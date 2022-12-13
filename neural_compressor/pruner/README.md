@@ -61,8 +61,8 @@ Neural network pruning is a promising model compression technique that removes t
 Pruning patterns defines the rules of pruned weights' arrangements in space. INC currently supports unstructured, N:M and NxM patterns. Please note that N:M pattern is applied to input channels while NxM pattern is applied to output ones. [Details](../../docs/source/pruning_details.md#pruning-patterns).
 
 <div align=center>
-<a target="_blank" href="../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG">
-    <img src="../../docs/source/_static/imgs/pruning/Pruning_patterns.PNG" width=700 height=160 alt="Sparsity Pattern">
+<a target="_blank" href="../../docs/source/_static/imgs/pruning/Pruning_patterns.JPG">
+    <img src="../../docs/source/_static/imgs/pruning/Pruning_patterns.JPG" width=700 height=160 alt="Sparsity Pattern">
 </a>
 </div>
 
@@ -70,11 +70,11 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. INC
 
 
 
-Pruning Criteria determines how should the weights of a neural network be scored and pruned. In the image below, pruning scores are represented by neurons' color and those with the lowest scores are pruned. The magnitude and gradient are widely used to score the weights. Currently, INC supports **magnitude**, **gradient**, **snip** and **snip_momentum** criteria. [Details](../../docs/source/pruning_details.md#pruning-criteria).
+Pruning Criteria determines how should the weights of a neural network be scored and pruned. In the image below, pruning scores are represented by neurons' color and those with the lowest scores are pruned. The magnitude and gradient are widely used to score the weights. Currently, INC supports **magnitude**, **gradient**, **snip** and **snip_momentum** criteria; pruning criteria is defined along with pruning type in INC configurations. [Details](../../docs/source/pruning_details.md#pruning-criteria).
 
 <div align=center>
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=360 height=230 alt="Pruning criteria">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=380 height=230 alt="Pruning criteria">
 </a>
 </div>
 
@@ -85,8 +85,8 @@ Pruning Criteria determines how should the weights of a neural network be scored
 Pruning schedule defines the way the model reach the target sparsity (the ratio of pruned weights). Both **one-shot** and **iterative** pruning schedules are supported. [Details](../../docs/source/pruning_details.md#pruning-schedule).
 
 <div align=center>
-<a target="_blank" href="../../docs/source/_static/imgs/pruning/pruning_schedule.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning//pruning_schedule.PNG" width=950 height=210 alt="Pruning schedule">
+<a target="_blank" href="../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG">
+    <img src="./../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG" width=1050 height=240 alt="Pruning schedule">
 </a>  
 </div>
 
@@ -107,8 +107,8 @@ Regularization is a technique that discourages learning a more complex model and
 [Details](../../docs/source/pruning_details.md#regularization).
 
 <div align=center>
-<a target="_blank" href="../../docs/source/_static/imgs/pruning/regularization.PNG">
-    <img src="../../docs/source/_static/imgs/pruning/regularization.PNG" width=350 height=170 alt="Regularization">
+<a target="_blank" href="../../docs/source/_static/imgs/pruning/Regularization.JPG">
+    <img src="../../docs/source/_static/imgs/pruning/Regularization.JPG" width=380 height=230 alt="Regularization">
 </a>
 </div>
 
@@ -122,7 +122,8 @@ Users can pass the customized training/evaluation functions to `Pruning` in vari
 
 
 
-The following section is an example of how to use hooks in user pass-in training function to perform BERT training. Our pruning API supports multiple pruner objects in a single Pruning object, which means we can apply different pruning configurations for different layers in a model. Since these pruning configurations share the same parameter names, we introduce a global-local configuration structure to initialize a Pruning object. First, we set up a dict-like local_config, which refers to some unique configurations for specific pruners. Afterwards, we pass this local_config dict and common configurations for all pruners (known as "global setting") to Pruning's initialization function. Below is code example for how to utilize our global-local configuration method to initialize a Pruning object.
+The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default setting is used as a complement.  
+
 
 
 
@@ -130,8 +131,8 @@ The following section is an example of how to use hooks in user pass-in training
 from neural_compressor.pruning import Pruning, WeightPruningConfig
 
 config = WeightPruningConfig(
-    local_configs,  # An example of local_configs is shown below.
-    target_sparsity=0.8, start_step=1, end_step=10, pruning_frequency=1
+    pruning_configs,  # An example of pruning_configs is shown below.
+    target_sparsity=0.8, start_step=1, end_step=10, pruning_frequency=1 # Default pruning setting.
 )
 prune = Pruning(config)  # Pruning constructor.
 prune.model = model      # Set model object to prune.
@@ -155,7 +156,7 @@ for epoch in range(num_train_epochs):
 ```
 
 ```python
-local_configs = [
+pruning_configs = [
         {
             'target_sparsity': 0.9,   # Target sparsity ratio of modules.
             'pruning_type': "snip_momentum", # Default pruning type.
@@ -173,9 +174,9 @@ local_configs = [
         },
         {
             "op_names": ['layer3.*'], # A list of modules that would be pruned.
-            'target_sparsity': 0.7,   # Target sparsity ratio of modules. 
             "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
-        }
+            # 'target_sparsity' 
+        } # For layer3, the missing target_sparsity would be complemented by default setting (i.e. 0.8)
     ]
 ```
 
