@@ -20,11 +20,15 @@ class TestPruning(unittest.TestCase):
                 "pruning_type": "magnitude_progressive"
             },
             {
+                'start_step': 1,
+                'end_step': 9,
                 "op_names": ['layer2.*'],
                 'target_sparsity': 0.5,
                 'pattern': '2:4'
             },
             {
+                'start_step': 1,
+                'end_step': 10,
                 "op_names": ['layer3.*'],
                 'target_sparsity': 0.7,
                 'pattern': '5x1',
@@ -43,25 +47,25 @@ class TestPruning(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        compression_manager.on_train_begin()
+        compression_manager.callbacks.on_train_begin()
 
         for epoch in range(2):
             self.model.train()
-            compression_manager.on_epoch_begin(epoch)
+            compression_manager.callbacks.on_epoch_begin(epoch)
             local_step = 0
             for image, target in dummy_dataloader:
-                compression_manager.on_step_begin(local_step)
+                compression_manager.callbacks.on_step_begin(local_step)
                 output = self.model(image)
                 loss = criterion(output, target)
                 optimizer.zero_grad()
                 loss.backward()
-                compression_manager.on_before_optimizer_step()
+                compression_manager.callbacks.on_before_optimizer_step()
                 optimizer.step()
-                compression_manager.on_after_optimizer_step()
-                compression_manager.on_step_end()
+                compression_manager.callbacks.on_after_optimizer_step()
+                compression_manager.callbacks.on_step_end()
                 local_step += 1
 
-            compression_manager.on_epoch_end()
+            compression_manager.callbacks.on_epoch_end()
 
 
 
