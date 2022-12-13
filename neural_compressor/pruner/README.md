@@ -176,7 +176,7 @@ pruning_configs = [
             "op_names": ['layer3.*'], # A list of modules that would be pruned.
             "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
             # 'target_sparsity' 
-        } # For layer3, the missing target_sparsty would be complemented by default setting (i.e. 0.8)
+        } # For layer3, the missing target_sparsity would be complemented by default setting (i.e. 0.8)
     ]
 ```
 
