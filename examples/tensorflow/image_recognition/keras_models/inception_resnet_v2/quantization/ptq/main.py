@@ -82,7 +82,7 @@ def evaluate(model):
     metric = TensorflowTopK(k=1)
 
     def eval_func(dataloader, metric):
-      warmup = 5
+        warmup = 5
         iteration = None
         latency_list = []
         if FLAGS.benchmark and FLAGS.mode == 'performance':
