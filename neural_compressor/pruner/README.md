@@ -74,7 +74,7 @@ Pruning Criteria determines how should the weights of a neural network be scored
 
 <div align=center>
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=360 height=230 alt="Pruning criteria">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=380 height=230 alt="Pruning criteria">
 </a>
 </div>
 
@@ -107,8 +107,8 @@ Regularization is a technique that discourages learning a more complex model and
 [Details](../../docs/source/pruning_details.md#regularization).
 
 <div align=center>
-<a target="_blank" href="../../docs/source/_static/imgs/pruning/regularization.PNG">
-    <img src="../../docs/source/_static/imgs/pruning/regularization.PNG" width=350 height=170 alt="Regularization">
+<a target="_blank" href="../../docs/source/_static/imgs/pruning/Regularization.JPG">
+    <img src="../../docs/source/_static/imgs/pruning/Regularization.JPG" width=350 height=170 alt="Regularization">
 </a>
 </div>
 
