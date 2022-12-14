@@ -274,7 +274,7 @@ class TestMixedPrecisionOnNonEnabledHost(unittest.TestCase):
             output_model = mix_precision.fit(self.onnx_model, conf)
         self.assertEqual(cm.exception.code, 0)
 
-        conf = MixedPrecisionConfig(extra_precisions=["fp16"])
+        conf = MixedPrecisionConfig(excluded_precisions=["fp16"])
         with self.assertRaises(SystemExit) as cm:
             output_model = mix_precision.fit(self.tf_model, conf)
         self.assertEqual(cm.exception.code, 0)
