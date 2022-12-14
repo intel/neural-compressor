@@ -17,7 +17,6 @@ ARG UBUNTU_VER=20.04
 FROM ubuntu:${UBUNTU_VER} as devel
 
 # See http://bugs.python.org/issue19846
-
 ENV LANG C.UTF-8
 
 RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
