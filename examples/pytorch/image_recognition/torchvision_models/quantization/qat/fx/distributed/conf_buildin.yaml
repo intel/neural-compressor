@@ -17,7 +17,7 @@ version: 1.0
 
 model:                                               # mandatory. used to specify model specific information.
   name: imagenet_qat
-  framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  framework: pytorch_fx                              # mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
 quantization:                                        # optional. required for QAT and PTQ.
   approach: quant_aware_training                     # mandatory. supported values are quant_aware_training and post_training_static_quant.
