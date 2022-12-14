@@ -12,22 +12,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Finetuning a 🤗 Transformers model for sequence classification on GLUE."""
+# """ Finetuning a 🤗 Transformers model for sequence classification on GLUE."""
 import argparse
 import logging
 import math
 import os
 import random
+from pathlib import Path
+import sys
+import torch
 
+sys.path.insert(0, '/')
 import datasets
 from datasets import load_dataset, load_metric
-import torch
-from torch.utils.data.dataloader import DataLoader
+from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-import numpy as np
-
 import transformers
+from accelerate import Accelerator
+from huggingface_hub import Repository
 from transformers import (
     AdamW,
     AutoConfig,
@@ -40,9 +43,14 @@ from transformers import (
     get_scheduler,
     set_seed,
 )
-
+from transformers.file_utils import get_full_repo_name
+from transformers.utils.versions import require_version
+from neural_compressor.pruning import Pruning
+from neural_compressor.pruner.utils import WeightPruningConfig
 
 logger = logging.getLogger(__name__)
+
+require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/text-classification/requirements.txt")
 
 task_to_keys = {
     "cola": ("sentence", None),
@@ -93,6 +101,12 @@ def parse_args():
         required=True,
     )
     parser.add_argument(
+        "--teacher_model_name_or_path",
+        type=str,
+        default=None,
+        help="Path to pretrained teacher model or model identifier from huggingface.co/models.",
+    )
+    parser.add_argument(
         "--use_slow_tokenizer",
         action="store_true",
         help="If passed, will use a slow tokenizer (not backed by the 🤗 Tokenizers library).",
@@ -106,8 +120,14 @@ def parse_args():
     parser.add_argument(
         "--per_device_eval_batch_size",
         type=int,
-        default=32,
+        default=8,
         help="Batch size (per device) for the evaluation dataloader.",
+    )
+    parser.add_argument(
+        "--distill_loss_weight",
+        type=float,
+        default=0.0,
+        help="distiller loss weight",
     )
     parser.add_argument(
         "--learning_rate",
@@ -117,8 +137,6 @@ def parse_args():
     )
     parser.add_argument("--weight_decay", type=float, default=0.0, help="Weight decay to use.")
     parser.add_argument("--num_train_epochs", type=int, default=3, help="Total number of training epochs to perform.")
-    parser.add_argument("--output_model", default=None, type=str, required=True,
-                        help="The output path for the trained model.")
     parser.add_argument(
         "--max_train_steps",
         type=int,
@@ -143,19 +161,32 @@ def parse_args():
     )
     parser.add_argument("--output_dir", type=str, default=None, help="Where to store the final model.")
     parser.add_argument("--seed", type=int, default=None, help="A seed for reproducible training.")
-    parser.add_argument('--do_train', action='store_true',
-                        help="train model")
-    parser.add_argument('--do_eval', action='store_true',
-                        help="evaluate model")
-    parser.add_argument('--do_prune', action='store_true',
-                        help="do gradient sensitivity pruning on trained model.")
-    parser.add_argument('--use_onnx', action='store_true',
-                        help="use onnx for inference")
-    parser.add_argument("--onnx_model_name", type=str, default="model.onnx", help="name for saved onnx model.")
-    parser.add_argument('--quantization', action='store_true',
-                        help="int8 quantization")
-    parser.add_argument("--config", default=None, help="pruning config")
-    parser.add_argument("--core_per_instance", type=int, default=-1, help="cores per instance.")
+    parser.add_argument("--cooldown_epochs", type=int, default=0, help="Cooling epochs after pruning")
+
+    parser.add_argument("--push_to_hub", action="store_true", help="Whether or not to push the model to the Hub.")
+    parser.add_argument(
+        "--hub_model_id", type=str, help="The name of the repository to keep in sync with the local `output_dir`."
+    )
+    parser.add_argument("--sparsity_warm_epochs", type=int, default=0,
+                        help="Number of epochs the network not be purned")
+    parser.add_argument("--hub_token", type=str, help="The token to use to push to the Model Hub.")
+    parser.add_argument("--do_prune", action="store_true", help="Whether or not to prune the model")
+    
+    parser.add_argument(
+        "--pruning_pattern",
+        type=str, default="4x1",
+        help="pruning pattern type, we support NxM and N:M."
+    )
+    parser.add_argument(
+        "--target_sparsity",
+        type=float, default=0.8,
+        help="Target sparsity of the model."
+    )
+    parser.add_argument(
+        "--pruning_frequency",
+        type=int, default=-1,
+        help="Sparse step frequency for iterative pruning, default to a quarter of pruning steps."
+    )
     args = parser.parse_args()
 
     # Sanity checks
@@ -169,137 +200,60 @@ def parse_args():
             extension = args.validation_file.split(".")[-1]
             assert extension in ["csv", "json"], "`validation_file` should be a csv or a json file."
 
-    if args.output_dir is not None:
-        os.makedirs(args.output_dir, exist_ok=True)
+    if args.push_to_hub:
+        assert args.output_dir is not None, "Need an `output_dir` to create a repo when `--push_to_hub` is passed."
 
     return args
 
-def take_eval_steps(args, model, eval_dataloader, metric, prune):
-    # reset bert config for pruned weight
-    target_num_heads = prune.cfg['pruning']['approach']['weight_compression']['pruners'][0].parameters['target']
-    for submodule in model.bert.encoder.layer:
-        submodule.attention.self.num_attention_heads = target_num_heads
-        submodule.attention.self.all_head_size = target_num_heads * submodule.attention.self.attention_head_size
-    logger.info("***** Running eval *****")
-    logger.info(f"  Num examples = {len(eval_dataloader) }")
-    model.eval()
-    for step, batch in enumerate(eval_dataloader):
-        outputs = model(**batch)
-        predictions = outputs.logits.argmax(dim=-1)
-        metric.add_batch(
-            predictions=predictions,
-            references=batch["labels"],
-        )
 
-    eval_metric = metric.compute()
-    logger.info(f"eval_metric : {eval_metric}")
-    return eval_metric
+def get_loss_one_logit(student_logit, teacher_logit):
+    t = 2.0
+    from torch.nn import functional as F
+    return F.kl_div(
+        input=F.log_softmax(student_logit / t, dim=-1),
+        target=F.softmax(teacher_logit / t, dim=-1),
+        reduction="batchmean"
+    ) * (t ** 2)
 
-def take_train_steps(args, model, eval_dataloader, metric, prune):
-    # Train!
-    logger.info("***** Running pruning *****")
-    logger.info(f"  Num examples = {len(eval_dataloader)}")
-    # Only show the progress bar once on each machine.
-    nb_eval_steps = 0
-    preds = None
-    out_label_ids = None
-    model.eval()
-
-    # To calculate head prune
-    head_mask = torch.ones(model.config.num_hidden_layers, model.config.num_attention_heads)
-    head_mask.requires_grad_(requires_grad=True)
-
-    for step, batch in enumerate(eval_dataloader):
-        inputs = {'input_ids': batch['input_ids'],
-                  'attention_mask': batch['attention_mask'],
-                  'labels': batch['labels']}
-        outputs = model(output_attentions=True, **inputs, head_mask=head_mask)
-
-        tmp_eval_loss, logits = outputs[:2]
-
-        tmp_eval_loss.backward()
-
-        prune.on_step_end()
-        nb_eval_steps += 1
-        predictions = logits.argmax(dim=-1)
-        # if preds is None:
-        #     preds = logits.detach().cpu().numpy()
-        #     out_label_ids = inputs['labels'].detach().cpu().numpy()
-        # else:
-        #     preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
-        #     out_label_ids = np.append(out_label_ids, inputs['labels'].detach().cpu().numpy(), axis=0)
-        # preds = np.argmax(preds, axis=1)
-        metric.add_batch(
-            predictions=predictions,
-            references=inputs["labels"],
-        )
-
-    eval_metric = metric.compute()
-    logger.info(f"eval_metric : {eval_metric}")
-    prune.on_epoch_end()
-
-def export_onnx_model(args, model):
-    with torch.no_grad():
-        inputs = {'input_ids':      torch.ones(1,args.max_length, dtype=torch.int64),
-                  'attention_mask': torch.ones(1,args.max_length, dtype=torch.int64),
-                  'token_type_ids': torch.ones(1,args.max_length, dtype=torch.int64)}
-        _ = model(**inputs)
-
-        onnx_saved_model = os.path.join(args.output_model, args.onnx_model_name)
-        symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
-        torch.onnx.export(model, (inputs['input_ids'],
-                                  inputs['attention_mask'],
-                                  inputs['token_type_ids']),
-                          onnx_saved_model,
-                          opset_version=11,
-                          do_constant_folding=True,
-                          input_names=['input_ids',
-                                       'attention_mask',
-                                       'token_type_ids'],
-                          output_names=['output'],
-                          dynamic_axes={'input_ids': symbolic_names,
-                                        'attention_mask' : symbolic_names,
-                                        'token_type_ids' : symbolic_names})
-        print("ONNX Model exported to {}".format(onnx_saved_model))
-
-def evaluate_onnxrt(args, model, eval_dataloader, metric, onnx_options=None):
-    from onnxruntime import ExecutionMode, InferenceSession, SessionOptions
-    session = InferenceSession(model.SerializeToString(), onnx_options)
-
-    # Eval!
-    logger.info("***** Running onnx evaluation  *****")
-    #eval_loss = 0.0
-    #nb_eval_steps = 0
-    preds = None
-    out_label_ids = None
-    for batch in tqdm(eval_dataloader, desc="Evaluating"):
-        batch = dict((k, v.detach().cpu().numpy()) for k, v in batch.items())
-        ort_inputs = {'input_ids': batch['input_ids'],
-                      'attention_mask': batch['attention_mask'],
-                      'token_type_ids': batch['token_type_ids']}
-        logits = session.run(None, ort_inputs)[0]
-        predictions = torch.from_numpy(logits).argmax(dim=-1)
-        metric.add_batch(
-            predictions=predictions,
-            references=torch.from_numpy(batch["labels"]),
-        )
-
-    eval_metric = metric.compute()
-    logger.info(f"onnx eval metric: {eval_metric}")
 
 def main():
     args = parse_args()
 
+    # Initialize the accelerator. We will let the accelerator handle device placement for us in this example.
+    accelerator = Accelerator()
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
         level=logging.INFO,
     )
+    logger.info(accelerator.state)
+
+    # Setup logging, we only want one process per machine to log things on the screen.
+    # accelerator.is_local_main_process is only True for one process per machine.
+    logger.setLevel(logging.INFO if accelerator.is_local_main_process else logging.ERROR)
+    if accelerator.is_local_main_process:
+        datasets.utils.logging.set_verbosity_warning()
+        transformers.utils.logging.set_verbosity_info()
+    else:
+        datasets.utils.logging.set_verbosity_error()
+        transformers.utils.logging.set_verbosity_error()
 
     # If passed along, set the training seed now.
     if args.seed is not None:
         set_seed(args.seed)
+
+    # Handle the repository creation
+    if accelerator.is_main_process:
+        if args.push_to_hub:
+            if args.hub_model_id is None:
+                repo_name = get_full_repo_name(Path(args.output_dir).name, token=args.hub_token)
+            else:
+                repo_name = args.hub_model_id
+            repo = Repository(args.output_dir, clone_from=repo_name)
+        elif args.output_dir is not None:
+            os.makedirs(args.output_dir, exist_ok=True)
+    accelerator.wait_for_everyone()
 
     # Get the datasets: you can either provide your own CSV/JSON training and evaluation files (see below)
     # or specify a GLUE benchmark task (the dataset will be downloaded automatically from the datasets Hub).
@@ -338,13 +292,13 @@ def main():
             num_labels = 1
     else:
         # Trying to have good defaults here, don't hesitate to tweak to your needs.
-        is_regression = datasets["train"].features["label"].dtype in ["float32", "float64"]
+        is_regression = raw_datasets["train"].features["label"].dtype in ["float32", "float64"]
         if is_regression:
             num_labels = 1
         else:
             # A useful fast method:
             # https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.Dataset.unique
-            label_list = datasets["train"].unique("label")
+            label_list = raw_datasets["train"].unique("label")
             label_list.sort()  # Let's sort it for determinism
             num_labels = len(label_list)
 
@@ -359,13 +313,21 @@ def main():
         from_tf=bool(".ckpt" in args.model_name_or_path),
         config=config,
     )
-
+    if args.distill_loss_weight > 0:
+        teacher_path = args.teacher_model_name_or_path
+        if teacher_path is None:
+            teacher_path = args.model_name_or_path
+        teacher_model = AutoModelForSequenceClassification.from_pretrained(
+            teacher_path,
+            from_tf=bool(".ckpt" in args.model_name_or_path),
+            config=config,
+        )
     # Preprocessing the datasets
     if args.task_name is not None:
         sentence1_key, sentence2_key = task_to_keys[args.task_name]
     else:
         # Again, we try to have some nice defaults but don't hesitate to tweak to your use case.
-        non_label_column_names = [name for name in datasets["train"].column_names if name != "label"]
+        non_label_column_names = [name for name in raw_datasets["train"].column_names if name != "label"]
         if "sentence1" in non_label_column_names and "sentence2" in non_label_column_names:
             sentence1_key, sentence2_key = "sentence1", "sentence2"
         else:
@@ -377,9 +339,9 @@ def main():
     # Some models have set the order of the labels to use, so let's make sure we do use it.
     label_to_id = None
     if (
-        model.config.label2id != PretrainedConfig(num_labels=num_labels).label2id
-        and args.task_name is not None
-        and not is_regression
+            model.config.label2id != PretrainedConfig(num_labels=num_labels).label2id
+            and args.task_name is not None
+            and not is_regression
     ):
         # Some have all caps in their config, some don't.
         label_name_to_id = {k.lower(): v for k, v in model.config.label2id.items()}
@@ -390,13 +352,20 @@ def main():
             )
             label_to_id = {i: label_name_to_id[label_list[i]] for i in range(num_labels)}
         else:
-            logger.warn(
+            logger.warning(
                 "Your model seems to have been trained with labels, but they don't match the dataset: ",
                 f"model labels: {list(sorted(label_name_to_id.keys()))}, dataset labels: {list(sorted(label_list))}."
                 "\nIgnoring the model labels as a result.",
             )
     elif args.task_name is None:
         label_to_id = {v: i for i, v in enumerate(label_list)}
+
+    if label_to_id is not None:
+        model.config.label2id = label_to_id
+        model.config.id2label = {id: label for label, id in config.label2id.items()}
+    elif args.task_name is not None and not is_regression:
+        model.config.label2id = {l: i for i, l in enumerate(label_list)}
+        model.config.id2label = {id: label for label, id in config.label2id.items()}
 
     padding = "max_length" if args.pad_to_max_length else False
 
@@ -416,9 +385,13 @@ def main():
                 result["labels"] = examples["label"]
         return result
 
-    processed_datasets = raw_datasets.map(
-        preprocess_function, batched=True, remove_columns=raw_datasets["train"].column_names
-    )
+    with accelerator.main_process_first():
+        processed_datasets = raw_datasets.map(
+            preprocess_function,
+            batched=True,
+            remove_columns=raw_datasets["train"].column_names,
+            desc="Running tokenizer on dataset",
+        )
 
     train_dataset = processed_datasets["train"]
     eval_dataset = processed_datasets["validation_matched" if args.task_name == "mnli" else "validation"]
@@ -436,7 +409,7 @@ def main():
         # Otherwise, `DataCollatorWithPadding` will apply dynamic padding for us (by padding to the maximum length of
         # the samples passed). When using mixed precision, we add `pad_to_multiple_of=8` to pad all tensors to multiple
         # of 8s, which will enable the use of Tensor Cores on NVIDIA hardware with compute capability >= 7.5 (Volta).
-        data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=None)
+        data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=(8 if accelerator.use_fp16 else None))
 
     train_dataloader = DataLoader(
         train_dataset, shuffle=True, collate_fn=data_collator, batch_size=args.per_device_train_batch_size
@@ -446,9 +419,11 @@ def main():
     # Optimizer
     # Split weights in two groups, one with weight decay and the other not.
     no_decay = ["bias", "LayerNorm.weight"]
+    no_decay_classifier = ["bias", "LayerNorm.weight", "classifier"]
+
     optimizer_grouped_parameters = [
         {
-            "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
+            "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay_classifier)],
             "weight_decay": args.weight_decay,
         },
         {
@@ -456,7 +431,21 @@ def main():
             "weight_decay": 0.0,
         },
     ]
-    optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
+    if args.do_prune:
+        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, betas=[0.9, 0.9])  ##changed
+    else:
+        optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
+
+    # Prepare everything with our `accelerator`.
+    if args.distill_loss_weight > 0:
+        teacher_model, model, optimizer, train_dataloader, eval_dataloader = accelerator.prepare(
+            teacher_model, model, optimizer, train_dataloader, eval_dataloader
+        )
+        teacher_model.eval()
+    else:
+        model, optimizer, train_dataloader, eval_dataloader = accelerator.prepare(
+            model, optimizer, train_dataloader, eval_dataloader
+        )
 
     # Note -> the training dataloader needs to be prepared before we grab his length below (cause its length will be
     # shorter in multiprocess)
@@ -478,95 +467,130 @@ def main():
     # Get the metric function
     if args.task_name is not None:
         metric = load_metric("glue", args.task_name)
+    else:
+        metric = load_metric("accuracy")
 
-    # Pruning
+    # Train!
+    total_batch_size = args.per_device_train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
+
+    logger.info("***** Running training *****")
+    logger.info(f"  Num examples = {len(train_dataset)}")
+    logger.info(f"  Num Epochs = {args.num_train_epochs}")
+    logger.info(f"  Instantaneous batch size per device = {args.per_device_train_batch_size}")
+    logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
+    logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
+    logger.info(f"  Total optimization steps = {args.max_train_steps}")
+    # Only show the progress bar once on each machine.
+    progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
+    completed_steps = 0
+
+    # Pruning preparation
+    pruning_configs=[
+        {
+            "pruning_type": "snip_momentum",
+            "pruning_scope": "global",
+            "sparsity_decay_type": "exp"
+        }
+    ]
+    config = WeightPruningConfig(
+        pruning_configs,
+        target_sparsity=args.target_sparsity,
+        excluded_op_names=["classifier", "pooler", ".*embeddings*"],
+        pruning_op_types=["Linear"],
+        max_sparsity_ratio_per_op=0.98,
+        pruning_scope="global",
+        pattern=args.pruning_pattern,
+        pruning_frequency=args.target_sparsity,
+    )
+    pruner = Pruning(config)
+    num_iterations = len(train_dataset) / total_batch_size
+    num_warm = int(args.sparsity_warm_epochs * num_iterations)
+    total_iterations = int(num_iterations * (args.num_train_epochs - args.cooldown_epochs))
+    frequency = int((total_iterations - num_warm + 1) / 4) if args.pruning_frequency == -1 \
+                                                           else args.pruning_frequency
     if args.do_prune:
-        # TODO: To remove eval baseline
-        # Eval first for baseline
+        start = num_warm
+        end = total_iterations
+    else:
+        start = num_iterations * args.num_train_epochs + 1
+        end = start
+    pruner.update_config(start_step=start, end_step=end, pruning_frequency=frequency)
+    pruner.model = model
+    pruner.on_train_begin()
+    for epoch in range(args.num_train_epochs):
+        model.train()
+        for step, batch in enumerate(train_dataloader):
+            pruner.on_step_begin(local_step=step)
+            outputs = model(**batch, output_hidden_states=True)
+            loss = outputs.loss
+            loss = loss / args.gradient_accumulation_steps
+            if args.distill_loss_weight > 0.0:
+                distill_loss_weight = args.distill_loss_weight
+                with torch.no_grad():
+                    teacher_outputs = teacher_model(**batch, output_hidden_states=True)
+                MSELoss = torch.nn.MSELoss().cuda()
+                loss = distill_loss_weight * MSELoss(outputs['hidden_states'][-1],
+                                                     teacher_outputs['hidden_states'][-1])  ##variant 3
+                
+            accelerator.backward(loss)
+            if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
+                pruner.on_before_optimizer_step()
+                optimizer.step()
+                pruner.on_after_optimizer_step()
+
+                lr_scheduler.step()
+                optimizer.zero_grad()
+                progress_bar.update(1)
+                completed_steps += 1
+
+            if completed_steps >= args.max_train_steps:
+                break
+
         model.eval()
-        eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
+
         for step, batch in enumerate(eval_dataloader):
             outputs = model(**batch)
-            predictions = outputs.logits.argmax(dim=-1)
+            predictions = outputs.logits.argmax(dim=-1) if not is_regression else outputs.logits.squeeze()
             metric.add_batch(
-                predictions=predictions,
-                references=batch["labels"],
+                predictions=accelerator.gather(predictions),
+                references=accelerator.gather(batch["labels"]),
             )
 
         eval_metric = metric.compute()
-        logger.info(f"before prune eval metric: {eval_metric}")
+        logger.info(f"epoch {epoch}: {eval_metric}")
+        ##pruner.on_after_eval()
+        if args.push_to_hub and epoch < args.num_train_epochs - 1:
+            accelerator.wait_for_everyone()
+            unwrapped_model = accelerator.unwrap_model(model)
+            unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
+            if accelerator.is_main_process:
+                tokenizer.save_pretrained(args.output_dir)
+                repo.push_to_hub(
+                    commit_message=f"Training in progress epoch {epoch}", blocking=False, auto_lfs_prune=True
+                )
+        if args.output_dir is not None:
+            accelerator.wait_for_everyone()
+            unwrapped_model = accelerator.unwrap_model(model)
+            file = os.path.join(args.output_dir, f"epoch{epoch}")
+            unwrapped_model.save_pretrained(file)
+            # unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
+            if accelerator.is_main_process:
+                tokenizer.save_pretrained(args.output_dir)
+                # if args.push_to_hub:
+                #     repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
-        prune_eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
-        prune_eval_dataloader = tqdm(prune_eval_dataloader, desc="Evaluating")
-        from neural_compressor.experimental import Pruning, common
-        def train_func(model):
-            return take_train_steps(args, model, prune_eval_dataloader, metric, prune)
-
-        def eval_func(model):
-            return take_eval_steps(args, model, prune_eval_dataloader, metric, prune)
-
-        # eval datasets.
-        prune = Pruning(args.config)
-        prune.model = common.Model(model)
-        prune.pruning_func = train_func
-        prune.eval_func = eval_func
-        model = prune.fit()
-        model.save(args.output_model)
-        # change to framework model for further use
-        model = model.model
-
-    if args.do_train:
-        # Train!
-        total_batch_size = args.per_device_train_batch_size * args.gradient_accumulation_steps
-
-        logger.info("***** Running training *****")
-        logger.info(f"  Num examples = {len(train_dataset)}")
-        logger.info(f"  Num Epochs = {args.num_train_epochs}")
-        logger.info(f"  Instantaneous batch size per device = {args.per_device_train_batch_size}")
-        logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
-        logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
-        logger.info(f"  Total optimization steps = {args.max_train_steps}")
-        # Only show the progress bar once on each machine.
-        progress_bar = tqdm(range(args.max_train_steps))
-        completed_steps = 0
-
-        for epoch in range(args.num_train_epochs):
-            model.train()
-            for step, batch in enumerate(train_dataloader):
-                outputs = model(**batch)
-                loss = outputs.loss
-                loss = loss / args.gradient_accumulation_steps
-                loss.backward()
-                if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                    optimizer.step()
-                    lr_scheduler.step()
-                    optimizer.zero_grad()
-                    progress_bar.update(1)
-                    completed_steps += 1
-
-                if completed_steps >= args.max_train_steps:
-                    break
-        # required when actual steps and max train steps doesn't match
-        progress_bar.close()
-        torch.save(model.state_dict(), args.output_model + '/retrained_model.pth')
-
-    if args.do_eval:
-        eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
-        model.eval()
-        for step, batch in enumerate(eval_dataloader):
-            outputs = model(**batch)
-            predictions = outputs.logits.argmax(dim=-1)
-            metric.add_batch(
-                predictions=predictions,
-                references=batch["labels"],
-            )
-
-        eval_metric = metric.compute()
-        logger.info(f"eval_metric: {eval_metric}")
-
-    # Get the metric function
-    if args.task_name is not None:
-        metric = load_metric("glue", args.task_name)
+    pattern_sparsity_over_conv_linear, element_sparsity_over_conv_linear, element_sparsity_over_all = pruner.get_sparsity_ratio()
+    print(pattern_sparsity_over_conv_linear, element_sparsity_over_conv_linear, element_sparsity_over_all )
+    if args.output_dir is not None:
+        accelerator.wait_for_everyone()
+        unwrapped_model = accelerator.unwrap_model(model)
+        file = os.path.join(args.output_dir, f"epoch{epoch}.pytorch.bin")
+        unwrapped_model.save_pretrained(file)
+        # unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
+        if accelerator.is_main_process:
+            tokenizer.save_pretrained(args.output_dir)
+            if args.push_to_hub:
+                repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
     if args.task_name == "mnli":
         # Final evaluation on mismatched validation set
@@ -574,62 +598,20 @@ def main():
         eval_dataloader = DataLoader(
             eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size
         )
+        eval_dataloader = accelerator.prepare(eval_dataloader)
 
         model.eval()
         for step, batch in enumerate(eval_dataloader):
             outputs = model(**batch)
             predictions = outputs.logits.argmax(dim=-1)
             metric.add_batch(
-                predictions=predictions,
-                references=batch["labels"],
+                predictions=accelerator.gather(predictions),
+                references=accelerator.gather(batch["labels"]),
             )
 
         eval_metric = metric.compute()
         logger.info(f"mnli-mm: {eval_metric}")
 
-    if args.use_onnx:
-        export_onnx_model(args, model)
-        from onnxruntime.quantization import quantize_dynamic, QuantType
-        from onnxruntime import ExecutionMode, InferenceSession, SessionOptions
-
-        from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-
-        import onnx
-        onnx_saved_model = os.path.join(args.output_model, args.onnx_model_name)
-        onnx_opt_model = onnx.load(onnx_saved_model)
-        if args.quantization:
-            logger.info(f"quantize onnx model ... ")
-            quantize_dynamic(onnx_saved_model,
-                             onnx_saved_model,
-                             op_types_to_quantize=['MatMul', 'Attention'],
-                             weight_type=QuantType.QInt8,
-                             per_channel=True,
-                             reduce_range=True,
-                             extra_options={'WeightSymmetric': False, 'MatMulConstBOnly': True})
-
-        onnx_options = SessionOptions()
-        if args.core_per_instance > 0:
-            onnx_options.intra_op_num_threads = args.core_per_instance
-        onnx_options.execution_mode = ExecutionMode.ORT_SEQUENTIAL
-
-        opt_options = BertOptimizationOptions('bert')
-        opt_options.enable_embed_layer_norm = False
-
-        logger.info(f"optimize onnx model ... ")
-        model_optimizer = optimizer.optimize_model(
-            onnx_saved_model,
-            'bert',
-            num_heads=0,
-            hidden_size=0,
-            optimization_options=opt_options)
-        onnx_model = model_optimizer.model
-
-        logger.info(f"executing onnx model ... ")
-
-        eval_dataset = processed_datasets["validation_matched" if args.task_name == "mnli" else "validation"]
-        eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
-        evaluate_onnxrt(args, onnx_model, eval_dataloader, metric, onnx_options)
 
 if __name__ == "__main__":
     main()

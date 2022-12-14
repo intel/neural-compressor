@@ -398,7 +398,7 @@ def parse_args():
     # )
     parser.add_argument(
         "--pruning_pattern",
-        type=str, default="1x1",
+        type=str, default="4x1",
         help="pruning pattern type, we support NxM and N:M."
     )
     parser.add_argument(
@@ -442,7 +442,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
+    # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
     # send_example_telemetry("run_qa_no_trainer", args)
 
@@ -980,16 +980,17 @@ def main():
     )
     pruner = Pruning(config)
     num_iterations = len(train_dataset) / total_batch_size
-    total_iterations = num_iterations * (args.num_train_epochs - args.warm_epochs - args.cooldown_epochs) \
-                       - args.num_warmup_steps
+    num_warm = int(args.warm_epochs * num_iterations) + args.num_warmup_steps
+    total_iterations = int(num_iterations * (args.num_train_epochs - args.cooldown_epochs))
+    frequency = int((total_iterations - num_warm + 1) / 4) if args.pruning_frequency == -1 \
+                                                           else args.pruning_frequency
     if args.do_prune:
-        start = int(args.warm_epochs * num_iterations+args.num_warmup_steps)
-        end = int(total_iterations)
-        frequency = int((end - start + 1) / 4) if (args.pruning_frequency == -1) else args.pruning_frequency
-        pruner.update_config(start_step=start, end_step=end, pruning_frequency=frequency)##iterative
+        start = num_warm
+        end = total_iterations
     else:
-        total_step = num_iterations * args.num_train_epochs + 1
-        pruner.update_config(start_step=total_step, end_step=total_step)
+        start = num_iterations * args.num_train_epochs + 1
+        end = start
+    pruner.update_config(start_step=start, end_step=end, pruning_frequency=frequency)##iterative
     pruner.model = model
     pruner.on_train_begin()
 

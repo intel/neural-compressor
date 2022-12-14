@@ -1,0 +1,197 @@
+i## Examples
+we have provided several pruning examples, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
+### [Glue](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning)
+
+We can train a sparse model with N:M(2:4) pattern on mrpc and sst2:
+```shell
+python3 ./run_glue_no_trainer.py \
+        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --task_name "mrpc" \
+        --max_length 128 \
+        --per_device_train_batch_size 16 \
+        --learning_rate 1e-3 \
+        --num_train_epochs 15 \
+        --weight_decay 1e-3  \
+        --do_prune \
+        --cooldown_epochs 5 \
+        --sparsity_warm_epochs 1 \
+        --target_sparsity 0.5 \
+        --pruning_pattern "2:4" \
+        --pruning_frequency 50 \
+        --lr_scheduler_type "constant" \
+        --distill_loss_weight 5
+```
+```shell
+python3 ./run_glue_no_trainer.py \
+        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --task_name "sst2" \
+        --max_length 128 \
+        --per_device_train_batch_size 16 \
+        --learning_rate 5e-5 \
+        --distill_loss_weight 2.0 \
+        --num_train_epochs 15 \
+        --weight_decay 5e-5   \
+        --cooldown_epochs 5 \
+        --sparsity_warm_epochs 0 \
+        --lr_scheduler_type "constant" \
+        --do_prune \
+        --target_sparsity 0.5 \
+        --pruning_pattern "2:4" \
+        --pruning_frequency 500
+```
+
+We can also choose a NxM (4x1) pattern on mrpc and sst2:
+```shell
+python3 ./run_glue_no_trainer.py \
+        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --task_name "mrpc" \
+        --max_length 128 \
+        --per_device_train_batch_size 16 \
+        --learning_rate 1e-3 \
+        --num_train_epochs 15 \
+        --weight_decay 1e-3  \
+        --do_prune \
+        --cooldown_epochs 5 \
+        --sparsity_warm_epochs 1 \
+        --target_sparsity 0.9 \
+        --pruning_pattern "4x1" \
+        --pruning_frequency 50 \
+        --lr_scheduler_type "constant" \
+        --distill_loss_weight 5
+```
+```shell
+python3 ./run_glue_no_trainer.py \
+        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --task_name "sst2" \
+        --max_length 128 \
+        --per_device_train_batch_size 16 \
+        --learning_rate 5e-5 \
+        --distill_loss_weight 2.0 \
+        --num_train_epochs 15 \
+        --weight_decay 5e-5   \
+        --cooldown_epochs 5 \
+        --sparsity_warm_epochs 0 \
+        --lr_scheduler_type "constant" \
+        --do_prune \
+        --target_sparsity 0.9 \
+        --pruning_pattern "4x1" \
+        --pruning_frequency 500
+```
+
+Per-channel pruning is also supported on mrpc and sst2.
+```shell
+python3 ./run_glue_no_trainer.py \
+        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --task_name "mrpc" \
+        --max_length 128 \
+        --per_device_train_batch_size 16 \
+        --learning_rate 1e-3 \
+        --num_train_epochs 15 \
+        --weight_decay 1e-3  \
+        --do_prune \
+        --cooldown_epochs 5 \
+        --sparsity_warm_epochs 1 \
+        --target_sparsity 0.9 \
+        --pruning_pattern "1xchannel" \
+        --pruning_frequency 50 \
+        --lr_scheduler_type "constant" \
+        --distill_loss_weight 5
+```
+```shell
+python3 ./run_glue_no_trainer.py \
+        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --task_name "sst2" \
+        --max_length 128 \
+        --per_device_train_batch_size 16 \
+        --learning_rate 5e-5 \
+        --distill_loss_weight 2.0 \
+        --num_train_epochs 15 \
+        --weight_decay 5e-5   \
+        --cooldown_epochs 5 \
+        --sparsity_warm_epochs 0 \
+        --lr_scheduler_type "constant" \
+        --do_prune \
+        --target_sparsity 0.9 \
+        --pruning_pattern "1xchannel" \
+        --pruning_frequency 500
+```
+
+To try to train a sparse model in mixed pattern, pruning config can be set as follows：
+```python
+pruning_configs=[
+        { # pruner0
+            "op_names": [".*output", ".*intermediate"], # list of regular expressions, containing the layer names you wish to be included in this pruner.
+            "pattern": "1x1",
+            "pruning_frequency": 100,
+            "pruning_type": "snip_momentum",
+            "sparsity_decay_type": "exp",
+            "min_sparsity_ratio_per_op": 0.99,
+        },
+        { # pruner1
+            "op_names": [".*query", ".*key", ".*value"],
+            "pattern": "4x1",
+            "pruning_frequency": 100,
+            "pruning_type": "snip_momentum",
+            "sparsity_decay_type": "exp"
+        }
+    ]
+```
+```shell
+python3 ./run_glue_no_trainer_mixed.py \
+        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --task_name "mrpc" \
+        --max_length 128 \
+        --per_device_train_batch_size 16 \
+        --learning_rate 1e-3 \
+        --num_train_epochs 15 \
+        --weight_decay 1e-3  \
+        --do_prune \
+        --cooldown_epochs 5 \
+        --sparsity_warm_epochs 1 \
+        --target_sparsity 0.9 \
+        --lr_scheduler_type "constant" \
+        --distill_loss_weight 5
+```
+
+We can also train a dense model on glue datasets (by setting --do_prune to False):
+```shell
+python3 run_glue_no_trainer.py \
+        --model_name_or_path "./bert-mini"  \
+        --task_name "mrpc" \
+        --max_length 128 \
+        --per_device_train_batch_size 16 \
+        --learning_rate 5e-5 \
+        --num_train_epoch 5 \
+        --weight_decay 5e-5 \
+        --output_dir "mrpc_result/"
+```
+or for sst2:
+```shell
+python run_glue_no_trainer.py \
+         --model_name_or_path "/path/to/dense_pretrained_model/" \
+        --task_name "sst2" \
+        --max_length 128 \
+        --per_device_train_batch_size 32 \
+        --learning_rate 5e-5 \
+        --num_train_epochs 10 \
+        --output_dir "sst2_result/"
+```
+### Results
+#### MRPC
+|  Model  | Dataset  | Sparsity pattern | Pruning methods |Element-wise/matmul, Gemm, conv ratio | Init model | Dense F1 (mean/max) | Sparse F1 (mean/max) | Relative drop |
+|  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: | :----: | :----: |
+| Bert-Mini  | MRPC |  4x1  |Snip-momentum| 0.8804 | Dense & Finetuned | 0.8619/0.8752 | 0.8610/0.8722 | -0.34% |
+| Bert-Mini  | MRPC |  2:4  |Snip-momentum| 0.4795 | Dense & Finetuned | 0.8619/0.8752| 0.8562/0.8695 | -0.65% |
+| Bert-Mini  | MRPC |  per channel  |Snip-momentum| 0.66 | Dense & Finetuned | 0.8619/0.8752| 0.8629/0.8680 | -0.83% |
+
+#### SST-2
+|  Model  | Dataset  |  Sparsity pattern | Pruning methods |Element-wise/matmul, Gemm, conv ratio | Init model | Dense Accuracy (mean/max) | Sparse Accuracy (mean/max)| Relative drop|
+|  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: | :----: | :----: |
+| Bert-Mini  | SST-2 |  4x1  |Snip-momentum| 0.8815 | Dense & Finetuned | 0.8660/0.8761 | 0.8651/0.8692 | -0.79% |
+| Bert-Mini  | SST-2 |  2:4  |Snip-momentum| 0.4795 | Dense & Finetuned | 0.8660/0.8761 | 0.8609/0.8693| -0.78% |
+| Bert-Mini  | SST-2 |  per channel  |Snip-momentum| 0.53 | Dense & Finetuned | 0.8660/0.8761 | 0.8651/0.8692| -0.79% |
+
+## References
+* [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
+* [Knowledge Distillation with the Reused Teacher Classifier](https://arxiv.org/abs/2203.14001)
+

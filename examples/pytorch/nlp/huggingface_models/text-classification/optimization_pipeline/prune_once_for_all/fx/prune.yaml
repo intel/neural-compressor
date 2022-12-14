@@ -20,10 +20,10 @@ model:
 pruning:
   approach:
     weight_compression:
-      start_epoch: 0
+      start_step: 0
       pruners:
         - !Pruner
-            prune_type: pattern_lock
+            pruning_type: pattern_lock
 tuning:
   accuracy_criterion:
     relative: 0.1                             # only verifying workflow, accuracy loss percentage: 10%

@@ -1,19 +1,18 @@
 #!/usr/bin/env python
 # coding=utf-8
-#  Copyright 2021 The HuggingFace Team. All rights reserved.
+# Copyright 2020 The HuggingFace Inc. team. All rights reserved.
 #
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """ Finetuning the library models for sequence classification on GLUE."""
 # You can also adapt this script on your own text classification task. Pointers for this are left as comments.
 
@@ -26,8 +25,9 @@ from typing import Optional
 
 import datasets
 import numpy as np
-import transformers
 from datasets import load_dataset, load_metric
+
+import transformers
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -35,6 +35,7 @@ from transformers import (
     DataCollatorWithPadding,
     EvalPrediction,
     HfArgumentParser,
+    IntervalStrategy,
     PretrainedConfig,
     Trainer,
     TrainingArguments,
@@ -47,7 +48,7 @@ from transformers.utils.versions import require_version
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
-check_min_version("4.10.0")
+check_min_version("4.10.0.dev0")
 
 require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/text-classification/requirements.txt")
 
@@ -130,6 +131,7 @@ class DataTrainingArguments:
     validation_file: Optional[str] = field(
         default=None, metadata={"help": "A csv or a json file containing the validation data."}
     )
+    test_file: Optional[str] = field(default=None, metadata={"help": "A csv or a json file containing the test data."})
 
     def __post_init__(self):
         if self.task_name is not None:
@@ -191,9 +193,6 @@ class ModelArguments:
     )
     benchmark: bool = field(
         default=False, metadata={"help": "get benchmark instead of accuracy"}
-    )
-    accuracy_only: bool = field(
-        default=False, metadata={"help": "get accuracy"}
     )
     onnx: bool = field(
         default=False, metadata={"help": "convert PyTorch model to ONNX"}
@@ -276,6 +275,19 @@ def main():
         # Loading a dataset from your local files.
         # CSV/JSON training and evaluation files are needed.
         data_files = {"train": data_args.train_file, "validation": data_args.validation_file}
+
+        # Get the test dataset: you can provide your own CSV/JSON test file (see below)
+        # when you use `do_predict` without specifying a GLUE benchmark task.
+        if training_args.do_predict:
+            if data_args.test_file is not None:
+                train_extension = data_args.train_file.split(".")[-1]
+                test_extension = data_args.test_file.split(".")[-1]
+                assert (
+                    test_extension == train_extension
+                ), "`test_file` should have the same extension (csv or json) as `train_file`."
+                data_files["test"] = data_args.test_file
+            else:
+                raise ValueError("Need either a GLUE task or a test file for `do_predict`.")
 
         for key in data_files.keys():
             logger.info(f"load a local file for {key}: {data_files[key]}")
@@ -414,7 +426,10 @@ def main():
 
     with training_args.main_process_first(desc="dataset map pre-processing"):
         raw_datasets = raw_datasets.map(
-            preprocess_function, batched=True, load_from_cache_file=not data_args.overwrite_cache
+            preprocess_function,
+            batched=True,
+            load_from_cache_file=not data_args.overwrite_cache,
+            desc="Running tokenizer on dataset",
         )
     if training_args.do_train:
         if "train" not in raw_datasets:
@@ -429,6 +444,13 @@ def main():
         eval_dataset = raw_datasets["validation_matched" if data_args.task_name == "mnli" else "validation"]
         if data_args.max_eval_samples is not None:
             eval_dataset = eval_dataset.select(range(data_args.max_eval_samples))
+
+    if training_args.do_predict or data_args.task_name is not None or data_args.test_file is not None:
+        if "test" not in raw_datasets and "test_matched" not in raw_datasets:
+            raise ValueError("--do_predict requires a test dataset")
+        predict_dataset = raw_datasets["test_matched" if data_args.task_name == "mnli" else "test"]
+        if data_args.max_predict_samples is not None:
+            predict_dataset = predict_dataset.select(range(data_args.max_predict_samples))
 
     # Log a few random samples from the training set:
     if training_args.do_train:
@@ -475,39 +497,45 @@ def main():
         data_collator=data_collator,
     )
 
+    early_stopping_patience = 2
+    early_stopping_threshold = 0.001 # optional
+    trainer.add_callback(transformers.EarlyStoppingCallback(early_stopping_patience, \
+                                                            early_stopping_threshold))
+
     eval_dataloader = trainer.get_eval_dataloader()
     batch_size = eval_dataloader.batch_size
 
-    def take_eval_steps(model, trainer, save_metrics=False):
-        trainer.model = model
-        metrics = trainer.evaluate()
-        if save_metrics:
-            trainer.save_metrics("eval", metrics)
-        logger.info("metrics keys: {}".format(metrics.keys()))
-        bert_task_acc_keys = ['eval_f1', 'eval_accuracy', 'eval_matthews_correlation',
-                              'eval_pearson', 'eval_mcc', 'eval_spearmanr']
-        for key in bert_task_acc_keys:
-            if key in metrics.keys():
-                throughput = metrics.get("eval_samples_per_second")
-                print('Batch size = %d' % batch_size)
-                print("Finally Eval {} Accuracy: {}".format(key, metrics[key]))
-                print("Latency: %.3f ms" % (1000 / throughput))
-                print("Throughput: {} samples/sec".format(throughput))
-                return metrics[key]
-        assert False, "No metric returned, Please check inference metric!"
-
     def eval_func(model):
-        return take_eval_steps(model, trainer)
+        trainer.model = model
+        result = trainer.evaluate(eval_dataset=eval_dataset)
+        accu = result['eval_f1']
+        print('Accuracy: %.3f ' % (accu), flush=True)
+        return accu
+
+    def benchmark(model):
+        print(model)
+        trainer.model = model
+        result = trainer.evaluate(eval_dataset=eval_dataset)
+        throughput = result['eval_samples_per_second']
+        print('Batch size = %d' % batch_size)
+        print('Latency: %.3f ms' % (1000 / throughput))
+        print('Throughput: %.3f samples/sec' % result['eval_samples_per_second'])
 
     # optimize and quantize with Neural Compressor
     if model_args.tune:
-        from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
-        tuning_criterion = TuningCriterion(max_trials=600)
-        conf = PostTrainingQuantConfig(approach="static", backend="pytorch_fx", tuning_criterion=tuning_criterion)
-        q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import QuantizationAwareTrainingConfig
+        conf = QuantizationAwareTrainingConfig(backend="pytorch_fx")
+        compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
+        trainer.model_wrapped = model
+        trainer.model = model
+        trainer.train()
+        compression_manager.callbacks.on_train_end()
+
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
-        save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
+        save_for_huggingface_upstream(model, tokenizer, training_args.output_dir)
 
         if model_args.onnx:
             it = iter(eval_dataloader)
@@ -524,7 +552,7 @@ def main():
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
             )
-            q_model.export('fp32-model.onnx', fp32_onnx_config)
+            model.export('fp32-model.onnx', fp32_onnx_config)
             int8_onnx_config = Torch2ONNXConfig(
                 dtype="int8",
                 opset_version=14,
@@ -534,7 +562,7 @@ def main():
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
             )
-            q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
+            model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
             int8_onnx_config = Torch2ONNXConfig(
                 dtype="int8",
                 opset_version=14,
@@ -544,12 +572,14 @@ def main():
                 output_names=['labels'],
                 dynamic_axes=dynamic_axes,
             )
-            q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
+            model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
         return
 
-    if model_args.benchmark or model_args.accuracy_only:
+    if model_args.benchmark:
+        benchmark(model)
+    else:
         eval_func(model)
-        return
+    return
 
     # Training
     if training_args.do_train:
