@@ -218,9 +218,7 @@ def train(model, compression_manager, device, trainloader, trial=None):
                 )
 
             compression_manager.callbacks.on_step_end()
-            break
         compression_manager.callbacks.on_epoch_end()
-        break
     return model
 
 
