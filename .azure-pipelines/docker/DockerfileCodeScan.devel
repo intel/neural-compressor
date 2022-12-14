@@ -28,7 +28,8 @@ ENV LANG C.UTF-8
 RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     aspell \
     aspell-en \
-    python3
+    python3 \
+    python3-pip
 
 RUN ln -sf $(which python3) /usr/bin/python
 
