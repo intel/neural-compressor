@@ -610,7 +610,7 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
         # do quantization
         if adaptor.sub_module_list is None:
             if _torch_version_greater_than("1.13.0"):
-                tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inputs=None)
+                tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inputs=None) # pylint: disable=E1123
             else:
                 tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
         else:
@@ -662,7 +662,7 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
         # do quantization
         if adaptor.sub_module_list is None:
             if _torch_version_greater_than("1.13.0"):
-                tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inputs=None)
+                tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inputs=None) # pylint: disable=E1123
             else:
                 tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
         else:
@@ -729,7 +729,7 @@ def get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg):
             # do quantization
             if adaptor.sub_module_list is None:
                 if _torch_version_greater_than("1.13.0"):
-                    tmp_model = prepare_fx(tmp_model, fx_op_cfgs,example_inputs=None)
+                    tmp_model = prepare_fx(tmp_model, fx_op_cfgs,example_inputs=None) # pylint: disable=E1123
                 else:
                     tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
             else:

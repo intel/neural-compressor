@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, qop_registry, QOperator
 
 @op_registry(op_types="Reshape, Transpose, Squeeze, Unsqueeze")
 class Direct8BitOperator(Operator):
@@ -83,3 +83,8 @@ class DirectCastOperator(Operator): # pragma: no cover
         if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
             return
         self.quantizer.dtype_cast(self.node, self.dtype)
+
+@qop_registry(op_types="Reshape, Transpose, Squeeze, Unsqueeze")
+class QDirectOperator(QOperator):
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)

@@ -17,7 +17,7 @@
 #
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, quantize_nparray
 
 @op_registry(op_types="Pad")
@@ -94,3 +94,8 @@ class PadOperator(Operator):
         node.input[0] = parent.input[0]
         node.output[0] = child.output[0]
         self.quantizer.remove_nodes.extend([parent, child])
+
+@qop_registry(op_types="Pad")
+class QPadOperator(QOperator):
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)

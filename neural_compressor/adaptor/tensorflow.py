@@ -1487,11 +1487,11 @@ class TensorFlowAdaptor(Adaptor):
         
         def _add_output_op_name(opname):
             if opname.endswith("_dequantize"):
-                output_op_names.add(opname[:-len("_dequantize")])
+                output_op_names.add(opname[:-len("_dequantize")]) # pylint: disable=no-member
             elif opname.endswith("__dequant"):
                 pass
             else:
-                output_op_names.add(opname)
+                output_op_names.add(opname) # pylint: disable=no-member
 
         for output_opname in qmodel.output_node_names:
             op_count = 0
