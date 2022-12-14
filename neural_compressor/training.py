@@ -35,22 +35,23 @@ class CompressionManager:
     examples:
         import neural_compressor.training.prepare_compression
         compression_manager = prepare_compression(conf, model)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
         train_loop:
-            compression_manager.on_train_begin()
             for epoch in range(epochs):
-                compression_manager.on_epoch_begin(epoch)
+                compression_manager.callbacks.on_epoch_begin(epoch)
                 for i, batch in enumerate(dataloader):
-                    compression_manager.on_step_begin(i)
+                    compression_manager.callbacks.on_step_begin(i)
                     ......
-                    output = compression_manager.model(batch)
+                    output = model(batch)
                     loss = ......
-                    loss = compression_manager.on_after_compute_loss(batch, output, loss)
+                    loss = compression_manager.callbacks.on_after_compute_loss(batch, output, loss)
                     loss.backward()
-                    compression_manager.on_before_optimizer_step()
+                    compression_manager.callbacks.on_before_optimizer_step()
                     optimizer.step()
-                    compression_manager.on_step_end()
-                compression_manager.on_epoch_end()
-            compression_manager.on_train_end()
+                    compression_manager.callbacks.on_step_end()
+                compression_manager.callbacks.on_epoch_end()
+        compression_manager.callbacks.on_train_end()
         compression_manager.save("path_to_save")
     """
     def __init__(self, component):

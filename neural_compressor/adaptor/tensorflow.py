@@ -83,7 +83,7 @@ class TensorFlowAdaptor(Adaptor):
 
         from pkg_resources import parse_version
         import tensorflow as tf
-        self.new_api = parse_version(tf.version.VERSION) == parse_version('2.11.0202242')
+        self.new_api = tf.version.VERSION in ('2.11.0202242', '2.11.0202250')
         self.qdq_enabled = self.itex_mode or self.format == 'QDQ' or self.new_api
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns(self.qdq_enabled)
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
