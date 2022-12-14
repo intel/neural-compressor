@@ -19,8 +19,8 @@ function init_params {
       --teacher=*)
           teacher=$(echo $var |cut -f2 -d=)
       ;;
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
+      --dataset_location=*)
+          dataset_location=$(echo $var |cut -f2 -d=)
       ;;
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
@@ -36,10 +36,10 @@ function run_distillation {
     python main.py \
            --topology=${topology} \
            --teacher=${teacher} \
+           --dataset=${dataset_location} \
            --distillation \
-           --config=${config} \
            --pretrained \
-           --output-model=${output_model}
+           --output_model=${output_model}
 }
 
 main "$@"
