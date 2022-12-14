@@ -163,7 +163,7 @@ def main():
         from neural_compressor.experimental import common
         from neural_compressor.config import PostTrainingQuantConfig
         model = common.Model(model, prepare_custom_config_dict=prepare_custom_config_dict)
-        conf = PostTrainingQuantConfig(approach="static", backend="pytorch_fx", calibration_sampling_size=[50])
+        conf = PostTrainingQuantConfig(approach="static", backend="default", calibration_sampling_size=[50])
         q_model = quantization.fit(model, conf=conf, calib_dataloader=cal_dataloader, eval_func=eval_func)
 
         q_model.save(args.tuned_checkpoint)
