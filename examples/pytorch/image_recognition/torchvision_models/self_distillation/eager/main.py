@@ -112,7 +112,7 @@ def main():
     main_worker(args)
 
 
-def train(model, compression_manager, device, trainloader, trial=None):
+def train(model, compression_manager, device, trainloader, testloader, trial=None):
     start_epoch = args.start_epoch
     end_epoch = args.epochs
 
@@ -216,9 +216,9 @@ def train(model, compression_manager, device, trainloader, trial=None):
                         100 * correct[4] / total,
                     )
                 )
-
             compression_manager.callbacks.on_step_end()
         compression_manager.callbacks.on_epoch_end()
+        validate(model, compression_manager, device, testloader, trial)
     return model
 
 
@@ -277,7 +277,7 @@ def validate(model, compression_manager, device, testloader, trial=None):
 
 
 def main_worker(args):
-    print("=> creating model '{}'".format(args.topology))
+    logging.info("=> creating model '{}'".format(args.topology))
     if args.cpu:
         device = torch.device("cpu")
     else:
@@ -317,7 +317,7 @@ def main_worker(args):
     trainset = torchvision.datasets.CIFAR100(
         root=args.data,
         train=True,
-        download=True,
+        download=False,
         transform=transform_train,
     )
     trainloader = PyTorchDataLoader(
@@ -325,7 +325,7 @@ def main_worker(args):
     )
 
     testset = torchvision.datasets.CIFAR100(
-        root=args.data, train=False, download=True, transform=transform_test
+        root=args.data, train=False, download=False, transform=transform_test
     )
 
     testloader = PyTorchDataLoader(testset, batch_size=args.batch_size)
@@ -344,7 +344,7 @@ def main_worker(args):
         model = model.to(device)
 
         def train_func(model, compression_manager):
-            return train(model, compression_manager, device, trainloader)
+            return train(model, compression_manager, device, trainloader, testloader)
 
         def eval_func(model, compression_manager):
             return validate(model, compression_manager, device, testloader)
@@ -364,12 +364,12 @@ def main_worker(args):
         compression_manager = prepare_compression(copy.deepcopy(model), conf)
        
         accu = eval_func(model, compression_manager)
-        print("Original model Accuracy:", accu)
+        logging.info("Original model Accuracy:", accu)
         model = compression_manager.model
         train_func(model, compression_manager)
         compression_manager.save(args.output_model)
         accu = eval_func(model, compression_manager)
-        print("Distilled model Accuracy:", accu)
+        logging.info("Distilled model Accuracy:", accu)
     else:
 
         def objective(trial):
@@ -378,11 +378,11 @@ def main_worker(args):
             model = resnet50()
             model = model.to(device)
 
-            def train_func(model, compression_manager):
-                return train(model, compression_manager, device, trainloader)
+            def train_func(model, compression_manager, trial):
+                return train(model, compression_manager, device, trainloader, testloader, trial)
 
-            def eval_func(model, compression_manager):
-                return validate(model, compression_manager, device, testloader)
+            def eval_func(model, compression_manager, trial):
+                return validate(model, compression_manager, device, testloader, trial)
 
             import copy
             from neural_compressor.training import prepare_compression
@@ -398,7 +398,7 @@ def main_worker(args):
             conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
             compression_manager = prepare_compression(copy.deepcopy(model), conf)
             model = compression_manager.model
-            train_func(model, compression_manager)
+            train_func(model, compression_manager, trial)
             compression_manager.save(args.output_model)
             accu = eval_func(model, compression_manager)
             return accu
