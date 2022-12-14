@@ -118,13 +118,15 @@ class HessianTraceEstimator:
                  device="cpu",
                  num_data_points=0):
         self._model = fuse_fx(model_tmp)
+        self.criterion=criterion
         parameters = [p for p in self._model.parameters() if p.requires_grad]
         self._parameter_handler = ParameterHandler(parameters, device)
         self._batch_size = data_loader.batch_size
         self._num_data_iter = num_data_points // self._batch_size if num_data_points >= self._batch_size else 1
         self._gradients_calculator = GradientsCalculator(self._model, data_loader,
                                                          self._num_data_iter,
-                                                         self._parameter_handler)
+                                                         self._parameter_handler,
+                                                         criterion=self.criterion)
         self._diff_eps = 1e-6
 
     def get_average_traces(self, max_iter=500, tolerance=1e-5):
@@ -704,15 +706,28 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
     fp32_model.eval()
     use_nccf = True
     if use_nccf:
-        ht = HessianTraceEstimator(fp32_model.model, data_loader=dataloader)
+        fp32_model=fuse_fx(fp32_model.model)
+        ht = HessianTraceEstimator(fp32_model, data_loader=dataloader,criterion=criterion)
         traces = ht.get_average_traces()
     else:
         ht = HessianTrace(fp32_model, dataloader,q_model)
         traces = ht.get_avg_traces(False,32)['weight']
 
 
-    for key in traces.keys():
-        print(key, traces[key])
+    op_to_traces={}
+    for i in traces:
+        # print(i,traces[i])
+        length=len(".weight") #weights->op
+        op_name=i[0:-length]
+        if 'weight' in i : # remove bias
+            op_to_traces[op_name]=traces[i]
+    for i in op_to_traces:#
+        # length=len(".weight") #weights->op
+        # op_name=i[0:-length]
+        print(i, op_to_traces[i])
+    return op_to_traces
+    # assert False
+    ######################Woring: please don't remove below code , it will be avaliable in next debug############################
     assert False
     q_model_state_dict = {}
     for key in q_model.state_dict().keys():
