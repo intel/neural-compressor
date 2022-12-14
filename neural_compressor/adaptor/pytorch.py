@@ -1114,7 +1114,7 @@ class TemplateAdaptor(Adaptor):
             hessian_trace(Dict[Tuple, float]), key: (op_name, op_type); value: hessian trace.
         """
         from .torch_utils.hawq_metric import hawq_top
-        op_to_traces=hawq_top(fp32_model=fp32_model,
+        op_to_traces = hawq_top(fp32_model=fp32_model,
                               dataloader=dataloader,
                               q_model=q_model,
                               criterion=criterion,
