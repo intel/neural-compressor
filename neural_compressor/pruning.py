@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+"""Pruning."""
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,144 +15,188 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from neural_compressor.utils.utility import LazyImport
 
+LazyImport('torch.nn')
+torch = LazyImport('torch')
 
-from .utils import logger
-from .utils.utility import singleton
-from .experimental import Pruning as ExpPruning
-from deprecated import deprecated
+from neural_compressor.pruner.utils import process_config, parse_to_prune,\
+    check_config, update_params
+from neural_compressor.pruner.pruners import get_pruner
+from neural_compressor.utils import logger
+import re
+from neural_compressor.pruner.utils import WeightPruningConfig
 
-@singleton
 class Pruning:
-    """This is base class of pruning object.
+    """Pruning.
 
-       Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
-       (<1% or <0.1% etc.) and pruning objectives (performance, memory footprint etc.).
-       Pruning class provides a flexible configuration interface via YAML for users to specify
-       these parameters.
+    The main class that users will used in codes to do pruning.
+    Contain at least one Pruner object.
 
     Args:
-        conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
-            Pruning_Conf class containing accuracy goal, pruning objective and related
-            dataloaders etc.
+        config: a string. The path to a config file. For config file template, please refer to
+            https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
 
+    Attributes:
+        model: The model object to prune.
+        config_file_path: A string. The path to a config file.
+        pruners: A list. A list of Pruner objects.
+        pruner_info: A config dict object. Contains pruners' information.
     """
 
-    def __init__(self, conf_fname_or_obj):
-        self.exp_pruner = ExpPruning(conf_fname_or_obj)
+    def __init__(self, config):
+        """Initialize."""
+        self.model = None
+        self.pruners = []
+        self.pruners_info = process_config(config)
 
-    def on_epoch_begin(self, epoch):
-        """ called on the begining of epochs"""
-        self.exp_pruner.on_epoch_begin(epoch)
+    def update_config(self, *args, **kwargs):
+        """Add user-defined arguments to the original configurations.
 
-    def on_step_begin(self, batch_id):
-        """ called on the begining of batches"""
-        self.exp_pruner.on_step_begin(batch_id)
+        The original config of pruning is read from a file.
+        However, users can still modify configurations by passing key-value arguments in this function.
+        Please note that the key-value arguments' keys are analysable in current configuration.
+        """
+        for item in self.pruners_info:
+            for key in kwargs:
+                if key in item.keys():
+                    item[key] = kwargs[key]
 
-    def on_step_end(self):
-        """ called on the end of batches"""
-        self.exp_pruner.on_step_end()
+            update_params(item)
+            check_config(item)
 
-    def on_epoch_end(self):
-        """ called on the end of epochs"""
-        self.exp_pruner.on_epoch_end()
+    # def _call_pruners(self, func):
+    #     """Function which decorates the Pruning class's functions.
+    #
+    #     It can simplify codes by calling same-name functions in Pruning's Pruner objects.
+    #     For example, when it decorates on_step_begin function of Pruning,
+    #         it automatically calls its Pruners' on_step_begin functions without a "for" code.
+    #     However, when this trick is enabled, the pylint validation on INC cannot passed, therefore commented out.
+    #     """
+    #    def warpper(self, *args, **kw):
+    #        func_name = f"{func.__name__}"
+    #        func(self, *args, **kw)
+    #        for prune in self.pruners:
+    #            prun_func = getattr(prune, func_name)
+    #            prun_func(*args, **kw)
+    #
+    #    return warpper
 
-    @deprecated(version='2.0', reason="please use neural_compressor.prepare and neural_compressor.fit instead")
-    def __call__(self, model, train_dataloader=None, pruning_func=None, eval_dataloader=None,
-                 eval_func=None):
-        """The main entry point of pruning.
-
-           This interface currently only works on pytorch
-           and provides three usages:
-           a) Fully yaml configuration: User specifies all the info through yaml,
-              including dataloaders used in training and evaluation phases
-              and pruning tuning settings.
-
-              For this usage, only model parameter is mandatory.
-
-           b) Partial yaml configuration: User specifies dataloaders used in training
-              and evaluation phase by code.
-              The tool provides built-in dataloaders and evaluators, user just need provide
-              a dataset implemented __iter__ or __getitem__ methods and invoke dataloader()
-              with dataset as input parameter to create neural_compressor dataloader before calling this
-              function.
-
-              After that, User specifies fp32 "model", train dataset "train_dataloader"
-              and evaluation dataset "eval_dataloader".
-              The trained and pruned model is evaluated with "eval_dataloader"
-              with evaluation metrics specified in the configuration file. The evaluation tells
-              the tuner whether the pruned model meets the accuracy criteria. If not,
-              the tuner starts a new training and tuning flow.
-
-              For this usage, model, q_dataloader and eval_dataloader parameters are mandatory.
-
-           c) Partial yaml configuration: User specifies dataloaders used in training phase
-              by code.
-              This usage is quite similar with b), just user specifies a custom "eval_func"
-              which encapsulates the evaluation dataset by itself.
-              The trained and pruned model is evaluated with "eval_func".
-              The "eval_func" tells the tuner whether the pruned model meets
-              the accuracy criteria. If not, the Tuner starts a new training and tuning flow.
-
-              For this usage, model, q_dataloader and eval_func parameters are mandatory.
-
-        Args:
-            model (object):                        For PyTorch model, it's torch.nn.model
-                                                   instance.
-            train_dataloader (generator):          Data loader for training. It is iterable
-                                                   and should yield a tuple (input, label) for
-                                                   training dataset containing label,
-                                                   or yield (input, _) for label-free training
-                                                   dataset. The input could be a object, list,
-                                                   tuple or dict, depending on user implementation,
-                                                   as well as it can be taken as model input.
-            pruning_func (function, optional):       Training function for pruning.
-                                                   This function takes "model" as input parameter
-                                                   and executes entire training process with self
-                                                   contained training hyper-parameters. If this
-                                                   parameter specified, eval_dataloader parameter
-                                                   plus metric defined in yaml, or eval_func
-                                                   parameter should also be specified at same time.
-            eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
-                                                   and should yield a tuple of (input, label).
-                                                   The input could be a object, list, tuple or
-                                                   dict, depending on user implementation,
-                                                   as well as it can be taken as model input.
-                                                   The label should be able to take as input of
-                                                   supported metrics. If this parameter is
-                                                   not None, user needs to specify pre-defined
-                                                   evaluation metrics through configuration file
-                                                   and should set "eval_func" paramter as None.
-                                                   Tuner will combine model, eval_dataloader
-                                                   and pre-defined metrics to run evaluation
-                                                   process.
-            eval_func (function, optional):        The evaluation function provided by user.
-                                                   This function takes model as parameter,
-                                                   and evaluation dataset and metrics should be
-                                                   encapsulated in this function implementation
-                                                   and outputs a higher-is-better accuracy scalar
-                                                   value.
-
-                                                   The pseudo code should be something like:
-
-                                                   def eval_func(model):
-                                                        input, label = dataloader()
-                                                        output = model(input)
-                                                        accuracy = metric(output, label)
-                                                        return accuracy
+    def get_sparsity_ratio(self):
+        """Calculate sparsity ratio of a module/layer.
 
         Returns:
-            pruned model: best pruned model found, otherwise return None
-
+            Three floats.
+            elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+            elementwise_over_all refers to zero elements' ratio in all layers in the model.
+            blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
         """
-        logger.warning("This API is going to be deprecated. Please import "
-            "neural_compressor.experimental.Pruning, initialize an instance of `Pruning`,"
-            "set its dataloader and metric attributes, then invoke its __call__ method.")
-        self.exp_pruner.model = model
-        self.exp_pruner.train_dataloader = train_dataloader
-        self.exp_pruner.pruning_func = pruning_func
-        self.exp_pruner.eval_dataloader = eval_dataloader
-        self.exp_pruner.eval_func = eval_func
-        return self.exp_pruner()
+        pattern_sparsity_cnt = 0
+        element_sparsity_cnt = 0
+        for pruner in self.pruners:
+            modules = pruner.modules
+            sparsity_ratio = pruner.pattern.get_sparsity_ratio(pruner.masks)
+            cnt = 0
+            for key in modules.keys():
+                cnt += modules[key].weight.numel()
+            pattern_sparsity_cnt += int(cnt * sparsity_ratio)
+            for key in pruner.masks.keys():
+                element_sparsity_cnt += torch.sum(pruner.masks[key] == 0).data.item()
 
-    fit = __call__
+        linear_conv_cnt = 0
+        param_cnt = 0
+        for name, module in self.model.named_modules():
+            if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
+                linear_conv_cnt += module.weight.numel()
+
+        for n, param in self.model.named_parameters():
+            param_cnt += param.numel()
+        if linear_conv_cnt == 0:
+            blockwise_over_matmul_gemm_conv = 0
+            elementwise_over_matmul_gemm_conv = 0
+        else:
+            blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
+            elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
+        if param_cnt == 0:
+            elementwise_over_all = 0
+        else:
+            elementwise_over_all = float(
+                element_sparsity_cnt) / param_cnt
+
+        return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
+
+    def _generate_pruners(self):
+        """Obtain Pruner objects."""
+        assert isinstance(self.model, torch.nn.Module)
+
+        for info in self.pruners_info:
+            modules = parse_to_prune(info, self.model)
+            if modules == {}:
+                logger.warning("one pruner hooks no layers, please have a check")
+
+            self.pruners.append(get_pruner(info, modules))
+            info['modules'] = [key for key in modules.keys()]
+            info['len_of_modules'] = len(info['modules'])
+            logger.info(info)
+
+    # @_call_pruners
+    def on_train_begin(self):
+        """Implement at the beginning of training process.
+
+        Before training, ensure that pruners are generated.
+        """
+        self._generate_pruners()  ##TODO is there better place to place
+
+    # @_call_pruners
+    def on_epoch_begin(self, epoch):
+        """Implement at the beginning of every epoch."""
+        for pruner in self.pruners:
+            pruner.on_epoch_begin(epoch)
+
+    # @_call_pruners
+    def on_step_begin(self, local_step):
+        """Implement at the beginning of every step."""
+        for pruner in self.pruners:
+            pruner.on_step_begin(local_step)
+
+    # @_call_pruners
+    def on_before_optimizer_step(self):
+        """Implement before optimizer.step()."""
+        for pruner in self.pruners:
+            pruner.on_before_optimizer_step()
+
+    # @_call_pruners
+    def on_step_end(self):
+        """Implement at the end of every step."""
+        for pruner in self.pruners:
+            pruner.on_step_end()
+
+    # @_call_pruners
+    def on_epoch_end(self):
+        """Implement the end of every epoch."""
+        for pruner in self.pruners:
+            pruner.on_epoch_end()
+
+    # @_call_pruners
+    def on_train_end(self):
+        """Implement the end of training phase."""
+        for pruner in self.pruners:
+            pruner.on_train_end()
+
+    # @_call_pruners
+    def on_before_eval(self):
+        """Implement at the beginning of evaluation phase."""
+        for pruner in self.pruners:
+            pruner.on_before_eval()
+
+    # @_call_pruners
+    def on_after_eval(self):
+        """Implement at the end of evaluation phase."""
+        for pruner in self.pruners:
+            pruner.on_after_eval()
+
+    # @_call_pruners
+    def on_after_optimizer_step(self):
+        """Implement after optimizer.step()."""
+        for pruner in self.pruners:
+            pruner.on_after_optimizer_step()

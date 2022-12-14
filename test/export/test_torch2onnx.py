@@ -7,10 +7,10 @@ import numpy as np
 from neural_compressor import quantization
 from neural_compressor.experimental.common import Model
 from neural_compressor.config import Torch2ONNXConfig
-from neural_compressor.experimental.data.datasets.dataset import DATASETS
+from neural_compressor.experimental.data.datasets.dataset import Datasets
 from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
 from neural_compressor.training import prepare_compression
-from neural_compressor.data import DATASETS, DATALOADERS
+from neural_compressor.data import Datasets, DATALOADERS
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch.utils.data as data
 
@@ -79,7 +79,7 @@ class TestPytorch2ONNX(unittest.TestCase):
     def setUpClass(self):
         from torchvision.models.quantization import resnet18
         self.cv_model = resnet18()
-        self.cv_dataset = DATASETS("pytorch")["dummy"]((10, 3, 224, 224))
+        self.cv_dataset = Datasets("pytorch")["dummy"]((10, 3, 224, 224))
         self.cv_dataloader = DATALOADERS["pytorch"](self.cv_dataset)
         self.nlp_model = AutoModelForSequenceClassification.from_pretrained(
             "distilbert-base-uncased-finetuned-sst-2-english"
@@ -119,7 +119,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         for fake_yaml in ["dynamic", "static", "qat"]:
             model = self.cv_model
             if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig(backend='pytorch_fx')
+                quant_conf = QuantizationAwareTrainingConfig()
                 compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
                 q_model = train_func_cv(compression_manager, compression_manager.model)
             else:
@@ -135,7 +135,6 @@ class TestPytorch2ONNX(unittest.TestCase):
                     }
                     quant_conf = PostTrainingQuantConfig(
                         approach="static",
-                        backend='pytorch_fx',
                         op_name_list=fallback_op,
                     )
                 q_model = quantization.fit(
@@ -173,7 +172,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         for fake_yaml in ["dynamic", "static", "qat"]:
             model = self.cv_model
             if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig(backend='pytorch_fx')
+                quant_conf = QuantizationAwareTrainingConfig()
                 compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
                 q_model = train_func_cv(compression_manager, compression_manager.model)
             else:
@@ -189,7 +188,6 @@ class TestPytorch2ONNX(unittest.TestCase):
                     }
                     quant_conf = PostTrainingQuantConfig(
                         approach="static",
-                        backend='pytorch_fx',
                         op_name_list=fallback_op,
                     )
                 q_model = quantization.fit(
@@ -229,7 +227,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         for fake_yaml in ["dynamic", "static", "qat"]:
             model = self.cv_model
             if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig(backend='pytorch_fx')
+                quant_conf = QuantizationAwareTrainingConfig()
                 compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
                 q_model = train_func_cv(compression_manager, compression_manager.model)
             else:
@@ -245,7 +243,6 @@ class TestPytorch2ONNX(unittest.TestCase):
                     }
                     quant_conf = PostTrainingQuantConfig(
                         approach="static",
-                        backend='pytorch_fx',
                         op_name_list=fallback_op,
                     )
                 q_model = quantization.fit(
@@ -304,7 +301,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         for fake_yaml in ["dynamic", "static", "qat"]:
             model = self.nlp_model
             if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig(backend='pytorch_fx')
+                quant_conf = QuantizationAwareTrainingConfig()
                 compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
                 q_model = train_func_nlp(
                     compression_manager,
@@ -324,7 +321,6 @@ class TestPytorch2ONNX(unittest.TestCase):
                     }
                     quant_conf = PostTrainingQuantConfig(
                         approach="static",
-                        backend='pytorch_fx',
                         op_name_list=fallback_op,
                     )
                 q_model = quantization.fit(
@@ -363,7 +359,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         for fake_yaml in ["dynamic", "static", "qat"]:
             model = self.nlp_model
             if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig(backend='pytorch_fx')
+                quant_conf = QuantizationAwareTrainingConfig()
                 compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
                 q_model = train_func_nlp(
                     compression_manager,
@@ -383,7 +379,6 @@ class TestPytorch2ONNX(unittest.TestCase):
                     }
                     quant_conf = PostTrainingQuantConfig(
                         approach="static",
-                        backend='pytorch_fx',
                         op_name_list=fallback_op,
                     )
                 q_model = quantization.fit(
@@ -424,7 +419,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         for fake_yaml in ["dynamic", "static", "qat"]:
             model = self.nlp_model
             if fake_yaml == "qat":
-                quant_conf = QuantizationAwareTrainingConfig(backend='pytorch_fx')
+                quant_conf = QuantizationAwareTrainingConfig()
                 compression_manager = prepare_compression(copy.deepcopy(model), quant_conf)
                 q_model = train_func_nlp(
                     compression_manager,
@@ -444,7 +439,6 @@ class TestPytorch2ONNX(unittest.TestCase):
                     }
                     quant_conf = PostTrainingQuantConfig(
                         approach="static",
-                        backend='pytorch_fx',
                         op_name_list=fallback_op,
                     )
                 q_model = quantization.fit(

@@ -17,7 +17,7 @@
 # limitations under the License.
 
 from .component import Component
-from ..pruners import PRUNERS
+from ..pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
@@ -126,7 +126,9 @@ class Pruning(Component):
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None}
+                                   'q_dataloader': None,
+                                   'format': 'default',
+                                   'backend': 'default'}
 
         if self.framework == 'tensorflow':
             framework_specific_info.update(

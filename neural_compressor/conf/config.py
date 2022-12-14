@@ -20,7 +20,7 @@ from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
-from ..pruners import PRUNERS
+from ..pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..version import __version__
 import re
@@ -217,7 +217,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s)),
@@ -235,7 +235,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
         # compute_dtypeis only for PyTorch framework
         Optional('compute_dtype', default=['uint8']): And(
             list,
@@ -259,13 +259,13 @@ graph_optimization_schema = Schema({
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
         },
         Optional('activation', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
             }
     }
 })
@@ -275,20 +275,20 @@ mixed_precision_schema = Schema({
     Optional('precisions', default={'precisions': ['fp32']}): And(
         Or(str, list),
         Use(input_to_list),
-        lambda s: all(i in [ 'fp32', 'bf16', 'fp16'] for i in s)),
+        lambda s: all(i in [ 'fp32', 'bf16'] for i in s)),
 
     Optional('op_wise', default={'weight': {}, 'activation': {}}): {
         Optional('weight', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
         },
         Optional('activation', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
             }
     }
 })
@@ -730,6 +730,7 @@ schema = Schema({
         'framework': And(str, lambda s: s in list(FRAMEWORKS.keys()) + ['NA']),
         Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
+ 
     },
     Optional('version', default=float(__version__.split('.')[0])): And(
                                           Or(float,
@@ -746,6 +747,7 @@ schema = Schema({
                                                       'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
+                                      'optimization_level': 1,
                                       }): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
@@ -797,7 +799,7 @@ schema = Schema({
                 Optional('dtype', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
                 Optional('algorithm', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
@@ -820,7 +822,7 @@ schema = Schema({
                 Optional('dtype', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
                 # compute_dtypeis only for PyTorch framework
                 Optional('compute_dtype', default=['uint8']): And(
                     Or(str, list),
@@ -839,15 +841,17 @@ schema = Schema({
         Optional('op_wise', default=None): {
             str: ops_schema
         },
+        Optional('optimization_level', default=1): And(int, lambda level: level in [0, 1]),
     },
     Optional('use_bf16', default=True): bool,
+    Optional('optimization_level', default=1): And(int, lambda level: level in [0, 1]),
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
     Optional('model_conversion'): model_conversion_schema,
 
     Optional('tuning', default={
-        'strategy': {'name': 'basic'},
+        'strategy': {'name': 'basic'}, 
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
@@ -856,11 +860,14 @@ schema = Schema({
         'diagnosis': False,
         }): {
         Optional('strategy', default={'name': 'basic'}): {
-            'name': And(str, lambda s: s in STRATEGIES), Optional('sigopt_api_token'): str,
+            'name': And(str, lambda s: s in STRATEGIES), 
+            Optional('sigopt_api_token'): str,
             Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='nc-tune'): str,
             Optional('accuracy_weight', default=1.0): float,
-            Optional('latency_weight', default=1.0): float
+            Optional('latency_weight', default=1.0): float,
+            Optional('confidence_batches', default=2): int,
+            Optional('hawq_v2_loss', default=None): object,
         } ,
         Hook('accuracy_criterion', handler=_valid_accuracy_field): object,
         Optional('accuracy_criterion', default={'relative': 0.01}): {
@@ -1084,6 +1091,7 @@ schema = Schema({
             Optional("num_evals", default=100000): int,
             Optional("results_csv_path", default=None): str,
             Optional("dataset_path", default=None): str,
+            Optional("supernet_ckpt_path", default=None): str,
             Optional("batch_size", default=64): int,
             Optional("num_workers", default=20): int,
             },
@@ -1112,6 +1120,7 @@ quantization_default_schema = Schema({
                                                      'activation': {}},
                                     }): dict,
     Optional('use_bf16', default=False): bool,
+    Optional('optimization_level', default=1): int,
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
@@ -1329,7 +1338,8 @@ class Conf(object):
                 'device': pythonic_config.quantization.device,
                 'model.inputs': pythonic_config.quantization.inputs,
                 'model.outputs': pythonic_config.quantization.outputs,
-                'model.framework': pythonic_config.quantization.backend,
+                'model.backend': pythonic_config.quantization.backend,
+                'model.quant_format': pythonic_config.quantization.quant_format,
                 'quantization.approach': pythonic_config.quantization.approach,
                 'quantization.calibration.sampling_size': 
                     pythonic_config.quantization.calibration_sampling_size,
@@ -1347,8 +1357,18 @@ class Conf(object):
                 'tuning.exit_policy.max_trials': pythonic_config.quantization.max_trials,
                 'tuning.exit_policy.performance_only': pythonic_config.quantization.performance_only,
                 'use_bf16': pythonic_config.quantization.use_bf16,
+                'quantization.optimization_level': pythonic_config.quantization.optimization_level,
                 'reduce_range': pythonic_config.quantization.reduce_range
             })
+            if pythonic_config.quantization.strategy_kwargs:
+                st_kwargs = pythonic_config.quantization.strategy_kwargs
+                for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \
+                    'accuracy_weight', 'latency_weight', 'hawq_v2_loss']:
+
+                    if st_key in st_kwargs:
+                        st_val =  st_kwargs[st_key]
+                        mapping.update({'tuning.strategy.' + st_key: st_val})
+            
         if pythonic_config.distillation is not None:
             mapping.update({
                 'distillation.train.criterion': pythonic_config.distillation.criterion,
@@ -1377,6 +1397,7 @@ class Conf(object):
             if pythonic_config.benchmark.outputs != []:
                 mapping.update({'model.outputs': pythonic_config.benchmark.outputs})
             mapping.update({
+                'model.backend': pythonic_config.benchmark.backend,
                 'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
                 'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
                 'evaluation.performance.configs.cores_per_instance':

@@ -19,8 +19,8 @@ import numpy as np
 from .strategy import strategy_registry, TuneStrategy
 from collections import OrderedDict
 
-from .st_utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
-from .st_utils.tuning_structs import OpTuningConfig
+from .utils.tuning_sampler import OpWiseTuningSampler, FallbackTuningSampler
+from .utils.tuning_structs import OpTuningConfig
 from ..utils import logger
 
 @strategy_registry
@@ -95,7 +95,7 @@ class RandomTuneStrategy(TuneStrategy):
                 initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
         # collect the ops that support static and dynamic
         quant_mode_wise_items = OrderedDict()
-        query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+        query_order = ['static', 'dynamic', 'bf16', 'fp32']
         pre_items = set()
         for quant_mode in query_order:
             items = tuning_space.query_items_by_quant_mode(quant_mode)

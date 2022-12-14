@@ -16,7 +16,7 @@
 ---
 -
   version:
-    name: ['2.11.0202242']
+    name: ['2.11.0202242', '2.11.0202250']
 
   precisions:
     names: int8, uint8, bf16, fp32
@@ -273,6 +273,10 @@
         'Dequantize + Conv2D + BiasAdd + LeakyRelu + Add + QuantizeV2',
         'Dequantize + Conv2D + LeakyRelu + AddV2 + QuantizeV2',
         'Dequantize + Conv2D + LeakyRelu + Add + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Relu + AddV2 + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Relu + Add + QuantizeV2',
+        'Dequantize + Conv2D + Relu + AddV2 + QuantizeV2',
+        'Dequantize + Conv2D + Relu + Add + QuantizeV2',
         'Dequantize + Conv2D + Add + QuantizeV2',
         'Dequantize + Conv2D + AddV2 + QuantizeV2',
         'Dequantize + Conv2D + AddV2 + Add + QuantizeV2',

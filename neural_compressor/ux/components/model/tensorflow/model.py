@@ -17,7 +17,7 @@ import os.path
 from typing import Any, List, Optional
 
 from neural_compressor.experimental.common.model import Model as NCModel
-from neural_compressor.model.model import TensorflowBaseModel
+from neural_compressor.model.tensorflow_model import TensorflowBaseModel
 from neural_compressor.utils.logger import Logger
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.graph.reader.tensorflow_reader import TensorflowReader

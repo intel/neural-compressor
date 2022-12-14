@@ -303,25 +303,13 @@ class PyTorchModel(PyTorchBaseModel):
 
     @workspace_path.setter
     def workspace_path(self, path):
-        from ..adaptor.pytorch import _cfg_to_qconfig, _propagate_qconfig
+        from neural_compressor.utils.pytorch import load
         workspace_path = path
         weights_file = os.path.join(os.path.abspath(os.path.expanduser(workspace_path)),
                                     'best_model.pt')
         assert os.path.exists(
             weights_file), "weight file %s didn't exist" % weights_file
-        self._model = copy.deepcopy(self._model.eval())
-        stat_dict = torch.load(weights_file)
-        tune_cfg = stat_dict.pop('best_configure')
-        op_cfgs = _cfg_to_qconfig(tune_cfg)
-        _propagate_qconfig(self._model, op_cfgs)
-        # sanity check common API misusage
-        if not any(hasattr(m, 'qconfig') and m.qconfig for m in self._model.modules()):
-            logger.warn("None of the submodule got qconfig applied. Make sure you "
-                        "passed correct configuration through `qconfig_dict` or "
-                        "by assigning the `.qconfig` attribute directly on submodules")
-        torch.quantization.add_observer_(self._model)
-        torch.quantization.convert(self._model, inplace=True)
-        self._model.load_state_dict(stat_dict)
+        self._model = load(weights_file, self._model)
 
     def save(self, root=None):
         if not root:
@@ -576,9 +564,9 @@ class PyTorchModel(PyTorchBaseModel):
                     model.graph.initializer.append(new_tensor)
             onnx.save(model, fp32_path)
 
-        from neural_compressor.adaptor.onnxrt import ONNXRTAdaptor
+        from neural_compressor.adaptor.onnxrt import ONNXRUNTIMEAdaptor
         # pylint: disable=E1120
-        inc_model = ONNXRTAdaptor._replace_gemm_with_matmul(model)
+        inc_model = ONNXRUNTIMEAdaptor._replace_gemm_with_matmul(model)
         model = inc_model.model
         onnx.save(model, fp32_path)
 
@@ -707,15 +695,15 @@ class PyTorchFXModel(PyTorchModel):
         super(PyTorchFXModel, self).__init__(model, **kwargs)
 
 
-class PyTorchIpexModel(PyTorchBaseModel):   # pragma: no cover
-    """Build PyTorchIpexModel object
+class IPEXModel(PyTorchBaseModel):   # pragma: no cover
+    """Build IPEXModel object
 
     Args:
         model (onnx model): model path
     """
 
     def __init__(self, model, **kwargs):
-        super(PyTorchIpexModel, self).__init__(model, **kwargs)
+        super(IPEXModel, self).__init__(model, **kwargs)
         self.ipex_config_path = None
 
     @property

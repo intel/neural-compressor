@@ -35,22 +35,23 @@ class CompressionManager:
     examples:
         import neural_compressor.training.prepare_compression
         compression_manager = prepare_compression(conf, model)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
         train_loop:
-            compression_manager.on_train_begin()
             for epoch in range(epochs):
-                compression_manager.on_epoch_begin(epoch)
+                compression_manager.callbacks.on_epoch_begin(epoch)
                 for i, batch in enumerate(dataloader):
-                    compression_manager.on_step_begin(i)
+                    compression_manager.callbacks.on_step_begin(i)
                     ......
-                    output = compression_manager.model(batch)
+                    output = model(batch)
                     loss = ......
-                    loss = compression_manager.on_after_compute_loss(batch, output, loss)
+                    loss = compression_manager.callbacks.on_after_compute_loss(batch, output, loss)
                     loss.backward()
-                    compression_manager.on_before_optimizer_step()
+                    compression_manager.callbacks.on_before_optimizer_step()
                     optimizer.step()
-                    compression_manager.on_step_end()
-                compression_manager.on_epoch_end()
-            compression_manager.on_train_end()
+                    compression_manager.callbacks.on_step_end()
+                compression_manager.callbacks.on_epoch_end()
+        compression_manager.callbacks.on_train_end()
         compression_manager.save("path_to_save")
     """
     def __init__(self, component):
@@ -115,29 +116,14 @@ class CompressionManager:
     def export(
         self,
         save_path: str,
-        input,
-        target_model_type: str = 'ONNX',
-        quant_mode: str = 'QDQ',
-        opset_version: int = 14,
-        *args,
-        **kwargs
+        conf,
     ):
         """Convert the model to another type model, like `onnx` model and so on.
 
         Args:
 
         """
-        if target_model_type == "ONNX":
-            if self.model.q_config is not None:
-                assert self.fp32_model is not None, "Can't deepcopy fp32 model, so we can't " \
-                    "export to onnx model now, this is a limitation, will remove in furture."
-                self.model.export_to_int8_onnx(
-                    save_path, input, opset_version=opset_version, fp32_model=self.fp32_model
-                )
-            else:
-                self.model.export_to_fp32_onnx(save_path, input, opset_version=opset_version)
-        else:
-            assert False, "Unsupport export for {} model".format(type(self.model))
+        self.model.export(save_path, conf)
 
 
 def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs):
@@ -179,17 +165,31 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         comps = []
         for conf in confs:
             if isinstance(conf, QuantizationAwareTrainingConfig):
-                conf_ = Config(quantization=conf)
+                conf_ = Config(quantization=conf,
+                               benchmark=None,
+                               pruning=None,
+                               distillation=None,
+                               nas=None)
                 com = Quantization(conf_)
+                com.model = model
             elif isinstance(conf, PruningConfig):
-                conf_ = Config(pruning=conf)
+                conf_ = Config(pruning=conf,
+                               benchmark=None,
+                               quantization=None,
+                               distillation=None,
+                               nas=None)
                 com = Pruning(conf_)
+                com.model = model
             elif isinstance(conf, DistillationConfig):
-                conf_ = Config(distillation=conf)
+                conf_ = Config(distillation=conf,
+                               benchmark=None,
+                               quantization=None,
+                               pruning=None,
+                               nas=None)
                 com = Distillation(conf_)
-                assert conf.teacher_model is not None, \
-                    "Please set teacher_model in DistillationConfig"
-                com.teacher_model = conf.teacher_model
+                com.model = model
+                if conf.teacher_model is not None:
+                    com.teacher_model = conf.teacher_model
             else:
                 assert False, "Unsupported configure: {}".format(type(conf))
 
@@ -202,17 +202,28 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         component = scheduler
     else:
         if isinstance(confs, QuantizationAwareTrainingConfig):
-            conf = Config(quantization=confs)
+            conf = Config(quantization=confs,
+                          benchmark=None,
+                          pruning=None,
+                          distillation=None,
+                          nas=None)
             component = Quantization(conf)
         elif type(confs) == PruningConfig:
-            conf = Config(pruning=confs)
+            conf = Config(pruning=confs,
+                          benchmark=None,
+                          quantization=None,
+                          distillation=None,
+                          nas=None)
             component = Pruning(conf)
         elif type(confs) == DistillationConfig:
-            conf = Config(distillation=confs)
+            conf = Config(distillation=confs,
+                          benchmark=None,
+                          quantization=None,
+                          pruning=None,
+                          nas=None)
             component = Distillation(conf)
-            assert confs.teacher_model is not None, \
-                    "Please set teacher_model in DistillationConfig"
-            component.teacher_model = confs.teacher_model
+            if confs.teacher_model is not None:
+                component.teacher_model = confs.teacher_model
         else:
             assert False, logger.error(
                 "confs should be one of QuantizationAwareTrainingConfig, "
@@ -222,6 +233,8 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         component.model = model
         if isinstance(confs, QuantizationAwareTrainingConfig):
             component.prepare_qat()
+        else:
+            component.prepare()
     compression_manager = CompressionManager(component)
 
     return compression_manager

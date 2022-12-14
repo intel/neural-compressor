@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
 echo "run basic others"
 
@@ -23,17 +22,23 @@ sed -i '/ neural_coder\//d' run.sh
 sed -i '/ ipex\//d' run.sh
 sed -i '/ itex\//d' run.sh
 
+echo "copy model for dynas..."
+mkdir -p .torch/ofa_nets || true
+cp -r /tf_dataset/ut-localfile/ofa_mbv3_d234_e346_k357_w1.2 .torch/ofa_nets || true
+
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_tf_${tensorflow_version}_pt_${pytorch_version}.log
 
 echo "cat run.sh..."
 cat run.sh | tee ${ut_log_name}
-echo "-------------"
+echo "------UT start-------"
 bash run.sh 2>&1 | tee -a ${ut_log_name}
 cp .coverage ${LOG_DIR}/.coverage.others
-echo "list all in ${LOG_DIR}"
-ls -a ${LOG_DIR}
+echo "------UT end -------"
+
 if [ $(grep -c "FAILED" ${ut_log_name}) != 0 ] || [ $(grep -c "OK" ${ut_log_name}) == 0 ];then
+    echo "Find errors in UT test, please check the output..."
     exit 1
 fi
+echo "UT finished successfully! "
