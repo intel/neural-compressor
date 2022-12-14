@@ -25,6 +25,7 @@ from .utils.tuning_structs import OpTuningConfig
 from .utils.tuning_space import TUNING_ITEMS_LST
 from ..utils import logger
 
+
 @strategy_registry
 class HAWQ_V2TuneStrategy(TuneStrategy):
     """The HAWQ v2 tuning strategy.
@@ -108,15 +109,15 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
             yield op_tuning_cfg
         # Start compute the hessian trace
         logger.info(f"**************  Start compute the hessian trace  *****************")
-        target_dtype = "int8"  
-        hawq_v2_criterion =self.cfg.tuning.strategy.hawq_v2_loss
+        target_dtype = "int8"
+        hawq_v2_criterion = self.cfg.tuning.strategy.hawq_v2_loss
         # assert hawq_v2_criterion is not None, "HAWQ-V2 strategy needs model loss function to compute the gradient, \
         #     Please assign it by strategy_kwargs({'hawq_v2_loss': hawq_v2_loss})."
-        op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self._fp32_model,
-                                                            dataloader = self.calib_dataloader,
-                                                            q_model = self.q_model,
-                                                            criterion =hawq_v2_criterion,
-                                                            enable_act = False)
+        op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model=self._fp32_model,
+                                                            dataloader=self.calib_dataloader,
+                                                            q_model=self.q_model,
+                                                            criterion=hawq_v2_criterion,
+                                                            enable_act=False)
         sorted_op_to_traces = dict(sorted(op_to_traces.items(), key=lambda item: item[1], reverse=True))
         logger.info(f"**************  Hessian Trace  *****************")
         for op_name, trace in sorted_op_to_traces.items():
@@ -134,8 +135,8 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
                     ordered_ops_tmp[op_name] = op_to_traces[op_trace_name]
 
         ordered_ops_tmp = sorted(ordered_ops_tmp.keys(),
-                             key=lambda key: ordered_ops_tmp[key],
-                             reverse=self.higher_is_better)
+                                 key=lambda key: ordered_ops_tmp[key],
+                                 reverse=self.higher_is_better)
         # WA for add op type
         op_info_map = {}
         for op_info in list(initial_op_tuning_cfg.keys()):

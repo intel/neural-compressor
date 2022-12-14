@@ -159,18 +159,23 @@ def main():
 
     val_loader = torch.utils.data.DataLoader(
         val_dataset,
-        batch_size=args.batch_size, shuffle=False,
+        batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
         validate(val_loader, model, criterion, args)
         return
 
+
     if args.tune:
         from neural_compressor.experimental import Quantization, common
         model.eval()
+
+        def eval_func(model):
+            return -1
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
+        quantizer.eval_func = eval_func
         q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
         return

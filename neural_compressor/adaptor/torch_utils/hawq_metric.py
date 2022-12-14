@@ -67,7 +67,7 @@ class HessianTrace:
             logger.info("fusing model")
             self.model = fuse_fx(model.model)  ##TODO need to check whether model has been already fused
         self.dataloader = dataloader
-        self.max_iter = 500
+        self.max_iter = 50
         self.tolerance = 1e-5
         self.eps = 1e-6
         self.index = 0
@@ -570,6 +570,11 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
         orig_eval = False
     fp32_model.eval()
     ht = HessianTrace(fp32_model, dataloader=dataloader, q_model=q_model)
+    traces = ht.get_avg_traces(enable_act)
+    op_to_traces = traces['weight']
+    for key in op_to_traces.keys():
+        print(key, op_to_traces[key])
+    assert False
     q_model_state_dict = {}
     for key in q_model.state_dict().keys():
         length = len("_model.")
@@ -582,8 +587,7 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
         op_qnt_tensor = weight_quant_loss[key]['quantized'].dequantize()
         diff_l2 = (torch.norm(op_float_tensor - op_qnt_tensor, p=2) ** 2)
         pertur_lst[key] = diff_l2
-    traces = ht.get_avg_traces(enable_act)
-    op_to_traces = traces['weight']
+
     if enable_act:
         act_to_traces = traces['activation']
         for trace_i, pertur_i, act_i in zip(op_to_traces.keys(), pertur_lst.keys(), act_to_traces.keys()):
