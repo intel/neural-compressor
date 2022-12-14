@@ -10,8 +10,8 @@ function main {
 
 # init params
 function init_params {
-  batch_size = 32
-  iters = 100
+  batch_size=32
+  iters=100
 
   for var in "$@"
   do
