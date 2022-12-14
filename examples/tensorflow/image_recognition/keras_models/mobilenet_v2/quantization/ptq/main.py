@@ -46,7 +46,11 @@ flags.DEFINE_string(
 flags.DEFINE_string(
 	'eval_data', None, 'location of evaluate dataset')
 
-flags.DEFINE_integer('batch_size', 32, 'batch_size')
+flags.DEFINE_integer(
+    'batch_size', 32, 'batch_size of evaluation')
+
+flags.DEFINE_integer(
+    'iters', 100, 'maximum iteration when evaluating performance')
 
 from neural_compressor.metric.metric import TensorflowTopK
 from neural_compressor.data.datasets.dataset import TensorflowImageRecord
@@ -86,7 +90,7 @@ def evaluate(model):
         iteration = None
         latency_list = []
         if FLAGS.benchmark and FLAGS.mode == 'performance':
-            iteration = 100
+            iteration = FLAGS.iters
         for idx, (inputs, labels) in enumerate(dataloader):
             inputs = np.array(inputs)
             input_tensor = tf.constant(inputs)

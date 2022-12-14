@@ -56,8 +56,13 @@ config = PostTrainingQuantConfig(
 ```
 
 ## Run Command
+#### Tune
   ```shell
   bash run_tuning.sh --input_model=./path/to/model --output_model=./result --dataset_location=/path/to/evaluation/dataset
-  bash run_benchmark.sh --input_model=./path/to/model --dataset_location=/path/to/evaluation/dataset --mode=performance --batch_size=32
+  ```
+
+#### Benchmark
+  ```shell
+  bash run_benchmark.sh --input_model=./path/to/model --dataset_location=/path/to/evaluation/dataset --mode=performance
   bash run_benchmark.sh --input_model=./path/to/model --dataset_location=/path/to/evaluation/dataset --mode=accuracy
   ```
