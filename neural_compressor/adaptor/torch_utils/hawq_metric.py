@@ -143,13 +143,15 @@ class HessianTraceEstimator:
 
             diff_avg = abs(mean_avg_total_trace - avg_total_trace) / (avg_total_trace + self._diff_eps)
             if diff_avg < tolerance:
-                return mean_avg_traces_per_param
+                # return mean_avg_traces_per_param
+                print("End of hessian cacluation")
+                break
             avg_total_trace = mean_avg_total_trace
 
         results = {}
         index = 0
         for n, p in self._model.named_parameters():
-            results[n] = mean_avg_traces_per_param[index]
+            results[n] = float(mean_avg_traces_per_param[index])
             index += 1
         return results
 
@@ -698,16 +700,27 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
     fp32_model.eval()
     use_nccf = True
     if use_nccf:
-        ht = HessianTraceEstimator(fp32_model.model, data_loader=dataloader)
+        fp32_model=fuse_fx(fp32_model.model)
+        ht = HessianTraceEstimator(fp32_model, data_loader=dataloader)
         traces = ht.get_average_traces()
     else:
         ht = HessianTrace(fp32_model, dataloader,q_model)
         traces = ht.get_avg_traces(False,32)['weight']
-
-
-    for key in traces.keys():
-        print(key, traces[key])
-    assert False
+    #print traces
+    op_to_traces={}
+    for i in traces:
+        # print(i,traces[i])
+        length=len(".weight") #weights->op
+        op_name=i[0:-length]
+        if 'weight' in i : # remove bias
+            op_to_traces[op_name]=traces[i]
+    for i in op_to_traces:#
+        # length=len(".weight") #weights->op
+        # op_name=i[0:-length]
+        print(i, op_to_traces[i])
+    return op_to_traces
+    # assert False
+    ######################Woring: please don't remove below code , it will be avaliable in next debug############################
     q_model_state_dict = {}
     for key in q_model.state_dict().keys():
         length = len("_model.")
