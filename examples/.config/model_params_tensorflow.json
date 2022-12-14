@@ -553,7 +553,7 @@
       "model_src_dir": "nlp/transformer_lt/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/transformer-lt-official-fp32-inference/transformer_lt_official_fp32_pretrained_model/data",
       "input_model": "/tf_dataset/tensorflow/transformer-lt-official-fp32-inference/transformer_lt_official_fp32_pretrained_model/graph/fp32_graphdef.pb",
-      "main_script": "run_inference.py",
+      "main_script": "main.py",
       "batch_size": 64
     },
     "bert_large_squad": {
