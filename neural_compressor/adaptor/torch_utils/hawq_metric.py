@@ -45,6 +45,7 @@ class Node_collector:
     def remove(self):
         self.handle.remove()
 
+
 class ParameterHandler:
     def __init__(self, parameters, device="cpu"):
         self._device = device
@@ -60,7 +61,7 @@ class ParameterHandler:
             gradients.append(0. if parameter.grad is None else parameter.grad + 0.)
         return gradients
 
-    def sample_rademacher_like_params(self) :
+    def sample_rademacher_like_params(self):
         def sample(parameter):
             r = torch.randint_like(parameter, high=2, device=self._device)
             return r.masked_fill_(r == 0, -1)
@@ -70,18 +71,21 @@ class ParameterHandler:
     def sample_normal_like_params(self):
         return [torch.randn(p.size(), device=self._device) for p in self.parameters]
 
-
+##shameless copy from https://github.com/openvinotoolkit/nncf
 class GradientsCalculator:
 
     def __init__(self, model: nn.Module,
                  data_loader, num_data_iter: int,
-                 paramerter_handler: ParameterHandler):
+                 paramerter_handler: ParameterHandler, criterion):
         self._model = model
         self._data_loader = data_loader
         self._num_data_iter = num_data_iter
         self._parameter_handler = paramerter_handler
         self.num_iter = 0
-        self.criterion = torch.nn.CrossEntropyLoss()
+        if criterion == None:
+            self.criterion = torch.nn.CrossEntropyLoss()
+        else:
+            self.criterion = criterion
 
     def __iter__(self):
         self.data_loader_iter = iter(self._data_loader)
@@ -104,16 +108,16 @@ class GradientsCalculator:
         self._model.zero_grad()
         return grads
 
-
+##shameless copy from https://github.com/openvinotoolkit/nncf
 class HessianTraceEstimator:
     """
     Performs estimation of Hessian Trace based on Hutchinson algorithm.
     """
 
-    def __init__(self, model_tmp: nn.Module, data_loader, criterion_fn=None, criterion=None,
+    def __init__(self, model_tmp: nn.Module, data_loader, criterion=None,
                  device="cpu",
                  num_data_points=0):
-        self._model = model_tmp
+        self._model = fuse_fx(model_tmp)
         parameters = [p for p in self._model.parameters() if p.requires_grad]
         self._parameter_handler = ParameterHandler(parameters, device)
         self._batch_size = data_loader.batch_size
@@ -123,7 +127,7 @@ class HessianTraceEstimator:
                                                          self._parameter_handler)
         self._diff_eps = 1e-6
 
-    def get_average_traces(self, max_iter=500, tolerance=1e-5) :
+    def get_average_traces(self, max_iter=500, tolerance=1e-5):
         """
         Estimates average hessian trace for each parameter
         :param max_iter: maximum number of iterations for Hutchinson algorithm
@@ -589,7 +593,7 @@ class HessianTrace:
         return traces
 
 
-#copy from torch.quantization._numeric_suite
+# copy from torch.quantization._numeric_suite
 def _find_match(
         str_list: Union[Dict[str, Any], List[str]], key_str: str,
         postfix: str,
@@ -700,27 +704,16 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
     fp32_model.eval()
     use_nccf = True
     if use_nccf:
-        fp32_model=fuse_fx(fp32_model.model)
-        ht = HessianTraceEstimator(fp32_model, data_loader=dataloader)
+        ht = HessianTraceEstimator(fp32_model.model, data_loader=dataloader)
         traces = ht.get_average_traces()
     else:
         ht = HessianTrace(fp32_model, dataloader,q_model)
         traces = ht.get_avg_traces(False,32)['weight']
-    #print traces
-    op_to_traces={}
-    for i in traces:
-        # print(i,traces[i])
-        length=len(".weight") #weights->op
-        op_name=i[0:-length]
-        if 'weight' in i : # remove bias
-            op_to_traces[op_name]=traces[i]
-    for i in op_to_traces:#
-        # length=len(".weight") #weights->op
-        # op_name=i[0:-length]
-        print(i, op_to_traces[i])
-    return op_to_traces
-    # assert False
-    ######################Woring: please don't remove below code , it will be avaliable in next debug############################
+
+
+    for key in traces.keys():
+        print(key, traces[key])
+    assert False
     q_model_state_dict = {}
     for key in q_model.state_dict().keys():
         length = len("_model.")
