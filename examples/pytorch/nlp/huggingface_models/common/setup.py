@@ -109,7 +109,7 @@ _deps = [
     "onnxconverter-common",
     "onnxruntime-tools>=1.4.2",
     "onnxruntime>=1.4.0",
-    "packaging==21.3",
+    "packaging<=21.3",
     "parameterized",
     "protobuf",
     "psutil",

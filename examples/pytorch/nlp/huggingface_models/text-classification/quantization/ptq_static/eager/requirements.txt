@@ -4,3 +4,4 @@ protobuf
 scipy
 scikit-learn
 Keras-Preprocessing
+packaging<=21.3
