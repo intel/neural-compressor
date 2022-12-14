@@ -21,6 +21,7 @@ function init_params {
   warmup_steps=10
   num_inter=2
   num_intra=28
+  benchmark=True
 
   for var in "$@"
   do
@@ -55,6 +56,9 @@ function init_params {
       --num_intra=*)
          num_intra=$(echo ${var} |cut -f2 -d=)
       ;;
+      --benchmark=*)
+         benchmark=$(echo ${var} |cut -f2 -d=)
+      ;;
       *)
           echo "Parameter error: ${var}"
           exit 1
@@ -70,7 +74,7 @@ function run_benchmark {
         python run_inference.py \
             --in-graph=${input_model} \
             --data-location=${dataset_location} \
-            --benchmark \
+            --benchmark=${benchmark} \
             --mode=${mode} \
             --steps=${iters} \
             --warmup-steps=${warmup_steps} \
