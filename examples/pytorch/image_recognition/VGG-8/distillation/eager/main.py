@@ -188,13 +188,14 @@ def main():
                                                              loss_weights=args.loss_weights)
     conf = DistillationConfig(teacher_model, distillation_criterion)
     compression_manager = prepare_compression(student_model, conf)
-    train(train_loader, compression_manager.model, criterion, optimizer, scheduler,
-                  compression_manager, best_prec1, val_loader)
-
-
-def train(train_loader, model, criterion, optimizer, scheduler, compression_manager, best_prec1,
-          val_loader):
     compression_manager.callbacks.on_train_begin()
+    model = compression_manager.model
+    train(train_loader, model, scheduler, compression_manager, best_prec1, criterion, val_loader)
+    
+    # change to framework model for further use
+    model = model.model
+
+def train(train_loader, model, scheduler, compression_manager, best_prec1, criterion, val_loader):
     for epoch in range(args.start_epoch, args.epochs):
         """Train for one epoch on the training set"""
         batch_time = AverageMeter()
@@ -222,9 +223,9 @@ def train(train_loader, model, criterion, optimizer, scheduler, compression_mana
             top1.update(prec1.item(), input.size(0))
 
             # compute gradient and do SGD step
-            optimizer.zero_grad()
+            compression_manager.callbacks.optimizer.zero_grad()
             loss.backward()
-            optimizer.step()
+            compression_manager.callbacks.optimizer.step()
             scheduler.step()
 
             # measure elapsed time
@@ -292,7 +293,7 @@ def validate(val_loader, model, epoch):
         log_value('val_acc', top1.avg, epoch)
     return top1.avg
 
-def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
+def save_checkpoint(state, is_best, filename='checkpoint.pt'):
     """Saves checkpoint to disk"""
     directory = "runs/%s/"%(args.name)
     if not os.path.exists(directory):
@@ -300,7 +301,7 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     filename = directory + filename
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, 'runs/%s/'%(args.name) + 'model_best.pth.tar')
+        shutil.copyfile(filename, 'runs/%s/'%(args.name) + 'model_best.pt')
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

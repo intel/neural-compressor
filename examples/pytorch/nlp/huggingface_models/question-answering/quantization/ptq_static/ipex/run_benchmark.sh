@@ -91,23 +91,6 @@ function run_benchmark {
             $mode_cmd \
             ${extra_cmd}
     fi
-    if [[ "${topology}" == "bert_large_1_10_ipex" ]]; then
-        pip install transformers==3.0.2
-        python run_qa_1_10.py \
-            --model_type bert \
-            --model_name_or_path $input_model \
-            --do_lower_case \
-            --predict_file $dataset_location \
-            --tokenizer_name $tokenizer_name \
-            --do_eval \
-            --max_seq_length 384 \
-            --doc_stride 128 \
-            --no_cuda \
-            --output_dir $tuned_checkpoint \
-            --per_gpu_eval_batch_size $batch_size \
-            $mode_cmd \
-            ${extra_cmd}
-    fi
 }
 
 

@@ -493,7 +493,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>BlendCNN</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/nlp/blendcnn/quantization/ptq/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/blendcnn/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
@@ -643,14 +643,14 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>CNN-10</td>
     <td>Image Recognition</td>
     <td>Knowledge Distillation</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/CNN-2/distillation/eager">eager</a></td>
+    <td><a href="./pytorch/image_recognition/CNN-2/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>MobileNet V2-0.35</td>
     <td>WideResNet40-2</td>
     <td>Image Recognition</td>
     <td>Knowledge Distillation</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/MobileNetV2-0.35/distillation/eager">eager</a></td>
+    <td><a href="./pytorch/image_recognition/MobileNetV2-0.35/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>ResNet18|ResNet34|ResNet50|ResNet101</td>
@@ -678,7 +678,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>BERT-Base</td>
     <td>Natural Language Processing</td>
     <td>Knowledge Distillation</td>
-    <td><a href="./pytorch/nlp/blendcnn/distillation/eager">eager</a></td>
+    <td><a href="./pytorch/nlp/blendcnn/distillation/fx">fx</a></td>
   </tr>
   <tr>
     <td>DistilBERT</td>

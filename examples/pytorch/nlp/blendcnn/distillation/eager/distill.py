@@ -146,12 +146,13 @@ def main(config='config/distill/mrpc/train.json', args=None):
                                                                  loss_weights=args.loss_weights)
         conf = DistillationConfig(teacher_model=teacher, criterion=distillation_criterion)
         compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
 
         def train_func(model):
             best_prec1 = 0
             epochs = 30
             iters = 120
-            compression_manager.callbacks.on_train_begin()
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
@@ -217,7 +218,7 @@ def main(config='config/distill/mrpc/train.json', args=None):
                 print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=10))
             return total_accuracy   
 
-        train_func(compression_manager.model)
+        train_func(model)
         return
 
     elif cfg.mode == "eval":

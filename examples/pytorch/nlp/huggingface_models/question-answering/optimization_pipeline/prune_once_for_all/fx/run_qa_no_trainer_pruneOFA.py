@@ -299,8 +299,8 @@ def move_input_to_device(input, device):
     else:
         assert False, "only support input type of torch.Tensor, tuple, list and dict."
 
-def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, \
-          agent, accelerator, eval_dataloader, metric):
+def train(args, model, train_dataloader, lr_scheduler, optimizer, \
+          compression_manager, accelerator, eval_dataloader, metric):
     # Train!
     total_batch_size = args.batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
@@ -313,17 +313,12 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, \
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
     completed_steps = 0
 
-    if agent:
-        agent.on_train_begin()
-        model = agent.model.model
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
-        if agent:
-            agent.on_epoch_begin(epoch)
+        compression_manager.callbacks.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
-            if agent:
-                agent.on_step_begin(step)
+            compression_manager.callbacks.on_step_begin(step)
             teacher_logits = None
             if 'teacher_logits' in batch:
                 teacher_logits = torch.vstack(list(batch['teacher_logits']))
@@ -333,33 +328,21 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, \
                 for sx, ex in zip(outputs['start_logits'], outputs['end_logits'])])
             labels = torch.hstack([torch.tensor([sx, ex]).to(outputs_for_kd.device) \
                 for sx, ex in zip(batch["start_positions"], batch["end_positions"])])
-            if criterion is None:
-                loss = outputs['loss']
-            else:
-                if teacher_logits is not None:
-                    criterion.teacher_outputs = teacher_logits
-                else:
-                    criterion.teacher_model_forward(batch)
-                loss = criterion(outputs_for_kd, labels)
-                loss = agent.on_after_compute_loss(batch, outputs, loss, teacher_logits)
+            loss = outputs['loss']
+            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                if agent:
-                    agent.on_before_optimizer_step()
+                compression_manager.callbacks.on_before_optimizer_step()
                 optimizer.step()
                 lr_scheduler.step()
                 optimizer.zero_grad()
                 completed_steps += 1
-            if agent:
-                agent.on_step_end()
+            compression_manager.callbacks.on_step_end()
             if completed_steps >= args.max_train_steps:
                 break
-        if agent:
-            agent.on_epoch_end()
+        compression_manager.callbacks.on_epoch_end()
         evaluation(args, model, accelerator, eval_dataloader, metric)
-    if agent:
-        agent.on_train_end()
 
 # Create and fill numpy array of size len_of_validation_data * max_length_of_output_tensor
 def create_and_fill_np_array(start_or_end_logits, dataset, max_len):
@@ -923,10 +906,6 @@ def main():
         num_warmup_steps=args.num_warmup_steps,
         num_training_steps=args.max_train_steps,
     )
-    
-    def train_func(model):
-        return train(args, model, train_dataloader, lr_scheduler, criterion, \
-                     optimizer, agent, accelerator, eval_dataloader, metric)
 
     def eval_func(model):
         return evaluation(args, model, accelerator, eval_dataloader, metric)
@@ -967,12 +946,25 @@ def main():
 
     from neural_compressor.training import prepare_compression
     compression_manager = prepare_compression(model, confs)
-        model = common.Model(accelerator.unwrap_model(model.model))
-        if accelerator.local_process_index in [-1, 0]:
-            model.save(args.output_dir)
-        # change to framework model for further use
-        model = model.model
-        
+    compression_manager.callbacks.on_train_begin()
+    model = compression_manager.model
+    train(args,
+          model,
+          train_dataloader=train_dataloader,
+          lr_scheduler=lr_scheduler,
+          optimizer=optimizer,
+          compression_manager=compression_manager,
+          accelerator=accelerator,
+          eval_dataloader=eval_dataloader,
+          metric=metric)
+    compression_manager.callbacks.on_train_end()
+
+
+    if accelerator.local_process_index in [-1, 0]:
+        model.save(args.output_dir)
+    # change to framework model for further use
+    model = model.model
+
     # Prediction
     if args.do_predict:
         logger.info("***** Running Prediction *****")
@@ -1013,11 +1005,6 @@ def main():
         prediction = post_processing_function(predict_examples, predict_dataset, outputs_numpy)
         predict_metric = metric.compute(predictions=prediction.predictions, references=prediction.label_ids)
         logger.info(f"Predict metrics: {predict_metric}")
-
-    # if args.output_dir is not None:
-    #     accelerator.wait_for_everyone()
-    #     unwrapped_model = accelerator.unwrap_model(model)
-    #     unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
 
 
 if __name__ == "__main__":

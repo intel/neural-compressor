@@ -305,7 +305,6 @@ def train(args, model, train_dataloader, lr_scheduler, compression_manager, acce
 
     completed_steps = 0
 
-    compression_manager.callbacks.on_train_begin()
     for epoch in range(args.num_train_epochs):
         model.train()
         for step, batch in enumerate(tqdm(train_dataloader)):
@@ -902,10 +901,14 @@ def main():
                                                                  loss_weights=args.loss_weights)
         conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
         compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        # Here is neural_compressor model
+        model = compression_manager.model
 
-        train(args, compression_manager.model, train_dataloader, lr_scheduler, compression_manager,
+        train(args, model, train_dataloader, lr_scheduler, compression_manager,
               accelerator, optimizer, eval_dataloader, metric)
-        model = compression_manager.model.model
+
+        model = model.model
 
     # Prediction
     if args.do_predict:

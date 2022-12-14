@@ -195,12 +195,8 @@ def main():
     train(train_loader, model, criterion, optimizer, scheduler,
                   compression_manager, best_prec1, val_loader)
 
-    directory = "runs/%s/"%(args.name)
-    os.makedirs(directory, exist_ok=True)
-    model.model = accelerator.unwrap_model(model.model)
-    model.save(directory)
     # change to framework model for further use
-    model = model.model
+    model = accelerator.unwrap_model(model.model)
 
 def train(train_loader, model, criterion, optimizer, scheduler, compression_manager, best_prec1,
           val_loader, accelerator):
@@ -306,7 +302,7 @@ def validate(val_loader, model, epoch, accelerator):
         log_value('val_acc', top1.avg, epoch)
     return top1.avg
 
-def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
+def save_checkpoint(state, is_best, filename='checkpoint.pt'):
     """Saves checkpoint to disk"""
     directory = "runs/%s/"%(args.name)
     if not os.path.exists(directory):
@@ -314,7 +310,7 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     filename = directory + filename
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, 'runs/%s/'%(args.name) + 'model_best.pth.tar')
+        shutil.copyfile(filename, 'runs/%s/'%(args.name) + 'model_best.pt')
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
