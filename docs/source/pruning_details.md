@@ -251,7 +251,8 @@ Pattern_lock pruning type uses masks of a fixed pattern during the pruning proce
 
  
 
-Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
+Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure. 
+Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
 
 
 
