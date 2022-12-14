@@ -469,6 +469,8 @@ class _BaseQuantizationConfig:
     @calibration_sampling_size.setter
     def calibration_sampling_size(self, sampling_size):
         if check_value('calibration_sampling_size', sampling_size, int):
+            if isinstance(sampling_size, int):
+                sampling_size =[sampling_size]
             self._calibration_sampling_size = sampling_size
 
     @property
