@@ -100,7 +100,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
         save_dict = super().__getstate__()
         return save_dict
     
-    def _tuning_record_msg(records):
+    def _tuning_record_msg(self, records):
         records_str_lst = [[str(e) for e in record] for record in records]
         record_msg = '\n'.join(','.join(record) for record in records_str_lst)
         return record_msg
