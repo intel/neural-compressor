@@ -45,7 +45,6 @@ RUN python -m pip install --no-cache-dir pylint==2.12.1\
     onnxruntime_extensions\
     tf_slim\
     transformers\
-    horovod\
     flask==2.1.3 \
     pydocstyle
 

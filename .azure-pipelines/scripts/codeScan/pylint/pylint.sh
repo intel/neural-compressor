@@ -7,6 +7,7 @@ log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
 mkdir -p $log_dir
 
 pip install -r /neural-compressor/requirements.txt
+pip install horovod
 pip install torch==1.12.0
 
 python -m pylint -f json --disable=R,C,W,E1129 --enable=line-too-long --max-line-length=120 --extension-pkg-whitelist=numpy --ignored-classes=TensorProto,NodeProto \
