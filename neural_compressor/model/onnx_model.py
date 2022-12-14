@@ -154,6 +154,10 @@ class ONNXModel(BaseModel):
         if ortq.find_by_name(tensor.name, self._model.graph.initializer) is None:
             self._model.graph.initializer.extend([tensor])
 
+    def add_initializers(self, tensors):
+        for tensor in tensors:
+            self.add_initializer(tensor)
+
     def get_initializer(self, name):
         for tensor in self._model.graph.initializer:
             if tensor.name == name:
@@ -423,3 +427,21 @@ class ONNXModel(BaseModel):
                 start_node.append(parent.name)
 
         return result_chain
+
+    def export(self, save_path, conf):
+        from neural_compressor.experimental.export import onnx_qlinear_to_qdq
+        from neural_compressor.config import ONNXQlinear2QDQConfig
+        if isinstance(conf, ONNXQlinear2QDQConfig):
+            add_nodes, remove_nodes, inits = onnx_qlinear_to_qdq(self._model,
+                                             self._input_name_to_nodes)
+            self.add_nodes(add_nodes)
+            self.remove_nodes(remove_nodes)
+            self.add_initializers(inits)
+            self.update()
+            self.remove_unused_constant()
+            self.topological_sort()
+            self.save(save_path)
+        else:
+            logger.warning("Unsupported config for export, "
+                "only ONNXQlinear2QDQConfig is supported!")
+            exit(0)

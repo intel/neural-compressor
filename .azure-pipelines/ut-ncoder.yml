@@ -11,6 +11,7 @@ pr:
     - neural_coder
     - test/neural_coder
     - setup.py
+    - .azure-pipelines/scripts/ut
 
 pool: ICX-16C
 

@@ -6,6 +6,7 @@ import os
 import shutil
 import yaml
 import platform
+from tensorflow.python.platform import gfile
 from neural_compressor.adaptor.tf_utils.util import disable_random
 from neural_compressor.experimental import Quantization, Benchmark, common
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2, version1_gte_version2
@@ -22,6 +23,7 @@ def build_fake_yaml(fake_yaml, save_path, **kwargs):
 class TestItexEnabling(unittest.TestCase):
     @classmethod
     def setUpClass(self):
+        os.system("rm *.log")
         fake_yaml_1 = '''
         model:
           name: fake_model_cpu
@@ -240,6 +242,7 @@ class TestItexEnabling(unittest.TestCase):
         out_name = relu6.name.split(':')[0]
         num_of_instance = 1
         cores_per_instance = 1
+        log_file = ''
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(
@@ -258,11 +261,13 @@ class TestItexEnabling(unittest.TestCase):
             evaluator.b_dataloader = common.DataLoader(dataset)
             num_of_instance = evaluator.conf.usr_cfg.evaluation.performance.configs.num_of_instance
             cores_per_instance = evaluator.conf.usr_cfg.evaluation.performance.configs.cores_per_instance
+            log_file = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, 0)
+            if gfile.Exists(log_file):
+                os.remove(log_file)
             evaluator.model = output_graph
             evaluator('performance')
 
         found_multi_instance_log = False
-        log_file = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, 0)
         for file_name in os.listdir(os.getcwd()):
             if file_name == log_file:
                 found_multi_instance_log = True

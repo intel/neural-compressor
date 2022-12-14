@@ -11,6 +11,7 @@ pr:
     - neural_compressor
     - test
     - setup.py
+    - .azure-pipelines/scripts/ut
     exclude:
     - neural_compressor/ux
     - test/ux
