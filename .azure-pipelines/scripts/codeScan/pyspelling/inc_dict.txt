@@ -2459,3 +2459,4 @@ WeightPruningConfig
 Namhoon
 Thalaiyasingam
 Torr
+MixedPrecisionConfig
