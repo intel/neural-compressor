@@ -28,12 +28,12 @@ model-specific configurations in a `yaml` configuration file to filter some
 capability from the first step in order to generate the tuning space. Each
 strategy then generates the quantization config according to its location
 and logic with tuning strategy configurations from the `yaml` configuration
-file. All strategies finish the tuning processing when the `timeout` or `max_trails` is reached. The default value of `timeout` is 0; if reached, the
+file. All strategies finish the tuning processing when the `timeout` or `max_trials` is reached. The default value of `timeout` is 0; if reached, the
 tuning phase stops when the `accuracy` criteria is met.
 
 ## Configurations
 
-Detailed configuration templates can be found [here](../neural_compressor/template).
+Detailed configuration templates can be found [here](../../neural_compressor/template).
 
 ### Model-specific configurations
 
@@ -324,7 +324,7 @@ conf = config.PostTrainingQuantConfig(
     tuning_criterion=config.TuningCriterion(
         timeout=0,
         strategy="mse_v2",
-        strategy_kwargs={"confidence_batches" : "2"},
+        strategy_kwargs={"confidence_batches" : 2},
     ),
 )
 ```
