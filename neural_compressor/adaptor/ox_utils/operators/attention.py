@@ -17,8 +17,8 @@
 #
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
-from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, qop_registry, QOperator
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain, find_by_name
 
 @op_registry(op_types="Attention")
 class AttentionOperator(Operator):
@@ -74,3 +74,46 @@ class AttentionOperator(Operator):
         self.quantizer.new_nodes.append(qattention_node)
 
         self.quantizer.remove_nodes.append(node)
+
+@qop_registry(op_types="QAttention")
+class QAttentionOperator(QOperator):
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)
+
+    def convert(self):
+        node = self.node
+        add_nodes = []
+        inputs = []
+        inits = []
+        if find_by_name(node.input[3], self.initializers) is None:
+            return False, add_nodes, inits
+        # input dq
+        in_dq1 = onnx.helper.make_node(
+            'DequantizeLinear',
+            [node.input[0], node.input[3], node.input[6]],
+            [node.name + '_in_dequant1'],
+            node.name + '_in_dequant1')
+        
+        in_dq2 = onnx.helper.make_node(
+            'DequantizeLinear',
+            [node.input[1], node.input[4], node.input[7]],
+            [node.name + '_in_dequant2'],
+            node.name + '_in_dequant2')
+        inputs = [node.name + '_in_dequant1',
+                  node.name + '_in_dequant2',
+                  node.input[2],
+                  node.input[5]]
+        
+        add_nodes.extend([in_dq1, in_dq2])
+
+        outputs = node.output
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+        kwargs["domain"] = ms_domain
+
+        binary_node = onnx.helper.make_node(
+            'Attention', inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(binary_node)
+        return True, add_nodes, inits

@@ -69,9 +69,18 @@ class Benchmark(object):
         self.exp_benchmarker.postprocess = nc_postprocess
 
 
-def fit(
-    model, config=None, b_dataloader=None, b_func=None
-):
+def fit(model, config=None, b_dataloader=None, b_func=None):
+    """Benchmark the model performance with the configure.
+
+    Args:
+        model (object):           The model to be benchmarked.
+        config (BenchmarkConfig): The configuration for benchmark containing accuracy goal,
+                                  tuning objective and preferred calibration & quantization
+                                  tuning space etc.
+        b_dataloader:             The dataloader for frameworks.
+        b_func:                   customized benchmark function. if user passes the dataloader,
+                                  than b_func is not needed.
+    """
     if isinstance(config, BenchmarkConfig):
         config = Config(benchmark=config)
     benchmarker = ExpBenchmark(config)
@@ -82,6 +91,3 @@ def fit(
         benchmarker.b_dataloader = b_dataloader
     benchmarker()
     return benchmarker.results
-
-
-benchmark = fit

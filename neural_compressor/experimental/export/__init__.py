@@ -19,3 +19,4 @@
 """Intel Neural Compressor Export."""
 
 from .torch2onnx import torch_to_fp32_onnx, torch_to_int8_onnx
+from .qlinear2qdq import onnx_qlinear_to_qdq

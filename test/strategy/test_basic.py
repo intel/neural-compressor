@@ -220,20 +220,15 @@ class TestBasicTuningStrategy(unittest.TestCase):
         
     def test_run_basic_one_trial_new_api(self):
         from neural_compressor.quantization import fit
-        from neural_compressor.config import AccuracyCriterion, AccuracyLoss, PostTrainingQuantConfig, TuningCriterion
-        from neural_compressor.data import DATASETS, DATALOADERS
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data import Datasets, DATALOADERS
         
         # dataset and dataloader
-        dataset = DATASETS("tensorflow")["dummy"](((100, 3, 3, 1)))
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS["tensorflow"](dataset)
         
         # tuning and accuracy criterion
-        tolerable_loss = AccuracyLoss(0.01)
-        accuracy_criterion = AccuracyCriterion(criterion='relative', tolerable_loss=tolerable_loss)
-        tuning_criterion = TuningCriterion(strategy='basic')
-        conf = PostTrainingQuantConfig(approach="static", backend="tensorflow", 
-                                       tuning_criterion=tuning_criterion,
-                                       accuracy_criterion=accuracy_criterion)
+        conf = PostTrainingQuantConfig()
         q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_dataloader=dataloader)
         self.assertIsNotNone(q_model)
 

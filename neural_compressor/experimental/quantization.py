@@ -28,6 +28,8 @@ from ..utils import logger
 from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel
+from ..model.tensorflow_model import TensorflowQATModel
+from ..model.model import get_model_fwk_name
 from ..conf.config import QuantConf
 from ..conf.pythonic_config import Config
 from deprecated import deprecated
@@ -232,8 +234,8 @@ class Quantization(Component):
 
     def dataset(self, dataset_type, *args, **kwargs):
         """Get dataset according to dataset_type."""
-        from ..data import DATASETS
-        return DATASETS(self.framework)[dataset_type](*args, **kwargs)
+        from ..data import Datasets
+        return Datasets(self.framework)[dataset_type](*args, **kwargs)
 
     @property
     def calib_dataloader(self):
@@ -407,6 +409,39 @@ class Quantization(Component):
         self._calib_func = user_q_func
 
     calib_func = q_func
+
+    @property
+    def model(self):
+        """Override model getter method to handle quantization aware training case."""
+        return self._model
+
+    @model.setter
+    def model(self, user_model):
+        """Override model setter method to handle quantization aware training case.
+
+        Args:
+           user_model: user are supported to set model from original framework model format
+                       (eg, tensorflow frozen_pb or path to a saved model),
+                       but not recommended. Best practice is to set from a initialized
+                       neural_compressor.experimental.common.Model.
+                       If tensorflow model is used, model's inputs/outputs will be
+                       auto inferenced, but sometimes auto inferenced
+                       inputs/outputs will not meet your requests,
+                       set them manually in config yaml file.
+                       Another corner case is slim model of tensorflow,
+                       be careful of the name of model configured in yaml file,
+                       make sure the name is in supported slim model list.
+        """
+        approach_cfg = deep_get(self.cfg, 'quantization.approach')
+        if not self.framework:
+            self.framework = get_model_fwk_name(user_model)
+        if self.framework == 'tensorflow' and approach_cfg == 'quant_aware_training':
+            if type(user_model) == str:
+                self._model = TensorflowQATModel(user_model)
+            else:
+                self._model = TensorflowQATModel(user_model._model)
+        else:
+            Component.model.__set__(self, user_model)
 
     def __repr__(self):
         """Return the class string."""

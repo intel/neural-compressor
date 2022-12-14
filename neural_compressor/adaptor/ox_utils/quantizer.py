@@ -37,7 +37,6 @@ from neural_compressor.adaptor.ox_utils.util import find_by_name, dtype_to_name
 from neural_compressor.adaptor.ox_utils.util import __producer__, __version__
 from neural_compressor.adaptor.ox_utils.util import quantize_data, dtype_mapping, support_pair, ValueInfo
 from neural_compressor import options
-from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.operators import OPERATORS
 
@@ -50,8 +49,7 @@ class Quantizer:
         model = onnx.shape_inference.infer_shapes(self.model.model) if \
             not self.model.large_size else self.model.model
         self.config = q_config
-        self.reduce_range = reduce_range if reduce_range is not None \
-            else False if CpuInfo().vnni else True
+        self.reduce_range = reduce_range
         self.mode = mode # QuantizationMode.Value
         self.static = static  # use static quantization for inputs.
         self.fuse_dynamic_quant = False
@@ -840,12 +838,12 @@ class Quantizer:
             raise ValueError("Quantization parameters should contain zero point and scale. "
                              "Specified values for output {}: {}".format(param_name, params))
 
-        zero_point_values = [params[0].item()]
+        zero_point_values = [params[0]]
         zero_point_shape = []
         zero_point_name = param_name + "_zero_point"
         zero_point_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[params[0].dtype]
 
-        scale_values = [params[1].item()]
+        scale_values = [params[1]]
         scale_shape = []
         scale_name = param_name + "_scale"
 

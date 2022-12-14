@@ -41,7 +41,7 @@ function init_params {
 # run_tuning
 function run_tuning {
 
-    python run_glue_tune.py \
+    python run_glue.py \
         --model_name_or_path ${input_model} \
         --task_name ${task_name} \
         --do_train \

@@ -36,9 +36,11 @@ from neural_compressor.experimental.data.transforms import transform_registry, B
 # BELOW IS TO BE DEPRECATED!
 @transform_registry(transform_type="ParseDecodeCoco", \
                     process="preprocess", framework="tensorflow")
-class ParseDecodeCocoTransform(BaseTransform):
-
+class ParseDecodeCocoTransform(BaseTransform):    # pragma: no cover 
+    """Coco decoding will be performed automatically from Neural Compressor v1.4.
+    """
     def __call__(self, sample):
+        """Convert `ParseDecodeCocoTransform` feature."""
         logger.warning("This transform is going to be deprecated, " \
             "coco decoding will be performed automatically from Neural Compressor v1.4.")
         return sample

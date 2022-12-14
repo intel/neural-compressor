@@ -2,7 +2,6 @@
 import psutil
 import unittest
 import os
-import yaml
 import numpy as np
 import tensorflow as tf
 import tempfile
@@ -18,9 +17,9 @@ arg_parser.add_argument('--input_model', dest='input_model', default='input_mode
 args = arg_parser.parse_args()
 from neural_compressor.benchmark import fit
 from neural_compressor.config import BenchmarkConfig
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental import common
-dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
+dataset = Datasets('tensorflow')['dummy']((100, 32, 32, 1), label=True)
 b_dataloader = common.DataLoader(dataset, batch_size=10)
 conf = BenchmarkConfig(warmup=5, iteration=10, cores_per_instance=4, num_of_instance=2)
 fit(args.input_model, conf, b_dataloader=b_dataloader)
@@ -33,8 +32,8 @@ arg_parser.add_argument('--input_model', dest='input_model', default='input_mode
 args = arg_parser.parse_args()
 from neural_compressor.benchmark import fit
 from neural_compressor.config import BenchmarkConfig
-from neural_compressor.data import DATASETS
-dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
+from neural_compressor.data import Datasets
+dataset = Datasets('tensorflow')['dummy']((100, 32, 32, 1), label=True)
 from neural_compressor.experimental import common
 conf = BenchmarkConfig(warmup=5, iteration=10, cores_per_instance=4, num_of_instance=2)
 b_dataloader = common.DataLoader(dataset, batch_size=10)
@@ -64,8 +63,8 @@ def build_benchmark2():
         "arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')\n",
         "args = arg_parser.parse_args()\n",
         "from neural_compressor.benchmark import fit\n"
-        "from neural_compressor.data import DATASETS\n",
-        "dataset = DATASETS('tensorflow')['dummy']((5, 32, 32, 1), label=True)\n",
+        "from neural_compressor.data import Datasets\n",
+        "dataset = Datasets('tensorflow')['dummy']((5, 32, 32, 1), label=True)\n",
 
         "from neural_compressor.experimental import common\n",
         "b_dataloader = common.DataLoader(dataset)\n",

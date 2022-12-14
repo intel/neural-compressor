@@ -17,8 +17,8 @@
 #
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
-from neural_compressor.adaptor.ox_utils.util import find_by_name
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
+from neural_compressor.adaptor.ox_utils.util import find_by_name, attribute_to_kwarg
 from onnx import onnx_pb as onnx_proto
 
 @op_registry(op_types="MatMul")
@@ -123,3 +123,46 @@ class MatMulOperator(Operator):
             self.quantizer.remove_nodes.extend(parents)
             self.quantizer.remove_nodes.append(child)
             self.quantizer.remove_nodes.append(node)
+            
+@qop_registry(op_types="QLinearMatMul")
+class QMatMulOperator(QOperator):
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)
+
+    def convert(self):
+        node = self.node
+        add_nodes = []
+        inits = []
+        # input dq
+        in_dq1 = onnx.helper.make_node(
+            'DequantizeLinear',
+            node.input[:3],
+            [node.name + '_in_dequant1'],
+            node.name + '_in_dequant1')
+
+        in_dq2 = onnx.helper.make_node(
+            'DequantizeLinear',
+            node.input[3:6],
+            [node.name + '_in_dequant2'],
+            node.name + '_in_dequant2')
+        inputs = [node.name + '_in_dequant1', node.name + '_in_dequant2']
+        
+        add_nodes.extend([in_dq1, in_dq2])
+        # output q
+        out_q = onnx.helper.make_node(
+            'QuantizeLinear',
+            [node.name + '_out', node.input[6], node.input[7]],
+            node.output,
+            node.name + '_out_quant')
+        outputs = [node.name + '_out']
+        add_nodes.append(out_q)
+
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+
+        matmul_node = onnx.helper.make_node(
+            'MatMul', inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(matmul_node)
+        return True, add_nodes, inits

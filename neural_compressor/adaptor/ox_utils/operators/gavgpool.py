@@ -17,7 +17,7 @@
 #
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
 @op_registry(op_types="GlobalAveragePool")
@@ -59,3 +59,36 @@ class GlobalAveragePoolOperator(Operator):
         self.quantizer.remove_nodes.append(child)
         self.quantizer.remove_nodes.append(parent)
         self.quantizer.remove_nodes.append(node)
+        
+@qop_registry(op_types="QLinearGlobalAveragePool")
+class QGlobalAveragePoolOperator(QOperator):
+    def __init__(self, onnx_node, children, initializers):
+        super().__init__(onnx_node, children, initializers)
+
+    def convert(self):
+        node = self.node
+        add_nodes = []
+        inits = []
+        # input dq
+        in_dq = onnx.helper.make_node(
+            'DequantizeLinear',
+            node.input[:3],
+            [node.name + '_in_dequant'],
+            node.name + '_in_dequant')
+        inputs = [node.name + '_in_dequant']
+        add_nodes.append(in_dq)
+        # output q
+        out_q = onnx.helper.make_node(
+            'QuantizeLinear',
+            [node.name + '_out', node.input[3], node.input[4]],
+            node.output,
+            node.name + '_out_quant')
+        outputs = [node.name + '_out']
+        add_nodes.append(out_q)
+
+        kwargs = {}
+        activation_node = onnx.helper.make_node(
+            'GlobalAveragePool', inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(activation_node)
+        return True, add_nodes, inits
