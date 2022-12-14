@@ -128,6 +128,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         for precision in self.query_handler.get_precisions():
             if precision != 'fp32':
+                if self.device == 'cpu' and precision == 'fp16':
+                    continue
                 self.quantizable_op_types += \
                     self.query_handler.get_op_types_by_precision(precision=precision)
  
@@ -930,6 +932,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
+                if precision == 'fp16' and self.device == 'cpu' and os.getenv('FORCE_FP16') != '1':
+                    continue
                 # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \
                     query.get_op_types_by_precision(precision) != ['*'] else \
