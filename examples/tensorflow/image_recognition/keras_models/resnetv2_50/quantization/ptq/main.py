@@ -18,6 +18,7 @@
 import time
 import numpy as np
 import tensorflow as tf
+from neural_compressor.utils import logger
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 flags = tf.compat.v1.flags
@@ -46,6 +47,9 @@ flags.DEFINE_string(
     'eval_data', None, 'location of evaluate dataset')
 
 flags.DEFINE_integer('batch_size', 32, 'batch_size')
+
+flags.DEFINE_integer(
+    'iters', 100, 'maximum iteration when evaluating performance')
 
 from neural_compressor.metric.metric import TensorflowTopK
 from neural_compressor.data.transforms.transform import ComposeTransform
@@ -80,13 +84,13 @@ def evaluate(model):
     output_name = list(output_dict_keys )[0]
     postprocess = LabelShift(label_shift=1)
     metric = TensorflowTopK(k=1)
+    latency_list = []
 
     def eval_func(dataloader, metric):
         warmup = 5
         iteration = None
-        latency_list = []
         if FLAGS.benchmark and FLAGS.mode == 'performance':
-            iteration = 100
+            iteration = FLAGS.iters
         for idx, (inputs, labels) in enumerate(dataloader):
             inputs = np.array(inputs)
             input_tensor = tf.constant(inputs)
@@ -103,10 +107,14 @@ def evaluate(model):
         return latency
 
     latency = eval_func(eval_dataloader, metric)
+    if FLAGS.benchmark:
+        logger.info("\n{} mode benchmark result:".format(FLAGS.mode))
+        for i, res in enumerate(latency_list):
+            logger.debug("Iteration {} result {}:".format(i, res))
     if FLAGS.benchmark and FLAGS.mode == 'performance':
-        print("Batch size = {}".format(eval_dataloader.batch_size))
-        print("Latency: {:.3f} ms".format(latency * 1000))
-        print("Throughput: {:.3f} images/sec".format(1. / latency))
+        logger.info("Batch size = {}".format(eval_dataloader.batch_size))
+        logger.info("Latency: {:.3f} ms".format(latency * 1000))
+        logger.info("Throughput: {:.3f} images/sec".format(1. / latency))
     acc = metric.result()
     return acc
 
@@ -135,8 +143,8 @@ def main(_):
         else:
             from neural_compressor.model.model import Model
             accuracy = evaluate(Model(FLAGS.input_model).model)
-            print('Batch size = %d' % FLAGS.batch_size)
-            print("Accuracy: %.5f" % accuracy)
+            logger.info('Batch size = %d' % FLAGS.batch_size)
+            logger.info("Accuracy: %.5f" % accuracy)
 
 if __name__ == "__main__":
     tf.compat.v1.app.run()

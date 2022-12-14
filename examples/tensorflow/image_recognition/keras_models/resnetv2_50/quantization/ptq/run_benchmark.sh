@@ -10,6 +10,9 @@ function main {
 
 # init params
 function init_params {
+  batch_size=32
+  iters=100
+
   for var in "$@"
   do
     case $var in
@@ -25,6 +28,8 @@ function init_params {
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)
       ;;
+      --iters=*)
+          iters=$(echo $var |cut -f2 -d=)
     esac
   done
 
@@ -38,7 +43,8 @@ function run_benchmark {
             --benchmark \
             --mode ${mode} \
             --eval_data ${dataset_location} \
-            --batch_size ${batch_size}
+            --batch_size ${batch_size} \
+            --iters ${iters}
 }
 
 main "$@"
