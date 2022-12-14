@@ -189,7 +189,6 @@ def main():
                     # Freeze batch norm mean and variance estimates
                     model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
 
-            return model
 
         import copy
         from neural_compressor import QuantizationAwareTrainingConfig
@@ -199,7 +198,7 @@ def main():
         compression_manager = prepare_compression(model, conf)
         compression_manager.callbacks.on_train_begin()
         model = compression_manager.model
-        q_model = train_func(model)
+        train_func(model)
         compression_manager.callbacks.on_train_end()
         compression_manager.save("./saved")
         return
