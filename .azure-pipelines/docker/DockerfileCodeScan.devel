@@ -27,7 +27,10 @@ ENV LANG C.UTF-8
 
 RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     aspell \
-    aspell-en 
+    aspell-en \
+    python3
+
+RUN ln -sf $(which python3) /usr/bin/python
 
 RUN python -m pip install --no-cache-dir pylint==2.12.1\
     bandit\
