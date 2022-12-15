@@ -24,12 +24,12 @@ device: cpu                                          # optional. default value i
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   calibration:
-    sampling_size: 20, 50                              # optional. default value is 100. used to set how many samples should be used in calibration.
+    sampling_size: 20, 50                            # optional. default value is 100. used to set how many samples should be used in calibration.
     dataloader:
       batch_size: 10
       dataset:
         ImageRecord:
-          root: /home/qungao_new/TF_Imagenet_FullData       # NOTE: modify to calibration dataset location if needed
+          root: /path/to/calibration/dataset         # NOTE: modify to calibration dataset location if needed
       transform:
         BilinearImagenet: 
           height: 224
@@ -184,7 +184,7 @@ evaluation:                                          # optional. required if use
       batch_size: 32
       dataset:
         ImageRecord:
-          root: /home/qungao_new/TF_Imagenet_FullData # NOTE: modify to calibration dataset location if needed
+          root: /path/to/evaluation/dataset          # NOTE: modify to calibration dataset location if needed
       transform:
         BilinearImagenet: 
           height: 224
@@ -198,7 +198,7 @@ evaluation:                                          # optional. required if use
       batch_size: 1
       dataset:
         ImageRecord:
-          root: /home/qungao_new/TF_Imagenet_FullData # NOTE: modify to calibration dataset location if needed
+          root: /path/to/evaluation/dataset          # NOTE: modify to calibration dataset location if needed
       transform:
         BilinearImagenet:
           height: 224
@@ -209,5 +209,4 @@ tuning:
     relative: 0.01
   exit_policy:
     timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
-    # max_trials: 10 
   random_seed: 9527                                  # optional. random seed for deterministic tuning.
