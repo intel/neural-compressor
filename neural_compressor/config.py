@@ -553,7 +553,7 @@ class _BaseQuantizationConfig:
 
     @excluded_precisions.setter
     def excluded_precisions(self, excluded_precisions):
-        if check_value("excluded_precisions", excluded_precisions, str, ["bf16"]):
+        if check_value("excluded_precisions", excluded_precisions, str, ["bf16", "fp16"]):
             self._excluded_precisions = excluded_precisions
             self._use_bf16 = "bf16" not in excluded_precisions
 

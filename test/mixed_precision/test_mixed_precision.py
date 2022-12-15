@@ -203,6 +203,7 @@ def build_pt_model():
 
 def build_yaml():
     fake_yaml = """
+        device: gpu
         model:
           name: test
           framework: onnxrt_qlinearops
@@ -303,27 +304,25 @@ class TestMixedPrecision(unittest.TestCase):
         from neural_compressor.experimental import common
         from neural_compressor.experimental.metric.metric import ONNXRT_QL_METRICS
         # test onnx
-        conf = MixedPrecisionConfig(extra_precisions=["fp16"])
-        set_workspace("./saved")
+        conf = MixedPrecisionConfig(device='gpu')
+
         output_model = mix_precision.fit(self.onnx_model, conf)
-        self.assertFalse(any([i.op_type == 'Cast' for i in output_model.nodes()]))
+        self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
-        tuning_criterion = TuningCriterion(max_trials=3, timeout=50)
-        conf = MixedPrecisionConfig(extra_precisions=["fp16"],
-                                    tuning_criterion=tuning_criterion)
-
+        tuning_criterion = TuningCriterion(max_trials=3, timeout=1000000)
+        conf = MixedPrecisionConfig(device='gpu', tuning_criterion=tuning_criterion)
         output_model = mix_precision.fit(self.onnx_model,
                                          conf,
                                          eval_dataloader=common.DataLoader(self.matmul_dataset),
                                          eval_metric=ONNXRT_QL_METRICS["MSE"]())
-        self.assertFalse(any([i.op_type == 'Cast' for i in output_model.nodes()]))
+        self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
         from neural_compressor.conf.config import MixedPrecision_Conf
         from neural_compressor.experimental import MixedPrecision
         converter = MixedPrecision(MixedPrecision_Conf('test.yaml'))
         converter.model = self.onnx_model
         output_model = converter.fit()
-        self.assertFalse(any([i.op_type == 'Cast' for i in output_model.nodes()]))
+        self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
     def test_mixed_precision_with_eval_func(self):
         def eval(model):

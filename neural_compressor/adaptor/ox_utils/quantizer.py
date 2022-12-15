@@ -320,7 +320,7 @@ class Quantizer:
                         if len(outs) > 0:
                             output_dtype = str(self.new_value_info[outs[0]].new_dtype)
                             break
-                    if len(outs) == 0 or all([not self.should_convert(i) for i in children]):
+                    if len(outs) == 0 or all([not self.should_cast(i) for i in children]):
                         return
                     if input_dtype == str(match_nodes[1].attribute[0].i) and \
                         output_dtype == str(match_nodes[0].attribute[0].i) and \

@@ -923,7 +923,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            ('squeeze', 'Squeeze'): {'activation':  {'dtype': 'fp16', 'quant_mode': 'static'},
                                                    'weight': {'dtype': 'fp16'}}}}
         model = adaptor.quantize(tune_cfg, common.Model(self.gather_model), self.gather_dataloader)
-        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 0)
+
+        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 2)
 
         tune_cfg = {'calib_iteration': 1,
                     'op': {('Matmul', 'MatMul'): {'activation':  {'dtype': ['uint8'], 'quant_mode': 'static'},
@@ -934,7 +935,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                                    'weight': {'dtype': 'fp16'}}}}
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
         model = adaptor.quantize(tune_cfg, common.Model(self.matmul_model), self.matmul_dataloader)
-        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 0)
+        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 2)
  
         for fake_yaml in ["gather.yaml"]:
             quantizer = Quantization(fake_yaml)
@@ -1067,7 +1068,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('MatMulInteger' in [i.op_type for i in q_model.nodes()])
  
-        config = PostTrainingQuantConfig(approach='dynamic', output_format='QDQ')
+        config = PostTrainingQuantConfig(approach='dynamic', quant_format='QDQ')
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('MatMulInteger' in [i.op_type for i in q_model.nodes()])

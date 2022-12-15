@@ -59,6 +59,8 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         if not target_dtypes:
             target_dtypes = ['bf16']
         # step1. target_dtype AMAP, collect the ops that support target_dtype
+        bf16_items_name = []
+        op_tuning_cfg = {}
         for target_dtype in target_dtypes:
             bf16_items = tuning_space.query_items_by_quant_mode(target_dtype)
             if len(bf16_items) == 0 or target_dtype == 'fp32':
@@ -66,7 +68,8 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             bf16_items_name = [item.name for item in bf16_items]
             op_tuning_cfg = deepcopy(initial_op_tuning_cfg)
             for op_name_type in bf16_items_name:
-                op_tuning_cfg[op_name_type] = OpTuningConfig(op_name_type[0], op_name_type[1], target_dtype, tuning_space)
+                op_tuning_cfg[op_name_type] = \
+                    OpTuningConfig(op_name_type[0], op_name_type[1], target_dtype, tuning_space)
             calib_sampling_size = 1
             op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
             yield op_tuning_cfg
