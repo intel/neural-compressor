@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument("-o", "--opt", type=str, default="",
                         help="optimization feature to enable")
 
-    parser.add_argument("-a", "--approach", type=str, default="static",
+    parser.add_argument("-a", "--approach", type=str, default="auto",
 
                         help="quantization approach (strategy)")
 
@@ -64,6 +64,8 @@ if not args.bench: # enable
             features = ["pytorch_inc_static_quant_ipex"]
         if args.approach == "dynamic":
             features = ["pytorch_inc_dynamic_quant"]
+        if args.approach == "auto":
+            features = ["inc_auto"]
     else:
         features = args.opt.split(",")
 
