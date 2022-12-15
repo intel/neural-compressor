@@ -8,7 +8,7 @@ For instance, to perform BF16 + Channels Last optimizations with BigDL-Nano API 
 ```
 python -m neural_coder -o nano_bf16_channels_last ../examples/nano/resnet18.py
 ```
-The alias for each optimization set is documented in the below Support Matrix.
+The alias for each optimization set is documented in the below Support Matrix. Note that you need to ```pip install bigdl``` first following [BigDL-Nano documentation](https://github.com/intel-analytics/BigDL#installing).
 
 ## Support Matrix
 
