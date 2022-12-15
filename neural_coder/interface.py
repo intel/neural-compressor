@@ -141,6 +141,7 @@ def enable(
         "tensorflow_amp",
         "keras_amp",
         "tensorflow_inc",
+        "keras_inc",
         "onnx_inc_static_quant_qlinear",
         "onnx_inc_static_quant_qdq",
         "onnx_inc_dynamic_quant",
