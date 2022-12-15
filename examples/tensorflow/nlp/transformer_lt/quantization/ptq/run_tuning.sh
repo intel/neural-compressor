@@ -11,7 +11,7 @@ function main {
 
 # init params
 function init_params {
-
+  topology="transformer_lt"
   for var in "$@"
   do
     case $var in

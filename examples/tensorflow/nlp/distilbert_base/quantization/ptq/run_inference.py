@@ -258,7 +258,7 @@ class Distilbert_base(object):
                     total_correct_predictions += self.get_correct_predictions(pred, labels)
                 total_time += run_time
         time_per_batch = total_time / float(ARGS.steps / ARGS.batch_size)
-        if RGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
+        if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
             accuracy = total_correct_predictions / ARGS.steps
             logger.info("Accuracy: {:.4f}".format(accuracy))
         if self.dataloader.batch_size == 1:

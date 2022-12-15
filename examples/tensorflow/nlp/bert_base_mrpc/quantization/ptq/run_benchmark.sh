@@ -11,9 +11,13 @@ function main {
 # init params
 function init_params {
   iters=100
+  topology="bert_base_mrpc"
   for var in "$@"
   do
     case $var in
+      --topology=*)
+          topology=$(echo $var |cut -f2 -d=)
+      ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;

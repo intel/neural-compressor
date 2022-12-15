@@ -12,6 +12,7 @@ function main {
 # init params
 function init_params {
   # set default value
+  topology="distillbert_base"
   input_model="./distilbert_base_fp32.pb"
   dataset_location="./sst2_validation_dataset"
   mode="performance"
