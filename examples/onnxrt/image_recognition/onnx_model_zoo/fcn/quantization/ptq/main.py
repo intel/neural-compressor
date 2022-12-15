@@ -72,6 +72,11 @@ parser.add_argument(
     help="benchmark mode of performance or accuracy"
 )
 parser.add_argument(
+    '--batch_size',
+    type=int,
+    default=1,
+)
+parser.add_argument(
     '--quant_format',
     type=str,
     default='default', 
@@ -112,8 +117,8 @@ preprocess = transforms.Compose([
 ])
 
 class Dataloader:
-    def __init__(self):
-        self.batch_size = 1
+    def __init__(self, batch_size):
+        self.batch_size = batch_size
         imgIds = self.getImgIdsUnion(cocoGt, VOC_CAT_IDS)
         self.data = []
         for imgId in imgIds:
@@ -134,8 +139,18 @@ class Dataloader:
                 self.data.append((input_tensor, output_tensor))
 
     def __iter__(self, index):
+        inputs = []
+        labels = []
+        idx = self.batch_size
         for data in self.data:
-            yield data
+            inputs.append(data[0])
+            labels.append(data[1])
+            idx -= 1
+            if idx < 0:
+                yield np.array(inputs), labels
+                inputs = []
+                labels = []
+                idx = self.batch_size
 
     def getImgIdsUnion(self, gt, catIds):
         """
