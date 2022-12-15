@@ -11,7 +11,7 @@ This document describes the step-by-step instructions for reproducing torchaudio
 pip install neural-compressor
 ```
 ```shell
-cd examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager
+cd examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx
 pip install -r requirements.txt
 ```
 
