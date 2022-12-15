@@ -6,7 +6,7 @@ Neural Coder collaborates with [BigDL-Nano](https://bigdl.readthedocs.io/en/late
 ## Example
 For instance, to perform BF16 + Channels Last optimizations with BigDL-Nano API using Neural Coder on the [example code](../examples/nano/resnet18.py) and run this code with the enabled optimizations, users can simply execute this command:
 ```
-python -m neural_coder -o nano_bf16_channels_last examples/nano/resnet18.py
+python -m neural_coder -o nano_bf16_channels_last ../examples/nano/resnet18.py
 ```
 The alias for each optimization set is documented in the below Support Matrix.
 
