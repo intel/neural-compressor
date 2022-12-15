@@ -171,11 +171,10 @@ def main():
         from neural_compressor.experimental import Quantization, common
         model.eval()
 
-        def eval_func(model):
-            return -1
+
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
-        quantizer.eval_func = eval_func
+       
         q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
         return
