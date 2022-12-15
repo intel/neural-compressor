@@ -1895,21 +1895,21 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">74.76%</td>
     <td class="tg-pm1l">68.95%</td>
     <td class="tg-pm1l">74.76%</td>
-    <td class="tg-6q5x">74.41%*</td>
+    <td class="tg-6q5x">74.75%</td>
   </tr>
   <tr>
     <td class="tg-cwad">BERT-base</td>
     <td class="tg-pm1l">85.54%</td>
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">85.54%</td>
-    <td class="tg-6q5x">84.56%*</td>
+    <td class="tg-6q5x">84.31%</td>
   </tr>
   <tr>
     <td class="tg-cwad">ResNet50 V1.5</td>
     <td class="tg-pm1l">72.20%</td>
     <td class="tg-pm1l">67.70%</td>
     <td class="tg-pm1l">72.20%</td>
-    <td class="tg-6q5x">71.84%*</td>
+    <td class="tg-6q5x">72.29%</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V2</td>
@@ -1930,7 +1930,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">83.82%</td>
     <td class="tg-pm1l">84.56%</td>
-    <td class="tg-6q5x">84.56%*</td>
+    <td class="tg-6q5x">84.56%</td>
   </tr>
   <tr>
     <td class="tg-cwad">SqueezeNet</td>
@@ -1944,7 +1944,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">18.63%</td>
     <td class="tg-pm1l">18.54%</td>
     <td class="tg-pm1l">18.63%</td>
-    <td class="tg-6q5x">18.61%*</td>
+    <td class="tg-6q5x">18.61%</td>
   </tr>
   <tr>
     <td class="tg-cwad">AlexNet</td>
@@ -1986,35 +1986,35 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">22.86%</td>
     <td class="tg-pm1l">16.94%</td>
     <td class="tg-pm1l">22.80%</td>
-    <td class="tg-pm1l">22.85%*</td>
+    <td class="tg-pm1l">22.87%</td>
   </tr>
   <tr>
     <td class="tg-cwad">Mobile bert MRPC</td>
     <td class="tg-pm1l">85.54%</td>
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">85.54%</td>
-    <td class="tg-pm1l">86.03%*</td>
+    <td class="tg-pm1l">85.54%</td>
   </tr>
   <tr>
     <td class="tg-cwad">Roberta base MRPC</td>
     <td class="tg-pm1l">89.46%</td>
     <td class="tg-pm1l">90.44%</td>
     <td class="tg-pm1l">89.71%</td>
-    <td class="tg-pm1l">89.71%*</td>
+    <td class="tg-pm1l">89.71%</td>
   </tr>
   <tr>
     <td class="tg-cwad">ResNet50 V1.5 MLPerf</td>
     <td class="tg-pm1l">76.14%</td>
     <td class="tg-pm1l">72.80%</td>
     <td class="tg-pm1l">76.14%</td>
-    <td class="tg-6q5x">75.98%*</td>
+    <td class="tg-6q5x">76.17%</td>
   </tr>
   <tr>
     <td class="tg-cwad">VGG16</td>
     <td class="tg-pm1l">66.69%</td>
     <td class="tg-pm1l">64.25%</td>
     <td class="tg-pm1l">66.69%</td>
-    <td class="tg-pm1l">66.52%*</td>
+    <td class="tg-pm1l">66.64%</td>
   </tr>
   <tr>
     <td class="tg-cwad">VGG16 (ONNX Model Zoo)</td>
