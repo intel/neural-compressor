@@ -434,8 +434,8 @@ class GraphConverter:
         g = GraphAnalyzer()
         g.graph = self._fp32_model.graph_def
         g.parse_graph()
-        y_pattern = [['Conv2D', 'MatMul'], ['BiasAdd'], ['Add', 'AddV2'], ('Relu',)]
-        y_pattern_variant = [['MaxPool', 'AvgPool'], ['Add', 'AddV2'], ('Relu',)]
+        y_pattern = [['Conv2D', 'MatMul'], ['BiasAdd'], ['Add', 'AddV2', 'AddN'], ('Relu',)]
+        y_pattern_variant = [['MaxPool', 'AvgPool'], ['Add', 'AddV2', 'AddN'], ('Relu',)]
         target_nodes = g.query_fusion_pattern_nodes(y_pattern)
         target_nodes_variant = g.query_fusion_pattern_nodes(y_pattern_variant)
 
