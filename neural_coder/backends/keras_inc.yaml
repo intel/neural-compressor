@@ -14,14 +14,14 @@
 
 transformation:
   location:
-    - insert_below_model_definition_line
+    - ["insert_below_dataloader_definition_line", "insert_below_model_definition_line"]
   content:
     - |-
       [+] from neural_compressor.quantization import fit
       [+] from neural_compressor.config import PostTrainingQuantConfig
       [+] from neural_compressor.experimental import common
       [+] config = PostTrainingQuantConfig(backend='itex')
-      [+] quantized_model = fit(MODEL_NAME, conf=config, calib_dataloader=calib_dataloader, eval_func=eval_func)
+      [+] quantized_model = fit(MODEL_NAME, conf=config, calib_dataloader=DATALOADER_NAME, eval_func=eval_func)
   order:
     - below:
       above:
