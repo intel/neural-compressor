@@ -1,6 +1,6 @@
 tf_example5 example
 =====================
-This example is used to demonstrate how to config benchmark in yaml for performance measurement.
+This example is used to demonstrate how to config benchmark using pure python API for performance measurement.
 
 ### 1. Installation
 ```shell
