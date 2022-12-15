@@ -528,8 +528,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
     def _revert_conv_add_fusion(self, model):
         from onnx import numpy_helper
         from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
-        from onnx import onnx_pb as onnx_proto
-        from neural_compressor.adaptor.ox_utils.util import find_by_name
         add_nodes = []
         remove_nodes = []
         for node in model.model.graph.node:
