@@ -1,4 +1,4 @@
-tf_example8 example
+tf_example3 example
 =====================
 This example is used to demonstrate how to convert a TensorFlow model with mix precision.
 
