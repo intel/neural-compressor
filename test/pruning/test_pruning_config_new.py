@@ -8,7 +8,10 @@ import torch.nn as nn
 
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.pruning import Pruning, WeightPruningConfig
+from neural_compressor.pruning import WeightPruningConfig
+#from neural_compressor.pruning import Pruning # pytorch_pruner
+from neural_compressor.experimental.pruning_exp import Pruning
+
 
 
 class TestPytorchPruning(unittest.TestCase):
@@ -36,8 +39,9 @@ class TestPytorchPruning(unittest.TestCase):
             pruning_frequency=2,
             target_sparsity=0.8,
         )
-        prune = Pruning(config)
-        prune.model = self.model
+        #import pdb;pdb.set_trace()
+        prune = Pruning(config) #
+        prune.model = self.model #
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
@@ -45,8 +49,8 @@ class TestPytorchPruning(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(12, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        prune.update_config(pruning_frequency=4)
-        prune.on_train_begin()
+        prune.update_config(pruning_frequency=4) #
+        prune.on_train_begin() #
         assert prune.pruners[0].config['pruning_frequency'] == 4
         assert prune.pruners[0].config['target_sparsity'] == 0.6
         assert prune.pruners[1].config['target_sparsity'] == 0.8
