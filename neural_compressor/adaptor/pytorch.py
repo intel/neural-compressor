@@ -1391,10 +1391,10 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.non_quant_dict = self.get_non_quant_modules(self.model.kwargs) 
         quantizable_ops = []
         self._get_quantizable_ops_recursively(self.model._model, '', quantizable_ops)
-        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
         bf16_ops = []
         if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             self._get_bf16_ops_recursively(self.model._model, '', bf16_ops)
         bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         self.model.model.training = True
@@ -2949,10 +2949,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         quantizable_ops = []
         tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
-        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
         bf16_ops = []
         if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
         bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         quantized_ops = OrderedDict()
