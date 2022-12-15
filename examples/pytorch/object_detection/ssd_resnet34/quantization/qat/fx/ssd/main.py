@@ -401,7 +401,7 @@ def train300_mlperf_coco(args):
         conf = QuantizationAwareTrainingConfig(backend="default")
         from neural_compressor.training import prepare_compression
         compression_manager = prepare_compression(copy.deepcopy(ssd300), conf)
-        compression.callbacks.on_train_begin()
+        compression_manager.callbacks.on_train_begin()
         model = compression_manager.model
         q_model = training_func_for_nc(model, val_dataloader)
         compression_manager.callbacks.on_train_end()
@@ -417,7 +417,13 @@ def train300_mlperf_coco(args):
                              dataloader=train_dataloader)
         else:
             new_model = ssd300
-        eval_func(new_model)
+        if args.accuracy:
+            eval_func(new_model)
+        else:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
+            benchmark.fit(new_model, config=b_conf, b_func=eval_func)
         return
 
     return False

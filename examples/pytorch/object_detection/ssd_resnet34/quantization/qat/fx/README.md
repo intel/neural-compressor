@@ -10,7 +10,7 @@ Our example comes from MLPerf Training Inference Suite
 
 ### 1. Installation
 
-PyTorch 1.8 or higher version is needed with pytorch_fx backend.
+PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to use Python 3.10.
 
   ```shell
   cd examples/pytorch/object_detection/ssd_resnet34/quantization/qat/fx

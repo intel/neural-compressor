@@ -6,7 +6,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 from neural_compressor import quantization
-from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion, AccuracyLoss
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 from queue import Queue
 
 import argparse
@@ -566,7 +566,7 @@ def main():
         print('Accuracy: %.3f ' % (accu))
         return accu
 
-    def benchmark(model):
+    def benchmark_func(model):
         global last_timeing
         runner.model.model = model
         lg.StartTestWithLogSettings(sut, qsl, settings, log_settings)
@@ -623,12 +623,18 @@ def main():
         if args.accuracy:
             eval_func(int8_model)
         elif args.benchmark:
-            benchmark(int8_model)
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
+            benchmark.fit(int8_model, config=b_conf, b_func=benchmark_func)
     else:
         if args.accuracy:
             eval_func(raw_model)
         elif args.benchmark:
-            benchmark(raw_model)
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
+            benchmark.fit(raw_model, config=b_conf, b_func=benchmark_func)
 
     runner.finish()
     lg.DestroyQSL(qsl)
