@@ -71,6 +71,7 @@ class Pruning(Component):
         # self.model = None # here skip 
         # align with old Component based API
         # self._init_with_conf()
+        self.callbacks = dict(tf_pruning=TfPruningCallback)
         self.pruners = []
         self.generate_hooks() # place generate hooks here, to get rid of prepare() function.
 
