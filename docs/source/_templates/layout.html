@@ -7,18 +7,13 @@
   <div class="container">
     <div class="header-container">
       <div class="navbar-logo">
-        <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
             <span class="headTitleStyle"> Intel® Neural Compressor</span> 
           </a>
+          <div class="version">
+            <a href='#'>{{ version }}</a>
+          </div>
     </div>
-      <!-- <div class="main-menu">
-        <ul>
-          <li>
-            <a href="https://github.com/intel-innersource/frameworks.ai.lpot.intel-lpot">GitHub</a>
-          </li>
-        </ul>
-      </div> -->
-
       <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
     </div>
   </div>
@@ -26,11 +21,6 @@
 {% endblock %}
 
 {% block menu %}
-<!-- <div>
-  <a style="color:#F05732; content: '⚠';" href="#">
-    ⚠ You are viewing old API docs.
-  </a>
-</div> -->
 {{ super() }}
 {% endblock %}
 
@@ -44,33 +34,4 @@
   var collapsedSections = ['start', 'autoapi', 'info'];
 </script>
 
-
-<!-- <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-4 text-center">
-        <h2>Docs</h2>
-        <p>Lorem ipsum dolor sit amet, consectetur</p>
-        <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
-      </div>
-
-      <div class="col-md-4 text-center">
-        <h2>Tutorials</h2>
-        <p>Lorem ipsum dolor sit amet, consectetur</p>
-        <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
-      </div>
-
-      <div class="col-md-4 text-center">
-        <h2>Resources</h2>
-        <p>Lorem ipsum dolor sit amet, consectetur</p>
-        <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
-      </div>
-    </div>
-  </div>
-</div> -->
-
 {% endblock %}
-
-
-
-
