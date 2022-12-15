@@ -12,7 +12,6 @@ function main {
 # init params
 function init_params {
   # set default value
-  topology="distillbert_base"
   input_model="./distilbert_base_fp32.pb"
   dataset_location="./sst2_validation_dataset"
   mode="performance"
@@ -27,9 +26,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo "$var" |cut -f2 -d=)
       ;;
@@ -59,10 +55,6 @@ function init_params {
       ;;
       --benchmark=*)
          benchmark=$(echo ${var} |cut -f2 -d=)
-      ;;
-      *)
-          echo "Parameter error: ${var}"
-          exit 1
       ;;
     esac
   done
