@@ -12,6 +12,7 @@ function main {
 function init_params {
   tuned_checkpoint=saved_results
   tokenizer_name=bert-large-uncased-whole-word-masking-finetuned-squad
+  iters=100
   for var in "$@"
   do
     case $var in
@@ -54,7 +55,7 @@ function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy_only"
     elif [[ ${mode} == "benchmark" ]]; then
-        mode_cmd=" --benchmark"
+        mode_cmd=" --benchmark --iters "${iters}
     else
         echo "Error: No such mode: ${mode}"
         exit 1

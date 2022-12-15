@@ -99,6 +99,12 @@ class ModelArguments:
     accuracy_only: bool = field(
         default=False, metadata={"help": "get accuracy"}
     )
+    iters: int = field(
+        default=100,
+        metadata={
+            "help": "The inference iterations to run for benchmark."
+        },
+    )
 
 
 @dataclass
@@ -648,7 +654,7 @@ def main():
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor import benchmark
             b_conf = BenchmarkConfig(warmup=5,
-                                     iteration=100,
+                                     iteration=model_args.iters,
                                      cores_per_instance=4,
                                      num_of_instance=1)
             benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)

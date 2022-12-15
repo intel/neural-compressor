@@ -322,8 +322,6 @@ def train(args, model, train_dataloader, lr_scheduler, compression_manager, acce
             loss = outputs.loss
             outputs = torch.vstack([torch.vstack([sx, ex]) \
                 for sx, ex in zip(outputs.start_logits, outputs.end_logits)])
-            labels = torch.hstack([torch.tensor([sx, ex]) \
-                for sx, ex in zip(batch["start_positions"], batch["end_positions"])])
             loss = compression_manager.callbacks.on_after_compute_loss(teacher_batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)

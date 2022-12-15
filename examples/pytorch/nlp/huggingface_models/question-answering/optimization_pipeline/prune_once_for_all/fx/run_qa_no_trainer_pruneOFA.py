@@ -326,10 +326,8 @@ def train(args, model, train_dataloader, lr_scheduler, optimizer, \
             outputs = model(**batch)
             outputs_for_kd = torch.vstack([torch.vstack([sx, ex]) \
                 for sx, ex in zip(outputs['start_logits'], outputs['end_logits'])])
-            labels = torch.hstack([torch.tensor([sx, ex]).to(outputs_for_kd.device) \
-                for sx, ex in zip(batch["start_positions"], batch["end_positions"])])
-            loss = outputs['loss']
-            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs, loss, teacher_logits)
+            loss = outputs['loss'].item()
+            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs_for_kd, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
@@ -906,9 +904,6 @@ def main():
         num_warmup_steps=args.num_warmup_steps,
         num_training_steps=args.max_train_steps,
     )
-
-    def eval_func(model):
-        return evaluation(args, model, accelerator, eval_dataloader, metric)
 
     confs = []
     if args.do_prune:
