@@ -122,11 +122,18 @@ def main():
             print("Accuracy: %.5f" % (1-WER))
             return 1-WER
         from neural_compressor import PostTrainingQuantConfig, quantization
+<<<<<<< HEAD:examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx/run_asr.py
         conf = PostTrainingQuantConfig(approach="static")
         q_model = quantization.fit(model,
                                    conf=conf,
                                    eval_func=eval_func,
                                    calib_dataloader=val_dataloader
+=======
+        conf = PostTrainingQuantConfig(approach="dynamic", backend="pytorch")
+        q_model = quantization.fit(model,
+                                   conf=conf,
+                                   eval_func=eval_func
+>>>>>>> fb5560e5e1df2aefe2c6e9154e7c452bf1aa1de6:examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager/run_asr.py
                                    )
         q_model.save(args.tuned_checkpoint)
         exit(0)
