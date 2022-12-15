@@ -538,6 +538,7 @@ def main():
                 distill_loss_weight = args.distill_loss_weight
                 with torch.no_grad():
                     teacher_outputs = teacher_model(**batch, output_hidden_states=True)
+                ##please refer to Knowledge Distillation with the Reused Teacher Classifier https://arxiv.org/abs/2203.14001
                 MSELoss = torch.nn.MSELoss().cuda()
                 loss = distill_loss_weight * MSELoss(outputs['hidden_states'][-1],
                                                      teacher_outputs['hidden_states'][-1])  ##variant 3

@@ -1,4 +1,4 @@
-i## Examples
+## Examples
 we have provided several pruning examples, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
 ### [Glue](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning)
 
@@ -116,7 +116,7 @@ python3 ./run_glue_no_trainer.py \
         --pruning_frequency 500
 ```
 
-To try to train a sparse model in mixed pattern, pruning config can be set as follows：
+To try to train a sparse model in mixed pattern, local pruning config can be set as follows:
 ```python
 pruning_configs=[
         { # pruner0
@@ -135,7 +135,9 @@ pruning_configs=[
             "sparsity_decay_type": "exp"
         }
     ]
+
 ```
+Please be aware that when the keywords appear in both global and local settings, we select the **local** settings as priority.
 ```shell
 python3 ./run_glue_no_trainer_mixed.py \
         --model_name_or_path "/path/to/dense_finetuned_model/" \
