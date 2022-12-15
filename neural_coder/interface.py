@@ -145,6 +145,7 @@ def enable(
         "onnx_inc_static_quant_qlinear",
         "onnx_inc_static_quant_qdq",
         "onnx_inc_dynamic_quant",
+        "inc_auto",
     ]
     '''
 
@@ -229,6 +230,19 @@ def enable(
 
     ## Feature Transformation
     for idx_feature, feature in enumerate(features):
+
+        # "inc_auto" auto selection of feature according to fwk
+        if feature == "inc_auto":
+            from .coders.autoinc import domain
+            code_domain = domain.determine_domain(globals.list_code_path[0])
+            if code_domain == "keras_script":
+                feature = "keras_inc"
+            elif code_domain == "tensorflow_keras_model":
+                feature = "tensorflow_inc"
+            elif code_domain == "onnx":
+                feature = "onnx_inc_dynamic_quant"
+            else:
+                feature = "pytorch_inc_dynamic_quant"
 
         # reset globals
         globals.reset_globals()
