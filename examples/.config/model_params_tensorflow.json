@@ -40,10 +40,8 @@
       "model_src_dir": "image_recognition/keras_models/resnet101/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/resnet101_keras/saved_model/",
-      "yaml": "resnet101.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 32
     },
     "resnet_v1_50_slim": {
       "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
@@ -121,10 +119,8 @@
       "model_src_dir": "image_recognition/keras_models/inception_v3/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/inception_v3_keras/saved_model/",
-      "yaml": "inception_v3.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 32
     },
     "inception_v3_slim": {
       "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
@@ -319,10 +315,8 @@
       "model_src_dir": "image_recognition/keras_models/resnetv2_101/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/resnetv2_101_keras/saved_model",
-      "yaml": "resnetv2_101.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 32
     },
     "resnetv2_152": {
       "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
@@ -364,10 +358,8 @@
       "model_src_dir": "image_recognition/keras_models/mobilenet_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/mobilenet_v2_keras/saved_model/",
-      "yaml": "mobilenet_v2.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 32
     },
     "mobilenetv3": {
       "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
