@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The `basic` tuning strategy."""
+
 import copy
 import numpy as np
 from collections import OrderedDict
@@ -27,14 +29,8 @@ from .utils.tuning_space import TUNING_ITEMS_LST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
-    """The basic tuning strategy which tunes the low precision model with below order.
-
-    1. modelwise tuning for all quantizable ops.
-    2. fallback tuning from bottom to top to decide the priority of which op has biggest impact
-       on accuracy.
-    3. incremental fallback tuning by fallbacking multiple ops with the order got from #2.
-    """
-
+    """The `basic` tuning strategy."""
+    
     def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
         """Construct a basic tuning strategy.
@@ -42,11 +38,11 @@ class BasicTuneStrategy(TuneStrategy):
         Args:
             model (object): The FP32 model specified for low precision tuning.
             conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
-            q_dataloader (generator): Data loader for calibration, mandatory for post-training quantization.
-            q_func (function, optional): Training function for quantization aware training.
-            eval_dataloader (generator, optional): Data loader for evaluation.
-            eval_func (function, optional): The evaluation function provided by user. 
-            dicts (dict, optional): The dict containing resume information. Defaults to None.
+            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
+            q_func (function): Training function for quantization aware training. Defaults to None.
+            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
+            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
+            dicts (dict): The dict containing resume information. Defaults to None.
         """
         super(
             BasicTuneStrategy,
@@ -61,11 +57,15 @@ class BasicTuneStrategy(TuneStrategy):
             q_hooks)
 
     def next_tune_cfg(self):
-        """The generator of yielding next tuning config to traverse by concrete strategies
-           according to last tuning result.
+        """Generate and yield the next tuning config with below order.
+        
+            1. modelwise tuning for all quantizable ops.
+            2. fallback tuning from bottom to top to decide the priority of which op has biggest impact
+            on accuracy.
+            3. incremental fallback tuning by fallbacking multiple ops with the order got from #2.
 
         Yields:
-            tune_config (dict): It's a dict containing the tuning configuration to run.
+            tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         from copy import deepcopy
         tuning_space = self.tuning_space

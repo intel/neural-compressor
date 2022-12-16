@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""MSE tuning strategy."""
+
 import copy
 from copy import deepcopy
 import numpy as np
@@ -32,55 +34,25 @@ from .utils.helper import tuning_record_msg
 class MSETuneStrategy(TuneStrategy):
     """The tuning strategy using MSE policy in tuning space.
 
-       This MSE policy runs fp32 model and int8 model seperately to get all activation tensors,
-       and then compares those tensors by MSE algorithm to order all ops with MSE distance for
-       deciding the impact of each op to final accuracy.
-       It will be used to define opwise tuningspace by priority.
-
-    Args:
-        model (object):                        The FP32 model specified for low precision tuning.
-        conf (Class):                          The Conf class instance initialized from user yaml
-                                               config file.
-        q_dataloader (generator):              Data loader for calibration, mandatory for
-                                               post-training quantization.
-                                               It is iterable and should yield a tuple (input,
-                                               label) for calibration dataset containing label,
-                                               or yield (input, _) for label-free calibration
-                                               dataset. The input could be a object, list, tuple or
-                                               dict, depending on user implementation, as well as
-                                               it can be taken as model input.
-        q_func (function, optional):           Reserved for future use.
-        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
-                                               and should yield a tuple of (input, label).
-                                               The input could be a object, list, tuple or dict,
-                                               depending on user implementation, as well as it can
-                                               be taken as model input. The label should be able
-                                               to take as input of supported metrics. If this
-                                               parameter is not None, user needs to specify
-                                               pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" parameter as None.
-                                               Tuner will combine model, eval_dataloader and
-                                               pre-defined metrics to run evaluation process.
-        eval_func (function, optional):        The evaluation function provided by user.
-                                               This function takes model as parameter, and
-                                               evaluation dataset and metrics should be
-                                               encapsulated in this function implementation and
-                                               outputs a higher-is-better accuracy scalar value.
-
-                                               The pseudo code should be something like:
-
-                                               def eval_func(model):
-                                                    input, label = dataloader()
-                                                    output = model(input)
-                                                    accuracy = metric(output, label)
-                                                    return accuracy
-        dicts (dict, optional):                The dict containing resume information.
-                                               Defaults to None.
-
+    This MSE policy runs fp32 model and int8 model seperately to get all activation tensors,
+      and then compares those tensors by MSE algorithm to order all ops with MSE distance for
+      deciding the impact of each op to final accuracy.
+      It will be used to define opwise tuningspace by priority.
     """
 
     def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
+        """Construct an mse tuning strategy.
+
+        Args:
+            model (object): The FP32 model specified for low precision tuning.
+            conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
+            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
+            q_func (function): Training function for quantization aware training. Defaults to None.
+            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
+            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
+            dicts (dict): The dict containing resume information. Defaults to None.
+        """
         self.ordered_ops = None
         super(
             MSETuneStrategy,
@@ -95,6 +67,11 @@ class MSETuneStrategy(TuneStrategy):
             q_hooks)
 
     def __getstate__(self):
+        """Magic method for pickle saving.
+
+        Returns:
+            save_dict: Saved dict for resuming
+        """
         for history in self.tuning_history:
             if self._same_yaml(history['cfg'], self.cfg):
                 history['ordered_ops'] = self.ordered_ops
@@ -102,7 +79,7 @@ class MSETuneStrategy(TuneStrategy):
         return save_dict
 
     def mse_metric_gap(self, fp32_tensor, dequantize_tensor):
-        """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor
+        """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
 
         Args:
             fp32_tensor (tensor): The FP32 tensor.
@@ -120,12 +97,16 @@ class MSETuneStrategy(TuneStrategy):
         return euclidean_dist / fp32_tensor.size
 
     def mse_impact_lst(self, op_list: List, fp32_model,  best_qmodel):
-        """_summary_
+        """Calculate and generate the MSE impact list.
 
         Args:
-            op_list (List): [(op_name, op_type), ...]
-            fp32_model: model before quantized
-            current_best_model :  model after quantized
+            op_list (List[Tuple(str, str)]): List of ops in format of [(op_name, op_type), ...].
+            fp32_model (Model): The original FP32 model before quantization.
+            current_best_model (Model):  The currently best quantized model.
+            
+        Returns:
+            ordered_op_name_types (List[Tuple(str, str)]): The sorted list of ops by its MSE
+              impaction, in the same format of 'op_list'. 
         """
         op_name_lst = [element[0] for element in op_list ]
         op_mapping = {}
@@ -155,13 +136,15 @@ class MSETuneStrategy(TuneStrategy):
 
 
     def next_tune_cfg(self):
-        """The generator of yielding next tuning config to traverse by concrete strategies
-           according to last tuning result.
+        """Generate and yield the next tuning config with below order.
+        
+            1. Op-type wise tuning for all quantizable ops.
+            2. Fallback the ops to 'int8_dynamic', 'bf16' and 'fp32' if supported
+               by the MSE impaction.
 
         Yields:
-            tune_config (dict): It's a dict containing the tuning configuration to run.
+            tune_config (dict): A dict containing the tuning configuration for quantization.
         """
-
         best_op_tuning_cfg = None
         if len(self.metric_name) == 1 or self.metric_weight is not None:
             best_acc = float('-inf') if self.higher_is_better else float('inf')
