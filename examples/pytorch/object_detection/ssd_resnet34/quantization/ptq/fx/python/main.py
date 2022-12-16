@@ -616,7 +616,7 @@ def main():
                                      annFile=args.dataset_path +
                                      "/annotations/instances_val2017.json",
                                      transform=transforms.ToTensor())
-        dataloader = torch.utils.data.DataLoader(dataset)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
         int8_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
                           raw_model,
                           dataloader=dataloader)
