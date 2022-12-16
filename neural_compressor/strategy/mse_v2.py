@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""MSE_v2 tuning strategy."""
+"""The `mse_v2` tuning strategy."""
 
 import copy
 from copy import deepcopy
@@ -32,18 +32,12 @@ from .utils.helper import tuning_record_msg
 
 @strategy_registry
 class MSE_V2TuneStrategy(TuneStrategy):
-    """The mse_v2 tuning strategy which tunes the low precision model with below order.
-
-    1. Several times of model-wise tuning for all quantizable operators.
-    2. Try fallback the quantized ops one by one, calculate and sort by the MSE of the 
-       quantizable tensors nearest to the output, and then select the operator with lowest
-       MSE to fallback.
-    3. Try quantize the fallback operators in #2 back further for better performance.
+    """The `mse_v2` tuning strategy.
     
     Note that, only tensorflow framework and pytorch FX backend is currently supported for mse_v2
     tuning strategy.
     """
-
+    
     def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
         """Construct an mse_v2 tuning strategy.
@@ -51,13 +45,12 @@ class MSE_V2TuneStrategy(TuneStrategy):
         Args:
             model (object): The FP32 model specified for low precision tuning.
             conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
-            q_dataloader (generator): Data loader for calibration, mandatory for post-training quantization.
-            q_func (function, optional): Training function for quantization aware training.
-            eval_dataloader (generator, optional): Data loader for evaluation.
-            eval_func (function, optional): The evaluation function provided by user. 
-            dicts (dict, optional): The dict containing resume information. Defaults to None.
+            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
+            q_func (function): Training function for quantization aware training. Defaults to None.
+            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
+            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
+            dicts (dict): The dict containing resume information. Defaults to None.
         """
-        
         self.ordered_ops = None
         super(
             MSE_V2TuneStrategy,
@@ -79,13 +72,17 @@ class MSE_V2TuneStrategy(TuneStrategy):
         return save_dict
 
     def next_tune_cfg(self):
-        """The generator of yielding next tuning config to traverse by concrete strategies
-           according to last tuning result.
-
+        """Generate and yield the next tuning config with below order.
+        
+            1. Several times of model-wise tuning for all quantizable operators.
+            2. Try fallback the quantized ops one by one, calculate and sort by the MSE of the 
+               quantizable tensors nearest to the output, and then select the operator with lowest
+               MSE to fallback.
+            3. Try quantize the fallback operators in #2 back further for better performance.
+    
         Yields:
-            tune_config (dict): It's a dict containing the tuning configuration to run.
+            tune_config (dict): A dict containing the tuning configuration for quantization.
         """
-
         best_op_tuning_cfg = None
         if len(self.metric_name) == 1 or self.metric_weight is not None:
             best_acc = float('-inf') if self.higher_is_better else float('inf')
