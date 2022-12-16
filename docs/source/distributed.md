@@ -1,18 +1,27 @@
 Distributed Training and Inference (Evaluation)
 ============
 
+- [Distributed Training and Inference (Evaluation)](#distributed-training-and-inference-evaluation)
+  - [Introduction](#introduction)
+  - [Horovod Installation](#horovod-installation)
+  - [Distributed Training and Inference (Evaluation)](#distributed-training-and-inference-evaluation-1)
+    - [Option 1: Pure Yaml Configuration](#option-1-pure-yaml-configuration)
+    - [Option 2: User Defined Training Function](#option-2-user-defined-training-function)
+    - [Horovodrun Execution](#horovodrun-execution)
+  - [Security](#security)
+  - [Examples](#examples)
 ## Introduction
 
 Neural Compressor uses [horovod](https://github.com/horovod/horovod) for distributed training.
 
-## horovod installation
+## Horovod Installation
 
 Please check horovod installation documentation and use following commands to install horovod:
 ```
 pip install horovod
 ```
 
-## Distributed training and inference (evaluation)
+## Distributed Training and Inference (Evaluation)
 
 Distributed training and inference are supported in PyTorch and TensorFlow currently. (i.e. PyTorch currently supports distributed QAT and PTQ. TensorFlow currently supports distributed PTQ and Keras-backend Pruning). To enable distributed training or inference, the steps are:
 
@@ -21,7 +30,7 @@ Distributed training and inference are supported in PyTorch and TensorFlow curre
     - Option 2: Pass the user defined training function to Neural Compressor. In this case, please follow the horovod documentation and below example to know how to write such training function with horovod on different frameworks.
 2. use horovodrun to execute your program.
 
-### Option 1: pure yaml configuration
+### Option 1: Pure Yaml Configuration
 
 To enable distributed training in Neural Compressor, user only need to add a field: `Distributed: True` in dataloader configuration:
 
@@ -58,7 +67,7 @@ result = quantizer.strategy.evaluation_result  # result -> (accuracy, evaluation
 ```
 
 
-### Option2: user defined training function
+### Option 2: User Defined Training Function
 
 Neural Compressor supports User defined PyTorch training function for distributed training which requires user to modify training script following horovod requirements. We provide a MNIST example to show how to do that and following are the steps for PyTorch.
 
@@ -119,7 +128,7 @@ component.eval_func = test_func
 model = component()
 ```
 
-### horovodrun
+### Horovodrun Execution
 
 User needs to use horovodrun to execute distributed training. For more usage, please refer to [horovod documentation](https://horovod.readthedocs.io/en/stable/running_include.html).
 
@@ -133,22 +142,22 @@ For example, the following command means that two processes will be assigned to 
 horovodrun -np 2 -H node-001:1,node-002:1 python example.py
 ```
 
-## security
+## Security
 
-horovodrun requires user set up SSH on all hosts without any prompts. To do distributed training with Neural Compressor, user needs to ensure the SSH setting on all hosts.
+Horovodrun requires user set up SSH on all hosts without any prompts. To do distributed training with Neural Compressor, user needs to ensure the SSH setting on all hosts.
 
-## Following examples are supported
+## Examples
 PyTorch:
 - PyTorch example-1: MNIST
-  - Please follow this README.md exactly：[MNIST](../examples/pytorch/image_recognition/mnist)
+  - Please follow this README.md exactly：[MNIST](../../examples/pytorch/image_recognition/mnist)
 
 - PyTorch example-2: QAT (Quantization Aware Training)
-  - Please follow this README.md exactly：[QAT](../examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed)
+  - Please follow this README.md exactly：[QAT](../../examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed)
 
 TensorFlow:
 - TensorFlow example-1: 'ResNet50 V1.0' PTQ (Post Training Quantization) with distributed inference    
-  - Step-1: Please cd (change directory) to the [TensorFlow Image Recognition Example](../examples/tensorflow/image_recognition) and follow the readme to run PTQ, ensure that PTQ of 'ResNet50 V1.0' can be successfully executed.
-  - Step-2: We only need to modify the [resnet50_v1.yaml](../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/resnet50_v1.yaml), add a line 'distributed: True' in the 'evaluation' field.
+  - Step-1: Please cd (change directory) to the [TensorFlow Image Recognition Example](../../examples/tensorflow/image_recognition) and follow the readme to run PTQ, ensure that PTQ of 'ResNet50 V1.0' can be successfully executed.
+  - Step-2: We only need to modify the [resnet50_v1.yaml](../../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/resnet50_v1.yaml), add a line 'distributed: True' in the 'evaluation' field.
     ```
     # only need to modify the resnet50_v1.yaml, add a line 'distributed: True'
     ......
@@ -175,4 +184,4 @@ TensorFlow:
     horovodrun -np 2 -H your_node1_name:1,your_node2_name:1 python main.py --tune --config=resnet50_v1.yaml --input-graph=/PATH/TO/resnet50_fp32_pretrained_model.pb --output-graph=./nc_resnet50_v1.pb
     ```
 - TensorFlow example-2: 'resnet_v2' pruning on Keras backend with distributed training and inference
-   - Please follow this README.md exactly：[Pruning](../examples/tensorflow/image_recognition/resnet_v2)
+   - Please follow this README.md exactly：[Pruning](../../examples/tensorflow/image_recognition/resnet_v2)
