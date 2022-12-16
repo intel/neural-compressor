@@ -22,6 +22,9 @@ function init_params {
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -34,6 +37,7 @@ function run_benchmark {
             --model_path ${input_model} \
             --mode ${mode} \
             --data_path ${dataset_location} \
+            --batch_size ${batch_size} \
             --benchmark
 }
 

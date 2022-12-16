@@ -22,6 +22,9 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -69,6 +72,7 @@ function run_benchmark {
             --data_path ${dataset_location} \
             --task ${TASK_NAME} \
             --mode=${mode} \
+            --batch_size=${batch_size} \
             --benchmark
             
 }

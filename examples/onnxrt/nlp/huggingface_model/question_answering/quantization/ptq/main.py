@@ -121,6 +121,10 @@ class ModelArguments:
         default=768,
         metadata={"help": ("onnx model optimize hidden_size")},
     )
+    batch_size: int = field(
+        default=1,
+        metadata={"help": ("batch size for benchmark")},
+    )
 
 
 @dataclass
@@ -277,7 +281,7 @@ def main():
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     training_args.do_eval = True
-    training_args.per_device_eval_batch_size = 1
+    training_args.per_device_eval_batch_size = model_args.batch_size
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
@@ -583,12 +587,14 @@ def main():
             from neural_compressor.config import BenchmarkConfig
             
             conf = BenchmarkConfig(iteration=100,
-                                cores_per_instance=28,
-                                num_of_instance=1)
-            fit(model, conf, b_dataloader=eval_dataloader)
+                                   cores_per_instance=28,
+                                   num_of_instance=1)
+            b_dataloader = SquadDataset(eval_dataloader)
+            b_dataloader = DataLoader(b_dataloader, model_args.batch_size)
+            fit(model, conf, b_dataloader=b_dataloader)
         elif model_args.mode == 'accuracy':
             eval_f1 = eval_func(model)
-            print("Batch size = %d" % training_args.per_device_eval_batch_size)
+            print("Batch size = %d" % model_args.batch_size)
             print("Accuracy: %.5f" % eval_f1)
 
 if __name__ == "__main__":

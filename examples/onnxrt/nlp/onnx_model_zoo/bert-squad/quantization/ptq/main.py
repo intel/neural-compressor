@@ -16,7 +16,6 @@ import sys
 max_seq_length = 256
 doc_stride = 128
 max_query_length = 64
-batch_size = 1
 n_best_size = 20
 max_answer_length = 30
 
@@ -101,6 +100,8 @@ def main():
     parser.add_argument('--quant_format', type=str, default='Default', 
                         choices=['default', 'QDQ'],
                         help="quantization format")
+    parser.add_argument('--batch_size', type=int, default=1, 
+                        help="batch size for benchmark")
     args = parser.parse_args()
 
     model = onnx.load(args.model_path)
@@ -115,7 +116,7 @@ def main():
                                                                             max_seq_length, doc_stride, max_query_length)
 
     dataset = squadDataset(eval_examples, input_ids, input_mask, segment_ids, 1) 
-    eval_dataloader = DataLoader(dataset, batch_size=batch_size)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size)
 
     def eval_func(model):
         return evaluate_squad(model, eval_dataloader, input_ids, eval_examples, extra_data, input_file)
@@ -153,7 +154,7 @@ def main():
             fit(model, conf, b_dataloader=eval_dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
-            print("Batch size = %d" % batch_size)
+            print("Batch size = %d" % args.batch_size)
             print("Accuracy: %.5f" % acc_result)
 
 

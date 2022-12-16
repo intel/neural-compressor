@@ -47,6 +47,7 @@ bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
 ```bash
 bash run_benchmark.sh --input_model=/path/to/model \ # model path as *.onnx
                       --dataset_location=/path/to/SQuAD/dataset \
+                      --batch_size=batch_size \ 
                       --mode=performance # or accuracy
 ```
 

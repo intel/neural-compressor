@@ -23,6 +23,9 @@ function init_params {
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -49,7 +52,6 @@ function run_benchmark {
     model_type='gpt2'
     model_name_or_path='gpt2'
     test_data='wiki.test.raw'
-    batch_size=1
     python gpt2.py --model_path ${input_model} \
                         --data_path ${dataset_location}${test_data} \
                         --model_type ${model_type} \

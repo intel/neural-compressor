@@ -27,7 +27,7 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Union
 import sys
-from neural_compressor.data import DATALOADERS, DATASETS
+from torch.utils.data import Dataset, DataLoader
 
 
 class ONNXRTBertDataset:
@@ -355,7 +355,7 @@ if __name__ == "__main__":
     dataset = ONNXRTBertDataset(data_dir=args.data_path,
                                 model_name_or_path=args.model_name_or_path,
                                 task=args.task)
-    dataloader = DATALOADERS['onnxrt_integerops'](dataset, batch_size=args.batch_size)
+    dataloader = DataLoader(dataset, args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
     def eval_func(model, *args):

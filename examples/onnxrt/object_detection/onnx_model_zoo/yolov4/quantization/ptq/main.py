@@ -71,6 +71,11 @@ parser.add_argument(
     type=str,
     help="benchmark mode of performance or accuracy"
 )
+parser.add_argument(
+    '--batch_size',
+    type=int,
+    default=1,
+)
 args = parser.parse_args()
 
 def get_anchors(anchors_path, tiny=False):
@@ -131,8 +136,18 @@ class Dataloader:
             self.image_list.append((image, label))
 
     def __iter__(self):
+        inputs = []
+        labels = []
+        idx = self.batch_size
         for item in self.image_list:
-            yield item
+            inputs.append(item[0])
+            labels.append(item[1])
+            idx -= 1
+            if idx < 0:
+                yield np.array(inputs), labels
+                inputs = []
+                labels = []
+                idx = self.batch_size
 
     def preprocess(self, sample):
         image, label = sample
@@ -457,8 +472,7 @@ class COCOmAPv2():
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    batch_size = 1
-    dataloader = Dataloader(args.data_path, batch_size=batch_size)
+    dataloader = Dataloader(args.data_path, batch_size=args.batch_size)
     metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes':0, 'scores':2, 'classes':1})
     postprocess = Post()
 
@@ -500,7 +514,7 @@ if __name__ == "__main__":
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
-            print("Batch size = %d" % batch_size)
+            print("Batch size = %d" % args.batch_size)
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:

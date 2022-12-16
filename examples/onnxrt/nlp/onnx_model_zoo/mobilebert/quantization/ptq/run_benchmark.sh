@@ -22,6 +22,9 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -32,8 +35,9 @@ function run_benchmark {
 
     python main.py \
             --model_path ${input_model} \
-            --mode=${mode} \
+            --mode ${mode} \
             --data_path ${dataset_location} \
+            --batch_size ${batch_size} \
             --benchmark
             
 }

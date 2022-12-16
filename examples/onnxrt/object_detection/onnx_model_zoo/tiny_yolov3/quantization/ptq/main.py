@@ -72,10 +72,15 @@ parser.add_argument(
     type=str,
     help="benchmark mode of performance or accuracy"
 )
+parser.add_argument(
+    '--batch_size',
+    type=int,
+    default=1,
+)
 args = parser.parse_args()
 
 class Dataloader:
-    def __init__(self, root, batch_size=1, size=416, img_dir='val2017', \
+    def __init__(self, root, batch_size, size=416, img_dir='val2017', \
             anno_dir='annotations/instances_val2017.json'):
         import json
         import os
@@ -121,8 +126,18 @@ class Dataloader:
             self.image_list.append((data, label))
 
     def __iter__(self):
+        inputs = []
+        labels = []
+        idx = self.batch_size
         for item in self.image_list:
-            yield item
+            inputs.append(item[0])
+            labels.append(item[1])
+            idx -= 1
+            if idx < 0:
+                yield np.array(inputs), labels
+                inputs = []
+                labels = []
+                idx = self.batch_size
 
     def letterbox_image(self, image, size):
         '''resize image with unchanged aspect ratio using padding'''
@@ -327,8 +342,7 @@ class Post:
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    batch_size = 1
-    dataloader = Dataloader(args.data_path, batch_size=batch_size)
+    dataloader = Dataloader(args.data_path, batch_size=args.batch_size)
     metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes':0, 'scores':1, 'classes':2})
     postprocess = Post()
 
@@ -370,7 +384,7 @@ if __name__ == "__main__":
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
-            print("Batch size = %d" % batch_size)
+            print("Batch size = %d" % args.batch_size)
             print("Accuracy: %.5f" % acc_result)
 
 

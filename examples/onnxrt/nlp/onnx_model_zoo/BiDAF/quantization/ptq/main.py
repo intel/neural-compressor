@@ -66,8 +66,8 @@ def preprocess(text):
    return words, chars
 
 class squadDataset():
-    def __init__(self, datapath):
-        self.batch_size = 1
+    def __init__(self, datapath, batch_size):
+        self.batch_size = batch_size
         self.data = []
         with open(datapath, "r") as f:
             input_data = json.load(f)["data"]
@@ -152,7 +152,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     model = onnx.load(args.model_path)
-    dataloader = squadDataset(args.data_path)
+    batch_size = 1
+    dataloader = squadDataset(args.data_path, batch_size)
     metric = EM()
 
     def eval_func(model):
@@ -188,11 +189,10 @@ if __name__ == "__main__":
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             conf = BenchmarkConfig(iteration=100,
-                                cores_per_instance=4,
-                                num_of_instance=7)
+                                   cores_per_instance=4,
+                                   num_of_instance=7)
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
-            batch_size = 1
             acc_result = eval_func(model)
             print("Batch size = %d" % batch_size)
             print("Accuracy: %.5f" % acc_result)
