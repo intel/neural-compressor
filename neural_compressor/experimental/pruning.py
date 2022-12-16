@@ -241,7 +241,6 @@ class Pruning(Component):
             if self.cfg.pruning.approach.weight_compression_pytorch != None:
                 from .pytorch_pruner.pruning import Pruning as PytorchPruning
                 self.pytorch_pruner = PytorchPruning(self.cfg)
-                self.pruners.append(self.pytorch_pruner)
                 self.pytorch_pruner.model = self.model._model # extract their pytorch model
                 self.pytorch_pruner.prepare()
                 self.pytorch_pruner.on_train_begin()
