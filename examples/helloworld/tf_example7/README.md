@@ -1,4 +1,4 @@
-tf_example8 example
+tf_example7 example
 =====================
 This example is used to demonstrate how to quantize a TensorFlow model with pure python API.
 
@@ -20,7 +20,7 @@ python test.py
 ### 4. Introduction
 We can quantize a model only needing to set the dataloader with dummy dataset to generate an int8 model.
 ```python
-    dataset = Datasets('tensorflow')['dummy'](shape=(20, 224, 224, 3))
+    dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
     from neural_compressor.quantization import fit
     config = PostTrainingQuantConfig()
     quantized_model = fit(
