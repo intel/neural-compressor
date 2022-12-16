@@ -26,7 +26,7 @@ import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
 from neural_compressor.experimental import Quantization
-from neural_compressor.data import DATALOADERS, DATASETS
+from neural_compressor.data import DATALOADERS, Datasets
 from neural_compressor.adaptor.tf_utils.util import _parse_ckpt_bn_input
 
 flags = tf.flags
@@ -133,13 +133,13 @@ def main(args=None):
       if FLAGS.tune:
           # create dataloader using default style_transfer dataset
           # generate stylized images
-          dataset = DATASETS('tensorflow')['style_transfer']( \
+          dataset = Datasets('tensorflow')['style_transfer']( \
               FLAGS.content_images_paths.strip(),
               FLAGS.style_images_paths.strip(),
               crop_ratio=0.2,
               resize_shape=(256, 256))
       else: 
-          dataset = DATASETS('tensorflow')['dummy_v2'](\
+          dataset = Datasets('tensorflow')['dummy_v2'](\
               input_shape=[(256, 256, 3), (256, 256, 3)], label_shape=(1, )) 
       dataloader = DATALOADERS['tensorflow'](dataset=dataset, batch_size=FLAGS.batch_size)
       tf.import_graph_def(frozen_graph, name='')
