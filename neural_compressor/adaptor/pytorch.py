@@ -3781,7 +3781,7 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                     scale = self.scale
                 for i in range(len(input)):
                     # for Matmul and BatchMatmul
-                    if i == 1:
+                    if i == 1 and hasattr(self, 'scale1'):
                         scale = self.scale1
                     tensor = input[i]
                     tensor_q = quantize_tensor(tensor, self.qconfig.iact_qconfig, scale=scale)
