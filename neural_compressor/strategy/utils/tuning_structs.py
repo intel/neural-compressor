@@ -41,10 +41,11 @@ class OpTuningConfig:
         op_name_type = (self.op_name, self.op_type)
         if quant_mode in QUANT_MODE_SET:
             for act_quant_flag in [True, False]:
-                new_quant_mode = (quant_mode, quant_bit, act_quant_flag)
-                if new_quant_mode in tuning_space.ops_dtype[op_name_type]:
-                    quant_mode = new_quant_mode
-                    break
+                for quant_bit in ['int8', 'fp8_e4m3']:
+                    new_quant_mode = (quant_mode, quant_bit, act_quant_flag)
+                    if new_quant_mode in tuning_space.ops_dtype[op_name_type]:
+                        quant_mode = new_quant_mode
+                        break
         if quant_mode in tuning_space.ops_dtype[op_name_type]:
             self.act_dtype = tuning_space.ops_dtype[op_name_type][quant_mode]['act_dtype']
             q_dtype = tuning_space.ops_dtype[op_name_type][quant_mode]

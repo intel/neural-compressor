@@ -750,3 +750,24 @@ def get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg):
     ordered_ops = sorted(fallback_order.keys(), key=lambda key: fallback_order[key], \
                                             reverse=False)
     return ordered_ops
+
+# FP8: Single entry function for quantizing tensor.
+def quantize_tensor(tensor, qtconfig, scale=None, inplace=False):
+    qtconfig.check_validity(qtconfig.dtype, qtconfig.scheme)
+    mode = qtconfig.dtype.upper()
+
+    if not scale:
+        if mode == 'E5M2':
+            scale = 1.0
+        elif mode == 'E4M3':
+            HF_max = torch.tensor(448.0)
+            amax = torch.max(torch.abs(tensor))
+            scale = HF_max / amax
+
+    if qtconfig.scheme is not None:
+        mode += "_"+qtconfig.scheme.upper()
+
+    from mpemu.pytquant.cpp import fpemu_cpp
+    tensor_q = fpemu_cpp.FPEmuOp.apply(tensor, mode, inplace, scale)
+
+    return tensor_q

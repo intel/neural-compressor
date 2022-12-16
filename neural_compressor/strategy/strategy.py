@@ -220,6 +220,7 @@ class TuneStrategy(object):
             self.eval_func = self._fake_eval_func
 
         # get fp32 model baseline
+        #self.baseline = [0, [0, 0]]
         if self.baseline is None:
             logger.info("Get FP32 model baseline.")
             self._fp32_model = self.model
@@ -339,14 +340,13 @@ class TuneStrategy(object):
 
     def _calculate_fallback_op_count(self, target_dtype='INT8'):
         fallback_stats = defaultdict(int)
-        
+
         for optype in self._optype_statistics:
             for dtype, count in self._optype_statistics[optype].items():
                 fallback_stats[dtype] += count
 
         return fallback_stats[target_dtype]
 
-    
     def _compare_optype_statistics(self, fields=None, optypes=None,
                                    skip_fields=None, skip_optypes=None):
         assert(fields == None or skip_fields == None)
@@ -399,13 +399,13 @@ class TuneStrategy(object):
         
     def initial_tuning_cfg(self):
         if self.cfg.quantization.approach == 'post_training_auto_quant':
-            query_order = ['static', 'dynamic', 'bf16', 'fp32']
+            query_order = ['static', 'dynamic', 'fp8_e5m2', 'bf16', 'fp32']
         elif self.cfg.quantization.approach == 'post_training_dynamic_quant':
-            query_order = ['dynamic', 'bf16', 'fp32']
+            query_order = ['dynamic', 'fp8_e5m2', 'bf16', 'fp32']
         elif self.cfg.quantization.approach == 'post_training_static_quant':
-            query_order = ['static', 'bf16', 'fp32']
+            query_order = ['static', 'fp8_e5m2', 'bf16', 'fp32']
         elif self.cfg.quantization.approach == 'quant_aware_training':
-            query_order = ['static', 'dynamic', 'bf16', 'fp32']
+            query_order = ['static', 'dynamic', 'fp8_e5m2', 'bf16', 'fp32']
 
         quant_mode_wise_items = OrderedDict()
         pre_items = set()
@@ -585,6 +585,7 @@ class TuneStrategy(object):
                 framework = 'pytorch_fx'
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
+            framework_specific_info.update({"precision": self.cfg.quantization.precision})
             framework_specific_info.update({"q_dataloader": q_dataloader})
             framework_specific_info.update({"use_bf16": self.cfg.use_bf16 \
                             if self.cfg.use_bf16 is not None else True})
@@ -595,6 +596,8 @@ class TuneStrategy(object):
                 framework_specific_info.update(
                     {"default_qconfig": self.cfg['quantization']['op_wise']['default_qconfig']})
             framework_specific_info.update({"q_func": q_func})
+            if 'fp8' in self.cfg.quantization.precision:
+                framework = 'pytorch_fp8'
         return framework, framework_specific_info
 
     def set_objectives(self):

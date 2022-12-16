@@ -29,6 +29,8 @@
     uint8: ['Conv1d', 'Conv2d', 'Conv3d', 'BatchNorm2d', 'BatchNorm3d', 'Linear', 'ReLU', 'ReLU6',
             'QuantStub', 'FloatFunctional', 'ConvReLU2d', 'ConvReLU3d', 'LinearReLU', 'BNReLU2d',
             'BNReLU3d', 'ConvBn2d', 'ConvBnReLU2d']
+    bf8: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'Embedding', 'LayerNorm']
+    hf8: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'Embedding', 'LayerNorm']
     bf16: ['Linear', 'bmm', 'mm', 'baddbmm', 'addmm', 'addbmm',
             '_convolution', 'LSTM', 'LSTMCell', 'GRU', 'GRUCell']
     fp32: ['*'] # '*' means all op types
@@ -270,6 +272,113 @@
                         },
                     },
           }
+    # fp8_e5m2(bf8) is direct cast.
+    fp8_e5m2: &cap_bf8_1_11 {
+          'Conv2d': &cap_bf8_1_11_Conv2d {
+            'weight': {
+                        'dtype': ['fp8_e5m2'],
+                        },
+            'activation': {
+                        'dtype': ['fp8_e5m2'],
+                        },
+                    },
+          'Linear': *cap_bf8_1_11_Conv2d,
+          'Matmul': *cap_bf8_1_11_Conv2d,
+          'BatchMatmul': *cap_bf8_1_11_Conv2d,
+          'Embedding': &cap_bf8_1_11_Embedding {
+            'weight': {
+                        'dtype': ['fp8_e5m2'],
+                        },
+            'activation': {
+                        'dtype': ['fp32'],
+                        },
+                    },
+          'EmbeddingBag': *cap_bf8_1_11_Embedding,
+          'LayerNorm': *cap_bf8_1_11_Conv2d,
+          'default': {
+            'activation': {
+                        'dtype': ['fp32'],
+                        },
+            'weight': {
+                        'dtype': ['fp32'],
+                        },
+                    },
+    }
+    # fp8_e4m3(hf8) has scale and therefore have dynamic and static method.
+    fp8_e4m3: &cap_hf8_1_11
+        dynamic: &cap_dynamic_hf8_1_11 {
+          'Conv2d': &cap_dynamic_hf8_1_11_Conv2d {
+            'weight': {
+                        'dtype': ['fp8_e4m3'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['fp8_e4m3'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'Linear': *cap_dynamic_hf8_1_11_Conv2d,
+          'Matmul': *cap_dynamic_hf8_1_11_Conv2d,
+          'BatchMatmul': *cap_dynamic_hf8_1_11_Conv2d,
+          'Embedding': &cap_hf8_1_11_Embedding {
+            'weight': {
+                        'dtype': ['fp8_e4m3'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['fp32'],
+                        },
+                    },
+          'EmbeddingBag': *cap_hf8_1_11_Embedding,
+          #'LayerNorm': *cap_dynamic_hf8_1_11_Conv2d,
+          'LayerNorm': *cap_bf8_1_11_Conv2d,
+          'default': {
+            'activation': {
+                        'dtype': ['fp32'],
+                        },
+            'weight': {
+                        'dtype': ['fp32'],
+                        },
+                    },
+        }
+        static: &cap_static_hf8_1_11 {
+          'Conv2d': &cap_static_hf8_1_11_Conv2d {
+            'weight': {
+                        'dtype': ['fp8_e4m3'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['fp8_e4m3'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['kl', 'minmax']
+                        },
+                    },
+          'Linear': *cap_static_hf8_1_11_Conv2d,
+          'Matmul': *cap_static_hf8_1_11_Conv2d,
+          'BatchMatmul': *cap_static_hf8_1_11_Conv2d,
+          'Embedding': *cap_hf8_1_11_Embedding,
+          'EmbeddingBag': *cap_hf8_1_11_Embedding,
+          #'LayerNorm': *cap_static_hf8_1_11_Conv2d,
+          'LayerNorm': *cap_bf8_1_11_Conv2d,
+          'default': {
+            'activation': {
+                        'dtype': ['fp32'],
+                        },
+            'weight': {
+                        'dtype': ['fp32'],
+                        },
+                    },
+        }
+
 
   patterns:
     fp32: &ref_1_11_fp32 [ #TODO Add more patterns here to demonstrate our concept the results external engine should return.

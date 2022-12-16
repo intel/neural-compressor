@@ -306,6 +306,7 @@ class _BaseQuantizationConfig:
                  backend="default",
                  quant_format="default",
                  device="cpu",
+                 precision='int8',
                  calibration_sampling_size=[100],
                  op_type_list=None,
                  op_name_list=None,
@@ -313,7 +314,7 @@ class _BaseQuantizationConfig:
                  strategy_kwargs=None,
                  objective="performance",
                  timeout=0,
-                 max_trials=100,
+                 max_trials=1000,
                  performance_only=False,
                  reduce_range=None,
                  excluded_precisions=[],
@@ -322,6 +323,7 @@ class _BaseQuantizationConfig:
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
+        self.precision = precision
         self.quant_format = quant_format
         self.device = device
         self.op_type_list = op_type_list
@@ -501,6 +503,17 @@ class _BaseQuantizationConfig:
             self._backend = backend
 
     @property
+    def precision(self):
+        return self._precision
+
+    @precision.setter
+    def precision(self, precision):
+        if check_value('precision', precision, str, [
+                'int8', 'fp8_e5m2', 'fp8_e4m3'
+        ]):
+            self._precision = precision
+
+    @property
     def outputs(self):
         return self._outputs
 
@@ -581,6 +594,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  device="cpu",
                  backend="default",
                  quant_format="default",
+                 precision="fp8_e5m2",
                  inputs=[],
                  outputs=[],
                  approach="static",
@@ -599,6 +613,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          device=device,
                          backend=backend,
                          quant_format=quant_format,
+                         precision=precision,
                          calibration_sampling_size=calibration_sampling_size,
                          op_type_list=op_type_list,
                          op_name_list=op_name_list,

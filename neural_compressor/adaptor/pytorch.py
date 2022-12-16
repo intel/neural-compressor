@@ -752,6 +752,7 @@ class TemplateAdaptor(Adaptor):
         self.bf16_ops = []
         self.use_bf16 = framework_specific_info['use_bf16'] if \
             'use_bf16' in framework_specific_info else True
+        self.precision = framework_specific_info['precision']
         self.device = framework_specific_info['device']
         self.q_dataloader = framework_specific_info['q_dataloader']
         self.q_func = framework_specific_info['q_func'] \
@@ -976,60 +977,96 @@ class TemplateAdaptor(Adaptor):
         q_capability['optypewise'] = OrderedDict()
         q_capability['opwise'] = OrderedDict()
 
-        if self.approach == "post_training_dynamic_quant":
+        if self.precision == 'int8':
+            if self.approach == "post_training_dynamic_quant":
+                capability_pair = [
+                    (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
+            elif self.approach == "quant_aware_training":
+                capability_pair = [
+                    (self.query_handler.get_quantization_capability()['quant_aware'], 'static')]
+            elif self.approach == "post_training_static_quant":
+                capability_pair = [
+                    (self.query_handler.get_quantization_capability()['int8'], 'static')]
+            else:
+                capability_pair = [
+                    (self.query_handler.get_quantization_capability()['int8'], 'static'),
+                    (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
+        elif self.precision == 'fp8_e5m2':
             capability_pair = [
-                (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
-        elif self.approach == "quant_aware_training":
-            capability_pair = [
-                (self.query_handler.get_quantization_capability()['quant_aware'], 'static')]
-        elif self.approach == "post_training_static_quant":
-            capability_pair = [
-                (self.query_handler.get_quantization_capability()['int8'], 'static')]
-        else:
-            capability_pair = [
-                (self.query_handler.get_quantization_capability()['int8'], 'static'),
-                (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
+                (self.query_handler.get_quantization_capability()['fp8_e5m2'])]
+        elif self.precision == 'fp8_e4m3':
+            if self.approach == "post_training_dynamic_quant":
+                capability_pair = [
+                    (self.query_handler.get_quantization_capability()['fp8_e4m3']['dynamic'], 'dynamic')]
+            else:
+                capability_pair = [
+                    (self.query_handler.get_quantization_capability()['fp8_e4m3']['static'], 'static')]
         fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
-        # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops,
-        # due to huge accuracy regression in PyTorch.
-        if isinstance(self, PyTorch_IPEXAdaptor):
-            additional_skipped_module_classes = {}
+
+        if self.precision == 'int8':
+            # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops,
+            # due to huge accuracy regression in PyTorch.
+            if isinstance(self, PyTorch_IPEXAdaptor):
+                additional_skipped_module_classes = {}
+            else:
+                additional_skipped_module_classes = {'LayerNorm', 'InstanceNorm3d', 'Dropout'}
+            no_fp32_ops = {'QuantStub'}
+            for pair in capability_pair:
+                capability, mode = pair
+                for q_op in quantizable_ops:
+                    if q_op not in q_capability['opwise']:
+                        q_capability['opwise'][q_op] = []
+                    if q_op[1] not in q_capability['optypewise']:
+                        q_capability['optypewise'][q_op[1]] = []
+
+                    if mode == 'static' and self.approach != "quant_aware_training" and \
+                        q_op[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell']:
+                        continue
+                    op_cfg = copy.deepcopy(capability[q_op[1]]) if q_op[1] in capability \
+                        else copy.deepcopy(capability['default'])
+
+                    op_cfg['activation']['quant_mode'] = mode if q_op[1] not in \
+                        ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell'] else 'dynamic'
+
+                    # skip the op that only include fp32
+                    if q_op[1] not in additional_skipped_module_classes:
+                        if op_cfg not in q_capability['opwise'][q_op]:
+                            q_capability['opwise'][q_op].append(op_cfg)
+                        if op_cfg not in q_capability['optypewise'][q_op[1]]:
+                            q_capability['optypewise'][q_op[1]].append(op_cfg)
+
+                    if q_op[1] not in no_fp32_ops:
+                        if fp32_config not in q_capability['opwise'][q_op]:
+                            q_capability['opwise'][q_op].append(fp32_config)
+                        if fp32_config not in q_capability['optypewise'][q_op[1]]:
+                            q_capability['optypewise'][q_op[1]].append(fp32_config)
         else:
-            additional_skipped_module_classes = {'LayerNorm', 'InstanceNorm3d', 'Dropout'}
-        no_fp32_ops = {'QuantStub'}
-        for pair in capability_pair:
-            capability, mode = pair
-            for q_op in quantizable_ops:
-                if q_op not in q_capability['opwise']:
-                    q_capability['opwise'][q_op] = []
-                if q_op[1] not in q_capability['optypewise']:
-                    q_capability['optypewise'][q_op[1]] = []
-
-                if mode == 'static' and self.approach != "quant_aware_training" and \
-                    q_op[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell']:
-                    continue
-                op_cfg = copy.deepcopy(capability[q_op[1]]) if q_op[1] in capability \
-                    else copy.deepcopy(capability['default'])
-
-                op_cfg['activation']['quant_mode'] = mode if q_op[1] not in \
-                    ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell'] else 'dynamic'
-
-                # skip the op that only include fp32
-                if q_op[1] not in additional_skipped_module_classes:
+            for pair in capability_pair:
+                if self.precision == 'fp8_e5m2':
+                    capability, mode = pair, None
+                else:
+                    capability, mode = pair
+                for q_op in quantizable_ops:
+                    if q_op not in q_capability['opwise']:
+                        q_capability['opwise'][q_op] = []
+                    if q_op[1] not in q_capability['optypewise']:
+                        q_capability['optypewise'][q_op[1]] = []
+                    op_cfg = copy.deepcopy(capability[q_op[1]]) if q_op[1] in capability \
+                        else copy.deepcopy(capability['default'])
+                    if mode:
+                        op_cfg['activation']['quant_mode'] = mode
                     if op_cfg not in q_capability['opwise'][q_op]:
                         q_capability['opwise'][q_op].append(op_cfg)
                     if op_cfg not in q_capability['optypewise'][q_op[1]]:
                         q_capability['optypewise'][q_op[1]].append(op_cfg)
-
-                if q_op[1] not in no_fp32_ops:
+                    # add fp32 config
                     if fp32_config not in q_capability['opwise'][q_op]:
                         q_capability['opwise'][q_op].append(fp32_config)
                     if fp32_config not in q_capability['optypewise'][q_op[1]]:
                         q_capability['optypewise'][q_op[1]].append(fp32_config)
 
-
         # get bf16 capability
-        if self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
+        if False and self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
             (self.version.release >= Version("1.11.0").release):
             self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             bf16_ops = []
@@ -3554,6 +3591,367 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         ordered_ops = get_fallback_order(self, model.model, dataloader, tune_cfg, 
                                          confidence_batches, fallback, requantize_cfgs)
         return ordered_ops
+
+
+@adaptor_registry
+class PyTorch_FP8Adaptor(TemplateAdaptor):
+    """Adaptor of PyTorch framework, all PyTorch API is in this class.
+
+    Args:
+        framework_specific_info (dict): dictionary of tuning configure from yaml file.
+    """
+    def __init__(self, framework_specific_info):
+        super(PyTorch_FP8Adaptor, self).__init__(framework_specific_info)
+        self.tune_cfg = None
+        if self.device == "cpu":
+            query_config_file = "pytorch_cpu.yaml"
+        elif self.device == "gpu":
+            query_config_file = "pytorch_gpu.yaml"
+        else:  # pragma: no cover
+            assert False, "Unsupport this device {}".format(self.device)
+        self.query_handler = PyTorchQuery(
+            local_config_file=os.path.join(os.path.dirname(__file__), query_config_file))
+        #from .torch_utils.fp8_wrapper import BatchMatmul,Matmul
+        from mpemu.module_wrappers import BatchMatmul,Matmul
+        self.white_list = [torch.nn.Linear, torch.nn.Conv2d, BatchMatmul, Matmul, 
+                            torch.nn.Embedding, torch.nn.LayerNorm]
+
+    @dump_elapsed_time("Pass quantize model")
+    def quantize(self, tune_cfg, model, dataloader, q_func=None):
+        """Execute the quantize process on the specified model.
+
+        Args:
+            tune_cfg (dict): quantization config.
+            model (object): model need to do quantization.
+            dataloader (object): calibration dataset.
+            q_func (objext, optional): training function for quantization aware training mode.
+
+        Returns:
+            (object): quantized model
+        """
+
+        assert isinstance(model._model, torch.nn.Module), \
+               "The model passed in is not the instance of torch.nn.Module"
+
+        # For tensorboard display
+        self.tune_cfg = tune_cfg
+        self.tune_cfg["approach"] = self.approach
+        self.tune_cfg["framework"] = "pytorch"
+        try:
+            q_model = copy.deepcopy(model)
+        except Exception as e:  # pragma: no cover
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                repr(e)))
+            q_model = model
+
+        model_qconfig_dict = self._cfg_to_qconfig()
+        # Update BN mean and var.
+        self._update_bn_statistics(q_model._model, dataloader, model_qconfig_dict)
+        # Insert input observer and execute calibration with input observer.
+        if self.approach == 'post_training_static_quant':
+            self._prepare_observer(q_model._model)
+            self._calibration_for_scale(q_model._model, dataloader)
+
+        # add fp8 emulation hook
+        from mpemu import qutils
+        qutils.reset_quantization_setup(q_model._model, model_qconfig_dict)
+        self.quantize_model_weights(q_model._model, model_qconfig_dict) # inplace
+        self.add_quantization_hooks(q_model._model, model_qconfig_dict)
+
+        self._dump_model_op_stats()
+        q_model.q_config = tune_cfg
+        return q_model
+
+    def _build_module_quant_config(self, dtype_w, scheme_w, dtype_i, scheme_i):
+        # only quantize input and weight
+        from mpemu.qutils import TensorQuantConfig, ModuleQuantConfig
+        dtype_w = dtype_w.split('_')[1]
+        self.wt_qconfig = TensorQuantConfig(dtype_w, scheme_w)
+        if dtype_i == 'fp32':
+            self.iact_qconfig = None
+        else:
+            dtype_i = dtype_i.split('_')[1]
+            self.iact_qconfig = TensorQuantConfig(dtype_i, scheme_i)
+        self.oact_qconfig   = None #TensorQuantConfig("e4m3", "rne")
+        mod_qconfig = ModuleQuantConfig(wt_qconfig=self.wt_qconfig,
+                                        iact_qconfig=self.iact_qconfig,
+                                        oact_qconfig=self.oact_qconfig,)
+        return mod_qconfig
+
+    def _cfg_to_qconfig(self):
+        # Convert tune_cfg into fp8 configuration format.
+        model_qconfig_dict = {}
+        for k, v in self.tune_cfg['op'].items():
+            dtype_w = v['weight']['dtype']
+            # skip fallbacked module
+            if dtype_w == 'fp32':
+                continue
+            dtype_i = v['activation']['dtype']
+            scheme_w = v['weight']['scheme'] if 'scheme' in v['weight'] else 'rne'
+            scheme_i = v['activation']['scheme'] if 'scheme' in v['activation'] else 'rne'
+            # TODO： Precision from strategy need to split for weight and activation
+            # Here is a workaround for Embedding and EmbeddingBag.
+            if k[1] in ['Embedding', 'EmbeddingBag']:
+                dtype_i = 'fp32'
+            mod_qconfig = self._build_module_quant_config(dtype_w, scheme_w, dtype_i, scheme_i)
+            model_qconfig_dict[k[0]] = mod_qconfig
+        return model_qconfig_dict
+
+    def _prepare_observer(self, model):
+        def input_observer_forward_pre_hook(self, input):
+            return self.input_activation_post_process(input[0])
+        ### Insert input observer into model, only for fp8_e4m3 static quantization ###
+        for name, module in model.named_modules():
+            op_type = str(module.__class__.__name__)
+            if (name, op_type) in self.tune_cfg['op']:
+                config = self.tune_cfg['op'][(name, op_type)]
+                if config['activation']['dtype'] == 'fp8_e4m3':
+                    algorithm = config['activation']['algorithm']
+                    if algorithm == 'kl':
+                        module.add_module(
+                            'input_activation_post_process', torch.quantization.HistogramObserver()
+                        )
+                    elif algorithm == 'minmax':
+                        module.add_module(
+                            'input_activation_post_process', torch.quantization.MinMaxObserver()
+                        )
+                    module.register_forward_pre_hook(input_observer_forward_pre_hook)
+
+    def _calibration_for_scale(self, model, dataloader):
+        # TODO: use config to set calib_sampling_size. 
+        # iterations = self.tune_cfg.get('calib_iteration', 1)
+        # self.model_calibration(
+        #     model, dataloader, iterations,
+        #     calib_sampling_size=self.tune_cfg.get('calib_sampling_size', 1))
+
+        calib_sampling_size = 300
+        iterations = math.ceil(calib_sampling_size / dataloader.batch_size)
+        self.model_calibration(
+            model, dataloader, iterations,
+            calib_sampling_size=300)
+
+        for name, module in model.named_modules():
+            if hasattr(module, 'input_activation_post_process'):
+                max_val = module.input_activation_post_process.max_val
+                min_val = module.input_activation_post_process.min_val
+                amax = torch.max(torch.abs(max_val), torch.abs(min_val))
+                HF_max = torch.tensor(448)
+                scale = HF_max / amax
+                module.register_parameter('scale', torch.nn.Parameter(scale))
+
+                # remove observer module and hook
+                delattr(module, 'input_activation_post_process')
+                hook_map = module._forward_pre_hooks
+                handle_ids_to_remove = set()
+                for handle_id, hook_fn in hook_map.items():
+                    if hook_fn.__name__ == 'input_observer_forward_pre_hook':
+                        handle_ids_to_remove.add(handle_id)
+                for handle_id in handle_ids_to_remove:
+                    hook_map.pop(handle_id)
+
+
+    def add_quantization_hooks(self, model, model_qconfig_dict):
+        def quantize_module_inputs(self, input):
+            from .torch_utils.util import quantize_tensor
+            if self.qconfig.iact_qconfig is not None and self.qconfig.iact_qconfig.is_enabled:
+                input_q = []
+                scale = None
+                if hasattr(self, 'scale'):
+                    scale = self.scale
+                for i in range(len(input)):
+                    tensor = input[i]
+                    tensor_q = quantize_tensor(tensor, self.qconfig.iact_qconfig, scale=scale)
+                    input_q.append(tensor_q)
+
+                input = tuple(input_q)
+            return input
+
+        hook_handles = []
+        for name, module in model.named_modules():
+            if name in model_qconfig_dict:
+                handle_pf = module.register_forward_pre_hook(quantize_module_inputs)
+                hook_handles.append(handle_pf)
+        return hook_handles
+
+    def quantize_model_weights(self, model, model_qconfig_dict):
+        def _quantize_weight(module, wt_qconfig, granularity='per_channel'):
+            from .torch_utils.util import quantize_tensor
+            def preprocess(i):
+                module.weight.data[i] = quantize_tensor(module.weight.data[i], wt_qconfig)
+
+            if granularity == 'per_channel':
+                from concurrent.futures import ThreadPoolExecutor
+                import multiprocessing
+                cpu_num = multiprocessing.cpu_count()
+                threadPool = ThreadPoolExecutor(max_workers=cpu_num, thread_name_prefix="test_")
+                for i, data in enumerate(module.weight.data):
+                    threadPool.submit(preprocess, i)
+                threadPool.shutdown(wait=True)
+            else:
+                module.weight.data = quantize_tensor(module.weight.data, wt_qconfig)
+            module.weight.data.copy_(module.weight.data)
+
+        for name, module in model.named_modules():
+            if hasattr(module, 'weight') and name in model_qconfig_dict:
+                config = self.tune_cfg['op'][(name, str(module.__class__.__name__))]
+                granularity = config['weight']['granularity'] if \
+                  'granularity' in config['weight'] else 'per_tensor'
+                qconfig = model_qconfig_dict[name]
+                _quantize_weight(module, qconfig.wt_qconfig, granularity)
+
+    def _update_bn_statistics(self, model, dataloader, model_qconfig_dict):
+        ### _update BatchNorm statistics: running_mean, running_var ###
+        from mpemu import qutils
+        BN_Flag = False
+        for child in model.modules():
+            child_type = child.__class__.__name__
+            if 'BatchNorm' in child_type:
+                BN_Flag = True
+        # TODO: should remove approach limit. 
+        # Dynamic fp8 also need to pdate BN, but we miss dataloader.
+        if BN_Flag and self.approach == 'post_training_static_quant':
+            # save fp32 weight data
+            fp32_model_dict = {}
+            for name, module in model.named_modules():
+                if hasattr(module, 'weight') and name in model_qconfig_dict:
+                    fp32_model_dict[name] = copy.deepcopy(module.weight)
+            # add fp8 emulation hook
+            qutils.reset_quantization_setup(model, model_qconfig_dict)
+            self.quantize_model_weights(model, model_qconfig_dict) # inplace
+            hook_handles = self.add_quantization_hooks(model, model_qconfig_dict)
+            model.train()
+            # TODO: use config to set calib_sampling_size. 
+            calib_sampling_size = 3000
+            iterations = math.ceil(calib_sampling_size / dataloader.batch_size)
+            self.model_calibration(
+                model, dataloader, iterations,
+                calib_sampling_size=3000)
+            model.eval()
+            # Recover all fp8 data back to fp32 after updating BN.
+            for name, module in model.named_modules():
+                if name in fp32_model_dict:
+                    module.weight = fp32_model_dict[name]
+            # Remove fp8 emulation hook
+            for h in hook_handles:
+                h.remove()
+            # Replace BN with scaleshift.
+            from mpemu import scale_shift
+            model = scale_shift.replace_batchnorms_with_scaleshifts(model)
+
+    def evaluate(self,
+                 model,
+                 dataloader,
+                 postprocess=None,
+                 metrics=None,
+                 measurer=None,
+                 iteration=-1,
+                 tensorboard=False,
+                 fp32_baseline=False):
+        """Execute the evaluate process on the specified model.
+
+        Args:
+            model (object): model to run evaluation.
+            dataloader (object): evaluation dataset.
+            postprocess (object, optional): process function after evaluation.
+            metrics (list, optional): list of metric function.
+            measurer (object, optional): measurer function.
+            iteration (int, optional): number of iterations to evaluate.
+            tensorboard (bool, optional): dump output tensor to tensorboard summary files.
+            fp32_baseline (boolen, optional): only for compare_label=False pipeline
+
+        Returns:
+            (object): accuracy
+        """
+        self.is_baseline = fp32_baseline
+        if tensorboard:
+            model = self._pre_eval_hook(model)
+
+        model_ = model._model
+        assert isinstance(
+            model_, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
+        model_.eval()
+        if self.device == "cpu":
+            model_.to("cpu")
+        elif self.device == "gpu":
+            if self.is_baseline:
+                model_.to("dpcpp")
+
+        if metrics:
+            self.fp32_preds_as_label = any([hasattr(metric, "compare_label") and \
+                not metric.compare_label for metric in metrics])
+        acc = self.model_eval(model_, dataloader, postprocess, metrics, measurer, iteration)
+
+        if tensorboard:
+            self._post_eval_hook(model, accuracy=acc)
+        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
+
+    def _dump_model_op_stats(self):
+        """This is a function to dump quantizable ops of model to user.
+        Args:
+            model (object): input model
+            tune_cfg (dict): quantization config
+        Returns:
+            None
+        """
+        res = {}
+        for k, v in self.tune_cfg['op'].items():
+            # TODO: split weight and activation scheme, dtype
+            dtype = v['weight']['dtype'].upper()
+            if 'FP8_' in dtype:
+                dtype = dtype.split('_')[0] + '(' + dtype.split('_')[1] + ')'
+            if k[1] not in res:
+                res[k[1]] = {'FP8(E5M2)':0, 'FP8(E4M3)': 0, 'FP32':0}
+            res[k[1]][dtype] += 1
+
+        field_names=["Op Type", "Total", "FP8(E5M2)", "FP8(E4M3)", "FP32"]
+        output_data = [[
+            op_type, sum(res[op_type].values()),
+            res[op_type]['FP8(E5M2)'], res[op_type]['FP8(E4M3)'], res[op_type]['FP32']]
+        for op_type in res.keys()]
+
+        Statistics(output_data,
+                   header='Mixed Precision Statistics',
+                   field_names=field_names).print_stat()
+        self.optype_statistics = field_names, output_data
+
+
+    def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): input model
+            prefix (string): prefix of op name
+            quantizable_ops (list): list of quantizable ops from model include op name and type.
+
+        Returns:
+            None
+        """
+
+        module_dict = dict(model.named_modules())
+        for op_name, child in module_dict.items():
+            if type(child) in self.white_list and type(child) != torch.nn.Sequential and \
+              type(child) != torch.quantization.stubs.DeQuantStub:
+                quantizable_ops.append(
+                    (op_name, unify_op_type_mapping[str(child.__class__.__name__)]
+                     if str(child.__class__.__name__) in unify_op_type_mapping else str(
+                         child.__class__.__name__)))
+
+
+    @dump_elapsed_time("Pass query framework capability")
+    def query_fw_capability(self, model):
+        """This is a helper function to get all quantizable ops from model.
+
+        Args:
+            model (object): input model which is Neural Compressor model
+
+        Returns:
+            q_capability (dictionary): tuning capability for each op from model.
+        """
+        # For strategy assertion, no usage of self.pre_optimized_model.
+        self.pre_optimized_model = model
+        tmp_model = model._model
+        return self._get_quantizable_ops(tmp_model)
 
 
 class PyTorchQuery(QueryBackendCapability):

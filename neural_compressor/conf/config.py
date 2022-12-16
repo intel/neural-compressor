@@ -757,6 +757,11 @@ schema = Schema({
                             'post_training_dynamic_quant',
                             'post_training_auto_quant',
                             'quant_aware_training']),
+        Optional('precision', default='fp8_e4m3'): And(
+            str,
+            lambda s: s in ['int8',
+                            'fp8_e4m3',
+                            'fp8_e5m2',]),
         Optional('train', default=None): train_schema,
         Optional('advance', default=None): {
             Optional('bias_correction'): And(str, lambda s: s in ['weight_empirical']),
@@ -854,7 +859,7 @@ schema = Schema({
         'strategy': {'name': 'basic'}, 
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
         'objective': 'performance',
-        'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
+        'exit_policy': {'timeout': 0, 'max_trials': 1000, 'performance_only': False},
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace},
         'diagnosis': False,
@@ -1340,6 +1345,7 @@ class Conf(object):
                 'model.backend': pythonic_config.quantization.backend,
                 'model.quant_format': pythonic_config.quantization.quant_format,
                 'quantization.approach': pythonic_config.quantization.approach,
+                'quantization.precision': pythonic_config.quantization.precision,
                 'quantization.calibration.sampling_size': 
                     pythonic_config.quantization.calibration_sampling_size,
                 'quantization.optype_wise': pythonic_config.quantization.op_type_list,

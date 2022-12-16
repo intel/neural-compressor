@@ -371,13 +371,13 @@ class TuningSpace:
                     quant_mode = quant_mode[0] if isinstance(quant_mode, list) else quant_mode
                     act_quant_flag =  op_cap['activation']['dtype'] != ['fp32']
                     # change the 'int8' to adapt the quantization with different numbers of bits in future
-                    quant_mode_flag = (quant_mode, 'int8', act_quant_flag) 
+                    quant_mode_flag = (quant_mode, self.conf.usr_cfg.quantization.precision, act_quant_flag)
                     parsed_op_cap['quant'][quant_mode_flag] = op_cap
                 else:
-                    if isinstance(op_cap['activation']['dtype'], list):
-                        parsed_op_cap['precision'] += op_cap['activation']['dtype']
+                    if isinstance(op_cap['weight']['dtype'], list):
+                        parsed_op_cap['precision'] += op_cap['weight']['dtype']
                     else:
-                        parsed_op_cap['precision'].append(op_cap['activation']['dtype'])
+                        parsed_op_cap['precision'].append(op_cap['weight']['dtype'])
             parsed_cap[op_name_type] = parsed_op_cap
             parsed_cap[op_name_type]['op_weight_flag'] = 'weight' in op_cap_lst[0]
         return parsed_cap
