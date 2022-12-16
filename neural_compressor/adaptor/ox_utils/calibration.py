@@ -436,8 +436,7 @@ class ONNXRTAugment:
             if parent and parent.name in q_config and q_config[parent.name] not in ['fp32']:
                 scheme = q_config[parent.name]['activation']['scheme']
                 qType = q_config[parent.name]['activation']['dtype']
-            elif tensor_name in self.model_wrapper.input() and \
-                self.backend in ['TensorrtExecutionProvider']:
+            elif self.backend in ['TensorrtExecutionProvider']:
                 scheme = 'sym'
                 qType = 3
             node_thresholds = quantization_thresholds[tensor_name]

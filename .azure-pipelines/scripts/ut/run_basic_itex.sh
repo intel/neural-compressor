@@ -3,7 +3,7 @@ python -c "import neural_compressor as nc;print(nc.version.__version__)"
 echo "run basic itex"
 
 echo "specify fwk version..."
-export itex_version='1.0.0'
+export itex_version='nightly'
 export tensorflow_version='2.10.0-official'
 
 echo "set up UT env..."

@@ -130,7 +130,9 @@ class Component(object):
             framework_specific_info = {'device': self.cfg.device,
                                     'random_seed': self.cfg.tuning.random_seed,
                                     'workspace_path': self.cfg.tuning.workspace.path,
-                                    'q_dataloader': None}
+                                    'q_dataloader': None,
+                                    'backend': self.cfg.model.get('backend', 'default'),
+                                    'format': self.cfg.model.get('quant_format', 'default')}
             if self.cfg.quantization.approach is not None:
                 framework_specific_info['approach'] = self.cfg.quantization.approach
 
@@ -472,6 +474,10 @@ class Component(object):
             assert not isinstance(user_model, BaseModel), \
                 "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
+            if self.framework == "tensorflow":
+                from ..model.tensorflow_model import get_model_type
+                if get_model_type(user_model) == 'keras' and self.cfg.model.backend == 'itex':
+                    self.framework = 'keras'
             if self.framework == "pytorch":
                 if self.cfg.model.backend == "default":
                     self.framework = "pytorch_fx"
@@ -483,6 +489,13 @@ class Component(object):
             logger.warning("Force convert framework model to neural_compressor model.")
             self._model = Model(user_model, framework=self.framework)
         else:
+            # It is config of neural_compressor version < 2.0, no need in 2.0
+            if self.cfg.model.framework == "pytorch_ipex":
+                from neural_compressor.model.torch_model import IPEXModel
+                if not isinstance(user_model, IPEXModel):
+                    self._model = Model(user_model.model, framework=self.cfg.model.framework)
+                    return
+
             self._model = user_model
 
         if 'tensorflow' in self.framework:

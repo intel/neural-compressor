@@ -419,7 +419,7 @@ class _BaseQuantizationConfig:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
+            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
             self._strategy = strategy
 
     @property
@@ -469,6 +469,8 @@ class _BaseQuantizationConfig:
     @calibration_sampling_size.setter
     def calibration_sampling_size(self, sampling_size):
         if check_value('calibration_sampling_size', sampling_size, int):
+            if isinstance(sampling_size, int):
+                sampling_size =[sampling_size]
             self._calibration_sampling_size = sampling_size
 
     @property
@@ -562,7 +564,7 @@ class TuningCriterion:
     @strategy.setter
     def strategy(self, strategy):
         if check_value('strategy', strategy, str,
-            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe']):
+            ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
             self._strategy = strategy
 
     @property
@@ -884,6 +886,9 @@ class ExportConfig:
     def dynamic_axes(self, dynamic_axes):
         self._dynamic_axes = dynamic_axes
 
+class ONNXQlinear2QDQConfig:
+    def __init__(self):
+        pass
 
 class Torch2ONNXConfig(ExportConfig):
     def __init__(

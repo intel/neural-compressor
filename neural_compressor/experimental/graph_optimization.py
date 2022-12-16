@@ -188,8 +188,8 @@ class Graph_Optimization():
 
     def dataset(self, dataset_type, *args, **kwargs):
         """Get dataset."""
-        from .data import DATASETS
-        return DATASETS(self.framework)[dataset_type](*args, **kwargs)
+        from .data import Datasets
+        return Datasets(self.framework)[dataset_type](*args, **kwargs)
 
     def set_config_by_model(self, model_obj):
         """Set model config."""

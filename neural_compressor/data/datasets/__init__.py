@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Built-in datasets class for multiple framework backends."""
+
+from .dataset import Datasets, Dataset, IterableDataset, dataset_registry
 from os.path import dirname, basename, isfile, join
 import glob
 
@@ -24,3 +27,5 @@ for f in modules:
     if isfile(f) and not f.startswith('__') and not f.endswith('__init__.py'):
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
+
+__all__ = ["Datasets", "Dataset", "IterableDataset", "dataset_registry"]

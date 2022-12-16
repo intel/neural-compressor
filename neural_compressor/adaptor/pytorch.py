@@ -30,7 +30,6 @@ from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
 
-
 torch = LazyImport("torch")
 json = LazyImport("json")
 hvd = LazyImport("horovod.torch")
@@ -866,37 +865,89 @@ class TemplateAdaptor(Adaptor):
 
     def eval_func(self, model, dataloader, postprocess, metrics, measurer, iteration, conf=None):
         results = []
-        for idx, (input, label) in enumerate(dataloader):
-            if measurer is not None:
-                measurer.start()
+        try:
+            for idx, (input, label) in enumerate(dataloader):
+                if measurer is not None:
+                    measurer.start()
 
-            output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
-            if self.device != "cpu":  # pragma: no cover
-                output = output.to("cpu")
-                label = label.to("cpu")
-            if measurer is not None:
-                measurer.end()
-            if postprocess is not None:
-                output, label = postprocess((output, label))
-            if metrics:
-                for metric in metrics:
-                    if not hasattr(metric, "compare_label") or \
-                        (hasattr(metric, "compare_label") and metric.compare_label):
-                        metric.update(output, label)
-
-                # If distributed dataloader, gather all outputs to update metric
-                if getattr(dataloader, 'distributed', False) or \
-                  isinstance(dataloader.sampler, \
-                  torch.utils.data.distributed.DistributedSampler):
-                    hvd.init()
+                output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
+                if self.device != "cpu":  # pragma: no cover
+                    output = output.to("cpu")
+                    label = label.to("cpu")
+                if measurer is not None:
+                    measurer.end()
+                if postprocess is not None:
+                    output, label = postprocess((output, label))
+                if metrics:
                     for metric in metrics:
-                        metric.hvd = hvd
+                        if not hasattr(metric, "compare_label") or \
+                            (hasattr(metric, "compare_label") and metric.compare_label):
+                            metric.update(output, label)
 
-            if self.fp32_preds_as_label:
-                self.fp32_results.append(output) if self.is_baseline else \
-                    results.append(output)
-            if idx + 1 == iteration:
-                break
+                    # If distributed dataloader, gather all outputs to update metric
+                    if getattr(dataloader, 'distributed', False) or \
+                      isinstance(dataloader.sampler, \
+                      torch.utils.data.distributed.DistributedSampler):
+                        hvd.init()
+                        for metric in metrics:
+                            metric.hvd = hvd
+
+                if self.fp32_preds_as_label:
+                    self.fp32_results.append(output) if self.is_baseline else \
+                        results.append(output)
+                if idx + 1 == iteration:
+                    break
+        except Exception as e:
+            logger.warning("The dataloader didn't include label, will try input without label!")
+            for idx, input in enumerate(dataloader):
+                if (isinstance(input, dict) or isinstance(input, UserDict)):
+                    if not self.benchmark:
+                        assert "label" in input, \
+                            "The dataloader must include label to measure the metric!"
+                        label = input["label"].to("cpu")
+                elif not self.benchmark:
+                    assert False, "The dataloader must include label to measure the metric!"
+
+                if measurer is not None:
+                    measurer.start()
+
+                output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
+
+                if measurer is not None:
+                    measurer.end()
+
+                if self.device != "cpu" and not self.benchmark:  # pragma: no cover
+                    if isinstance(output, dict) or isinstance(input, UserDict):
+                        for key in output:
+                            output[key] = output[key].to("cpu")
+                    elif isinstance(output, list) or isinstance(output, tuple):
+                        for tensor in output:
+                            tensor = tensor.to("cpu")
+                    else:
+                        output = output.to("cpu")
+
+                if postprocess is not None and not self.benchmark:
+                    output, label = postprocess((output, label))
+
+                if metrics and not self.benchmark:
+                    for metric in metrics:
+                        if not hasattr(metric, "compare_label") or \
+                            (hasattr(metric, "compare_label") and metric.compare_label):
+                            metric.update(output, label)
+
+                    # If distributed dataloader, gather all outputs to update metric
+                    if getattr(dataloader, 'distributed', False) or \
+                      isinstance(dataloader.sampler, \
+                      torch.utils.data.distributed.DistributedSampler):
+                        hvd.init()
+                        for metric in metrics:
+                            metric.hvd = hvd
+
+                if self.fp32_preds_as_label:
+                    self.fp32_results.append(output) if self.is_baseline else \
+                        results.append(output)
+                if idx + 1 == iteration:
+                    break
         return results
 
     def model_eval(self,
@@ -1094,6 +1145,34 @@ class TemplateAdaptor(Adaptor):
             return True
         else:
             return False
+        
+    def calculate_hessian_trace(self,
+                                fp32_model, 
+                                dataloader, 
+                                q_model,
+                                criterion, 
+                                enable_act = False
+                                ):
+        """Calculate hessian trace.
+
+        Args:
+            fp32_model: The original fp32 model.
+            criterion: The loss function for calculate the hessian trace. # loss = criterion(output, target)
+            dataloader: The dataloader for calculate the gradient.
+            q_model: The INT8 AMAP model.
+            enable_act: Enabling quantization error or not.
+            
+        Return:
+            hessian_trace(Dict[Tuple, float]), key: (op_name, op_type); value: hessian trace.
+        """
+        from .torch_utils.hawq_metric import hawq_top
+        op_to_traces=hawq_top(fp32_model=fp32_model,
+                              dataloader=dataloader,
+                              q_model=q_model,
+                              criterion=criterion,
+                              enable_act=enable_act)
+        return op_to_traces
+        pass
 
 
 unify_op_type_mapping = {
@@ -1312,10 +1391,10 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.non_quant_dict = self.get_non_quant_modules(self.model.kwargs) 
         quantizable_ops = []
         self._get_quantizable_ops_recursively(self.model._model, '', quantizable_ops)
-        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
         bf16_ops = []
         if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             self._get_bf16_ops_recursively(self.model._model, '', bf16_ops)
         bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         self.model.model.training = True
@@ -2870,10 +2949,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         quantizable_ops = []
         tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
-        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
         bf16_ops = []
         if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
         bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         quantized_ops = OrderedDict()
@@ -3182,7 +3261,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-
         module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
             if self.is_fused_module(child):
@@ -3506,6 +3584,28 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         except:  # pragma: no cover
             logger.info('Module has no forward function')
         return False
+
+    def get_output_op_names(self, *args, **kwargs):
+        return None
+
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+                                 confidence_batches, fallback=True, requantize_cfgs=None):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): INC model containing fp32 model
+            dataloader (string): dataloader contains real data.
+            tune_cfg (dict): dictionary of tune configure for each op.
+            fallback (bool): switch method in fallback stage and re-quantize stage
+
+        Returns:
+            ops_lst (list): sorted op list by sensitivity
+        """
+        from .torch_utils.util import get_fallback_order
+        ordered_ops = get_fallback_order(self, model.model, dataloader, tune_cfg, 
+                                         confidence_batches, fallback, requantize_cfgs)
+        return ordered_ops
 
 
 class PyTorchQuery(QueryBackendCapability):
