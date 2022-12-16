@@ -32,6 +32,7 @@ from ..pruner.utils import WeightPruningConfig
 from ..pruner.utils import process_config, parse_to_prune, check_config, update_params
 from ..utils.utility import LazyImport
 from ..pruner.pruners import get_pruner
+from ..conf.pythonic_config import Config
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 
@@ -61,7 +62,9 @@ class Pruning(Component):
     def __init__(self, conf_fname_or_obj=None):
         """Initiailize."""
         super(Pruning, self).__init__()
-        # we support WeightPruningConfig object and yaml file as 
+        # we support WeightPruningConfig object and yaml file as
+        if isinstance(conf_fname_or_obj, Config):
+            conf_fname_or_obj = conf_fname_or_obj.pruning
         if isinstance(conf_fname_or_obj, WeightPruningConfig):
             self.conf = conf_fname_or_obj
         else:
@@ -74,7 +77,7 @@ class Pruning(Component):
         self.callbacks = dict(tf_pruning=TfPruningCallback)
         self.pruners = []
         self.generate_hooks() # place generate hooks here, to get rid of prepare() function.
-
+        self.framework = "pytorch"
     @property
     def model(self):
         """Getter of model in neural_compressor.model."""

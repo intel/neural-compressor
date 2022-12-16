@@ -17,14 +17,13 @@
 
 import copy
 from .conf.pythonic_config import Config
-from .config import DistillationConfig, PruningConfig, QuantizationAwareTrainingConfig
+from .config import DistillationConfig, QuantizationAwareTrainingConfig
 from .experimental.distillation import Distillation
-from .experimental.pruning import Pruning
 from .experimental.quantization import Quantization
 from .experimental.scheduler import Scheduler
 from .utils import logger
 from typing import Callable, List, Union
-
+from neural_compressor.experimental.pruning_v2 import Pruning, WeightPruningConfig
 
 class CompressionManager:
     """CompressionManager is uesd in train loop for what user want to deal with additional.
@@ -96,6 +95,9 @@ class CompressionManager:
             """ called on the end of backward"""
             self.callbacks.on_before_optimizer_step()
 
+        def on_after_optimizer_step(self):
+            """ called on the end of backward"""
+            self.callbacks.on_before_optimizer_step()
 
         def on_step_end(self):
             """ called on the end of batches"""
@@ -172,7 +174,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                                nas=None)
                 com = Quantization(conf_)
                 com.model = model
-            elif isinstance(conf, PruningConfig):
+            elif isinstance(conf, WeightPruningConfig):
                 conf_ = Config(pruning=conf,
                                benchmark=None,
                                quantization=None,
@@ -208,7 +210,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                           distillation=None,
                           nas=None)
             component = Quantization(conf)
-        elif type(confs) == PruningConfig:
+        elif type(confs) == WeightPruningConfig:
             conf = Config(pruning=confs,
                           benchmark=None,
                           quantization=None,
