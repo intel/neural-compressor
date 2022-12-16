@@ -225,6 +225,15 @@
       "batch_size": 100,
       "new_benchmark": false
     },
+    "yolo_v3": {
+      "model_src_dir": "object_detection/yolo_v3/quantization/ptq/eager",
+      "dataset_location": "/tf_dataset/pytorch/coco_data_yolo",
+      "input_model": "/tf_dataset/pytorch/coco_data_yolo/yolov3.weights",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
     "efficientnet_b0_fx": {
         "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
         "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
@@ -713,6 +722,15 @@
       "input_model": "/tf_dataset2/models/pytorch/ssd_resnet34/ssd_resnet34_qat_fx.pt",
       "main_script": "ssd/main.py",
       "batch_size": 1
+    },
+    "maskrcnn_fx": {
+      "model_src_dir": "object_detection/maskrcnn/quantization/ptq/fx",
+      "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
+      "input_model": "/tf_dataset2/models/pytorch/maskrcnn_fx/e2e_mask_rcnn_R_50_FPN_1x.pth",
+      "yaml": "pytorch/conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
     },
     "bert_base_MRPC_qat": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/qat/fx",

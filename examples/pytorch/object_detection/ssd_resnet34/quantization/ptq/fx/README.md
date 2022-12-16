@@ -65,7 +65,7 @@ GCC5 or above is needed.
 
 ### 3. To get the benchmark of tuned model, includes Batch_size and Throughput: 
 
-    bash run_benchmark.sh --topology=ssd-resnet34 --dataset_location=./convert_dataset --input_model=./resnet34-ssd1200.pytorch --config=./saved_results --mode=benchmark --int8=true/false
+    bash run_benchmark.sh --topology=ssd-resnet34 --dataset_location=./convert_dataset --input_model=./resnet34-ssd1200.pytorch --config=./saved_results --mode=performance --int8=true/false
 
 ### 4. The following is the brief output information:
 

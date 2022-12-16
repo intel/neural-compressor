@@ -45,6 +45,6 @@ Follow the instructions on https://github.com/mlcommons/training/tree/master/sin
 
 ### 3. To get the benchmark of tuned model, includes Batch_size and Throughput: 
 
-    bash run_benchmark.sh --topology=resnet34 --dataset_location=coco/ --input_model=$trained model path$ --mode=benchmark --int8=true/false
+    bash run_benchmark.sh --topology=resnet34 --dataset_location=coco/ --input_model=$trained model path$ --mode=performance --int8=true/false
 
 
