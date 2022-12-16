@@ -5,7 +5,7 @@ we have provided several pruning examples, which are trained on different datase
 We can train a sparse model with N:M(2:4) pattern on mrpc and sst2:
 ```shell
 python3 ./run_glue_no_trainer.py \
-        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --model_name_or_path "/path/to/bertmini/dense_finetuned_model" \
         --task_name "mrpc" \
         --max_length 128 \
         --per_device_train_batch_size 16 \
@@ -13,6 +13,7 @@ python3 ./run_glue_no_trainer.py \
         --num_train_epochs 15 \
         --weight_decay 1e-3  \
         --do_prune \
+        --output_dir "./sparse_mrpc_bertmini" \
         --cooldown_epochs 5 \
         --sparsity_warm_epochs 1 \
         --target_sparsity 0.5 \
@@ -23,7 +24,7 @@ python3 ./run_glue_no_trainer.py \
 ```
 ```shell
 python3 ./run_glue_no_trainer.py \
-        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --model_name_or_path "/path/to/bertmini/dense_finetuned_model" \
         --task_name "sst2" \
         --max_length 128 \
         --per_device_train_batch_size 16 \
@@ -35,6 +36,7 @@ python3 ./run_glue_no_trainer.py \
         --sparsity_warm_epochs 0 \
         --lr_scheduler_type "constant" \
         --do_prune \
+        --output_dir "./sparse_sst2_bertmini" \
         --target_sparsity 0.5 \
         --pruning_pattern "2:4" \
         --pruning_frequency 500
@@ -43,7 +45,7 @@ python3 ./run_glue_no_trainer.py \
 We can also choose a NxM (4x1) pattern on mrpc and sst2:
 ```shell
 python3 ./run_glue_no_trainer.py \
-        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --model_name_or_path "/path/to/bertini/dense_finetuned_model" \
         --task_name "mrpc" \
         --max_length 128 \
         --per_device_train_batch_size 16 \
@@ -51,6 +53,7 @@ python3 ./run_glue_no_trainer.py \
         --num_train_epochs 15 \
         --weight_decay 1e-3  \
         --do_prune \
+        --output_dir "./sparse_mrpc_bertmini" \
         --cooldown_epochs 5 \
         --sparsity_warm_epochs 1 \
         --target_sparsity 0.9 \
@@ -61,7 +64,7 @@ python3 ./run_glue_no_trainer.py \
 ```
 ```shell
 python3 ./run_glue_no_trainer.py \
-        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --model_name_or_path "/path/to/bertmini/dense_finetuned_model" \
         --task_name "sst2" \
         --max_length 128 \
         --per_device_train_batch_size 16 \
@@ -73,6 +76,7 @@ python3 ./run_glue_no_trainer.py \
         --sparsity_warm_epochs 0 \
         --lr_scheduler_type "constant" \
         --do_prune \
+        --output_dir "./sparse_sst2_bertmini" \
         --target_sparsity 0.9 \
         --pruning_pattern "4x1" \
         --pruning_frequency 500
@@ -81,7 +85,7 @@ python3 ./run_glue_no_trainer.py \
 Per-channel pruning is also supported on mrpc and sst2.
 ```shell
 python3 ./run_glue_no_trainer.py \
-        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --model_name_or_path "/path/to/bertmini/dense_finetuned_model" \
         --task_name "mrpc" \
         --max_length 128 \
         --per_device_train_batch_size 16 \
@@ -89,6 +93,7 @@ python3 ./run_glue_no_trainer.py \
         --num_train_epochs 15 \
         --weight_decay 1e-3  \
         --do_prune \
+        --output_dir "./sparse_mrpc_bertmini" \
         --cooldown_epochs 5 \
         --sparsity_warm_epochs 1 \
         --target_sparsity 0.9 \
@@ -99,7 +104,7 @@ python3 ./run_glue_no_trainer.py \
 ```
 ```shell
 python3 ./run_glue_no_trainer.py \
-        --model_name_or_path "/path/to/dense_finetuned_model/" \
+        --model_name_or_path "/path/to/bertmini/dense_finetuned_model" \
         --task_name "sst2" \
         --max_length 128 \
         --per_device_train_batch_size 16 \
@@ -111,10 +116,33 @@ python3 ./run_glue_no_trainer.py \
         --sparsity_warm_epochs 0 \
         --lr_scheduler_type "constant" \
         --do_prune \
+        --output_dir "./sparse_sst2_bertmini" \
         --target_sparsity 0.9 \
         --pruning_pattern "1xchannel" \
         --pruning_frequency 500
 ```
+
+ Distilbert-base-uncased model pruning is supported on mrpc as following:
+ ```shell
+      python run_glue_no_trainer.py \
+        --model_name_or_path "path/to/distilbert-base-uncased/dense_finetuned_model" \
+        --task_name "mrpc" \
+        --max_length 256 \
+        --per_device_train_batch_size 16 \
+        --learning_rate 1e-4\
+        --num_train_epochs 120 \
+        --weight_decay 0 \
+        --cooldown_epochs 40 \
+        --sparsity_warm_epochs 0 \
+        --lr_scheduler_type "constant" \
+        --distill_loss_weight 2 \
+        --do_prune \
+        --output_dir "./sparse_mrpc_distillbert" \
+        --target_sparsity 0.9 \
+        --pruning_pattern "4x1" \
+        --pruning_frequency 50 \
+```
+2:4 sparsity is similar to the above, only the target_sparsity and pruning_pattern need to be changed.
 
 To try to train a sparse model in mixed pattern, local pruning config can be set as follows:
 ```python
@@ -148,6 +176,7 @@ python3 ./run_glue_no_trainer_mixed.py \
         --num_train_epochs 15 \
         --weight_decay 1e-3  \
         --do_prune \
+        --output_dir "./sparse_mrpc_bertmini" \
         --cooldown_epochs 5 \
         --sparsity_warm_epochs 1 \
         --target_sparsity 0.9 \
@@ -165,7 +194,7 @@ python3 run_glue_no_trainer.py \
         --learning_rate 5e-5 \
         --num_train_epoch 5 \
         --weight_decay 5e-5 \
-        --output_dir "mrpc_result/"
+        --output_dir "./dense_mrpc_bertmini"
 ```
 or for sst2:
 ```shell
@@ -176,22 +205,25 @@ python run_glue_no_trainer.py \
         --per_device_train_batch_size 32 \
         --learning_rate 5e-5 \
         --num_train_epochs 10 \
-        --output_dir "sst2_result/"
+        --output_dir "./dense_sst2_bertmini"
 ```
 ### Results
+The snip-momentum pruning method is used by default, and the initial dense model is fine-tuned.
 #### MRPC
-|  Model  | Dataset  | Sparsity pattern | Pruning methods |Element-wise/matmul, Gemm, conv ratio | Init model | Dense F1 (mean/max) | Sparse F1 (mean/max) | Relative drop |
-|  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: | :----: | :----: |
-| Bert-Mini  | MRPC |  4x1  |Snip-momentum| 0.8804 | Dense & Finetuned | 0.8619/0.8752 | 0.8610/0.8722 | -0.34% |
-| Bert-Mini  | MRPC |  2:4  |Snip-momentum| 0.4795 | Dense & Finetuned | 0.8619/0.8752| 0.8562/0.8695 | -0.65% |
-| Bert-Mini  | MRPC |  per channel  |Snip-momentum| 0.66 | Dense & Finetuned | 0.8619/0.8752| 0.8629/0.8680 | -0.83% |
+|  Model  | Dataset  | Sparsity pattern |Element-wise/matmul, Gemm, conv ratio | Dense Accuracy (mean/max) | Sparse Accuracy (mean/max) | Relative drop |
+|  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: |
+| Bert-Mini | MRPC |  4x1  | 0.8804 | 0.8619/0.8752 | 0.8610/0.8722 | -0.34% |
+| Bert-Mini | MRPC |  2:4  | 0.4795 | 0.8619/0.8752| 0.8666/0.8689 | -0.72% |
+| Bert-Mini | MRPC |  per channel  | 0.66 | 0.8619/0.8752| 0.8629/0.8680 | -0.83% |
+| Distilbert-base-uncased | MRPC |  4x1  | 0.8992 | 0.9026 |0.8985 | -0.46% |
+| Distilbert-base-uncased | MRPC |  2:4  | 0.5000 | 0.9026 | 0.9088 | +0.68% |
 
 #### SST-2
-|  Model  | Dataset  |  Sparsity pattern | Pruning methods |Element-wise/matmul, Gemm, conv ratio | Init model | Dense Accuracy (mean/max) | Sparse Accuracy (mean/max)| Relative drop|
-|  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: | :----: | :----: |
-| Bert-Mini  | SST-2 |  4x1  |Snip-momentum| 0.8815 | Dense & Finetuned | 0.8660/0.8761 | 0.8651/0.8692 | -0.79% |
-| Bert-Mini  | SST-2 |  2:4  |Snip-momentum| 0.4795 | Dense & Finetuned | 0.8660/0.8761 | 0.8609/0.8693| -0.78% |
-| Bert-Mini  | SST-2 |  per channel  |Snip-momentum| 0.53 | Dense & Finetuned | 0.8660/0.8761 | 0.8651/0.8692| -0.79% |
+|  Model  | Dataset  |  Sparsity pattern |Element-wise/matmul, Gemm, conv ratio | Dense Accuracy (mean/max) | Sparse Accuracy (mean/max)| Relative drop|
+|  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: |
+| Bert-Mini | SST-2 |  4x1  | 0.8815 | 0.8660/0.8761 | 0.8651/0.8692 | -0.79% |
+| Bert-Mini | SST-2 |  2:4  | 0.4795 | 0.8660/0.8761 | 0.8731/0.8773 | +0.14% |
+| Bert-Mini | SST-2 |  per channel  | 0.53 | 0.8660/0.8761 | 0.8651/0.8692 | -0.79% |
 
 ## References
 * [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
