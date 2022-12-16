@@ -20,7 +20,7 @@ import copy
 import numpy as np
 from .pruner import pruner_registry, Pruner
 from .magnitude import BasicMagnitudePruner
-from ..utils import logger
+from neural_compressor.utils import logger
 
 @pruner_registry
 class GroupLassoPruner(BasicMagnitudePruner):

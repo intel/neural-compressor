@@ -28,12 +28,18 @@ def parse_args():
     parser.add_argument("-o", "--opt", type=str, default="",
                         help="optimization feature to enable")
 
-    parser.add_argument("-a", "--approach", type=str, default="static",
+    parser.add_argument("-a", "--approach", type=str, default="auto",
 
                         help="quantization approach (strategy)")
 
     parser.add_argument('--config', type=str, default="",
                         help='quantization configuration file path')
+
+    parser.add_argument('-b', '--bench', default=False, action='store_true',
+                        help='conduct auto_quant benchmark instead of enable')
+
+    parser.add_argument('-e', '--enable', default=False, action='store_true',
+                        help='only do enable, not overwrite or run program')
 
     # positional
     parser.add_argument("script", type=str,
@@ -51,34 +57,44 @@ import shutil
 script_copied = args.script[:-3] + "_optimized.py"
 shutil.copy(args.script, script_copied)
 
-# optimize on copied script with Neural Coder
-from neural_coder import enable
-if args.opt == "":
-    if args.approach == "static":
-        features = ["pytorch_inc_static_quant_fx"]
-    if args.approach == "static_ipex":
-        features = ["pytorch_inc_static_quant_ipex"]
-    if args.approach == "dynamic":
-        features = ["pytorch_inc_dynamic_quant"]
-else:
-    features = args.opt.split(",")
+if not args.bench: # "enable and run" or "only enable"
+    # optimize on copied script with Neural Coder
+    from neural_coder import enable
+    if args.opt == "":
+        if args.approach == "static":
+            features = ["pytorch_inc_static_quant_fx"]
+        if args.approach == "static_ipex":
+            features = ["pytorch_inc_static_quant_ipex"]
+        if args.approach == "dynamic":
+            features = ["pytorch_inc_dynamic_quant"]
+        if args.approach == "auto":
+            features = ["inc_auto"]
+    else:
+        features = args.opt.split(",")
 
-# execute optimization enabling
-enable(
-    code=script_copied,
-    features=features,
-    overwrite=True,
-)
+    # execute optimization enabling
+    enable(
+        code=script_copied,
+        features=features,
+        overwrite=True,
+    )
 
-# execute on copied script, which has already been optimized
-cmd = []
+    if not args.enable: # enable and run
+        # execute on copied script, which has already been optimized
+        cmd = []
 
-cmd.append(sys.executable) # "/xxx/xxx/python"
-cmd.append("-u")
-cmd.append(script_copied)
-cmd.extend(args.script_args)
+        cmd.append(sys.executable) # "/xxx/xxx/python"
+        cmd.append("-u")
+        cmd.append(script_copied)
+        cmd.extend(args.script_args)
 
-cmd = " ".join(cmd) # list convert to string
+        cmd = " ".join(cmd) # list convert to string
 
-process = subprocess.Popen(cmd, env=os.environ, shell=True)  # nosec
-process.wait()
+        process = subprocess.Popen(cmd, env=os.environ, shell=True)  # nosec
+        process.wait()
+else: # auto_quant
+    from neural_coder import auto_quant
+    auto_quant(
+        code=script_copied,
+        args=' '.join(args.script_args), # convert list of strings to a single string
+    )

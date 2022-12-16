@@ -83,7 +83,7 @@ class TensorFlowAdaptor(Adaptor):
 
         from pkg_resources import parse_version
         import tensorflow as tf
-        self.new_api = parse_version(tf.version.VERSION) == parse_version('2.11.0202242')
+        self.new_api = tf.version.VERSION in ('2.11.0202242', '2.11.0202250')
         self.qdq_enabled = self.itex_mode or self.format == 'QDQ' or self.new_api
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns(self.qdq_enabled)
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
@@ -525,6 +525,17 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
+        if self.approach == "quant_aware_training":
+            assert q_func is not None, "quantization aware training mode \
+                is not configured correctly"
+
+            from neural_compressor.experimental import common
+            qat_model = q_func(model)
+
+            return self.convert(common.Model(qat_model), 'QAT', 'default')
+
+        assert q_func is None, \
+            "post-training quantization mode is not support calibration function for Tensorflow!"
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
