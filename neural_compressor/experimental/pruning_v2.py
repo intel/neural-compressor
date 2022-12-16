@@ -116,11 +116,11 @@ class Pruning(Component):
 
         linear_conv_cnt = 0
         param_cnt = 0
-        for name, module in self.model.named_modules():
+        for name, module in self._model.model.named_modules():
             if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
                 linear_conv_cnt += module.weight.numel()
 
-        for n, param in self.model.named_parameters():
+        for n, param in self._model.model.named_parameters():
             param_cnt += param.numel()
         if linear_conv_cnt == 0:
             blockwise_over_matmul_gemm_conv = 0
@@ -141,6 +141,7 @@ class Pruning(Component):
 
         Before training, ensure that pruners are generated.
         """
+        # self.model = self.model.model
         self._generate_pruners()  ##TODO is there better place to place
 
     def _on_epoch_begin(self, epoch):
@@ -297,10 +298,10 @@ class Pruning(Component):
 
     def _generate_pruners(self):
         """Obtain Pruner objects."""
-        assert isinstance(self.model, torch.nn.Module)
+        assert isinstance(self._model.model, torch.nn.Module)
 
         for info in self.pruners_info:
-            modules = parse_to_prune(info, self.model)
+            modules = parse_to_prune(info, self._model.model)
             if modules == {}:
                 logger.warning("one pruner hooks no layers, please have a check")
 

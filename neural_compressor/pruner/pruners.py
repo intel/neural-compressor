@@ -17,6 +17,7 @@
 # limitations under the License.
 import copy
 from neural_compressor.utils.utility import LazyImport
+
 torch = LazyImport('torch')
 from .patterns import get_pattern
 from .schedulers import get_scheduler
@@ -124,6 +125,11 @@ class BasePruner:
         self.total_prune_cnt = (self.end_step - self.start_step + 1) \
                                // self.pruning_frequency
         self.completed_pruned_cnt = 0
+        self.total_prune_cnt -= 1  ## not pruning at step 0
+        if self.total_prune_cnt == 0:
+            self.total_prune_cnt = 1
+            self.completed_pruned_cnt = 1
+
         for key in self.modules.keys():
             module = self.modules[key]
             self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)  ##TODO support bias or others
@@ -422,7 +428,7 @@ class ProgressivePruner(BasicPruner):
             self.check_progressive_validity()
             self.pre_masks = copy.deepcopy(self.masks)
             self.progressive_masks = copy.deepcopy(self.masks)
-            if self.pruning_frequency < self.progressive_steps:##TODO trick
+            if self.pruning_frequency < self.progressive_steps:  ##TODO trick
                 self.progressive_steps = self.pruning_frequency
                 # if self.progressive_steps == 3:
                 #     self.progressive_steps = 2

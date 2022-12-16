@@ -97,7 +97,7 @@ class CompressionManager:
 
         def on_after_optimizer_step(self):
             """ called on the end of backward"""
-            self.callbacks.on_before_optimizer_step()
+            self.callbacks.on_after_optimizer_step()
 
         def on_step_end(self):
             """ called on the end of batches"""
