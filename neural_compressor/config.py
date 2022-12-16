@@ -314,7 +314,7 @@ class _BaseQuantizationConfig:
                  strategy_kwargs=None,
                  objective="performance",
                  timeout=0,
-                 max_trials=1000,
+                 max_trials=100,
                  performance_only=False,
                  reduce_range=None,
                  excluded_precisions=[],
@@ -533,7 +533,7 @@ class _BaseQuantizationConfig:
 
 
 class TuningCriterion:
-    def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, max_trials=100, objective="performance"):
+    def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, max_trials=1000, objective="performance"):
         self.strategy = strategy
         self.timeout = timeout
         self.max_trials = max_trials
