@@ -56,7 +56,7 @@ function init_params {
 function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy_only"
-    elif [[ ${mode} == "benchmark" ]]; then
+    elif [[ ${mode} == "performance" ]]; then
         mode_cmd=" --iters ${iters} --benchmark "
     else
         echo "Error: No such mode: ${mode}"
@@ -67,16 +67,6 @@ function run_benchmark {
     if [[ ${int8} == "true" ]]; then
         extra_cmd=$extra_cmd" --int8"
     fi
-
-    if [[ "${topology}" == "hubert_fx" ]]; then
-        input_model=hubert
-    elif [[ "${topology}" == "wav2vec_fx" ]]; then
-        input_model=wav2vec
-    else
-        echo "Error: please set the correct topology."
-        exit 1
-    fi
-
 
     python run_asr.py \
             --model $input_model \

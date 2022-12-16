@@ -54,7 +54,7 @@ function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy_only"
         default_bs=16384
-    elif [[ ${mode} == "benchmark" ]]; then
+    elif [[ ${mode} == "performance" ]]; then
         mode_cmd=" -i ${iters} --benchmark "
         default_bs=16
     else

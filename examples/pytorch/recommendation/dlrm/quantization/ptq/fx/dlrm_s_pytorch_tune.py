@@ -920,10 +920,10 @@ if __name__ == "__main__":
     if args.benchmark:
         from neural_compressor.config import BenchmarkConfig
         from neural_compressor import benchmark
-        b_conf = BenchmarkConfig(warmup=5,
-                                 iteration=args.iters,
+        b_conf = BenchmarkConfig(
                                  cores_per_instance=4,
-                                 num_of_instance=1)
+                                 num_of_instance=1
+                                 )
         benchmark.fit(dlrm, b_conf, b_func=eval_func)
         exit(0)
     

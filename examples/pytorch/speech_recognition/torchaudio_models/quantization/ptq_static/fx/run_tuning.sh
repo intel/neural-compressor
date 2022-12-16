@@ -43,18 +43,7 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    extra_cmd=""
-    if [[ "${topology}" == "hubert_fx" ]]; then
-      input_model=hubert
-    elif [[ "${topology}" == "wav2vec_fx" ]]; then
-      input_model=wav2vec
-    else
-      echo "Error: please set the correct topology."
-      exit 1
 
-    fi
-
-    extra_cmd=$extra_cmd
     python run_asr.py \
             --model $input_model \
             --root $root \
@@ -63,7 +52,6 @@ function run_tuning {
             --tune \
             --batch_size $batch_size \
             --tuned_checkpoint ${output_model} \
-            ${extra_cmd}
 
 }
 

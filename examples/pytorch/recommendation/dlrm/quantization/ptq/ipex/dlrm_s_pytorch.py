@@ -863,8 +863,7 @@ def run():
     if args.benchmark:
         from neural_compressor.config import BenchmarkConfig
         from neural_compressor import benchmark
-        b_conf = BenchmarkConfig(warmup=5,
-                                 iteration=args.num_batches,
+        b_conf = BenchmarkConfig(
                                  cores_per_instance=4,
                                  num_of_instance=1)
         def b_func(model):
