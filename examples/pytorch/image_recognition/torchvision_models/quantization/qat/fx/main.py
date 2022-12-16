@@ -75,13 +75,14 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'N processes per node, which has N GPUs. This is the '
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
-parser.add_argument("--config", default=None, help="tuning config")
 parser.add_argument('-i', "--iter", default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('-w', "--warmup_iter", default=5, type=int,
                     help='For benchmark measurement only.')
-parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+parser.add_argument('--performance', dest='performance', action='store_true',
                     help='run benchmark')
+parser.add_argument("--accuracy", dest='accuracy', action='store_true',
+                    help='For accuracy measurement only.')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
@@ -203,7 +204,7 @@ def main():
         compression_manager.save("./saved")
         return
 
-    if args.benchmark:
+    if args.performance or args.accuracy:
         model.eval()
         if args.int8:
             from neural_compressor.utils.pytorch import load
@@ -212,7 +213,16 @@ def main():
                              dataloader=val_loader)
         else:
             new_model = model
-        validate(val_loader, new_model, criterion, args)
+        if args.performance:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(warmup=5,
+                                     iteration=args.iter,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(new_model, b_conf, b_dataloader=val_loader)
+        if args.accuracy:
+            validate(val_loader, new_model, criterion, args)
         return
 
 

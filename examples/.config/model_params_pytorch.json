@@ -13,37 +13,25 @@
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "hawq_v2",
-      "batch_size": 100,
-      "new_benchmark": false
+      "batch_size": 100
     },
       "efficientnet_b3_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "hawq_v2",
-      "batch_size": 100,
-      "new_benchmark": false
+      "batch_size": 100
       },
     "resnet18_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "batch_size": 100
     },
     "resnet18_ipex":{
      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/ipex",
      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
      "input_model": "",
-     "yaml": "conf_ipex.yaml",
-     "strategy": "basic",
-     "batch_size": 100,
-     "new_benchmark": false
+     "batch_size": 100
     },
     "resnet50": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
@@ -58,19 +46,13 @@
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/ipex",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
-      "yaml": "conf_ipex.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "batch_size": 100
     },
     "resnext101_32x16d_wsl_ipex": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/ipex",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
-      "yaml": "conf_ipex.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "batch_size": 100
     },
     "rnnt_ipex": {
       "model_src_dir": "speech_recognition/rnnt/quantization/ptq_static/ipex",
@@ -166,10 +148,7 @@
       "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "batch_size": 100
     },
     "resnet50_qat": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
@@ -233,33 +212,6 @@
       "strategy": "basic",
       "batch_size": 100,
       "new_benchmark": false
-    },
-    "efficientnet_b0_fx": {
-        "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
-        "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-        "input_model": "",
-        "yaml": "conf.yaml",
-        "strategy": "mse_v2",
-        "batch_size": 100,
-        "new_benchmark": false
-    },
-    "efficientnet_b3_fx": {
-        "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
-        "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-        "input_model": "",
-        "yaml": "conf.yaml",
-        "strategy": "mse_v2",
-        "batch_size": 100,
-        "new_benchmark": false
-    },
-      "efficientnet_b7_fx": {
-        "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
-        "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-        "input_model": "",
-        "yaml": "conf.yaml",
-        "strategy": "mse_v2",
-        "batch_size": 100,
-        "new_benchmark": false
     },
     "bert_base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",

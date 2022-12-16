@@ -44,16 +44,6 @@ function run_tuning {
     if [ "resnext101_32x16d_wsl_ipex" = "${topology}" ];then
         extra_cmd=$extra_cmd" --hub "
     fi
-    result=$(echo $topology | grep "ipex")
-    if [[ "$result" != "" ]];then
-        sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf_ipex.yaml
-        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf_ipex.yaml
-        extra_cmd=$extra_cmd" --ipex"
-        topology=${topology%*${topology:(-5)}}
-    else
-        sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf.yaml
-        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf.yaml
-    fi
     extra_cmd=$extra_cmd" ${dataset_location}"
 
     python main.py \

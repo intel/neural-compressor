@@ -42,7 +42,6 @@ function run_tuning {
         extra_cmd = $extra_cmd"--tuned_checkpoint ${output_model}"
     fi
     extra_cmd=$extra_cmd" ${dataset_location}"
-    yaml="./conf.yaml"
 
     python main.py \
             --pretrained \
@@ -50,7 +49,6 @@ function run_tuning {
             -a $topology \
             -j 1 \
             -b 128 \
-            --config ${yaml} \
             ${extra_cmd}
 
 }
