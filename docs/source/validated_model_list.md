@@ -2053,5 +2053,3 @@ Performance varies by use, configuration and other factors. See [platform config
   </tr>
 </tbody>
 </table>
-
-> **Note:** The model weights are quantized by pre-channel except the models with '*' which are quantized by per-tensor. 
