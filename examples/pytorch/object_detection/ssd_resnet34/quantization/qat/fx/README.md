@@ -32,12 +32,11 @@ Follow the instructions on https://github.com/mlcommons/training/tree/master/sin
 ### 1. Enable ssd_resnet34 example with quant aware training strategy of Neural Compressor.
 
   The changes made are as follows:
-  1. add conf.yaml:
-    This file contains the configuration of quantization.
-  2. add ssd/main.py:\
-    we add the eval_func and training_func_for_nc with reference to https://github.com/mlcommons/training/blob/master/single_stage_detector/ssd/train.py \
+  1. add ssd/main.py:\
+    We import neural_compressor and pass `QuantizationAwareTrainingConfig` to the quant aware training process.
+    We then add the eval_func and training_func_for_nc with reference to https://github.com/mlcommons/training/blob/master/single_stage_detector/ssd/train.py \
     we import neural_compressor in it.
-  3. edit ssd/ssd300.py:
+  2. edit ssd/ssd300.py:
     we replace view() with reshape() in function bbox_view().
 
 ### 2. To get the tuned model and its accuracy: 

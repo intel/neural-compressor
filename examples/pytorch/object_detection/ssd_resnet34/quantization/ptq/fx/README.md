@@ -54,19 +54,9 @@ GCC5 or above is needed.
 ### 1. Enable ssd_resnet34 example with the auto dynamic quantization strategy of Neural Compressor.
 
   The changes made are as follows:
-  1. add conf.yaml:
-    This file contains the configuration of quantization. Users need add calibration dataset path in it.
-        ```
-        COCONpy:
-          root: ./
-          npy_dir: preprocessed/coco-1200-pt/NCHW/val2017/
-          anno_dir: convert_dataset/annotations/instances_val2017.json
-        ```
-    Note: the npy file does not exist in current folder and will be generated after the progress is initialized. So please keep npy_dir path pointing to preprocessed/coco-1200-pt/NCHW/val2017/ in current folder, You can also use absolute path by adding your current path before preprocessed/coco-1200-pt/NCHW/val2017/.
-    Such as: /home/xxx/neural_compressor/examples/pytorch/fx/object_detection/ssd_resnet34/ptq/preprocessed/coco-1200-pt/NCHW/val2017/
-  2. edit python/main.py:
-    we import neural_compressor in it.
-  3. edit python/model/ssd_r34.py:
+  1. edit python/main.py:
+    we import neural_compressor in it and pass `PostTrainingQuantConfig` to the quantization process.
+  2. edit python/model/ssd_r34.py:
     we wrap functions with @torch.fx.wrap to avoid ops cannot be traced by fx mode.
 
 ### 2. To get the tuned model and its accuracy: 
@@ -81,7 +71,7 @@ GCC5 or above is needed.
 
 Left part is accuracy/percentage, right part is time_usage/second.
 
-sampling_size: 50(conf.yaml)
+sampling_size: 50
 FP32 baseline is: [19.6298, 3103.3418]
 Pass quantize model elapsed time: 76469.05 ms
 Tune 1 result is: [19.1733, 763.7865]
@@ -93,7 +83,7 @@ Tune 2 result is: [19.4817, 861.9649]
 | fp32  | 1 | 878.225 ms | 1.139 samples/sec |
 | int8  | 1 |  97.111 ms | 10.298 samples/sec |
 
-sampling_size: 500(conf.yaml)  
+sampling_size: 500
 FP32 baseline is: [19.6298, 3103.3418]  
 Pass quantize model elapsed time: 480769.63 ms  
 Tune 1 result is: [19.0617, 649.5251]  
