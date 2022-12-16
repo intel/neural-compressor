@@ -1,49 +1,59 @@
 Graph Optimization
 ==================
 
+1. [Introduction](#introduction)
+
+    1.1. [FP32 Optimization](#fp32-optimization)
+
+    1.2. [Auto-mixed Precision Optimization](#auto-mixed-precision-optimization)
+
+
+2. [Get Started with Graph Optimization API ](#get-started-with-graph-optimization-api)
+3. [Examples](#examples)
+
 ## Introduction
 
 Graph optimization is primarily focused on two scenarios, shown below:
 
-1. **FP32 optimization**. This is similar to the TensorFlow optimization tool [optimize_for_inference](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/optimize_for_inference.py) while Neural Compressor enables more optimizations (such as common subexpression elimination).
+1. **FP32 Optimization**. This is similar to the TensorFlow optimization tool [optimize_for_inference](https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/optimize_for_inference.py) while Neural Compressor enables more optimizations (such as common subexpression elimination).
 
-2. **Auto-mixed precision optimization**. Neural Compressor generates the optimal model with auto-mixed precision ([bfloat16](https://cloud.google.com/tpu/docs/bfloat16) and FP32) and allows for additional auto-tuning per accuracy requirements.
+2. **Auto-mixed Precision Optimization**. Neural Compressor generates the optimal model with auto-mixed precision ([bfloat16](https://cloud.google.com/tpu/docs/bfloat16) and FP32) and allows for additional auto-tuning per accuracy requirements.
 
 
-## How to use it
+## Get Started with Graph Optimization API
 
 See the following three examples which demonstrate graph optimization API usage.
 
 ### FP32 Optimization
 
-Neural Compressor runs the graph optimization under FP32 Optimization by default. In other words, the **precisions** field is explicitly set to **fp32**:
+Neural Compressor runs the graph optimization under FP32 Optimization by default. In other words, the **fp32** optimization is going to be defaulty implemented, even if **precisions** field is not explicitly set.
 
 ```python
     from neural_compressor.experimental import Graph_Optimization
     graph_optimizer = Graph_Optimization()
-    graph_optimizer.precisions = 'fp32' #Optional, default is 'fp32'
-    graph_optimizer.input = 'input'  # Optional
-    graph_optimizer.output = 'op_to_store'  # Optional
+    graph_optimizer.precisions = 'fp32'
+    graph_optimizer.input = 'input'
+    graph_optimizer.output = 'op_to_store'
     graph_optimizer.model = '/path/to/model'
     optimized_model = graph_optimizer()
 ```
-
+Since Neural Compressor will attempt to detect **input** and **output** names of the model, it's optional to set them explicitly.
 ### Auto-mixed Precision Optimization
 
 #### Default auto-mixed precision
 
-The only difference between this and the default mode (FP32 optimization) is that **bf16** must be added to the **precisions** field.
+Once **bf16** is added to the **precisions** field, the default auto-mixed precision mode will be enabled.
 
   ```python
       from neural_compressor.experimental import Graph_Optimization
       graph_optimizer = Graph_Optimization()
       graph_optimizer.precisions = 'bf16, fp32'
-      graph_optimizer.input = 'input'  # Optional
-      graph_optimizer.output = 'op_to_store'  # Optional
+      graph_optimizer.input = 'input'
+      graph_optimizer.output = 'op_to_store'
       graph_optimizer.model = '/path/to/model'
       optimized_model = graph_optimizer()
   ```
-Note the **fp32** is optional when the **bf16** is set to precisions field. The below example has the identical action under the hardware platform supports bf16, e.g, the CPX platform.
+Note the **fp32** is optional when the **bf16** is set to **precisions** field. The below example has the identical action under the hardware platform supports bf16, e.g, the CPX platform.
   ```python
       from neural_compressor.experimental import Graph_Optimization
       graph_optimizer = Graph_Optimization()
