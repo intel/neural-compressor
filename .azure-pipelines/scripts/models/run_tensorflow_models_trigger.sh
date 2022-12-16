@@ -86,7 +86,7 @@ elif [ "${model}" == "darknet19" ]; then
     new_benchmark=false
     inc_new_api=true
     tuning_cmd="bash run_tuning.sh --topology=${model} --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=benchmark --batch_size=1 --iters=500"
+    benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=performance --batch_size=1 --iters=500"
 elif [ "${model}" == "densenet-121" ]; then
     model_src_dir="oob_models/quantization/ptq"
     dataset_location=""
@@ -97,7 +97,7 @@ elif [ "${model}" == "densenet-121" ]; then
     new_benchmark=false
     inc_new_api=true
     tuning_cmd="bash run_tuning.sh --topology=${model} --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=benchmark --batch_size=1 --iters=500"
+    benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=performance --batch_size=1 --iters=500"
 elif [ "${model}" == "resnet-101" ]; then
     model_src_dir="oob_models/quantization/ptq"
     dataset_location=""
@@ -108,7 +108,7 @@ elif [ "${model}" == "resnet-101" ]; then
     new_benchmark=false
     inc_new_api=true
     tuning_cmd="bash run_tuning.sh --topology=${model} --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=benchmark --batch_size=1 --iters=500"
+    benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=performance --batch_size=1 --iters=500"
 elif [ "${model}" == "resnet50_fashion" ]; then
     model_src_dir="image_recognition/keras_models/resnet50_fashion/quantization/ptq"
     dataset_location="/tf_dataset2/datasets/mnist/FashionMNIST_small"
