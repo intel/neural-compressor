@@ -293,11 +293,6 @@ mixed_precision_schema = Schema({
     }
 })
 
-model_conversion_schema = Schema({
-    'source': And(str, lambda s: s.lower() == 'qat'),
-    'destination': And(str, lambda s: s.lower() == 'default')
-})
-
 filter_schema = Schema({
     Optional('LabelBalance'): {
         'size': And(int, lambda s: s > 0)
@@ -847,8 +842,6 @@ schema = Schema({
     Optional('optimization_level', default=1): And(int, lambda level: level in [0, 1]),
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
-
-    Optional('model_conversion'): model_conversion_schema,
 
     Optional('tuning', default={
         'strategy': {'name': 'basic'}, 

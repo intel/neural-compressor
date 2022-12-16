@@ -11,5 +11,4 @@ The component API information is available:
    component/Distillation
    component/Scheduler
    component/MixedPrecision
-   component/ModelConversion
    component/Nas

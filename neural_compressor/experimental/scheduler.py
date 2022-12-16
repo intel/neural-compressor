@@ -27,7 +27,6 @@ from ..model.model import get_model_fwk_name
 from .quantization import Quantization
 from .pruning import Pruning
 from .distillation import Distillation
-from .model_conversion import ModelConversion
 from .graph_optimization import Graph_Optimization
 from .benchmark import Benchmark
 from .component import Component
@@ -37,7 +36,6 @@ SUPPORTED_COMPONENTS = [
   Quantization,
   Pruning,
   Graph_Optimization,
-  ModelConversion,
   Benchmark,
   Component
 ]

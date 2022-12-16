@@ -24,11 +24,10 @@ from .pruning import Pruning
 from .benchmark import Benchmark
 from .graph_optimization import Graph_Optimization, GraphOptimization
 from .mixed_precision import MixedPrecision
-from .model_conversion import ModelConversion
 from .distillation import Distillation
 from .nas import NAS
 from . import export
 
 __all__ = ['Component', 'Quantization', 'Pruning', 'Benchmark', 'Graph_Optimization', \
-           'GraphOptimization', 'ModelConversion', 'Distillation', 'NAS', 'MixedPrecision', \
+           'GraphOptimization', 'Distillation', 'NAS', 'MixedPrecision', \
            'export']
