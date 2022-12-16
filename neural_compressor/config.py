@@ -594,7 +594,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  device="cpu",
                  backend="default",
                  quant_format="default",
-                 precision="fp8_e5m2",
+                 precision="fp8_e4m3",
                  inputs=[],
                  outputs=[],
                  approach="static",

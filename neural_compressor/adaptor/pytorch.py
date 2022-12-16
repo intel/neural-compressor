@@ -3699,7 +3699,12 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
 
     def _prepare_observer(self, model):
         def input_observer_forward_pre_hook(self, input):
-            return self.input_activation_post_process(input[0])
+            output = self.input_activation_post_process(input[0])
+            if hasattr(self, 'input_activation_post_process1'):
+                output1 = self.input_activation_post_process1(input[1])
+                return (output, output1)
+            else:
+                return output
         ### Insert input observer into model, only for fp8_e4m3 static quantization ###
         for name, module in model.named_modules():
             op_type = str(module.__class__.__name__)
@@ -3707,14 +3712,23 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                 config = self.tune_cfg['op'][(name, op_type)]
                 if config['activation']['dtype'] == 'fp8_e4m3':
                     algorithm = config['activation']['algorithm']
+                    from mpemu.module_wrappers import BatchMatmul, Matmul
                     if algorithm == 'kl':
                         module.add_module(
                             'input_activation_post_process', torch.quantization.HistogramObserver()
                         )
+                        if type(module) in [BatchMatmul,Matmul]:
+                            module.add_module(
+                                'input_activation_post_process1', torch.quantization.HistogramObserver()
+                            )
                     elif algorithm == 'minmax':
                         module.add_module(
                             'input_activation_post_process', torch.quantization.MinMaxObserver()
                         )
+                        if type(module) in [BatchMatmul,Matmul]:
+                            module.add_module(
+                                'input_activation_post_process1', torch.quantization.MinMaxObserver()
+                            )
                     module.register_forward_pre_hook(input_observer_forward_pre_hook)
 
     def _calibration_for_scale(self, model, dataloader):
@@ -3730,24 +3744,31 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
             model, dataloader, iterations,
             calib_sampling_size=300)
 
+        HF_max = torch.tensor(448)
         for name, module in model.named_modules():
             if hasattr(module, 'input_activation_post_process'):
                 max_val = module.input_activation_post_process.max_val
                 min_val = module.input_activation_post_process.min_val
                 amax = torch.max(torch.abs(max_val), torch.abs(min_val))
-                HF_max = torch.tensor(448)
                 scale = HF_max / amax
                 module.register_parameter('scale', torch.nn.Parameter(scale))
-
-                # remove observer module and hook
                 delattr(module, 'input_activation_post_process')
-                hook_map = module._forward_pre_hooks
-                handle_ids_to_remove = set()
-                for handle_id, hook_fn in hook_map.items():
-                    if hook_fn.__name__ == 'input_observer_forward_pre_hook':
-                        handle_ids_to_remove.add(handle_id)
-                for handle_id in handle_ids_to_remove:
-                    hook_map.pop(handle_id)
+            if hasattr(module, 'input_activation_post_process1'):
+                max_val = module.input_activation_post_process1.max_val
+                min_val = module.input_activation_post_process1.min_val
+                amax = torch.max(torch.abs(max_val), torch.abs(min_val))
+                scale = HF_max / amax
+                module.register_parameter('scale1', torch.nn.Parameter(scale))
+                delattr(module, 'input_activation_post_process1')
+    
+            # remove observer hooks
+            hook_map = module._forward_pre_hooks
+            handle_ids_to_remove = set()
+            for handle_id, hook_fn in hook_map.items():
+                if hook_fn.__name__ == 'input_observer_forward_pre_hook':
+                    handle_ids_to_remove.add(handle_id)
+            for handle_id in handle_ids_to_remove:
+                hook_map.pop(handle_id)
 
 
     def add_quantization_hooks(self, model, model_qconfig_dict):
@@ -3759,6 +3780,9 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                 if hasattr(self, 'scale'):
                     scale = self.scale
                 for i in range(len(input)):
+                    # for Matmul and BatchMatmul
+                    if i == 1:
+                        scale = self.scale1
                     tensor = input[i]
                     tensor_q = quantize_tensor(tensor, self.qconfig.iact_qconfig, scale=scale)
                     input_q.append(tensor_q)

@@ -336,8 +336,8 @@
                         },
                     },
           'EmbeddingBag': *cap_hf8_1_11_Embedding,
-          #'LayerNorm': *cap_dynamic_hf8_1_11_Conv2d,
-          'LayerNorm': *cap_bf8_1_11_Conv2d,
+          'LayerNorm': *cap_dynamic_hf8_1_11_Conv2d,
+          #'LayerNorm': *cap_bf8_1_11_Conv2d,
           'default': {
             'activation': {
                         'dtype': ['fp32'],
@@ -363,12 +363,13 @@
                         },
                     },
           'Linear': *cap_static_hf8_1_11_Conv2d,
+          # TODO: Matmul and BatchMatmul only have activations
           'Matmul': *cap_static_hf8_1_11_Conv2d,
           'BatchMatmul': *cap_static_hf8_1_11_Conv2d,
           'Embedding': *cap_hf8_1_11_Embedding,
           'EmbeddingBag': *cap_hf8_1_11_Embedding,
-          #'LayerNorm': *cap_static_hf8_1_11_Conv2d,
-          'LayerNorm': *cap_bf8_1_11_Conv2d,
+          'LayerNorm': *cap_static_hf8_1_11_Conv2d,
+          #'LayerNorm': *cap_bf8_1_11_Conv2d,
           'default': {
             'activation': {
                         'dtype': ['fp32'],
