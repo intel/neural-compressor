@@ -535,10 +535,8 @@
       "model_src_dir": "recommendation/wide_deep_large_ds/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/wide_deep_large_ds/dataset",
       "input_model": "/tf_dataset/tensorflow/wide_deep_large_ds/fp32_optimized_graph.pb",
-      "yaml": "wide_deep_large_ds.yaml",
-      "strategy": "basic",
-      "batch_size": 256,
-      "new_benchmark": false
+      "main_script": "inference.py",
+      "batch_size": 256
     },
     "style_transfer": {
       "model_src_dir": "style_transfer/arbitrary_style_transfer/quantization/ptq",
