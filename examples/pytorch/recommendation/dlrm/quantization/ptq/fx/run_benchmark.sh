@@ -52,7 +52,7 @@ function init_params {
 # run_benchmark
 function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --benchmark"
+        mode_cmd=" --accuracy_only"
         default_bs=16384
     elif [[ ${mode} == "benchmark" ]]; then
         mode_cmd=" -i ${iters} --benchmark "

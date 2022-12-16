@@ -430,8 +430,9 @@ def run_throughput_benchmark(args, dlrm, test_ld):
     for j, inputBatch in enumerate(test_ld):
         X, lS_o, lS_i, T, W, CBPP = unpack_batch(inputBatch)
         bench.add_input(X, lS_o, lS_i)
-        if j == 1000: 
+        if args.num_batches > 0 and j == args.num_batches: 
             break
+    args.num_batches = args.num_batches if args.num_batches > 0 else j
     stats = bench.benchmark(
         num_calling_threads=args.share_weight_instance,
         num_warmup_iters=100,
@@ -688,6 +689,8 @@ def run():
     parser.add_argument("--int8-configure", type=str, default="./int8_configure.json")
     parser.add_argument("--dist-backend", type=str, default="ccl")
     parser.add_argument("--tune", action="store_true", default=False)
+    parser.add_argument("--benchmark", type=bool, default=False)
+    parser.add_argument("--accuracy_only", type=bool, default=False)
 
     global args
     global nbatches
@@ -857,6 +860,38 @@ def run():
                             )
         q_model.save(args.save_model)
         exit(0)
+    if args.benchmark:
+        from neural_compressor.config import BenchmarkConfig
+        from neural_compressor import benchmark
+        b_conf = BenchmarkConfig(warmup=5,
+                                 iteration=args.num_batches,
+                                 cores_per_instance=4,
+                                 num_of_instance=1)
+        def b_func(model):
+            with torch.no_grad():
+                return inference(
+                          args,
+                          model,
+                          best_acc_test,
+                          best_auc_test,
+                          test_ld,
+                          trace=args.int8
+                        )
+        benchmark.fit(model, b_conf, b_func=b_func)
+        exit(0)
+
+    if args.accuracy_only:
+        with torch.no_grad():
+            inference(
+                  args,
+                  model,
+                  best_acc_test,
+                  best_auc_test,
+                  test_ld,
+                  trace=args.int8
+                  )
+        exit(0)
+
 
     if args.bf16 and not args.inference_only:
         for j, inputBatch in enumerate(train_ld):
