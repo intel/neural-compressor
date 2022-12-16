@@ -850,7 +850,7 @@ def run():
         eval_dataloader = DLRM_DataLoader(train_ld)
         from neural_compressor import PostTrainingQuantConfig, quantization
         conf = PostTrainingQuantConfig(approach="static",
-                                       backend="pytorch_ipex"
+                                       backend="ipex"
                                        )
         q_model = quantization.fit(
                             dlrm,
