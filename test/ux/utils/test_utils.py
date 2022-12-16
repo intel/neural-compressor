@@ -308,14 +308,14 @@ class TestUtils(unittest.TestCase):
                 "weight": {
                     "granularity": ["per_channel", "per_tensor"],
                     "scheme": ["asym", "sym"],
-                    "dtype": ["int8", "uint8", "fp32", "bf16"],
+                    "dtype": ["int8", "uint8", "fp32", "bf16", "fp16"],
                     "algorithm": ["minmax"],
                     "bit": 7.0,
                 },
                 "activation": {
                     "granularity": ["per_channel", "per_tensor"],
                     "scheme": ["asym", "sym"],
-                    "dtype": ["int8", "uint8", "fp32", "bf16"],
+                    "dtype": ["int8", "uint8", "fp32", "bf16", "fp16"],
                     "algorithm": ["minmax", "kl"],
                 },
             },
@@ -333,14 +333,14 @@ class TestUtils(unittest.TestCase):
                 "weight": {
                     "granularity": ["per_channel", "per_tensor"],
                     "scheme": ["asym", "sym", "asym_float"],
-                    "dtype": ["int8", "uint8", "fp32", "bf16"],
+                    "dtype": ["int8", "uint8", "fp32", "bf16", "fp16"],
                     "algorithm": ["minmax"],
                     "bit": 7.0,
                 },
                 "activation": {
                     "granularity": ["per_channel", "per_tensor"],
                     "scheme": ["asym", "sym"],
-                    "dtype": ["int8", "uint8", "fp32", "bf16"],
+                    "dtype": ["int8", "uint8", "fp32", "bf16", "fp16"],
                     "algorithm": ["minmax", "kl", "placeholder"],
                     "compute_dtype": ["int8", "uint8", "fp32", "bf16", "None"],
                 },

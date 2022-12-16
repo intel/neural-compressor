@@ -46,6 +46,7 @@ class Model(Base):
     output_nodes = Column(String(250), nullable=False, default="")
     supports_profiling = Column(Boolean, nullable=False, default=False)
     supports_graph = Column(Boolean, nullable=False, default=False)
+    supports_pruning = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, nullable=False, default=func.now())
 
     project: Any = relationship("Project", back_populates="models")
@@ -104,6 +105,7 @@ class Model(Base):
         domain_flavour_id: int,
         supports_profiling: bool,
         supports_graph: bool,
+        supports_pruning: bool,
     ) -> int:
         """
         Add model to database.
@@ -123,6 +125,7 @@ class Model(Base):
             domain_flavour_id=domain_flavour_id,
             supports_profiling=supports_profiling,
             supports_graph=supports_graph,
+            supports_pruning=supports_pruning,
         )
         db_session.add(new_model)
         db_session.flush()
@@ -206,5 +209,6 @@ class Model(Base):
             "output_nodes": json.loads(model.output_nodes),
             "supports_profiling": model.supports_profiling,
             "supports_graph": model.supports_graph,
+            "supports_pruning": model.supports_pruning,
             "created_at": str(model.created_at),
         }

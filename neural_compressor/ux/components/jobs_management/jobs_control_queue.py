@@ -15,9 +15,12 @@
 """Defines _JobsControlQueue class for queuing requests to JobsManager."""
 from queue import Queue
 from subprocess import Popen
+from threading import Event
 from typing import Callable, Optional, Tuple
 
 from neural_compressor.ux.components.jobs_management.request import _Request, _RequestType
+from neural_compressor.ux.utils.exceptions import ClientErrorException
+from neural_compressor.ux.utils.logger import log
 
 
 class _JobsControlQueue:
@@ -37,10 +40,27 @@ class _JobsControlQueue:
         )
         self._requests.put(task)
 
-    def abort_job(self, job_id: str, request_id: Optional[str] = None) -> None:
+    def abort_job(
+        self,
+        job_id: str,
+        request_id: Optional[str] = None,
+        blocking: bool = False,
+    ) -> None:
         """Put request to kill running job."""
-        task = _Request(_RequestType.ABORT, request_id=request_id, job_id=job_id)
+        event = None
+        if blocking:
+            event = Event()
+
+        task = _Request(
+            _RequestType.ABORT,
+            request_id=request_id,
+            job_id=job_id,
+            event=event,
+        )
         self._requests.put(task)
+
+        if event:
+            event.wait()
 
     def add_subprocess(self, job_id: str, process_handle: Popen) -> None:
         """Add subprocess to currently executed job."""
@@ -61,6 +81,8 @@ class _JobsControlQueue:
         def wraped_target(args: Tuple) -> None:
             try:
                 target(args)
+            except ClientErrorException as e:
+                log.error(e)
             finally:
                 request = _Request(_RequestType.DELETE_JOB, job_id=job_id)
                 self._requests.put(request)

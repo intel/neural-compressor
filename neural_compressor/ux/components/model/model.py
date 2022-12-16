@@ -130,6 +130,11 @@ class Model(ABC):
             log.debug("Could not load graph of model.")
         return False
 
+    @property
+    def supports_pruning(self) -> bool:
+        """Check if pruning is supported for the model."""
+        return False
+
     @abstractmethod
     def guard_requirements_installed(self) -> None:
         """Ensure all requirements are installed."""

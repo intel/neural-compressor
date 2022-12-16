@@ -55,12 +55,6 @@ def execute_optimization_pytorch_script(
     logs = [os.path.join(optimization.workdir, "neural_coder_patch.diff")]
 
     Workdir.clean_logs(optimization.workdir)
-    OptimizationAPIInterface.update_optimization_status(
-        {
-            "id": optimization_id,
-            "status": ExecutionStatus.WIP,
-        },
-    )
 
     optimization.generate_config()
 
@@ -125,12 +119,6 @@ def execute_optimization_regular(
     }
 
     Workdir.clean_logs(optimization.workdir)
-    OptimizationAPIInterface.update_optimization_status(
-        {
-            "id": optimization_id,
-            "status": ExecutionStatus.WIP,
-        },
-    )
 
     optimization.generate_config()
 
