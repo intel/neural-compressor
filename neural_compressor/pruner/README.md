@@ -125,7 +125,8 @@ Users can pass the customized training/evaluation functions to `Pruning` in vari
 The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default setting is used as a complement.
 
 ```python
-from neural_compressor.pruner.pruning import Pruning, WeightPruningConfig
+from neural_compressor.pruner.pruning import Pruning
+from neural_compressor.config import WeightPruningConfig
 
 config = WeightPruningConfig(
     pruning_configs,  # An example of pruning_configs is shown below.

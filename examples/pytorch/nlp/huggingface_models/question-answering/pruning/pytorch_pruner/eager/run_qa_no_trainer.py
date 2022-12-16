@@ -57,7 +57,7 @@ from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
 from neural_compressor.pruner.pruning import Pruning
-from neural_compressor.pruner.utils import WeightPruningConfig
+from neural_compressor.config import WeightPruningConfig
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.21.0.dev0")

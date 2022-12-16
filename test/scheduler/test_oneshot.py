@@ -306,7 +306,7 @@ class TestPruning(unittest.TestCase):
 
     def test_distillation_prune_oneshot_with_new_API(self):
         from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
-        from neural_compressor.training import Pruning, WeightPruningConfig
+        from neural_compressor.config import WeightPruningConfig
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)

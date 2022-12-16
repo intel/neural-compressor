@@ -17,8 +17,6 @@
 # limitations under the License.
 
 from .component import Component
-from ..utils.utility import required_libs
-from ..pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
@@ -26,9 +24,8 @@ from ..model import BaseModel
 from ..adaptor import FRAMEWORKS
 from ..conf.config import PruningConf
 from ..conf.pythonic_config import Config
-from ..pruner.utils import WeightPruningConfig
+from ..config import WeightPruningConfig
 
-#
 from ..pruner.utils import process_config, parse_to_prune, check_config, update_params
 from ..utils.utility import LazyImport
 from ..pruner.pruners import get_pruner
@@ -64,8 +61,11 @@ class Pruning(Component):
         super(Pruning, self).__init__()
         # we support WeightPruningConfig object and yaml file as
         if isinstance(conf_fname_or_obj, Config):
-            conf_fname_or_obj = conf_fname_or_obj.pruning
-        if isinstance(conf_fname_or_obj, WeightPruningConfig):
+            self.cfg = PruningConf()
+            self.cfg.map_pyconfig_to_cfg(conf_fname_or_obj)
+            self.cfg = self.cfg.usr_cfg
+            self.conf = conf_fname_or_obj.pruning
+        elif isinstance(conf_fname_or_obj, WeightPruningConfig):
             self.conf = conf_fname_or_obj
         else:
             # yaml file
@@ -77,15 +77,6 @@ class Pruning(Component):
         self.callbacks = dict(tf_pruning=TfPruningCallback)
         self.pruners = []
         self.generate_hooks() # place generate hooks here, to get rid of prepare() function.
-
-    @property
-    def model(self):
-        """Getter of model in neural_compressor.model."""
-        return self._model
-
-    @model.setter
-    def model(self, user_model):
-        self._model = user_model
 
     def update_config(self, *args, **kwargs):
         """Add user-defined arguments to the original configurations.

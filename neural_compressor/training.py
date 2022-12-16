@@ -17,13 +17,13 @@
 
 import copy
 from .conf.pythonic_config import Config
-from .config import DistillationConfig, QuantizationAwareTrainingConfig
+from .config import DistillationConfig, QuantizationAwareTrainingConfig, WeightPruningConfig
 from .experimental.distillation import Distillation
 from .experimental.quantization import Quantization
 from .experimental.scheduler import Scheduler
 from .utils import logger
 from typing import Callable, List, Union
-from neural_compressor.experimental.pruning_v2 import Pruning, WeightPruningConfig
+from neural_compressor.experimental.pruning_v2 import Pruning
 
 class CompressionManager:
     """CompressionManager is uesd in train loop for what user want to deal with additional.

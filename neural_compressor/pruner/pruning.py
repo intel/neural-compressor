@@ -25,7 +25,7 @@ from neural_compressor.pruner.utils import process_config, parse_to_prune,\
 from neural_compressor.pruner.pruners import get_pruner
 from neural_compressor.utils import logger
 import re
-from neural_compressor.pruner.utils import WeightPruningConfig
+from neural_compressor.config import WeightPruningConfig
 
 class Pruning:
     """Pruning.
