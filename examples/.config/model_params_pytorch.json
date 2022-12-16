@@ -13,18 +13,21 @@
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
+      "main_script": "main.py",
       "batch_size": 100
     },
       "efficientnet_b3_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
+      "main_script": "main.py",
       "batch_size": 100
       },
     "resnet18_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
+      "main_script": "main.py",
       "batch_size": 100
     },
     "resnet18_ipex":{
@@ -46,12 +49,14 @@
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/ipex",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
+      "main_script": "main.py",
       "batch_size": 100
     },
     "resnext101_32x16d_wsl_ipex": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/ipex",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
+      "main_script": "main.py",
       "batch_size": 100
     },
     "rnnt_ipex": {
@@ -148,6 +153,7 @@
       "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
+      "main_script": "main.py",
       "batch_size": 100
     },
     "resnet50_qat": {
