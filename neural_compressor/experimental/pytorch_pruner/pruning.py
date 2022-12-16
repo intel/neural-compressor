@@ -60,7 +60,7 @@ class Pruning:
                     item[key] = kwargs[key]
 
     def prepare(self):
-        # to align with old API's calling pipeline
+        """Align with old API's calling pipeline."""
         pass
 
     def get_sparsity_ratio(self):
