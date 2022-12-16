@@ -77,7 +77,7 @@ class Pruning(Component):
         self.callbacks = dict(tf_pruning=TfPruningCallback)
         self.pruners = []
         self.generate_hooks() # place generate hooks here, to get rid of prepare() function.
-        self.framework = "pytorch"
+
     @property
     def model(self):
         """Getter of model in neural_compressor.model."""

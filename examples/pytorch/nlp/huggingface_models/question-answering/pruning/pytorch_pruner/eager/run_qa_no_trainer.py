@@ -26,7 +26,6 @@ import os
 import sys
 
 sys.path.insert(0, './')
-import random
 from pathlib import Path
 
 import datasets
@@ -57,7 +56,7 @@ from transformers.file_utils import get_full_repo_name
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
-from neural_compressor.pruning import Pruning
+from neural_compressor.pruner.pruning import Pruning
 from neural_compressor.pruner.utils import WeightPruningConfig
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.

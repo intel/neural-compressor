@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .pruning import Pruning
+from neural_compressor.pruner.pruning import Pruning
 from .benchmark import Benchmark
 from .version import __version__
 from .contrib import *

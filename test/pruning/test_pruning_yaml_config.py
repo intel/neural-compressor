@@ -4,7 +4,7 @@ import unittest
 
 import torchvision
 
-from neural_compressor.pruning import Pruning
+from neural_compressor.pruner.pruning import Pruning
 
 
 def build_fake_yaml():
