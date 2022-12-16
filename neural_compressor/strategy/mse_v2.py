@@ -92,13 +92,6 @@ class MSE_V2TuneStrategy(TuneStrategy):
             eval_func,
             dicts,
             q_hooks)
-
-    def __getstate__(self):
-        for history in self.tuning_history:
-            if self._same_yaml(history['cfg'], self.cfg):
-                history['ordered_ops'] = self.ordered_ops
-        save_dict = super().__getstate__()
-        return save_dict
     
     def _tuning_record_msg(self, records):
         records_str_lst = [[str(e) for e in record] for record in records]
