@@ -69,14 +69,13 @@ if FLAGS.calib_data:
     [TensorflowResizeCropImagenetTransform(height=224, width=224, mean_value=[123.68, 116.78, 103.94])]))
   calib_dataloader = DefaultDataLoader(dataset=calib_dataset, batch_size=10)
 
-def evaluate(model, measurer=None):
+def evaluate(model):
   """
   Custom evaluate function to inference the model for specified metric on validation dataset.
   
   Args:
       model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
-      measurer (object, optional): for benchmark measurement of duration.
-      
+
   Returns:
       accuracy (float): evaluation result, the larger is better.
   """
@@ -87,21 +86,32 @@ def evaluate(model, measurer=None):
   metric = TensorflowTopK(k=1)
   
   def eval_func(dataloader, metric):
-      results = []
+      warmup = 5
+      iteration = None
+      latency_list = []
+      if FLAGS.benchmark and FLAGS.mode == 'performance':
+          iteration = 100
       for idx, (inputs, labels) in enumerate(dataloader):
           inputs = np.array(inputs)
           input_tensor = tf.constant(inputs)
-          if measurer:
-            measurer.start()
+          start = time.time()
           predictions = infer(input_tensor)[output_name]
-          if measurer:
-            measurer.end()
+          end = time.time()
           predictions = predictions.numpy()
           predictions, labels = postprocess((predictions, labels))
           metric.update(predictions, labels)
-      return results
+          latency_list.append(end - start)
+          if iteration and idx >= iteration:
+              break
 
-  results = eval_func(eval_dataloader, metric)
+      latency = np.array(latency_list[warmup:]).mean() / eval_dataloader.batch_size
+      return latency
+
+  latency = eval_func(eval_dataloader, metric)
+  if FLAGS.benchmark and FLAGS.mode == 'performance':
+      print("Batch size = {}".format(eval_dataloader.batch_size))
+      print("Latency: {:.3f} ms".format(latency * 1000))
+      print("Throughput: {:.3f} images/sec".format(1. / latency))
   acc = metric.result()
   return acc
 
