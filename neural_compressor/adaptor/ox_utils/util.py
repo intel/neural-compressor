@@ -200,11 +200,11 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
     if scale == 1 or (scheme == 'sym' and qType == onnx_proto.TensorProto.INT8):
         zero_point = 0
     elif qType == onnx_proto.TensorProto.UINT8:
-        zero_point = round((0 - rmin) / scale)
-        zero_point = np.uint8(round(max(0, min(255, zero_point))))
+        zero_point = np.round((0 - rmin) / scale)
+        zero_point = np.uint8(np.round(max(0, min(255, zero_point))))
     else:
-        zero_point = round((-64 - rmin) / scale) if quantize_range == 128 \
-            else round((-127 - rmin) / scale)
+        zero_point = np.round((-64 - rmin) / scale) if quantize_range == 128 \
+            else np.round((-127 - rmin) / scale)
     return scale, zero_point
 
 def quantize_data(data, quantize_range, qType, scheme):
