@@ -1,15 +1,18 @@
 Distributed Training and Inference (Evaluation)
 ============
 
-- [Distributed Training and Inference (Evaluation)](#distributed-training-and-inference-evaluation)
-  - [Introduction](#introduction)
-  - [Horovod Installation](#horovod-installation)
-  - [Distributed Training and Inference (Evaluation)](#distributed-training-and-inference-evaluation-1)
-    - [Option 1: Pure Yaml Configuration](#option-1-pure-yaml-configuration)
-    - [Option 2: User Defined Training Function](#option-2-user-defined-training-function)
-    - [Horovodrun Execution](#horovodrun-execution)
-  - [Security](#security)
-  - [Examples](#examples)
+1. [Introduction](#introduction)
+2. [Horovod Installation](#horovod-installation)
+3. [Distributed Training and Inference (Evaluation)](#distributed-training-and-inference-evaluation-1)
+
+    3.1. [Option 1: Pure Yaml Configuration](#option-1-pure-yaml-configuration)
+
+    3.2. [Option 2: User Defined Training Function](#option-2-user-defined-training-function)
+
+    3.3. [Horovodrun Execution](#horovodrun-execution)
+4. [Security](#security)
+5. [Examples](#examples)
+
 ## Introduction
 
 Neural Compressor uses [horovod](https://github.com/horovod/horovod) for distributed training.
