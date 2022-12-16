@@ -38,7 +38,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
     2. Try fallback the quantized ops one by one, calculate and sort by the MSE of the 
        quantizable tensors nearest to the output, and then select the operator with lowest
        MSE to fallback.
-    3. Try quantize the fallback operators in stage 2 back further for better performance.
+    3. Try quantize the fallback operators in #2 back further for better performance.
     
     Note that, only tensorflow framework and pytorch FX backend is currently supported for mse_v2
     tuning strategy.
@@ -49,13 +49,13 @@ class MSE_V2TuneStrategy(TuneStrategy):
         """Construct an mse_v2 tuning strategy.
         
         Args:
-        model (object): The FP32 model specified for low precision tuning.
-        conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
-        q_dataloader (generator): Data loader for calibration, mandatory for post-training quantization.
-        q_func (function, optional): Training function for quantization aware training.
-        eval_dataloader (generator, optional): Data loader for evaluation.
-        eval_func (function, optional): The evaluation function provided by user. 
-        dicts (dict, optional): The dict containing resume information. Defaults to None.
+            model (object): The FP32 model specified for low precision tuning.
+            conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
+            q_dataloader (generator): Data loader for calibration, mandatory for post-training quantization.
+            q_func (function, optional): Training function for quantization aware training.
+            eval_dataloader (generator, optional): Data loader for evaluation.
+            eval_func (function, optional): The evaluation function provided by user. 
+            dicts (dict, optional): The dict containing resume information. Defaults to None.
         """
         
         self.ordered_ops = None
