@@ -77,6 +77,7 @@ class CompressionManager:
         def on_train_end(self):
             """ called after the end of epochs"""
             self.callbacks.on_train_end()
+            logger.info("Training finished!")
 
         def on_epoch_begin(self, epoch):
             """ called on the beginning of epochs"""
