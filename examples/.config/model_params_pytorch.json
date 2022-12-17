@@ -328,7 +328,7 @@
       "model_src_dir": "recommendation/dlrm/quantization/ptq/ipex",
       "dataset_location": "/mnt/local_disk3/dataset/dlrm/dlrm/input",
       "input_model": "/mnt/local_disk3/dataset/dlrm/dlrm/dlrm_weight/tb00_40M.pt",
-      "main_script" "dlrm_s_pytorch.py",
+      "main_script": "dlrm_s_pytorch.py",
       "batch_size": 16384
     },
     "blendcnn": {
