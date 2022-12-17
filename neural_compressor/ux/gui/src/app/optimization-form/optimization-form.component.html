@@ -10,7 +10,7 @@
       </mat-form-field>
       <br>
       <div class="float-right">
-        <button mat-raised-button matStepperNext type="submit">
+        <button mat-raised-button name="next" matStepperNext type="submit">
           <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
           Next
         </button>
@@ -30,8 +30,16 @@
         </mat-button-toggle>
       </mat-button-toggle-group>
       <br>
+      <br>
+      <br>
+      <mat-radio-group *ngIf="optimizationFormGroup.get('precisionId').value === 1 && data.supportsPruning"
+        formControlName="optimizationTypeId">
+        <ng-container *ngFor="let type of supportedTypes">
+          <mat-radio-button [value]="type.id">{{ type.name }}</mat-radio-button><br><br>
+        </ng-container>
+      </mat-radio-group>
       <div class="float-right">
-        <button mat-raised-button matStepperNext type="submit">
+        <button mat-raised-button name="next" matStepperNext type="submit">
           <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
           Next
         </button>
@@ -87,3 +95,5 @@
     </form>
   </mat-step>
 </mat-horizontal-stepper>
+
+<ng-keyboard-shortcuts [shortcuts]="shortcuts"></ng-keyboard-shortcuts>

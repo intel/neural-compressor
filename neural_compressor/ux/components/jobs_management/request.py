@@ -16,6 +16,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from subprocess import Popen
+from threading import Event
 from typing import Any, Callable, Iterable, Optional
 
 
@@ -38,3 +39,4 @@ class _Request:
     args: Optional[Iterable[Any]] = None
     request_id: Optional[str] = None
     process_handle: Optional[Popen] = None
+    event: Optional[Event] = None

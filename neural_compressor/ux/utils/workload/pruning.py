@@ -17,10 +17,12 @@ import re
 from typing import Any, Dict, List, Optional, Union
 
 from neural_compressor.conf.config import Pruner
+from neural_compressor.ux.utils.consts import postprocess_transforms
+from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.utils.logger import log
 from neural_compressor.ux.utils.workload.dataloader import Dataloader
-from neural_compressor.ux.utils.workload.evaluation import Postprocess
+from neural_compressor.ux.utils.workload.evaluation import Postprocess, PostprocessSchema
 
 
 class SGDOptimizer(JsonSerializer):
@@ -29,7 +31,7 @@ class SGDOptimizer(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}):
         """Initialize Configuration SGDOptimizer class."""
         super().__init__()
-        self.learning_rate: float = float(data.get("learning_rage", None))
+        self.learning_rate: float = float(data.get("learning_rate", None))
         self.momentum = data.get("momentum", None)
         self.nesterov = data.get("nesterov", None)
         self.weight_decay = data.get("weight_decay", None)
@@ -110,6 +112,31 @@ class KnowledgeDistillationLossCriterion(JsonSerializer):
         self.loss_weights = data.get("loss_weights", None)
 
 
+class IntermediateLayersKnowledgeDistillationLoss(JsonSerializer):
+    """Configuration IntermediateLayersKnowledgeDistillationLoss class."""
+
+    def __init__(self, data: Dict[str, Any] = {}):
+        """Initialize Configuration IntermediateLayersKnowledgeDistillationLoss class."""
+        super().__init__()
+        self.layer_mappings = data.get("layer_mappings", None)
+        self.loss_types = data.get("loss_types", None)
+        self.loss_weights = data.get("loss_weights", None)
+        self.add_origin_loss = data.get("add_origin_loss", None)
+
+
+class SelfKnowledgeDistillationLoss(JsonSerializer):
+    """Configuration SelfKnowledgeDistillationLoss class."""
+
+    def __init__(self, data: Dict[str, Any] = {}):
+        """Initialize Configuration SelfKnowledgeDistillationLoss class."""
+        super().__init__()
+        self.layer_mappings = data.get("layer_mappings", None)
+        self.loss_types = data.get("loss_types", None)
+        self.loss_weights = data.get("loss_weights", None)
+        self.add_origin_loss = data.get("add_origin_loss", None)
+        self.temperature = data.get("temperature", None)
+
+
 class Criterion(JsonSerializer):
     """Configuration Criterion class."""
 
@@ -132,6 +159,16 @@ class Criterion(JsonSerializer):
                 data["KnowledgeDistillationLoss"],
             )
 
+        self.IntermediateLayersKnowledgeDistillationLoss: Optional[
+            IntermediateLayersKnowledgeDistillationLoss
+        ] = None
+        if isinstance(data.get("IntermediateLayersKnowledgeDistillationLoss", None), dict):
+            self.IntermediateLayersKnowledgeDistillationLoss = (
+                IntermediateLayersKnowledgeDistillationLoss(
+                    data["IntermediateLayersKnowledgeDistillationLoss"],
+                )
+            )
+
 
 class Train(JsonSerializer):
     """Configuration Train class."""
@@ -152,6 +189,26 @@ class Train(JsonSerializer):
         if isinstance(data.get("postprocess", None), dict):
             self.postprocess = Postprocess(data.get("postprocess", {}))
         self.hostfile = data.get("hostfile", None)
+
+    def set_postprocess_transforms(self, transforms: List[Dict[str, Any]]) -> None:
+        """Set postprocess transformation."""
+        if transforms is None or len(transforms) <= 0:
+            return
+        transform_names = {transform["name"] for transform in transforms}
+        has_postprocess_transforms = len(transform_names.intersection(postprocess_transforms)) > 0
+        if not has_postprocess_transforms:
+            return
+
+        if self.postprocess is None:
+            self.postprocess = Postprocess()
+
+        postprocess_transforms_data = {}
+        for single_transform in transforms:
+            if single_transform["name"] in postprocess_transforms:
+                postprocess_transforms_data.update(
+                    {single_transform["name"]: single_transform["params"]},
+                )
+        self.postprocess.transform = PostprocessSchema(postprocess_transforms_data)
 
     def serialize(
         self,
@@ -196,9 +253,108 @@ class WeightCompressionApproach(JsonSerializer):
             data,
             "target_sparsity",
         )
+        self.max_sparsity_ratio_per_layer: Optional[float] = parse_dict_value_to_float(
+            data,
+            "max_sparsity_ratio_per_layer",
+        )
+        self.prune_type: Optional[str] = data.get("prune_type", None)
+
         self.start_epoch: Optional[int] = parse_dict_value_to_int(data, "start_epoch")
         self.end_epoch: Optional[int] = parse_dict_value_to_int(data, "end_epoch")
-        self.pruners: List[Pruner] = data.get("pruners", [])
+
+        self.start_step: Optional[int] = parse_dict_value_to_int(data, "start_step")
+        self.end_step: Optional[int] = parse_dict_value_to_int(data, "end_step")
+
+        self.update_frequency: Optional[float] = parse_dict_value_to_float(
+            data,
+            "update_frequency",
+        )
+        self.update_frequency_on_step: Optional[int] = parse_dict_value_to_int(
+            data,
+            "update_frequency_on_step",
+        )
+        self.excluded_names: List[str] = data.get("excluded_names", [])
+        self.prune_domain: Optional[str] = data.get("prune_domain", None)
+        self.names: List[str] = data.get("names", [])
+        self.extra_excluded_names: List[str] = data.get("extra_excluded_names", [])
+        self.prune_layer_type: Optional[List[Any]] = data.get("prune_layer_type", None)
+        self.sparsity_decay_type: Optional[str] = data.get("sparsity_decay_type", None)
+        self.pattern: Optional[str] = data.get("pattern", None)
+        self.pruners: List[Pruner] = self.initialize_pruners(data.get("pruners", []))
+
+    @staticmethod
+    def initialize_pruners(pruner_dict_list: List[Union[dict, Pruner]]) -> List[Pruner]:
+        """Initialize list of pruners from dict format."""
+        pruner_list = []
+        for pruner_entry in pruner_dict_list:
+            if isinstance(pruner_entry, Pruner):
+                pruner_list.append(pruner_entry)
+                continue
+            if isinstance(pruner_entry, dict):
+                pruner_list.append(Pruner(**pruner_entry))
+                continue
+            raise ClientErrorException("Could not initialize pruners.")
+
+        return pruner_list
+
+    def serialize(
+        self,
+        serialization_type: str = "default",
+    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        """Serialize WeightCompressionApproach class."""
+        result = {}
+        for key, value in self.__dict__.items():
+            if key in self._skip:
+                continue
+            if value is None:
+                continue
+            variable_name = re.sub(r"^_", "", key)
+            getter_value = value
+            try:
+                getter_value = getattr(self, variable_name)
+            except AttributeError:
+                log.warning(f"Found f{key} attribute without {variable_name} getter.")
+
+            if variable_name == "pruners":
+                serialized_value = [self.serialize_pruner(pruner) for pruner in getter_value]
+            else:
+                serialized_value = self._serialize_value(
+                    getter_value,
+                    serialization_type,
+                )
+
+            if serialized_value:
+                result[variable_name] = serialized_value
+        return result
+
+    @staticmethod
+    def serialize_pruner(pruner: Pruner) -> dict:
+        """Serialize INC Pruner instance."""
+        pruner_fields = [
+            "start_epoch",
+            "end_epoch",
+            "update_frequency",
+            "target_sparsity",
+            "initial_sparsity",
+            "start_step",
+            "end_step",
+            "update_frequency_on_step",
+            "prune_domain",
+            "sparsity_decay_type",
+            "extra_excluded_names",
+            "pattern",
+            "prune_type",
+            "method",
+            "names",
+            "parameters",
+        ]
+        serialized_pruner = {}
+        for field in pruner_fields:
+            field_value = getattr(pruner, field)
+            if field_value is None:
+                continue
+            serialized_pruner.update({field: field_value})
+        return serialized_pruner
 
 
 class Approach(JsonSerializer):
@@ -207,9 +363,16 @@ class Approach(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}):
         """Initialize Configuration Approach class."""
         super().__init__()
+
         self.weight_compression: Optional[WeightCompressionApproach] = None
-        if isinstance(data.get("weight_compression", {}), dict):
+        if isinstance(data.get("weight_compression", None), dict):
             self.weight_compression = WeightCompressionApproach(data["weight_compression"])
+
+        self.weight_compression_pytorch: Optional[WeightCompressionApproach] = None
+        if isinstance(data.get("weight_compression_pytorch", None), dict):
+            self.weight_compression_pytorch = WeightCompressionApproach(
+                data["weight_compression_pytorch"],
+            )
 
 
 class Pruning(JsonSerializer):
