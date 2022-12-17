@@ -122,7 +122,7 @@ class BasePruner:
         self.end_step = self.config['end_step']
         self.pruning_frequency = self.config['pruning_frequency']
         ##this is different with original code
-        self.total_prune_cnt = (self.end_step - self.start_step + 1) \
+        self.total_prune_cnt = (self.end_step - self.start_step + self.pruning_frequency) \
                                // self.pruning_frequency
         self.completed_pruned_cnt = 0
         self.total_prune_cnt -= 1  ## not pruning at step 0
