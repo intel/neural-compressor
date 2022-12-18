@@ -577,7 +577,7 @@ def main():
         if model_args.benchmark:
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor import benchmark
-            b_conf = BenchmarkConfig(warmup=5, iteration=100, cores_per_instance=4)
+            b_conf = BenchmarkConfig(warmup=5, iteration=100, cores_per_instance=4, num_of_instance=1)
             benchmark.fit(new_model, b_conf, b_dataloader=trainer.get_eval_dataloader())
         else:
             eval_func_for_nc(new_model)
