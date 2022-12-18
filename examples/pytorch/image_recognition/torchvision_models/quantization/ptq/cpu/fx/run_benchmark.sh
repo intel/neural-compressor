@@ -12,7 +12,7 @@ function main {
 function init_params {
   iters=100
   batch_size=32
-  input_model=saved_results
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
@@ -57,13 +57,18 @@ function run_benchmark {
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
+    extra_cmd=""
+    if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8"
+    fi
 
     python main.py \
             --pretrained \
-            --tuned_checkpoint ${input_model} \
+            --tuned_checkpoint ${tuned_checkpoint} \
             -b ${batch_size} \
-            -a $topology \
+            -a ${input_model} \
             ${mode_cmd} \
+            ${extra_cmd} \
             ${dataset_location}
 }
 

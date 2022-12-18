@@ -184,7 +184,7 @@ def main():
                                     conf,
                                     calib_dataloader=val_loader,
                                     eval_func=eval_func)
-        q_model.save("./saved")
+        q_model.save(args.tuned_checkpoint)
         return
 
     if args.performance or args.accuracy:

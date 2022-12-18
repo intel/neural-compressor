@@ -40,7 +40,7 @@ function run_tuning {
     python main.py \
             --pretrained \
             -t \
-            -a ${topology} \
+            -a ${input_model} \
             -b 30 \
             --tuned_checkpoint ${output_model} \
             ${dataset_location}

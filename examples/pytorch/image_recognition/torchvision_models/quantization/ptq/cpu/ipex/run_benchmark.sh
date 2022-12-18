@@ -12,7 +12,7 @@ function main {
 function init_params {
   iters=100
   batch_size=32
-  input_model=saved_results
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
@@ -58,20 +58,24 @@ function run_benchmark {
         exit 1
     fi
 
-    extra_cmd=""
+    extra_cmd="--ipex"
     if [ "resnext101_32x16d_wsl_ipex" = "${topology}" ];then
         extra_cmd=$extra_cmd" --hub"
     fi
-    extra_cmd=$extra_cmd" ${dataset_location}"
+
+    if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8"
+    fi
     echo $extra_cmd
 
 
     python main.py \
             --pretrained \
-            --tuned_checkpoint ${input_model} \
+            --tuned_checkpoint ${tuned_checkpoint} \
             -b ${batch_size} \
-            -a $topology \
+            -a ${input_model} \
             ${mode_cmd} \
+            ${extra_cmd} \
             ${dataset_location}
 }
 

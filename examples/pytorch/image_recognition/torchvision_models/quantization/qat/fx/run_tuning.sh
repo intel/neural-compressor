@@ -46,7 +46,7 @@ function run_tuning {
     python main.py \
             --pretrained \
             -t \
-            -a $topology \
+            -a $input_model \
             -j 1 \
             -b 128 \
             ${extra_cmd}

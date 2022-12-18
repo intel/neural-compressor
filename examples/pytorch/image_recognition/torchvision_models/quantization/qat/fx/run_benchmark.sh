@@ -11,7 +11,7 @@ function main {
 # init params
 function init_params {
   iters=100
-  input_model=saved_results
+  tuned_checkpoint=saved_results
   batch_size=30
   for var in "$@"
   do
@@ -66,9 +66,9 @@ function run_benchmark {
 
     python main.py \
             --pretrained \
-            --tuned_checkpoint ${input_model} \
+            --tuned_checkpoint ${tuned_checkpoint} \
             -b ${batch_size} \
-            -a $topology \
+            -a ${input_model} \
             ${mode_cmd} \
             ${extra_cmd}
 }

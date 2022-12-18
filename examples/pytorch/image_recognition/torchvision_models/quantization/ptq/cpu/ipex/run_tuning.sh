@@ -41,7 +41,7 @@ function run_tuning {
     if [ -n "$output_model" ];then
         extra_cmd=$extra_cmd"--tuned_checkpoint ${output_model}"
     fi
-    if [ "resnext101_32x16d_wsl_ipex" = "${topology}" ];then
+    if [[ "${topology}" == "resnext101_32x16d_wsl"* ]];then
         extra_cmd=$extra_cmd" --hub "
     fi
     extra_cmd=$extra_cmd" ${dataset_location}"
@@ -49,7 +49,7 @@ function run_tuning {
     python main.py \
             --pretrained \
             -t \
-            -a $topology \
+            -a $input_model \
             -b 30 \
             ${extra_cmd}
 

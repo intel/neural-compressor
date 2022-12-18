@@ -201,7 +201,7 @@ def main():
         model = compression_manager.model
         train_func(model)
         compression_manager.callbacks.on_train_end()
-        compression_manager.save("./saved")
+        compression_manager.save(args.tuned_checkpoint)
         return
 
     if args.performance or args.accuracy:
