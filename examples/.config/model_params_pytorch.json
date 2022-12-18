@@ -34,6 +34,7 @@
      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/ipex",
      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
      "input_model": "",
+     "main_script": "main.py",
      "batch_size": 100
     },
     "resnet50": {
