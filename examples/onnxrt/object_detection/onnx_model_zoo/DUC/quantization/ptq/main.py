@@ -133,7 +133,7 @@ class Dataset:
         y0 += pad_w_left
         y1 += pad_w_left
 
-        img_data = np.array(im, dtype=np.float)
+        img_data = np.array(im, dtype=np.float32)
         img_data = cv.copyMakeBorder(img_data, pad_h_up, pad_h_bottom, pad_w_left, pad_w_right, cv.BORDER_CONSTANT, value=[122.675, 116.669, 104.008])
         img_data = img_data[x0:x1, y0:y1, :]
         img_data = np.transpose(img_data, (2, 0, 1))
@@ -143,13 +143,13 @@ class Dataset:
 
         img_label = np.array(Image.open(frags[1]))
         img_label = cv.resize(img_label, (im_size[1], im_size[0]), interpolation=cv.INTER_NEAREST)
-        img_label = np.array(img_label, dtype=np.float)
+        img_label = np.array(img_label, dtype=np.float32)
         img_label = cv.copyMakeBorder(img_label, pad_h_up, pad_h_bottom, pad_w_left, pad_w_right, cv.BORDER_CONSTANT, value=255)
         img_label = img_label[x0:x1, y0:y1]
 
         img_label = cv.resize(img_label, (int(crop_sz[1] / cell_width), int(crop_sz[0] / cell_width)), interpolation=cv.INTER_NEAREST)
         
-        converted = np.ones(img_label.shape, dtype=np.float) * 255
+        converted = np.ones(img_label.shape, dtype=np.float32) * 255
         id2trainId = {label.id: label.trainId for label in labels}
         for id in id2trainId:
             trainId = id2trainId[id]
