@@ -398,7 +398,7 @@ if __name__ == "__main__":
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.criterion = 'absolute'
         accuracy_criterion.absolute = 0.02
-        op_name_list={
+        op_name_list = {
             'TFNodes/yolo_evaluation*': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
             'conv2d_1': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
             'leaky_re_lu_1': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},

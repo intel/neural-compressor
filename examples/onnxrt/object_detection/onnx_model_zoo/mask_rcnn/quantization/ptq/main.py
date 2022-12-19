@@ -393,6 +393,20 @@ if __name__ == "__main__":
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
         accuracy_criterion = AccuracyCriterion(higher_is_better=False, criterion='absolute')
+        op_name_list = {
+            '[5][2-9][0-9]': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '[5][1][4-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '[6-9][0-9][0-9]$': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '[6][0-6][0-9][0-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '[6][7][0-8][0-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '[6][7][9][0-7]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '[6][8][2-9][0-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '[1]\d{3,}': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '[3-5]\d{3,}': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '[2][0-6][0-9][0-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '[2][8-9][0-9][0-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            '2794': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+        }
         config = PostTrainingQuantConfig(approach='static', 
                                          accuracy_criterion=accuracy_criterion,
                                          quant_format=args.quant_format,)
