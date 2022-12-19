@@ -2451,6 +2451,7 @@ npmjs
 AWSSageMakerSupport
 sagemaker
 xpu
+PostTrainingQuantConfig
 dgpu
 BenchmarkConfig
 QuantizationAwareTrainingConfig
@@ -2463,3 +2464,4 @@ Namhoon
 Thalaiyasingam
 Torr
 QOperator
+MixedPrecisionConfig

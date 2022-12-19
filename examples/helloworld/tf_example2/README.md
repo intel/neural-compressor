@@ -77,27 +77,20 @@ This customized metric will calculate accuracy.
 ```
 ### 4. Use the customized data loader and metric for quantization 
 ```python
-    quantizer = Quantization('./conf.yaml')
     dataset = Dataset()
-    quantizer.metric = MyMetric()
-    quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)
-    quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=1)
-    quantizer.model = common.Model('../models/saved_model')
-    q_model = quantizer.fit()
+    config = PostTrainingQuantConfig()
+    q_model = fit(
+        model='../models/saved_model',
+        conf=config,
+        calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset, batch_size=1),
+        eval_dataloader=DataLoader(framework='tensorflow', dataset=dataset, batch_size=1),
+        eval_metric=MyMetric())
 
 ```
 
 ### 5. Run quantized model
 please get the input and output op name from nc_workspace/tensorflow/hello_world/deploy.yaml
-```yaml
-    model:
-      name: hello_world
-      framework: tensorflow
-      inputs:
-      - input
-      outputs:
-      - output
-```
+
 Run inference on the quantized model
 ```python
     import tensorflow as tf
