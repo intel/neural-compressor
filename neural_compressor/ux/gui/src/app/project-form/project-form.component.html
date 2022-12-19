@@ -12,7 +12,7 @@
       </mat-card>
       <br />
       <div class="float-right">
-        <button id="next_btn1" type="submit" mat-raised-button matStepperNext>
+        <button id="next_btn1" type="submit" mat-raised-button name="next" matStepperNext>
           <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
           Next
         </button>
@@ -36,7 +36,7 @@
       </mat-card>
       <br />
       <div class="float-right">
-        <button id="next_btn2" type="submit" mat-raised-button matStepperNext (click)="getExamples()">
+        <button id="next_btn2" type="submit" mat-raised-button name="next" matStepperNext (click)="getExamples()">
           <img class="navigation-icon" src="./../../assets/083-arrow-forward-right.svg">
           Next
         </button>
@@ -238,3 +238,5 @@
       </div>
     </form>
   </mat-step>
+
+  <ng-keyboard-shortcuts [shortcuts]="shortcuts"></ng-keyboard-shortcuts>

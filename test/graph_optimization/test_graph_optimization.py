@@ -169,7 +169,7 @@ class MyMetric(object):
     def result(self):
         pred = np.array(self.pred_list)
         label = np.array(self.label_list)
-        ones = np.ones(pred.ndim, dtype=np.int)
+        ones = np.ones(pred.ndim, dtype=np.int32)
         ones[0] = label.shape[0]
         label = np.array(self.label_list).reshape(ones)
         correct_num = np.sum(pred == label) 

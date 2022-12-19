@@ -31,7 +31,7 @@ class TrainingMonitor():
     def epoch_step(self, logs={}):
         for (k, v) in logs.items():
             l = self.H.get(k, [])
-            if not isinstance(v, np.float):
+            if not isinstance(v, np.float32):
                 v = round(float(v), 4)
             l.append(v)
             self.H[k] = l

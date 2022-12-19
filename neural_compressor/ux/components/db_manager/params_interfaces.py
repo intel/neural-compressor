@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional, Union
 from neural_compressor.ux.components.optimization.tune.tuning import (
     TuningDetails as TuningDetailsInterface,
 )
+from neural_compressor.ux.utils.workload.pruning import Pruning
 
 
 class ModelAddParamsInterface:
@@ -35,6 +36,7 @@ class ModelAddParamsInterface:
     output_nodes: List[str]
     supports_profiling: bool
     supports_graph: bool
+    supports_pruning: bool
 
     @staticmethod
     def parse_nodes(nodes: Union[None, str, List[str]]) -> List[str]:
@@ -70,6 +72,7 @@ class OptimizationAddParamsInterface:
     sampling_size: int
     tuning_details: TuningDetailsInterface
     diagnosis_config: dict
+    pruning_details: Pruning
 
 
 class OptimizationEditParamsInterface:
