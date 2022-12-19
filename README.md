@@ -56,13 +56,18 @@ pip install tensorflow
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
 ```python
-import tensorflow as tf
-from neural_compressor.experimental import Quantization, common
-quantizer = Quantization()
-quantizer.model = './mobilenet_v1_1.0_224_frozen.pb'
-dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3))
-quantizer.calib_dataloader = common.DataLoader(dataset)
-quantizer.fit()
+from neural_compressor.config import PostTrainingQuantConfig
+from neural_compressor.data.dataloaders.dataloader import DataLoader
+from neural_compressor.data import Datasets
+
+dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
+from neural_compressor.quantization import fit
+config = PostTrainingQuantConfig()
+fit(
+  model="./mobilenet_v1_1.0_224_frozen.pb",
+  conf=config,
+  calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset),
+  eval_dataloader=DataLoader(framework='tensorflow', dataset=dataset))
 ```
 ### Quantization with [JupyterLab Extension](./neural_coder/extensions/neural_compressor_ext_lab/README.md)
 Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install with one click:
