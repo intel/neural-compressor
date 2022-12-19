@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The auto-mixed precision strategy."""
+
 import copy
 import numpy as np
 from collections import OrderedDict
@@ -27,48 +29,21 @@ from .utils.tuning_structs import OpTuningConfig
 
 @strategy_registry
 class AutoMixedPrecisionTuneStrategy(TuneStrategy):
-    """The auto-mixed precision strategy which tunes the mixed precision model with below order.
-
-    1. modelwise tuning for all tunable ops.
-    2. fallback tuning from bottom to top to decide the priority of which op has biggest impact
-       on accuracy.
-    3. incremental fallback tuning by fallbacking multiple ops with the order got from #2.
-
-    Args:
-        model (object):                        The FP32 model specified for low precision tuning.
-        conf (Class):                          The Conf class instance initialized from user yaml
-                                               config file.
-        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
-                                               and should yield a tuple of (input, label).
-                                               The input could be a object, list, tuple or dict,
-                                               depending on user implementation, as well as it can
-                                               be taken as model input. The label should be able
-                                               to take as input of supported metrics. If this
-                                               parameter is not None, user needs to specify
-                                               pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" parameter as None.
-                                               Tuner will combine model, eval_dataloader and
-                                               pre-defined metrics to run evaluation process.
-        eval_func (function, optional):        The evaluation function provided by user.
-                                               This function takes model as parameter, and
-                                               evaluation dataset and metrics should be
-                                               encapsulated in this function implementation and
-                                               outputs a higher-is-better accuracy scalar value.
-
-                                               The pseudo code should be something like:
-
-                                               def eval_func(model):
-                                                    input, label = dataloader()
-                                                    output = model(input)
-                                                    accuracy = metric(output, label)
-                                                    return accuracy
-        dicts (dict, optional):                The dict containing resume information.
-                                               Defaults to None.
-
-    """
+    """The auto-mixed precision strategy."""
 
     def __init__(self, model, conf, q_dataloader=None, q_func=None,
                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
+        """Construct an auto-mixed-precision tuning strategy.
+
+        Args:
+            model (object): The FP32 model specified for low precision tuning.
+            conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
+            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
+            q_func (function): Training function for quantization aware training. Defaults to None.
+            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
+            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
+            dicts (dict): The dict containing resume information. Defaults to None.
+        """
         super().__init__(
             model,
             conf,
@@ -80,6 +55,16 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             q_hooks)
 
     def next_tune_cfg(self):
+        """Generate and yield the next tuning config with below order.
+     
+        1. modelwise tuning for all tunable ops.
+        2. fallback tuning from bottom to top to decide the priority of which op has biggest impact
+        on accuracy.
+        3. incremental fallback tuning by fallbacking multiple ops with the order got from #2.
+        
+        Yields:
+            tune_config (dict): A dict containing the tuning configuration for quantization.
+        """
         from copy import deepcopy
 
         # filter quantization dtype
@@ -141,6 +126,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 yield op_tuning_cfg
 
     def traverse(self):
+        """Traverse the tuning space, overrided from `strategy`."""
         # get fp32 model baseline
         if self.baseline is None and (self.eval_dataloader or self.eval_func):
             logger.info("Get FP32 model baseline.")

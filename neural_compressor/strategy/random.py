@@ -53,7 +53,11 @@ class RandomTuneStrategy(TuneStrategy):
             q_hooks)
 
     def next_tune_cfg(self):
-        """Generate and yield the next tuning config by random searching in tuning space."""
+        """Generate and yield the next tuning config by random searching in tuning space.
+        
+        Yields:
+            tune_config (dict): A dict containing the tuning configuration for quantization.
+        """
         from copy import deepcopy
         tuning_space = self.tuning_space
         initial_op_tuning_cfg = {}
