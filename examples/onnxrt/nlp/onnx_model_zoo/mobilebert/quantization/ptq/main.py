@@ -103,8 +103,6 @@ def main():
     parser = argparse.ArgumentParser(description='onnx squad')
     parser.add_argument('--model_path', required=True, type=str,
                         help='model path')
-    parser.add_argument('--config', required=True, type=str,
-                        help='Tuning config file path')
     parser.add_argument('--save_path', type=str, default='mobilbert_tune.onnx', 
                         help='save tuned model path')
     parser.add_argument('--data_path', type=str,

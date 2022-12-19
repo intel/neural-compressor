@@ -138,15 +138,18 @@ class Dataloader:
     def __iter__(self):
         inputs = []
         labels = []
+        image_shapes = []
         idx = self.batch_size
         for item in self.image_list:
-            inputs.append(item[0])
-            labels.append(item[1])
+            inputs = item[0][0] if isinstance(inputs, list) else np.satck(inputs, item[0][0])
+            image_shapes = item[0][1] if isinstance(image_shapes, list) else np.stack(image_shapes, item[0][1])
+            labels = item[1] if isinstance(labels, list) else np.satck(labels, item[1])
             idx -= 1
-            if idx < 0:
-                yield np.array(inputs), labels
+            if idx <= 0:
+                yield (np.array(inputs), np.array(image_shapes)), labels
                 inputs = []
                 labels = []
+                image_shapes = []
                 idx = self.batch_size
 
     def preprocess(self, sample):
@@ -518,13 +521,27 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
+        from neural_compressor import options
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
+
+        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.criterion = 'absolute'
         accuracy_criterion.absolute = 0.02
+        op_name_list={
+            'StatefulPartitionedCall/model/lambda*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/tf_op_layer_add*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/tf_op_layer_Sigmoid*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/tf_op_layer_split*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/tf_op_layer_Reshape*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'Transpose*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/conv2d_101/BiasAdd': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/conv2d_109/BiasAdd': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+        }
         config = PostTrainingQuantConfig(approach='static', 
                                          calibration_sampling_size=[1],
+                                         op_name_list=op_name_list,
                                          accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)
