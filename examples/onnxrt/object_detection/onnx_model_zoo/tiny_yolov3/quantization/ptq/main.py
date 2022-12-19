@@ -128,15 +128,18 @@ class Dataloader:
     def __iter__(self):
         inputs = []
         labels = []
+        image_shapes = []
         idx = self.batch_size
         for item in self.image_list:
-            inputs.append(item[0])
-            labels.append(item[1])
+            inputs = item[0][0] if isinstance(inputs, list) else np.satck(inputs, item[0][0])
+            image_shapes = item[0][1] if isinstance(image_shapes, list) else np.stack(image_shapes, item[0][1])
+            labels = item[1] if isinstance(labels, list) else np.satck(labels, item[1])
             idx -= 1
-            if idx < 0:
-                yield np.array(inputs), labels
+            if idx <= 0:
+                yield (np.array(inputs), np.array(image_shapes)), labels
                 inputs = []
                 labels = []
+                image_shapes = []
                 idx = self.batch_size
 
     def letterbox_image(self, image, size):
