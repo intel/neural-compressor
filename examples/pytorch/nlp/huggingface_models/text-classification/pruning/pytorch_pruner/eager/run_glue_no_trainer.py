@@ -25,6 +25,7 @@ sys.path.insert(0, './')
 import datasets
 from datasets import load_dataset, load_metric
 from torch.utils.data import DataLoader
+import torch
 from tqdm.auto import tqdm
 
 import transformers
@@ -464,7 +465,7 @@ def main():
 
     #from pytorch_pruner.pruning import Pruning
     from neural_compressor.training import prepare_compression, Pruning
-    from neural_compressor.pruner.utils import WeightPruningConfig
+    from neural_compressor.training import WeightPruningConfig
 
     num_iterations = len(train_dataset) / total_batch_size
     total_iterations = num_iterations * (args.num_train_epochs - args.sparsity_warm_epochs - args.cooldown_epochs)
@@ -474,40 +475,36 @@ def main():
         {
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
-            "sparsity_decay_type": "exp"
+            "sparsity_decay_type": "exp",
+            "target_sparsity": 0.9,
+            "excluded_op_names": ["classifier", "pooler", ".*embeddings*"],
+            "pruning_op_types": ["Linear"],
+            "max_sparsity_ratio_per_op": 0.98,
+            "pattern": "4x1",
+            "pruning_frequency": 100
         }
     ]
-    config = WeightPruningConfig(
-        pruning_configs,
-        target_sparsity=0.9,
-        start_step=int(args.sparsity_warm_epochs * num_iterations),
-        end_step=int(total_iterations),
-        excluded_op_names=["classifier", "pooler", ".*embeddings*"],
-        pruning_op_types=["Linear"],
-        max_sparsity_ratio_per_op=0.98,
-        pruning_scope="global",
-        pattern="4x1",
-        pruning_frequency=100,
-    )
-    #pruner = Pruning(args.pruning_config)
+
+    # pruner = Pruning(args.pruning_config)
+    # import pdb;pdb.set_trace()
+    if args.do_prune:
+        config = WeightPruningConfig(
+            pruning_configs,
+            start_step = int(args.sparsity_warm_epochs * num_iterations),
+            end_step = int(total_iterations)
+        )
+    else:
+        config = WeightPruningConfig(
+            pruning_configs,
+            start_step = args.num_train_epochs * num_iterations + 1,
+            end_step = args.num_train_epochs * num_iterations + 1
+        )
+
     compression_manager = prepare_compression(model=model, confs=config)
 
-
-    # num_iterations = len(train_dataset) / total_batch_size
-
-    # total_iterations = num_iterations * (args.num_train_epochs - args.sparsity_warm_epochs - args.cooldown_epochs)
-    # if args.do_prune:
-    #     pruner.update_items_for_all_pruners(start_step=int(args.sparsity_warm_epochs * num_iterations),
-    #                                         end_step=int(total_iterations))  ##iterative
-    # else:
-    #     pruner.update_items_for_all_pruners(start_step=total_iterations+1,
-    #                                         end_step=total_iterations+1) ##removing the pruner by set the start step to the training end
-    # pruner.model = model
-    # pruner.on_train_begin()
     compression_manager.callbacks.on_train_begin()
     sparsity_warm_step = 0
 
-    import torch
     for epoch in range(args.num_train_epochs):
         model.train()
 

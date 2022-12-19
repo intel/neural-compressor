@@ -958,7 +958,7 @@ def main():
             resume_step -= starting_epoch * len(train_dataloader)
 
     from neural_compressor.training import Pruning, prepare_compression
-    from neural_compressor.pruner.utils import WeightPruningConfig
+    from neural_compressor.training import WeightPruningConfig
 
     num_iterations = len(train_dataset) / total_batch_size
     total_iterations = num_iterations * (args.num_train_epochs - args.warm_epochs - args.cooldown_epochs) \
@@ -969,40 +969,31 @@ def main():
         {
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
-            "sparsity_decay_type": "exp"
+            "sparsity_decay_type": "exp",
+            "target_sparsity": 0.80,
+            "excluded_op_names": ["qa_outputs", "pooler", ".*embeddings*"],
+            "pruning_op_types": ["Linear"],
+            "max_sparsity_ratio_per_op": 0.98,
+            "pattern": "4x1",
+            "pruning_frequency": 1000
         }
     ]
-    config = WeightPruningConfig(
-        pruning_configs,
-        start_step=int(args.warm_epochs * num_iterations+args.num_warmup_steps),
-        end_step=int(total_iterations),
-        target_sparsity=0.80,
-        excluded_op_names=["qa_outputs", "pooler", ".*embeddings*"],
-        pruning_op_types=["Linear"],
-        max_sparsity_ratio_per_op=0.98,
-        pruning_scope="global",
-        pattern="4x1",
-        pruning_frequency=1000
-    )
 
-    import pdb;pdb.set_trace()
+    if args.do_prune:
+        config = WeightPruningConfig(
+            pruning_configs,
+            start_step=int(args.warm_epochs * num_iterations+args.num_warmup_steps),
+            end_step=int(total_iterations)
+        )
+    else:
+        config = WeightPruningConfig(
+            pruning_configs,
+            start_step = int(args.num_train_epochs * num_iterations + 1),
+            end_step = int(args.num_train_epochs * num_iterations + 1)
+        )
 
     compression_manager = prepare_compression(model=model, confs=config)
-
-    # pruner = Pruning(config)
-    # num_iterations = len(train_dataset) / total_batch_size
-    # total_iterations = num_iterations * (args.num_train_epochs - args.warm_epochs - args.cooldown_epochs) \
-    #                    - args.num_warmup_steps
-    # if args.do_prune:
-    #     start = int(args.warm_epochs * num_iterations+args.num_warmup_steps)
-    #     end = int(total_iterations)
-    #     frequency = int((end - start + 1) / 4) if (args.pruning_frequency == -1) else args.pruning_frequency
-    #     pruner.update_config(start_step=start, end_step=end, pruning_frequency=frequency)##iterative
-    # else:
-    #     total_step = num_iterations * args.num_train_epochs + 1
-    #     pruner.update_config(start_step=total_step, end_step=total_step)
-    # pruner.model = model
-    # pruner.on_train_begin()
+    compression_manager.callbacks.on_train_begin()
 
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
