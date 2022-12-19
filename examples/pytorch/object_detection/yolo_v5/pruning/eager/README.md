@@ -60,7 +60,7 @@ python3 -m torch.distributed.run --nproc_per_node 2 --master_port='29500' \
 
 #### YOLOv5
 The snip-momentum pruning method is used by default and the initial dense models are all fine-tuned.
-|  Model  | Dataset  |  Sparsity pattern |Element-wise/matmul, Gemm, conv ratio | Dense mAP50/mAP50-95 | Sparse mAP50/mAP50-95| Relative drop|
+|  Model  | Dataset  |  Sparsity pattern |Element-wise/matmul, GEMM, Conv ratio | Dense mAP50/mAP50-95 | Sparse mAP50/mAP50-95| Relative drop|
 |  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: |
 | YOLOv5s6 | COCO |  1x1  | 0.7998 | 0.600:0.404 | 0.584/0.393 | -2.67%/-2.71% |
 | YOLOv5s6 | COCO |  4x1  | 0.7776 | 0.600:0.404 | 0.573/0.381 | -4.50%/-5.69% |
