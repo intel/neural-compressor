@@ -40,7 +40,7 @@ parser.add_argument('--accuracy_only', dest='accuracy_only', action='store_true'
                     help='For accuracy measurement only.')
 parser.add_argument('--tuned_checkpoint', default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
-parser.add_argument('--iters', default=100, type=int,
+parser.add_argument('--iters', default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('--warmup_iter', default=5, type=int,
                     help='For benchmark measurement only.')
@@ -151,8 +151,7 @@ def main():
             results = {}
             batch_time = AverageMeter('Time', ':6.3f')
             with torch.inference_mode():
-                for i, wave in enumerate(val_dataloader):
-                    
+                for i, wave in enumerate(val_dataloader): 
                     if i >= args.warmup_iter:
                         start = time.time()
                     emission, _ = model(wave[0][0])
@@ -177,30 +176,15 @@ def main():
 
         from neural_compressor.config import BenchmarkConfig
         from neural_compressor import benchmark
-        b_conf = BenchmarkConfig(warmup=5,
-                                 iteration=args.iters,
+        b_conf = BenchmarkConfig(
                                  cores_per_instance=4,
-                                 num_of_instance=1)
+                                 num_of_instance=1
+                                 )
         benchmark.fit(model, b_conf, b_func=b_func)
+        exit(0)
+
     if args.accuracy_only:
         eval_func(model)
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-        acc = eval_func(new_model)
         exit(0)
 
 
