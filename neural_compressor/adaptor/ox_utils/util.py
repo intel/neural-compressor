@@ -195,16 +195,16 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
         max_range = max(abs(rmin), abs(rmax))
         scale = (float(max_range) * 2) / quantize_range if max_range > 0 else 1
     else:
-        scale = (float(rmax) - rmin) / quantize_range if rmin != rmax else 1
+        scale = (float(rmax) - float(rmin)) / quantize_range if rmin != rmax else 1
 
     if scale == 1 or (scheme == 'sym' and qType == onnx_proto.TensorProto.INT8):
         zero_point = 0
     elif qType == onnx_proto.TensorProto.UINT8:
-        zero_point = round((0 - rmin) / scale)
+        zero_point = round((0 - float(rmin)) / scale)
         zero_point = np.uint8(round(max(0, min(255, zero_point))))
     else:
-        zero_point = round((-64 - rmin) / scale) if quantize_range == 128 \
-            else round((-127 - rmin) / scale)
+        zero_point = round((-64 - float(rmin)) / scale) if quantize_range == 128 \
+            else round((-127 - float(rmin)) / scale)
     return scale, zero_point
 
 def quantize_data(data, quantize_range, qType, scheme):

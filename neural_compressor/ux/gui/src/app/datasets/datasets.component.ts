@@ -11,9 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
+import { ShortcutInput } from 'ng-keyboard-shortcuts';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { DatasetFormComponent } from '../dataset-form/dataset-form.component';
 import { ModelService } from '../services/model.service';
@@ -23,10 +24,13 @@ import { ModelService } from '../services/model.service';
   templateUrl: './datasets.component.html',
   styleUrls: ['./datasets.component.scss', './../error/error.component.scss', './../home/home.component.scss']
 })
-export class DatasetsComponent implements OnInit {
+export class DatasetsComponent implements OnInit, AfterViewInit {
   @Input() framework;
   @Input() domain;
   @Input() domainFlavour;
+
+  shortcuts: ShortcutInput[] = [];
+
   datasets = [];
   activeDatasetId = 0;
   datasetDetails = {};
@@ -46,6 +50,16 @@ export class DatasetsComponent implements OnInit {
         this.activeDatasetId = -1;
         this.datasetDetails = {};
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.shortcuts.push(
+      {
+        key: 'shift + alt + d',
+        preventDefault: true,
+        command: e => this.addDataset()
+      },
+    );
   }
 
   getDatasetList(id?: number) {

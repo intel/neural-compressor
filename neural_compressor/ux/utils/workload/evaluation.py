@@ -97,9 +97,20 @@ class PostprocessSchema(JsonSerializer):
     def __init__(self, data: Dict[str, Any] = {}):
         """Initialize Configuration PostprocessSchema class."""
         super().__init__()
-        self.LabelShift = data.get("LabelShift", None)  # [Optional] >0
+        self.LabelShift: Optional[int] = self.get_label_shift_value(data)
         self.Collect = data.get("Collect", None)
         self.SquadV1 = data.get("SquadV1", None)
+        self.SquadV1ModelZoo = data.get("SquadV1ModelZoo", None)
+
+    @staticmethod
+    def get_label_shift_value(data: dict) -> Optional[int]:
+        """Get LabelShift value."""
+        label_shift_data: Any = data.get("LabelShift", None)
+        if label_shift_data is None:
+            return None
+        if isinstance(label_shift_data, dict) and "label_shift" in label_shift_data:
+            return int(label_shift_data["label_shift"])
+        return int(label_shift_data)
 
 
 class Postprocess(JsonSerializer):
@@ -184,9 +195,10 @@ class Evaluation(JsonSerializer):
             self.accuracy.postprocess = Postprocess()
 
         if self.accuracy and self.accuracy.postprocess:
+            postprocess_transforms_data = {}
             for single_transform in transforms:
                 if single_transform["name"] in postprocess_transforms:
-                    self.accuracy.postprocess.transform = {  # type: ignore
-                        single_transform["name"]: single_transform["params"],
-                    }
-                    break
+                    postprocess_transforms_data.update(
+                        {single_transform["name"]: single_transform["params"]},
+                    )
+            self.accuracy.postprocess.transform = PostprocessSchema(postprocess_transforms_data)

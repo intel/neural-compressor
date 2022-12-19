@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from neural_compressor.conf.config import Pruner
+from neural_compressor.ux.utils.consts import postprocess_transforms
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.utils.logger import log
@@ -301,7 +302,7 @@ class Config(JsonSerializer):
     def process_transform(config: OrderedDict, transform: List[Dict[str, Any]]) -> None:
         """Process transformation."""
         for single_transform in transform:
-            if single_transform["name"] == "SquadV1":
+            if single_transform["name"] in postprocess_transforms:
                 continue
             trans_obj = Transform(
                 single_transform["name"],
@@ -372,7 +373,6 @@ class Config(JsonSerializer):
     def load(self, path: str) -> None:
         """Load configuration from file."""
         log.debug(f"Loading predefined config from {path}")
-        yaml.add_constructor("!Pruner", Pruner, yaml.SafeLoader)
         with open(path) as yaml_config:
             config = yaml.safe_load(yaml_config)
         self.initialize(config)
@@ -382,8 +382,23 @@ class Config(JsonSerializer):
         yaml.add_representer(float, float_representer)  # type: ignore
         yaml.add_representer(Pruner, pruner_representer)  # type: ignore
 
+        # Workaround for pruner class
+        serialized_config = self.serialize()
+        try:
+            serialized_config["pruning"]["approach"]["weight_compression"][  # type: ignore
+                "pruners"
+            ] = self.pruning.approach.weight_compression.pruners  # type: ignore
+        except (KeyError, AttributeError):
+            log.debug("Could not find prunners for weight compression approach.")
+        try:
+            serialized_config["pruning"]["approach"]["weight_compression_pytorch"][  # type: ignore
+                "pruners"
+            ] = self.pruning.approach.weight_compression_pytorch.pruners  # type: ignore
+        except (KeyError, AttributeError):
+            log.debug("Could not find prunners for weight compression pytorch approach.")
+
         yaml_content = yaml.dump(
-            data=self.serialize(),
+            data=serialized_config,
             indent=4,
             default_flow_style=None,
             sort_keys=False,

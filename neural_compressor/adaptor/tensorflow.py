@@ -525,6 +525,17 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
+        if self.approach == "quant_aware_training":
+            assert q_func is not None, "quantization aware training mode \
+                is not configured correctly"
+
+            from neural_compressor.experimental import common
+            qat_model = q_func(model)
+
+            return self.convert(common.Model(qat_model), 'QAT', 'default')
+
+        assert q_func is None, \
+            "post-training quantization mode is not support calibration function for Tensorflow!"
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)

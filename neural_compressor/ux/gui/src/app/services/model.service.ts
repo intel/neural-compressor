@@ -158,7 +158,7 @@ export class ModelService {
     return this.http.get(this.baseUrl + 'api/project/list');
   }
 
-  getProjectDetails(id) {
+  getProjectDetails(id: number) {
     return this.http.post(this.baseUrl + 'api/project', { id });
   }
 
@@ -177,11 +177,11 @@ export class ModelService {
     );
   }
 
-  getDatasetList(id) {
+  getDatasetList(id: number) {
     return this.http.post(this.baseUrl + 'api/dataset/list', { project_id: id });
   }
 
-  getDatasetDetails(id) {
+  getDatasetDetails(id: number) {
     return this.http.post(this.baseUrl + 'api/dataset', { id });
   }
 
@@ -197,11 +197,11 @@ export class ModelService {
     return this.http.post(this.baseUrl + 'api/dataset/add', dataset);
   }
 
-  getOptimizationList(id) {
+  getOptimizationList(id: number) {
     return this.http.post(this.baseUrl + 'api/optimization/list', { project_id: id });
   }
 
-  getOptimizationDetails(id) {
+  getOptimizationDetails(id: number) {
     return this.http.post(this.baseUrl + 'api/optimization', { id });
   }
 
@@ -209,7 +209,7 @@ export class ModelService {
     return this.http.post(this.baseUrl + 'api/optimization/add', optimization);
   }
 
-  executeOptimization(optimizationId, requestId) {
+  executeOptimization(optimizationId: number, requestId: string) {
     return this.http.post(
       this.baseUrl + 'api/optimization/execute',
       {
@@ -242,18 +242,18 @@ export class ModelService {
     }
   }
 
-  addNotes(id, notes) {
+  addNotes(id: number, notes: string) {
     return this.http.post(this.baseUrl + 'api/project/note', {
       id,
       notes
     });
   }
 
-  getModelList(id) {
+  getModelList(id: number) {
     return this.http.post(this.baseUrl + 'api/model/list', { project_id: id });
   }
 
-  getBenchmarksList(id) {
+  getBenchmarksList(id: number) {
     return this.http.post(this.baseUrl + 'api/benchmark/list', { project_id: id });
   }
 
@@ -261,11 +261,11 @@ export class ModelService {
     return this.http.post(this.baseUrl + 'api/benchmark/add', benchmark);
   }
 
-  getBenchmarkDetails(id) {
+  getBenchmarkDetails(id: number) {
     return this.http.post(this.baseUrl + 'api/benchmark', { id });
   }
 
-  executeBenchmark(benchmarkId, requestId) {
+  executeBenchmark(benchmarkId: number, requestId: number) {
     return this.http.post(
       this.baseUrl + 'api/benchmark/execute',
       {
@@ -286,11 +286,11 @@ export class ModelService {
     return this.http.post(this.baseUrl + 'api/profiling/add', profiling);
   }
 
-  getProfilingList(id) {
+  getProfilingList(id: number) {
     return this.http.post(this.baseUrl + 'api/profiling/list', { project_id: id });
   }
 
-  getProfilingDetails(id) {
+  getProfilingDetails(id: number) {
     return this.http.post(this.baseUrl + 'api/profiling', { id });
   }
 
@@ -383,6 +383,24 @@ export class ModelService {
         op_name,
         type
 
+      }
+    );
+  }
+
+  getPruningDetails(optimization_id: number) {
+    return this.http.post(
+      this.baseUrl + `api/optimization/pruning_details`,
+      {
+        id: optimization_id
+      }
+    );
+  }
+
+  getPruningParams(optimization_id: number) {
+    return this.http.post(
+      this.baseUrl + `api/pruning/details_wizard`,
+      {
+        optimization_id
       }
     );
   }
