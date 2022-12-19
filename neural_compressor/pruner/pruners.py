@@ -320,7 +320,8 @@ class BasicPruner(BasePruner):
     def on_after_optimizer_step(self):
         """Prune the model after optimization."""
         ##the order of the following three lines can't not be exchanged
-        self.reg.on_after_optimizer_step()
+        if self.global_step >= self.start_step and self.global_step <= self.end_step:
+            self.reg.on_after_optimizer_step()
         self.mask_weights()
         self.criterion.on_after_optimizer_step()
         self.global_step += 1
@@ -557,7 +558,8 @@ class ProgressivePruner(BasicPruner):
     def on_after_optimizer_step(self):
         """Prune the model after optimization."""
         ##the order of the following three lines can't not be exchanged
-        self.reg.on_after_optimizer_step()
+        if self.global_step >= self.start_step and self.global_step <= self.end_step:
+            self.reg.on_after_optimizer_step()
         if not self.use_progressive:
             self.mask_weights()
         else:

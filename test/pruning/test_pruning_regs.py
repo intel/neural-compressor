@@ -30,7 +30,6 @@ local_regs_config = [
         "pruning_frequency": 2,
         "op_names": ['layer2.*'],
         "pruning_scope": "local",
-        "target_sparsity": 0.75,
         "pattern": "1x1",
         "sparsity_decay_type": "exp",
         "reg_type": "group_lasso",
@@ -39,7 +38,6 @@ local_regs_config = [
     {
         "start_step": 2,
         "end_step": 8,
-        "target_sparsity": 0.1,
         "pruning_type": "gradient",
         "pruning_frequency": 2,
         "op_names": ['fc'],
