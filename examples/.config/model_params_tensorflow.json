@@ -1665,6 +1665,41 @@
       "main_script": "main.py",
       "batch_size": 32
     },
+    "resnet50v2_keras_qat": {
+      "model_src_dir": "image_recognition/keras_models/resnetv2_50/quantization/qat",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/resnet50v2_keras/resnet50v2",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "resnet101_keras_qat": {
+      "model_src_dir": "image_recognition/keras_models/resnet101/quantization/qat",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/resnet101_keras/resnet101",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "resnet101v2_keras_qat": {
+      "model_src_dir": "image_recognition/keras_models/resnetv2_101/quantization/qat",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/resnet101v2_keras/resnet101v2",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "densenet169_keras_qat": {
+      "model_src_dir": "image_recognition/keras_models/densenet169/quantization/qat",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/densenet169_keras/densenet169",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "mobilenet_v2_keras_qat": {
+      "model_src_dir": "image_recognition/keras_models/mobilenet_v2/quantization/qat",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/mobilenet_v2_keras/mobilenet_v2",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
     "resnet50_keras_h5": {
       "model_src_dir": "image_recognition/keras_models/resnet50/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",

@@ -41,16 +41,9 @@ python prepare_model.py --output_model=/path/to/model
 `--output_model ` the model should be saved as SavedModel format or H5 format.
 
 ## Run Command
-run tune:
-
   ```shell
-  python main.py --input_model=./path/to/model --output_model=./result --dataset_location=/path/to/evaluation/dataset --tune
-  ```
-
-run benchmark:
-
-  ```shell
-  python main.py --input_model=./path/to/model --mode=accuracy --dataset_location=/path/to/evaluation/dataset --batch_size=100 --benchmark
+  bash run_tuning.sh --input_model=./path/to/model --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  bash run_benchmark.sh --input_model=./path/to/model --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=100
   ```
 
 Details of enabling Intel® Neural Compressor to apply QAT.
