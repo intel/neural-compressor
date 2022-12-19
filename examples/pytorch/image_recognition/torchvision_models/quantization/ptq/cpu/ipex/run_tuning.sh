@@ -39,7 +39,7 @@ function init_params {
 function run_tuning {
     extra_cmd="--ipex"
     if [ -n "$output_model" ];then
-        extra_cmd=$extra_cmd"--tuned_checkpoint ${output_model}"
+        extra_cmd=$extra_cmd" --tuned_checkpoint ${output_model}"
     fi
     if [[ "${topology}" == "resnext101_32x16d_wsl"* ]];then
         extra_cmd=$extra_cmd" --hub "
