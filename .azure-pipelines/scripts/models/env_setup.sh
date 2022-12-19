@@ -109,11 +109,6 @@ else
     $BOLD_RED && echo "Not found requirements.txt file." && $RESET
 fi
 
-# re-install pycocotools resolve the issue with numpy
-echo "re-install pycocotools resolve the issue with numpy..."
-pip uninstall pycocotools -y
-pip install --no-cache-dir pycocotools
-
 $BOLD_YELLOW && echo "======== update yaml config ========" && $RESET
 $BOLD_YELLOW && echo -e "\nPrint origin yaml..." && $RESET
 cat ${yaml}
