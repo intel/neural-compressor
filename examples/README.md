@@ -480,8 +480,8 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>Wav2Vec2</td>
     <td>Speech Recognition</td>
-    <td>Post-Training Dynamic /Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager">eager</a> / <a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx">fx</a></td>
+    <td>Post-Training Dynamic</td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager">eager</a> </td>
   </tr>
   <tr>
     <td>HuBERT</td>

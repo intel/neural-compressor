@@ -33,20 +33,13 @@ BOOKS.TXT  CHAPTERS.TXT  dataset_infos.json  LICENSE.TXT  README.TXT  SPEAKERS.T
 ```
 # Run
 
-### 1. Wav2vec2.0
-```bash
-bash run_tuning.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --topology=wav2vec2 --output_model=./saved_results
-```
-```bash
-bash run_benchmark.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --topology=wav2vec2 --output_model=./saved_results --mode=benchmark
-```
-### 2. Hubert
+## Hubert
 
 ```bash
-bash run_tuning.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --topology=hubert --output_model=./saved_results
+bash run_tuning.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=hubert --output_model=./saved_results
 ```
 ```bash
-bash run_benchmark.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --topology=hubert --output_model=./saved_results --mode=benchmark
+bash run_benchmark.sh --dataset_location=/path/to/speech_dataset/LibriSpeech/test-clean --input_model=hubert --output_model=./saved_results --mode=performance
 ```
 
 
