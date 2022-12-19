@@ -8,6 +8,11 @@
 
 2. [NAS Support Matrix](#nas-support-matrix)
 3. [Get Started with NAS API](#get-started-with-nas-api)
+
+    3.1. [Basic Usage](#basic-usage)
+
+    3.2. [Advanced Usage (Custom NAS)](#advanced-usage-custom-nas)
+
 4. [Examples](#examples)
 
 ## Introduction
@@ -74,6 +79,6 @@ Currently, Intel® Neural Compressor supported two built-in NAS methods: [Basic 
 Following examples are supported in Intel® Neural Compressor:
 
 - DyNAS MobileNetV3 supernet Example:
-  - [DyNAS MobileNetV3 supernet Example](../examples/notebook/dynas/MobileNetV3_Supernet_NAS.ipynb): DyNAS with MobileNetV3 supernet on ImageNet dataset.
+  - [DyNAS MobileNetV3 supernet Example](../../examples/notebook/dynas/MobileNetV3_Supernet_NAS.ipynb): DyNAS with MobileNetV3 supernet on ImageNet dataset.
 - DyNAS Transformer LT supernet Example:
-  - [DyNAS Transformer LT supernet Example](../examples/notebook/dynas/Transformer_LT_Supernet_NAS.ipynb): DyNAS with Transformer LT supernet on WMT En-De dataset.
+  - [DyNAS Transformer LT supernet Example](../../examples/notebook/dynas/Transformer_LT_Supernet_NAS.ipynb): DyNAS with Transformer LT supernet on WMT En-De dataset.
