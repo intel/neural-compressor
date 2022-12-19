@@ -5,7 +5,33 @@
   </h1>
 
   <ng-template #intro>
-    Congratulations! You've just created this project.
+    <p>Keyboard shortcuts:</p>
+    <table>
+      <tr>
+        <th>shift + alt + c</th>
+        <td>create new project</td>
+      </tr>
+      <tr>
+        <th>shift + alt + o</th>
+        <td>create new optimization</td>
+      </tr>
+      <tr>
+        <th>shift + alt + b</th>
+        <td>create new benchmark</td>
+      </tr>
+      <tr>
+        <th>shift + alt + p</th>
+        <td>create new profiling</td>
+      </tr>
+      <tr>
+        <th>shift + alt + d</th>
+        <td>create new dataset</td>
+      </tr>
+      <tr>
+        <th>ctrl + right</th>
+        <td>click next in form</td>
+      </tr>
+    </table>
   </ng-template>
 
   <mat-tab-group mat-stretch-tabs *ngIf="project['input_model']" [(selectedIndex)]="selectedTab"
@@ -22,7 +48,8 @@
       </ng-template>
       <app-optimizations [framework]="project['input_model']['framework']['name']"
         [domain]="project['input_model']['domain']['name']"
-        [domainFlavour]="project['input_model']['domain_flavour']['name']"></app-optimizations>
+        [domainFlavour]="project['input_model']['domain_flavour']['name']"
+        [supportsPruning]="project['input_model']['supports_pruning']"></app-optimizations>
     </mat-tab>
 
     <mat-tab>

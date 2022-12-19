@@ -1951,14 +1951,14 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">54.71%</td>
     <td class="tg-pm1l">47.06%</td>
     <td class="tg-pm1l">54.71%</td>
-    <td class="tg-pm1l">54.74%*</td>
+    <td class="tg-pm1l">54.79%</td>
   </tr>
   <tr>
     <td class="tg-cwad">CaffeNet</td>
     <td class="tg-pm1l">56.25%</td>
     <td class="tg-pm1l">52.35%</td>
     <td class="tg-pm1l">56.27%</td>
-    <td class="tg-pm1l">56.12%*</td>
+    <td class="tg-pm1l">56.24%</td>
   </tr>
   <tr>
     <td class="tg-cwad">GoogleNet</td>
@@ -1972,7 +1972,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">55.86%</td>
     <td class="tg-pm1l">45.09%</td>
     <td class="tg-pm1l">55.86%</td>
-    <td class="tg-pm1l">55.75%*</td>
+    <td class="tg-pm1l">55.89%</td>
   </tr>
   <tr>
     <td class="tg-cwad">Inception V1</td>
@@ -2021,7 +2021,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">72.31%</td>
     <td class="tg-pm1l">69.35%</td>
     <td class="tg-pm1l">72.32%</td>
-    <td class="tg-pm1l">72.31%*</td>
+    <td class="tg-pm1l">72.34%</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V3 MLPerf</td>
@@ -2053,5 +2053,3 @@ Performance varies by use, configuration and other factors. See [platform config
   </tr>
 </tbody>
 </table>
-
-> **Note:** The model weights are quantized by pre-channel except the models with '*' which are quantized by per-tensor. 

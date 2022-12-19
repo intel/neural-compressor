@@ -193,9 +193,9 @@ def letter_box_pos_to_original_pos(letter_pos, current_size, ori_image_size)-> n
     :param ori_image_size: The size of image before being letter boxed.
     :return:
     """
-    letter_pos = np.asarray(letter_pos, dtype=np.float)
-    current_size = np.asarray(current_size, dtype=np.float)
-    ori_image_size = np.asarray(ori_image_size, dtype=np.float)
+    letter_pos = np.asarray(letter_pos, dtype=np.float32)
+    current_size = np.asarray(current_size, dtype=np.float32)
+    ori_image_size = np.asarray(ori_image_size, dtype=np.float32)
     final_ratio = min(current_size[0] / ori_image_size[0], current_size[1] / ori_image_size[1])
     pad = 0.5 * (current_size - final_ratio * ori_image_size)
     pad = pad.astype(np.int32)

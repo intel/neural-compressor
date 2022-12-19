@@ -52,6 +52,9 @@ def get_model_type(model):
                             " lower not support intel ITEX.")
             try:
                 model = tf.keras.models.load_model(model)
+                if isinstance(model, tf.keras.Model) and hasattr(model, 'to_json'):
+                    return 'keras'
+                return 'saved_model'
             except:
                 pass
     if isinstance(model, tf.keras.Model) and hasattr(model, 'to_json'):

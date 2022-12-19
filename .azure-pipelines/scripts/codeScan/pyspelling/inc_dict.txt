@@ -2397,6 +2397,8 @@ grappler
 amsgrad
 qoperator
 apis
+PostTrainingQuantConfig
+dgpu
 CPz
 PostTrainingQuantConfig
 dgpu
