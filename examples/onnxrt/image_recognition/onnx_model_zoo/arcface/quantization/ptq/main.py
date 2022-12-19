@@ -123,7 +123,7 @@ class Dataloader:
  
     def __iter__(self):
         for data in self.data_list:
-            yield data, self.issame_list
+            yield np.expand_dims(data, axis=0), self.issame_list
 
 def eval_func(model, dataloader, metric):
     metric.reset()

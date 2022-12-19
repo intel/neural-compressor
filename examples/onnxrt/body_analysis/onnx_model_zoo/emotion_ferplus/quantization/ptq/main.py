@@ -159,7 +159,7 @@ class Dataloader:
         images = [np.reshape(np.fromstring(image, dtype=np.uint8, sep=' '), (48, 48)) for image in df['pixels']]
         labels = np.array(list(map(int, df['emotion'])))
         self.batch_size = 1
-        self.data = [(self.preprocess(image), label) for image, label in zip(images, labels)]
+        self.data = [(self.preprocess(image), [label]) for image, label in zip(images, labels)]
             
     def __len__(self):
         return len(self.data)
