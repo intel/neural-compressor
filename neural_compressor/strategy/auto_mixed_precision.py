@@ -63,7 +63,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         op_tuning_cfg = {}
         for target_dtype in target_dtypes:
             bf16_items = tuning_space.query_items_by_quant_mode(target_dtype)
-            if len(bf16_items) == 0 or target_dtype == 'fp32':
+            if len(bf16_items) == 0:
                 continue
             bf16_items_name = [item.name for item in bf16_items]
             op_tuning_cfg = deepcopy(initial_op_tuning_cfg)
