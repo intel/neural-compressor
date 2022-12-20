@@ -212,6 +212,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         assert history_cfg is not None, \
           "Need chieckpoint_dir or history_cfg to rebuild int8 model"
         tune_cfg = history_cfg
+        stat_dict = None
 
     version = get_torch_version()
     # Get example inputs for ipex and torch>=1.13.
