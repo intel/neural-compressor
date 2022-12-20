@@ -847,7 +847,7 @@ if __name__ == "__main__":
             args.print_freq = ld_nbatches
             args.test_freq = 0
 
-        del ld_model
+        del(ld_model)
 
         print(
             "Saved at: epoch = {:d}/{:d}, batch = {:d}/{:d}, ntbatch = {:d}".format(
