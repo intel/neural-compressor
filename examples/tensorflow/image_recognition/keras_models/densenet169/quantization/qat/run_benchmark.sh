@@ -3,6 +3,7 @@ set -x
 
 function main {
 
+  iters=-1
   init_params "$@"
   run_benchmark
 

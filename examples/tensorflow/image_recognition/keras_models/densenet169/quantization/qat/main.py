@@ -54,6 +54,8 @@ flags.DEFINE_string(
 flags.DEFINE_integer(
     'batch_size', 32, 'batch_size')
 
+flags.DEFINE_integer(
+    'iters', -1, 'iteration')
 
 def prepare_data(root):
     """
@@ -120,7 +122,7 @@ def evaluate(model):
             predictions, labels = postprocess((predictions, labels))
             metric.update(predictions, labels)
             latency_list.append(end-start)
-            if idx + 1 == FLAGS.iters:
+            if idx + 1 == FLAGS.iters and FLAGS.mode == 'performance':
                 break
         latency = np.array(latency_list).mean() / FLAGS.batch_size
         return latency
