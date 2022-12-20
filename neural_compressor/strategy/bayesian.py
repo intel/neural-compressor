@@ -17,6 +17,8 @@
 
 """The `baysian` tuning strategy."""
 
+"""The `baysian` tuning strategy."""
+
 import copy
 import warnings
 import numpy as np
@@ -178,7 +180,7 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
 
 
 def _hashable(x):
-    """Ensure that an point is hashable by a python dict."""
+    """ ensure that an point is hashable by a python dict """
     return tuple(map(float, x))
 
 # Target space part
@@ -194,7 +196,7 @@ class TargetSpace(object):
         Args:
             target_func (function): Function to be maximized.
             pbounds (dict): Dictionary with parameters names as keys and a tuple with minimum and maximum values.
-            random_seed (int): Optionally specify a seed for a random number generator.
+            random_seed (int): Optionally specify a seed for a random number generator
         """
         self.random_seed = random_seed
         # Get the name of the parameters
@@ -224,7 +226,6 @@ class TargetSpace(object):
 
     @property
     def empty(self):
-        """Get whether the space is empty."""
         return len(self) == 0
 
     @property
