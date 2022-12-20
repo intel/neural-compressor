@@ -1476,6 +1476,11 @@ class Conf(object):
                     pythonic_config.benchmark.intra_num_of_threads,
             })
 
+        if "model.backend" not in mapping:
+            mapping.update({
+                'model.backend': "default",
+            })
+
         for k, v in mapping.items():
             if k in ['tuning.accuracy_criterion.relative', 'tuning.accuracy_criterion.absolute']:
                 target_key = str(pythonic_config.quantization.accuracy_criterion)
