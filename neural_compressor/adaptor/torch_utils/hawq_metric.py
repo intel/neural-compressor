@@ -437,11 +437,13 @@ class HessianTrace:
 
     def get_vtHv_weight(self, params, num_samples):
         v = self.sample_rademacher(params)
-        H_v = [0] * len(v)
+        # H_v = [0] * len(v)
+        H_v=self.sample_normal_like_params()
         cnt = 0
+        # batch_size = self._batch_size
         for step, data in enumerate(self.dataloader):
             batch_size = data[0].shape[0]
-            logger.info("batch_size:"+str(batch_size)+"|"+str(self.dataloader.batch_size))
+            # logger.info("batch_size:"+str(batch_size)+"|"+str(self.dataloader.batch_size))
             cnt += batch_size
             gradients = self.forward_backward(self.model, data, create_graph=True)
             H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
@@ -450,8 +452,15 @@ class HessianTrace:
                 break
         if cnt > 0:
             H_v = [item / cnt for item in H_v]
-        v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
+        v_t_H_v = torch.stack([torch.sum(h_v * v_t)/h_v.size().numel() for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
+        # avg_traces_per_param = torch.stack([torch.sum(a * b) / a.size().numel() for (a, b) in zip(vhp, v)])
         return v_t_H_v
+        #Using python iterator to enable
+        # for gradients in self._gradients_calculator:
+        #      H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
+        #      H_v = [pre + cur * float(batch_size) for cur, pre in zip(H_v_one, H_v)]
+        # H_v = [item / cnt for item in H_v]
+        
 
     # def get_vtHv_act(self, params, num_samples):
     #     v = self.sample_rademacher(params)
@@ -483,7 +492,7 @@ class HessianTrace:
             layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
             model_trace = torch.sum(layer_traces_estimate)
             diff_ratio = abs(model_trace - prev_avg_model_trace) / (prev_avg_model_trace + self.eps)
-            if diff_ratio < self.tolerance and iter > 10:  ##TODO magic number
+            if diff_ratio < self.tolerance:  ##TODO magic number
                 break
             # if iter == 20:  ##TODO for debugging
             #     break
@@ -832,11 +841,11 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
         logger.info("use nncf")
     elif use_nccf==1:
         ht = HessianTrace(fp32_model, dataloader,q_model)
-        traces=ht.cal_avg_traces(enable_act=False,num_samples=32)
+        traces=ht.cal_avg_traces(enable_act=False,num_samples=1)
         logger.info("use hawq")
     else:
         ht = HessianTrace(fp32_model, dataloader,q_model)
-        traces = ht.get_avg_traces(False,100)['weight']
+        traces = ht.get_avg_traces(False,32)['weight']
         return traces
     op_to_traces={}
     for i in traces:
