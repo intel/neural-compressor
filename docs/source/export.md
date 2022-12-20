@@ -88,13 +88,13 @@ For different recipes and ONNX INT8 model formats, 'nn.quantized.Linear' will be
      <td align="center">QDQ_OP_FP32_BIAS</td>
      <td>
 <pre>
-  QuantizeLinear
-        |
- DequantizeLinear
-        |             
-      MatMul
-        |
-       Add
+     QuantizeLinear
+           |
+    DequantizeLinear
+           |             
+         MatMul
+           |
+          Add
 </pre>
      </td>
      <td>
@@ -111,15 +111,15 @@ MatMulIntegerToFloat
      <td align="center">QDQ_OP_INT32_BIAS</td>
      <td>
 <pre>
-   QuantizeLinear
-         |
-   MatMulInteger
-         |
-        Add
-         |
-        Cast
-         |
-        Mul
+     QuantizeLinear
+           |
+     MatMulInteger
+           |
+          Add
+           |
+          Cast
+           |
+          Mul
 </pre>
      </td>
      <td>
@@ -140,17 +140,17 @@ MatMulIntegerToFloat
      <td align="center">QDQ_OP_FP32_BIAS_QDQ</td>
      <td>
 <pre>
-   QuantizeLinear
-         |
-  DequantizeLinear   
-         |
-       MatMul
-         |
-        Add
-         |
-   QuantizeLinear
-         |
-  DequantizeLinear
+     QuantizeLinear
+           |
+    DequantizeLinear   
+           |
+         MatMul
+           |
+          Add
+           |
+     QuantizeLinear
+           |
+    DequantizeLinear
 </pre>
      </td>
      <td>
