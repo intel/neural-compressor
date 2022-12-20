@@ -36,7 +36,7 @@ function run_tuning {
             --model_path ${input_model} \
             --save_path ${output_model} \
             --data_path ${dataset_location} \
-            --quant_format ${quant_format} \ 
+            --quant_format ${quant_format} \
             --tune
 }
 

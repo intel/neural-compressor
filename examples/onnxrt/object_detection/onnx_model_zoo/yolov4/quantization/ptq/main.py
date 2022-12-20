@@ -527,12 +527,12 @@ if __name__ == "__main__":
         accuracy_criterion.criterion = 'absolute'
         accuracy_criterion.absolute = 0.02
         op_name_list={
-            'StatefulPartitionedCall/model/lambda*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'StatefulPartitionedCall/model/tf_op_layer_add*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'StatefulPartitionedCall/model/tf_op_layer_Sigmoid*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'StatefulPartitionedCall/model/tf_op_layer_split*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'StatefulPartitionedCall/model/tf_op_layer_Reshape*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'Transpose*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/lambda.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/tf_op_layer_add.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/tf_op_layer_Sigmoid.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/tf_op_layer_split.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'StatefulPartitionedCall/model/tf_op_layer_Reshape.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'Transpose.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
             'StatefulPartitionedCall/model/conv2d_101/BiasAdd': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
             'StatefulPartitionedCall/model/conv2d_109/BiasAdd': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
         }

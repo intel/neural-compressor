@@ -27,6 +27,8 @@ import numpy as np
 import os
 import onnxruntime as ort
 import yaml
+import sys
+sys.path.append('/home2/yuwenzho/new_api/neural-compressor')
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -392,13 +394,22 @@ if __name__ == "__main__":
 
 
     if args.tune:
+        from neural_compressor import options
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
+
+        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.criterion ='absolute'
         accuracy_criterion.absolute = 0.02
+        op_name_list = {
+            'TFNodes/yolo_evaluation.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'conv2d_10': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+            'conv2d_13': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+        }
         config = PostTrainingQuantConfig(approach='static', 
                                          calibration_sampling_size=[1],
-                                        accuracy_criterion=accuracy_criterion)
+                                         op_name_list=op_name_list,
+                                         accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)
