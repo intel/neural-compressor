@@ -98,9 +98,9 @@ parser.add_argument('-i', "--iter", default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('-w', "--warmup_iter", default=5, type=int,
                     help='For benchmark measurement only.')
-parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+parser.add_argument('--performance', dest='performance', action='store_true',
                     help='run benchmark')
-parser.add_argument('-r', "--accuracy_only", dest='accuracy_only', action='store_true',
+parser.add_argument('-r', "--accuracy", dest='accuracy', action='store_true',
                     help='For accuracy measurement only.')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
@@ -292,24 +292,39 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.evaluate:
         validate(val_loader, model, criterion, args)
 
+    def eval_func(model):
+        accu = validate(val_loader, model, criterion, args)
+        return float(accu)
+
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf_ipex.yaml")
-        quantizer.model = common.Model(model)
-        q_model = quantizer.fit()
+        from neural_compressor import PostTrainingQuantConfig
+        from neural_compressor import quantization
+        conf = PostTrainingQuantConfig(backend='ipex')
+        q_model = quantization.fit(model,
+                                    conf,
+                                    calib_dataloader=val_loader,
+                                    eval_func=eval_func)
         q_model.save(args.tuned_checkpoint)
         return
 
-    if args.benchmark or args.accuracy_only:
+    if args.performance or args.accuracy:
         model.eval()
-        ipex_config_path = None
         if args.int8:
             from neural_compressor.utils.pytorch import load
             q_model = load(os.path.expanduser(args.tuned_checkpoint), model, dataloader=val_loader)
             model = q_model
         else:
             model = model
-        validate(val_loader, model, criterion, args, ipex_config_path)
+        if args.performance:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(warmup=5,
+                                     iteration=args.iter,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(model, b_conf, b_dataloader=val_loader)
+        if args.accuracy:
+            validate(val_loader, model, criterion, args)
         return
 
     for epoch in range(args.start_epoch, args.epochs):
@@ -381,7 +396,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             progress.print(i)
 
 
-def validate(val_loader, model, criterion, args, ipex_config_path=None):
+def validate(val_loader, model, criterion, args):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
@@ -422,11 +437,6 @@ def validate(val_loader, model, criterion, args, ipex_config_path=None):
                 break
 
         print('Batch size = %d' % args.batch_size)
-        if args.batch_size == 1:
-            print('Latency: %.3f ms' % (batch_time.avg * 1000))
-        print('Throughput: %.3f images/sec' % (args.batch_size / batch_time.avg))
-
-        # TODO: this should also be done with the ProgressMeter
         print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
               .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 

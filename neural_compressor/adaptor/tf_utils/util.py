@@ -30,6 +30,8 @@ from .graph_util import GraphAnalyzer
 from .graph_util import GraphRewriterHelper
 from pkg_resources import parse_version
 
+TF_SPR_BASE_VERSIONS = ('2.11.0202242', '2.11.0202250')
+
 def version1_lt_version2(version1, version2):
     return parse_version(version1) < parse_version(version2)
     

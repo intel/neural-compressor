@@ -2398,12 +2398,8 @@ amsgrad
 qoperator
 apis
 AccuracyCriterion
-AccuracyLoss
-PostTrainingQuantConfig
 TuningCriterion
 CPz
-PostTrainingQuantConfig
-dgpu
 Nsh
 UmK
 fe
@@ -2453,8 +2449,8 @@ efe
 npmjs
 AWSSageMakerSupport
 sagemaker
-BenchmarkConfig
 xpu
+PostTrainingQuantConfig
 dgpu
 BenchmarkConfig
 QuantizationAwareTrainingConfig
@@ -2466,3 +2462,4 @@ WeightPruningConfig
 Namhoon
 Thalaiyasingam
 Torr
+MixedPrecisionConfig

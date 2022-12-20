@@ -60,13 +60,6 @@ def execute_profiling(data: Dict[str, Any]) -> None:
         project_id = profiling_details["project_id"]
         project_details = ProjectAPIInterface.get_project_details({"id": project_id})
 
-        ProfilingAPIInterface.update_profiling_status(
-            {
-                "id": profiling_id,
-                "status": ExecutionStatus.WIP,
-            },
-        )
-
         response_data = execute_real_profiling(
             request_id=request_id,
             project_details=project_details,

@@ -1,6 +1,17 @@
 BigDL Nano Support
 ===========================
 
+Neural Coder collaborates with [BigDL-Nano](https://bigdl.readthedocs.io/en/latest/doc/Nano/Overview/nano.html), a Python library that automatically applies modern CPU optimizations, to further democratize ease-of-use BigDL-Nano APIs as a **no-code** solution for PyTorch Deep Learning programmers.
+
+## Example
+For instance, to perform BF16 + Channels Last optimizations with BigDL-Nano API using Neural Coder on the [example code](../examples/nano/resnet18.py) and run this code with the enabled optimizations, users can simply execute this command:
+```
+python -m neural_coder -o nano_bf16_channels_last ../examples/nano/resnet18.py
+```
+The alias for each optimization set is documented in the below Support Matrix. Note that you need to ```pip install bigdl``` first following [BigDL-Nano documentation](https://github.com/intel-analytics/BigDL#installing).
+
+## Support Matrix
+
 | Optimization Set | API Alias | 
 | ------------- | ------------- | 
 | BF16 + Channels Last | `nano_bf16_channels_last` | 

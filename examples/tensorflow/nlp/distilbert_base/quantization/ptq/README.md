@@ -170,7 +170,8 @@ After prepare step is done, we add the code for quantization tuning to generate 
     from neural_compressor.benchmark import fit
     from neural_compressor.config import BenchmarkConfig
     if ARGS.mode == 'performance':
-        fit(model, conf=BenchmarkConfig(), b_func=eval_func)
+        conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
+        fit(graph, conf, b_func=self.eval_func)
     elif ARGS.mode == 'accuracy':
         self.eval_func(graph)
 ```

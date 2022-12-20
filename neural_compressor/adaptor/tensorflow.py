@@ -83,7 +83,7 @@ class TensorFlowAdaptor(Adaptor):
 
         from pkg_resources import parse_version
         import tensorflow as tf
-        self.new_api = parse_version(tf.version.VERSION) == parse_version('2.11.0202242')
+        self.new_api = tf.version.VERSION in ('2.11.0202242', '2.11.0202250')
         self.qdq_enabled = self.itex_mode or self.format == 'QDQ' or self.new_api
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns(self.qdq_enabled)
         self.optimization = self.query_handler.get_grappler_optimization_cfg()
@@ -525,6 +525,17 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
+        if self.approach == "quant_aware_training":
+            assert q_func is not None, "quantization aware training mode \
+                is not configured correctly"
+
+            from neural_compressor.experimental import common
+            qat_model = q_func(model)
+
+            return self.convert(common.Model(qat_model), 'QAT', 'default')
+
+        assert q_func is None, \
+            "post-training quantization mode is not support calibration function for Tensorflow!"
         self.tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
@@ -1484,6 +1495,14 @@ class TensorFlowAdaptor(Adaptor):
         
         graph_def = GraphAnalyzer().parse_graph(qmodel.graph_def)
         output_op_names = set()
+        
+        def _add_output_op_name(opname):
+            if opname.endswith("_dequantize"):
+                output_op_names.add(opname[:-len("_dequantize")]) # pylint: disable=no-member
+            elif opname.endswith("__dequant"):
+                pass
+            else:
+                output_op_names.add(opname) # pylint: disable=no-member
 
         for output_opname in qmodel.output_node_names:
             op_count = 0
@@ -1496,7 +1515,7 @@ class TensorFlowAdaptor(Adaptor):
                         break
                     op = graph_def[opname]
                     if op.node.op == 'Dequantize':
-                        output_op_names.add(opname)
+                        _add_output_op_name(opname)
                         break
                     next_opnames = op.node.input
                     if not next_opnames:

@@ -71,7 +71,7 @@ class ProfilingAPIInterface:
             profiling_id: int = int(data.get("id", None))
             profiling_name: str = str(data.get("name", None))
             job_id = parse_job_id("profiling", profiling_id)
-            jobs_control_queue.abort_job(job_id)
+            jobs_control_queue.abort_job(job_id, blocking=True)
         except ValueError:
             raise ClientErrorException("Could not parse value.")
         except TypeError:

@@ -88,6 +88,7 @@ class TestTensorflowQAT(unittest.TestCase):
         compression_manager = training.prepare_compression('./baseline_model', config)
         compression_manager.callbacks.on_train_begin()
 
+        q_aware_model = compression_manager.model
         # `quantize_model` requires a recompile.
         q_aware_model.compile(optimizer='adam',
                                 loss=tf.keras.losses.SparseCategoricalCrossentropy(

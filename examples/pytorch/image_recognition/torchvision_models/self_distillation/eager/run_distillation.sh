@@ -16,9 +16,6 @@ function init_params {
       --topology=*)
           topology=$(echo $var |cut -f2 -d=)
       ;;
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
@@ -41,7 +38,6 @@ function run_distillation {
     fi
     python main.py \
            --topology=${topology} \
-           --config=${config} \
            --output-model=${output_model} \
            ${extra_cmd}
 }

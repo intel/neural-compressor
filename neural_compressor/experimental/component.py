@@ -68,7 +68,10 @@ class Component(object):
             'on_step_begin': self.on_step_begin,
             'on_step_end': self.on_step_end,
             'on_after_compute_loss': self.on_after_compute_loss,
-            'on_before_optimizer_step': self.on_before_optimizer_step
+            'on_before_optimizer_step': self.on_before_optimizer_step,
+            'on_after_optimizer_step': self.on_after_optimizer_step,
+            'on_before_eval': self.on_before_eval,
+            'on_after_eval': self.on_after_eval
         }
         self.hooks_dict = {
             'on_train_begin': [],
@@ -78,7 +81,10 @@ class Component(object):
             'on_step_begin': [],
             'on_step_end': [],
             'on_after_compute_loss': [],
-            'on_before_optimizer_step': []
+            'on_before_optimizer_step': [],
+            'on_after_optimizer_step': [],
+            'on_before_eval': [],
+            'on_after_eval': []
         }
         if conf_fname_or_obj is not None:  # pragma: no cover
             if isinstance(conf_fname_or_obj, str):
@@ -283,6 +289,21 @@ class Component(object):
         """Be called before optimizer step."""
         for on_before_optimizer_step_hook in self.hooks_dict['on_before_optimizer_step']:
             on_before_optimizer_step_hook()
+
+    def on_after_optimizer_step(self):
+        """Be called after optimizer step."""
+        for on_after_optimizer_step_hook in self.hooks_dict['on_after_optimizer_step']:
+            on_after_optimizer_step_hook()
+
+    def on_before_eval(self):
+        """Be called before evaluation."""
+        for on_before_eval_hook in self.hooks_dict['on_before_eval']:
+            on_before_eval_hook()
+
+    def on_after_eval(self):
+        """Be called after evaluation."""
+        for on_after_eval_hook in self.hooks_dict['on_after_eval']:
+            on_after_eval_hook()
 
     @deprecated(version='2.0', reason="please use `on_before_optimizer_step` instead")
     def on_post_grad(self):
@@ -489,6 +510,13 @@ class Component(object):
             logger.warning("Force convert framework model to neural_compressor model.")
             self._model = Model(user_model, framework=self.framework)
         else:
+            # It is config of neural_compressor version < 2.0, no need in 2.0
+            if self.cfg.model.framework == "pytorch_ipex":
+                from neural_compressor.model.torch_model import IPEXModel
+                if not isinstance(user_model, IPEXModel):
+                    self._model = Model(user_model.model, framework=self.cfg.model.framework)
+                    return
+
             self._model = user_model
 
         if 'tensorflow' in self.framework:

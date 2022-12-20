@@ -57,7 +57,7 @@ class BenchmarkAPIInterface:
             benchmark_id: int = int(data.get("id", None))
             benchmark_name: str = str(data.get("name", None))
             job_id = parse_job_id("benchmark", benchmark_id)
-            jobs_control_queue.abort_job(job_id)
+            jobs_control_queue.abort_job(job_id, blocking=True)
         except ValueError:
             raise ClientErrorException("Could not parse value.")
         except TypeError:
