@@ -26,7 +26,6 @@ import os
 import sys
 
 sys.path.insert(0, './')
-import random
 from pathlib import Path
 
 import datasets
@@ -978,8 +977,7 @@ def main():
             "sparsity_decay_type": "exp",
             "excluded_op_names": ["qa_outputs", "pooler", ".*embeddings*"],
             "pruning_op_types": ["Linear"],
-            "max_sparsity_ratio_per_op": 0.98,
-            "pruning_scope": "global"
+            "max_sparsity_ratio_per_op": 0.98
         }
     ]
     config = WeightPruningConfig(

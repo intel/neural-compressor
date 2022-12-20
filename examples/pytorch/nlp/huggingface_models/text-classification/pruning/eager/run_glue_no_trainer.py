@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# """ Finetuning a 🤗 Transformers model for sequence classification on GLUE."""
+""" Finetuning a 🤗 Transformers model for sequence classification on GLUE."""
 import argparse
 import logging
 import math
@@ -20,12 +20,12 @@ import os
 import random
 from pathlib import Path
 import sys
-import torch
 
 sys.path.insert(0, './')
 import datasets
 from datasets import load_dataset, load_metric
 from torch.utils.data import DataLoader
+import torch
 from tqdm.auto import tqdm
 
 import transformers
@@ -498,11 +498,11 @@ def main():
     pruning_configs=[
         {
             "pruning_type": "snip_momentum",
+            "pruning_scope": "global",
             "sparsity_decay_type": "exp",
             "excluded_op_names": ["classifier", "pooler", ".*embeddings*"],
             "pruning_op_types": ["Linear"],
-            "max_sparsity_ratio_per_op": 0.98,
-            "pruning_scope": "global"
+            "max_sparsity_ratio_per_op": 0.98
         }
     ]
     config = WeightPruningConfig(
@@ -521,6 +521,7 @@ def main():
     
     for epoch in range(args.num_train_epochs):
         model.train()
+        
         for step, batch in enumerate(train_dataloader):
             # pruner.on_step_begin(local_step=step)
             compression_manager.callbacks.on_step_begin(step)
@@ -535,8 +536,9 @@ def main():
                 MSELoss = torch.nn.MSELoss().cuda()
                 loss = distill_loss_weight * MSELoss(outputs['hidden_states'][-1],
                                                      teacher_outputs['hidden_states'][-1])  ##variant 3
-                
+
             accelerator.backward(loss)
+            
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
                 # pruner.on_before_optimizer_step()
                 compression_manager.callbacks.on_before_optimizer_step()
