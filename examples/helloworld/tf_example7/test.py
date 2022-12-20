@@ -1,33 +1,17 @@
-import tensorflow as tf
-from argparse import ArgumentParser
-from neural_compressor import conf
-from neural_compressor.experimental import common
+from neural_compressor.config import PostTrainingQuantConfig
+from neural_compressor.data.dataloaders.dataloader import DataLoader
+from neural_compressor.data import Datasets
 
 def main():
-    arg_parser = ArgumentParser(description='Parse args')
-    arg_parser.add_argument('--benchmark', action='store_true', help='run benchmark')
-    arg_parser.add_argument('--tune', action='store_true', help='run tuning')
-    args = arg_parser.parse_args()
-    
-    dataloader = {
-        'dataset': {'dummy_v2': {'input_shape': [28, 28]}}
-    }
-    conf.quantization.calibration.dataloader = dataloader
-    conf.evaluation.accuracy.dataloader = dataloader
-    conf.tuning.accuracy_criterion.absolute = 0.9
-    conf.evaluation.performance.dataloader = dataloader
-    if args.tune:
-        from neural_compressor.experimental import Quantization
-        quantizer = Quantization(conf)
-        quantizer.model = common.Model("../models/frozen_graph.pb")
-        quantizer.fit()
 
-    if args.benchmark:
-        from neural_compressor.experimental import Benchmark
-        evaluator = Benchmark(conf)
-        evaluator.model = common.Model("../models/frozen_graph.pb")
-        evaluator('performance')
-      
+    dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
+    from neural_compressor.quantization import fit
+    config = PostTrainingQuantConfig()
+    fit(
+        model="./mobilenet_v1_1.0_224_frozen.pb",
+        conf=config,
+        calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset),
+        eval_dataloader=DataLoader(framework='tensorflow', dataset=dataset))
+
 if __name__ == "__main__":
-
     main()

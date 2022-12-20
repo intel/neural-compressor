@@ -11,8 +11,8 @@ class TestGrapplerPass(unittest.TestCase):
         g = tf.Graph()
         with g.as_default():
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
-            z_data = np.array([[2, 4], [6, 8]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+            z_data = np.array([[2, 4], [6, 8]], dtype=np.float32)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             z = tf.constant(z_data, dtype=tf.float32, shape=[2, 2])
