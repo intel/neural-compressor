@@ -4,21 +4,29 @@ Intel® Neural Compressor Bench
 Intel® Neural Compressor Bench is a web application for easier use of Intel® Neural Compressor.
 
 ## Table of Contents
-- [Introduction](#introduction)
-- [Home screen](#home-screen)
-- [Create new project](#create-new-project)
-  - [Optimization tab](#optimization-tab)
-  - [Benchmark tab](#benchmark-tab)
-  - [Profiling tab](#profiling-tab)
-  - [Diagnosis tab](#diagnosis-tab)
-  - [Dataset tab](#dataset-tab)
-  - [Project information](#project-information-tab)
-- [System information](#system-information)
-- [Security](#security)
+1. [Introduction](#introduction)
+2. [Home screen](#home-screen)
+3. [Create new project](#create-new-project)
+
+    3.1. [Optimization tab](#optimization-tab)
+
+    3.2. [Benchmark tab](#benchmark-tab)
+
+    3.3. [Profiling tab](#profiling-tab)
+
+    3.4. [Diagnosis tab](#diagnosis-tab)
+
+    3.5. [Dataset tab](#dataset-tab)
+
+    3.6. [Project information](#project-information-tab)
+
+4. [System information](#system-information)
+5. [Security](#security)
+
 # Introduction
 ## Install Intel® Neural Compressor with Bench
 To install Install Intel® Neural Compressor with GUI install full version of Intel® Neural Compressor in one of following ways:
-### Option 1 Install from binary
+### Option 1: Install from binary
 
 ```Shell
 # install stable full version from pip (including GUI)
@@ -31,7 +39,7 @@ pip install -i https://test.pypi.org/simple/ neural-compressor-full
 conda install neural-compressor-full -c conda-forge -c intel  
 ```
 
-### Option 2 Install from source
+### Option 2: Install from source
 
 ```Shell
 git clone https://github.com/intel/neural-compressor.git
@@ -158,6 +166,13 @@ For Quantization you can also modify Tuning details before optimizing model.
 ### Optimization details
 To perform optimization click "Run" button. Once process is finished you can click on row with specific optimization to display details about optimization parameters and optimized model. When you click on blue arrow icon in model path line, you can download optimized model.
 ![Optimization-details](_static/imgs/bench/optimization-details.png "Optimization-details")
+
+### Pruning
+To add pruning, click "Add new optimization" and in the *Precision* step choose *fp32* and then check the *pruning* option. Choose the dataset and click *Finish*.
+![Pruning-wizard](_static/imgs/bench/pruning-wizard.png "Pruning-wizard")
+Pruning parameters are visible after in *Optimization details* section described before.
+![Pruning-details](_static/imgs/bench/pruning-details.png "Pruning-details")
+Click *Run* button in the optimization table to execute the pruning. When the pruning is finished, path to the optimized model can be found in the details section.
 
 ## Benchmark tab
 ### Benchmark table
