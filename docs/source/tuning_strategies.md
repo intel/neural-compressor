@@ -5,11 +5,12 @@ Tuning Strategies
 
 Intel® Neural Compressor aims to help users quickly deploy
 the low-precision inference solution on popular Deep Learning frameworks
-such as TensorFlow, PyTorch, and MxNet. Using built-in strategies, it
+such as TensorFlow, PyTorch, and ONNX Runtime. Using built-in strategies, it
 automatically optimizes low-precision recipes for deep learning models to
 achieve optimal product objectives, such as inference performance and memory
-usage, with expected accuracy criteria. Currently, it supports `Basic`, `Bayesian`, `Exhaustive`, `MSE`, `Random`, `SigOpt` and `TPE` strategies. `Basic` is
-the default strategy.
+usage, with expected accuracy criteria. Currently, several strategies, including
+`Basic`, `Bayesian`, `Exhaustive`, `MSE`, `MSE_v2`, `Random`, `SigOpt`, `TPE`, 
+`Hawq_v2` etc is supported. By default, `Basic` strategy is used for tuning.
 
 ## Strategy Design
 
@@ -27,12 +28,12 @@ model-specific configurations in a `yaml` configuration file to filter some
 capability from the first step in order to generate the tuning space. Each
 strategy then generates the quantization config according to its location
 and logic with tuning strategy configurations from the `yaml` configuration
-file. All strategies finish the tuning processing when the `timeout` or `max_trails` is reached. The default value of `timeout` is 0; if reached, the
+file. All strategies finish the tuning processing when the `timeout` or `max_trials` is reached. The default value of `timeout` is 0; if reached, the
 tuning phase stops when the `accuracy` criteria is met.
 
 ## Configurations
 
-Detailed configuration templates can be found [here](../neural_compressor/template).
+Detailed configuration templates can be found [here](../../neural_compressor/template).
 
 ### Model-specific configurations
 
@@ -107,6 +108,33 @@ tuning:
   tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
 ```
 
+After INC v2.0, it is recommended to use the [pythonic style](pythonic_style.md)
+instead of legacy format of configuration. Here is an example config of a post 
+training quantization with all default settings given explicitly. 
+
+```python
+from neural_compressor import config
+
+conf = config.PostTrainingQuantConfig(
+    # optional. the level of quantization. 
+    # when set to 0, conservitive tuning strategy will be used.
+    # this field has a higher priority than tuning_criterion.strategy.
+    optimization_level=1,
+
+    accuracy_criterion=config.AccuracyCriterion(
+        higher_is_better=True, # optional. 
+        criterion='relative', # optional. available values are 'relative' and 'absolute'.
+        tolerable_loss=0.01, # optional.
+    ),
+    tuning_criterion=config.TuningCriterion(
+        timeout=0, # optional. tuning timeout (seconds). when set to 0, early stop is enabled.
+        max_trials=100, # optional. max tuning times. combined with `timeout` field to decide when to exit tuning.
+        strategy="basic", # optional. name of tuning strategy. 
+        strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.
+    ),
+)
+```
+
 ### Basic
 
 #### Design
@@ -125,7 +153,8 @@ goal is achieved.
 #### Usage
 
 `Basic` is the default strategy. It can be used by default if you don't add
-the `strategy` field in your `yaml` configuration file. Classical settings in the configuration file are shown below:
+the `strategy` field in your `yaml` configuration file. Classical settings 
+in the configuration file are shown below:
 
 ```yaml
 tuning:
@@ -134,6 +163,22 @@ tuning:
   exit_policy:
     timeout: 0
   random_seed: 9527
+```
+
+Via [pythonic style configs](pythonic_style.md), an equivalent settings are 
+shown below.
+
+```python
+conf = config.PostTrainingQuantConfig(
+    accuracy_criterion=config.AccuracyCriterion(
+        criterion='relative',
+        tolerable_loss=0.01,
+    ),
+    tuning_criterion=config.TuningCriterion(
+        timeout=0,
+        strategy="basic",
+    ),
+)
 ```
 
 ### Bayesian
@@ -172,6 +217,23 @@ tuning:
     max_trials: 100
 ```
 
+Via [pythonic style configs](pythonic_style.md), an equivalent settings are 
+shown below.
+
+```python
+conf = config.PostTrainingQuantConfig(
+    accuracy_criterion=config.AccuracyCriterion(
+        criterion='relative',
+        tolerable_loss=0.01,
+    ),
+    tuning_criterion=config.TuningCriterion(
+        timeout=0,
+        max_trials=100,
+        strategy="bayesian",
+    ),
+)
+```
+
 ### MSE
 
 #### Design
@@ -198,6 +260,22 @@ tuning:
   exit_policy:
     timeout: 0
   random_seed: 9527
+```
+
+Using `MSE` via [pythonic style configs](pythonic_style.md) is also similar to 
+`Basic`, an equivalent settings are shown below.
+
+```python
+conf = config.PostTrainingQuantConfig(
+    accuracy_criterion=config.AccuracyCriterion(
+        criterion='relative',
+        tolerable_loss=0.01,
+    ),
+    tuning_criterion=config.TuningCriterion(
+        timeout=0,
+        strategy="mse",
+    ),
+)
 ```
 
 ### MSE_v2
@@ -231,6 +309,24 @@ tuning:
   exit_policy:
     timeout: 0
   random_seed: 9527
+```
+
+Using `MSE_v2` via [pythonic style configs](pythonic_style.md) is also similar
+to `MSE`, an equivalent settings are shown below. Note that the 
+`confidence_batches` field should be set inside the `strategy_kwargs`.
+
+```python
+conf = config.PostTrainingQuantConfig(
+    accuracy_criterion=config.AccuracyCriterion(
+        criterion='relative',
+        tolerable_loss=0.01,
+    ),
+    tuning_criterion=config.TuningCriterion(
+        timeout=0,
+        strategy="mse_v2",
+        strategy_kwargs={"confidence_batches" : 2},
+    ),
+)
 ```
 
 ### TPE
@@ -281,14 +377,31 @@ take from 24 hours to few days to complete, depending on the model.
 ```yaml
 tuning:
   strategy:
-    name: bayesian
+    name: tpe
   accuracy_criterion:
     relative:  0.01
   objective: performance
 
   exit_policy:
     timeout: 0
-    max_trials: 100
+    max_trials: 200
+```
+
+Using `TPE` via [pythonic style configs](pythonic_style.md) is also similar to 
+`Bayesian`, an equivalent settings are shown below.
+
+```python
+conf = config.PostTrainingQuantConfig(
+    accuracy_criterion=config.AccuracyCriterion(
+        criterion='relative',
+        tolerable_loss=0.01,
+    ),
+    tuning_criterion=config.TuningCriterion(
+        timeout=0,
+        max_trials=200,
+        strategy="tpe",
+    ),
+)
 ```
 
 ### Exhaustive
@@ -315,6 +428,22 @@ tuning:
   random_seed: 9527
 ```
 
+Using `Exhaustive` via [pythonic style configs](pythonic_style.md) is also 
+similar to `Basic`, an equivalent settings are shown below.
+
+```python
+conf = config.PostTrainingQuantConfig(
+    accuracy_criterion=config.AccuracyCriterion(
+        criterion='relative',
+        tolerable_loss=0.01,
+    ),
+    tuning_criterion=config.TuningCriterion(
+        timeout=0,
+        strategy="exhaustive",
+    ),
+)
+```
+
 ### Random
 
 #### Design
@@ -338,6 +467,22 @@ tuning:
   random_seed: 9527
 
 ```
+
+Using `Random` via [pythonic style configs](pythonic_style.md) is also similar to `Basic`, an equivalent settings are shown below.
+
+```python
+conf = config.PostTrainingQuantConfig(
+    accuracy_criterion=config.AccuracyCriterion(
+        criterion='relative',
+        tolerable_loss=0.01,
+    ),
+    tuning_criterion=config.TuningCriterion(
+        timeout=0,
+        strategy="random",
+    ),
+)
+```
+
 ### SigOpt
 
 #### Design
@@ -364,6 +509,29 @@ tuning:
 ```
 
 For details, [how to use sigopt strategy in neural_compressor](./sigopt_strategy.md) is available.
+
+Via [pythonic style configs](pythonic_style.md), the equivalent settings are 
+shown below. Note that required options `sigopt_api_token` and `sigopt_project_id`,
+and the optional option `sigopt_experiment_name` should be set inside the 
+`strategy_kwargs`.
+
+```python
+conf = config.PostTrainingQuantConfig(
+    accuracy_criterion=config.AccuracyCriterion(
+        criterion='relative',
+        tolerable_loss=0.01,
+    ),
+    tuning_criterion=config.TuningCriterion(
+        timeout=0,
+        strategy="sigopt",
+        strategy_kwargs={
+          "sigopt_api_token": "YOUR-ACCOUNT-API-TOKEN",
+          "sigopt_project_id": "PROJECT-ID",
+          "sigopt_experiment_name": "nc-tune",
+        },
+    ),
+)
+```
 
 ## Customize a New Tuning Strategy
 
