@@ -522,7 +522,7 @@ if __name__ == "__main__":
                         help='path to checkpoint tuned by Neural Compressor (default: ./)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark for int8')
-    parser.add_argument("--accuracy_only", type=bool, default=False)
+    parser.add_argument("--accuracy_only", action='store_true', default=False)
     args = parser.parse_args()
 
     if args.mlperf_logging:

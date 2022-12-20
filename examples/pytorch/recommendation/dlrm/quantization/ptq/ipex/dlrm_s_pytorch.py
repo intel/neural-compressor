@@ -689,8 +689,8 @@ def run():
     parser.add_argument("--int8-configure", type=str, default="./int8_configure.json")
     parser.add_argument("--dist-backend", type=str, default="ccl")
     parser.add_argument("--tune", action="store_true", default=False)
-    parser.add_argument("--benchmark", type=bool, default=False)
-    parser.add_argument("--accuracy_only", type=bool, default=False)
+    parser.add_argument("--benchmark", action="store_true", default=False)
+    parser.add_argument("--accuracy_only", action="store_true", default=False)
 
     global args
     global nbatches
