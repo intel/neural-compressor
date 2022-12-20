@@ -88,6 +88,16 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         """ Setter to model """
         self._model = model
 
+    @property
+    def fp32_model(self):
+        """ Getter to model """
+        return self._fp32_model
+
+    @fp32_model.setter
+    def fp32_model(self, fp32_model):
+        """ Setter to model """
+        self._fp32_model = fp32_model
+
     def register_forward_pre_hook(self):
         self.handles.append(
                 self._model.register_forward_pre_hook(self.generate_forward_pre_hook()))
