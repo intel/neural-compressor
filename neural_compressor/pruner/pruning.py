@@ -1,5 +1,5 @@
-"""pruning module."""
-#!/usr/bin/env python
+"""Pruning."""
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2022 Intel Corporation
@@ -15,12 +15,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from neural_compressor.utils.utility import LazyImport
 
-import torch.nn
+LazyImport('torch.nn')
+torch = LazyImport('torch')
 
-from .prune_utils import process_config, parse_to_prune, parse_not_to_prune
-from .pruner import get_pruner
-from .logger import logger
+from neural_compressor.pruner.utils import process_config, parse_to_prune, \
+    check_config, update_params
+from neural_compressor.pruner.pruners import get_pruner
+from neural_compressor.utils import logger
+import re
+from neural_compressor.config import WeightPruningConfig
 
 
 class Pruning:
@@ -32,39 +37,46 @@ class Pruning:
     Args:
         config: a string. The path to a config file. For config file template, please refer to
             https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
-    
+
     Attributes:
         model: The model object to prune.
         config_file_path: A string. The path to a config file.
         pruners: A list. A list of Pruner objects.
-        pruner_info: A config dict object. Contains pruners' information.    
+        pruner_info: A config dict object. Contains pruners' information.
     """
-    
+
     def __init__(self, config):
         """Initialize."""
-        self.model = None
-        self.config_file_path = config
+        self._model = None
         self.pruners = []
-        self.pruner_info = process_config(self.config_file_path)
+        self.pruners_info = process_config(config)
 
-    def update_items_for_all_pruners(self, **kwargs):
-        """Functions which add User-defined arguments to the original configurations.
+    @property
+    def model(self):
+        """Getter of model in neural_compressor.model."""
+        return self._model
 
-        The original config of pruning is read from a file. 
+    @model.setter
+    def model(self, user_model):
+        self._model = user_model
+
+    def update_config(self, *args, **kwargs):
+        """Add user-defined arguments to the original configurations.
+
+        The original config of pruning is read from a file.
         However, users can still modify configurations by passing key-value arguments in this function.
         Please note that the key-value arguments' keys are analysable in current configuration.
         """
-        for item in self.pruner_info:
+        for item in self.pruners_info:
             for key in kwargs:
                 if key in item.keys():
                     item[key] = kwargs[key]
 
-    def prepare(self):
-        """Align with old API's calling pipeline."""
-        pass
+            update_params(item)
+            check_config(item)
 
     def get_sparsity_ratio(self):
-        """Functions that calculate a modules/layers sparsity.
+        """Calculate sparsity ratio of a module/layer.
 
         Returns:
             Three floats.
@@ -86,82 +98,89 @@ class Pruning:
 
         linear_conv_cnt = 0
         param_cnt = 0
-        for name, module in self.model.named_modules():
-            if type(module).__name__ in ["Linear"] or "Conv" in type(module).__name__:
+        for name, module in self._model.named_modules():
+            if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
                 linear_conv_cnt += module.weight.numel()
 
-        for n, param in self.model.named_parameters():
+        for n, param in self._model.named_parameters():
             param_cnt += param.numel()
-        blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
-        elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
-        elementwise_over_all = float(
-            element_sparsity_cnt) / param_cnt
+        if linear_conv_cnt == 0:
+            blockwise_over_matmul_gemm_conv = 0
+            elementwise_over_matmul_gemm_conv = 0
+        else:
+            blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
+            elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
+        if param_cnt == 0:
+            elementwise_over_all = 0
+        else:
+            elementwise_over_all = float(
+                element_sparsity_cnt) / param_cnt
 
         return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 
     def _generate_pruners(self):
-        """Functions that obtain Pruner objects."""
-        assert isinstance(self.model, torch.nn.Module)
+        """Obtain Pruner objects."""
+        assert isinstance(self._model, torch.nn.Module)
 
-        for info in self.pruner_info:
-            modules = parse_to_prune(self.model, info)
-            modules = parse_not_to_prune(modules, info)
+        for info in self.pruners_info:
+            modules = parse_to_prune(info, self._model)
             if modules == {}:
                 logger.warning("one pruner hooks no layers, please have a check")
 
-            self.pruners.append(get_pruner(modules, info))
+            self.pruners.append(get_pruner(info, modules))
             info['modules'] = [key for key in modules.keys()]
             info['len_of_modules'] = len(info['modules'])
             logger.info(info)
 
     def on_train_begin(self):
-        """Functions called in the beginning of training process.
+        """Implement at the beginning of training process.
 
         Before training, ensure that pruners are generated.
         """
         self._generate_pruners()  ##TODO is there better place to place
-    
+
     def on_epoch_begin(self, epoch):
-        """Functions called in the beginning of every epoch."""
+        """Implement at the beginning of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_begin(epoch)
 
     def on_step_begin(self, local_step):
-        """Functions called in the beginning of every step."""
+        """Implement at the beginning of every step."""
         for pruner in self.pruners:
             pruner.on_step_begin(local_step)
 
     def on_before_optimizer_step(self):
-        """Functions called before optimizer.step()."""
+        """Implement before optimizer.step()."""
         for pruner in self.pruners:
             pruner.on_before_optimizer_step()
 
     def on_step_end(self):
-        """Functions called in the end of every step."""
+        """Implement at the end of every step."""
         for pruner in self.pruners:
             pruner.on_step_end()
 
     def on_epoch_end(self):
-        """Functions called in the end of every epoch."""
+        """Implement the end of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_end()
 
     def on_train_end(self):
-        """Functions called in the end of training."""
+        """Implement the end of training phase."""
         for pruner in self.pruners:
             pruner.on_train_end()
+        self.get_sparsity_ratio()
 
     def on_before_eval(self):
-        """Functions called in the beginning of evaluation."""
+        """Implement at the beginning of evaluation phase."""
         for pruner in self.pruners:
             pruner.on_before_eval()
 
     def on_after_eval(self):
-        """Functions called in the end of evaluation."""
+        """Implement at the end of evaluation phase."""
         for pruner in self.pruners:
             pruner.on_after_eval()
 
     def on_after_optimizer_step(self):
-        """Functions called after optimizer.step()."""
+        """Implement after optimizer.step()."""
         for pruner in self.pruners:
             pruner.on_after_optimizer_step()
