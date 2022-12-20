@@ -29,6 +29,8 @@ do
             strategy=`echo $i | sed "s/${PATTERN}//"`;;
         --new_benchmark=*)
             new_benchmark=`echo $i | sed "s/${PATTERN}//"`;;
+        --inc_new_api=*)
+            inc_new_api=`echo $i | sed "s/${PATTERN}//"`;;
         --tuning_cmd=*)
             tuning_cmd=`echo $i | sed "s/${PATTERN}//"`;;
         --benchmark_cmd=*)
@@ -62,7 +64,8 @@ if [ "${mode}" == "env_setup" ]; then
         --dataset_location=${dataset_location} \
         --batch_size=${batch_size} \
         --strategy=${strategy} \
-        --new_benchmark=${new_benchmark}
+        --new_benchmark=${new_benchmark} \
+        --inc_new_api="${inc_new_api}"
 elif [ "${mode}" == "tuning" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
