@@ -3612,8 +3612,10 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
         self.query_handler = PyTorchQuery(
             local_config_file=os.path.join(os.path.dirname(__file__), query_config_file))
         #from .torch_utils.fp8_wrapper import BatchMatmul,Matmul
-        from mpemu.module_wrappers import BatchMatmul,Matmul
-        self.white_list = [torch.nn.Linear, torch.nn.Conv2d, BatchMatmul, Matmul, 
+        from mpemu.module_wrappers import (BatchMatmul, Matmul, AddMatmul,
+                                            EltwiseAdd, EltwiseMul, EltwiseDiv)
+        self.white_list = [torch.nn.Linear, torch.nn.Conv2d, BatchMatmul, Matmul, \
+                            AddMatmul, EltwiseAdd, EltwiseMul, EltwiseDiv, \
                             torch.nn.Embedding, torch.nn.LayerNorm]
 
     @dump_elapsed_time("Pass quantize model")
@@ -3833,7 +3835,8 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                 BN_Flag = True
         # TODO: should remove approach limit. 
         # Dynamic fp8 also need to pdate BN, but we miss dataloader.
-        if BN_Flag and self.approach == 'post_training_static_quant':
+        if BN_Flag:
+            assert dataloader, "Please pass in a calibration dataloader."
             # save fp32 weight data
             fp32_model_dict = {}
             for name, module in model.named_modules():
