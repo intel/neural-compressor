@@ -26,7 +26,6 @@ from time import time
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
 from .utils.tuning_structs import OpTuningConfig
-from .utils.helper import tuning_record_msg
 
 @strategy_registry
 class MSE_V2TuneStrategy(TuneStrategy):
@@ -93,13 +92,11 @@ class MSE_V2TuneStrategy(TuneStrategy):
             eval_func,
             dicts,
             q_hooks)
-
-    def __getstate__(self):
-        for history in self.tuning_history:
-            if self._same_yaml(history['cfg'], self.cfg):
-                history['ordered_ops'] = self.ordered_ops
-        save_dict = super().__getstate__()
-        return save_dict
+    
+    def _tuning_record_msg(self, records):
+        records_str_lst = [[str(e) for e in record] for record in records]
+        record_msg = '\n'.join(','.join(record) for record in records_str_lst)
+        return record_msg
 
     def next_tune_cfg(self):
         """The generator of yielding next tuning config to traverse by concrete strategies
@@ -217,7 +214,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
                     fallback_records = [[select_op_info]]
                 else:
                     fallback_records.append(fallback_records[-1] + [select_op_info])
-                logger.debug(f"*** The fallback ops record: \n{tuning_record_msg(fallback_records)}")
+                logger.debug(f"*** The fallback ops record: \n{self._tuning_record_msg(fallback_records)}")
                 yield tune_cfg
 
             logger.info(f"*** The accuracy meeting the accuracy requirements, stop fallback ops.")
@@ -253,7 +250,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
                                     re-quantize it.")
                         tune_cfg[select_op_info] = op_quant_cfgs[select_op_info]
                         fallback_records.append(new_fallback_ops)
-                        logger.debug(f"*** The fallback ops record: \n{tuning_record_msg(fallback_records)}")
+                        logger.debug(f"*** The fallback ops record: \n{self._tuning_record_msg(fallback_records)}")
                         yield tune_cfg
                         break
                     else:
