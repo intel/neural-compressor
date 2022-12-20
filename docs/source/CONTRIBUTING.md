@@ -22,35 +22,27 @@ Before sending your pull requests, follow the information below:
 
 ## Pull Request Template
 
-**Change Summary**
+**Type of Change**
+feature or bug fix or documentation or validation or others
+API changed or not
 
-Include a detailed summary of the change.
+**Description**
+detail description
+JIRA ticket: xxx
 
-**Change Motivation**
+**Expected Behavior & Potential Risk**
+the expected behavior that triggered by this PR
 
-Include an explanation for the change.
+**How has this PR been tested?**
+how to reproduce the test (including hardware information)
 
-**Change Limit**
-
-Include an explanation about the regression your change might bring.
-
-**Test Info**
-
-- For bug fixes, provide test steps to reproduce your issue.
-- For new features, provide test steps besides unit tests if necessary.
-
-**Environment Info**
-Provide the development or test environment info.
-
-- OS
-- CPU info
-- Python version
-- Dependent component version
+**Dependency Change?**
+any library dependency introduced or removed
 
 ## Support
 
 Submit your questions, feature requests, and bug reports to the
-[GitHub issues](https://github.com/intel/neural-compressor/issues) page. You may also reach out to [Maintainers](neural_compressor.maintainers@intel.com).
+[GitHub issues](https://github.com/intel/neural-compressor/issues) page. You may also reach out to [Maintainers](inc.maintainers@intel.com).
 
 ## Contributor Covenant Code of Conduct
 
