@@ -760,3 +760,12 @@ def get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg):
     ordered_ops = sorted(fallback_order.keys(), key=lambda key: fallback_order[key], \
                                             reverse=False)
     return ordered_ops
+
+def get_torch_version():
+    from packaging.version import Version
+    try:
+        torch_version = torch.__version__.split('+')[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, 'Got an unknown version of torch: {}'.format(e)
+    version = Version(torch_version)
+    return version

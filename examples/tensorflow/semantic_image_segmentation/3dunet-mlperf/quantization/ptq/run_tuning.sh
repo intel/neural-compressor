@@ -17,9 +17,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
-      ;;
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
@@ -40,13 +37,11 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    config=$topology'.yaml'
     python run_accuracy.py \
       --input-model=${input_model} \
       --output-model=${output_model} \
       --data-location=${dataset_location} \
       --calib-preprocess=${BUILD_DIR}/calib_preprocess \
-      --config=${config} \
       --mode=tune 
 }
 

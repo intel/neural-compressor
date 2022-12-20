@@ -24,7 +24,7 @@ done
 FRAMEWORK="onnxrt"
 FRAMEWORK_VERSION="1.13.1"
 
-
+inc_new_api=false
 # ======== set up config for onnxrt models ========
 if [ "${model}" == "resnet50-v1-12" ]; then
     model_src_dir="image_recognition/onnx_model_zoo/resnet50/quantization/ptq"
@@ -82,6 +82,7 @@ fi
     --new_benchmark=${new_benchmark} \
     --tuning_cmd="${tuning_cmd}" \
     --benchmark_cmd="${benchmark_cmd}" \
+    --inc_new_api="${inc_new_api}" \
     --mode=${mode} \
     --USE_TUNE_ACC=${USE_TUNE_ACC} \
     --PERF_STABLE_CHECK=${PERF_STABLE_CHECK} \

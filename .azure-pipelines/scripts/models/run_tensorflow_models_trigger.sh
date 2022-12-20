@@ -24,6 +24,7 @@ done
 FRAMEWORK="tensorflow"
 FRAMEWORK_VERSION="2.10.0"
 
+inc_new_api=false
 # ======== set up config for tensorflow models ========
 if [ "${model}" == "resnet50v1.5" ]; then
     model_src_dir="image_recognition/tensorflow_models/quantization/ptq"
@@ -83,8 +84,9 @@ elif [ "${model}" == "darknet19" ]; then
     strategy="basic"
     batch_size=1
     new_benchmark=false
-    tuning_cmd="bash run_tuning.sh --topology=${model} --dataset_location= --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=${model} --dataset_location= --mode=benchmark --batch_size=1 --iters=500"
+    inc_new_api=true
+    tuning_cmd="bash run_tuning.sh --topology=${model} --input_model=${input_model}"
+    benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=performance --batch_size=1 --iters=500"
 elif [ "${model}" == "densenet-121" ]; then
     model_src_dir="oob_models/quantization/ptq"
     dataset_location=""
@@ -93,8 +95,9 @@ elif [ "${model}" == "densenet-121" ]; then
     strategy="basic"
     batch_size=1
     new_benchmark=false
-    tuning_cmd="bash run_tuning.sh --topology=${model} --dataset_location= --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=${model} --dataset_location= --mode=benchmark --batch_size=1 --iters=500"
+    inc_new_api=true
+    tuning_cmd="bash run_tuning.sh --topology=${model} --input_model=${input_model}"
+    benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=performance --batch_size=1 --iters=500"
 elif [ "${model}" == "resnet-101" ]; then
     model_src_dir="oob_models/quantization/ptq"
     dataset_location=""
@@ -103,8 +106,9 @@ elif [ "${model}" == "resnet-101" ]; then
     strategy="basic"
     batch_size=1
     new_benchmark=false
-    tuning_cmd="bash run_tuning.sh --topology=${model} --dataset_location= --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=${model} --dataset_location= --mode=benchmark --batch_size=1 --iters=500"
+    inc_new_api=true
+    tuning_cmd="bash run_tuning.sh --topology=${model} --input_model=${input_model}"
+    benchmark_cmd="bash run_benchmark.sh --topology=${model} --mode=performance --batch_size=1 --iters=500"
 elif [ "${model}" == "resnet50_fashion" ]; then
     model_src_dir="image_recognition/keras_models/resnet50_fashion/quantization/ptq"
     dataset_location="/tf_dataset2/datasets/mnist/FashionMNIST_small"
@@ -131,6 +135,7 @@ fi
     --new_benchmark=${new_benchmark} \
     --tuning_cmd="${tuning_cmd}" \
     --benchmark_cmd="${benchmark_cmd}" \
+    --inc_new_api="${inc_new_api}" \
     --mode=${mode} \
     --USE_TUNE_ACC=${USE_TUNE_ACC} \
     --PERF_STABLE_CHECK=${PERF_STABLE_CHECK} \

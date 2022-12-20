@@ -72,8 +72,8 @@ class TestOptimizationLevel(unittest.TestCase):
         dataloader = DATALOADERS["tensorflow"](dataset)
 
         # tuning and accuracy criterion
-        optimization_level = 0
-        conf = PostTrainingQuantConfig(optimization_level=0)
+        quant_level = 0
+        conf = PostTrainingQuantConfig(quant_level=0)
 
         # fit
         q_model = fit(model=self.constant_graph,
@@ -135,8 +135,8 @@ class TestOptimizationLevel(unittest.TestCase):
         dataloader = DATALOADERS["pytorch"](dataset)
 
         # tuning and accuracy criterion
-        optimization_level = 0
-        conf = PostTrainingQuantConfig(optimization_level=optimization_level)
+        quant_level = 0
+        conf = PostTrainingQuantConfig(quant_level=quant_level)
 
         # fit
         q_model = fit(model=resnet18,
