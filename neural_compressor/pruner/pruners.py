@@ -53,6 +53,7 @@ def parse_valid_pruner_types():
     for x in CRITERIA.keys():
         for p in ["", "_progressive"]:
             valid_pruner_types.append(x + p)
+    valid_pruner_types.append("pattern_lock")
     return valid_pruner_types
 
 def get_pruner(config, modules):
