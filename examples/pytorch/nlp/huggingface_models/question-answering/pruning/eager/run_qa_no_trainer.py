@@ -26,6 +26,7 @@ import os
 import sys
 
 sys.path.insert(0, './')
+import random
 from pathlib import Path
 
 import datasets
@@ -56,6 +57,8 @@ from transformers.file_utils import get_full_repo_name
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
+from neural_compressor.training import Pruning, prepare_compression
+from neural_compressor.training import WeightPruningConfig
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.21.0.dev0")
@@ -395,7 +398,7 @@ def parse_args():
     # )
     parser.add_argument(
         "--pruning_pattern",
-        type=str, default="1x1",
+        type=str, default="4x1",
         help="pruning pattern type, we support NxM and N:M."
     )
     parser.add_argument(
@@ -439,7 +442,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
+    # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
     # send_example_telemetry("run_qa_no_trainer", args)
 
@@ -532,9 +535,9 @@ def main():
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
-
+        
     if args.distill_loss_weight > 0:
-        teacher_path = args.teacher_model_name_or_path
+        teacher_path = args.teacher_model_name_or_path 
         if teacher_path is None:
             teacher_path = args.model_name_or_path
         teacher_model = AutoModelForQuestionAnswering.from_pretrained(
@@ -957,41 +960,39 @@ def main():
             starting_epoch = resume_step // len(train_dataloader)
             resume_step -= starting_epoch * len(train_dataloader)
 
-    from neural_compressor.training import Pruning, prepare_compression
-    from neural_compressor.training import WeightPruningConfig
-
+    # Pruning preparation 
     num_iterations = len(train_dataset) / total_batch_size
-    total_iterations = num_iterations * (args.num_train_epochs - args.warm_epochs - args.cooldown_epochs) \
-                       - args.num_warmup_steps
-
-    # Pruning preparation
+    num_warm = int(args.warm_epochs * num_iterations) + args.num_warmup_steps
+    total_iterations = int(num_iterations * (args.num_train_epochs - args.cooldown_epochs))
+    frequency = int((total_iterations - num_warm + 1) / 40) if args.pruning_frequency == -1 \
+                                                           else args.pruning_frequency
+    pruning_start = num_warm
+    pruning_end = total_iterations
+    if not args.do_prune:
+        pruning_start = num_iterations * args.num_train_epochs + 1
+        pruning_end = pruning_start
     pruning_configs=[
         {
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
             "sparsity_decay_type": "exp",
-            "target_sparsity": 0.80,
             "excluded_op_names": ["qa_outputs", "pooler", ".*embeddings*"],
             "pruning_op_types": ["Linear"],
             "max_sparsity_ratio_per_op": 0.98,
-            "pattern": "4x1",
-            "pruning_frequency": 1000
+            "pruning_scope": "global"
         }
     ]
-
-    if args.do_prune:
-        config = WeightPruningConfig(
-            pruning_configs,
-            start_step=int(args.warm_epochs * num_iterations+args.num_warmup_steps),
-            end_step=int(total_iterations)
-        )
-    else:
-        config = WeightPruningConfig(
-            pruning_configs,
-            start_step = int(args.num_train_epochs * num_iterations + 1),
-            end_step = int(args.num_train_epochs * num_iterations + 1)
-        )
-
+    config = WeightPruningConfig(
+        pruning_configs,
+        target_sparsity=args.target_sparsity,
+        pattern=args.pruning_pattern,
+        pruning_frequency=frequency,
+        start_step=pruning_start,
+        end_step=pruning_end
+    )
+    # pruner = Pruning(config)
+    # pruner.model = model
+    # pruner.on_train_begin()
     compression_manager = prepare_compression(model=model, confs=config)
     compression_manager.callbacks.on_train_begin()
 

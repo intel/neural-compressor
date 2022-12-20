@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Finetuning a 🤗 Transformers model for sequence classification on GLUE."""
+# """ Finetuning a 🤗 Transformers model for sequence classification on GLUE."""
 import argparse
 import logging
 import math
@@ -20,12 +20,12 @@ import os
 import random
 from pathlib import Path
 import sys
+import torch
 
 sys.path.insert(0, './')
 import datasets
 from datasets import load_dataset, load_metric
 from torch.utils.data import DataLoader
-import torch
 from tqdm.auto import tqdm
 
 import transformers
@@ -45,6 +45,8 @@ from transformers import (
 )
 from transformers.file_utils import get_full_repo_name
 from transformers.utils.versions import require_version
+from neural_compressor.training import prepare_compression, Pruning
+from neural_compressor.training import WeightPruningConfig
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +101,12 @@ def parse_args():
         required=True,
     )
     parser.add_argument(
+        "--teacher_model_name_or_path",
+        type=str,
+        default=None,
+        help="Path to pretrained teacher model or model identifier from huggingface.co/models.",
+    )
+    parser.add_argument(
         "--use_slow_tokenizer",
         action="store_true",
         help="If passed, will use a slow tokenizer (not backed by the 🤗 Tokenizers library).",
@@ -121,7 +129,6 @@ def parse_args():
         default=0.0,
         help="distiller loss weight",
     )
-
     parser.add_argument(
         "--learning_rate",
         type=float,
@@ -150,11 +157,6 @@ def parse_args():
         choices=["linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup"],
     )
     parser.add_argument(
-        "--pruning_config",
-        type=str,
-        help="pruning_config",
-    )
-    parser.add_argument(
         "--num_warmup_steps", type=int, default=0, help="Number of steps for the warmup in the lr scheduler."
     )
     parser.add_argument("--output_dir", type=str, default=None, help="Where to store the final model.")
@@ -169,6 +171,22 @@ def parse_args():
                         help="Number of epochs the network not be purned")
     parser.add_argument("--hub_token", type=str, help="The token to use to push to the Model Hub.")
     parser.add_argument("--do_prune", action="store_true", help="Whether or not to prune the model")
+    
+    parser.add_argument(
+        "--pruning_pattern",
+        type=str, default="4x1",
+        help="pruning pattern type, we support NxM and N:M."
+    )
+    parser.add_argument(
+        "--target_sparsity",
+        type=float, default=0.8,
+        help="Target sparsity of the model."
+    )
+    parser.add_argument(
+        "--pruning_frequency",
+        type=int, default=-1,
+        help="Sparse step frequency for iterative pruning, default to a quarter of pruning steps."
+    )
     args = parser.parse_args()
 
     # Sanity checks
@@ -296,8 +314,11 @@ def main():
         config=config,
     )
     if args.distill_loss_weight > 0:
+        teacher_path = args.teacher_model_name_or_path
+        if teacher_path is None:
+            teacher_path = args.model_name_or_path
         teacher_model = AutoModelForSequenceClassification.from_pretrained(
-            args.model_name_or_path,
+            teacher_path,
             from_tf=bool(".ckpt" in args.model_name_or_path),
             config=config,
         )
@@ -463,51 +484,43 @@ def main():
     progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
     completed_steps = 0
 
-    #from pytorch_pruner.pruning import Pruning
-    from neural_compressor.training import prepare_compression, Pruning
-    from neural_compressor.training import WeightPruningConfig
-
-    num_iterations = len(train_dataset) / total_batch_size
-    total_iterations = num_iterations * (args.num_train_epochs - args.sparsity_warm_epochs - args.cooldown_epochs)
-
     # Pruning preparation
+    num_iterations = len(train_dataset) / total_batch_size
+    num_warm = int(args.sparsity_warm_epochs * num_iterations)
+    total_iterations = int(num_iterations * (args.num_train_epochs - args.cooldown_epochs))
+    frequency = int((total_iterations - num_warm + 1) / 40) if args.pruning_frequency == -1 \
+                                                           else args.pruning_frequency
+    pruning_start = num_warm
+    pruning_end = total_iterations
+    if not args.do_prune:
+        pruning_start = num_iterations * args.num_train_epochs + 1
+        pruning_end = pruning_start
     pruning_configs=[
         {
             "pruning_type": "snip_momentum",
-            "pruning_scope": "global",
             "sparsity_decay_type": "exp",
-            "target_sparsity": 0.9,
             "excluded_op_names": ["classifier", "pooler", ".*embeddings*"],
             "pruning_op_types": ["Linear"],
             "max_sparsity_ratio_per_op": 0.98,
-            "pattern": "4x1",
-            "pruning_frequency": 100
+            "pruning_scope": "global"
         }
     ]
-
-    # pruner = Pruning(args.pruning_config)
-    # import pdb;pdb.set_trace()
-    if args.do_prune:
-        config = WeightPruningConfig(
-            pruning_configs,
-            start_step = int(args.sparsity_warm_epochs * num_iterations),
-            end_step = int(total_iterations)
-        )
-    else:
-        config = WeightPruningConfig(
-            pruning_configs,
-            start_step = args.num_train_epochs * num_iterations + 1,
-            end_step = args.num_train_epochs * num_iterations + 1
-        )
-
+    config = WeightPruningConfig(
+        pruning_configs,
+        target_sparsity=args.target_sparsity,
+        pattern=args.pruning_pattern,
+        pruning_frequency=frequency,
+        start_step=pruning_start,
+        end_step=pruning_end
+    )
+    # pruner = Pruning(config)
+    # pruner.model = model
+    # pruner.on_train_begin()
     compression_manager = prepare_compression(model=model, confs=config)
-
     compression_manager.callbacks.on_train_begin()
-    sparsity_warm_step = 0
-
+    
     for epoch in range(args.num_train_epochs):
         model.train()
-
         for step, batch in enumerate(train_dataloader):
             # pruner.on_step_begin(local_step=step)
             compression_manager.callbacks.on_step_begin(step)
@@ -522,9 +535,8 @@ def main():
                 MSELoss = torch.nn.MSELoss().cuda()
                 loss = distill_loss_weight * MSELoss(outputs['hidden_states'][-1],
                                                      teacher_outputs['hidden_states'][-1])  ##variant 3
-
+                
             accelerator.backward(loss)
-
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
                 # pruner.on_before_optimizer_step()
                 compression_manager.callbacks.on_before_optimizer_step()
@@ -541,10 +553,6 @@ def main():
                 break
 
         model.eval()
-        zero_cnt = 0
-        total_cnt = 0
-        embedding_cnt = 0
-        all_total_cnt = 0
 
         for step, batch in enumerate(eval_dataloader):
             outputs = model(**batch)
@@ -556,6 +564,7 @@ def main():
 
         eval_metric = metric.compute()
         logger.info(f"epoch {epoch}: {eval_metric}")
+        ##pruner.on_after_eval()
         if args.push_to_hub and epoch < args.num_train_epochs - 1:
             accelerator.wait_for_everyone()
             unwrapped_model = accelerator.unwrap_model(model)
@@ -576,6 +585,8 @@ def main():
                 # if args.push_to_hub:
                 #     repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
+    # pattern_sparsity_over_conv_linear, element_sparsity_over_conv_linear, element_sparsity_over_all = pruner.get_sparsity_ratio()
+    # print(pattern_sparsity_over_conv_linear, element_sparsity_over_conv_linear, element_sparsity_over_all )
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
         unwrapped_model = accelerator.unwrap_model(model)
