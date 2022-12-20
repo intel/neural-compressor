@@ -24,6 +24,7 @@ from datetime import timedelta
 import collections
 import csv
 import os
+import numpy as np
 import modeling as modeling
 import optimization as optimization
 import time
