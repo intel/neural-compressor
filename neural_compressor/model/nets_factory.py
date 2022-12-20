@@ -15,11 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""TF-Slim nets factory."""
+
 from ..utils.utility import singleton
 
 @singleton
 class TFSlimNetsFactory(object):
+    """TF-Slim nets factory."""
+
     def __init__(self):
+        """Initialize a TFSlimNetsFactory."""
         # tf_slim only support specific models by default
         self.default_slim_models = ['alexnet_v2', 'overfeat', 'vgg_a', 'vgg_16', 'vgg_19', \
                                'inception_v1', 'inception_v2', 'inception_v3', \
@@ -61,15 +66,16 @@ class TFSlimNetsFactory(object):
           'resnet_v2_200': {'model': resnet_v2.resnet_v2_200, 'input_shape': [None, 224, 224, 3], \
                             'num_classes': 1001, 'arg_scope': resnet_v2.resnet_arg_scope}
         }
+
     def register(self, name, model_func, input_shape, arg_scope, **kwargs):
-        """register a model to TFSlimNetsFactory, all info
+        """Register a model to TFSlimNetsFactory.
+
         Args:
-            checkpoint: checkpoint for this slim model
-            model_func: model that built from slim
-            input_shape: input tensor shape, 
-            arg_scope: slim arg scope that needed
-            kwargs: other input params needed by model_func, eg num_classes
-        """ 
+            name (str): name of a model.
+            model_func (_type_): model that built from slim.
+            input_shape (_type_): input tensor shape.
+            arg_scope (_type_): slim arg scope that needed.
+        """
         net_info = {'model': model_func, 'input_shape': input_shape, \
                     'arg_scope':arg_scope}
         net = {name: {**net_info, **kwargs}}

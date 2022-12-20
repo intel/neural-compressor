@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Model for multiple framework backends."""
+
 import copy
 import os
 import importlib
@@ -60,7 +62,8 @@ MODELS = {'tensorflow': TensorflowModel,
           }
 
 def get_model_fwk_name(model):
-    """Detect the input model belongs to which framework
+    """Detect the input model belongs to which framework.
+
     Args:
         model (string): framework name that supported by Neural Compressor, if there's no available fwk info,
                         then return 'NA'.
@@ -147,6 +150,7 @@ class Model(object):
     
     def __new__(cls, root, **kwargs):
         """Create a new instance object of Model.
+        
         Args:
             root (object): raw model format. For Tensorflow model, could be path to frozen pb file, 
                 path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras model object.
