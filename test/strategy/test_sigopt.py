@@ -156,7 +156,7 @@ class TestSigoptTuningStrategy(unittest.TestCase):
                            'sigopt_project_id': 'sigopt_project_id_test',
                            'sigopt_experiment_name': 'nc-tune'}
         tuning_criterion = TuningCriterion(strategy='sigopt', strategy_kwargs=strategy_kwargs, max_trials=3)
-        conf = PostTrainingQuantConfig(approach="static", backend="tensorflow", 
+        conf = PostTrainingQuantConfig(approach="static", 
                                        tuning_criterion=tuning_criterion,
                                        accuracy_criterion=accuracy_criterion)
         self.assertEqual(conf.strategy_kwargs, strategy_kwargs)
