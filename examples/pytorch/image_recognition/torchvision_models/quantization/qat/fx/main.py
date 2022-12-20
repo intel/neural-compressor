@@ -309,6 +309,7 @@ def validate(val_loader, model, criterion, args):
             if args.iter > 0 and i >= (args.warmup_iter + args.iter - 1):
                 break
 
+        print('Batch size = %d' % args.batch_size)
         print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
               .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 
