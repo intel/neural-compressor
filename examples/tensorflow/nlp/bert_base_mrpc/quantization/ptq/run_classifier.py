@@ -1077,6 +1077,7 @@ def main(_):
             accuracy (float): evaluation result, the larger is better.
         """
         from neural_compressor.adaptor.tf_utils.util import iterator_sess_run
+        from neural_compressor.objective import Performance
         if not isinstance(model, BaseModel):
           model = Model(model)
         model.input_tensor_names = ["input_file", "batch_size"]
@@ -1088,25 +1089,22 @@ def main(_):
         if FLAGS.benchmark and FLAGS.mode == 'performance':
             iteration = 100
         metric = Accuracy()
+        measurer = Performance()
 
         def eval_func(dataloader):
             warmup = 5
-            latency_list = []
             for idx, (inputs, labels) in enumerate(dataloader):
                 # dataloader should keep the order and len of inputs same with input_tensor
                 assert len(input_tensor) == len(inputs), \
                     'inputs len must equal with input_tensor'
                 feed_dict = dict(zip(input_tensor, inputs))
-
-                start = time.time()
                 predictions = iterator_sess_run(model.sess, model.iter_op, \
-                    feed_dict, output_tensor, iteration)
-                end = time.time()
-
+                    feed_dict, output_tensor, iteration, measurer)
                 metric.update(predictions, labels)
-                latency_list.append(end-start)
                 if idx + 1 == iteration:
                     break
+
+            latency_list = measurer.result_list()
             latency = np.array(latency_list[warmup:]).mean() / FLAGS.eval_batch_size
             return latency
 
