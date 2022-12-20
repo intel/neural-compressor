@@ -73,7 +73,7 @@ class BayesianTuneStrategy(TuneStrategy):
         save_dict = super().__getstate__()
         return save_dict
 
-    def params_to_tune_configs(self, params):
+    def _params_to_tune_configs(self, params):
         op_tuning_cfg = {}
         calib_sampling_size_lst = self.tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         for op_name_type, configs in self.op_configs.items():
@@ -109,7 +109,7 @@ class BayesianTuneStrategy(TuneStrategy):
         if len(calib_sampling_size_lst) > 1:
             pbounds['calib_sampling_size'] = (0, len(calib_sampling_size_lst))
         if len(pbounds) == 0:
-            yield self.params_to_tune_configs(params)
+            yield self._params_to_tune_configs(params)
             return
         if self.bayes_opt is None:
             self.bayes_opt = BayesianOptimization(
@@ -118,7 +118,7 @@ class BayesianTuneStrategy(TuneStrategy):
             params = self.bayes_opt.gen_next_params()
             logger.debug("Dump current bayesian params:")
             logger.debug(params)
-            yield self.params_to_tune_configs(params)
+            yield self._params_to_tune_configs(params)
             try:
                 self.bayes_opt._space.register(params, self.last_tune_result[0])
             except KeyError:
@@ -182,8 +182,6 @@ def _hashable(x):
     return tuple(map(float, x))
 
 # Target space part
-
-
 class TargetSpace(object):
     """Holds the param-space coordinates (X) and target values (Y).
     
@@ -196,7 +194,7 @@ class TargetSpace(object):
         Args:
             target_func (function): Function to be maximized.
             pbounds (dict): Dictionary with parameters names as keys and a tuple with minimum and maximum values.
-            random_seed (int): Optionally specify a seed for a random number generator
+            random_seed (int): Optionally specify a seed for a random number generator.
         """
         self.random_seed = random_seed
         # Get the name of the parameters
@@ -216,38 +214,54 @@ class TargetSpace(object):
         self._cache = {}
 
     def __contains__(self, x):
+        """Check if param x is cached in this space."""
         return _hashable(x) in self._cache
 
     def __len__(self):
+        """Get the total count of stored items."""
         assert len(self._params) == len(self._target)
         return len(self._target)
 
     @property
     def empty(self):
-        """Return whether the space is empty."""
+        """Get whether the space is empty."""
         return len(self) == 0
 
     @property
     def params(self):
+        """Get all params stored in this space."""
         return self._params
 
     @property
     def target(self):
+        """Get all target values in this space."""
         return self._target
 
     @property
     def dim(self):
+        """Get the dimension of this space."""
         return len(self._keys)
 
     @property
     def keys(self):
+        """Get all keys of this space."""
         return self._keys
 
     @property
     def bounds(self):
+        """Get the bounds of this space."""
         return self._bounds
 
     def params_to_array(self, params):
+        """Generate an array from params.
+
+        Args:
+            params (Dict): The dict contains keys in `self.keys`, and 
+              corresponding param.
+
+        Returns:
+            np.array: An array contains all param values. 
+        """
         try:
             assert set(params) == set(self.keys)
         except AssertionError:
@@ -258,6 +272,14 @@ class TargetSpace(object):
         return np.asarray([params[key] for key in self.keys])
 
     def array_to_params(self, x):
+        """Generate an params' dict from array.
+
+        Args:
+            x (np.array): The array contains all param values.
+
+        Returns:
+            dict: the dict contains keys and the param value corresponding to it.
+        """
         try:
             assert len(x) == len(self.keys)
         except AssertionError:
