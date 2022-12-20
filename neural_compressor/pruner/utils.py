@@ -28,10 +28,10 @@ except:
 
 
 def check_config(prune_config):
-    """Functions that check key-value is valid to run Pruning object.
+    """Check if the configuration dict is valid for running Pruning object.
 
     Args:
-        prune_config: A config dict object. Contains Pruning parameters and configurations.
+        prune_config: A config dict object that contains Pruning parameters and configurations.
 
     Returns:
         None if everything is correct.
@@ -88,7 +88,8 @@ def check_config(prune_config):
 
 
 def reset_none_to_default(obj, key, default):
-    """Functions that add up undefined configurations.
+    """Set undefined configurations to default values.
+
     If some configurations are not defined in the configuration, set it to a default value.
     Args:
         obj: A dict{key: value}
@@ -108,8 +109,8 @@ def reset_none_to_default(obj, key, default):
         else:
             return getattr(obj, key)
 
-
 def update_params(info):
+    """Update parameters."""
     if "parameters" in info.keys():
         params = info["parameters"]
         for key in params:
@@ -117,6 +118,16 @@ def update_params(info):
 
 
 def process_weight_config(global_config, local_configs, default_config):
+    """Process pruning configurations.
+
+    Args:
+        global_config: A config dict object that contains pruning parameters and configurations.
+        local_config: A config dict object that contains pruning parameters and configurations.
+        default_config: A config dict object that contains pruning parameters and configurations.
+
+    Returns:
+        pruners_info: A config dict object that contains pruning parameters and configurations.
+    """
     pruners_info = []
     default_all = global_config
     for key in default_config.keys():
@@ -142,6 +153,16 @@ def process_weight_config(global_config, local_configs, default_config):
 
 
 def process_yaml_config(global_config, local_configs, default_config):
+    """Process the yaml configuration file.
+
+    Args:
+        global_config: A config dict object that contains pruning parameters and configurations.
+        local_config: A config dict object that contains pruning parameters and configurations.
+        default_config: A config dict object that contains pruning parameters and configurations.
+
+    Returns:
+        pruners_info: A config dict object that contains pruning parameters and configurations.
+    """
     pruners_info = []
     default_all = global_config
     for key in default_config.keys():
@@ -167,6 +188,7 @@ def process_yaml_config(global_config, local_configs, default_config):
 
 
 def process_and_check_config(val):
+    """Process and check configurations."""
     default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
                              'excluded_op_names': [],
                              'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'pruning_frequency': 1,
@@ -200,12 +222,11 @@ def process_config(config):
     """Obtain a config dict object from a config file.
 
     Args:
-        config: A string. The path to configuration file.
+        config: A string representing the path to configuration file.
 
     Returns:
         A config dict object.
     """
-
     if isinstance(config, str):
         try:
             with open(config, 'r') as f:
