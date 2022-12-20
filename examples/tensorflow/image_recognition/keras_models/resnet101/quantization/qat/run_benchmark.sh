@@ -26,7 +26,7 @@ function init_params {
           batch_size=$(echo $var |cut -f2 -d=)    
       ;;
       --iters=*)
-          batch_size=$(echo $var |cut -f2 -d=)    
+          iters=$(echo $var |cut -f2 -d=)    
       ;;
     esac
   done
