@@ -92,22 +92,6 @@ tuning strategy and then set the accuracy criterion and optimization
 objective for tuning. Users can also set the `stop` condition for the tuning
 by changing the `exit_policy`:
 
-```yaml
-tuning:
-  strategy:
-    name: basic                                      # optional. default value is basic. other values are bayesian, mse.
-  accuracy_criterion:
-    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
-  objective: performance                             # optional. objective with accuracy constraint guaranteed. default value is performance. other values are modelsize and footprint.
-
-  exit_policy:
-    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
-    max_trials: 100                                  # optional. max tune times. default value is 100. combine with timeout field to decide when to exit.
-    performance_only: False                          # optional. max tune times. default value is False which means only generate fully quantized model.
-  random_seed: 9527                                  # optional. random seed for deterministic tuning.
-  tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
-```
-
 After INC v2.0, it is recommended to use the [pythonic style](pythonic_style.md)
 instead of legacy format of configuration. Here is an example config of a post 
 training quantization with all default settings given explicitly. 
@@ -153,20 +137,7 @@ goal is achieved.
 #### Usage
 
 `Basic` is the default strategy. It can be used by default if you don't add
-the `strategy` field in your `yaml` configuration file. Classical settings 
-in the configuration file are shown below:
-
-```yaml
-tuning:
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-```
-
-Via [pythonic style configs](pythonic_style.md), an equivalent settings are 
-shown below.
+the `strategy` field in your `tuning_criterion` setting. Classical settings are shown below:
 
 ```python
 conf = config.PostTrainingQuantConfig(
@@ -203,23 +174,6 @@ For the `Bayesian` strategy, set the `timeout` or `max_trials` to a non-zero
 value as shown in the below example. This is because the param space for `bayesian` can be very small so the accuracy goal might not be reached which
 can make the tuning never end. Additionally, if the log level is set to `debug` by `LOGLEVEL=DEBUG` in the environment, the message `[DEBUG] Tuning config was evaluated, skip!` will print endlessly. If the timeout is changed from 0 to an integer, `Bayesian` ends after the timeout is reached.
 
-
-```yaml
-tuning:
-  strategy:
-    name: bayesian
-  accuracy_criterion:
-    relative:  0.01
-  objective: performance
-
-  exit_policy:
-    timeout: 0
-    max_trials: 100
-```
-
-Via [pythonic style configs](pythonic_style.md), an equivalent settings are 
-shown below.
-
 ```python
 conf = config.PostTrainingQuantConfig(
     accuracy_criterion=config.AccuracyCriterion(
@@ -250,20 +204,6 @@ the op-wise fallback in this order.
 
 `MSE` is similar to `Basic` but the specific strategy name of `mse` must be
 included.
-
-```yaml
-tuning:
-  strategy:
-    name: mse
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-```
-
-Using `MSE` via [pythonic style configs](pythonic_style.md) is also similar to 
-`Basic`, an equivalent settings are shown below.
 
 ```python
 conf = config.PostTrainingQuantConfig(
@@ -296,23 +236,7 @@ large number of tuning counts.
 `MSE_v2` is similar to `MSE` in usage. To use the `MSE_v2` tuning strategy,
 the specific strategy name of `mse_v2` must be included. Also, the option
 `confidence_batches` can be included optionally to specify the count of batches
-in sensitivity calculation process.
-
-
-```yaml
-tuning:
-  strategy:
-    name: mse_v2
-    confidence_batches: 2
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-```
-
-Using `MSE_v2` via [pythonic style configs](pythonic_style.md) is also similar
-to `MSE`, an equivalent settings are shown below. Note that the 
+in sensitivity calculation process. Note that the 
 `confidence_batches` field should be set inside the `strategy_kwargs`.
 
 ```python
@@ -324,7 +248,7 @@ conf = config.PostTrainingQuantConfig(
     tuning_criterion=config.TuningCriterion(
         timeout=0,
         strategy="mse_v2",
-        strategy_kwargs={"confidence_batches" : 2},
+        strategy_kwargs={"confidence_batches":2},
     ),
 )
 ```
@@ -374,22 +298,6 @@ take from 24 hours to few days to complete, depending on the model.
 
 `TPE` usage is similar to `Bayesian`:
 
-```yaml
-tuning:
-  strategy:
-    name: tpe
-  accuracy_criterion:
-    relative:  0.01
-  objective: performance
-
-  exit_policy:
-    timeout: 0
-    max_trials: 200
-```
-
-Using `TPE` via [pythonic style configs](pythonic_style.md) is also similar to 
-`Bayesian`, an equivalent settings are shown below.
-
 ```python
 conf = config.PostTrainingQuantConfig(
     accuracy_criterion=config.AccuracyCriterion(
@@ -417,16 +325,6 @@ configs. Same reason as `Bayesian`, fallback datatypes are not included for now.
 
 `Exhaustive` usage is similar to `Basic`:
 
-```yaml
-tuning:
-  strategy:
-    name: exhaustive
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-```
 
 Using `Exhaustive` via [pythonic style configs](pythonic_style.md) is also 
 similar to `Basic`, an equivalent settings are shown below.
@@ -456,20 +354,6 @@ tuning configs to generate a better-performance quantized model.
 
 `Random` usage is similar to `Basic`:
 
-```yaml
-tuning:
-  strategy:
-    name: random 
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-
-```
-
-Using `Random` via [pythonic style configs](pythonic_style.md) is also similar to `Basic`, an equivalent settings are shown below.
-
 ```python
 conf = config.PostTrainingQuantConfig(
     accuracy_criterion=config.AccuracyCriterion(
@@ -493,25 +377,9 @@ conf = config.PostTrainingQuantConfig(
 
 Compare to `Basic`, `sigopt_api_token` and `sigopt_project_id` is necessary for `SigOpt`.`sigopt_experiment_name` is optional, the default name is `nc-tune`.
 
-```yaml
-tuning:
-  strategy:
-    name: sigopt
-    sigopt_api_token: YOUR-ACCOUNT-API-TOKEN
-    sigopt_project_id: PROJECT-ID
-    sigopt_experiment_name: nc-tune
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-
-```
-
 For details, [how to use sigopt strategy in neural_compressor](./sigopt_strategy.md) is available.
 
-Via [pythonic style configs](pythonic_style.md), the equivalent settings are 
-shown below. Note that required options `sigopt_api_token` and `sigopt_project_id`,
+Note that required options `sigopt_api_token` and `sigopt_project_id`,
 and the optional option `sigopt_experiment_name` should be set inside the 
 `strategy_kwargs`.
 
@@ -538,7 +406,7 @@ conf = config.PostTrainingQuantConfig(
 Intel® Neural Compressor supports new strategy extension by implementing a subclass of `TuneStrategy` class in neural_compressor.strategy package
  and registering this strategy by `strategy_registry` decorator.
 
-for example, user can implement a `Abc` strategy like below:
+For example, user can implement a `Abc` strategy like below:
 
 ```python
 @strategy_registry
