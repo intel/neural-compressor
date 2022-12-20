@@ -26,7 +26,6 @@ import os
 import sys
 
 sys.path.insert(0, './')
-import random
 from pathlib import Path
 
 import datasets
@@ -57,8 +56,6 @@ from transformers.file_utils import get_full_repo_name
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
-from neural_compressor.pruning import Pruning
-from neural_compressor.pruner.utils import WeightPruningConfig
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.21.0.dev0")
@@ -535,9 +532,9 @@ def main():
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
-        
+
     if args.distill_loss_weight > 0:
-        teacher_path = args.teacher_model_name_or_path 
+        teacher_path = args.teacher_model_name_or_path
         if teacher_path is None:
             teacher_path = args.model_name_or_path
         teacher_model = AutoModelForQuestionAnswering.from_pretrained(
@@ -960,38 +957,43 @@ def main():
             starting_epoch = resume_step // len(train_dataloader)
             resume_step -= starting_epoch * len(train_dataloader)
 
+    from neural_compressor.training import Pruning, prepare_compression
+    from neural_compressor.training import WeightPruningConfig
+
+    num_iterations = len(train_dataset) / total_batch_size
+    total_iterations = num_iterations * (args.num_train_epochs - args.warm_epochs - args.cooldown_epochs) \
+                       - args.num_warmup_steps
+
     # Pruning preparation
     pruning_configs=[
         {
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
-            "sparsity_decay_type": "exp"
+            "sparsity_decay_type": "exp",
+            "target_sparsity": 0.80,
+            "excluded_op_names": ["qa_outputs", "pooler", ".*embeddings*"],
+            "pruning_op_types": ["Linear"],
+            "max_sparsity_ratio_per_op": 0.98,
+            "pattern": "4x1",
+            "pruning_frequency": 1000
         }
     ]
-    config = WeightPruningConfig(
-        pruning_configs,
-        target_sparsity=args.target_sparsity,
-        excluded_op_names=["qa_outputs", "pooler", ".*embeddings*"],
-        pruning_op_types=["Linear"],
-        max_sparsity_ratio_per_op=0.98,
-        pruning_scope="global",
-        pattern=args.pruning_pattern,
-        pruning_frequency=1000
-    )
-    pruner = Pruning(config)
-    num_iterations = len(train_dataset) / total_batch_size
-    total_iterations = num_iterations * (args.num_train_epochs - args.warm_epochs - args.cooldown_epochs) \
-                       - args.num_warmup_steps
+
     if args.do_prune:
-        start = int(args.warm_epochs * num_iterations+args.num_warmup_steps)
-        end = int(total_iterations)
-        frequency = int((end - start + 1) / 4) if (args.pruning_frequency == -1) else args.pruning_frequency
-        pruner.update_config(start_step=start, end_step=end, pruning_frequency=frequency)##iterative
+        config = WeightPruningConfig(
+            pruning_configs,
+            start_step=int(args.warm_epochs * num_iterations+args.num_warmup_steps),
+            end_step=int(total_iterations)
+        )
     else:
-        total_step = num_iterations * args.num_train_epochs + 1
-        pruner.update_config(start_step=total_step, end_step=total_step)
-    pruner.model = model
-    pruner.on_train_begin()
+        config = WeightPruningConfig(
+            pruning_configs,
+            start_step = int(args.num_train_epochs * num_iterations + 1),
+            end_step = int(args.num_train_epochs * num_iterations + 1)
+        )
+
+    compression_manager = prepare_compression(model=model, confs=config)
+    compression_manager.callbacks.on_train_begin()
 
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
@@ -999,7 +1001,8 @@ def main():
             if args.with_tracking:
                 total_loss = 0
             for step, batch in enumerate(train_dataloader):
-                pruner.on_step_begin(local_step=step)
+                # pruner.on_step_begin(local_step=step)
+                compression_manager.callbacks.on_step_begin(step)
                 outputs = model(**batch)
                 loss = outputs.loss
                 # We keep track of the loss at each epoch
@@ -1017,9 +1020,11 @@ def main():
                 loss = loss / args.gradient_accumulation_steps
                 accelerator.backward(loss)
                 if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                    pruner.on_before_optimizer_step()
+                    # pruner.on_before_optimizer_step()
+                    compression_manager.callbacks.on_before_optimizer_step()
                     optimizer.step()
-                    pruner.on_after_optimizer_step()
+                    # pruner.on_after_optimizer_step()
+                    compression_manager.callbacks.on_after_optimizer_step()
                     lr_scheduler.step()
                     optimizer.zero_grad()
                     progress_bar.update(1)

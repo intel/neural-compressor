@@ -20,12 +20,13 @@ from neural_compressor.utils.utility import LazyImport
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 
-from neural_compressor.pruner.utils import process_config, parse_to_prune,\
+from neural_compressor.pruner.utils import process_config, parse_to_prune, \
     check_config, update_params
 from neural_compressor.pruner.pruners import get_pruner
 from neural_compressor.utils import logger
 import re
-from neural_compressor.pruner.utils import WeightPruningConfig
+from neural_compressor.config import WeightPruningConfig
+
 
 class Pruning:
     """Pruning.
@@ -46,9 +47,18 @@ class Pruning:
 
     def __init__(self, config):
         """Initialize."""
-        self.model = None
+        self._model = None
         self.pruners = []
         self.pruners_info = process_config(config)
+
+    @property
+    def model(self):
+        """Getter of model in neural_compressor.model."""
+        return self._model
+
+    @model.setter
+    def model(self, user_model):
+        self._model = user_model
 
     def update_config(self, *args, **kwargs):
         """Add user-defined arguments to the original configurations.
@@ -64,23 +74,6 @@ class Pruning:
 
             update_params(item)
             check_config(item)
-
-    # def _call_pruners(self, func):
-    #     """Function which decorates the Pruning class's functions.
-    #
-    #     It can simplify codes by calling same-name functions in Pruning's Pruner objects.
-    #     For example, when it decorates on_step_begin function of Pruning,
-    #         it automatically calls its Pruners' on_step_begin functions without a "for" code.
-    #     However, when this trick is enabled, the pylint validation on INC cannot passed, therefore commented out.
-    #     """
-    #    def warpper(self, *args, **kw):
-    #        func_name = f"{func.__name__}"
-    #        func(self, *args, **kw)
-    #        for prune in self.pruners:
-    #            prun_func = getattr(prune, func_name)
-    #            prun_func(*args, **kw)
-    #
-    #    return warpper
 
     def get_sparsity_ratio(self):
         """Calculate sparsity ratio of a module/layer.
@@ -105,11 +98,11 @@ class Pruning:
 
         linear_conv_cnt = 0
         param_cnt = 0
-        for name, module in self.model.named_modules():
+        for name, module in self._model.named_modules():
             if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
                 linear_conv_cnt += module.weight.numel()
 
-        for n, param in self.model.named_parameters():
+        for n, param in self._model.named_parameters():
             param_cnt += param.numel()
         if linear_conv_cnt == 0:
             blockwise_over_matmul_gemm_conv = 0
@@ -127,10 +120,10 @@ class Pruning:
 
     def _generate_pruners(self):
         """Obtain Pruner objects."""
-        assert isinstance(self.model, torch.nn.Module)
+        assert isinstance(self._model, torch.nn.Module)
 
         for info in self.pruners_info:
-            modules = parse_to_prune(info, self.model)
+            modules = parse_to_prune(info, self._model)
             if modules == {}:
                 logger.warning("one pruner hooks no layers, please have a check")
 
@@ -139,7 +132,6 @@ class Pruning:
             info['len_of_modules'] = len(info['modules'])
             logger.info(info)
 
-    # @_call_pruners
     def on_train_begin(self):
         """Implement at the beginning of training process.
 
@@ -147,55 +139,47 @@ class Pruning:
         """
         self._generate_pruners()  ##TODO is there better place to place
 
-    # @_call_pruners
     def on_epoch_begin(self, epoch):
         """Implement at the beginning of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_begin(epoch)
 
-    # @_call_pruners
     def on_step_begin(self, local_step):
         """Implement at the beginning of every step."""
         for pruner in self.pruners:
             pruner.on_step_begin(local_step)
 
-    # @_call_pruners
     def on_before_optimizer_step(self):
         """Implement before optimizer.step()."""
         for pruner in self.pruners:
             pruner.on_before_optimizer_step()
 
-    # @_call_pruners
     def on_step_end(self):
         """Implement at the end of every step."""
         for pruner in self.pruners:
             pruner.on_step_end()
 
-    # @_call_pruners
     def on_epoch_end(self):
         """Implement the end of every epoch."""
         for pruner in self.pruners:
             pruner.on_epoch_end()
 
-    # @_call_pruners
     def on_train_end(self):
         """Implement the end of training phase."""
         for pruner in self.pruners:
             pruner.on_train_end()
+        self.get_sparsity_ratio()
 
-    # @_call_pruners
     def on_before_eval(self):
         """Implement at the beginning of evaluation phase."""
         for pruner in self.pruners:
             pruner.on_before_eval()
 
-    # @_call_pruners
     def on_after_eval(self):
         """Implement at the end of evaluation phase."""
         for pruner in self.pruners:
             pruner.on_after_eval()
 
-    # @_call_pruners
     def on_after_optimizer_step(self):
         """Implement after optimizer.step()."""
         for pruner in self.pruners:

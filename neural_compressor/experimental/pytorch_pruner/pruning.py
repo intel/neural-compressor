@@ -59,6 +59,10 @@ class Pruning:
                 if key in item.keys():
                     item[key] = kwargs[key]
 
+    def prepare(self):
+        """Align with old API's calling pipeline."""
+        pass
+
     def get_sparsity_ratio(self):
         """Functions that calculate a modules/layers sparsity.
 

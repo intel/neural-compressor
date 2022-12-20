@@ -18,6 +18,7 @@
 
 from .patterns import BasePattern
 from neural_compressor.utils.utility import LazyImport
+
 torch = LazyImport('torch')
 
 REGS = {}
@@ -124,5 +125,4 @@ class GroupLasso(BaseReg):
                     continue
                 reg_term = self.pattern.reshape_reduced_to_orig(self.reg_terms[key], key,
                                                                 self.modules[key].weight.shape)
-                self.modules[key].weight -= reg_term
-
+                self.modules[key].weight -= reg_term * self.modules[key].weight
