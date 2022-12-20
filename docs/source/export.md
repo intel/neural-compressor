@@ -70,4 +70,127 @@ q_model.export('int8-model.onnx', int8_onnx_config)
 
 # Appendix
 
-> TODO: Add descriptions for three recipes
+Since there is a known quantization gap between PyTorch 'nn.Linear' module and ONNX 'MatMul + Add' subgraph, we provide three recipes.
+
+For different recipes and ONNX INT8 model formats, 'nn.quantized.Linear' will be exported to the following subgraph:
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-c3ow{border-color:inherit;text-align:center;vertical-align:center}
+.tg .tg-0pky{border-color:inherit;text-align:left;vertical-align:center}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-c3ow">Recipe</th>
+    <th class="tg-c3ow">QDQ</th>
+    <th class="tg-c3ow">QLinear</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-c3ow">QDQ_OP_FP32_BIAS</td>
+    <td class="tg-0pky">
+    <pre>
+     QuantizeLinear
+           |
+    DequantizeLinear
+           |             
+        MatMul
+           |
+          Add
+    </pre>
+    </td>
+    <td class="tg-0pky">
+    <pre>
+       QuantizeLinear
+             |
+    MatMulIntegerToFloat
+             |
+            Add 
+    </pre>
+    </td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">QDQ_OP_INT32_BIAS</td>
+    <td class="tg-0pky">
+    <pre>
+    QuantizeLinear
+          |
+     MatMulInteger
+          |
+         Add
+          |
+        Cast
+          |
+         Mul
+    </pre>
+    </td>
+    <td class="tg-0pky">
+    <pre>
+    QuantizeLinear
+          |
+     MatMulInteger
+          |
+         Add
+          |
+        Cast
+          |
+         Mul
+    </pre>
+    </td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">QDQ_OP_FP32_BIAS_QDQ</td>
+    <td class="tg-0pky">
+    <pre>
+     QuantizeLinear
+           |
+    DequantizeLinear   
+           |
+         MatMul
+           |
+          Add
+           |
+     QuantizeLinear
+           |
+    DequantizeLinear
+    </pre>
+    </td>
+    <td class="tg-0pky">
+    <pre>
+       QuantizeLinear
+             |
+    MatMulIntegerToFloat
+             |
+            Add
+             |
+       QuantizeLinear
+             |
+      DequantizeLinear
+    </pre>
+    </td>
+  </tr>
+</tbody>
+</table>
+
+The default recipe is `QDQ_OP_FP32_BIAS`. If the accuracy of the exported ONNX INT8 model does not meet your criterion, we recommend you try recipe `QDQ_OP_INT32_BIAS` and `QDQ_OP_FP32_BIAS_QDQ` as follows:
+```python
+# q_model is a Neural Compressor model after performing quantization.
+from neural_compressor.config import Torch2ONNXConfig
+int8_onnx_config = Torch2ONNXConfig(
+    dtype="int8",
+    opset_version=14,
+    quant_format="QDQ", # or QLinear
+    example_inputs=torch.randn(1, 3, 224, 224),
+    input_names=['input'],
+    output_names=['output'],
+    dynamic_axes={"input": {0: "batch_size"},
+                    "output": {0: "batch_size"}},
+    recipe='QDQ_OP_INT32_BIAS', # or QDQ_OP_FP32_BIAS_QDQ
+)
+q_model.export('int8-model.onnx', int8_onnx_config)
+```
