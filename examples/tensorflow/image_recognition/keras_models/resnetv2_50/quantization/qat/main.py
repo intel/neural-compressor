@@ -16,7 +16,6 @@
 # limitations under the License.
 
 import time
-import codeop
 import logging
 import numpy as np
 import tensorflow as tf
@@ -33,7 +32,7 @@ flags = tf.compat.v1.flags
 FLAGS = flags.FLAGS
 logger = logging.getLogger(__name__)
 
-## Required parameters
+# Required parameters
 flags.DEFINE_string(
     'input_model', None, 'Run inference with specified keras model.')
 
@@ -93,18 +92,15 @@ def evaluate(model):
 
     Args:
         model (tf.Graph_def): The input model graph
-        
+
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
     from neural_compressor.experimental import common
     model = common.Model(model)
     input_tensor = model.input_tensor
-    output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
-                        model.output_tensor[0]
-    iteration = -1
-    if FLAGS.benchmark and FLAGS.mode == 'performance':
-        iteration = 100
+    output_tensor = model.output_tensor if len(
+        model.output_tensor) > 1 else model.output_tensor[0]
     postprocess = LabelShift(label_shift=1)
     metric = TensorflowTopK(k=1)
 
@@ -124,7 +120,7 @@ def evaluate(model):
             predictions, labels = postprocess((predictions, labels))
             metric.update(predictions, labels)
             latency_list.append(end-start)
-            if idx + 1 == iteration:
+            if idx + 1 == FLAGS.iters:
                 break
         latency = np.array(latency_list).mean() / FLAGS.batch_size
         return latency
@@ -169,7 +165,7 @@ def main():
         from neural_compressor.experimental import common
         from neural_compressor.config import BenchmarkConfig
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
-        "Benchmark only supports performance or accuracy mode."
+            "Benchmark only supports performance or accuracy mode."
 
         model = common.Model(FLAGS.input_model).graph_def
         if FLAGS.mode == 'performance':

@@ -25,6 +25,9 @@ function init_params {
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)    
       ;;
+      --iters=*)
+          batch_size=$(echo $var |cut -f2 -d=)    
+      ;;
     esac
   done
 
@@ -38,6 +41,7 @@ function run_benchmark {
             --benchmark \
             --mode ${mode} \
             --batch_size ${batch_size} \
+            --iters ${iters} \
             --dataset_location ${dataset_location}
 }
 
