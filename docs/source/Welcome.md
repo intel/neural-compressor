@@ -203,7 +203,6 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
     <tr>
         <td colspan="2" align="center"><a href="./benchmark.html">Benchmarking</a></td>
         <td colspan="3" align="center"><a href="./distributed.html">Distributed Training</a></td>
-        <td colspan="2" align="center"><a href="./model_conversion.html">Model Conversion</a></td>
         <td colspan="2" align="center"><a href="./tensorboard.html">TensorBoard</a></td>
     </tr>
     <tr>
