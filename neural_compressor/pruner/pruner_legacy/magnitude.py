@@ -15,16 +15,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Magnitude pruner."""
+
 import numpy as np
 from .pruner import pruner_registry, Pruner
 from neural_compressor.utils import logger
 
 @pruner_registry
 class BasicMagnitudePruner(Pruner):
+    """Magnitude pruner class.
+
+    Args:
+        model (object): The original model (currently PyTorchModel instance).
+        local_config (Conf): configs specific for this pruning instance.
+        global_config (Conf): global configs which may be overwritten by local_config.
+    """
+
     def __init__(self, model, local_config, global_config):
+        """Initialize the attributes."""
         super(BasicMagnitudePruner, self).__init__(model, local_config, global_config)
 
     def on_epoch_begin(self, epoch):
+        """Update target sparsity according to the schedule and compute mask accordingly."""
         self.sparsity = self.update_sparsity(epoch)
         logger.debug("Start pruning in epoch {} with sparsity {}.".
                      format(str(epoch), str(self.sparsity)))
@@ -33,6 +45,7 @@ class BasicMagnitudePruner(Pruner):
             self.compute_mask()
 
     def on_step_begin(self, batch_id):
+        """Apply mask to the weight."""
         res = dict()
 
         for weight in self.weights:
@@ -44,7 +57,7 @@ class BasicMagnitudePruner(Pruner):
         return res
 
     def compute_mask(self):
-        """compute masks according to absolute values"""
+        """Compute masks according to absolute values."""
         for weight in self.weights:
             tensor = np.array(self.model.get_weight(weight))
             if len(tensor.shape) in self.tensor_dims:
@@ -63,6 +76,7 @@ class BasicMagnitudePruner(Pruner):
                 self.masks[weight] = self.pattern.repeat_mask(reduced_mask, tensor.shape)
 
     def on_epoch_end(self):
+        """Sparsity ratio summary and apply mask to the weight."""
         res = dict()
         if self.is_last_epoch:
 
@@ -81,6 +95,7 @@ class BasicMagnitudePruner(Pruner):
         return res
 
     def on_step_end(self):
+        """Apply mask to the weight."""
         res = dict()
         for weight in self.weights:
             if weight in self.masks:

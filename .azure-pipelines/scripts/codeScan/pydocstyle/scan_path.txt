@@ -1,1 +1,2 @@
 /neural-compressor/neural_compressor/experimental
+/neural_compressor/pruner/pruner_legacy

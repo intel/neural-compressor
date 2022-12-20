@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Group Lasso pruner."""
+
 import re
 import copy
 import numpy as np
@@ -24,13 +26,23 @@ from neural_compressor.utils import logger
 
 @pruner_registry
 class GroupLassoPruner(BasicMagnitudePruner):
+    """Group Lasso pruner class.
+
+    Args:
+        model (object): The original model (currently PyTorchModel instance).
+        local_config (Conf): configs specific for this pruning instance.
+        global_config (Conf): global configs which may be overwritten by local_config.
+    """
+
     def __init__(self, model, local_config, global_config):
+        """Initialize the attributes."""
         super(GroupLassoPruner, self).__init__(model, local_config, global_config)
         self.cur_weights = copy.deepcopy(self.weights)
         self.is_masks_set = False
         self.alpha = local_config.parameters['alpha']
 
     def on_before_optimizer_step(self):
+        """Update gradient to prune the weights by back propagation."""
         if self.cur_weights:
             for weight_name in self.weights:
                 weight_grad = self.model.get_gradient(weight_name)
