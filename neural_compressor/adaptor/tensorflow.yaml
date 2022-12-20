@@ -16,7 +16,7 @@
 ---
 -
   version:
-    name: ['2.11.0202242']
+    name: ['2.11.0202242', '2.11.0202250']
 
   precisions:
     names: int8, uint8, bf16, fp32

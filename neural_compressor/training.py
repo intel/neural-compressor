@@ -17,14 +17,13 @@
 
 import copy
 from .conf.pythonic_config import Config
-from .config import DistillationConfig, PruningConfig, QuantizationAwareTrainingConfig
+from .config import DistillationConfig, QuantizationAwareTrainingConfig, WeightPruningConfig
 from .experimental.distillation import Distillation
-from .experimental.pruning import Pruning
 from .experimental.quantization import Quantization
 from .experimental.scheduler import Scheduler
 from .utils import logger
 from typing import Callable, List, Union
-
+from neural_compressor.experimental.pruning_v2 import Pruning
 
 class CompressionManager:
     """CompressionManager is uesd in train loop for what user want to deal with additional.
@@ -35,22 +34,23 @@ class CompressionManager:
     examples:
         import neural_compressor.training.prepare_compression
         compression_manager = prepare_compression(conf, model)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
         train_loop:
-            compression_manager.on_train_begin()
             for epoch in range(epochs):
-                compression_manager.on_epoch_begin(epoch)
+                compression_manager.callbacks.on_epoch_begin(epoch)
                 for i, batch in enumerate(dataloader):
-                    compression_manager.on_step_begin(i)
+                    compression_manager.callbacks.on_step_begin(i)
                     ......
-                    output = compression_manager.model(batch)
+                    output = model(batch)
                     loss = ......
-                    loss = compression_manager.on_after_compute_loss(batch, output, loss)
+                    loss = compression_manager.callbacks.on_after_compute_loss(batch, output, loss)
                     loss.backward()
-                    compression_manager.on_before_optimizer_step()
+                    compression_manager.callbacks.on_before_optimizer_step()
                     optimizer.step()
-                    compression_manager.on_step_end()
-                compression_manager.on_epoch_end()
-            compression_manager.on_train_end()
+                    compression_manager.callbacks.on_step_end()
+                compression_manager.callbacks.on_epoch_end()
+        compression_manager.callbacks.on_train_end()
         compression_manager.save("path_to_save")
     """
     def __init__(self, component):
@@ -76,6 +76,7 @@ class CompressionManager:
         def on_train_end(self):
             """ called after the end of epochs"""
             self.callbacks.on_train_end()
+            logger.info("Training finished!")
 
         def on_epoch_begin(self, epoch):
             """ called on the beginning of epochs"""
@@ -95,6 +96,9 @@ class CompressionManager:
             """ called on the end of backward"""
             self.callbacks.on_before_optimizer_step()
 
+        def on_after_optimizer_step(self):
+            """ called on the end of backward"""
+            self.callbacks.on_after_optimizer_step()
 
         def on_step_end(self):
             """ called on the end of batches"""
@@ -171,7 +175,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                                nas=None)
                 com = Quantization(conf_)
                 com.model = model
-            elif isinstance(conf, PruningConfig):
+            elif isinstance(conf, WeightPruningConfig):
                 conf_ = Config(pruning=conf,
                                benchmark=None,
                                quantization=None,
@@ -207,7 +211,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                           distillation=None,
                           nas=None)
             component = Quantization(conf)
-        elif type(confs) == PruningConfig:
+        elif type(confs) == WeightPruningConfig:
             conf = Config(pruning=confs,
                           benchmark=None,
                           quantization=None,

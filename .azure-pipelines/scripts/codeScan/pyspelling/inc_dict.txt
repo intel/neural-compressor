@@ -2397,7 +2397,11 @@ grappler
 amsgrad
 qoperator
 apis
+PostTrainingQuantConfig
+dgpu
 CPz
+PostTrainingQuantConfig
+dgpu
 Nsh
 UmK
 fe
@@ -2447,6 +2451,7 @@ npmjs
 AWSSageMakerSupport
 sagemaker
 xpu
+PostTrainingQuantConfig
 dgpu
 BenchmarkConfig
 QuantizationAwareTrainingConfig
@@ -2458,3 +2463,4 @@ WeightPruningConfig
 Namhoon
 Thalaiyasingam
 Torr
+MixedPrecisionConfig

@@ -1,0 +1,1821 @@
+[
+    {
+        "paramName": "train",
+        "name": "Train",
+        "type": "",
+        "range": null,
+        "defaultValue": null,
+        "required": false,
+        "elementType": "treeNode",
+        "choices": [],
+        "help": null,
+        "children": [
+            {
+                "paramName": "optimizer",
+                "name": "Optimizer",
+                "type": "",
+                "range": null,
+                "defaultValue": null,
+                "required": true,
+                "elementType": "singleSelect",
+                "choices": ["SGD", "Adam", "AdamW"],
+                "help": null,
+                "children": [
+                    {
+                        "paramName": "SGD",
+                        "name": "SGD",
+                        "type": "",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": false,
+                        "elementType": "treeNode",
+                        "choices": [],
+                        "help": null,
+                        "children": [
+                            {
+                                "paramName": "learning_rate",
+                                "name": "Learning rate",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": true,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "momentum",
+                                "name": "Momentum",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "nesterov",
+                                "name": "Nesterov",
+                                "type": "bool",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "singleSelect",
+                                "choices": [
+                                    true,
+                                    false
+                                ],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "weight_decay",
+                                "name": "Weight decay",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            }
+                        ]
+                    },
+                    {
+                        "paramName": "AdamW",
+                        "name": "AdamW",
+                        "type": "",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": false,
+                        "elementType": "",
+                        "choices": [],
+                        "help": null,
+                        "children": [
+                            {
+                                "paramName": "weight_decay",
+                                "name": "Weight decay",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": true,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "learning_rate",
+                                "name": "Learning rate",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": 0.001,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "beta_1",
+                                "name": "Beta 1",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": 0.9,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "beta_2",
+                                "name": "Beta 2",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": 0.999,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "epsilon",
+                                "name": "Epsilon",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": 1.00E-07,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "amsgrad",
+                                "name": "Amsgrad",
+                                "type": "bool",
+                                "range": null,
+                                "defaultValue": false,
+                                "required": false,
+                                "elementType": "singleSelect",
+                                "choices": [
+                                    true,
+                                    false
+                                ],
+                                "help": null,
+                                "children": []
+                            }
+                        ]
+                    },
+                    {
+                        "paramName": "Adam",
+                        "name": "Adam",
+                        "type": "",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": "",
+                        "elementType": "",
+                        "choices": [],
+                        "help": null,
+                        "children": [
+                            {
+                                "paramName": "learning_rate",
+                                "name": "Learning rate",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": 0.001,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "beta_1",
+                                "name": "Beta 1",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": 0.9,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "beta_2",
+                                "name": "Beta 2",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": 0.999,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "epsilon",
+                                "name": "Epsilon",
+                                "type": "float",
+                                "range": null,
+                                "defaultValue": 1.00E-07,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "amsgrad",
+                                "name": "Amsgrad",
+                                "type": "bool",
+                                "range": null,
+                                "defaultValue": false,
+                                "required": false,
+                                "elementType": "singleSelect",
+                                "choices": [
+                                    true,
+                                    false
+                                ],
+                                "help": null,
+                                "children": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "paramName": "  ",
+                "name": "Criterion",
+                "type": "",
+                "range": null,
+                "defaultValue": null,
+                "required": true,
+                "elementType": "singleSelect",
+                "choices": [
+                    "Cross Entropy Loss",
+                    "Sparse Categorical Crossentropy",
+                    "Knowledge Distillation Loss",
+                    "Intermediate Layers Knowledge Distillation Loss",
+                    "Self Knowledge Distillation Loss"
+                ],
+                "help": null,
+                "children": [
+                    {
+                        "paramName": "CrossEntropyLoss",
+                        "name": "Cross Entropy Loss",
+                        "type": "",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": false,
+                        "elementType": "",
+                        "choices": [],
+                        "help": null,
+                        "children": [
+                            {
+                                "paramName": "reduction",
+                                "name": "Reduction",
+                                "type": "str",
+                                "range": null,
+                                "defaultValue": "mean",
+                                "required": false,
+                                "elementType": "singleSelect",
+                                "choices": [
+                                    "none",
+                                    "sum",
+                                    "mean",
+                                    "auto",
+                                    "sum_over_batch_size"
+                                ],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "from_logits",
+                                "name": "From logits",
+                                "type": "bool",
+                                "range": null,
+                                "defaultValue": false,
+                                "required": false,
+                                "elementType": "singleSelect",
+                                "choices": [
+                                    true,
+                                    false
+                                ],
+                                "help": null,
+                                "children": []
+                            }
+                        ]
+                    },
+                    {
+                        "paramName": "SparseCategoricalCrossentropy",
+                        "name": "Sparse Categorical Crossentropy",
+                        "type": "",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": false,
+                        "elementType": "",
+                        "choices": [],
+                        "help": null,
+                        "children": [
+                            {
+                                "paramName": "reduction",
+                                "name": "Reduction",
+                                "type": "str",
+                                "range": null,
+                                "defaultValue": "mean",
+                                "required": false,
+                                "elementType": "singleSelect",
+                                "choices": [
+                                    "none",
+                                    "sum",
+                                    "mean",
+                                    "auto",
+                                    "sum_over_batch_size"
+                                ],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "from_logits",
+                                "name": "From logits",
+                                "type": "bool",
+                                "range": null,
+                                "defaultValue": false,
+                                "required": false,
+                                "elementType": "singleSelect",
+                                "choices": [
+                                    true,
+                                    false
+                                ],
+                                "help": null,
+                                "children": []
+                            }
+                        ]
+                    },
+                    {
+                        "paramName": "KnowledgeDistillationLoss",
+                        "name": "Knowledge Distillation Loss",
+                        "type": "",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": false,
+                        "elementType": "",
+                        "choices": [],
+                        "help": null,
+                        "children": [
+                            {
+                                "paramName": "temperature",
+                                "name": "Temperature",
+                                "type": "float",
+                                "range": {
+                                    "min": 0,
+                                    "max": null
+                                },
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "loss_types",
+                                "name": "Loss types",
+                                "type": "List[str]",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "multiSelect",
+                                "choices": [
+                                    "CE",
+                                    "KL",
+                                    "MSE"
+                                ],
+                                "help": "Example: [\"CE\", \"KL\"] -- any combination of CE, KL and MSE.",
+                                "children": []
+                            },
+                            {
+                                "paramName": "loss_weights",
+                                "name": "Loss weights",
+                                "type": "List[float]",
+                                "range": {
+                                    "min": 0,
+                                    "max": null
+                                },
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "stringInput",
+                                "choices": [],
+                                "help": "[val_1, ..., val_n] where val_1+...+val_n==1 and all val_x > 0",
+                                "children": []
+                            }
+                        ]
+                    },
+                    {
+                        "paramName": "IntermediateLayersKnowledgeDistillationLoss",
+                        "name": "Intermediate Layers Knowledge Distillation Loss",
+                        "type": "",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": false,
+                        "elementType": "",
+                        "choices": [],
+                        "help": null,
+                        "children": [
+                            {
+                                "paramName": "layer_mappings",
+                                "name": "Layer mappings",
+                                "type": "List[List[str]]",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": true,
+                                "elementType": "stringInput",
+                                "choices": [],
+                                "help": "Example: [[\"l1\", \"l1_1\"], [\"l2\"]]",
+                                "children": []
+                            },
+                            {
+                                "paramName": "loss_types",
+                                "name": "Loss types",
+                                "type": "List[str]",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "multiSelect",
+                                "choices": [
+                                    "MSE",
+                                    "KL",
+                                    "L1"
+                                ],
+                                "help": "Example: [\"CE\", \"KL\"] -- any combination of L1, KL and MSE.",
+                                "children": []
+                            },
+                            {
+                                "paramName": "loss_weights",
+                                "name": "Loss weights",
+                                "type": "List[float]",
+                                "range": {
+                                    "min": 0,
+                                    "max": null
+                                },
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "stringInput",
+                                "choices": [],
+                                "help": "[val_1, ..., val_n] where val_x > 0 for all x.",
+                                "children": []
+                            },
+                            {
+                                "paramName": "add_origin_loss",
+                                "name": "Add origin loss",
+                                "type": "bool",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "singleSelect",
+                                "choices": [
+                                    true,
+                                    false
+                                ],
+                                "help": null,
+                                "children": []
+                            }
+                        ]
+                    },
+                    {
+                        "paramName": "SelfKnowledgeDistillationLoss",
+                        "name": "Self Knowledge Distillation Loss",
+                        "type": "",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": false,
+                        "elementType": "",
+                        "choices": [],
+                        "help": null,
+                        "children": [
+                            {
+                                "paramName": "layer_mappings",
+                                "name": "Layer mappings",
+                                "type": "List[List[str]]",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": true,
+                                "elementType": "stringInput",
+                                "choices": [],
+                                "help": "Example: [[\"l1\", \"l1_2\"], [\"l2\"], [\"l3\", \"l3_2\"]]",
+                                "children": []
+                            },
+                            {
+                                "paramName": "loss_types",
+                                "name": "Loss types",
+                                "type": "List[str]",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "multiSelect",
+                                "choices": [
+                                    "L2",
+                                    "CE",
+                                    "KL"
+                                ],
+                                "help": "Example: [\"CE\", \"L2\"] -- any combination of L2, KL and CE.",
+                                "children": []
+                            },
+                            {
+                                "paramName": "loss_weights",
+                                "name": "Loss weights",
+                                "type": "List[float]",
+                                "range": {
+                                    "min": 0,
+                                    "max": 1
+                                },
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "stringInput",
+                                "choices": [],
+                                "help": "[val_1, ..., val_n] where 1 > val_x > 0 for all x.",
+                                "children": []
+                            },
+                            {
+                                "paramName": "add_origin_loss",
+                                "name": "Add origin loss",
+                                "type": "bool",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "singleSelect",
+                                "choices": [
+                                    true,
+                                    false
+                                ],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "temperature",
+                                "name": "Temperature",
+                                "type": "float",
+                                "range": {
+                                    "min": 0,
+                                    "max": null
+                                },
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "paramName": "dataloader_id",
+                "name": "Dataloader",
+                "type": "",
+                "range": null,
+                "defaultValue": null,
+                "required": "Optional (should be list of dataloaders in project)",
+                "elementType": "",
+                "choices": [],
+                "help": null,
+                "children": []
+            },
+            {
+                "paramName": "epoch",
+                "name": "Epoch",
+                "type": "int",
+                "range": {
+                    "min": 1,
+                    "max": null
+                },
+                "defaultValue": 1,
+                "required": false,
+                "elementType": "numberInput",
+                "choices": [],
+                "help": null,
+                "children": []
+            },
+            {
+                "paramName": "start_epoch",
+                "name": "Start epoch",
+                "type": "int",
+                "range": null,
+                "defaultValue": 0,
+                "required": false,
+                "elementType": "numberInput",
+                "choices": [],
+                "help": null,
+                "children": []
+            },
+            {
+                "paramName": "end_epoch",
+                "name": "End epoch",
+                "type": "int",
+                "range": null,
+                "defaultValue": null,
+                "required": false,
+                "elementType": "numberInput",
+                "choices": [],
+                "help": null,
+                "children": []
+            },
+            {
+                "paramName": "iteration",
+                "name": "Iteration",
+                "type": "int",
+                "range": null,
+                "defaultValue": null,
+                "required": false,
+                "elementType": "numberInput",
+                "choices": [],
+                "help": null,
+                "children": []
+            },
+            {
+                "paramName": "frequency",
+                "name": "Frequency",
+                "type": "int",
+                "range": null,
+                "defaultValue": null,
+                "required": false,
+                "elementType": "numberInput",
+                "choices": [],
+                "help": null,
+                "children": []
+            },
+            {
+                "paramName": "execution_mode",
+                "name": "Execution mode",
+                "type": "str",
+                "range": null,
+                "defaultValue": "eager",
+                "required": false,
+                "elementType": "singleSelect",
+                "choices": [
+                    "eager",
+                    "graph"
+                ],
+                "help": null,
+                "children": []
+            },
+            {
+                "paramName": "postprocess",
+                "name": "Postprocess",
+                "type": "",
+                "range": null,
+                "defaultValue": null,
+                "required": false,
+                "elementType": "",
+                "choices": [],
+                "help": null,
+                "children": [
+                    {
+                        "paramName": "transform",
+                        "name": "Transform",
+                        "type": "",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": false,
+                        "elementType": "",
+                        "choices": [],
+                        "help": null,
+                        "children": [
+                            {
+                                "paramName": "LabelShift",
+                                "name": "LabelShift",
+                                "type": "int",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "numberInput",
+                                "choices": [],
+                                "help": null,
+                                "children": []
+                            },
+                            {
+                                "paramName": "Collect",
+                                "name": "Collect",
+                                "type": "",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "",
+                                "choices": [],
+                                "help": null,
+                                "children": [
+                                    {
+                                        "paramName": "length",
+                                        "name": "Length",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": null,
+                                        "required": true,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "paramName": "SquadV1",
+                                "name": "SquadV1",
+                                "type": "",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": false,
+                                "elementType": "",
+                                "choices": [],
+                                "help": null,
+                                "children": [
+                                    {
+                                        "paramName": "label_file",
+                                        "name": "Label file",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": null,
+                                        "required": true,
+                                        "elementType": "filePath",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "vocab_file",
+                                        "name": "Vocab file",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": null,
+                                        "required": true,
+                                        "elementType": "filePath",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "do_lower_case",
+                                        "name": "Do lower case",
+                                        "type": "bool",
+                                        "range": null,
+                                        "defaultValue": true,
+                                        "required": false,
+                                        "elementType": "singleSelect",
+                                        "choices": [
+                                            true,
+                                            false
+                                        ],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "max_seq_length",
+                                        "name": "Max seq length",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": 384,
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "paramName": "SquadV1ModelZoo",
+                                "name": "SquadV1ModelZoo",
+                                "type": "",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": "",
+                                "elementType": "",
+                                "choices": [],
+                                "help": null,
+                                "children": [
+                                    {
+                                        "paramName": "label_file",
+                                        "name": "Label file",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": null,
+                                        "required": true,
+                                        "elementType": "filePath",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "vocab_file",
+                                        "name": "Vocab file",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": null,
+                                        "required": true,
+                                        "elementType": "filePath",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "do_lower_case",
+                                        "name": "Do lower case",
+                                        "type": "bool",
+                                        "range": null,
+                                        "defaultValue": true,
+                                        "required": false,
+                                        "elementType": "singleSelect",
+                                        "choices": [
+                                            true,
+                                            false
+                                        ],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "max_seq_length",
+                                        "name": "Max seq length",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": 384,
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "paramName": "hostfile",
+                "name": "Hostfile",
+                "type": "str",
+                "range": null,
+                "defaultValue": null,
+                "required": false,
+                "elementType": "filePath",
+                "choices": [],
+                "help": null,
+                "children": []
+            }
+        ]
+    },
+    {
+        "paramName": "approach",
+        "name": "Approach",
+        "type": "",
+        "range": null,
+        "defaultValue": null,
+        "required": "",
+        "elementType": "singleSelect",
+        "choices": [
+            "Weight compression",
+            "Weight compression pytorch"
+        ],
+        "help": null,
+        "children": [
+            {
+                "paramName": "weight_compression",
+                "name": "Weight compression",
+                "type": "",
+                "range": null,
+                "defaultValue": null,
+                "required": false,
+                "elementType": "",
+                "choices": [],
+                "help": null,
+                "children": [
+                    {
+                        "paramName": "initial_sparsity",
+                        "name": "Initial sparsity",
+                        "type": "float",
+                        "range": {
+                            "min": 0,
+                            "max": 1
+                        },
+                        "defaultValue": 0,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "target_sparsity",
+                        "name": "Target sparsity",
+                        "type": "float",
+                        "range": {
+                            "min": 0,
+                            "max": 1
+                        },
+                        "defaultValue": 0.97,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "max_sparsity_ratio_per_layer",
+                        "name": "Max sparsity ratio per layer",
+                        "type": "float",
+                        "range": null,
+                        "defaultValue": 0.98,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "prune_type",
+                        "name": "Prune type",
+                        "type": "str",
+                        "range": null,
+                        "defaultValue": "basic_magnitude",
+                        "required": false,
+                        "elementType": "singleSelect",
+                        "choices": [
+                            "basic_magnitude",
+                            "pattern_lock",
+                            "gradient_sensitivity",
+                            "group_lasso",
+                            "snip",
+                            "snip_momentum"
+                        ],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "start_epoch",
+                        "name": "Start epoch",
+                        "type": "int",
+                        "range": null,
+                        "defaultValue": 0,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "end_epoch",
+                        "name": "End epoch",
+                        "type": "int",
+                        "range": null,
+                        "defaultValue": 4,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "start_step",
+                        "name": "Start step",
+                        "type": "int",
+                        "range": null,
+                        "defaultValue": 0,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "end_step",
+                        "name": "End step",
+                        "type": "int",
+                        "range": null,
+                        "defaultValue": 0,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "update_frequency",
+                        "name": "Update frequency",
+                        "type": "float",
+                        "range": null,
+                        "defaultValue": 1,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "update_frequency_on_step",
+                        "name": "Update frequency on step",
+                        "type": "int",
+                        "range": null,
+                        "defaultValue": 1,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "excluded_names",
+                        "name": "Excluded names",
+                        "type": "List[str]",
+                        "range": null,
+                        "defaultValue": "[]",
+                        "required": false,
+                        "elementType": "stringInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "prune_domain",
+                        "name": "Prune domain",
+                        "type": "str",
+                        "range": null,
+                        "defaultValue": "global",
+                        "required": false,
+                        "elementType": "singleSelect",
+                        "choices": [
+                            "global",
+                            "local"
+                        ],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "names",
+                        "name": "Names",
+                        "type": "List[str]",
+                        "range": null,
+                        "defaultValue": "[]",
+                        "required": false,
+                        "elementType": "stringInput",
+                        "choices": [],
+                        "help": "Example: [\"name1\", \"name2\"]",
+                        "children": []
+                    },
+                    {
+                        "paramName": "extra_excluded_names",
+                        "name": "Extra excluded names",
+                        "type": "List[str]",
+                        "range": null,
+                        "defaultValue": "None",
+                        "required": false,
+                        "elementType": "stringInput",
+                        "choices": [],
+                        "help": "Example: [\"name1\", \"name2\"]",
+                        "children": []
+                    },
+                    {
+                        "paramName": "prune_layer_type",
+                        "name": "Prune layer type",
+                        "type": "List[str]",
+                        "range": null,
+                        "defaultValue": "None",
+                        "required": false,
+                        "elementType": "stringInput",
+                        "choices": [],
+                        "help": "Example: [\"type1\", \"type2\"]",
+                        "children": []
+                    },
+                    {
+                        "paramName": "sparsity_decay_type",
+                        "name": "Sparsity decay type",
+                        "type": "str",
+                        "range": null,
+                        "defaultValue": "exp",
+                        "required": false,
+                        "elementType": "singleSelect",
+                        "choices": [
+                            "linear",
+                            "cos",
+                            "exp",
+                            "cube"
+                        ],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "pattern",
+                        "name": "Pattern",
+                        "type": "str",
+                        "range": null,
+                        "defaultValue": "tile_pattern_1x1",
+                        "required": false,
+                        "elementType": "stringInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "pruners",
+                        "name": "Pruners",
+                        "type": "List[Prunner]",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": false,
+                        "elementType": "",
+                        "choices": [],
+                        "help": "List of objects of type Pruner.",
+                        "children": [
+                            {
+                                "paramName": "pruners",
+                                "name": "Pruner",
+                                "type": "",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": "",
+                                "elementType": "",
+                                "choices": [],
+                                "help": null,
+                                "children": [
+                                    {
+                                        "paramName": "start_epoch",
+                                        "name": "Start epoch",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "end_epoch",
+                                        "name": "End epoch",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "initial_sparsity",
+                                        "name": "Initial sparsity",
+                                        "type": "float",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "target_sparsity",
+                                        "name": "Target sparsity",
+                                        "type": "float",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "update_frequency",
+                                        "name": "Update frequency",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": 1,
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "method",
+                                        "name": "Method",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": "per_tensor",
+                                        "required": false,
+                                        "elementType": "stringInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "prune_type",
+                                        "name": "Prune type",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": "basic_magnitude",
+                                        "required": false,
+                                        "elementType": "singleSelect",
+                                        "choices": [
+                                            "basic_magnitude",
+                                            "pattern_lock",
+                                            "gradient_sensitivity",
+                                            "group_lasso",
+                                            "snip",
+                                            "snip_momentum"
+                                        ],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "start_step",
+                                        "name": "Start step",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "end_step",
+                                        "name": "End step",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "update_frequency_on_step",
+                                        "name": "Update frequency on step",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "prune_domain",
+                                        "name": "Prune domain",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": "global",
+                                        "required": false,
+                                        "elementType": "singleSelect",
+                                        "choices": [
+                                            "global",
+                                            "local"
+                                        ],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "sparsity_decay_type",
+                                        "name": "Sparsity decay type",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "stringInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "pattern",
+                                        "name": "Pattern",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": "tile_pattern_1x1",
+                                        "required": false,
+                                        "elementType": "stringInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "names",
+                                        "name": "Names",
+                                        "type": "List[str]",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "stringInput",
+                                        "choices": [],
+                                        "help": "Example: [\"name1\", \"name2\"]",
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "extra_excluded_names",
+                                        "name": "Extra excluded names",
+                                        "type": "List[str]",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "stringInput",
+                                        "choices": [],
+                                        "help": "Example: [\"name1\", \"name2\"]",
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "parameters",
+                                        "name": "Parameters",
+                                        "type": "Dict",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "?",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "paramName": "weight_compression_pytorch",
+                "name": "Weight compression pytorch",
+                "type": "",
+                "range": null,
+                "defaultValue": null,
+                "required": "",
+                "elementType": "",
+                "choices": [],
+                "help": null,
+                "children": [
+                    {
+                        "paramName": "initial_sparsity",
+                        "name": "Initial sparsity",
+                        "type": "float",
+                        "range": {
+                            "min": 0,
+                            "max": 1
+                        },
+                        "defaultValue": 0,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "target_sparsity",
+                        "name": "Target sparsity",
+                        "type": "float",
+                        "range": null,
+                        "defaultValue": 0.97,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "max_sparsity_ratio_per_layer",
+                        "name": "Max sparsity ratio per layer",
+                        "type": "float",
+                        "range": null,
+                        "defaultValue": 0.98,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "prune_type",
+                        "name": "Prune type",
+                        "type": "str",
+                        "range": null,
+                        "defaultValue": "basic_magnitude",
+                        "required": false,
+                        "elementType": "singleSelect",
+                        "choices": [
+                            "basic_magnitude",
+                            "pattern_lock",
+                            "gradient_sensitivity",
+                            "group_lasso",
+                            "snip",
+                            "snip_momentum"
+                        ],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "start_epoch",
+                        "name": "Start epoch",
+                        "type": "int",
+                        "range": null,
+                        "defaultValue": 0,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "end_epoch",
+                        "name": "End epoch",
+                        "type": "int",
+                        "range": null,
+                        "defaultValue": 4,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "start_step",
+                        "name": "Start step",
+                        "type": "int",
+                        "range": null,
+                        "defaultValue": 0,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "end_step",
+                        "name": "End step",
+                        "type": "int",
+                        "range": null,
+                        "defaultValue": 0,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "update_frequency",
+                        "name": "Update frequency",
+                        "type": "float",
+                        "range": null,
+                        "defaultValue": 1,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "update_frequency_on_step",
+                        "name": "Update frequency on step",
+                        "type": "int",
+                        "range": null,
+                        "defaultValue": 1,
+                        "required": false,
+                        "elementType": "numberInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "excluded_names",
+                        "name": "Excluded names",
+                        "type": "List[str]",
+                        "range": null,
+                        "defaultValue": "[]",
+                        "required": false,
+                        "elementType": "stringInput",
+                        "choices": [],
+                        "help": "Example: [\"name1\", \"name2\"]",
+                        "children": []
+                    },
+                    {
+                        "paramName": "prune_domain",
+                        "name": "Prune domain",
+                        "type": "str",
+                        "range": null,
+                        "defaultValue": "global",
+                        "required": false,
+                        "elementType": "singleSelect",
+                        "choices": [
+                            "global",
+                            "local"
+                        ],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "names",
+                        "name": "Names",
+                        "type": "List[str]",
+                        "range": null,
+                        "defaultValue": "[]",
+                        "required": false,
+                        "elementType": "stringInput",
+                        "choices": [],
+                        "help": "Example: [\"name1\", \"name2\"]",
+                        "children": []
+                    },
+                    {
+                        "paramName": "extra_excluded_names",
+                        "name": "Extra excluded names",
+                        "type": "List[str]",
+                        "range": null,
+                        "defaultValue": "None",
+                        "required": false,
+                        "elementType": "stringInput",
+                        "choices": [],
+                        "help": "Example: [\"name1\", \"name2\"]",
+                        "children": []
+                    },
+                    {
+                        "paramName": "prune_layer_type",
+                        "name": "Prune layer type",
+                        "type": "List[str]",
+                        "range": null,
+                        "defaultValue": "None",
+                        "required": false,
+                        "elementType": "stringInput",
+                        "choices": [],
+                        "help": "Example: [\"type1\", \"type2\"]",
+                        "children": []
+                    },
+                    {
+                        "paramName": "sparsity_decay_type",
+                        "name": "Sparsity decay type",
+                        "type": "str",
+                        "range": null,
+                        "defaultValue": "exp",
+                        "required": false,
+                        "elementType": "singleSelect",
+                        "choices": [
+                            "linear",
+                            "cos",
+                            "exp",
+                            "cube"
+                        ],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "pattern",
+                        "name": "Pattern",
+                        "type": "str",
+                        "range": null,
+                        "defaultValue": "tile_pattern_1x1",
+                        "required": false,
+                        "elementType": "stringInput",
+                        "choices": [],
+                        "help": null,
+                        "children": []
+                    },
+                    {
+                        "paramName": "pruners",
+                        "name": "Pruners",
+                        "type": "List[Prunner]",
+                        "range": null,
+                        "defaultValue": null,
+                        "required": false,
+                        "elementType": "",
+                        "choices": [],
+                        "help": "List of objects of type Pruner.",
+                        "children": [
+                            {
+                                "paramName": "pruners",
+                                "name": "Pruner",
+                                "type": "",
+                                "range": null,
+                                "defaultValue": null,
+                                "required": "",
+                                "elementType": "",
+                                "choices": [],
+                                "help": null,
+                                "children": [
+                                    {
+                                        "paramName": "start_epoch",
+                                        "name": "Start epoch",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "end_epoch",
+                                        "name": "End epoch",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "initial_sparsity",
+                                        "name": "Initial sparsity",
+                                        "type": "float",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "target_sparsity",
+                                        "name": "Target sparsity",
+                                        "type": "float",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "update_frequency",
+                                        "name": "Update frequency",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": 1,
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "method",
+                                        "name": "Method",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": "per_tensor",
+                                        "required": false,
+                                        "elementType": "stringInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "prune_type",
+                                        "name": "Prune type",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": "basic_magnitude",
+                                        "required": false,
+                                        "elementType": "singleSelect",
+                                        "choices": [
+                                            "basic_magnitude",
+                                            "pattern_lock",
+                                            "gradient_sensitivity",
+                                            "group_lasso",
+                                            "snip",
+                                            "snip_momentum"
+                                        ],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "start_step",
+                                        "name": "Start step",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "end_step",
+                                        "name": "End step",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "update_frequency_on_step",
+                                        "name": "Update frequency on step",
+                                        "type": "int",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "numberInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "prune_domain",
+                                        "name": "Prune domain",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": "global",
+                                        "required": false,
+                                        "elementType": "singleSelect",
+                                        "choices": [
+                                            "global",
+                                            "local"
+                                        ],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "sparsity_decay_type",
+                                        "name": "Sparsity decay type",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "stringInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "pattern",
+                                        "name": "Pattern",
+                                        "type": "str",
+                                        "range": null,
+                                        "defaultValue": "tile_pattern_1x1",
+                                        "required": false,
+                                        "elementType": "stringInput",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "names",
+                                        "name": "Names",
+                                        "type": "List[str]",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "stringInput",
+                                        "choices": [],
+                                        "help": "Example: [\"name1\", \"name2\"]",
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "extra_excluded_names",
+                                        "name": "Extra excluded names",
+                                        "type": "List[str]",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "stringInput",
+                                        "choices": [],
+                                        "help": "Example: [\"name1\", \"name2\"]",
+                                        "children": []
+                                    },
+                                    {
+                                        "paramName": "parameters",
+                                        "name": "Parameters",
+                                        "type": "Dict",
+                                        "range": null,
+                                        "defaultValue": "None",
+                                        "required": false,
+                                        "elementType": "?",
+                                        "choices": [],
+                                        "help": null,
+                                        "children": []
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

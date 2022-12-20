@@ -94,12 +94,12 @@
     <button mat-button class="close-button" (click)="showComparison = false" matTooltip="Close">&#x2573;</button>
     <h2>Throughput comparison</h2>
     <p>
-      <ngx-charts-bar-vertical-2d *ngIf="throughputData" [view]="view" [scheme]="customColor"
+      <ngx-charts-bar-vertical-2d *ngIf="throughputData" [view]="view" [scheme]="colorDomain"
         [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
         [yAxisLabel]="'samples/sec'" [results]="throughputData" [style]="'fill:' + fontColor">
       </ngx-charts-bar-vertical-2d>
     </p>
-    <ngx-charts-legend class="chart-legend" [data]="throughputLegend" [title]="'Legend'" [colors]="throughputColors">
+    <ngx-charts-legend class="chart-legend" [data]="throughputLegend" [title]="'Legend'" [colors]="colorHelper">
     </ngx-charts-legend>
   </div>
 
@@ -107,12 +107,12 @@
     <button mat-button class="close-button" (click)="showComparison = false" matTooltip="Close">&#x2573;</button>
     <h2>Accuracy comparison</h2>
     <p>
-      <ngx-charts-bar-vertical-2d *ngIf="accuracyData" [view]="view" [scheme]="customColor"
+      <ngx-charts-bar-vertical-2d *ngIf="accuracyData" [view]="view" [scheme]="colorDomain"
         [showXAxisLabel]="showXAxisLabel" [showYAxisLabel]="showYAxisLabel" [xAxis]="xAxis" [yAxis]="yAxis"
         [yAxisLabel]="'%'" [results]="accuracyData" [style]="'fill:' + fontColor">
       </ngx-charts-bar-vertical-2d>
     </p>
-    <ngx-charts-legend class="chart-legend" [data]="accuracyLegend" [title]="'Legend'" [colors]="accuracyColors">
+    <ngx-charts-legend class="chart-legend" [data]="accuracyLegend" [title]="'Legend'" [colors]="colorHelper">
     </ngx-charts-legend>
   </div>
 </div>
@@ -244,3 +244,5 @@
     </div>
   </div>
 </ng-container>
+
+<ng-keyboard-shortcuts [shortcuts]="shortcuts"></ng-keyboard-shortcuts>

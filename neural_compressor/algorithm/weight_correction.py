@@ -99,7 +99,7 @@ class WeightCorrection(Algorithm):
             channel_variance = np.std(t_fp32_weight, axis=1) / \
               (np.std(t_q_weight, axis=1) + self.eps)          
 
-            broad_shape = np.ones(len(fp32_weight.shape), dtype=np.int)
+            broad_shape = np.ones(len(fp32_weight.shape), dtype=np.int32)
             broad_shape[self.channel_axis] = len(channel_variance)
             channel_variance = channel_variance.reshape(broad_shape)
             variance_q_weight = q_weight * channel_variance
