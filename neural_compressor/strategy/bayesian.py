@@ -180,7 +180,7 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
 
 
 def _hashable(x):
-    """ ensure that an point is hashable by a python dict """
+    """Ensure that an point is hashable by a python dict."""
     return tuple(map(float, x))
 
 # Target space part
@@ -226,6 +226,7 @@ class TargetSpace(object):
 
     @property
     def empty(self):
+        """Check if the space is empty."""
         return len(self) == 0
 
     @property
@@ -261,7 +262,7 @@ class TargetSpace(object):
               corresponding param.
 
         Returns:
-            np.array: An array contains all param values. 
+            np.array: An array contains all params. 
         """
         try:
             assert set(params) == set(self.keys)
@@ -276,10 +277,10 @@ class TargetSpace(object):
         """Generate an params' dict from array.
 
         Args:
-            x (np.array): The array contains all param values.
+            x (np.array): The array contains all params.
 
         Returns:
-            dict: the dict contains keys and the param value corresponding to it.
+            dict: the dict contains keys and the params corresponding to it.
         """
         try:
             assert len(x) == len(self.keys)
@@ -378,7 +379,21 @@ class TargetSpace(object):
 
 # Tuning part
 class BayesianOptimization():
+    """The class for bayesian optimization.
+    
+    This class takes the parameters bounds in order to find which values 
+    for the parameters yield the maximum value using bayesian optimization.
+    """
+    
     def __init__(self, pbounds, random_seed=9527, verbose=2):
+        """Construct a bayesian optimization.
+
+        Args:
+            pbounds (dict): Dictionary with parameters names as keys and a tuple with
+              minimum and maximum values.
+            random_seed (int, optional): The seed for random searching. Default to 9527. 
+            verbose (int, optional): The level of verbosity. Default to 2.
+        """
         self._random_seed = random_seed
         # Data structure containing the bounds of its domain,
         # and a record of the points we have evaluated.
@@ -396,14 +411,17 @@ class BayesianOptimization():
 
     @property
     def space(self):
+        """Get the target space."""
         return self._space
 
     @property
     def max(self):
+        """Get the maximum value of target space."""
         return self._space.max()
 
     @property
     def res(self):
+        """Get the minimum value of target space."""
         return self._space.res()
 
     @staticmethod
@@ -435,5 +453,6 @@ class BayesianOptimization():
         return self._space.array_to_params(suggestion)
 
     def gen_next_params(self):
+        """Get the next parameter."""
         next_params = self.suggest()
         return next_params
