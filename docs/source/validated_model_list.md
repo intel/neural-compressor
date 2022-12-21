@@ -1,5 +1,28 @@
 Validated Models
-===
+======
+
+1. [Validated MLPerf Models](#Validated-MLPerf-Models)
+
+2. [Validated Quantization Examples](#Validated-Quantization-Examples)
+
+    2.1. [TensorFlow Models with TensorFlow 2.10.0](#TensorFlow-Models-with-TensorFlow-2.10.0)
+
+    2.2. [PyTorch Models with Torch 1.12.1+cpu in PTQ Mode](#PyTorch-Models-with-Torch-1.12.1+cpu-in-PTQ-Mode)
+
+    2.3. [PyTorch Models with Torch 1.12.1+cpu in QAT Mode](#PyTorch-Models-with-Torch-1.12.1+cpu-in-QAT-Mode)
+
+    2.4. [PyTorch Models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu](#PyTorch-Models-with-Torch-and-Intel®-Extension-for-PyTorch*-1.11.0+cpu)
+    
+    2.5. [ONNX Models with ONNX Runtime 1.12.1](#ONNX-Models-with-ONNX-Runtime-1.12.1)
+
+    2.6. [MXNet Models with MXNet 1.7.0](#MXNet-Models-with-MXNet-1.7.0)
+
+3. [Validated Pruning Examples](#Validated-Pruning-Examples)
+
+4. [Validated Knowledge Distillation Examples](#Validated-Knowledge-Distillation-Examples)
+
+5. [Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime](#Validated-ONNX QDQ-INT8-Models-on-Multiple-Hardware-through-ONNX-Runtime)
+
 ## Validated MLPerf Models
 <table class="docutils">
 <thead>
@@ -72,11 +95,11 @@ Validated Models
 
 ## Validated Quantization Examples
 
-Performance results test on ​​09/24/2022 with Intel Xeon Platinum 8380 Scalable processor, using 1 socket, 4 cores/instance, 10 instances and batch size 1. 
+Performance results test on ​​09/24/2022 with Intel Xeon Platinum 8380 Scalable processor, using 1 socket, 4 cores/instance, 8 instances and batch size 1. 
 
 Performance varies by use, configuration and other factors. See [platform configuration](./platform_configuration.md) for configuration details. For more complete information about performance and benchmark results, visit www.intel.com/benchmarks
 
-### TensorFlow models with TensorFlow 2.10.0
+### TensorFlow Models with TensorFlow 2.10.0
 
 <table class="tg">
 <thead>
@@ -359,7 +382,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch 1.12.1+cpu in PTQ mode
+### PyTorch Models with Torch 1.12.1+cpu in PTQ Mode
 
 <table class="tg">
 <thead>
@@ -742,7 +765,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch 1.12.1+cpu in QAT mode
+### PyTorch Models with Torch 1.12.1+cpu in QAT Mode
 
 <table class="tg">
 <thead>
@@ -805,7 +828,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu
+### PyTorch Models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu
 
 <table class="tg">
 <thead>
@@ -1491,7 +1514,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### MXNet models with MXNet 1.7.0
+### MXNet Models with MXNet 1.7.0
 
 <table class="tg">
 <thead>
@@ -1862,7 +1885,6 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-
 ## Validated Knowledge Distillation Examples
 |  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  | Student With Distributed Distillation<br>(Metrics Improvement)  |
 |---------------------|-----------|--------------------------------------|------------------------------------|-----------------------------------------------------|-----------------------------------------------------|
@@ -1877,7 +1899,7 @@ Performance varies by use, configuration and other factors. See [platform config
 |BERT-3 example       |  QQP      | BERT-3<br>(0.8626/0.8213 EM/F1)      | BERT-Base<br>(0.9091/0.8782 EM/F1) |   0.8684/0.8259 EM/F1<br>(0.0058/0.0046 EM/F1)      |   WIP                        |
 |DistilRoBERTa example|  COLA     | DistilRoBERTa<br>(0.6057 ACC)        | RoBERTa-Large<br>(0.6455 ACC)      |   0.6187 ACC<br>(0.0130 ACC)                        |   WIP                        |
 
-## Validated ONNX QDQ INT8 models on multiple hardware through ONNX Runtime
+## Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime
 
 <table class="tg">
 <thead>
