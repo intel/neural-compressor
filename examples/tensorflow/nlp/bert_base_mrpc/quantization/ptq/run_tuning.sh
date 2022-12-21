@@ -11,13 +11,9 @@ function main {
 
 # init params
 function init_params {
-
   for var in "$@"
   do
     case $var in
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo "$var" |cut -f2 -d=)
       ;;
@@ -46,7 +42,6 @@ function run_tuning {
       --num_train_epochs=3.0 \
       --output_dir=$input_model \
       --output_model=$output_model \
-      --config=$config \
       --tune \
 
 }
