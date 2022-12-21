@@ -19,30 +19,28 @@ Tuning Strategies
 
     3.2. [Basic](#basic)
 
-    3.3. [Bayesian](#bayesian)
+    3.3. [MSE](#mse)
 
-    3.4. [MSE](#mse)
+    3.4. [MSE_V2](#mse_v2)
 
-    3.5. [MSE_V2](#mse_v2)
+    3.5. [HAWQ_V2](#hawq_v2)
 
-    3.6. [HAWQ_V2](#hawq_v2)
+    3.6. [Bayesian](#bayesian)
 
-    3.7. [TPE](#tpe)
+    3.7. [Exhaustive](#exhaustive)
 
-    3.8. [Exhaustive](#exhaustive)
+    3.8. [Random](#random)
 
-    3.9. [Random](#random)
+    3.9. [SigOpt](#sigOpt)
 
-    3.10. [SigOpt](#sigOpt)
-
+    3.10. [TPE](#tpe)
 
  4. [Customize a New Tuning Strategy](#customize-a-new-tuning-strategy)
 
 ## Introduction
 
 Intel® Neural Compressor aims to help users quickly deploy
-the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. Using built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several strategies, including `O0`, `Basic`, `Bayesian`, `Exhaustive`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Random`, `SigOpt`, `TPE`, 
- etc are supported. By default, the `Basic` strategy is used for tuning.
+the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. Using built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several strategies, including `O0`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `SigOpt`, `TPE`, etc are supported. By default, the `Basic` strategy is used for tuning.
 
 ## Strategy Design
 Before the tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse logic and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
@@ -52,10 +50,10 @@ below:
 
 ### Tuning Space
 
-Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization(PTQ static), Post Training Dynamic Quantization, Quantization Aware Training, etc. One OP with a specific quantization mode has multiple ways to quantize for example quantization scheme(scheme/asymmetric), calibration algorithm(MinMax/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tunable items and their options. For example, the tuning items and options of the `Conv2D` in PyTorch are as follows:
+Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it has multiple quantization scheme(scheme/asymmetric), calibration algorithm(MinMax/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tunable items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
 ![Conv2D_PyTorch_Cap](./_static/imgs/Conv2D_PyTorch_Cap.png "Conv2D PyTorch Capability")
 
-To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_list` and `op_type_list`. Before tuning, the strategy will merge these user configurations with framework capability to create the final tuning space.
+To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_list` and `op_type_list` in `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.
 
 ### Exit Policy
 User can control the tuning process by setting the exit policy by specifying the `timeout`, and `max_trials` fields in the `TuningCriterion`.
@@ -86,14 +84,14 @@ accuracy_criterion=AccuracyCriterion(
 ```
 
 ### Traverse 
-Once the `tuning space` was constructed, user can specify the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig`(`QuantizationAwareTrainingConfig`), or the `strategy` field with strategy name in the `TuningCriterion`. The priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the traverse logic by strategy name. We will introduce the design and usage of each traverse logic in the following session.
+Once the `tuning space` was constructed, user can specify the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`), or the `strategy` field with strategy name in the `TuningCriterion`. The priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the traverse logic by strategy name. We will introduce the design and usage of each traverse logic in the following session.
 
 ## Traverse Logics
 
 ### O0 
 
 #### Design
-The quantization level `O0` is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model and then adds the quantized OPs in `op-type-wise` and `op-wise`.
+The quantization level `O0` is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model and then convert the OPs into lower precision by `op-type-wise` and `op-wise`.
 #### Usage
 
 To use `O0`, user should specify the `quant_level` field with `0` in the `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`).
@@ -116,21 +114,22 @@ conf = config.PostTrainingQuantConfig(
 
 The `Basic` strategy is designed for most models to do quantization. It includes
 three stages and each stage is executed sequentially, and the tuning process ends once the condition meets the exit policy. 
-- **Stage I**. Op-Type-Wise Tuning
+- **Stage I**. OP Type Wise Tuning
 
-    In this stage, it tries to quantize the OPs as many as possible and traverse all op-type-wise tuning configs. Note that, we initial the op with different quantization modes according to the quantization approach.
+    In this stage, it tries to quantize the OPs as many as possible and traverse all OP type wise tuning configs. Note that, we initial the OP with different quantization modes according to the quantization approach.
     
-    a. `post_training_static_quant`: It quantizes all OPs support Post Training Static Quantization(PTQ static).
+    a. `post_training_static_quant`: It quantizes all OPs support PTQ static.
 
-    b. `post_training_dynamic_quant`: We quantized all OPs support Post Training Dynamic Quantization(PTQ Dynamic).
+    b. `post_training_dynamic_quant`: It quantizes all OPs support PTQ dynamic.
     
-    c. `post_training_auto_quant`: It quantizes all OPs support PTQ static or PTQ Dynamic. For the OPs support both PTQ static and PTQ Dynamic, it first tries to do PTQ static for them, if none of the Op-type-wise tuning configs meet the accuracy loss criteria, it tries do PTQ Dynamic for them.
+    c. `post_training_auto_quant`: It quantizes all OPs support PTQ static or PTQ dynamic. For the OPs support both PTQ static and PTQ dynamic, it first tries to do PTQ static for them. If none of the OP type wise tuning configs meet the accuracy loss criteria, it tries do PTQ dynamic for them.
 
-- **Stage II**. Fallback OP One-by-One
+- **Stage II**. Fallback OP One by One
 
-    In this stage, it performs high-precision OP (FP32, BF16 ...) fallbacks one-by-one based on the tuning config with the best result in the previous stage, and records the impact of each OP. 
+    In this stage, it performs high-precision OP (FP32, BF16 ...) fallbacks one by one based on the tuning config with the best result in the previous stage, and records the impact of each OP. 
 
 - **Stage III**. Fallback Multiple OPs Accumulated
+
     In the final stage, it first sorted the OPs list according to the impact score in stage II, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
 
 ### Usage
@@ -147,54 +146,20 @@ conf = config.PostTrainingQuantConfig(
 )
 ```
 
-### Bayesian
-
-#### Design
-
-`Bayesian` optimization is a sequential design strategy for the global
-optimization of black-box functions. This strategy comes from the [Bayesian
-optimization](https://github.com/fmfn/BayesianOptimization) package and
-changed it to a discrete version that complied with the strategy standard of
-Intel® Neural Compressor. It uses [Gaussian processes](https://en.wikipedia.org/wiki/Neural_network_Gaussian_process) to define
-the prior/posterior distribution over the black-box function with the tuning
-history and then finds the tuning configuration that maximizes the expected
-improvement. For now, `Bayesian` just focus on op-wise quantization configs tuning 
-without the fallback phase. In order to obtain a quantized model with good accuracy 
-and better performance in a short time. We don't add datatype as a tuning 
-parameter into `Bayesian`.
-
-#### Usage
-
-For the `Bayesian` strategy, set the `timeout` or `max_trials` to a non-zero
-value as shown in the below example. This is because the param space for `bayesian` can be very small, so the accuracy goal might not be reached which
-can make the tuning never end. Additionally, if the log level is set to `debug` by `LOGLEVEL=DEBUG` in the environment, the message `[DEBUG] Tuning config was evaluated, skip!` will print endlessly. If the `timeout` is changed from 0 to an integer, `Bayesian` ends after the timeout is reached.
-
-```python
-from neural_compressor import config
-
-conf = config.PostTrainingQuantConfig(
-    tuning_criterion=config.TuningCriterion(
-        timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-        max_trials=100, # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
-        strategy="bayesian", # optional. name of the tuning strategy. 
-    ),
-)
-```
-
 ### MSE
 
 #### Design
 
 `MSE` and `Basic` strategies share similar ideas. The primary difference
-between the two strategies is the way sorted op lists are generated in stage II. The `MSE` strategy needs to get the tensors for each operator of raw FP32
+between the two strategies is the way sorted op lists generated in stage II. The `MSE` strategy needs to get the tensors for each OP of raw FP32
 models and the quantized model based on the best model-wise tuning
 configuration. It then calculates the MSE (Mean Squared Error) for each
-operator, sorts those operators according to the MSE value, and performs
+OP, sorts those OPs according to the MSE value, and performs
 the op-wise fallback in this order.
 
 #### Usage
 
-`MSE` is similar to `Basic` but replaces the `strategy` field with `mse` in the `tuning_criterion` setting.
+`MSE` is similar to `Basic` but replaces the `strategy` field with `mse` in the `TuningCriterion`.
 
 ```python
 from neural_compressor import config
@@ -210,11 +175,10 @@ conf = config.PostTrainingQuantConfig(
 
 #### Design
 
-`MSE_v2` is a strategy with a two stages fallback and revert fallback. In the fallback stage, 
- [WIP], which is composed of three key components. First, a multi-batch order combination based on per-layer fallback MSE values helps evaluate layer sensitivity with a few-shot. Second, a sensitivity gradient is proposed to better evaluate the sensitivity, together with the beam search to solve the local optimum problem. Third, a quantize-again procedure is introduced to remove redundancy in fallback layers to protect performance. MSE_v2 performs better, especially in models with a long full-dataset evaluation time and a large number of tuning counts.
+`MSE_v2` is a strategy with a two stages fallback and revert fallback. In the fallback stage, it uses multi-batch data to score the op impact and then fallback the op with the highest score util found the quantized model meets accuracy criteria. In the revert fallback stage, it also scores the impact of fallback OPs in the previous stage and selects the op with the lowest score to revert the fallback until the quantized model not meets accuracy criteria.
 
 #### Usage
-To use the `MSE_V2` tuning strategy, your need to specify the `strategy` field with `mse_v2` in the `TuningCriterion`. Also, the `confidence_batches` can be set optionally inside the `strategy_kwargs` to specify the number of batches to calculate the op sensitivity. Increasing `confidence_batches` will generally improve the accuracy of the scoring of the impact of OPs at the cost of more time spent in the process of sorting the OPs.
+To use the `MSE_V2` tuning strategy, user should specify the `strategy` field with `mse_v2` in the `TuningCriterion`. Also, the `confidence_batches` can be set optionally inside the `strategy_kwargs` to specify the number of batches to score the op impact. Increasing `confidence_batches` will generally improve the accuracy of the scoring at the cost of more time spent in this process.
 
 ```python
 from neural_compressor import config
@@ -249,56 +213,36 @@ conf = config.PostTrainingQuantConfig(
 )
 ```
 
-### TPE
+### Bayesian
 
 #### Design
 
-`TPE` uses sequential model-based optimization methods (SMBOs). **Sequential** refers to running trials one after another and selecting a better
-**hyperparameter** to evaluate based on previous trials. A hyperparameter is
-a parameter whose value is set before the learning process begins; it
-controls the learning process. SMBO apples Bayesian reasoning in that it
-updates a **surrogate** model that represents an **objective** function
-(objective functions are more expensive to compute). Specifically, it finds
-hyperparameters that perform best on the surrogate and then apply them to
-the objective function. The process is repeated and the surrogate is updated
-with incorporated new results until the timeout or max trials is reached.
-
-A surrogate model and selection criteria can be built in a variety of ways.
-`TPE` builds a surrogate model by applying Bayesian reasoning. The TPE
-algorithm consists of the following steps:
-
-- Define a domain of hyperparameter search space.
-- Create an objective function that takes in hyperparameters and outputs a
-score (e.g., loss, RMSE, cross-entropy) that we want to minimize.
-- Collect a few observations (score) using a randomly selected set of
-hyperparameters.
-- Sort the collected observations by score and divide them into two groups
-based on some quantile. The first group (x1) contains observations that
-give the best scores and the second one (x2) contains all other
-observations.
-- Model the two densities l(x1) and g(x2) using Parzen Estimators (also known as kernel density estimators), which are a simple average of kernels centered on existing data points.
-- Draw sample hyperparameters from l(x1). Evaluate them in terms of l(x1)/g(x2), and return the set that yields the minimum value under l(x1)/g(x1) that
-corresponds to the greatest expected improvement. Evaluate these
-hyperparameters on the objective function.
-- Update the observation list in step 3.
-8. Repeat steps 4-7 with a fixed number of trials.
-
->Note: TPE requires many iterations in order to reach an optimal solution;
-We recommend running at least 200 iterations. Because every iteration
-requires evaluation of a generated model--which means accuracy measurements
-on a dataset and latency measurements using a benchmark--this process can
-take from 24 hours to a few days to complete, depending on the model.
+`Bayesian` optimization is a sequential design strategy for the global
+optimization of black-box functions. This strategy comes from the [Bayesian
+optimization](https://github.com/fmfn/BayesianOptimization) package and
+changed it to a discrete version that complied with the strategy standard of
+Intel® Neural Compressor. It uses [Gaussian processes](https://en.wikipedia.org/wiki/Neural_network_Gaussian_process) to define
+the prior/posterior distribution over the black-box function with the tuning
+history and then finds the tuning configuration that maximizes the expected
+improvement. For now, `Bayesian` just focus on op-wise quantization configs tuning 
+without the fallback phase. In order to obtain a quantized model with good accuracy 
+and better performance in a short time. We don't add datatype as a tuning 
+parameter into `Bayesian`.
 
 #### Usage
 
-`TPE` usage is similar to `basic` but specifies the `strategy` field with `tpe` in the `TuningCriterion`.
+For the `Bayesian` strategy, set the `timeout` or `max_trials` to a non-zero
+value as shown in the below example. This is because the param space for `bayesian` can be very small, so the accuracy goal might not be reached which
+can make the tuning never end. Additionally, if the log level is set to `debug` by `LOGLEVEL=DEBUG` in the environment, the message `[DEBUG] Tuning config was evaluated, skip!` will print endlessly. If the `timeout` is changed from 0 to an integer, `Bayesian` ends after the timeout is reached.
 
 ```python
 from neural_compressor import config
 
 conf = config.PostTrainingQuantConfig(
     tuning_criterion=config.TuningCriterion(
-        strategy="tpe",
+        timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+        max_trials=100, # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+        strategy="bayesian", # optional. name of the tuning strategy. 
     ),
 )
 ```
@@ -349,6 +293,7 @@ conf = config.PostTrainingQuantConfig(
 )
 ```
 
+
 ### SigOpt
 
 #### Design
@@ -377,10 +322,65 @@ conf = config.PostTrainingQuantConfig(
 )
 ```
 
+
+### TPE
+
+#### Design
+
+`TPE` uses sequential model-based optimization methods (SMBOs). **Sequential** refers to running trials one after another and selecting a better
+**hyperparameter** to evaluate based on previous trials. A hyperparameter is
+a parameter whose value is set before the learning process begins; it
+controls the learning process. SMBO apples Bayesian reasoning in that it
+updates a **surrogate** model that represents an **objective** function
+(objective functions are more expensive to compute). Specifically, it finds
+hyperparameters that perform best on the surrogate and then applies them to
+the objective function. The process is repeated and the surrogate is updated
+with incorporated new results until the timeout or max trials is reached.
+
+A surrogate model and selection criteria can be built in a variety of ways.
+`TPE` builds a surrogate model by applying Bayesian reasoning. The TPE
+algorithm consists of the following steps:
+
+- Define a domain of hyperparameter search space.
+- Create an objective function that takes in hyperparameters and outputs a
+score (e.g., loss, RMSE, cross-entropy) that we want to minimize.
+- Collect a few observations (score) using a randomly selected set of
+hyperparameters.
+- Sort the collected observations by score and divide them into two groups
+based on some quantile. The first group (x1) contains observations that
+give the best scores and the second one (x2) contains all other
+observations.
+- Model the two densities l(x1) and g(x2) using Parzen Estimators (also known as kernel density estimators), which are a simple average of kernels centered on existing data points.
+- Draw sample hyperparameters from l(x1). Evaluate them in terms of l(x1)/g(x2), and return the set that yields the minimum value under l(x1)/g(x1) that
+corresponds to the greatest expected improvement. Evaluate these
+hyperparameters on the objective function.
+- Update the observation list in step 3.
+8. Repeat steps 4-7 with a fixed number of trials.
+
+>Note: TPE requires many iterations in order to reach an optimal solution.
+We recommend running at least 200 iterations. Because every iteration
+requires evaluation of a generated model--which means accuracy measurements
+on a dataset and latency measurements using a benchmark--this process can
+take from 24 hours to a few days to complete, depending on the model.
+
+#### Usage
+
+`TPE` usage is similar to `basic` but specifies the `strategy` field with `tpe` in the `TuningCriterion`.
+
+```python
+from neural_compressor import config
+
+conf = config.PostTrainingQuantConfig(
+    tuning_criterion=config.TuningCriterion(
+        strategy="tpe",
+    ),
+)
+```
+
+
 ## Customize a New Tuning Strategy
 
-Intel® Neural Compressor supports new strategy extension by implementing a sub-class of the `TuneStrategy` class in neural_compressor.strategy package
- and registering this strategy by the `strategy_registry` decorator.
+Intel® Neural Compressor supports new strategy extension by implementing a sub-class of the `TuneStrategy` class in neural_compressor.strategy package and registering it by the `strategy_registry` decorator.
 
 For example, user can implement an `Abc` strategy like below:
 
@@ -402,8 +402,7 @@ class AbcTuneStrategy(TuneStrategy):
 
 ```
 
-The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse
- all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.
+The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.
 
 If the traverse behavior of the `TuneStrategy` base class does not meet the new strategy requirement, it could re-implement a `traverse` function with its own logic.
 
