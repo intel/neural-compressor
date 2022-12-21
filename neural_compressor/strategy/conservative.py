@@ -300,8 +300,11 @@ class ConservativeTuneStrategy(TuneStrategy):
                                                                 'Best tune result']).print_stat()
 
     def _get_op_type_priority(self):
-        optypewise_cap = self.capability['optypewise']
-        op_type_priority = list(optypewise_cap.keys())
+        if 'op_type_priority' in self.capability:
+            op_type_priority = self.capability['op_type_priority']
+        else:
+            optypewise_cap = self.capability['optypewise']
+            op_type_priority = list(optypewise_cap.keys())
         return op_type_priority
 
     def _sorted_item_by_op_type(self, 
@@ -391,7 +394,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         # Add all quantized pair into queue
         quant_items_pool = COrderedDict()
         # collect and sorted all ops that support bf16 and fp16
-        for quant_mode in  ['bf16', 'fp16']:
+        for quant_mode in  ['fp8_e5m2', 'bf16', 'fp16']:
             if quant_mode in quant_mode_wise_items:
                 op_item_pairs = [(op_item, quant_mode) for op_item in quant_mode_wise_items[quant_mode]]
                 op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
@@ -399,13 +402,14 @@ class ConservativeTuneStrategy(TuneStrategy):
         op_item_pairs = []
         quant_ops_name_set = set()
         # collect and sorted all ops that support int8
+        # print(quant_mode_wise_items)
         for quant_mode, items_lst in quant_mode_wise_items.items():
             if "static" in quant_mode or 'dynamic' in quant_mode:
                 _quant_mode = "static" if "static" in quant_mode else "dynamic"
                 op_item_pairs += [(item, _quant_mode) for item in items_lst if item.name not in quant_ops_name_set]
                 quant_ops_name_set = quant_ops_name_set.union([item.name for item in items_lst])
-                op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
-                quant_items_pool['int8'] = op_item_pairs
+        op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
+        quant_items_pool['int8'] = op_item_pairs
         return quant_items_pool
         
         

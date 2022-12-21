@@ -1064,6 +1064,8 @@ class TemplateAdaptor(Adaptor):
                         q_capability['opwise'][q_op].append(fp32_config)
                     if fp32_config not in q_capability['optypewise'][q_op[1]]:
                         q_capability['optypewise'][q_op[1]].append(fp32_config)
+            # used in quant_level=0/1 to decide the quantize/fallback order.
+            q_capability['op_type_priority'] = self.query_handler.get_op_types_by_precision('hf8')
 
         # get bf16 capability
         if False and self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
