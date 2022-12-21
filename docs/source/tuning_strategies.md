@@ -40,17 +40,17 @@ Tuning Strategies
 ## Introduction
 
 Intel® Neural Compressor aims to help users quickly deploy
-the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. Using built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several strategies, including `O0`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `SigOpt`, `TPE`, etc are supported. By default, the `Basic` strategy is used for tuning.
+the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several strategies, including `O0`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `SigOpt`, `TPE`, etc are supported. By default, the `Basic` strategy is used for tuning.
 
 ## Strategy Design
-Before the tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse logic and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
+Before tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse logic and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
 below:
 
 ![Tuning Strategy](./_static/imgs/strategy.png "Strategy Framework")
 
 ### Tuning Space
 
-Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it has multiple quantization scheme(scheme/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
+Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
 ![Conv2D_PyTorch_Cap](./_static/imgs/Conv2D_PyTorch_Cap.png "Conv2D PyTorch Capability")
 
 To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_list` and `op_type_list` in `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.
@@ -84,17 +84,17 @@ accuracy_criterion=AccuracyCriterion(
 ```
 
 ### Traverse 
-Once the `tuning space` was constructed, user can specify the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`), or the `strategy` field with strategy name in the `TuningCriterion`. The priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the traverse logic by strategy name. We will introduce the design and usage of each traverse logic in the following session.
+Once the `tuning space` was constructed, user can specify the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`), or the `strategy` field with strategy name in the `TuningCriterion`. The priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the traverse logic by strategy name. The design and usage of each traverse logic is introduced in the following session.
 
 ## Traverse Logic
 
 ### O0 
 
 #### Design
-The quantization level `O0` is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model and then convert the OPs into lower precision by `op-type-wise` and `op-wise`.
+The quantization level `O0` is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model, and then quantize the OPs to lower precision OP type wisely and OP wisely.
 #### Usage
 
-To use `O0`, user should specify the `quant_level` field with `0` in the `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`).
+To use `O0`, the `quant_level` field should be set to `0` in `PostTrainingQuantConfig` (or `QuantizationAwareTrainingConfig`).
 
 ```python
 from neural_compressor import config
@@ -112,17 +112,17 @@ conf = config.PostTrainingQuantConfig(
 
 ### Design
 
-The `Basic` strategy is designed for most models to do quantization. It includes
-three stages and each stage is executed sequentially, and the tuning process ends once the condition meets the exit policy. 
+The `Basic` strategy is designed for quantizing most models. There are three stages executed by `Basic` strategy sequentially, and the tuning process ends once the condition meets the exit policy. 
+
 - **Stage I**. OP Type Wise Tuning
 
-    In this stage, it tries to quantize the OPs as many as possible and traverse all OP type wise tuning configs. Note that, we initial the OP with different quantization modes according to the quantization approach.
+    In this stage, it tries to quantize the OPs as many as possible and traverse all OP type wise tuning configs. Note that,  the OP is initiallized with different quantization modes according to the quantization approach.
     
-    a. `post_training_static_quant`: It quantizes all OPs support PTQ static.
+    a. `post_training_static_quant`: Quantize all OPs support PTQ static.
 
-    b. `post_training_dynamic_quant`: It quantizes all OPs support PTQ dynamic.
+    b. `post_training_dynamic_quant`: Quantize all OPs support PTQ dynamic.
     
-    c. `post_training_auto_quant`: It quantizes all OPs support PTQ static or PTQ dynamic. For the OPs support both PTQ static and PTQ dynamic, it first tries to do PTQ static for them. If none of the OP type wise tuning configs meet the accuracy loss criteria, it tries do PTQ dynamic for them.
+    c. `post_training_auto_quant`: Quantize all OPs support PTQ static or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise tuning configs meet the accuracy loss criteria.
 
 - **Stage II**. Fallback OP One by One
 
@@ -134,7 +134,7 @@ three stages and each stage is executed sequentially, and the tuning process end
 
 ### Usage
 
-`Basic` is the default strategy. It can be used by default if you don't change the `strategy` field in the `TuningCriterion`. Classical settings are shown below:
+`Basic` is the default strategy. It can be used by default with nothing changed in the `strategy` field of `TuningCriterion`. Classical settings are shown below:
 
 ```python
 from neural_compressor import config
@@ -159,7 +159,7 @@ the op-wise fallback in this order.
 
 #### Usage
 
-`MSE` is similar to `Basic` but replaces the `strategy` field with `mse` in the `TuningCriterion`.
+The usage of `MSE` is similar to `Basic`. To use `MSE` strategy, the `strategy` field of the `TuningCriterion` should be spicified with `mse`.
 
 ```python
 from neural_compressor import config
@@ -178,7 +178,7 @@ conf = config.PostTrainingQuantConfig(
 `MSE_v2` is a strategy with a two stages fallback and revert fallback. In the fallback stage, it uses multi-batch data to score the op impact and then fallback the op with the highest score util found the quantized model meets accuracy criteria. In the revert fallback stage, it also scores the impact of fallback OPs in the previous stage and selects the op with the lowest score to revert the fallback until the quantized model not meets accuracy criteria.
 
 #### Usage
-To use the `MSE_V2` tuning strategy, user should specify the `strategy` field with `mse_v2` in the `TuningCriterion`. Also, the `confidence_batches` can be set optionally inside the `strategy_kwargs` to specify the number of batches to score the op impact. Increasing `confidence_batches` will generally improve the accuracy of the scoring at the cost of more time spent in this process.
+To use the `MSE_V2` tuning strategy, the `strategy` field in the `TuningCriterion` should be specified with `mse_v2`. Also, the `confidence_batches` can be specified optionally inside the `strategy_kwargs` for the number of batches to score the op impact. Increasing `confidence_batches` will generally improve the accuracy of the scoring with more time spent in tuning process.
 
 ```python
 from neural_compressor import config
@@ -197,7 +197,7 @@ conf = config.PostTrainingQuantConfig(
 `HAWQ_V2` implements the [Hessian Aware trace-Weighted Quantization of Neural Networks](https://arxiv.org/abs/1911.03852). We made a small change to it by using the hessian trace to score the op impact and then fallback the OPs according to the scoring result.
 
 #### Usage
-To use the `HAWQ_V2` tuning strategy, user should specify the `strategy` field with `HAWQ_V2` in the `TuningCriterion` and provide the loss function of model for calculating the hessian trace. The `hawq_v2_loss` should be set in the field of `hawq_v2_loss` in the `strategy_kwargs`.
+To use the `HAWQ_V2` tuning strategy, the `strategy` field in the `TuningCriterion` should be specified with `hawq_v2`, and the loss function for calculating the hessian trace of model should be provided. The loss function should be set in the field of `hawq_v2_loss` in the `strategy_kwargs`.
 
 ```python
 from neural_compressor import config
@@ -231,9 +231,8 @@ parameter into `Bayesian`.
 
 #### Usage
 
-For the `Bayesian` strategy, set the `timeout` or `max_trials` to a non-zero
-value as shown in the below example. This is because the param space for `bayesian` can be very small, so the accuracy goal might not be reached which
-can make the tuning never end. Additionally, if the log level is set to `debug` by `LOGLEVEL=DEBUG` in the environment, the message `[DEBUG] Tuning config was evaluated, skip!` will print endlessly. If the `timeout` is changed from 0 to an integer, `Bayesian` ends after the timeout is reached.
+For the `Bayesian` strategy, it is recommended to set `timeout` or `max_trials` to a non-zero
+value as shown in below example, because the param space for `bayesian` can be very small and the accuracy goal might not be reached, which can make the tuning end never. Additionally, if the log level is set to `debug` by `LOGLEVEL=DEBUG` in the environment variable, the message `[DEBUG] Tuning config was evaluated, skip!` will print endlessly. If the `timeout` is changed from 0 to an integer, `Bayesian` ends after the timeout is reached.
 
 ```python
 from neural_compressor import config
@@ -258,7 +257,7 @@ configs. Same reason as `Bayesian`, fallback datatypes are not included for now.
 
 #### Usage
 
-`Exhaustive` usage is similar to `basic` but specifies the `strategy` field with `exhaustive` in the `TuningCriterion`.
+`Exhaustive` usage is similar to `basic`, with `exhausitive` specified to `strategy` field in the `TuningCriterion`.
 
 
 ```python
