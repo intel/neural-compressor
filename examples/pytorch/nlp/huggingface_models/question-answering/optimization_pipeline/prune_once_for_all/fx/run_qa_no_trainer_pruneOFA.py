@@ -907,10 +907,9 @@ def main():
 
     confs = []
     if args.do_prune:
-        # Pruning!
-        from neural_compressor.config import Pruner, PruningConfig
-        pruner = Pruner(prune_type="pattern_lock")
-        p_conf = PruningConfig(pruners=[pruner])
+        from neural_compressor.config import WeightPruningConfig
+        import pdb;pdb.set_trace()
+        p_conf = WeightPruningConfig(pruning_type="pattern_lock")
         confs.append(p_conf)
 
     if args.do_quantization:

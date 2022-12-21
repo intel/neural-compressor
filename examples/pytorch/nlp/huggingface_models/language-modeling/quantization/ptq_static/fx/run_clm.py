@@ -561,7 +561,7 @@ def main():
         q_model = quantization.fit(model,
                                    conf,
                                    calib_dataloader=trainer.get_eval_dataloader(),
-                                   calib_func=eval_func_for_nc)
+                                   eval_func=eval_func_for_nc)
         q_model.save(training_args.output_dir)
         exit(0)
 
