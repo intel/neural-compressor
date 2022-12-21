@@ -10,6 +10,7 @@ pr:
     include:
       - neural_compressor
       - setup.py
+      - .azure-pipelines
 
 pool:
   vmImage: "ubuntu-latest"
