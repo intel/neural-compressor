@@ -20,6 +20,7 @@ import re
 import yaml
 from .logger import logger
 from ..config import WeightPruningConfig
+from ..conf.config import PrunerV2
 
 try:
     from neural_compressor.conf.dotdict import DotDict
@@ -169,12 +170,25 @@ def check_key_validity(template_config, user_config):
         for user_key, user_value in usr_cfg_dict.items():
             if user_key not in template_config.keys():
                 logger.warning(f"{user_key} is not supported for config")
+
+    def check_key_validity_prunerv2(template_config, usr_cfg_dict):
+        for user_key, user_value in usr_cfg_dict.pruner_config.items():
+            if user_key not in template_config.keys():
+                logger.warning(f"{user_key} is not supported for config")
     
+    # multi pruners
     if isinstance(user_config, list):
         for obj in user_config:
-            check_key_validity_dict(template_config, obj)
+            if isinstance(obj, dict):
+                check_key_validity_dict(template_config, obj)
+            elif isinstance(obj, PrunerV2):
+                check_key_validity_prunerv2(template_config, obj)
+                
+    # single pruner, weightconfig or yaml
     elif isinstance(user_config, dict):
         check_key_validity_dict(template_config, user_config)
+    elif isinstance(user_config, PrunerV2):
+        check_key_validity_prunerv2(template_config, user_config)
     return
 
 def process_and_check_config(val):
