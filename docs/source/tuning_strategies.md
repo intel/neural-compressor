@@ -197,7 +197,7 @@ conf = config.PostTrainingQuantConfig(
 `HAWQ_V2` implements the [Hessian Aware trace-Weighted Quantization of Neural Networks](https://arxiv.org/abs/1911.03852). We made a small change to it by using the hessian trace to score the op impact and then fallback the OPs according to the scoring result.
 
 #### Usage
-To use the `HAQW_V2` tuning strategy, user should specify the `strategy` field with `HAQW_V2` in the `TuningCriterion` and provide the loss function of model for calculating the hessian trace. The `hawq_v2_loss` should be set in the field of `hawq_v2_loss` in the `strategy_kwargs`.
+To use the `HAWQ_V2` tuning strategy, user should specify the `strategy` field with `HAWQ_V2` in the `TuningCriterion` and provide the loss function of model for calculating the hessian trace. The `hawq_v2_loss` should be set in the field of `hawq_v2_loss` in the `strategy_kwargs`.
 
 ```python
 from neural_compressor import config
