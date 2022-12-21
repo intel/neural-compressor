@@ -1,97 +1,25 @@
 Validated Models
 ======
 
-1. [Validated MLPerf Models](#Validated-MLPerf-Models)
+1. [Validated Quantization Examples](#Validated-Quantization-Examples)
 
-2. [Validated Quantization Examples](#Validated-Quantization-Examples)
+    1.1. [TensorFlow Models with TensorFlow 2.10.0](#tensorflow-models-with-tensorflow-2100)
 
-    2.1. [TensorFlow Models with TensorFlow 2.10.0](#TensorFlow-Models-with-TensorFlow-2.10.0)
+    1.2. [PyTorch Models with Torch 1.12.1+cpu in PTQ Mode](#pytorch-models-with-torch-1121cpu-in-qat-mode)
 
-    2.2. [PyTorch Models with Torch 1.12.1+cpu in PTQ Mode](#PyTorch-Models-with-Torch-1.12.1+cpu-in-PTQ-Mode)
+    1.3. [PyTorch Models with Torch 1.12.1+cpu in QAT Mode](#pytorch-models-with-torch-1121cpu-in-qat-mode)
 
-    2.3. [PyTorch Models with Torch 1.12.1+cpu in QAT Mode](#PyTorch-Models-with-Torch-1.12.1+cpu-in-QAT-Mode)
-
-    2.4. [PyTorch Models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu](#PyTorch-Models-with-Torch-and-Intel®-Extension-for-PyTorch*-1.11.0+cpu)
+    1.4. [PyTorch Models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu](#pytorch-models-with-torch-and-intel-extension-for-pytorch-1110cpu)
     
-    2.5. [ONNX Models with ONNX Runtime 1.12.1](#ONNX-Models-with-ONNX-Runtime-1.12.1)
+    1.5. [ONNX Models with ONNX Runtime 1.12.1](#onnx-models-with-onnx-runtime-1121)
 
-    2.6. [MXNet Models with MXNet 1.7.0](#MXNet-Models-with-MXNet-1.7.0)
+    1.6. [MXNet Models with MXNet 1.7.0](#mxnet-models-with-mxnet-170)
 
-3. [Validated Pruning Examples](#Validated-Pruning-Examples)
+2. [Validated Pruning Examples](#Validated-Pruning-Examples)
 
-4. [Validated Knowledge Distillation Examples](#Validated-Knowledge-Distillation-Examples)
+3. [Validated Knowledge Distillation Examples](#Validated-Knowledge-Distillation-Examples)
 
-5. [Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime](#Validated-ONNX QDQ-INT8-Models-on-Multiple-Hardware-through-ONNX-Runtime)
-
-## Validated MLPerf Models
-<table class="docutils">
-<thead>
-  <tr>
-    <th>Model</th>
-    <th>Framework</th>
-    <th>Support</th>
-    <th>Example</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td rowspan="2">ResNet50 V1.5</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex">Link</a></td>
-  </tr>
-  <tr>
-    <td>DLRM</td>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/recommendation/dlrm/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td rowspan="2">BERT large</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/nlp/bert_large_squad/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">Link</a></td>
-  </tr>
-  <tr>
-    <td rowspan="2">SSD ResNet34</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/object_detection/ssd_resnet34/quantization">Link</a></td>
-  </tr>
-  <tr>
-    <td>RNN-T</td>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/speech_recognition/rnnt/quantization">Link</a></td>    
-  </tr>
-  <tr>
-    <td rowspan="2">3D-UNet</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/semantic_image_segmentation/3dunet-mlperf/quantization">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/image_recognition/3d-unet/quantization">Link</a></td>
-  </tr>
-</tbody>
-</table>
+4. [Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime](#validated-onnx-qdq-int8-models-on-multiple-hardware-through-onnx-runtime)
 
 ## Validated Quantization Examples
 

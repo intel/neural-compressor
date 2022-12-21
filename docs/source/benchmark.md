@@ -38,10 +38,10 @@ Users can get the performance of the float32 model and the optimized low precisi
     </tbody>
 </table>
 
-## Get Started with Benchmark
+## Get Started with Benchmark API
 
 Benchmark provide capability to automatically run with multiple instance through `cores_per_instance` and `num_of_instance` config (CPU only). 
-And please make sure `cores_per_instance * num_of_instance` must less than CPU physical core numbers. 
+And please make sure `cores_per_instance * num_of_instance` must be less than CPU physical core numbers. 
 `benchmark.fit` accept `b_dataloader` or `b_func` as input. 
 `b_func` is customized benchmark function. If user passes the `b_dataloader`, then `b_func` is not required.
 
