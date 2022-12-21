@@ -41,7 +41,7 @@ class BaseModel:
 
     @property
     def graph_info(self):
-        """Return {Node: Node_type} like {'conv0': 'conv2d'}."""
+        """Return a dict with content 'Node: Node_type'."""
         raise NotImplementedError
 
     @abstractmethod
