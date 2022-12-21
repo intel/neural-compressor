@@ -380,19 +380,8 @@ if __name__ == "__main__":
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
         accuracy_criterion = AccuracyCriterion(higher_is_better=False, criterion='absolute')
-        op_name_list = {
-            '[5][2-9][0-9]': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            '[5][1][4-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            '[1-2][0-5][0-9][0-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            '[3-9]\d{3,}': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            '[6-9]\d{2,}': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            '[2][7-9]\d{2,}': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            '[2][6][2-9][0-9]': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            '[1]\d{3,}': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-        }
         config = PostTrainingQuantConfig(approach='static', 
                                         accuracy_criterion=accuracy_criterion,
-                                        op_name_list=op_name_list,
                                         quant_format=args.quant_format)
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

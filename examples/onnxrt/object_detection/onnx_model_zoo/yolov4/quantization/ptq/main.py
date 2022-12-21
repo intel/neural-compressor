@@ -518,27 +518,14 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        from neural_compressor import options
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
 
-        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.criterion = 'absolute'
         accuracy_criterion.absolute = 0.02
-        op_name_list={
-            'StatefulPartitionedCall/model/lambda.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'StatefulPartitionedCall/model/tf_op_layer_add.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'StatefulPartitionedCall/model/tf_op_layer_Sigmoid.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'StatefulPartitionedCall/model/tf_op_layer_split.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'StatefulPartitionedCall/model/tf_op_layer_Reshape.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'Transpose.*?': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'StatefulPartitionedCall/model/conv2d_101/BiasAdd': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-            'StatefulPartitionedCall/model/conv2d_109/BiasAdd': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
-        }
         config = PostTrainingQuantConfig(approach='static', 
                                          calibration_sampling_size=[1],
-                                         op_name_list=op_name_list,
                                          accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

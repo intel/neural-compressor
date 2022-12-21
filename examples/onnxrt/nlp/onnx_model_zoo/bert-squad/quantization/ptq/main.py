@@ -97,9 +97,6 @@ def main():
                         help="benchmark mode of performance or accuracy")
     parser.add_argument('--benchmark_nums', type=int, default=1000,
                         help="Benchmark numbers of samples")
-    parser.add_argument('--quant_format', type=str, default='Default', 
-                        choices=['default', 'QDQ'],
-                        help="quantization format")
     parser.add_argument('--batch_size', type=int, default=1, 
                         help="batch size for benchmark")
     args = parser.parse_args()
@@ -131,17 +128,12 @@ def main():
                         'activation':  {'dtype': ['fp32']},
                         'weight': {'dtype': ['fp32']}
                      }}
-        if args.quant_format == 'QDQ':
-            config = PostTrainingQuantConfig(approach='static',
-                                             op_name_list=op_name_list,
-                                             quant_format=args.quant_format)
-        else:
-            config = PostTrainingQuantConfig(approach='dynamic',
-                                             op_name_list=op_name_list)
+
+        config = PostTrainingQuantConfig(approach='dynamic',
+                                         op_name_list=op_name_list)
         q_model = quantization.fit(model, 
-                                config,
-                                calib_dataloader=eval_dataloader,
-                                eval_func=eval_func)
+                                   config,
+                                   eval_func=eval_func)
         q_model.save(args.save_path)
 
     if args.benchmark:
