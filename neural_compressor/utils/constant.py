@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Constants used for the configuration."""
+
 FP32 = {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}
 BF16 = {'weight': {'dtype': ['bf16']}, 'activation': {'dtype': ['bf16']}}
 

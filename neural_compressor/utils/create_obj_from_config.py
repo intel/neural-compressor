@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Utility methods to create corresponding objects from configuration."""
+
 from neural_compressor.experimental.metric import METRICS
 from neural_compressor.experimental.data import Datasets, TRANSFORMS, FILTERS, DATALOADERS
 from neural_compressor.experimental.common import Optimizers, Criterions
@@ -26,6 +28,8 @@ DEFAULT_BATCH_SIZE = 64
 
 
 def get_func_from_config(func_dict, cfg, compose=True):
+    """Get the function from configuration.
+    """
     func_list = []
     for func_name, func_value in OrderedDict(cfg).items():
         func_kwargs = {}
