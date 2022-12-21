@@ -226,7 +226,7 @@ class Benchmark(object):
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
 
         if(sys.platform in ['linux'] and get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
-            raise OSError('Currently no support on AMD with hyperthreads')
+            raise OSError('Currently no support on ARM with hyperthreads')
         elif sys.platform in ['linux']:
             bounded_threads = get_bounded_threads(get_core_ids(), get_threads(), get_physical_ids())
 

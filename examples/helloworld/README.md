@@ -17,5 +17,5 @@ The following Hello World examples are available:
 * [tf_example4](/examples/helloworld/tf_example4): quantize checkpoint with dummy dataloader.
 * [tf_example5](/examples/helloworld/tf_example5): config performance and accuracy measurement.
 * [tf_example6](/examples/helloworld/tf_example6): use default user-facing APIs to quantize a pb model.
-* [tf_example7](/examples/helloworld/tf_example7): quantize and benchmark with pure python API.
+* [tf_example7](/examples/helloworld/tf_example7): quantize model with dummy dataset.
 
