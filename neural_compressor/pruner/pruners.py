@@ -21,12 +21,11 @@ from neural_compressor.utils.utility import LazyImport
 torch = LazyImport('torch')
 from .patterns import get_pattern
 from .schedulers import get_scheduler
-from .criteria import get_criterion, CRITERIAS
+from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
 from .logger import logger
 
 PRUNERS = {}
-
 
 def register_pruner(name):
     """Class decorator to register a Pruner subclass to the registry.
@@ -48,6 +47,14 @@ def register_pruner(name):
 
     return register
 
+def parse_valid_pruner_types():
+    """Get all valid pruner names"""
+    valid_pruner_types = []
+    for x in CRITERIA.keys():
+        for p in ["", "_progressive"]:
+            valid_pruner_types.append(x + p)
+    valid_pruner_types.append("pattern_lock")
+    return valid_pruner_types
 
 def get_pruner(config, modules):
     """Get registered pruner class.
@@ -71,7 +78,7 @@ def get_pruner(config, modules):
         # if progressive, delete "progressive" words and reset config["progressive"]
         name = config["pruning_type"][0:-12]
         config["progressive"] = True
-    if name in CRITERIAS:
+    if name in CRITERIA:
         if config["progressive"] == False:
             config['criterion_type'] = name
             name = "basic"  ##return the basic pruner
@@ -80,7 +87,7 @@ def get_pruner(config, modules):
             name = "progressive"  ## return the progressive pruner
 
     if name not in PRUNERS.keys():
-        assert False, f"does not support {name}, currently only support {PRUNERS.keys()}"
+        assert False, f"does not support {name}, currently only support {parse_valid_pruner_types()}"
     return PRUNERS[name](config, modules)
 
 

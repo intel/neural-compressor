@@ -19,14 +19,14 @@ from neural_compressor.utils.utility import LazyImport
 torch = LazyImport('torch')
 
 
-CRITERIAS = {}
+CRITERIA = {}
 
 
 def register_criterion(name):
     """Register a criterion to the registry."""
 
     def register(criterion):
-        CRITERIAS[name] = criterion
+        CRITERIA[name] = criterion
         return criterion
 
     return register
@@ -35,9 +35,9 @@ def register_criterion(name):
 def get_criterion(config, modules):
     """Get registered criterion class."""
     name = config["criterion_type"]
-    if name not in CRITERIAS.keys():
-        assert False, f"criteria does not support {name}, currently only support {CRITERIAS.keys()}"
-    return CRITERIAS[name](modules, config)
+    if name not in CRITERIA.keys():
+        assert False, f"criteria does not support {name}, currently only support {CRITERIA.keys()}"
+    return CRITERIA[name](modules, config)
 
 
 class PruningCriterion:
