@@ -30,18 +30,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional, Any, Union, Callable, Set
-
 import numpy as np
-import random
-seed=9527
-np.random.seed(seed)
-random.seed(seed)
 import torch
-torch.manual_seed(seed) #cpu
-torch.cuda.manual_seed_all(seed)  #并行gpu
-torch.backends.cudnn.deterministic = True  #cpu/gpu结果一致
-torch.backends.cudnn.benchmark = True   #训练集变化不大时使训练加速
-
 # Define Collector based on hook, which is used to record the intermediate result
 class Node_collector:
     def __init__(self, m):
@@ -117,46 +107,7 @@ class GradientsCalculator:
         grads = self._parameter_handler.get_gradients()
         self._model.zero_grad()
         return grads
-class GradientsCalculator2:
-    
-    def __init__(self, model: nn.Module,
-                 data_loader, num_data_iter: int,
-                 criterion):
-        self._model = model
-        self._data_loader = data_loader
-        self._num_data_iter = num_data_iter
-        self.num_iter = 0
-        self.parameters=[p for p in self._model.parameters() if p.requires_grad]
-        if criterion == None:
-            self.criterion = torch.nn.CrossEntropyLoss()
-        else:
-            self.criterion = criterion
 
-    def __iter__(self):
-        self.data_loader_iter = iter(self._data_loader)
-        self.num_iter = 0
-        return self
-    def get_gradients(self):
-        gradients = []
-        for parameter in self.parameters:
-            gradients.append(0. if parameter.grad is None else parameter.grad + 0.)
-        return gradients
-    def __next__(self):
-        if self.num_iter >= self._num_data_iter:
-            raise StopIteration
-        self.num_iter += 1
-        inupt, target = next(self.data_loader_iter)
-
-        self._model.zero_grad()
-
-        outputs = self._model(inupt)
-        loss = self.criterion(outputs, target)
-
-        loss.backward(create_graph=True)
-        
-        grads = self.get_gradients()
-        self._model.zero_grad()
-        return grads
 ##shameless copy from https://github.com/openvinotoolkit/nncf
 class HessianTraceEstimator:
     """
@@ -261,15 +212,11 @@ class HessianTrace:
         self.criterion = criterion
         self._batch_size=dataloader.batch_size
         self.params= [p for p in self.model.parameters() if p.requires_grad]
-        num_data_points=0
-        self._num_data_iter = num_data_points // self._batch_size if num_data_points >= self._batch_size else 1
         if self.criterion == None:
             self.criterion = torch.nn.CrossEntropyLoss().to(self.device)  ##TODO need to set in config
         self.criterion = self.criterion.to(self.device)
         self.weight_to_op, self.op_list = self.get_fused_mapping()
         self.get_params()
-        self._gradients_calculator=GradientsCalculator2(self.model,data_loader=self.dataloader,num_data_iter=
-                                                       self._num_data_iter,criterion=self.criterion)
 
     def is_fused_module(self, module):
         """This is a helper function for `_propagate_qconfig_helper` to detecte
@@ -414,10 +361,6 @@ class HessianTrace:
         else:
             model.zero_grad()
 
-    # def get_params(self, model):
-    #     parameters = [p for p in model.parameters() if p.requires_grad]
-    #     return parameters
-
     def sample_rademacher(self, params):
         samples = []
         for param in params:
@@ -452,15 +395,8 @@ class HessianTrace:
                 break
         if cnt > 0:
             H_v = [item / cnt for item in H_v]
-        v_t_H_v = torch.stack([torch.sum(h_v * v_t)/h_v.size().numel() for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
-        # avg_traces_per_param = torch.stack([torch.sum(a * b) / a.size().numel() for (a, b) in zip(vhp, v)])
+        v_t_H_v = torch.stack([torch.sum(h_v * v_t)/h_v.size().numel() for (h_v, v_t) in zip(H_v, v)])  
         return v_t_H_v
-        #Using python iterator to enable
-        # for gradients in self._gradients_calculator:
-        #      H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
-        #      H_v = [pre + cur * float(batch_size) for cur, pre in zip(H_v_one, H_v)]
-        # H_v = [item / cnt for item in H_v]
-        
 
     # def get_vtHv_act(self, params, num_samples):
     #     v = self.sample_rademacher(params)
@@ -654,8 +590,10 @@ class HessianTrace:
         Estimates average hessian trace for each parameter
         """
         assert num_samples > 0
+        num_samp=self._batch_size
+        logger.info("num_samp:"+str(num_samp))
         traces = {}
-        weight_traces = self.get_weight_traces(num_samples)
+        weight_traces = self.get_weight_traces(num_samp)
         traces['weight'] = weight_traces
         act_trace = {}
         if enable_act:
@@ -666,64 +604,6 @@ class HessianTrace:
                 act_trace[i] = float(act_traces[i]) + float(mse_gap[j])  # Tensor->float
             traces['activation'] = act_traces
         return traces
-    def cal_avg_traces(self, enable_act=False,num_samples=32):
-        """calculate the average traces for given model
-
-        Args:
-            enable_act (_type_): _description_
-            num_samples (int, optional): _description_. Defaults to 32.
-
-        Returns:
-            _type_: _description_
-        """
-        assert num_samples>0
-        import tqdm
-        avg_total_trace=0.
-        avg_traces_per_iter=[]
-        mean_avg_traces_per_param=None
-        for i in tqdm.tqdm(range(self.max_iter)):
-            avg_traces_per_iter.append(self._calc_avg_traces_per_param())
-            mean_avg_traces_per_param=self._get_mean(avg_traces_per_iter)
-            mean_avg_total_trace=torch.sum(mean_avg_traces_per_param)
-            diff_avg=abs(mean_avg_total_trace-avg_total_trace)/(avg_total_trace+self.eps)
-            # logger.info("self.tolerance:"+str(self.tolerance))
-            if diff_avg<self.tolerance:
-                logger.info("End of hessian trace calculation")
-                break
-            avg_total_trace=mean_avg_total_trace
-        
-        results={}
-        indx=0
-        for n,p in self.model.named_parameters():
-            results[n]=float(mean_avg_traces_per_param[indx])
-            indx+=1
-        return results
-            
-        
-    def _calc_avg_traces_per_param(self):
-        # v = self._parameter_handler.sample_rademacher_like_params()
-        v=self.sample_rademacher_like_params()
-        # vhp = self._parameter_handler.sample_normal_like_params()
-        vhp=self.sample_normal_like_params()
-        num_all_data = self._num_data_iter * self._batch_size
-        idx=0
-        for gradients in self._gradients_calculator:
-            idx+=1
-            vhp_curr = torch.autograd.grad(gradients,
-                                           self.params,
-                                           grad_outputs=v,
-                                           only_inputs=True,
-                                           retain_graph=False)
-            vhp = [a + b * float(self._batch_size) + 0. for a, b in zip(vhp, vhp_curr)]
-        vhp = [a / float(num_all_data) for a in vhp]
-        avg_traces_per_param = torch.stack([torch.sum(a * b) / a.size().numel() for (a, b) in zip(vhp, v)])
-        logger.info("idx:",idx)
-        return avg_traces_per_param
-    @staticmethod
-    def _get_mean(data):
-        return torch.mean(torch.stack(data), dim=0)
-
-
 # copy from torch.quantization._numeric_suite
 def _find_match(
         str_list: Union[Dict[str, Any], List[str]], key_str: str,
@@ -833,19 +713,16 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
     if fp32_model.training:
         orig_eval = False
     fp32_model.eval()
-    use_nccf = 2
+    use_nccf = 1
     if use_nccf==0:
         fp32_model=fuse_fx(fp32_model.model)
         ht = HessianTraceEstimator(fp32_model, data_loader=dataloader,criterion=criterion)
         traces = ht.get_average_traces()
         logger.info("use nncf")
-    elif use_nccf==1:
-        ht = HessianTrace(fp32_model, dataloader,q_model)
-        traces=ht.cal_avg_traces(enable_act=False,num_samples=1)
-        logger.info("use hawq")
     else:
         ht = HessianTrace(fp32_model, dataloader,q_model)
-        traces = ht.get_avg_traces(False,32)['weight']
+        traces = ht.get_avg_traces(False,30)['weight']
+        logger.info("use hawq")
         return traces
     op_to_traces={}
     for i in traces:
