@@ -2,14 +2,22 @@ SigOpt Strategy
 ============
 
 1. [Introduction](#introduction)
-2. [Preparation](#preparation)
-3. [SigOpt](#sigopt)
-4. [Neural Compressor configuration](#neural-compressor-configuration)
-5. [Performance](#performance)
+
+    1.1 [Preparation](#preparation)
+    
+    1.2 [SigOpt Platform](#sigopt-platform)
+    
+    1.3  [Neural Compressor Configuration](#neural-compressor-configuration)
+
+2. [Performance](#performance)
+    
+    2.1 [Benefit of SigOpt Strategy](#benefit-of-sigopt-strategy)
+
+    2.2 [Performance Comparison of Different Strategies](#performance-comparison-of-different-strategies)
 
 ## Introduction
 
-[SigOpt](https://app.sigopt.com/) is available via an online platform and can be used for model development and performance. [Optimization Loop](https://app.sigopt.com/docs/overview/optimization) is the backbone of using SigOpt. We can set metrics and realize the interaction between the online platform and tuning configures based on this mechanism.
+[SigOpt](https://app.sigopt.com/) is an online model development platform that makes it easy to track runs, visualize training, and scale hyperparameter optimization for any type of model. [Optimization Loop](https://app.sigopt.com/docs/overview/optimization) is the backbone of using SigOpt. We can set metrics and realize the interaction between the online platform and tuning configures based on this mechanism.
 
 ### Preparation
 
@@ -18,7 +26,7 @@ Before using the `SigOpt` strategy, a SigOpt account is necessary.
 - Create a new project and write the corresponding name into the field of `sigopt_project_id`.
 - Set the name for this experiment in field of `sigopt_experiment_id`, the default is nc-tune.
 
-#### `SigOpt`
+### SigOpt Platform 
 
 If you are using the SigOpt products for the first time, please [sign-up](https://app.sigopt.com/signup), if not, please [login](https://app.sigopt.com/login). It is free to apply for an account. Although there are certain restrictions on the model parameters and the number of experiments created, it is sufficient for ordinary customers. If you want higher capacity, please contact support@sigopt.com.
 
@@ -51,14 +59,14 @@ conf = config.PostTrainingQuantConfig(
 )
 ```
 
-### Performance
+## Performance
 
-#### Benefit of Sigopt strategy
+### Benefit of SigOpt Strategy
 
 - Metric based SigOpt is better than self-defining and easy to use. You can read the details [here](https://app.sigopt.com/docs/overview/metric_constraints). 
 - Through the token api, the results of each experiment are recorded in your account. You can use the SigOpt data analysis function to analyze the results, such as drawing a chart, calculating the F1 score, etc.
 
-#### Performance comparison of different strategies
+### Performance Comparison of Different Strategies
 
 - MobileNet_v1(tensorflow)
 
