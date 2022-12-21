@@ -10,9 +10,10 @@ Tuning Strategies
 	2.2. [Exist Policy](#exist-policy)
 
 	2.3. [Accuracy Criteria](#accuracy-criteria)
-3. [Traverse Logics](#traverse-logics)
 
-    3.1. [Basic](#basic)
+    2.4. [Traverse Logics](#traverse-logics)
+
+3. [Basic](#basic)
 
     3.2. [Bayesian](#bayesian)
 
@@ -52,14 +53,13 @@ below:
 
 ### Tuning Space
 
-The `tuning space` include all tunable items and their options, for example calibration sampling size, quantization scheme(scheme/asymmetric), or select parts of model not quantize. 
-Specifically, for one op, the tuning items and options are as following.
-
+Intel® Neural Compressor support multiple quantization modes such as Post Training Static Quantization(PTQ static), Post Training Dynamic Quantization, Quantization Aware Training,etc. For one OP with specific quantization mode have multiple ways to quantize for example quantization scheme(scheme/asymmetric), calibration algorithm(MinMax/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` include all tunable items and their options. For example, the `conv2d` in PyTorch, the tuning items and options are as following.
+![Conv2D_PyTorch_Cap](./_static/imgs/Conv2D_PyTorch_Cap.png "Conv2D PyTorch Capability")
 
 To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_list` and `op_type_list`. Before tuning, the strategy will merge these user configurations with framework capability to create the final tuning space.
 
 ### Exist policy
-User can control the tuning process by setting the exist policy by specifying the `timeout`, and `max_trials`.
+User can control the tuning process by setting the exist policy by specifying the `timeout`, and `max_trials` fields in the `TuningCriterion`.
 
 ```python
 from neural_compressor.config import TuningCriterion
@@ -74,7 +74,7 @@ tuning_criterion=TuningCriterion(
 
 
 ### Accuracy Criteria
-User can set the accuracy criteria by specifying the `higher_is_better`, `criterion`, and `tolerable_loss`.
+User can set the accuracy criteria by specifying the `higher_is_better`, `criterion`, and `tolerable_loss` fields in the `AccuracyCriterion`.
 
 ``` python
 from neural_compressor.config import AccuracyCriterion
@@ -86,15 +86,37 @@ accuracy_criterion=AccuracyCriterion(
 )
 ```
 
-## Traverse Logics
+### Traverse Logics
+Once the `tuning space` was constructed, you can specific the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig`(`QuantizationAwareTrainingConfig`), or the `strategy` field with strategy name in the `TuningCriterion`. The priority of `quant_level` is higher than `strategy`, which mean the you need to set the `quant_level` to `1` if you want to specific the traverse logic by strategy name. We will introduce the design and usage of each traverse logic in the following session.
 
-### Basic
 
-#### Design
+## O0 
+
+### Design
+The quantization level `O0` is designed for user want to keep the precision of model after quantization. It start with the original(`fp32`) model and then add the quantized OPs in `op-type-wise` and `op-wise`.
+### Usage
+
+To use `O0`, you can specific the `quant_level` field with `0` in the `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`).
+
+```python
+from neural_compressor import config
+
+conf = config.PostTrainingQuantConfig(
+    quant_level=0, # the quantization level.
+    tuning_criterion=config.TuningCriterion(
+        timeout=0, # optional. tuning timeout (seconds). when set to 0, early stop is enabled.
+        max_trials=100, # optional. max tuning times. combined with `timeout` field to decide when to exit tuning.
+    ),
+)
+```
+
+## Basic
+
+### Design
 
 `Basic` strategy is designed for most models to do quantization. It includes
 three stages and each stage is executed sequentially, and the tuning process ends once the codition meets the exist policy. 
-- Stage I. Op-type-wise tuning
+- **Stage I**. Op-Type-Wise Tuning
 
     In this stage, it try to quantized the OPs as many as possible and traverse all op-type-wise tuning configs. Note that, we initial the op with difference quantization mode according to the quantization approach.
     
@@ -104,13 +126,14 @@ three stages and each stage is executed sequentially, and the tuning process end
     
     c. `post_training_auto_quant`: it quantized all OPs support PTQ static or PTQ Dynamic. For the OPs support both PTQ static or PTQ Dynamic, we first try to do PTQ static for them, if none of the Op-type-wise tuning configs meet the accuracy loss criteria, we try do PTQ Dynamic for them.
 
-- Stage II. Fallback op one-by-one
+- **Stage II**. Fallback OP One-by-One
+
     In this stage, it performs high-precision OP (FP32, BF16 ...) fallbacks one-by-one based on the tuning config with best result in the previous stage, and records the impact of each OP. 
 
-- Stage III.Fallback multiple operations accumulated
+- **Stage III**.Fallback Multiple OPs Accumulated
     In final stage, it first sorted OPs list according to the impact score in the stage II, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
 
-#### Usage
+### Usage
 
 `Basic` is the default strategy. It can be used by default if you don't change the
 the `strategy` field in the `tuning_criterion` setting. Classical settings are shown below:
@@ -184,7 +207,7 @@ conf = config.PostTrainingQuantConfig(
 )
 ```
 
-### MSE_v2
+### MSE_V2
 
 #### Design
 
@@ -195,7 +218,7 @@ better especially in models with a long full-dataset evaluation time and a
 large number of tuning counts.
 
 #### Usage
-To use the `MSE_v2` tuning strategy, your need to specific the `strategy` field with `mse_v2` in the `tuning_criterion` setting. Also, the option
+To use the `MSE_V2` tuning strategy, your need to specific the `strategy` field with `mse_v2` in the `tuning_criterion` setting. Also, the option
 `confidence_batches` can be set optionally inside the `strategy_kwargs` to specify the number of batches to calculate the op sensitivity. Increasing the `confidence_batches` will generally improve the accuracy of the scoring of the impact of OPs at the cost of more time spent in the process of sorting the OPs.
 
 ```python
