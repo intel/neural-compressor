@@ -3,11 +3,12 @@
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 RESET="echo -en \\E[0m \\n" # close color
 
-log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
+work_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/pydocstyle"
+log_dir="$work_dir/../scanLog"
 mkdir -p $log_dir
 
 exit_code=0
-for line in $(cat scan_path.txt)
+for line in $(cat ${work_dir}/scan_path.txt)
 do
     pydocstyle --convention=google $line >> $log_dir/pydocstyle.log
     if [ $? -ne 0 ]; then
