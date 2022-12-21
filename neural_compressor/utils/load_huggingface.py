@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Huggingface Loader: provides access to Huggingface pretrained models."""
 
 import copy
 import os
@@ -30,7 +31,9 @@ WEIGHTS_NAME = "pytorch_model.bin"
 
 
 class OptimizedModel:
+    """The class provides a method from_pretrained to access Huggingface models."""
     def __init__(self, *args, **kwargs):   # pragma: no cover
+        """Init method (Not used)."""
         raise EnvironmentError(
             f"{self.__class__.__name__} is designed to be instantiated using the"
             f"`{self.__class__.__name__}.from_pretrained(model_name_or_path)` method."
@@ -42,8 +45,8 @@ class OptimizedModel:
         model_name_or_path: str,
         **kwargs
     ) -> torch.nn.Module:
-        """
-        Instantiate a quantized pytorch model from a given Intel Neural Compressor (INC) configuration file.
+        """Instantiate a quantized pytorch model from a given Intel Neural Compressor (INC) configuration file.
+
         Args:
             model_name_or_path (:obj:`str`):
                 Repository name in the Hugging Face Hub or path to a local directory hosting the model.
@@ -60,6 +63,7 @@ class OptimizedModel:
                 The specific model version to use. It can be a branch name, a tag name, or a commit id, since we use a
                 git-based system for storing models and other artifacts on huggingface.co, so ``revision`` can be any
                 identifier allowed by git.
+
         Returns:
             q_model: Quantized model.
         """
@@ -217,6 +221,7 @@ class OptimizedModel:
 
 
 def save_for_huggingface_upstream(model, tokenizer, output_dir):
+    """Save the model and tokenizer in the output directory."""
     tokenizer.save_pretrained(output_dir)
     torch.save(model.quantized_state_dict(), os.path.join(output_dir, WEIGHTS_NAME))
     # save configure dtype as int8 for load identification
