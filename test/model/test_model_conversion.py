@@ -5,13 +5,9 @@ import unittest
 import os
 import shutil
 import yaml
-from neural_compressor.adaptor.tf_utils.util import disable_random
-from neural_compressor.experimental import model_conversion
-
 import tensorflow as tf
+from pkg_resources import parse_version
 tf.compat.v1.enable_eager_execution()
-from tensorflow import keras
-from tensorflow.python.framework import graph_util
 
 
 def build_fake_yaml():
@@ -32,7 +28,7 @@ def build_fake_yaml():
 def prepare_dataset():
     
     # Load MNIST dataset
-    mnist = keras.datasets.mnist
+    mnist = tf.keras.datasets.mnist
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
     
     # Normalize the input image so that each pixel value is between 0 to 1.
@@ -44,13 +40,13 @@ def prepare_dataset():
 def prepare_model(model_out_path, train_images, train_labels):
     
     # Define the model architecture.
-    model = keras.Sequential([
-      keras.layers.InputLayer(input_shape=(28, 28)),
-      keras.layers.Reshape(target_shape=(28, 28, 1)),
-      keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation='relu'),
-      keras.layers.MaxPooling2D(pool_size=(2, 2)),
-      keras.layers.Flatten(),
-      keras.layers.Dense(10)
+    model = tf.keras.Sequential([
+      tf.keras.layers.InputLayer(input_shape=(28, 28)),
+      tf.keras.layers.Reshape(target_shape=(28, 28, 1)),
+      tf.keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation='relu'),
+      tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+      tf.keras.layers.Flatten(),
+      tf.keras.layers.Dense(10)
     ])
     
     # Train the digit classification model
@@ -88,7 +84,7 @@ def prepare_qat_model(model_in_path, model_out_path, train_images, train_labels)
     
     q_aware_model.save(model_out_path)
 
-@unittest.skipIf(tf.version.VERSION < '2.4.0', "Only supports tf 2.4.0 or above")
+@unittest.skipIf(parse_version(tf.version.VERSION) < parse_version('2.4.0'), "version check")
 class TestModelConversion(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -132,7 +128,6 @@ class TestModelConversion(unittest.TestCase):
         with graph.as_default():
             with tf.compat.v1.Session() as sess:
                 meta_graph=tf.compat.v1.saved_model.loader.load(sess, [tf.compat.v1.saved_model.tag_constants.SERVING], self._quantized_temp_path)
-                print(meta_graph.graph_def.node)
                 for i in meta_graph.graph_def.node:
                     if 'MatMul' in i.op:
                         self.assertTrue('QuantizedMatMul' in i.op)

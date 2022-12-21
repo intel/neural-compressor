@@ -107,6 +107,9 @@ def input_fn(data_file, num_epochs, shuffle, batch_size, compute_accuracy=True):
     dataset = dataset.prefetch(batch_size*10)
     return dataset
 
+def evaluation_func(model, measurer=None):
+    evaluate_opt_graph.eval_inference(model)
+
 class eval_classifier_optimized_graph:
     """Evaluate image classifier with optimized TensorFlow graph"""
 
@@ -178,24 +181,37 @@ class eval_classifier_optimized_graph:
         Returns:
             graph: it will return a quantized pb
         """
-        from neural_compressor.experimental import Quantization
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.utils.utility import set_random_seed
         infer_graph = load_graph(self.args.input_graph)
-        quantizer = Quantization(self.args.config)
+        set_random_seed(9527)
+
+        config = PostTrainingQuantConfig(
+            inputs=["new_numeric_placeholder", "new_categorical_placeholder"],
+            outputs=["import/head/predictions/probabilities"],
+            calibration_sampling_size=[2000],
+            op_name_list={
+                'import/dnn/hiddenlayer_0/MatMul': {
+                'activation':  {'dtype': ['uint8'], 'algorithm': ['minmax'], 'scheme':['asym']},
+                }
+            })
+
         if self.args.calib_data:
-            quantizer.model = infer_graph
-            quantizer.calib_dataloader = Dataloader(self.args.calib_data, self.args.batch_size)
-            quantizer.eval_func = self.eval_inference
-            q_model = quantizer.fit()
+            q_model = fit(
+                model=infer_graph,
+                conf=config,
+                calib_dataloader=Dataloader(self.args.calib_data, self.args.batch_size),
+                eval_func=self.eval_inference)
             return q_model
-        else:
-            print("Please provide calibration dataset!")
+        print("Please provide calibration dataset!")
 
     def eval_inference(self, infer_graph):
         print("Run inference")
         if isinstance(infer_graph, tf.compat.v1.GraphDef):
-            graph = tf.Graph() 
+            graph = tf.Graph()
             with graph.as_default():
-                tf.import_graph_def(infer_graph, name='') 
+                tf.import_graph_def(infer_graph, name='')
             infer_graph = graph
 
         data_config = tf.compat.v1.ConfigProto()
@@ -297,8 +313,12 @@ class eval_classifier_optimized_graph:
             q_model.save(self.args.output_graph)
 
         if self.args.benchmark:
-            infer_graph = load_graph(self.args.input_graph)
-            self.eval_inference(infer_graph)
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+            fit(self.args.input_graph, conf,
+                b_dataloader=Dataloader(self.args.eval_data, self.args.batch_size),
+                b_func=evaluation_func)
 
 class Dataloader(object):
     def __init__(self, data_location, batch_size):
