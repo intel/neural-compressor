@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ from google.protobuf import text_format
 from utils import tokenizer
 from utils.tokenizer import Subtokenizer
 from utils import metrics
-from neural_compressor.experimental import Quantization, common
 from neural_compressor.data import DATALOADERS
 from neural_compressor.utils.utility import dump_elapsed_time
 from neural_compressor.utils import logger
@@ -41,47 +40,62 @@ INPUT_TENSOR_NAMES = ['input_tokens:0']
 OUTPUT_TENSOR_NAMES = ["model/Transformer/strided_slice_15:0"]
 
 flags.DEFINE_string(
-    "config", "transformer_lt_mlperf.yaml",
-    """Quantization configuration file to load.""")
-flags.DEFINE_string(
     "input_graph", "transformer_mlperf_fp32.pb",
     """TensorFlow 'GraphDef' file to load.""")
+
 flags.DEFINE_string(
     "output_model", "output_transformer_mlperf_int8.pb",
     """The output model of the quantized model.""")
+
 flags.DEFINE_bool(
     "input_binary", True,
     """Whether the input files are in binary format.""")
+
 flags.DEFINE_string(
     "vocab_file", "vocab.ende.32768",
     """Path to subtoken vocabulary file.""")
+
 flags.DEFINE_string(
     "input_file", "newstest2014.en",
     """File containing text to translate.""")
+
 flags.DEFINE_string(
     "reference_file", "newstest2014.de",
     """File containing reference translation.""")
+
 flags.DEFINE_string(
     "file_out", "output_translation_result.txt",
-    """Save latest translation to this file when using 'accuracy'/'tune' mode.""")
+    """Save latest translation to this file when using 'accuracy' mode.""")
+
 flags.DEFINE_integer(
     "batch_size", 64,
     """The validation batch size.""")
+
 flags.DEFINE_integer(
     "num_inter", 2,
     """Number of inter op parallelism thread to use.""")
+
 flags.DEFINE_integer(
     "num_intra", 28,
     """Number of intra op parallelism thread to use.""")
+
 flags.DEFINE_integer(
     "warmup_steps", 10,
     """Number of warmup steps before benchmarking the model.""")
+
 flags.DEFINE_integer(
-    "iters", -1,
-    "The iteration used for 'benchmark' mode.")
-flags.DEFINE_string(
-    "mode", "tune",
-    """One of three options: 'benchmark'/'accuracy'/'tune'.""")
+    "iters", 100,
+    "The iteration used for performance mode.")
+
+flags.DEFINE_bool('tune', False,
+                    'whether to tune the model')
+
+flags.DEFINE_bool('benchmark', False, 
+                    'whether to benchmark the model')
+
+flags.DEFINE_string("mode", None,
+                     "One of three options: 'performance'/'accuracy'.")
+
 flags.DEFINE_string(
     "bleu_variant", "uncased",
     """One of two options: 'uncased'/'cased'.""")
@@ -203,8 +217,6 @@ def collate_fn(batch):
 
 @dump_elapsed_time(customized_msg="Customized eval_func")
 def eval_func(infer_graph):
-    assert FLAGS.mode in ["benchmark", "accuracy", "tune"], \
-            "'mode' must be one of three options: 'benchmark'/'accuracy'/'tune'."
     dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
     sorted_keys = dataset.sorted_keys
     dataloader = DATALOADERS['tensorflow'] \
@@ -215,47 +227,50 @@ def eval_func(infer_graph):
     session_config = tf.compat.v1.ConfigProto(
         inter_op_parallelism_threads = FLAGS.num_inter,
         intra_op_parallelism_threads = FLAGS.num_intra)
+
     with tf.compat.v1.Session(config=session_config, graph=infer_graph) as sess:
         time_list = []
         translations = []
         warmup = FLAGS.warmup_steps if FLAGS.warmup_steps > 0 else 0
-        iteration = FLAGS.iters \
-            if FLAGS.iters > -1 and FLAGS.mode == "benchmark" else len(dataloader)
-        assert iteration != 0, \
-            "'iteration' cannot be zero."
-        assert iteration >= warmup, \
+        iteration = -1
+        if FLAGS.benchmark and FLAGS.mode == "performance":
+            iteration = FLAGS.iters
+            assert iteration >= warmup, \
             "'iteration' must be greater than or equal to warmup."
-        assert iteration <= len(dataloader), \
-            "'iteration' must be less than or equal to len(dataloader)."
-        if FLAGS.mode == "benchmark":
             logger.info('******** Start to get performance of the model ********')
         else:
             logger.info('******** Start to get accuracy and performance of the model ********')
+        assert iteration != 0, \
+            "'iteration' cannot be zero."
+        assert iteration <= len(dataloader), \
+            "'iteration' must be less than or equal to len(dataloader)."
+
         if warmup > 0:
             logger.info('Start to do warm-up with {}/{} (steps/total_iterations) before getting performance.' \
                 .format(warmup, iteration))
         else:
             logger.info('Start to get performance with {} iterations.'.format(iteration))
         for idx, (input_data, _) in enumerate(dataloader):
-            if idx < iteration:
-                if idx == warmup and warmup > 0:
-                    logger.info('The warm-up is over.')
-                    logger.info('Start to get performance with {}/{} (steps/total_iterations).' \
-                        .format(iteration - warmup, iteration))
-                feed_dict = {input_tensors[0]: input_data}
-                time_start = time.time()
-                dec_tensor = sess.run(output_tensors, feed_dict)
-                duration = time.time() - time_start
-                time_list.append(duration)
-                translations.append(dec_tensor)
-            else:
+            if idx == warmup and warmup > 0:
+                logger.info('The warm-up is over.')
+                logger.info('Start to get performance with {}/{} (steps/total_iterations).' \
+                    .format(iteration - warmup, iteration))
+            feed_dict = {input_tensors[0]: input_data}
+            time_start = time.time()
+            dec_tensor = sess.run(output_tensors, feed_dict)
+            duration = time.time() - time_start
+            time_list.append(duration)
+            translations.append(dec_tensor)
+            if iteration == idx + 1:
                 break
-    latency = np.array(time_list[warmup:]).mean() / FLAGS.batch_size
-    logger.info('Batch-size = {}'.format(FLAGS.batch_size))
-    logger.info('Latency: {:.3f} ms'.format(latency * 1000))
-    logger.info('Throughput: {:.3f} items/sec'.format(1./ latency))
 
-    if FLAGS.mode != "benchmark":
+    latency = np.array(time_list[warmup:]).mean() / FLAGS.batch_size
+    if FLAGS.benchmark and FLAGS.mode == "performance":
+        logger.info('Batch-size = {}'.format(FLAGS.batch_size))
+        logger.info('Latency: {:.3f} ms'.format(latency * 1000))
+        logger.info('Throughput: {:.3f} items/sec'.format(1./ latency))
+
+    if FLAGS.mode != "performance":
         """Write translations to file and calculate BLEU score."""
         translation_count = 0
         decoded_translations=[]
@@ -288,22 +303,37 @@ def eval_func(infer_graph):
 
 def main(unused_args):
     graph = load_graph(FLAGS.input_graph)
-    if FLAGS.mode == 'tune':
-        quantizer = Quantization(FLAGS.config)
+    if FLAGS.tune:
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data.dataloaders.dataloader import DataLoader
         dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
-        quantizer.calib_dataloader = common.DataLoader(dataset,
-                                                       collate_fn = collate_fn,
-                                                       batch_size = FLAGS.batch_size)
-        quantizer.model = common.Model(graph)
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
+        calib_dataloader = DataLoader(dataset = dataset,
+                                      framework ='tensorflow',
+                                      collate_fn = collate_fn,
+                                      batch_size = FLAGS.batch_size)
+										
+        conf = PostTrainingQuantConfig(inputs=['input_tokens'],
+                                        outputs=['model/Transformer/strided_slice_15'],
+                                        calibration_sampling_size=[500])       
+        q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
+                    eval_func=eval_func)
         try:
             q_model.save(FLAGS.output_model)
         except Exception as e:
             tf.compat.v1.logging.error("Failed to save model due to {}".format(str(e)))
-    else:
-        eval_func(graph)
 
+    if FLAGS.benchmark:
+        assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
+        "Benchmark only supports performance or accuracy mode."
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
+        if FLAGS.mode == 'performance':
+            conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
+            fit(graph, conf, b_func=eval_func)
+        elif FLAGS.mode == 'accuracy':
+            eval_func(graph)
+            
 
 if __name__ == "__main__":
     app.run()
