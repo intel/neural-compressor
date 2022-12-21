@@ -217,6 +217,7 @@ class Distillation(Component):
     def prepare(self):
         """Prepare hooks."""
         self.generate_hooks()
+        self.create_criterion()
 
     def pre_process(self):
         """Preprocessing before the disillation pipeline.
@@ -256,7 +257,8 @@ class Distillation(Component):
             self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
 
         if self._train_func is None:
-            self.create_criterion()
+            if self.criterion is None:
+                self.create_criterion()
             self.create_optimizer()
             if self._train_dataloader is not None:
                 self._train_func = create_train_func(self.framework, \

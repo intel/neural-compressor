@@ -1495,6 +1495,14 @@ class TensorFlowAdaptor(Adaptor):
         
         graph_def = GraphAnalyzer().parse_graph(qmodel.graph_def)
         output_op_names = set()
+        
+        def _add_output_op_name(opname):
+            if opname.endswith("_dequantize"):
+                output_op_names.add(opname[:-len("_dequantize")]) # pylint: disable=no-member
+            elif opname.endswith("__dequant"):
+                pass
+            else:
+                output_op_names.add(opname) # pylint: disable=no-member
 
         for output_opname in qmodel.output_node_names:
             op_count = 0
@@ -1507,7 +1515,7 @@ class TensorFlowAdaptor(Adaptor):
                         break
                     op = graph_def[opname]
                     if op.node.op == 'Dequantize':
-                        output_op_names.add(opname)
+                        _add_output_op_name(opname)
                         break
                     next_opnames = op.node.input
                     if not next_opnames:

@@ -32,7 +32,7 @@ Neural network pruning (briefly known as pruning or sparsity) is one of the most
 Pruning patterns defines the rules of pruned weights' arrangements in space.
 
 <a target="_blank" href="./_static/imgs/pruning/pruning_pattern.png">
-    <img src="_static/imgs/pruning/pruning_patterns.png" width=600 height=225 alt="Sparsity Pattern">
+    <img src="_static/imgs/pruning/pruning_patterns.png" width=600 height=150 alt="Sparsity Pattern">
 </a>
 
 
