@@ -210,7 +210,7 @@ def evaluate(model, dataloader):
 if __name__ == "__main__":
 
     model = onnx.load(args.model_path)
-    dataloader = Dataloader()
+    dataloader = Dataloader(args.batch_size)
     def eval(model):
         return evaluate(model, dataloader)
 
