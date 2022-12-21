@@ -75,11 +75,14 @@ terms are listed below.
 
    plotly
 
+   diffusers
+
                                 Apache License
                             Version 2.0, January 2004
                         http://www.apache.org/licenses/
 
    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
 
    1. Definitions.
 
@@ -399,6 +402,10 @@ terms are listed below.
 
 	FileSaver.js
 	Copyright © 2016 Eli Grey.
+
+    Hardware Aware Transformers
+    Copyright (c) 2020, Hanrui Wang, Zhanghao Wu, Zhijian Liu, Han Cai, Ligeng Zhu, Chuang Gan and Song Han. All rights reserved.
+    Copyright (c) Facebook, Inc. and its affiliates.
 
     The MIT License (MIT)
 
