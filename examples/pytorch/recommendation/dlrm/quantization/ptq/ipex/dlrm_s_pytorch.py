@@ -876,14 +876,14 @@ def run():
                           test_ld,
                           trace=args.int8
                         )
-        benchmark.fit(model, b_conf, b_func=b_func)
+        benchmark.fit(dlrm, b_conf, b_func=b_func)
         exit(0)
 
     if args.accuracy_only:
         with torch.no_grad():
             inference(
                   args,
-                  model,
+                  dlrm,
                   best_acc_test,
                   best_auc_test,
                   test_ld,
