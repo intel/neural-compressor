@@ -2462,7 +2462,6 @@ Thalaiyasingam
 Torr
 MixedPrecisionConfig
 contrib
-HAWQ
 AccuracyCriterion
 AccuracyLoss
 TuningCriterion
