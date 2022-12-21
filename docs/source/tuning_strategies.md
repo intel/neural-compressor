@@ -13,7 +13,7 @@ Tuning Strategies
 
     2.4. [Traverse](#traverse)
 
-3. [Traverse Logics](#traverse-logics)
+3. [Traverse Logic](#traverse-logic)
 
     3.1. [O0](#o0)
 
@@ -31,7 +31,7 @@ Tuning Strategies
 
     3.8. [Random](#random)
 
-    3.9. [SigOpt](#sigOpt)
+    3.9. [SigOpt](#sigopt)
 
     3.10. [TPE](#tpe)
 
@@ -50,7 +50,7 @@ below:
 
 ### Tuning Space
 
-Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it has multiple quantization scheme(scheme/asymmetric), calibration algorithm(MinMax/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tunable items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
+Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it has multiple quantization scheme(scheme/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tunable items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
 ![Conv2D_PyTorch_Cap](./_static/imgs/Conv2D_PyTorch_Cap.png "Conv2D PyTorch Capability")
 
 To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_list` and `op_type_list` in `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.
@@ -86,7 +86,7 @@ accuracy_criterion=AccuracyCriterion(
 ### Traverse 
 Once the `tuning space` was constructed, user can specify the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`), or the `strategy` field with strategy name in the `TuningCriterion`. The priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the traverse logic by strategy name. We will introduce the design and usage of each traverse logic in the following session.
 
-## Traverse Logics
+## Traverse Logic
 
 ### O0 
 
