@@ -2464,3 +2464,5 @@ MixedPrecisionConfig
 AccuracyCriterion
 AccuracyLoss
 TuningCriterion
+Hanwen
+Suyue
