@@ -69,7 +69,7 @@ class Test_MSEV2Strategy(unittest.TestCase):
         
         conf = PostTrainingQuantConfig(
             approach="static",
-            optimization_level=1,
+            quant_level=1,
             tuning_criterion=TuningCriterion(strategy="mse_v2"))
         
         q_model = fit(
@@ -96,7 +96,7 @@ class Test_MSEV2Strategy(unittest.TestCase):
         
         conf = PostTrainingQuantConfig(
             approach="static",
-            optimization_level=1,
+            quant_level=1,
             tuning_criterion=TuningCriterion(
                 strategy="mse_v2",
                 strategy_kwargs={
@@ -126,7 +126,7 @@ class Test_MSEV2Strategy(unittest.TestCase):
         
         conf = PostTrainingQuantConfig(
             approach="static",
-            optimization_level=1,
+            quant_level=1,
             tuning_criterion=TuningCriterion(strategy="mse_v2"))
         
         q_model = fit(

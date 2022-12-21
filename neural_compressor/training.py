@@ -163,7 +163,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
             compression_manager.on_train_end()
     """
 
-    if isinstance(confs, List):
+    if isinstance(confs, List) and len(confs) > 1:
         from .experimental.scheduler import Scheduler
         comps = []
         for conf in confs:
@@ -204,6 +204,8 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         scheduler.append(comp)
         component = scheduler
     else:
+        if isinstance(confs, List):
+            confs = confs[0]
         if isinstance(confs, QuantizationAwareTrainingConfig):
             conf = Config(quantization=confs,
                           benchmark=None,
