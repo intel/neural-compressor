@@ -220,6 +220,7 @@ def get_args():
     parser.add_argument('--int8', dest='int8', action='store_true', help='run benchmark')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                         help='path to checkpoint tuned by Neural Compressor (default: ./)')
+    parser.add_argument("--batch_size", default=1, type=int, help="batch size for tuning or benchmarking")
     args = parser.parse_args()
 
     # don't use defaults in argparser. Instead we default to a dict, override that with a profile
