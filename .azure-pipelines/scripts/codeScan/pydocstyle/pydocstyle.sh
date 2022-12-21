@@ -6,11 +6,17 @@ RESET="echo -en \\E[0m \\n" # close color
 log_dir="/neural-compressor/.azure-pipelines/scripts/codeScan/scanLog"
 mkdir -p $log_dir
 
-pydocstyle --convention=google /neural-compressor/neural_compressor/experimental >$log_dir/pydocstyle.log
-exit_code=$?
+exit_code=0
+for line in $(cat scan_path.txt)
+do
+    pydocstyle --convention=google $line >> $log_dir/pydocstyle.log
+    if [ $? -ne 0 ]; then
+      exit_code=1
+    fi
+done
 
 $BOLD_YELLOW && echo " -----------------  Current pydocstyle cmd start --------------------------" && $RESET
-echo "python pydocstyle --convention=google /neural-compressor/neural_compressor/experimental > $log_dir/pydocstyle.log"
+echo "pydocstyle --convention=google \$line > $log_dir/pydocstyle.log"
 $BOLD_YELLOW && echo " -----------------  Current pydocstyle cmd end --------------------------" && $RESET
 
 $BOLD_YELLOW && echo " -----------------  Current log file output start --------------------------"
