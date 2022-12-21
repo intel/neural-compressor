@@ -11,7 +11,7 @@ Dataset
 
 ## Introduction
 
-To adapt to its internal dataloaser API, Intel® Neural Compressor implements some built-in datasets.
+To adapt to its internal dataloader API, Intel® Neural Compressor implements some built-in datasets.
 
 A dataset is a container which holds all data that can be used by the dataloader, and have the ability to be fetched by index or created as an iterator. One can implement a specific dataset by inheriting from the Dataset class by implementing `__iter__` method or `__getitem__` method, while implementing `__getitem__` method, `__len__` method is recommended.
 
