@@ -20,10 +20,10 @@ import logging
 import numpy as np
 import tensorflow as tf
 
-from neural_compressor.experimental.metric.metric import TensorflowTopK
-from neural_compressor.experimental.data.transforms.transform import ComposeTransform
-from neural_compressor.experimental.data.datasets.dataset import TensorflowImageRecord
-from neural_compressor.experimental.data.transforms.imagenet_transform import LabelShift
+from neural_compressor.metric.metric import TensorflowTopK
+from neural_compressor.data.transforms.transform import ComposeTransform
+from neural_compressor.data.datasets.dataset import TensorflowImageRecord
+from neural_compressor.data.transforms.imagenet_transform import LabelShift
 from neural_compressor.data.transforms.imagenet_transform import TensorflowResizeCropImagenetTransform
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -99,8 +99,8 @@ def evaluate(model):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
-    from neural_compressor.experimental import common
-    model = common.Model(model)
+    from neural_compressor.model.model import Model
+    model = Model(model)
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(
         model.output_tensor) > 1 else model.output_tensor[0]
@@ -165,12 +165,13 @@ def main():
 
     if FLAGS.benchmark:
         from neural_compressor.benchmark import fit
-        from neural_compressor.experimental import common
+        from neural_compressor.model.model import Model
         from neural_compressor.config import BenchmarkConfig
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
             "Benchmark only supports performance or accuracy mode."
 
-        model = common.Model(FLAGS.input_model).graph_def
+        model = Model(FLAGS.input_model).graph_def
+
         if FLAGS.mode == 'performance':
             conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
             fit(model, conf, b_func=evaluate)
