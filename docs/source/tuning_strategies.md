@@ -116,7 +116,7 @@ The `Basic` strategy is designed for quantizing most models. There are three sta
 
 - **Stage I**. OP Type Wise Tuning
 
-    In this stage, it tries to quantize the OPs as many as possible and traverse all OP type wise tuning configs. Note that,  the OP is initiallized with different quantization modes according to the quantization approach.
+    In this stage, it tries to quantize the OPs as many as possible and traverse all OP type wise tuning configs. Note that,  the OP is initialized with different quantization modes according to the quantization approach.
     
     a. `post_training_static_quant`: Quantize all OPs support PTQ static.
 
@@ -159,7 +159,7 @@ the op-wise fallback in this order.
 
 #### Usage
 
-The usage of `MSE` is similar to `Basic`. To use `MSE` strategy, the `strategy` field of the `TuningCriterion` should be spicified with `mse`.
+The usage of `MSE` is similar to `Basic`. To use `MSE` strategy, the `strategy` field of the `TuningCriterion` should be specified with `mse`.
 
 ```python
 from neural_compressor import config
@@ -257,7 +257,7 @@ configs. Same reason as `Bayesian`, fallback datatypes are not included for now.
 
 #### Usage
 
-`Exhaustive` usage is similar to `basic`, with `exhausitive` specified to `strategy` field in the `TuningCriterion`.
+`Exhaustive` usage is similar to `basic`, with `exhaustive` specified to `strategy` field in the `TuningCriterion`.
 
 
 ```python
