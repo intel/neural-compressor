@@ -771,3 +771,40 @@ def quantize_tensor(tensor, qtconfig, scale=None, inplace=False):
     tensor_q = fpemu_cpp.FPEmuOp.apply(tensor, mode, inplace, scale)
 
     return tensor_q
+
+def get_first_and_last(model):
+    try:
+        traced_model = torch.fx.symbolic_trace(model)
+        modules = dict(model.named_modules())
+        # save key names to match fx name
+        fx_name_mapping = {}
+        for k in modules.keys():
+            name = k.replace('.', '_')
+            fx_name_mapping[name] = k
+        # fine first conv and last linear
+        op_type_list = []
+        for node in traced_model.graph.nodes:
+            if node.op == 'call_module':
+                op_class = type(modules[node.target])
+                op_type = str(op_class.__name__)
+                op_type_list.append((node.name, op_type))
+        for name, type1 in op_type_list:
+            if type1 == 'Conv2d':
+                first_conv = fx_name_mapping[name]
+                break
+        for name, type2 in op_type_list[::-1]:
+            if type2 == 'Linear':
+                last_linear = fx_name_mapping[name]
+                break
+    except:
+        first_conv = None
+        last_linear = 'classifier'
+        for name, module in model.named_modules():
+            if hasattr(module, 'in_channels') and module.in_channels==3:
+                # skip the following conv
+                if first_conv is None:
+                    first_conv = name
+            elif isinstance(module, torch.nn.Linear) and last_linear:
+                # skip previous linear
+                last_linear = name
+    return first_conv, last_linear

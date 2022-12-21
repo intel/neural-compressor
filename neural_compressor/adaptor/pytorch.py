@@ -3614,9 +3614,31 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
         #from .torch_utils.fp8_wrapper import BatchMatmul,Matmul
         from mpemu.module_wrappers import (BatchMatmul, Matmul, AddMatmul,
                                             EltwiseAdd, EltwiseMul, EltwiseDiv)
-        self.white_list = [torch.nn.Linear, torch.nn.Conv2d, BatchMatmul, Matmul, \
-                            AddMatmul, EltwiseAdd, EltwiseMul, EltwiseDiv, \
-                            torch.nn.Embedding, torch.nn.LayerNorm]
+        op_type_mapping = {
+            'linear': torch.nn.Linear, 
+            'conv2d': torch.nn.Conv2d,
+            'embedding': torch.nn.Embedding, 
+            'embeddingbag': torch.nn.EmbeddingBag, 
+            'layernorm': torch.nn.LayerNorm,
+            'bmm': BatchMatmul, 
+            'amm': AddMatmul,
+            'mm': Matmul,  
+            'add': EltwiseAdd, 
+            'mul': EltwiseMul, 
+            'div': EltwiseDiv, 
+        }
+        op_type_list = os.getenv('FP8_OP_TYPE_LIST')
+        self.white_list = []
+        if op_type_list:
+            op_type_list = eval(op_type_list)
+            for i in op_type_list:
+                self.white_list.append(op_type_mapping[i.lower()])
+        else:
+            self.white_list = [torch.nn.Linear, torch.nn.Conv2d, \
+                                BatchMatmul, Matmul, AddMatmul, \
+                                EltwiseAdd, EltwiseMul, EltwiseDiv, \
+                                torch.nn.Embedding, torch.nn.EmbeddingBag, \
+                                torch.nn.LayerNorm]
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
@@ -3922,8 +3944,11 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
         """
         res = {}
         for k, v in self.tune_cfg['op'].items():
-            # TODO: split weight and activation scheme, dtype
-            dtype = v['weight']['dtype'].upper()
+            dtype = v['activation']['dtype'].upper()
+            # check weight for Embedding, EmbeddingBag
+            if 'FP8' in v['weight']['dtype'].upper():
+                dtype = v['weight']['dtype'].upper()
+
             if 'FP8_' in dtype:
                 dtype = dtype.split('_')[0] + '(' + dtype.split('_')[1] + ')'
             if k[1] not in res:
@@ -3955,10 +3980,15 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
             None
         """
 
+        first_conv, last_linear = torch_utils.util.get_first_and_last(model)
+        exempt_modules = []
+        if os.getenv('DISABLE_FIRST_CONV') == "True":
+            exempt_modules.append(first_conv)
+        if os.getenv('DISABLE_LAST_LINEAR') == "True":
+            exempt_modules.append(last_linear)
         module_dict = dict(model.named_modules())
         for op_name, child in module_dict.items():
-            if type(child) in self.white_list and type(child) != torch.nn.Sequential and \
-              type(child) != torch.quantization.stubs.DeQuantStub:
+            if type(child) in self.white_list and op_name not in exempt_modules:
                 quantizable_ops.append(
                     (op_name, unify_op_type_mapping[str(child.__class__.__name__)]
                      if str(child.__class__.__name__) in unify_op_type_mapping else str(

@@ -29,8 +29,10 @@
     uint8: ['Conv1d', 'Conv2d', 'Conv3d', 'BatchNorm2d', 'BatchNorm3d', 'Linear', 'ReLU', 'ReLU6',
             'QuantStub', 'FloatFunctional', 'ConvReLU2d', 'ConvReLU3d', 'LinearReLU', 'BNReLU2d',
             'BNReLU3d', 'ConvBn2d', 'ConvBnReLU2d']
-    bf8: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'Embedding', 'LayerNorm']
-    hf8: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'Embedding', 'LayerNorm']
+    bf8: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'AddMatmul', 'EltwiseAdd', 'EltwiseMul', 
+          'EltwiseDiv', 'Embedding', 'LayerNorm']
+    hf8: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'AddMatmul', 'EltwiseAdd', 'EltwiseMul', 
+          'EltwiseDiv', 'Embedding', 'LayerNorm']
     bf16: ['Linear', 'bmm', 'mm', 'baddbmm', 'addmm', 'addbmm',
             '_convolution', 'LSTM', 'LSTMCell', 'GRU', 'GRUCell']
     fp32: ['*'] # '*' means all op types
@@ -283,8 +285,19 @@
                         },
                     },
           'Linear': *cap_bf8_1_11_Conv2d,
-          'Matmul': *cap_bf8_1_11_Conv2d,
-          'BatchMatmul': *cap_bf8_1_11_Conv2d,
+          'Matmul': &cap_bf8_1_11_Matmul {
+            'weight': {
+                        'dtype': ['fp32'], # no weight
+                        },
+            'activation': {
+                        'dtype': ['fp8_e5m2'],
+                        },
+                    },
+          'BatchMatmul': *cap_bf8_1_11_Matmul,
+          'AddMatmul': *cap_bf8_1_11_Matmul,
+          'EltwiseAdd': *cap_bf8_1_11_Matmul, 
+          'EltwiseMul': *cap_bf8_1_11_Matmul, 
+          'EltwiseDiv': *cap_bf8_1_11_Matmul,
           'Embedding': &cap_bf8_1_11_Embedding {
             'weight': {
                         'dtype': ['fp8_e5m2'],
@@ -322,8 +335,22 @@
                         },
                     },
           'Linear': *cap_dynamic_hf8_1_11_Conv2d,
-          'Matmul': *cap_dynamic_hf8_1_11_Conv2d,
-          'BatchMatmul': *cap_dynamic_hf8_1_11_Conv2d,
+          'Matmul': &cap_dynamic_hf8_1_11_Matmul {
+            'weight': {
+                        'dtype': ['fp32'], # no weight
+                        },
+            'activation': {
+                        'dtype': ['fp8_e4m3'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax'],
+                        },
+                    },
+          'BatchMatmul': *cap_dynamic_hf8_1_11_Matmul,
+          'AddMatmul': *cap_dynamic_hf8_1_11_Matmul,
+          'EltwiseAdd': *cap_dynamic_hf8_1_11_Matmul, 
+          'EltwiseMul': *cap_dynamic_hf8_1_11_Matmul, 
+          'EltwiseDiv': *cap_dynamic_hf8_1_11_Matmul,
           'Embedding': &cap_hf8_1_11_Embedding {
             'weight': {
                         'dtype': ['fp8_e4m3'],
@@ -363,9 +390,22 @@
                         },
                     },
           'Linear': *cap_static_hf8_1_11_Conv2d,
-          # TODO: Matmul and BatchMatmul only have activations
-          'Matmul': *cap_static_hf8_1_11_Conv2d,
-          'BatchMatmul': *cap_static_hf8_1_11_Conv2d,
+          'Matmul': &cap_static_hf8_1_11_Matmul {
+            'weight': {
+                        'dtype': ['fp32'], # no weight
+                        },
+            'activation': {
+                        'dtype': ['fp8_e4m3'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['kl', 'minmax']
+                        },
+                    },
+          'BatchMatmul': *cap_static_hf8_1_11_Matmul,
+          'AddMatmul': *cap_static_hf8_1_11_Matmul,
+          'EltwiseAdd': *cap_static_hf8_1_11_Matmul, 
+          'EltwiseMul': *cap_static_hf8_1_11_Matmul, 
+          'EltwiseDiv': *cap_static_hf8_1_11_Matmul,
           'Embedding': *cap_hf8_1_11_Embedding,
           'EmbeddingBag': *cap_hf8_1_11_Embedding,
           'LayerNorm': *cap_static_hf8_1_11_Conv2d,

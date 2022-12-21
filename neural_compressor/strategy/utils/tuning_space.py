@@ -23,9 +23,9 @@ from typing import Dict
 from copy import deepcopy
 from ...utils import logger
 
-PRECISION_SET = {'bf16', 'fp32'}
+PRECISION_SET = {'fp8_e5m2', 'bf16', 'fp32'}
 QUANT_MODE_SET = {'static', 'dynamic'}
-QUNAT_BIT_SET = {'int8', 'uint8', 'int4', 'uint4'}
+QUNAT_BIT_SET = {'fp8_e4m3', 'int8', 'uint8', 'int4', 'uint4'}
 
 TUNING_ITEMS_LST = [('activation','scheme'), ('activation','algorithm'), ('activation','granularity'),
                     ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'),
@@ -374,10 +374,16 @@ class TuningSpace:
                     quant_mode_flag = (quant_mode, self.conf.usr_cfg.quantization.precision, act_quant_flag)
                     parsed_op_cap['quant'][quant_mode_flag] = op_cap
                 else:
-                    if isinstance(op_cap['weight']['dtype'], list):
-                        parsed_op_cap['precision'] += op_cap['weight']['dtype']
+                    dtype = op_cap['activation']['dtype']
+                    # check weight for Embedding, EmbeddingBag
+                    if isinstance(dtype, list):
+                        if op_cap['weight']['dtype'][0] != 'fp32':
+                            dtype = op_cap['weight']['dtype']
+                        parsed_op_cap['precision'] += dtype
                     else:
-                        parsed_op_cap['precision'].append(op_cap['weight']['dtype'])
+                        if op_cap['weight']['dtype'] != 'fp32':
+                            dtype = op_cap['weight']['dtype']
+                        parsed_op_cap['precision'].append(dtype)
             parsed_cap[op_name_type] = parsed_op_cap
             parsed_cap[op_name_type]['op_weight_flag'] = 'weight' in op_cap_lst[0]
         return parsed_cap
