@@ -143,12 +143,10 @@ def main():
         from neural_compressor import quantization, PostTrainingQuantConfig
         if args.quant_format == 'QDQ':
             config = PostTrainingQuantConfig(approach='static', 
-                                            backend='onnxrt_integerops',
                                             calibration_sampling_size=[8],
                                             quant_format=args.quant_format)
         else:
             config = PostTrainingQuantConfig(approach='dynamic', 
-                                            backend='onnxrt_integerops',
                                             calibration_sampling_size=[8])
         q_model = quantization.fit(model, 
                                    config,
