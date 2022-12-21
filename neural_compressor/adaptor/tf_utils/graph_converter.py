@@ -34,8 +34,9 @@ from neural_compressor.experimental.common import Model
 from .transform_graph.insert_logging import InsertLogging
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
-from .util import iterator_sess_run,version1_gt_version2,version1_eq_version2
+from .util import generate_feed_dict, iterator_sess_run,version1_gt_version2,version1_eq_version2
 from .util import version1_gte_version2,version1_lte_version2,version1_lt_version2
+from .util import TF_SPR_BASE_VERSIONS
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from .quantize_graph_common import QuantizeGraphHelper
 from .quantize_graph.qdq.optimize_qdq import OptimizeQDQGraph
@@ -163,8 +164,7 @@ class GraphConverter:
         # ITEX optimization has broken INC calibration process.
         # INC needs turn off ITEX optimization pass in calibration stage.
         # TODO ITEX will provide API to replace setting environment variable.
-        if self.itex_mode:
-            os.environ["ITEX_REMAPPER"] = "0"
+        os.environ["ITEX_REMAPPER"] = "0"
         sess = model.sess
         iter_op = model.iter_op
         input_tensor = model.input_tensor
@@ -225,26 +225,25 @@ class GraphConverter:
                         return True
 
                     disorder_tensors = []
-                    disorder_inputs = [] 
+                    disorder_inputs = []
                     for idx, sort_tensor in enumerate(input_tensor):
                         sort_input = inputs[idx] 
                         if check_shape(sort_tensor, sort_input):
-                            feed_dict.update({sort_tensor: sort_input}) 
+                            feed_dict.update({sort_tensor: sort_input})
                         else:
                             disorder_tensors.append(sort_tensor)
                             disorder_inputs.append(sort_input)
                     for i, dis_tensor in enumerate(disorder_tensors):
-                       for j, dis_input in enumerate(disorder_inputs):  
-                           if check_shape(dis_tensor, dis_input):
-                               feed_dict.update({dis_tensor: dis_input})    
-                               break
+                        for j, dis_input in enumerate(disorder_inputs):
+                            if check_shape(dis_tensor, dis_input):
+                                feed_dict.update({dis_tensor: dis_input})
+                                break
             _ = sess.run(output_tensor, feed_dict) if iter_op==[] \
                 else iterator_sess_run(sess, iter_op, \
                     feed_dict, output_tensor, self.calib_iteration)
             if idx + 1 == self.calib_iteration:
                 break
-        if self.itex_mode:
-            os.environ["ITEX_REMAPPER"] = "1"
+        os.environ["ITEX_REMAPPER"] = "1"
 
     def _check_tf_version(self):
         is_supported_version = False
@@ -270,7 +269,7 @@ class GraphConverter:
             if version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
                 is_supported_version = True
 
-            if version1_eq_version2(tf.version.VERSION, '2.11.0202242'):
+            if tf.version.VERSION in TF_SPR_BASE_VERSIONS:
                 is_supported_version = True
                 is_sprbase_version = True
 
@@ -353,7 +352,8 @@ class GraphConverter:
             model = self.bf16_convert()
 
         if self.new_api:
-            model.graph_def = FuseConvRedundantDequantizeTransformer(model.graph_def).do_transformation()
+            if self.performance_only:
+                model.graph_def = FuseConvRedundantDequantizeTransformer(model.graph_def).do_transformation()
             model.graph_def = FuseMatMulRedundantDequantizeTransformer(model.graph_def).do_transformation()
         post_cse_graph_def = PostCseOptimizer(model.graph_def).do_transformation()
         post_hostconst_graph_def = PostHostConstConverter(post_cse_graph_def).do_transformation()
@@ -434,8 +434,8 @@ class GraphConverter:
         g = GraphAnalyzer()
         g.graph = self._fp32_model.graph_def
         g.parse_graph()
-        y_pattern = [['Conv2D', 'MatMul'], ['BiasAdd'], ['Add', 'AddV2'], ('Relu',)]
-        y_pattern_variant = [['MaxPool', 'AvgPool'], ['Add', 'AddV2'], ('Relu',)]
+        y_pattern = [['Conv2D', 'MatMul'], ['BiasAdd'], ['Add', 'AddV2', 'AddN'], ('Relu',)]
+        y_pattern_variant = [['MaxPool', 'AvgPool'], ['Add', 'AddV2', 'AddN'], ('Relu',)]
         target_nodes = g.query_fusion_pattern_nodes(y_pattern)
         target_nodes_variant = g.query_fusion_pattern_nodes(y_pattern_variant)
 

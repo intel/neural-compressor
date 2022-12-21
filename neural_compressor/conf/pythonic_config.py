@@ -18,7 +18,7 @@
 import logging
 from .dotdict import DotDict
 from ..config import _BaseQuantizationConfig, accuracy_criterion, BenchmarkConfig, \
-                     check_value, DistillationConfig, options, PruningConfig
+                     check_value, DistillationConfig, options, WeightPruningConfig
 
 logger = logging.getLogger("neural_compressor")
 
@@ -27,24 +27,42 @@ class QuantizationConfig(_BaseQuantizationConfig):
     def __init__(self,
                  inputs=[],
                  outputs=[],
-                 backend='NA',
+                 backend='default',
                  device='cpu',
                  approach='post_training_static_quant',
                  calibration_sampling_size=[100],
                  op_type_list=None,
                  op_name_list=None,
                  strategy='basic',
+                 strategy_kwargs=None,
                  objective='performance',
                  timeout=0,
                  max_trials=100,
                  performance_only=False,
                  reduce_range=None,
                  use_bf16=True,
+                 quant_level=1,
                  accuracy_criterion=accuracy_criterion):
-        extra_precisions = ["bf16"] if use_bf16 else []
-        super().__init__(inputs, outputs, backend, device, calibration_sampling_size, op_type_list,
-                         op_name_list, strategy, objective, timeout, max_trials, performance_only,
-                         reduce_range, extra_precisions, accuracy_criterion)
+        excluded_precisions = ["bf16"] if not use_bf16 else []
+        super().__init__(
+            inputs=inputs,
+            outputs=outputs,
+            backend=backend,
+            device=device,
+            calibration_sampling_size=calibration_sampling_size,
+            op_type_list=op_type_list,
+            op_name_list=op_name_list,
+            strategy=strategy,
+            strategy_kwargs=strategy_kwargs,
+            objective=objective,
+            timeout=timeout,
+            max_trials=max_trials,
+            performance_only=performance_only,
+            reduce_range=reduce_range,
+            excluded_precisions=excluded_precisions,
+            accuracy_criterion=accuracy_criterion,
+            quant_level=quant_level
+        )
         self._approach = approach
 
     @property
@@ -145,7 +163,7 @@ class MXNet:
     def precisions(self, precisions):
         if not isinstance(precisions, list):
             precisions = [precisions]
-        if check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16']):
+        if check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16']):
             self._precisions = precisions
 
 class ONNX(MXNet):
@@ -164,6 +182,10 @@ class ONNX(MXNet):
             self._graph_optimization_level = graph_optimization_level
 
 class TensorFlow(MXNet):
+    def __init__(self, precisions=None):
+        super().__init__(precisions)
+
+class Keras(MXNet):
     def __init__(self, precisions=None):
         super().__init__(precisions)
 
@@ -220,11 +242,12 @@ class NASConfig:
 
 quantization = QuantizationConfig()
 benchmark = BenchmarkConfig()
-pruning = PruningConfig()
+pruning = WeightPruningConfig()
 distillation = DistillationConfig(teacher_model=None)
 nas = NASConfig()
 onnxruntime_config = ONNX()
 tensorflow_config = TensorFlow()
+keras_config = Keras()
 pytorch_config = PyTorch()
 mxnet_config = MXNet()
 
@@ -240,7 +263,8 @@ class Config:
                  onnxruntime=onnxruntime_config,
                  tensorflow=tensorflow_config,
                  pytorch=pytorch_config,
-                 mxnet=mxnet_config):
+                 mxnet=mxnet_config,
+                 keras=keras_config):
         self._quantization = quantization
         self._benchmark = benchmark
         self._options = options
@@ -251,6 +275,7 @@ class Config:
         self._tensorflow = tensorflow
         self._pytorch = pytorch
         self._mxnet = mxnet
+        self._keras = keras
 
     @property
     def distillation(self):
@@ -263,6 +288,10 @@ class Config:
     @property
     def tensorflow(self):
         return self._tensorflow
+
+    @property
+    def keras(self):
+        return self._keras
 
     @property
     def pytorch(self):

@@ -1864,18 +1864,18 @@ Performance varies by use, configuration and other factors. See [platform config
 
 
 ## Validated Knowledge Distillation Examples
-|  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  |
-|---------------------|-----------|--------------------------------------|------------------------------------|-----------------------------------------------------|
-| MobileNet example   | CIFAR-10  | MobileNetV2-0.35<br>(0.7965 ACC)     | WideResNet40-2<br>(0.9522 ACC)     |   0.8178 ACC<br>(0.0213 ACC)                        |
-| CNN example         | CIFAR-100 | CNN-2<br>(0.5494 ACC)                | CNN-10<br>(0.7153 ACC)             |   0.5540 ACC<br>(0.0046 ACC)                        |
-| VGG example         | CIFAR-100 | VGG-8-BN<br>(0.7022 ACC)             | VGG-13-BN<br>(0.7415 ACC)          |   0.7025 ACC<br>(0.0003 ACC)                        |
-| ResNet example      | ImageNet  | ResNet18<br>(0.6739 ACC)             | ResNet50<br>(0.7399 ACC)           |   0.6845 ACC<br>(0.0106 ACC)                        |
-| BlendCnn example    |   MRPC    | BlendCnn<br>(0.7034 ACC)             | BERT-Base<br>(0.8382 ACC)          |   0.7034 ACC<br>(0 ACC)                             |
-| BiLSTM example      |  SST-2    | BiLSTM<br>(0.8314 ACC)               | RoBERTa-Base<br>(0.9403 ACC)       |   0.9048 ACC<br>(0.0734 ACC)                        |
-|DistilBERT example   |  SQuAD    | DistilBERT<br>(0.7323/0.8256 EM/F1)  | BERT-Base<br>(0.8084/0.8814 EM/F1) |   0.7442/0.8371 EM/F1<br>(0.0119/0.0115 EM/F1)      |
-|TinyBERT example     |  MNLI     | TinyBERT<br>(0.8018/0.8044 m/mm)     | BERT-Base<br>(0.8363/0.8411 m/mm)  |   0.8025/0.8074 m/mm<br>(0.0007/0.0030 m/mm)        |
-|BERT-3 example       |  QQP      | BERT-3<br>(0.8626/0.8213 EM/F1)      | BERT-Base<br>(0.9091/0.8782 EM/F1) |   0.8684/0.8259 EM/F1<br>(0.0058/0.0046 EM/F1)      |
-|DistilRoBERTa example|  COLA     | DistilRoBERTa<br>(0.6057 ACC)        | RoBERTa-Large<br>(0.6455 ACC)      |   0.6187 ACC<br>(0.0130 ACC)                        |
+|  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  | Student With Distributed Distillation<br>(Metrics Improvement)  |
+|---------------------|-----------|--------------------------------------|------------------------------------|-----------------------------------------------------|-----------------------------------------------------|
+| MobileNet example   | CIFAR-10  | MobileNetV2-0.35<br>(0.7965 ACC)     | WideResNet40-2<br>(0.9522 ACC)     |   0.8178 ACC<br>(0.0213 ACC)                        |   0.8235 ACC<br>(0.027 ACC)                        |
+| CNN example         | CIFAR-100 | CNN-2<br>(0.5494 ACC)                | CNN-10<br>(0.7153 ACC)             |   0.5540 ACC<br>(0.0046 ACC)                        |   0.5523 ACC<br>(0.0029 ACC)                        |
+| VGG example         | CIFAR-100 | VGG-8-BN<br>(0.7022 ACC)             | VGG-13-BN<br>(0.7415 ACC)          |   0.7025 ACC<br>(0.0003 ACC)                        |   WIP                        |
+| ResNet example      | ImageNet  | ResNet18<br>(0.6739 ACC)             | ResNet50<br>(0.7399 ACC)           |   0.6845 ACC<br>(0.0106 ACC)                        |   WIP                        |
+| BlendCnn example    |   MRPC    | BlendCnn<br>(0.7034 ACC)             | BERT-Base<br>(0.8382 ACC)          |   0.7034 ACC<br>(0 ACC)                             |   WIP                        |
+| BiLSTM example      |  SST-2    | BiLSTM<br>(0.8314 ACC)               | RoBERTa-Base<br>(0.9403 ACC)       |   0.9048 ACC<br>(0.0734 ACC)                        |   WIP                        |
+|DistilBERT example   |  SQuAD    | DistilBERT<br>(0.7323/0.8256 EM/F1)  | BERT-Base<br>(0.8084/0.8814 EM/F1) |   0.7442/0.8371 EM/F1<br>(0.0119/0.0115 EM/F1)      |   WIP                        |
+|TinyBERT example     |  MNLI     | TinyBERT<br>(0.8018/0.8044 m/mm)     | BERT-Base<br>(0.8363/0.8411 m/mm)  |   0.8025/0.8074 m/mm<br>(0.0007/0.0030 m/mm)        |   WIP                        |
+|BERT-3 example       |  QQP      | BERT-3<br>(0.8626/0.8213 EM/F1)      | BERT-Base<br>(0.9091/0.8782 EM/F1) |   0.8684/0.8259 EM/F1<br>(0.0058/0.0046 EM/F1)      |   WIP                        |
+|DistilRoBERTa example|  COLA     | DistilRoBERTa<br>(0.6057 ACC)        | RoBERTa-Large<br>(0.6455 ACC)      |   0.6187 ACC<br>(0.0130 ACC)                        |   WIP                        |
 
 ## Validated ONNX QDQ INT8 models on multiple hardware through ONNX Runtime
 
@@ -1895,21 +1895,21 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">74.76%</td>
     <td class="tg-pm1l">68.95%</td>
     <td class="tg-pm1l">74.76%</td>
-    <td class="tg-6q5x">74.41%*</td>
+    <td class="tg-6q5x">74.75%</td>
   </tr>
   <tr>
     <td class="tg-cwad">BERT-base</td>
     <td class="tg-pm1l">85.54%</td>
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">85.54%</td>
-    <td class="tg-6q5x">84.56%*</td>
+    <td class="tg-6q5x">84.31%</td>
   </tr>
   <tr>
     <td class="tg-cwad">ResNet50 V1.5</td>
     <td class="tg-pm1l">72.20%</td>
     <td class="tg-pm1l">67.70%</td>
     <td class="tg-pm1l">72.20%</td>
-    <td class="tg-6q5x">71.84%*</td>
+    <td class="tg-6q5x">72.29%</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V2</td>
@@ -1930,7 +1930,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">83.82%</td>
     <td class="tg-pm1l">84.56%</td>
-    <td class="tg-6q5x">84.56%*</td>
+    <td class="tg-6q5x">84.56%</td>
   </tr>
   <tr>
     <td class="tg-cwad">SqueezeNet</td>
@@ -1944,21 +1944,21 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">18.63%</td>
     <td class="tg-pm1l">18.54%</td>
     <td class="tg-pm1l">18.63%</td>
-    <td class="tg-6q5x">18.61%*</td>
+    <td class="tg-6q5x">18.61%</td>
   </tr>
   <tr>
     <td class="tg-cwad">AlexNet</td>
     <td class="tg-pm1l">54.71%</td>
     <td class="tg-pm1l">47.06%</td>
     <td class="tg-pm1l">54.71%</td>
-    <td class="tg-pm1l">54.74%*</td>
+    <td class="tg-pm1l">54.79%</td>
   </tr>
   <tr>
     <td class="tg-cwad">CaffeNet</td>
     <td class="tg-pm1l">56.25%</td>
     <td class="tg-pm1l">52.35%</td>
     <td class="tg-pm1l">56.27%</td>
-    <td class="tg-pm1l">56.12%*</td>
+    <td class="tg-pm1l">56.24%</td>
   </tr>
   <tr>
     <td class="tg-cwad">GoogleNet</td>
@@ -1972,7 +1972,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">55.86%</td>
     <td class="tg-pm1l">45.09%</td>
     <td class="tg-pm1l">55.86%</td>
-    <td class="tg-pm1l">55.75%*</td>
+    <td class="tg-pm1l">55.89%</td>
   </tr>
   <tr>
     <td class="tg-cwad">Inception V1</td>
@@ -1986,42 +1986,42 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">22.86%</td>
     <td class="tg-pm1l">16.94%</td>
     <td class="tg-pm1l">22.80%</td>
-    <td class="tg-pm1l">22.85%*</td>
+    <td class="tg-pm1l">22.87%</td>
   </tr>
   <tr>
     <td class="tg-cwad">Mobile bert MRPC</td>
     <td class="tg-pm1l">85.54%</td>
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">85.54%</td>
-    <td class="tg-pm1l">86.03%*</td>
+    <td class="tg-pm1l">85.54%</td>
   </tr>
   <tr>
     <td class="tg-cwad">Roberta base MRPC</td>
     <td class="tg-pm1l">89.46%</td>
     <td class="tg-pm1l">90.44%</td>
     <td class="tg-pm1l">89.71%</td>
-    <td class="tg-pm1l">89.71%*</td>
+    <td class="tg-pm1l">89.71%</td>
   </tr>
   <tr>
     <td class="tg-cwad">ResNet50 V1.5 MLPerf</td>
     <td class="tg-pm1l">76.14%</td>
     <td class="tg-pm1l">72.80%</td>
     <td class="tg-pm1l">76.14%</td>
-    <td class="tg-6q5x">75.98%*</td>
+    <td class="tg-6q5x">76.17%</td>
   </tr>
   <tr>
     <td class="tg-cwad">VGG16</td>
     <td class="tg-pm1l">66.69%</td>
     <td class="tg-pm1l">64.25%</td>
     <td class="tg-pm1l">66.69%</td>
-    <td class="tg-pm1l">66.52%*</td>
+    <td class="tg-pm1l">66.64%</td>
   </tr>
   <tr>
     <td class="tg-cwad">VGG16 (ONNX Model Zoo)</td>
     <td class="tg-pm1l">72.31%</td>
     <td class="tg-pm1l">69.35%</td>
     <td class="tg-pm1l">72.32%</td>
-    <td class="tg-pm1l">72.31%*</td>
+    <td class="tg-pm1l">72.34%</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V3 MLPerf</td>
@@ -2053,5 +2053,3 @@ Performance varies by use, configuration and other factors. See [platform config
   </tr>
 </tbody>
 </table>
-
-> **Note:** The model weights are quantized by pre-channel except the models with '*' which are quantized by per-tensor. 

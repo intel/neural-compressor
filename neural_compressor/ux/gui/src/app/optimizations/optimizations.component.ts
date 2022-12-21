@@ -11,16 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as saveAs from 'file-saver';
+import { ShortcutInput } from 'ng-keyboard-shortcuts';
 import { environment } from 'src/environments/environment';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { DatasetFormComponent } from '../dataset-form/dataset-form.component';
 import { OptimizationFormComponent } from '../optimization-form/optimization-form.component';
 import { PinBenchmarkComponent } from '../pin-benchmark/pin-benchmark.component';
+import { PruningComponent } from '../pruning/pruning.component';
 import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
 declare let require: any;
@@ -32,15 +34,18 @@ const shajs = require('sha.js');
   styleUrls: ['./optimizations.component.scss', './../error/error.component.scss', './../home/home.component.scss',
     './../datasets/datasets.component.scss']
 })
-export class OptimizationsComponent implements OnInit {
+export class OptimizationsComponent implements OnInit, AfterViewInit {
 
   @ViewChild('accChart', { read: ElementRef, static: false }) accChartRef: ElementRef;
   @ViewChild('perfChart', { read: ElementRef, static: false }) perfChartRef: ElementRef;
+  @ViewChild(PruningComponent) pruningComponent: PruningComponent;
 
   @Input() framework: string;
-  @Input() domain;
-  @Input() domainFlavour;
+  @Input() domain: string;
+  @Input() domainFlavour: string;
+  @Input() supportsPruning: boolean;
 
+  shortcuts: ShortcutInput[] = [];
   apiBaseUrl = environment.baseUrl;
   token = '';
 
@@ -84,7 +89,6 @@ export class OptimizationsComponent implements OnInit {
   chartsReady = false;
   fontColor = localStorage.getItem('darkMode') === 'darkMode' ? '#fff' : '#000';
 
-
   colorScheme = {
     domain: [
       '#0095CA',
@@ -124,6 +128,16 @@ export class OptimizationsComponent implements OnInit {
       .subscribe(resp => {
         this.fontColor = resp === '' ? '#000' : '#fff';
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.shortcuts.push(
+      {
+        key: 'shift + alt + o',
+        preventDefault: true,
+        command: e => this.addOptimization()
+      },
+    );
   }
 
   initializeOptimizations(): void {
@@ -274,7 +288,8 @@ export class OptimizationsComponent implements OnInit {
       {
         projectId: this.activatedRoute.snapshot.params.id,
         index: this.optimizations.length,
-        framework: this.framework.toLowerCase()
+        framework: this.framework.toLowerCase(),
+        supportsPruning: this.supportsPruning
       }
     });
 

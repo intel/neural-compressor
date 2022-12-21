@@ -37,9 +37,6 @@ function init_params {
       --int8=*)
           int8=$(echo ${var} |cut -f2 -d=)
       ;;
-      --config=*)
-          tuned_checkpoint=$(echo $var |cut -f2 -d=)
-      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -53,44 +50,33 @@ function init_params {
 # run_benchmark
 function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
-    elif [[ ${mode} == "benchmark" ]]; then
-        mode_cmd=" --iter ${iters} --benchmark "
+        mode_cmd=" --accuracy"
+    elif [[ ${mode} == "performance" ]]; then
+        mode_cmd=" --iter ${iters} --performance "
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
-    extra_cmd=""
+    extra_cmd="--ipex"
     if [ "resnext101_32x16d_wsl_ipex" = "${topology}" ];then
         extra_cmd=$extra_cmd" --hub"
     fi
-    result=$(echo $topology | grep "ipex")
-    if [[ "$result" != "" ]];then
-        sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf_ipex.yaml
-        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf_ipex.yaml
-        if [[ ${int8} == "true" ]]; then
-            extra_cmd=$extra_cmd" --int8"
-        fi
-        extra_cmd=$extra_cmd" --ipex"
-        topology=${topology%*${topology:(-5)}}
-    else
-        sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf.yaml
-        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf.yaml
-        if [[ ${int8} == "true" ]]; then
-            extra_cmd=$extra_cmd" --int8"
-        fi
+
+    if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8"
     fi
-    extra_cmd=$extra_cmd" ${dataset_location}"
     echo $extra_cmd
+
 
     python main.py \
             --pretrained \
             --tuned_checkpoint ${tuned_checkpoint} \
             -b ${batch_size} \
-            -a $topology \
+            -a ${input_model} \
             ${mode_cmd} \
-            ${extra_cmd}
+            ${extra_cmd} \
+            ${dataset_location}
 }
 
 main "$@"

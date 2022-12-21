@@ -81,7 +81,7 @@ class NASBase(object):
 
     def search(self, res_save_path=None):
         # NAS search process.
-        ...    
+        ...
 
     def estimate(self, model): # pragma: no cover
         # Estimate performance of the model. Depends on specific NAS algorithm.
@@ -175,3 +175,5 @@ Following examples are supported in Intel® Neural Compressor:
 
 - DyNAS MobileNetV3 supernet Example:
   - [DyNAS MobileNetV3 supernet Example](../examples/notebook/dynas/MobileNetV3_Supernet_NAS.ipynb): DyNAS with MobileNetV3 supernet on ImageNet dataset.
+- DyNAS Transformer LT supernet Example:
+  - [DyNAS Transformer LT supernet Example](../examples/notebook/dynas/Transformer_LT_Supernet_NAS.ipynb): DyNAS with Transformer LT supernet on WMT En-De dataset.

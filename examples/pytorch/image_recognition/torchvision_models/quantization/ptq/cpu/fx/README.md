@@ -55,6 +55,37 @@ python main.py -t -a inception_v3 --pretrained /path/to/imagenet
 python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
 ```
 
+### 6. Efficientnet_b0
+
+```shell
+python main.py -t -a efficientnet_b0 --pretrained /path/to/imagenet
+```
+> **Note**
+>
+> It is recommended to use [`MSE_v2`](/docs/source/tuning_strategies.md#MSE_v2)
+> strategy for quantizing `efficientnet_b0` model to reduce tuning time 
+> and get the result faster.
+### 7. Efficientnet_b3
+
+```shell
+python main.py -t -a efficientnet_b3 --pretrained /path/to/imagenet
+```
+> **Note**
+>
+> It is recommended to use [`MSE_v2`](/docs/source/tuning_strategies.md#MSE_v2)
+> strategy for quantizing `efficientnet_b3` model to reduce tuning time 
+> and get the result faster.
+### 8. Efficientnet_b7
+
+```shell
+python main.py -t -a efficientnet_b7 --pretrained /path/to/imagenet
+```
+> **Note**
+>
+> It is recommended to use [`MSE_v2`](/docs/source/tuning_strategies.md#MSE_v2)
+> strategy for quantizing `efficientnet_b7` model to reduce tuning time 
+> and get the result faster.
+
 # Saving and loading model:
 
 * Saving model:
@@ -177,7 +208,7 @@ Here we choose topk built-in metric and set accuracy target as tolerating 0.01 r
 
 ### Prepare
 
-The related code please refer to examples/pytorch/fx/image_recognition/imagenet/cpu/ptq/main.py.
+The related code please refer to examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx/main.py.
 
 ### Code Update
 

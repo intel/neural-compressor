@@ -37,7 +37,7 @@ class Calibration(JsonSerializer):
 class WiseConfigDetails(JsonSerializer):
     """Configuration WiseConfigDetails class."""
 
-    def __init__(self, data: Dict[str, Any] = None) -> None:
+    def __init__(self, data: Optional[Dict[str, Any]] = None) -> None:
         """Initialize Configuration WiseConfigDetails class."""
         super().__init__()
         if data is None:
@@ -56,7 +56,7 @@ class WiseConfigDetails(JsonSerializer):
 class WiseConfig(JsonSerializer):
     """Configuration WiseConfig class."""
 
-    def __init__(self, data: Dict[str, Any] = None) -> None:
+    def __init__(self, data: Optional[Dict[str, Any]] = None) -> None:
         """Initialize Configuration WiseConfig class."""
         super().__init__()
         if data is None:

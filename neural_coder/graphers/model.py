@@ -132,6 +132,8 @@ def register_nnModule_instance_definition():
                 def_cl.append(cl)
             elif is_def and "onnx.load" in cl.line_content:
                 def_cl.append(cl)
+            elif is_def and "keras.Sequential" in cl.line_content:
+                def_cl.append(cl)
             elif is_def and "." in stripped and \
                 stripped[stripped.find("=") + 1: stripped.find(".")] in globals.list_class_name:
                 def_cl.append(cl)

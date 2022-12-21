@@ -56,13 +56,18 @@ pip install tensorflow
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
 ```python
-import tensorflow as tf
-from neural_compressor.experimental import Quantization, common
-quantizer = Quantization()
-quantizer.model = './mobilenet_v1_1.0_224_frozen.pb'
-dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3))
-quantizer.calib_dataloader = common.DataLoader(dataset)
-quantizer.fit()
+from neural_compressor.config import PostTrainingQuantConfig
+from neural_compressor.data.dataloaders.dataloader import DataLoader
+from neural_compressor.data import Datasets
+
+dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
+from neural_compressor.quantization import fit
+config = PostTrainingQuantConfig()
+fit(
+  model="./mobilenet_v1_1.0_224_frozen.pb",
+  conf=config,
+  calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset),
+  eval_dataloader=DataLoader(framework='tensorflow', dataset=dataset))
 ```
 ### Quantization with [JupyterLab Extension](./neural_coder/extensions/neural_compressor_ext_lab/README.md)
 Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install with one click:
@@ -203,7 +208,6 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
     <tr>
         <td colspan="2" align="center"><a href="./docs/source/benchmark.md">Benchmarking</a></td>
         <td colspan="3" align="center"><a href="./docs/source/distributed.md">Distributed Training</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/model_conversion.md">Model Conversion</a></td>
         <td colspan="2" align="center"><a href="./docs/source/tensorboard.md">TensorBoard</a></td>
     </tr>
     <tr>
@@ -226,13 +230,15 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 </table>
 
 ## Selected Publications/Events
+* [Intel together with Tencent deepens the cooperation to build a cloud foundation for digital and intelligent industry](https://mp.weixin.qq.com/s/CPz9-5Nsh-5N9Q8-UmK--w) (Dec 2022)
+* [Running Fast Transformers on CPUs: Intel Approach Achieves Significant Speed Ups and SOTA Performance](https://medium.com/syncedreview/running-fast-transformers-on-cpus-intel-approach-achieves-significant-speed-ups-and-sota-448521704c5e) (Nov 2022)
+* [Intel Neural Compressor for TF Virtual Appliance packaged by Bitnami](https://marketplace.cloud.vmware.com/services/details/e9c3d891-ca51-4f07-a5aa-3fe6394f15ae) (Nov 2022)
 * [Neural Compressor: an open-source Python library for network compression](https://cloud.tencent.com/developer/article/2165895) (Nov 2022)
 * [Running Fast Transformers on CPUs: Intel Approach Achieves Significant Speed Ups and SOTA Performance](https://medium.com/syncedreview/running-fast-transformers-on-cpus-intel-approach-achieves-significant-speed-ups-and-sota-448521704c5e) (Nov 2022)
 * [Personalized Stable Diffusion with Few-Shot Fine-Tuning](https://medium.com/intel-analytics-software/personalized-stable-diffusion-with-few-shot-fine-tuning-on-a-single-cpu-f01a3316b13) (Nov 2022)
+* [Fast DistilBERT on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * [Meet the Innovation of Intel AI Software: Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/articles/technical/innovation-of-ai-software-extension-tensorflow.html) (Oct 2022)
 * [PyTorch* Inference Acceleration with Intel® Neural Compressor](https://www.intel.com/content/www/us/en/developer/articles/technical/pytorch-inference-with-intel-neural-compressor.html#gs.gnq0cj) (Oct 2022)
-* Neural Coder, a new plug-in for Intel Neural Compressor was covered by [Twitter](https://twitter.com/IntelDevTools/status/1583629213697212416), [LinkedIn](https://www.linkedin.com/posts/intel-software_oneapi-ai-deeplearning-activity-6989377309917007872-Dbzg?utm_source=share&utm_medium=member_desktop), and [Intel Developer Zone](https://mp.weixin.qq.com/s/LL-4eD-R0YagFgODM23oQA) from Intel, and [Twitter](https://twitter.com/IntelDevTools/status/1583629213697212416/retweets) and [LinkedIn](https://www.linkedin.com/feed/update/urn:li:share:6990377841435574272/) from Hugging Face. (Oct 2022)
-* Intel Neural Compressor successfully landed on [GCP](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [AWS](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel) marketplace. (Oct 2022)
 
 > View our [full publication list](./docs/source/publication_list.md).
 

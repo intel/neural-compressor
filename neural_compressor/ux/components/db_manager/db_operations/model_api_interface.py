@@ -58,6 +58,7 @@ class ModelAPIInterface:
                 output_nodes=model_parameters.output_nodes,
                 supports_profiling=model_parameters.supports_profiling,
                 supports_graph=model_parameters.supports_graph,
+                supports_pruning=model_parameters.supports_pruning,
             )
         return model_id
 
@@ -136,6 +137,8 @@ class ModelAPIInterface:
             )
             model_parameters.supports_profiling = data.get("supports_profiling", False)
             model_parameters.supports_graph = data.get("supports_graph", False)
+            model_parameters.supports_pruning = data.get("supports_pruning", False)
+
         except ValueError:
             raise ClientErrorException("Could not parse value")
         except TypeError:

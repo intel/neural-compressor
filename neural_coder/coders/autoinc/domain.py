@@ -24,5 +24,9 @@ def determine_domain(path) -> str:
             return 'transformers_no_trainer'
     elif 'onnx.load(' in codes:
         return 'onnx'
+    elif 'keras.Sequential' in codes:
+        return 'keras_script'
+    elif 'from tensorflow import' in codes or 'import tensorflow' in codes:
+        return 'tensorflow_keras_model'
     else:
         return 'random model'

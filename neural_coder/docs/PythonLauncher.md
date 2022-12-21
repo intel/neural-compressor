@@ -10,7 +10,7 @@ Example: Let's say you are running an NLP model using ```run_glue.py``` from Hug
 python run_glue.py --model_name_or_path bert-base-cased --task_name mrpc --do_eval --output_dir result
 ```
 
-With Neural Coder's **Launcher**, users can easily enjoy Deep Learning optimizations (default: INT8 static quantization by Intel® Neural Compressor) by simply adding an inline prefix
+With Neural Coder's **Launcher**, users can easily enjoy Deep Learning optimizations (e.g. default - INT8 dynamic quantization by Intel® Neural Compressor for PyTorch models) by simply adding an inline prefix
 ```bash
 -m neural_coder
 ```
@@ -27,7 +27,7 @@ Note: Any modification on the optimized code ```run_glue_optimized.py``` will be
 
 Users can specify which Deep Learning optimization they want to conduct using ```--opt``` argument. The list of supported Deep Learning optimization features can be found [here](SupportMatrix.md).
 
-Note that if specifically optimizing with INT8 quantization by Intel® Neural Compressor, ```--strategy``` argument can be specified with either ```static```, ```static_ipex``` or ```dynamic```. For example, to run INT8 dynamic quantization by Intel® Neural Compressor instead of the default static quantization:
+Note that if specifically optimizing with INT8 quantization by Intel® Neural Compressor, to choose a quantization approach (strategy), ```--approach``` argument can be specified with either ```static```, ```static_ipex``` or ```dynamic```. For example, to run INT8 static quantization by Intel® Neural Compressor:
 ```bash
-python -m neural_coder --strategy dynamic run_glue.py --model_name_or_path bert-base-cased --task_name mrpc --do_eval --output_dir result
+python -m neural_coder --approach static run_glue.py --model_name_or_path bert-base-cased --task_name mrpc --do_eval --output_dir result
 ```

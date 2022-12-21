@@ -346,6 +346,24 @@ def load_precisions_config() -> dict:
     return _load_json_as_dict(json_path)
 
 
+def load_pruning_details_config() -> List[Dict[str, Any]]:
+    """Load pruning details config from json."""
+    json_path = os.path.join(
+        configs_directory,
+        "pruning_details.json",
+    )
+    return _load_json_as_list(json_path)
+
+
+def get_default_pruning_config_path() -> str:
+    """Get path to yaml config with default pruning config."""
+    return os.path.join(
+        configs_directory,
+        "predefined_configs",
+        "pruning.yaml",
+    )
+
+
 def load_model_wise_params(framework: str) -> dict:
     """Load model wise parameters for specified framework."""
     json_path = os.path.join(

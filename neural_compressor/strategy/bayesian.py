@@ -27,8 +27,8 @@ from copy import deepcopy
 
 from ..utils import logger
 from .strategy import strategy_registry, TuneStrategy
-from .st_utils.tuning_sampler import OpWiseTuningSampler
-from .st_utils.tuning_structs import OpTuningConfig
+from .utils.tuning_sampler import OpWiseTuningSampler
+from .utils.tuning_structs import OpTuningConfig
 
 
 @strategy_registry
@@ -234,7 +234,7 @@ class TargetSpace(object):
         # Create an array with parameters bounds
         self._bounds = np.array(
             [pbounds[name] for name in names],
-            dtype=np.float
+            dtype=np.float32
         )
 
         # preallocated memory for X and Y points
