@@ -7,29 +7,33 @@ Tuning Strategies
 
     2.1. [Tuning Space](#tuning-space)
 
-	2.2. [Exist Policy](#exist-policy)
+	2.2. [exit Policy](#exit-policy)
 
 	2.3. [Accuracy Criteria](#accuracy-criteria)
 
-    2.4. [Traverse Logics](#traverse-logics)
+    2.4. [Traverse](#traverse)
 
-3. [Basic](#basic)
+3. [Traverse Logics](#traverse-logics)
 
-    3.2. [Bayesian](#bayesian)
+    3.1. [O0](#o0)
 
-    3.3. [MSE](#mse)
+    3.2. [Basic](#basic)
 
-    3.4. [MSE_v2](#mse_v2)
+    3.3. [Bayesian](#bayesian)
 
-    3.5. [HAWQ_V2](#hawq_v2)
+    3.4. [MSE](#mse)
 
-    3.6. [TPE](#tpe)
+    3.5. [MSE_V2](#mse_v2)
 
-    3.7. [Exhaustive](#exhaustive)
+    3.6. [HAWQ_V2](#hawq_v2)
 
-    3.8. [Random](#random)
+    3.7. [TPE](#tpe)
 
-    3.9. [SigOpt](#sigOpt)
+    3.8. [Exhaustive](#exhaustive)
+
+    3.9. [Random](#random)
+
+    3.10. [SigOpt](#sigOpt)
 
 
  4. [Customize a New Tuning Strategy](#customize-a-new-tuning-strategy)
@@ -41,12 +45,12 @@ the low-precision inference solution on popular Deep Learning frameworks
 such as TensorFlow, PyTorch, ONNX, and MXNet. Using built-in strategies, it
 automatically optimizes low-precision recipes for deep learning models to
 achieve optimal product objectives, such as inference performance and memory
-usage, with expected accuracy criteria. Currently, several strategies, including
-`Basic`, `Bayesian`, `Exhaustive`, `MSE`, `MSE_v2`, `Hawq_v2`, `Random`, `SigOpt`, `TPE`, 
- etc is supported. By default, `Basic` strategy is used for tuning.
+usage, with expected accuracy criteria. Currently, several strategies, including `O0`, 
+`Basic`, `Bayesian`, `Exhaustive`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Random`, `SigOpt`, `TPE`, 
+ etc are supported. By default, the `Basic` strategy is used for tuning.
 
 ## Strategy Design
-Before the tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy drive to generates the next quantization configuration according to its traverse logic and the previous tuning record. The tuning process stop when meet the exist policy. The function of strategies is shown
+Before the tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy drive to generates the next quantization configuration according to its traverse logic and the previous tuning record. The tuning process stop when meet the exit policy. The function of strategies is shown
 below:
 
 ![Tuning Strategy](./_static/imgs/strategy.png "Strategy Framework")
@@ -58,8 +62,8 @@ Intel® Neural Compressor support multiple quantization modes such as Post Train
 
 To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_list` and `op_type_list`. Before tuning, the strategy will merge these user configurations with framework capability to create the final tuning space.
 
-### Exist policy
-User can control the tuning process by setting the exist policy by specifying the `timeout`, and `max_trials` fields in the `TuningCriterion`.
+### Exit Policy
+User can control the tuning process by setting the exit policy by specifying the `timeout`, and `max_trials` fields in the `TuningCriterion`.
 
 ```python
 from neural_compressor.config import TuningCriterion
@@ -86,15 +90,16 @@ accuracy_criterion=AccuracyCriterion(
 )
 ```
 
-### Traverse Logics
+### Traverse 
 Once the `tuning space` was constructed, you can specific the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig`(`QuantizationAwareTrainingConfig`), or the `strategy` field with strategy name in the `TuningCriterion`. The priority of `quant_level` is higher than `strategy`, which mean the you need to set the `quant_level` to `1` if you want to specific the traverse logic by strategy name. We will introduce the design and usage of each traverse logic in the following session.
 
+## Traverse Logics
 
-## O0 
+### O0 
 
-### Design
+#### Design
 The quantization level `O0` is designed for user want to keep the precision of model after quantization. It start with the original(`fp32`) model and then add the quantized OPs in `op-type-wise` and `op-wise`.
-### Usage
+#### Usage
 
 To use `O0`, you can specific the `quant_level` field with `0` in the `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`).
 
@@ -115,7 +120,7 @@ conf = config.PostTrainingQuantConfig(
 ### Design
 
 `Basic` strategy is designed for most models to do quantization. It includes
-three stages and each stage is executed sequentially, and the tuning process ends once the codition meets the exist policy. 
+three stages and each stage is executed sequentially, and the tuning process ends once the codition meets the exit policy. 
 - **Stage I**. Op-Type-Wise Tuning
 
     In this stage, it try to quantized the OPs as many as possible and traverse all op-type-wise tuning configs. Note that, we initial the op with difference quantization mode according to the quantization approach.
@@ -281,7 +286,7 @@ hyperparameters.
 based on some quantile. The first group (x1) contains observations that
 gives the best scores and the second one (x2) contains all other
 observations.
-- Model the two densities l(x1) and g(x2) using Parzen Estimators (also known as kernel density estimators) which are a simple average of kernels centered on existing data points.
+- Model the two densities l(x1) and g(x2) using Parzen Estimators (also known as kernel density estimators) which are a simple average of kernels centered on exiting data points.
 - Draw sample hyperparameters from l(x1). Evaluate them in terms of l(x1)/g(x2), and return the set that yields the minimum value under l(x1)/g(x1) that
 corresponds to the greatest expected improvement. Evaluate these
 hyperparameters on the objective function.
