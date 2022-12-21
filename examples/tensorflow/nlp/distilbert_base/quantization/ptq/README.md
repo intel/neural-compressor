@@ -34,7 +34,8 @@ Intel® Extension for TensorFlow is mandatory to be installed for quantizing the
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_gpu.md#install-gpu-drivers).
+Please refer to the [Installation Guides](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html) for latest Intel GPU driver installation.
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers).
 
 #### Quantizing the model on Intel CPU (Experimental):
 Intel® Extension for TensorFlow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
@@ -63,11 +64,11 @@ bash run_tuning.sh \
 ```
 ### Run Benchmark:
 ```shell
-# benchmark mode: only get performance
+# performance mode: get performance
 bash run_benchmark.sh \
     --input_model=$INPUT_MODEL \
     --dataset_location=$DATASET_DIR \
-    --mode=benchmark \
+    --mode=performance \
     --batch_size=$BATCH_SIZE \
     --max_seq_length=$MAX_SEQ \
     --iters=$ITERS \
@@ -77,7 +78,7 @@ bash run_benchmark.sh \
 ```
 
 ```shell
-# accuracy mode: get performance and accuracy
+# accuracy mode: get accuracy
 bash run_benchmark.sh \
     --input_model=$INPUT_MODEL \
     --dataset_location=$DATASET_DIR \
@@ -106,7 +107,7 @@ Details of enabling Intel® Neural Compressor on DistilBERT base for TensorFlow
 
 This is a tutorial of how to enable DistilBERT base model with Intel® Neural Compressor.
 ## User Code Analysis
-1. User specifies fp32 *model*, calibration dataloader *q_dataloader*, evaluation dataloader *eval_dataloader* and metric in tuning.metric field of model-specific config.
+1. User specifies fp32 *model*, calibration dataloader *q_dataloader*, evaluation dataloader *eval_dataloader* and metric.
 
 2. User specifies fp32 *model*, calibration dataloader *q_dataloader* and a custom *eval_func* which encapsulates the evaluation dataloader and metric by itself.
 
@@ -136,50 +137,43 @@ class Dataloader(object):
             yield feed_dict, labels
 ```
 
+### Quantization Config
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
+
 ### Code Update
 After prepare step is done, we add the code for quantization tuning to generate quantized model.
 
+#### Tune
 ```python
-from neural_compressor.quantization import fit
-from neural_compressor.config import PostTrainingQuantConfig, \
-    TuningCriterion, AccuracyCriterion, AccuracyLoss, set_random_seed
-
-set_random_seed(9527)
-tuning_criterion = TuningCriterion(
-    strategy="basic",
-    timeout=0,
-    max_trials=100,
-    objective="performance")
-
-tolerable_loss = AccuracyLoss(loss=0.02)
-
-accuracy_criterion = AccuracyCriterion(
-    higher_is_better=True,
-    criterion='relative',
-    tolerable_loss=tolerable_loss)
-
-config = PostTrainingQuantConfig(
-    device="cpu",
-    backend="tensorflow",
-    inputs=[],
-    outputs=[],
-    approach="static",
-    calibration_sampling_size=[500],
-    op_type_list=None,
-    op_name_list=None,
-    reduce_range=None,
-    extra_precisions=[],
-    tuning_criterion=tuning_criterion,
-    accuracy_criterion=accuracy_criterion)
-
-q_model = fit(
-    model=graph,
-    conf=config,
-    calib_dataloader=self.dataloader,
-    calib_func=None,
-    eval_dataloader=None,
-    eval_func=self.eval_func,
-    eval_metric=None)
+    from neural_compressor import quantization
+    from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
+    accuracy_criterion = AccuracyCriterion(tolerable_loss=0.02)
+    config = PostTrainingQuantConfig(calibration_sampling_size=[500],
+                                        accuracy_criterion=accuracy_criterion)
+    q_model = quantization.fit(model=graph, conf=config, calib_dataloader=self.dataloader,
+                    eval_func=self.eval_func)
+    try:
+        q_model.save(ARGS.output_graph)
+    except Exception as e:
+        tf.compat.v1.logging.error("Failed to save model due to {}".format(str(e)))
+```
+#### Benchmark
+```python
+    from neural_compressor.benchmark import fit
+    from neural_compressor.config import BenchmarkConfig
+    if ARGS.mode == 'performance':
+        conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
+        fit(graph, conf, b_func=self.eval_func)
+    elif ARGS.mode == 'accuracy':
+        self.eval_func(graph)
 ```
 
-The Intel® Neural Compressor quantizer.fit() function will return a best quantized model under time constraint.
+The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.

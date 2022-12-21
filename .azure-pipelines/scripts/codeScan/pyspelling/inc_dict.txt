@@ -2403,6 +2403,7 @@ Nsh
 UmK
 fe
 vmware
+PythonLauncher
 keepachangelog
 vscode
 IntelNeuralCompressor
