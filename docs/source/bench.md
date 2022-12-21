@@ -12,7 +12,7 @@ Intel® Neural Compressor Bench is a web application for easier use of Intel® N
 
     3.2. [Benchmark Tab](#benchmark-tab)
 
-    3.3. [Profiling v](#profiling-tab)
+    3.3. [Profiling Tab](#profiling-tab)
 
     3.4. [Diagnosis Tab](#diagnosis-tab)
 
@@ -26,7 +26,7 @@ Intel® Neural Compressor Bench is a web application for easier use of Intel® N
 # Introduction
 ## Install Intel® Neural Compressor with Bench
 To install Install Intel® Neural Compressor with GUI install full version of Intel® Neural Compressor in one of following ways:
-### Option 1: Install from binary
+### Option 1: Install from Binary
 
 ```Shell
 # install stable full version from pip (including GUI)
@@ -39,7 +39,7 @@ pip install -i https://test.pypi.org/simple/ neural-compressor-full
 conda install neural-compressor-full -c conda-forge -c intel  
 ```
 
-### Option 2: Install from source
+### Option 2: Install from Source
 
 ```Shell
 git clone https://github.com/intel/neural-compressor.git
