@@ -1,11 +1,23 @@
 Dataset
 =======
 
+1. [Introduction](#introduction)
+
+2. [Supported Framework Dataset Matrix](#supported-framework-dataset-matrix)
+
+3. [Get start with Dataset API](#get-start-with-dataset-api)
+
+4. [Examples](#examples)
+
+## Introduction
+
+To adapt to its internal dataloaser API, Intel® Neural Compressor implements some built-in datasets.
+
+A dataset is a container which holds all data that can be used by the dataloader, and have the ability to be fetched by index or created as an iterator. One can implement a specific dataset by inheriting from the Dataset class by implementing `__iter__` method or `__getitem__` method, while implementing `__getitem__` method, `__len__` method is recommended.
+
 Users can use Neural Compressor built-in dataset objects as well as register their own datasets.
 
-## Built-in dataset support list
-
-Neural Compressor supports built-in dataloaders on popular industry datasets. Refer to this [HelloWorld example](/examples/helloworld/tf_example6) to learn how to configure a built-in dataloader.
+## Supported Framework Dataset Matrix
 
 #### TensorFlow
 
@@ -75,6 +87,45 @@ Neural Compressor supports built-in dataloaders on popular industry datasets. Re
 | GLUE(data_dir, model_name_or_path, max_seq_length, do_lower_case, task, model_type, dynamic_length, evaluate, transform, filter) | **data_dir** (str): The input data dir <br> **model_name_or_path** (str):  Path to pre-trained student model or shortcut name,  <br> **max_seq_length** (int, default=128): The maximum total input sequence length after tokenization. Sequences longer than this will be truncated, sequences shorter will be padded. <br> **do_lower_case** (bool, default=True): Whether or not to lowercase the input. <br> **task** (bool, default=True): The name of the task to fine-tune. Choices include mrpc, qqp, qnli, rte, sts-b, cola, mnli, wnli. <br> **model_type** (str, default='bert'): model type, support 'distilbert', 'bert', 'mobilebert', 'roberta'. <br> **dynamic_length** (bool, default=False): Whether to use fixed sequence length. <br> **evaluate** (bool, default=True): Whether do evaluation or training. <br> **transform** (bool, default=True): If true, <br> **filter** (bool, default=True): If true, | Refer to [this example](/examples/onnxrt/language_translation/bert) on how to prepare dataset | **In yaml file:** <br> dataset: <br> &ensp;&ensp; bert: <br> &ensp;&ensp;&ensp;&ensp; data_dir: False <br> &ensp;&ensp;&ensp;&ensp; model_name_or_path: True <br> (transform and filter are not set in the range of dataset) <br> **In user code:** <br> from neural_compressor.experimental.data import DATASETS <br> datasets = DATASETS(framework) <br> dataset = datasets['bert'] (data_dir='/path/to/data/', model_name_or_path='bert-base-uncased', max_seq_length=128, task='mrpc', model_type='bert', dynamic_length=True, transform=None, filter=None) |
 | sparse_dummy_v2(dense_shape, label_shape, sparse_ratio, low, high, dtype, transform, filter) | **dense_shape** (list or tuple):create single or multi sparse tensors, tuple represent the sample shape of the dataset, eg and image size should be represented as (224, 224, 3), tuple contains multiple list and represent multi input tensors. <br> **label_shape** (list or tuple):create single or multi label tensors list represent the sample shape of the label, eg and label size should be represented as (1,), tuple contains multiple list and represent multi label tensors. In yaml usage, it offers (1,) as the default value. <br> **sparse_ratio** (float, default=0.5): the ratio of sparsity, support [0, 1]. <br> **low** (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low < 0, if float, will implement all tensors with same low value. <br> **high** (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> **dtype** (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br>  **transform** (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> **filter** (Filter objects, default=None): filter out examples according to specific conditions | This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high. | **In yaml file:** <br> dataset: <br> &ensp;&ensp; sparse_dummy_v2: <br> &ensp;&ensp;&ensp;&ensp; dense_shape: [224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; label_shape: [1] <br> &ensp;&ensp;&ensp;&ensp; sparse_ratio: 0.5 <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> <br> **In user code:** <br> from neural_compressor.experimental.data import DATASETS <br> datasets = DATASETS(framework) <br> dataset = datasets['sparse_dummy_v2'] (dense_shape, label_shape, sparse_ratio, low, high, dtype, transform=None, filter=None) |
 
+## Get start with Dataset API
+
+### Config dataloader in a yaml file
+
+```yaml
+quantization:
+  approach: post_training_static_quant
+  calibration:
+    dataloader:
+      dataset:
+        COCORaw:
+          root: /path/to/calibration/dataset
+      filter:
+        LabelBalance:
+          size: 1
+      transform:
+        Resize:
+          size: 300
+
+evaluation:
+  accuracy:
+    metric: 
+      ...
+    dataloader:
+      batch_size: 16
+      dataset:
+        COCORaw:
+          root: /path/to/evaluation/dataset
+      transform:
+        Resize:
+          size: 300
+  performance:
+    dataloader:
+      batch_size: 16
+      dataset:
+        dummy_v2:
+          input_shape: [224, 224, 3] 
+```
+
 ## User-specific dataset
 
 Users can register their own datasets as follows:
@@ -104,3 +155,9 @@ quantizer.eval_func = eval_func
 q_model = quantizer.fit() 
 
 ```
+
+## Examples
+
+- Refer to this [example](https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/object_detection/onnx_model_zoo/DUC/quantization/ptq) to learn how to define a customised dataset.
+
+- Refer to this [HelloWorld example](/examples/helloworld/tf_example6) to learn how to configure a built-in dataset.
