@@ -299,11 +299,7 @@ We validate the pruning technique on typical models across various domains (incl
 
  
 
-[1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: SINGLE-SHOT NETWORK
-
-PRUNING BASED ON CONNECTION SENSITIVITY. In International Conference on
-
-Learning Representations, 2019.
+[1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.
 
 
 
@@ -314,3 +310,4 @@ Learning Representations, 2019.
 
 
  
+
