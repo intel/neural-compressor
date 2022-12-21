@@ -39,6 +39,8 @@ NULL_OP_NAMES = ['null']
 
 
 class OpType(Enum):
+    """Enum op types.
+    """
     NORMAL = 0
     QUANTIZE = 1
     QUANTIZED = 2
@@ -62,6 +64,12 @@ def isiterable(obj) -> bool:
 
 def ensure_list(x):
     """Ensures that object is a list.
+
+    Args:
+        x : input.
+
+    Returns:
+        list: x if x is list, else [x].
     """
     return x if isinstance(x, (tuple, list)) else [x]
 
@@ -83,6 +91,15 @@ def check_mx_version(version):
 
 
 def combine_capabilities(current, new):
+    """combine capabilities.
+
+    Args:
+        current (dict): current capabilities.
+        new (dict): new capabilities.
+
+    Returns:
+        dict: contains all capabilities.
+    """
     if isinstance(current, list):
         assert isinstance(new, list)
         return list(set(current) | set(new))
@@ -99,13 +116,13 @@ def combine_capabilities(current, new):
 def make_nc_model(target, sym_model, ctx, input_desc):
     """Converts a symbolic model to an Neural Compressor model.
 
-        Args:
-            target (object): target model type to return.
-            sym_model (tuple): symbol model (symnet, args, auxs).
-            input_desc (list): model input data description.
+    Args:
+        target (object): target model type to return.
+        sym_model (tuple): symbol model (symnet, args, auxs).
+        input_desc (list): model input data description.
 
-        Returns:
-            NCModel: converted neural_compressor model
+    Returns:
+        NCModel: converted neural_compressor model
     """
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
@@ -117,11 +134,11 @@ def make_nc_model(target, sym_model, ctx, input_desc):
 def fuse(sym_model, ctx):
     """Fuse the supplied model.
 
-        Args:
-            sym_model (tuple): symbol model (symnet, args, auxs).
+    Args:
+        sym_model (tuple): symbol model (symnet, args, auxs).
 
-        Returns:
-            tuple: fused symbol model (symnet, args, auxs).
+    Returns:
+        tuple: fused symbol model (symnet, args, auxs).
     """
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
@@ -136,6 +153,14 @@ def fuse(sym_model, ctx):
 
 
 def get_framework_name(ctx):
+    """get the framework name by version.
+
+    Args:
+        ctx (object): mxnet context object.
+
+    Returns:
+        str: framework name.
+    """
     if 'cpu' in ctx.device_type:
         if check_mx_version('2.0.0'):
             return 'ONEDNN_QUANTIZE'
@@ -160,6 +185,17 @@ def prepare_model_data(nc_model, ctx, data_x):
 
 
 def prepare_model(nc_model, ctx, input_desc):
+    """Prepare model.
+
+    Args:
+        nc_model (object): model to prepare.
+        ctx (object): mxnet context object.
+        input_desc (list): input list of mxnet data types.
+
+    Returns:
+        object: mxnet model (symnet, args, auxs).
+    """
+
     assert isinstance(nc_model, NCModel)
 
     model_x = nc_model.model
@@ -181,6 +217,15 @@ def prepare_model(nc_model, ctx, input_desc):
 
 
 def create_data_example(ctx, input_desc):
+    """Create data example by mxnet input description and ctx.
+
+    Args:
+        ctx (object): mxnet context object.
+        input_desc (list): input list of mxnet data types.
+
+    Returns:
+        list: data example.
+    """
     if mx.is_np_array():
         return [mx.np.zeros(d.shape, ctx=ctx, dtype=d.dtype) for d in input_desc]
     else:
@@ -188,6 +233,14 @@ def create_data_example(ctx, input_desc):
 
 
 def _match_array_semantics(sym_model):
+    """Match array semantics.
+
+    Args:
+        sym_model (tuple): symbol model (symnet, args, auxs).
+
+    Returns:
+        tuple: symbol model (symnet, args, auxs).
+    """
     if check_mx_version('2.0.0') and mx.util.is_np_array():
         symnet, args, auxs = sym_model
         symnet = symnet.as_np_ndarray()
@@ -200,6 +253,16 @@ def _match_array_semantics(sym_model):
 
 
 def prepare_dataloader(nc_model, ctx, data_x):
+    """Prepare dataloader.
+
+    Args:
+        nc_model (object): model to prepare.
+        ctx (object): mxnet context object.
+        data_x (object): mxnet io iterable object or dataloader object.
+
+    Returns:
+        object: dataloader.
+    """
     assert isinstance(nc_model, NCModel)
 
     if isinstance(data_x, DataLoaderWrap):
@@ -236,6 +299,15 @@ def prepare_dataloader(nc_model, ctx, data_x):
 
 
 def ndarray_to_device(ndarray, device):
+    """Ndarray to device.
+
+    Args:
+        ndarray (ndarray): model to prepare.
+        device (object): mxnet device object.
+
+    Returns:
+        ndarray: ndarray on the device.
+    """
     try:
         return ndarray.to_device(device)  # 2.x version
     except AttributeError:
@@ -245,10 +317,11 @@ def ndarray_to_device(ndarray, device):
 def is_model_quantized(sym_model):
     """Checks whether the model is quantized.
 
-        Args:
-            sym_model (tuple): symbol model (symnet, args, auxs).
-        Returns:
-            boolean: True if model is quantized, else False.
+    Args:
+        sym_model (tuple): symbol model (symnet, args, auxs).
+
+    Returns:
+        boolean: True if model is quantized, else False.
     """
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
@@ -260,6 +333,14 @@ def is_model_quantized(sym_model):
 
 
 def _dequantize_sym_name(sym_name, check_list=None):
+    """Revise sym name by the node prefix or postfix.
+
+    Args:
+        sym_name (str): sym name.
+
+    Returns:
+        tuple: (name, op_type).
+    """
     name = sym_name
     op_type = OpType.NORMAL
     if sym_name.endswith(QUANTIZE_NODE_POSTFIX):
@@ -466,6 +547,8 @@ def make_symbol_block(sym_model, ctx, input_desc):
 
 
 def _gluon_forward(net, ctx, dataloader, b_filter, pre_batch=None, post_batch=None):
+    """gluon forward func.
+    """
     batch_num = 0
     for run, batch in zip(b_filter, dataloader):
         if not run:
@@ -510,6 +593,8 @@ def make_module(sym_model, ctx, input_desc):
 
 
 def _module_forward(module, dataloader, b_filter, pre_batch=None, post_batch=None):
+    """module forward func.
+    """
     batch_num = 0
     for run, batch in zip(b_filter, dataloader):
         if not run:
@@ -643,6 +728,9 @@ def calib_model(qsym_model, calib_data, calib_cfg):
 
 
 def amp_convert(sym_model, input_desc, amp_cfg):
+    """convert model to support amp.
+    """
+
     assert check_mx_version('2.0.0'), 'AMP is supported since MXNet 2.0. This error is due to ' \
         'an error in the configuration file.'
     from mxnet import amp
@@ -652,6 +740,8 @@ def amp_convert(sym_model, input_desc, amp_cfg):
 
 
 class DataLoaderWrap:
+    """DataLoader Wrap.
+    """
     def __init__(self, dataloader, input_desc):
         self.dataloader = dataloader
         self.input_desc = input_desc
@@ -666,6 +756,8 @@ class DataLoaderWrap:
 
 
 class DataIterLoader:
+    """DataIterLoader.
+    """
     def __init__(self, data_iter):
         self.data_iter = data_iter
 
@@ -679,19 +771,29 @@ class DataIterLoader:
 
 
 class CollectorBase:
+    """Collector Base class.
+    """
     def collect_gluon(self, name, _, arr):
+        """collect by gluon api.
+        """
         raise NotImplementedError()
 
     def collect_module(self, name, arr):
+        """collect by module name.
+        """
         name = mx.base.py_str(name)
         handle = ctypes.cast(arr, mx.base.NDArrayHandle)
         arr = mx.nd.NDArray(handle, writable=False)
         self.collect_gluon(name, '', arr)
 
     def pre_batch(self, m, b):
+        """function to call prior to batch inference.
+        """
         pass
 
     def post_batch(self, m, b, o):
+        """function to call after batch inference.
+        """
         pass
 
 
@@ -706,6 +808,8 @@ class CalibCollector(CollectorBase):
         self.include_tensors_kl = include_tensors_kl
 
     def collect_gluon(self, name, _, arr):
+        """collect by gluon api.
+        """
         if name in self.include_tensors_kl:
             alg = 'kl'
         elif name in self.include_tensors_minmax:
@@ -735,6 +839,8 @@ class CalibCollector(CollectorBase):
 
     @staticmethod
     def _combine_histogram(old_hist, arr, new_min, new_max, new_th):
+        """combine histogram.
+        """
         if check_mx_version('2.0.0'):
             return mx.contrib.quantization._LayerHistogramCollector.combine_histogram(
                 old_hist, arr, new_min, new_max, new_th)
@@ -743,6 +849,8 @@ class CalibCollector(CollectorBase):
                                                              new_max, new_th)
 
     def calc_kl_th_dict(self, quantized_dtype):
+        """calculation kl thresholds.
+        """
         if len(self.hist_dict) > 0:
             if check_mx_version('2.0.0'):
                 return mx.contrib.quantization._LayerHistogramCollector.get_optimal_thresholds(
@@ -766,6 +874,8 @@ class TensorCollector(CollectorBase):
         assert len(rest) == 0, 'Unexpected tensors set to be collected: {}'.format(rest)
 
     def collect_gluon(self, name, _, arr):
+        """collect by gluon api.
+        """
         is_quantized = False
         if name not in self.tensor_to_node:
             if name in self.qtensor_to_tensor:
@@ -782,6 +892,8 @@ class TensorCollector(CollectorBase):
             self.tensors_dicts[-1].setdefault(node, {})[name] = (is_quantized, arr.copy())
 
     def pre_batch(self, m, b):
+        """preprocess.
+        """
         self.tensors_dicts.append({})
 
 
@@ -790,6 +902,8 @@ class NameCollector(CollectorBase):
         self.names = []
 
     def collect_gluon(self, name, _, arr):
+        """collect by gluon api.
+        """
         self.names.append(name)
 
 
@@ -802,8 +916,12 @@ class CalibData:
     # `min_max_dict` is used as a thresholds dictionary when `calib_mode` == 'naive'
     @property
     def min_max_dict(self):
+        """return mix-max dict.
+        """
         return self.th_dict
 
     # for mxnet version >= 2.0.0
     def post_collect(self):
+        """return mix-max dict for mxnet version >= 2.0.0.
+        """
         return self.th_dict
