@@ -32,7 +32,7 @@ SigOpt has two concepts: [project](https://app.sigopt.com/projects) and [experim
 
 In Neural Compressor sigopt strategy, the metrics add accuracy as constraint and optimize for latency.
 
-### Neural Compressor configuration
+### Neural Compressor Configuration
 
 Compare to `Basic` strategy, `sigopt_api_token` is necessary for `SigOpt` strategy. Create the corresponding project name `sigopt_project_id` in the account before using the strategy.
 
@@ -62,15 +62,15 @@ conf = config.PostTrainingQuantConfig(
 
 - MobileNet_v1(tensorflow)
 
-|strategy|FP32 baseline|int8 accuracy|int8 duration(s)|
-|--------|-------------|-------------|----------------|
-|  basic |  0.8266     | 0.8372      |  88.2132       |
-| sigopt |  0.8266     | 0.8372      |  83.7495       |
+    |strategy|FP32 baseline|int8 accuracy|int8 duration(s)|
+    |--------|-------------|-------------|----------------|
+    |  basic |  0.8266     | 0.8372      |  88.2132       |
+    | sigopt |  0.8266     | 0.8372      |  83.7495       |
 
 - ResNet50_v1(tensorflow)
 
-|strategy|FP32 baseline|int8 accuracy|int8 duration(s)|
-|--------|-------------|-------------|----------------|
-|  basic |  0.8299     | 0.8294      |  85.0837       |
-| sigopt |  0.8299     | 0.8291      |  83.4469       |
+    |strategy|FP32 baseline|int8 accuracy|int8 duration(s)|
+    |--------|-------------|-------------|----------------|
+    |  basic |  0.8299     | 0.8294      |  85.0837       |
+    | sigopt |  0.8299     | 0.8291      |  83.4469       |
 
