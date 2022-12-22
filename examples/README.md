@@ -678,7 +678,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>BERT-Base</td>
     <td>Natural Language Processing</td>
     <td>Knowledge Distillation</td>
-    <td><a href="./pytorch/nlp/blendcnn/distillation/fx">fx</a></td>
+    <td><a href="./pytorch/nlp/blendcnn/distillation/eager">eager</a></td>
   </tr>
   <tr>
     <td>DistilBERT</td>

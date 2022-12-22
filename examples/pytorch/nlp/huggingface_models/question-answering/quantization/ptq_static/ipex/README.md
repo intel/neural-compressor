@@ -54,7 +54,7 @@ If IPEX version is equal or higher than 1.12, please install transformers 4.19.0
   bash run_tuning.sh --topology="bert_large_ipex"
 ```
 ```
-  bash run_benchmark.sh --topology="bert_large_ipex" --mode=benchmark
+  bash run_benchmark.sh --topology="bert_large_ipex" --mode=performance
 ```
 
 ### Distilbert-base Inference
@@ -85,5 +85,5 @@ For distilbert-base, the IPEX version requests equal or higher than 1.12.
   bash run_tuning.sh --topology="distilbert_base_ipex"
 ```
 ```
-  bash run_benchmark.sh --topology="distilbert_base_ipex" --mode=benchmark
+  bash run_benchmark.sh --topology="distilbert_base_ipex" --mode=performance
 ```
