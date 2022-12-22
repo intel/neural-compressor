@@ -90,11 +90,10 @@ def check_config(prune_config):
 def reset_none_to_default(obj, key, default):
     """Set undefined configurations to default values.
 
-    If some configurations are not defined in the configuration, set it to a default value.
     Args:
         obj: A dict{key: value}
-        key: A string. Key in obj.
-        default: When the key is not in obj, Add key: default item in original obj.
+        key: A string representing the key in obj.
+        default: When the key is not in obj, add key by the default item in original obj.
     """
     if obj == None:
         return None
@@ -188,7 +187,11 @@ def process_yaml_config(global_config, local_configs, default_config):
 
 
 def process_and_check_config(val):
-    """Process and check configurations."""
+    """Process and check configurations.
+    
+    Args:  
+        val: A dict that contains the layer-specific pruning configurations.
+    """
     default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
                              'excluded_op_names': [],
                              'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'pruning_frequency': 1,
@@ -219,10 +222,10 @@ def process_and_check_config(val):
 
 
 def process_config(config):
-    """Obtain a config dict object from a config file.
+    """Obtain a config dict object from the config file.
 
     Args:
-        config: A string representing the path to configuration file.
+        config: A string representing the path to the configuration file.
 
     Returns:
         A config dict object.
@@ -252,7 +255,12 @@ def process_config(config):
 
 
 def parse_to_prune(config, model):
-    """Keep target pruned layers."""
+    """Keep target pruned layers.
+    
+    Args:
+        config: A string representing the path to the configuration file.
+        model: The model to be pruned.
+    """
     modules = {}
     if config["op_names"] == None or config["op_names"] == []:
         config["op_names"] = [".*"]
