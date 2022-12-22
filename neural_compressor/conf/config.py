@@ -90,7 +90,7 @@ class PrunerV2:
                  start_step=None, end_step=None, pruning_scope=None, pruning_frequency=None,
                  min_sparsity_ratio_per_op=None, max_sparsity_ratio_per_op=None,
                  sparsity_decay_type=None, pruning_op_types=None, reg_type=None,
-                 reduce_type=None, parameters=None, resume_from_pruned_checkpoint=None):
+                 criterion_reduce_type=None, parameters=None, resume_from_pruned_checkpoint=None):
         self.pruner_config = DotDict({
             'target_sparsity': target_sparsity,
             'pruning_type': pruning_type,
@@ -106,7 +106,7 @@ class PrunerV2:
             'sparsity_decay_type': sparsity_decay_type,
             'pruning_op_types': pruning_op_types,
             'reg_type': reg_type,
-            'reduce_type': reduce_type,
+            'criterion_reduce_type': criterion_reduce_type,
             'parameters': parameters,
             'resume_from_pruned_checkpoint': resume_from_pruned_checkpoint
         })
@@ -755,7 +755,7 @@ weight_compression_v2_schema = Schema({
     Optional('sparsity_decay_type', default="exp"): str,
     Optional('pruning_op_types', default=['Conv', 'Linear']): list,
     Optional('reg_type', default=None): str,
-    Optional('reduce_type', default="mean"): str,
+    Optional('criterion_reduce_type', default="mean"): str,
     Optional('parameters', default={"reg_coeff": 0.0}): dict,
     Optional('resume_from_pruned_checkpoint', default=False): str,
     Optional('pruners'): And(list, \
@@ -806,7 +806,7 @@ schema = Schema({
                                                       'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
-                                      'optimization_level': 1,
+                                      'quant_level': 1,
                                       }): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
@@ -900,10 +900,10 @@ schema = Schema({
         Optional('op_wise', default=None): {
             str: ops_schema
         },
-        Optional('optimization_level', default=1): And(int, lambda level: level in [0, 1]),
+        Optional('quant_level', default=1): And(int, lambda level: level in [0, 1]),
     },
     Optional('use_bf16', default=True): bool,
-    Optional('optimization_level', default=1): And(int, lambda level: level in [0, 1]),
+    Optional('quant_level', default=1): And(int, lambda level: level in [0, 1]),
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
@@ -1178,7 +1178,7 @@ quantization_default_schema = Schema({
                                                      'activation': {}},
                                     }): dict,
     Optional('use_bf16', default=False): bool,
-    Optional('optimization_level', default=1): int,
+    Optional('quant_level', default=1): int,
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
@@ -1415,7 +1415,7 @@ class Conf(object):
                 'tuning.exit_policy.max_trials': pythonic_config.quantization.max_trials,
                 'tuning.exit_policy.performance_only': pythonic_config.quantization.performance_only,
                 'use_bf16': pythonic_config.quantization.use_bf16,
-                'quantization.optimization_level': pythonic_config.quantization.optimization_level,
+                'quantization.quant_level': pythonic_config.quantization.quant_level,
                 'reduce_range': pythonic_config.quantization.reduce_range
             })
             if pythonic_config.quantization.strategy_kwargs:
@@ -1474,6 +1474,11 @@ class Conf(object):
                     pythonic_config.benchmark.inter_num_of_threads,
                 'evaluation.accuracy.configs.intra_num_of_threads':
                     pythonic_config.benchmark.intra_num_of_threads,
+            })
+
+        if "model.backend" not in mapping:
+            mapping.update({
+                'model.backend': "default",
             })
 
         for k, v in mapping.items():

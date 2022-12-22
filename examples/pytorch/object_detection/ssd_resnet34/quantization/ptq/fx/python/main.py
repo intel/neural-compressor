@@ -5,7 +5,8 @@ mlperf inference benchmarking tool
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from neural_compressor.experimental import Quantization, common
+from neural_compressor import quantization
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 from queue import Queue
 
 import argparse
@@ -219,6 +220,7 @@ def get_args():
     parser.add_argument('--int8', dest='int8', action='store_true', help='run benchmark')
     parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                         help='path to checkpoint tuned by Neural Compressor (default: ./)')
+    parser.add_argument("--batch_size", default=1, type=int, help="batch size for tuning or benchmarking")
     args = parser.parse_args()
 
     # don't use defaults in argparser. Instead we default to a dict, override that with a profile
@@ -565,7 +567,7 @@ def main():
         print('Accuracy: %.3f ' % (accu))
         return accu
 
-    def benchmark(model):
+    def benchmark_func(model):
         global last_timeing
         runner.model.model = model
         lg.StartTestWithLogSettings(sut, qsl, settings, log_settings)
@@ -586,10 +588,24 @@ def main():
     os.chdir(os.path.join(sys.path[0], ".."))
     if args.tune:
         # Quantization with Neural Compressor
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(raw_model)
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
+        import torchvision.datasets as dset
+        import torchvision.transforms as transforms
+        import torch
+
+        from neural_compressor.experimental.data.datasets.coco_dataset import COCONpy
+        dataset = COCONpy(root='./', npy_dir='preprocessed/coco-1200-pt/NCHW/val2017/',
+            anno_dir='convert_dataset/annotations/instances_val2017.json')
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
+
+        tuning_criterion = TuningCriterion(max_trials=600)
+
+        conf = PostTrainingQuantConfig(approach="static", backend="default",
+            calibration_sampling_size=[50,100,500], tuning_criterion=tuning_criterion)
+        q_model = quantization.fit(raw_model,
+            conf=conf,
+            eval_func=eval_func,
+            calib_dataloader=dataloader
+        )
         q_model.save(args.tuned_checkpoint)
 
     elif args.int8:
@@ -601,19 +617,25 @@ def main():
                                      annFile=args.dataset_path +
                                      "/annotations/instances_val2017.json",
                                      transform=transforms.ToTensor())
-        dataloader = torch.utils.data.DataLoader(dataset)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
         int8_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
                           raw_model,
                           dataloader=dataloader)
         if args.accuracy:
             eval_func(int8_model)
         elif args.benchmark:
-            benchmark(int8_model)
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
+            benchmark.fit(int8_model, config=b_conf, b_func=benchmark_func)
     else:
         if args.accuracy:
             eval_func(raw_model)
         elif args.benchmark:
-            benchmark(raw_model)
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
+            benchmark.fit(raw_model, config=b_conf, b_func=benchmark_func)
 
     runner.finish()
     lg.DestroyQSL(qsl)

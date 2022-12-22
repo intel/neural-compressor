@@ -26,7 +26,6 @@ from time import time
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
 from .utils.tuning_structs import OpTuningConfig
-from .utils.helper import tuning_record_msg
 
 @strategy_registry
 class MSETuneStrategy(TuneStrategy):

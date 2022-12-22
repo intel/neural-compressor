@@ -16,9 +16,6 @@ function init_params {
       --topology=*)
           topology=$(echo $var |cut -f2 -d=)
       ;;
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
@@ -27,6 +24,9 @@ function init_params {
       ;;
       --use_cpu=*)
           use_cpu=$(echo $var |cut -f2 -d=)
+      ;;
+      --hpo=*)
+          hpo=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -39,9 +39,11 @@ function run_distillation {
     if [ 1 = "${use_cpu}" ];then
         extra_cmd=${extra_cmd}" --cpu"
     fi
+    if [ 1 = "${hpo}" ];then
+        extra_cmd=${extra_cmd}" --hpo"
+    fi
     python main.py \
            --topology=${topology} \
-           --config=${config} \
            --output-model=${output_model} \
            ${extra_cmd}
 }

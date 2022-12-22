@@ -2397,15 +2397,13 @@ grappler
 amsgrad
 qoperator
 apis
-PostTrainingQuantConfig
-dgpu
 CPz
 PostTrainingQuantConfig
-dgpu
 Nsh
 UmK
 fe
 vmware
+PythonLauncher
 keepachangelog
 vscode
 IntelNeuralCompressor
@@ -2451,7 +2449,6 @@ npmjs
 AWSSageMakerSupport
 sagemaker
 xpu
-PostTrainingQuantConfig
 dgpu
 BenchmarkConfig
 QuantizationAwareTrainingConfig
@@ -2471,3 +2468,6 @@ MatMulIntegerToFloat
 QuantizeLinear
 css
 subgraph
+AccuracyCriterion
+AccuracyLoss
+TuningCriterion

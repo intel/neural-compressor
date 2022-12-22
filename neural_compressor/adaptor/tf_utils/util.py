@@ -232,7 +232,7 @@ def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1, mea
     sess.run(iter_op, feed_dict)
     preds = []
     idx = 0
-    while idx < iteration or iteration == -1:
+    while idx+1 != iteration:
         try:
             if measurer:
                 measurer.start()

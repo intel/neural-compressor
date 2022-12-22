@@ -821,7 +821,7 @@ def run():
             )
         )
         print("Testing state: accuracy = {:3.3f} %".format(ld_acc_test * 100))
-        del ld_model
+        del(ld_model)
 
     ext_dist.barrier()
     print("time/loss/accuracy (if enabled):")
