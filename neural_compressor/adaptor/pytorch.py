@@ -3764,11 +3764,12 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
         #     model, dataloader, iterations,
         #     calib_sampling_size=self.tune_cfg.get('calib_sampling_size', 1))
 
-        calib_sampling_size = 300
+        calib_sampling_size = self.tune_cfg['calib_sampling_size']
         iterations = math.ceil(calib_sampling_size / dataloader.batch_size)
         self.model_calibration(
             model, dataloader, iterations,
-            calib_sampling_size=300)
+            calib_sampling_size=calib_sampling_size)
+        print('calib_sampling_size', calib_sampling_size)
 
         HF_max = torch.tensor(448)
         for name, module in model.named_modules():
@@ -3871,12 +3872,12 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
             self.quantize_model_weights(model, model_qconfig_dict) # inplace
             hook_handles = self.add_quantization_hooks(model, model_qconfig_dict)
             model.train()
-            # TODO: use config to set calib_sampling_size. 
-            calib_sampling_size = 3000
+            calib_sampling_size = self.tune_cfg['bn_calib_sampling_size']
             iterations = math.ceil(calib_sampling_size / dataloader.batch_size)
             self.model_calibration(
                 model, dataloader, iterations,
-                calib_sampling_size=3000)
+                calib_sampling_size=calib_sampling_size)
+            print('bn_calib_sampling_size', calib_sampling_size)
             model.eval()
             # Recover all fp8 data back to fp32 after updating BN.
             for name, module in model.named_modules():

@@ -768,6 +768,7 @@ schema = Schema({
         },
         Optional('calibration', default={'sampling_size': [100]}): {
             Optional('sampling_size', default=[100]): And(Or(str, int, list), Use(input_to_list)),
+            Optional('batchnorm_sampling_size', default=[3000]): And(Or(str, int, list), Use(input_to_list)),
             Optional('dataloader', default=None): dataloader_schema
         },
         Optional('recipes', default={'scale_propagation_max_pooling': True,
@@ -1348,6 +1349,8 @@ class Conf(object):
                 'quantization.precision': pythonic_config.quantization.precision,
                 'quantization.calibration.sampling_size': 
                     pythonic_config.quantization.calibration_sampling_size,
+                'quantization.calibration.batchnorm_sampling_size': 
+                    pythonic_config.quantization.batchnorm_calibration_sampling_size,
                 'quantization.optype_wise': pythonic_config.quantization.op_type_list,
                 'quantization.op_wise': pythonic_config.quantization.op_name_list,
                 'tuning.strategy.name': pythonic_config.quantization.strategy,

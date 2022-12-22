@@ -599,6 +599,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  outputs=[],
                  approach="static",
                  calibration_sampling_size=[100],
+                 batchnorm_calibration_sampling_size=[3000],
                  op_type_list=None,
                  op_name_list=None,
                  reduce_range=None,
@@ -627,6 +628,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          optimization_level=optimization_level,
                          accuracy_criterion=accuracy_criterion)
         self.approach = approach
+        self.batchnorm_calibration_sampling_size = batchnorm_calibration_sampling_size
 
     @property
     def approach(self):
@@ -645,6 +647,15 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     def tuning_criterion(self, tuning_criterion):
         if check_value("tuning_criterion", tuning_criterion, TuningCriterion):
             self._tuning_criterion = tuning_criterion
+
+    @property
+    def batchnorm_calibration_sampling_size(self):
+        return self._batchnorm_calibration_sampling_size
+
+    @batchnorm_calibration_sampling_size.setter
+    def batchnorm_calibration_sampling_size(self, sampling_size):
+        if check_value('calibration_sampling_size', sampling_size, int):
+            self._batchnorm_calibration_sampling_size = sampling_size
 
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):

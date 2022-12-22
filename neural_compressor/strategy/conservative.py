@@ -69,6 +69,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         calib_sampling_size = calib_sampling_size_lst[0]
         tune_cfg = self._initialize_tune_cfg()
         tune_cfg['calib_sampling_size'] = calib_sampling_size
+        tune_cfg['bn_calib_sampling_size'] = self.bn_calib_sampling_size
         op_type_priority = self._get_op_type_priority()
         quant_items_pool = self._quant_items_pool(op_type_priority)
         logger.info(f"*** Try to convert op into lower precision to improve performance.")

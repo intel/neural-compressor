@@ -190,6 +190,7 @@ class TuneStrategy(object):
         self.tuning_times = 0
         self.fallback_start_point = 0
         self.metric_met_point = 0
+        self.bn_calib_sampling_size = self.cfg.quantization.calibration.batchnorm_sampling_size[0]
 
         if resume is not None: self.setup_resume(resume)
 

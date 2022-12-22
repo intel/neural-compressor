@@ -18,6 +18,8 @@ fake_bf8_yaml = '''
     quantization:
         # approach not needed for fp8_e5m2
         precision: fp8_e5m2   # select from fp8_e5m2, fp8_e4m3, int8
+        calibration:
+            batchnorm_sampling_size: 3000
 
     tuning:
         accuracy_criterion:
@@ -36,6 +38,8 @@ fake_dyn_yaml = '''
     quantization:
         approach: post_training_dynamic_quant
         precision: fp8_e4m3
+        calibration:
+            batchnorm_sampling_size: 3000
 
     tuning:
         accuracy_criterion:
@@ -54,6 +58,9 @@ fake_ptq_yaml = '''
     quantization:
         approach: post_training_static_quant
         precision: fp8_e4m3
+        calibration:
+            batchnorm_sampling_size: 3000
+            sampling_size: 300
 
     tuning:
         accuracy_criterion:
@@ -71,6 +78,8 @@ fake_bf8_fallback_yaml = '''
     quantization:
         # approach not needed for fp8_e5m2
         precision: fp8_e5m2
+        calibration:
+            batchnorm_sampling_size: 3000
         optype_wise: {
             "Embedding": {
                 "activation": {"dtype": ["fp32"]},
@@ -110,6 +119,8 @@ fake_dyn_fallback_yaml = '''
     quantization:
         approach: post_training_dynamic_quant
         precision: fp8_e4m3
+        calibration:
+            batchnorm_sampling_size: 3000
         optype_wise: {
             "Embedding": {
                 "activation": {"dtype": ["fp32"]},
@@ -149,6 +160,9 @@ fake_ptq_fallback_yaml = '''
     quantization:
         approach: post_training_static_quant
         precision: fp8_e4m3
+        calibration:
+            batchnorm_sampling_size: 3000
+            sampling_size: 300
         optype_wise: {
             "Embedding": {
                 "activation": {"dtype": ["fp32"]},
@@ -249,7 +263,12 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
 
     def test_CV_quantization_new_API(self):
         model = self.cv_model
-        quant_conf = PostTrainingQuantConfig(precision="fp8_e5m2")
+        quant_conf = PostTrainingQuantConfig(
+            precision="fp8_e5m2",
+            # by default, calibration_sampling_size=100, batchnorm_calibration_sampling_size = 3000
+            calibration_sampling_size=[300],
+            batchnorm_calibration_sampling_size=[3000],
+        )
         q_model = quantization.fit(
             model,
             quant_conf,
@@ -258,9 +277,19 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
         for fake_yaml in ["dynamic", "static"]:
             model = self.cv_model
             if fake_yaml == "dynamic":
-                quant_conf = PostTrainingQuantConfig(approach="dynamic", precision="fp8_e4m3")
+                quant_conf = PostTrainingQuantConfig(
+                    approach="dynamic", 
+                    precision="fp8_e4m3",
+                    calibration_sampling_size=[300],
+                    batchnorm_calibration_sampling_size=[3000],
+                )
             elif fake_yaml == "static":
-                quant_conf = PostTrainingQuantConfig(approach="static", precision="fp8_e4m3")
+                quant_conf = PostTrainingQuantConfig(
+                    approach="static", 
+                    precision="fp8_e4m3",
+                    calibration_sampling_size=[300],
+                    batchnorm_calibration_sampling_size=[3000],
+                )
             q_model = quantization.fit(
                 model,
                 quant_conf,

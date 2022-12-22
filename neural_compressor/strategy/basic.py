@@ -118,6 +118,7 @@ class BasicTuneStrategy(TuneStrategy):
                     logger.info("Early stopping the stage 1.")
                     break
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                op_tuning_cfg['bn_calib_sampling_size'] = self.bn_calib_sampling_size
                 yield op_tuning_cfg
             # Fallback the ops supported both static and dynamic from static to dynamic
             # Tuning items: None
@@ -134,6 +135,7 @@ class BasicTuneStrategy(TuneStrategy):
                     new_op_tuning_cfg[item.name] = self.initial_dynamic_cfg_based_on_static_cfg(
                                                    new_op_tuning_cfg[item.name])
                 new_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                new_op_tuning_cfg['bn_calib_sampling_size'] = self.bn_calib_sampling_size
                 yield new_op_tuning_cfg
             best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
 
@@ -153,6 +155,7 @@ class BasicTuneStrategy(TuneStrategy):
                 op_fallback_acc_impact = OrderedDict()
                 for op_index, op_tuning_cfg in enumerate(fallback_sampler):
                     op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                    op_tuning_cfg['bn_calib_sampling_size'] = self.bn_calib_sampling_size
                     yield op_tuning_cfg
                     acc, _ = self.last_tune_result
                     op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
@@ -171,6 +174,7 @@ class BasicTuneStrategy(TuneStrategy):
                                                             op_dtypes=op_dtypes, accumulate=True)
                     for op_tuning_cfg in fallback_sampler:
                         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                        op_tuning_cfg['bn_calib_sampling_size'] = self.bn_calib_sampling_size
                         yield op_tuning_cfg
                         
     def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
