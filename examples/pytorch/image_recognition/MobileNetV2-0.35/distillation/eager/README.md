@@ -1,4 +1,4 @@
-## CIFAR10 Distillation Example
+## MobileNet Distillation Example
 This example is used for distillation on CIFAR10 dataset. Use following commands to install requirements and execute demo of distillation of the WideResNet40-2 to the MobileNetV2-0.35.
 
 ```shell
