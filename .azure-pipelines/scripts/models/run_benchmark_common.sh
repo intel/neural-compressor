@@ -49,8 +49,8 @@ main() {
     if [ ${PERF_STABLE_CHECK} == "false" ]; then
         run_performance
     else
-        max_loop=3
-        gap=(0.05 0.05 0.1)
+        max_loop=2
+        gap=(0.005 0.001)
         for ((iter = 0; iter < ${max_loop}; iter++)); do
             run_performance
             {
