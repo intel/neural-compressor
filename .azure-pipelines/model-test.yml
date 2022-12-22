@@ -127,7 +127,6 @@ stages:
     pool:
       vmImage: "ubuntu-latest"
     dependsOn: [TensorFlowModels, PyTorchModels, MXNetModels, ONNXModels]
-    condition: succeededOrFailed()
     jobs:
       - job: GenerateReport
         steps:
