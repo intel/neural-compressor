@@ -715,7 +715,7 @@ def bench(
             "patch -R -d/ -p0 < " + patch_path, env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec
         sp_unpatch.wait()
 
-    return [FPS, MSPI, P50, P90, P99, acc_delta], mode, os.path.abspath(ws_path)
+    return [FPS, MSPI, P50, P90, P99, acc_delta, acc_fp32, acc_int8], mode, os.path.abspath(ws_path)
 
 
 def superbench(
