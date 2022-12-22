@@ -64,24 +64,6 @@ class TuningSampler:
         """Interface for generate the next tuning config."""
         pass
 
-
-
-        """
-        
-        Args:
-        tuning_space: Tuning space.
-        tuning_items_priority: The priority to traverse the tuning items.
-        tuning_order_lst: The tuning orders.
-        op_dtype_dict: The (op name, op type) and its target data type.
-        initial_op_tuning_cfg: The initial tuning config.
-        
-        """
-        """
-        step1. create a default tuning config for each op
-        step2. collect all tuning items and options, and build the model-wise traverse order
-        step3. yield the tuning item with option one by one, query the existence of tuning item 
-               and specific option for one opif exist, use the default tuning config if not exist
-        """
 class ModelWiseTuningSampler(TuningSampler):
     """Not displayed in API Docs."""
 
@@ -93,12 +75,18 @@ class ModelWiseTuningSampler(TuningSampler):
                  initial_op_tuning_cfg: Dict[tuple, OpTuningConfig]):
         """Model type wise tuning sampler.
 
+        step1. create a default tuning config for each op
+        step2. collect all tuning items and options, and build the model-wise traverse order
+        step3. yield the tuning item with option one by one, query the existence of tuning item 
+               and specific option for one op if exist, use the default tuning config if not exist
+               
         Args:
             tuning_space: Tuning space.
             tuning_items_priority: The priority to traverse the tuning items.
             tuning_order_lst: The tuning orders.
             op_dtype_dict: The (op name, op type) and its target data type.
             initial_op_tuning_cfg: The initial tuning config.
+        
         """
         super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg)
 
