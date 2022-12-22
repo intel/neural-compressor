@@ -86,9 +86,9 @@ class BasePattern:
     Attributes:
         pattern: A config dict object that includes information of the pattern.    
         is_global:  A bool determining whether the pruning takes global pruning option.
-                    Global pruning means that a pruning criterion is applied to all pruning layers simultaneously.
-                    Local pruning, by contrast, means that the pruning criterion is applied to 
-                        every pruning layer individually.
+                    Global pruning means that pruning scores by a pruning criterion are evaluated in all layers.
+                    Local pruning, by contrast, means that pruning scores by the pruning criterion are evaluated 
+                        in every layer individually.
         keep_mask_layers:A dict that includes the layers whose mask will not be updated.
         invalid_layers: The layers whose shapes don't fit the pattern.
         modules: Torch neural network modules to be pruned with the pattern.
