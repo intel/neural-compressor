@@ -150,6 +150,7 @@ def main():
                                             calibration_sampling_size=[8])
         q_model = quantization.fit(model, 
                                    config,
+                                   calib_dataloader=eval_dataloader,
                                    eval_func=eval_func)
         q_model.save(args.save_path)
 
