@@ -20,6 +20,7 @@ import re
 import yaml
 from .logger import logger
 from ..config import WeightPruningConfig
+from ..conf.config import PrunerV2
 
 try:
     from neural_compressor.conf.dotdict import DotDict
@@ -164,7 +165,31 @@ def process_yaml_config(global_config, local_configs, default_config):
 
     return pruners_info
 
+def check_key_validity(template_config, user_config):
+    def check_key_validity_dict(template_config, usr_cfg_dict):
+        for user_key, user_value in usr_cfg_dict.items():
+            if user_key not in template_config.keys():
+                logger.warning(f"{user_key} is not supported for config")
 
+    def check_key_validity_prunerv2(template_config, usr_cfg_dict):
+        for user_key, user_value in usr_cfg_dict.pruner_config.items():
+            if user_key not in template_config.keys():
+                logger.warning(f"{user_key} is not supported for config")
+    
+    # multi pruners
+    if isinstance(user_config, list):
+        for obj in user_config:
+            if isinstance(obj, dict):
+                check_key_validity_dict(template_config, obj)
+            elif isinstance(obj, PrunerV2):
+                check_key_validity_prunerv2(template_config, obj)
+                
+    # single pruner, weightconfig or yaml
+    elif isinstance(user_config, dict):
+        check_key_validity_dict(template_config, user_config)
+    elif isinstance(user_config, PrunerV2):
+        check_key_validity_prunerv2(template_config, user_config)
+    return
 
 def process_and_check_config(val):
     default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
@@ -173,7 +198,6 @@ def process_and_check_config(val):
                              'min_sparsity_ratio_per_op': 0.0, 'max_sparsity_ratio_per_op': 0.98,
                              'sparsity_decay_type': 'exp',
                              'pruning_op_types': ['Conv', 'Linear'],
-
                              }
     default_local_config = {'resume_from_pruned_checkpoint': False, 'reg_type': None,
                             'criterion_reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
@@ -185,16 +209,18 @@ def process_and_check_config(val):
     default_config.update(default_local_config)
     default_config.update(params_default_config)
     if isinstance(val, WeightPruningConfig):
-        pruning_configs = val.pruning_configs
         global_configs = val.weight_compression
+        pruning_configs = val.pruning_configs
+        check_key_validity(default_config, pruning_configs)
+        check_key_validity(default_config, global_configs)
         return process_weight_config(global_configs, pruning_configs, default_config)
     else:
         val = val["pruning"]["approach"]["weight_compression_v2"]
         global_configs = val
         pruning_configs = val["pruners"]
+        check_key_validity(default_config, pruning_configs)
+        check_key_validity(default_config, global_configs)
         return process_yaml_config(global_configs, pruning_configs, default_config)
-
-
 
 def process_config(config):
     """Obtain a config dict object from a config file.
