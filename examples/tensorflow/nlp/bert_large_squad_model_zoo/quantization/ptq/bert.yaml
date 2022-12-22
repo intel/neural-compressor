@@ -23,6 +23,8 @@ model:
 
 device: cpu                                          # optional. default value is cpu, other value is gpu.
 
+use_bf16: false                                      # optional. turn off bf16 conversion
+
 evaluation:
   accuracy:
     metric:
