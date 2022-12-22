@@ -213,8 +213,8 @@ on_after_optimizer_step() : Execute after optimization step.
 We validate the pruning technique on typical models across various domains (including CV and NLP) and the examples are listed in [Pruning Examples](../../docs/source/pruning_details.md#examples). A complete overview of validated examples including quantization, pruning and distillation results could be found in  [Intel Neural Compressor Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
 
 <div style = "width: 77%; margin-bottom: 2%;">
-  <a target="_blank" href="./docs/source/_static/imgs/pruning/pruningy_scatter.jpg">
-    <img src="./docs/source/_static/imgs/pruning/pruningy_scatter.jpg" alt="Architecture" width=800 height=500>
+  <a target="_blank" href="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG">
+    <img src="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG" alt="Architecture" width=800 height=500>
   </a>
 </div>
 
