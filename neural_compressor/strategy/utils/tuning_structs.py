@@ -15,20 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Tuning structure."""
 
 from typing import Dict, Any
 from .tuning_space import QUANT_MODE_SET
 from ...utils import logger
 
 class OpTuningConfig:
+    """Op tuning config."""
+    
     def __init__(self, op_name, op_type, op_quant_mode, tuning_space, kwargs={}):
-        """
-        tuning config for one specific op
-        :param op_name:
-        :param op_type:
-        :param op_quant_mode:
-        :param act_dtype:
-        :param kwargs:
+        """Create the tuning config.
+
+        Args:
+            op_name: op name.
+            op_type: op type.
+            op_quant_mode: quantization mode.
+            tuning_space: tuning space.
+            kwargs: other parameters. Defaults to {}.
         """
         self.op_name = op_name
         self.op_type = op_type
@@ -60,6 +64,11 @@ class OpTuningConfig:
 
 
     def __str__(self) -> str:
+        """Display the tuning config as string.
+
+        Returns:
+            msg: the tuning config as string.
+        """
         msg =  f"op name: {self.op_name}, op type : {self.op_type} \n"
         msg += f"\t activation dtype: {self.act_dtype} \n"
         msg += f"\t weight dtype: {self.weight_dtype} \n"  if self.weight_dtype else ""
@@ -68,8 +77,7 @@ class OpTuningConfig:
         return msg
 
     def get_state(self):
-        """
-        Return the op tuning configuration. 
+        """Return the op tuning configuration.
         
         Returns:
             Dict: The op tuning state.
@@ -89,4 +97,9 @@ class OpTuningConfig:
 
     @classmethod
     def from_state(cls, config: Dict):
+        """Create the tuning config from dict.
+
+        Args:
+            config: A dict includes the tuning config.
+        """
         cls(**config)

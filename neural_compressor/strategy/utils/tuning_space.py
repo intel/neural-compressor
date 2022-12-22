@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Tuning space."""
 
 from ast import Or
 from collections import defaultdict, OrderedDict
@@ -33,33 +34,69 @@ TUNING_ITEMS_LST = [('activation','scheme'), ('activation','algorithm'), ('activ
 
 
 class TuningItem:
+    """Not displayed in API Docs."""
+    
     def __init__(self, name, options=[], item_type=None):
+        """Init the tuning item.
+
+        Args:
+            name: tuning item name.
+            options: The options. Defaults to [].
+            item_type: The item type. Defaults to None.
+        """
         self.name = name
         self._options = options
         self.item_type = item_type
 
     @property
     def options(self):
+        """Return all options.
+
+        Returns:
+            All options.
+        """
         return self._options
 
     def append(self, option):
+        """Append option.
+
+        Args:
+            option: The option to add.
+        """
         self._options.append(option)
 
     def remove(self, option):
+        """Remove option.
+
+        Args:
+            option: The option to remove.
+        """
         if option in self._options:
             self._options.remove(option)
 
     def get_option_by_name(self, option_name):
+        """Get the option item by name.
+
+        Args:
+            option_name: option name.
+
+        Returns:
+            option: the queried option.
+        """
         for option in self.options:
             if isinstance(option, TuningItem) and option.name == option_name:
                 return option
         return None
 
     def get_details(self, depth=0):
-        """
-        :return:
-        """
+        """Get the tuning item and its options recursively.
+        
+        Args:
+            depth: recursion depth. Defaults to 0.
 
+        Returns:
+            The tuning item and its options as a string.
+        """
         details = ['\t' * depth + f"{self.name},  {self.item_type}"]
         for option in self.options:
             if isinstance(option, int) or isinstance(option, str):
@@ -70,7 +107,16 @@ class TuningItem:
 
 
 class TuningSpace:
+    """Not displayed in API Docs."""
+    
     def __init__(self, capability, conf, framework=None):
+        """Init the tuning space.
+
+        Args:
+            capability: framework capability.
+            conf: user configuration
+            framework: framework name. Defaults to None.
+        """
         self.capability = capability
         self.conf = conf
         self.root_item = TuningItem(name='root', options=[], item_type='root')
@@ -84,6 +130,7 @@ class TuningSpace:
         self._create_tuning_space(capability, usr_cfg)
 
     def _parse_capability(self, capability):
+        """Parse the capability and construct the tuning space(a tree)."""
         calib = TuningItem(name='calib_sampling_size',
                            options=capability['calib']['calib_sampling_size'],
                            item_type='calib_sampling_size')
@@ -127,7 +174,8 @@ class TuningSpace:
                 quant_mode_item.append(tuning_item)
 
     def _merge_op_cfg(self, op_cap, op_user_cfg, fw_op_cap):
-        """
+        """Merge the framework capability with user config.
+
         # for precision, merge the options of the tuning items 
         # for quanzation, merge the dtype
         supported_precision_set = {'fp32', 'bf16'}
@@ -147,7 +195,10 @@ class TuningSpace:
                     'granularity': ['per_tensor']
                     }
             }
+            
         Returns:
+            op_cap: merged op capability.
+
         """
         for key in ['activation', 'weight']:
             if key in op_user_cfg and op_user_cfg[key] is not None:
@@ -207,10 +258,11 @@ class TuningSpace:
                                                                  fw_cap['op'][op_name_type])
              
     def _merge_with_user_cfg(self, capability: Dict, user_cfg: Dict):
-        """
-        Merge the capability queried from the adaptor with user config in the order of 
+        """Merge the capability with user config.
+        
+        Merge the capability queried from the adaptor with user config in the order of
         model-wise, optype-wise, and op-wise if needed.
-        The optype-wise user config will override the model-wise user config for their 
+        The optype-wise user config will override the model-wise user config for their
         intersection parts, the same as the op-wise and optype-wise.
         
         Here is an example:
@@ -319,7 +371,8 @@ class TuningSpace:
             self._merge_op_wise_cfg(capability, user_cfg['op_wise'], fw_capability)
             
     def _parse_cap_helper(self, cap):
-        """
+        """Parse the capability and convert it into internal structure.
+        
         # for op support int8 dynamic ptq, int8 static ptq, fp32, and bf16
         ('op_name1','optype1'):[
             {
@@ -383,7 +436,8 @@ class TuningSpace:
         return parsed_cap
     
     def _create_tuning_space(self, capability, usr_cfg):
-        """
+        """Create tuning space.
+        
         step1. merge the capability with usr_cfg
         step2. create the tuning space
         :param capability:
@@ -396,8 +450,8 @@ class TuningSpace:
         self._parse_capability(capability)
 
     def query_items_by_quant_mode(self, quant_mode):
-        """
-        Collect all op items that support the specific quantization/precision mode 
+        """Collect all op items that support the specific quantization/precision mode.
+        
         Args:
             quant_mode (str): fp32/bf16/dynamic/static
 
@@ -414,17 +468,46 @@ class TuningSpace:
         return items_lst
     
     def query_quant_mode_item(self, op_name_type, quant_mode):
+        """Interface for query the quantization item.
+
+        Args:
+            op_name_type: (op_name, op_type)
+            quant_mode: The quantization mode.
+
+        Returns:
+            Return queried quantization item.
+        """
         op_item = self.op_items[op_name_type]
         for quant_item in op_item.options:
             if quant_mode == quant_item.name or quant_mode in quant_item.name:
                 return quant_item
 
     def query_item_option(self, op_name_type, quant_mode, key, val):
+        """Check if the option exit in the tuning item.
+
+        Args:
+            op_name_type: (op_name, op_type)
+            quant_mode: The quantization mode.
+            key: tuning item name.
+            val: option of tuning item .
+
+        Returns:
+            bool: Return True if the option exit in the tuning item else False.
+        """
         quant_mode_item = self.query_quant_mode_item(op_name_type, quant_mode)
         tuning_item = quant_mode_item.get_option_by_name(key)
         return tuning_item is not None and val in tuning_item.options
     
     def set_deafult_config(self, op_name_type, quant_mode):
+        """Get the default tuning config.
+
+        Args:
+            op_name_type: (op_name, op_type)
+            quant_mode: quantization mode.
+
+        Returns:
+            op_tuning_config: the default config according to the specified quantization mode.
+        """
         from .tuning_structs import OpTuningConfig
         op_item = self.op_items[op_name_type]
         # set the first option as the default if the not support the required quant mode

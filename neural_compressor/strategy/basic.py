@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The `basic` tuning strategy."""
+"""The basic tuning strategy."""
 
 import copy
 import numpy as np
@@ -29,40 +29,14 @@ from .utils.tuning_space import TUNING_ITEMS_LST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
-    """The `basic` tuning strategy."""
-    
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        """Construct a basic tuning strategy.
-
-        Args:
-            model (object): The FP32 model specified for low precision tuning.
-            conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
-            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
-            q_func (function): Training function for quantization aware training. Defaults to None.
-            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
-            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
-            dicts (dict): The dict containing resume information. Defaults to None.
-        """
-        super(
-            BasicTuneStrategy,
-            self).__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
+    """The basic tuning strategy."""
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
         
-            1. modelwise tuning for all quantizable ops.
-            2. fallback tuning from bottom to top to decide the priority of which op has biggest impact
-            on accuracy.
-            3. incremental fallback tuning by fallbacking multiple ops with the order got from #2.
+            1. OP Type Wise Tuning
+            2. Stage II. Fallback OP One by One
+            3. Fallback Multiple OPs Accumulated
 
         Yields:
             tune_config (dict): A dict containing the tuning configuration for quantization.
@@ -127,7 +101,7 @@ class BasicTuneStrategy(TuneStrategy):
                     op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
 
 
-                # do accumulated fallback according to the order in the previous stage
+                # Fallback OPs accumulated according to the order in the previous stage
                 if len(op_fallback_acc_impact) > 0:
                     ordered_ops = sorted(op_fallback_acc_impact.keys(), 
                                          key=lambda key: op_fallback_acc_impact[key],

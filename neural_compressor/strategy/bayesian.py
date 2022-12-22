@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The `baysian` tuning strategy."""
-
-"""The `baysian` tuning strategy."""
+"""The BaySian tuning strategy."""
 
 import copy
 import warnings
@@ -37,31 +35,12 @@ from .utils.tuning_structs import OpTuningConfig
 
 @strategy_registry
 class BayesianTuneStrategy(TuneStrategy):
-    """The `baysian` tuning strategy."""
+    """The BaySian tuning strategy."""
     
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        """Construct a bayesian tuning strategy.
-        
-        Args:
-            model (object): The FP32 model specified for low precision tuning.
-            conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
-            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
-            q_func (function): Training function for quantization aware training. Defaults to None.
-            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
-            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
-            dicts (dict): The dict containing resume information. Defaults to None.
-        """
+    def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, 
+                 eval_func=None, dicts=None, q_hooks=None):
+        """Init the BaySian tuning strategy."""
         self.bayes_opt = None
-        super().__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
 
     def __getstate__(self):
         """Magic method for pickle saving.
@@ -91,7 +70,12 @@ class BayesianTuneStrategy(TuneStrategy):
         return op_tuning_cfg
 
     def next_tune_cfg(self):
-        """Generate and yield the next tuning config using bayesian search in tuning space.
+        """Generate the next tuning config according to bayesian search algorithm.
+        
+        This strategy comes from the Bayesian optimization package and changed it to a discrete version.
+        It uses Gaussian processes to define the prior/posterior distribution over the black-box 
+        function with the tuning history and then finds the tuning configuration that maximizes 
+        the expected improvement.
 
         Yields:
             tune_config (dict): A dict containing the tuning configuration for quantization.
@@ -139,7 +123,7 @@ def acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10):
         gp: A gaussian process fitted to the relevant data.
         y_max: The current maximum known value of the target function.
         bounds: The variables bounds to limit the search of the acq max.
-        random_state: instance of np.RandomState random number generator
+        random_seed: instance of np.RandomState random number generator
         n_warmup: number of times to randomly sample the acquisition function
         n_iter: number of times to run scipy.minimize
     
@@ -381,12 +365,12 @@ class TargetSpace(object):
 class BayesianOptimization():
     """The class for bayesian optimization.
     
-    This class takes the parameters bounds in order to find which values 
-    for the parameters yield the maximum value using bayesian optimization.
+    This class takes the parameters bounds in order to find which values for 
+    the parameters yield the maximum value using bayesian optimization.
     """
     
     def __init__(self, pbounds, random_seed=9527, verbose=2):
-        """Construct a bayesian optimization.
+        """Init bayesian optimization.
 
         Args:
             pbounds (dict): Dictionary with parameters names as keys and a tuple with
@@ -432,7 +416,7 @@ class BayesianOptimization():
         return mean + kappa * std
 
     def suggest(self):
-        """Get most promissing point to probe next."""
+        """Suggest the most promising points."""
         if len(set(self._space.target)) < 2:
             return self._space.array_to_params(self._space.random_sample())
 

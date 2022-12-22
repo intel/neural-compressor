@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The HAWQ v2 tuning strategy."""
+"""The HAWQ_V2 tuning strategy."""
 
 from collections import OrderedDict
 from copy import deepcopy
@@ -29,32 +29,13 @@ from ..utils import logger
 
 @strategy_registry
 class HAWQ_V2TuneStrategy(TuneStrategy):
-    """The HAWQ v2 tuning strategy."""
-
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        """Construct a HAWQ v2 tuning strategy.
-        
-        Args:
-            model (object): The FP32 model specified for low precision tuning.
-            conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
-            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
-            q_func (function): Training function for quantization aware training. Defaults to None.
-            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
-            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
-            dicts (dict): The dict containing resume information. Defaults to None.
-        """
-        super(
-            HAWQ_V2TuneStrategy,
-            self).__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
+    """The HAWQ V2 tuning strategy.
+    
+    HAWQ_V2 implements the "Hawq-v2: Hessian aware trace-weighted quantization of neural networks".
+    We made a small change to it by using the hessian trace to score the op impact and then
+    fallback the OPs according to the scoring result.
+    
+    """
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config using HAWQ v2 search in tuning space.
@@ -84,7 +65,7 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
             yield op_tuning_cfg
         # Start compute the hessian trace
         logger.info(f"**************  Start compute the hessian trace  *****************")
-        target_dtype = "int8"  
+        target_dtype = "fp32"  
         hawq_v2_criterion =self.cfg.tuning.strategy.hawq_v2_loss
         # assert hawq_v2_criterion is not None, "HAWQ-V2 strategy needs model loss function to compute the gradient, \
         #     Please assign it by strategy_kwargs({'hawq_v2_loss': hawq_v2_loss})."

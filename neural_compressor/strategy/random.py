@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The `random` tuning strategy."""
+"""The random tuning strategy."""
 
 import numpy as np
 from .strategy import strategy_registry, TuneStrategy
@@ -27,38 +27,16 @@ from ..utils import logger
 
 @strategy_registry
 class RandomTuneStrategy(TuneStrategy):
-    """The `random` tuning strategy, which using random searching in tuning space."""
-
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        """Construct a random tuning strategy.
-
-        Args:
-            model (object): The FP32 model specified for low precision tuning.
-            conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
-            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
-            q_func (function): Training function for quantization aware training. Defaults to None.
-            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
-            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
-            dicts (dict): The dict containing resume information. Defaults to None.
-        """
-        super().__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
+    """The random tuning strategy."""
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config by random searching in tuning space.
         
+        Random strategy is used to randomly choose quantization tuning configurations from the tuning space.
+
         Yields:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
-        from copy import deepcopy
         tuning_space = self.tuning_space
         initial_op_tuning_cfg = {}
         for item in tuning_space.root_item.options:

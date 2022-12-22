@@ -17,7 +17,6 @@
 
 """MSE tuning strategy."""
 
-import copy
 from copy import deepcopy
 import numpy as np
 from collections import OrderedDict
@@ -33,37 +32,16 @@ from .utils.tuning_structs import OpTuningConfig
 class MSETuneStrategy(TuneStrategy):
     """The tuning strategy using MSE policy in tuning space.
 
-    This MSE policy runs fp32 model and int8 model seperately to get all activation tensors,
-      and then compares those tensors by MSE algorithm to order all ops with MSE distance for
-      deciding the impact of each op to final accuracy.
-      It will be used to define opwise tuningspace by priority.
+    The MSE strategy needs to get the tensors for each OP of raw FP32 models and the quantized model based on
+    the best model-wise tuning configuration. It then calculates the MSE (Mean Squared Error) for each OP, sorts
+    those OPs according to the MSE value, and performs the op-wise fallback in this order.
     """
-
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        """Construct an mse tuning strategy.
-
-        Args:
-            model (object): The FP32 model specified for low precision tuning.
-            conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
-            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
-            q_func (function): Training function for quantization aware training. Defaults to None.
-            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
-            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
-            dicts (dict): The dict containing resume information. Defaults to None.
-        """
+    
+    def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, 
+                 eval_func=None, dicts=None, q_hooks=None):
+        """Init an mse tuning strategy."""
         self.ordered_ops = None
-        super(
-            MSETuneStrategy,
-            self).__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
+
 
     def __getstate__(self):
         """Magic method for pickle saving.
@@ -77,7 +55,7 @@ class MSETuneStrategy(TuneStrategy):
         save_dict = super().__getstate__()
         return save_dict
 
-    def mse_metric_gap(self, fp32_tensor, dequantize_tensor):
+    def _mse_metric_gap(self, fp32_tensor, dequantize_tensor):
         """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
 
         Args:
@@ -125,7 +103,7 @@ class MSETuneStrategy(TuneStrategy):
             quantization_cfg=current_best_tune_cfg)
         dequantize_tensor_dict = quant_dump_content['activation'][0]
         ops_mse = {
-            op: self.mse_metric_gap(
+            op: self._mse_metric_gap(
                 list(fp32_tensor_dict[op].values())[0],
                 list(dequantize_tensor_dict[op].values())[0]) for op in fp32_tensor_dict}
         ordered_op_names = sorted(ops_mse.keys(), key=lambda key: ops_mse[key], reverse=self.higher_is_better)
@@ -135,12 +113,8 @@ class MSETuneStrategy(TuneStrategy):
 
 
     def next_tune_cfg(self):
-        """Generate and yield the next tuning config with below order.
+        """Generate and yield the next tuning config.
         
-            1. Op-type wise tuning for all quantizable ops.
-            2. Fallback the ops to 'int8_dynamic', 'bf16' and 'fp32' if supported
-               by the MSE impaction.
-
         Yields:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """

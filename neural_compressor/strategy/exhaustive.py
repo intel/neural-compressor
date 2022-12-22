@@ -15,10 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The `exhaustive` tuning strategy."""
+"""The exhaustive tuning strategy."""
 
-import copy
-import itertools
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 
@@ -28,34 +26,13 @@ from ..utils import logger
 
 @strategy_registry
 class ExhaustiveTuneStrategy(TuneStrategy):
-    """The `exhaustive` tuning strategy."""
-
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        """Construct an exhaustive tuning strategy.
-
-        Args:
-            model (object): The FP32 model specified for low precision tuning.
-            conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
-            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
-            q_func (function): Training function for quantization aware training. Defaults to None.
-            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
-            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
-            dicts (dict): The dict containing resume information. Defaults to None.
-        """
-        super().__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
+    """The exhaustive tuning strategy."""
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config using exhaustive search in tuning space.
-    
+        
+        It sequentially traverse all possible quantization tuning configurations in a tuning space.
+        
         Yields:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
@@ -103,5 +80,4 @@ class ExhaustiveTuneStrategy(TuneStrategy):
                     break
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
-
         return

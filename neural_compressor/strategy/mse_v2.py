@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The `mse_v2` tuning strategy."""
+"""The MSE_V2 tuning strategy."""
 
 import copy
 from copy import deepcopy
@@ -26,7 +26,7 @@ from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 from time import time 
 
-from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
+from .utils.tuning_sampler import OpTypeWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 
 @strategy_registry
@@ -37,32 +37,6 @@ class MSE_V2TuneStrategy(TuneStrategy):
     tuning strategy.
     """
     
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        """Construct an mse_v2 tuning strategy.
-        
-        Args:
-            model (object): The FP32 model specified for low precision tuning.
-            conf (Conf | Config): The configurations for tuning, quantization, evaluation etc.
-            q_dataloader (generator[input, label]): Data loader for calibration, mandatory for post-training quantization.
-            q_func (function): Training function for quantization aware training. Defaults to None.
-            eval_dataloader (generator[input, label]): Data loader for evaluation. Defaults to None.
-            eval_func (function(model)->accuracy): The evaluation function provided by user. Defaults to None.
-            dicts (dict): The dict containing resume information. Defaults to None.
-        """
-        self.ordered_ops = None
-        super(
-            MSE_V2TuneStrategy,
-            self).__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
-    
     def _tuning_record_msg(self, records):
         records_str_lst = [[str(e) for e in record] for record in records]
         record_msg = '\n'.join(','.join(record) for record in records_str_lst)
@@ -71,11 +45,13 @@ class MSE_V2TuneStrategy(TuneStrategy):
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
         
-            1. Several times of model-wise tuning for all quantizable operators.
-            2. Try fallback the quantized ops one by one, calculate and sort by the MSE of the 
-               quantizable tensors nearest to the output, and then select the operator with lowest
-               MSE to fallback.
-            3. Try quantize the fallback operators in #2 back further for better performance.
+           MSE_v2 is a strategy with a two stages fallback and revert fallback.
+           In the fallback stage, it uses multi-batch data to score the op impact
+           and then fallback the op with the highest score util found the quantized
+           model meets accuracy criteria. 
+           In the revert fallback stage, it also scores the impact of fallback OPs
+           in the previous stage and selects the op with the lowest score to revert
+           the fallback until the quantized model not meets accuracy criteria.
     
         Yields:
             tune_config (dict): A dict containing the tuning configuration for quantization.
