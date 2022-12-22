@@ -317,7 +317,7 @@ class _BaseQuantizationConfig:
                  performance_only=False,
                  reduce_range=None,
                  excluded_precisions=[],
-                 optimization_level=1,
+                 quant_level=1,
                  accuracy_criterion=accuracy_criterion):
         self.inputs = inputs
         self.outputs = outputs
@@ -337,7 +337,7 @@ class _BaseQuantizationConfig:
         self.use_bf16 = "bf16" not in self.excluded_precisions
         self.accuracy_criterion = accuracy_criterion
         self.calibration_sampling_size = calibration_sampling_size
-        self.optimization_level = optimization_level
+        self.quant_level = quant_level
 
     @property
     def accuracy_criterion(self):
@@ -359,12 +359,12 @@ class _BaseQuantizationConfig:
             self._use_bf16 = "bf16" not in excluded_precisions
 
     @property
-    def optimization_level(self):
-        return self._optimization_level
+    def quant_level(self):
+        return self._quant_level
 
-    @optimization_level.setter
-    def optimization_level(self, optimization_level):
-        self._optimization_level = optimization_level
+    @quant_level.setter
+    def quant_level(self, quant_level):
+        self._quant_level = quant_level
 
     @property
     def reduce_range(self):
@@ -591,7 +591,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  excluded_precisions=[],
-                 optimization_level=1,
+                 quant_level=1,
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
     ):
@@ -611,7 +611,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          max_trials=tuning_criterion.max_trials,
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
-                         optimization_level=optimization_level,
+                         quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion)
         self.approach = approach
 
@@ -644,7 +644,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  excluded_precisions=[],
-                 optimization_level=1):
+                 quant_level=1):
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
@@ -653,7 +653,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                          op_name_list=op_name_list,
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
-                         optimization_level=optimization_level)
+                         quant_level=quant_level)
         self._approach = 'quant_aware_training'
 
     @property
