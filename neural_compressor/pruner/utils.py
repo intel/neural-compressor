@@ -29,10 +29,10 @@ except:
 
 
 def check_config(prune_config):
-    """Functions that check key-value is valid to run Pruning object.
+    """Check if the configuration dict is valid for running Pruning object.
 
     Args:
-        prune_config: A config dict object. Contains Pruning parameters and configurations.
+        prune_config: A config dict object that contains Pruning parameters and configurations.
 
     Returns:
         None if everything is correct.
@@ -89,12 +89,12 @@ def check_config(prune_config):
 
 
 def reset_none_to_default(obj, key, default):
-    """Functions that add up undefined configurations.
-    If some configurations are not defined in the configuration, set it to a default value.
+    """Set undefined configurations to default values.
+
     Args:
         obj: A dict{key: value}
-        key: A string. Key in obj.
-        default: When the key is not in obj, Add key: default item in original obj.
+        key: A string representing the key in obj.
+        default: When the key is not in obj, add key by the default item in original obj.
     """
     if obj == None:
         return None
@@ -109,8 +109,8 @@ def reset_none_to_default(obj, key, default):
         else:
             return getattr(obj, key)
 
-
 def update_params(info):
+    """Update parameters."""
     if "parameters" in info.keys():
         params = info["parameters"]
         for key in params:
@@ -118,6 +118,16 @@ def update_params(info):
 
 
 def process_weight_config(global_config, local_configs, default_config):
+    """Process pruning configurations.
+
+    Args:
+        global_config: A config dict object that contains pruning parameters and configurations.
+        local_config: A config dict object that contains pruning parameters and configurations.
+        default_config: A config dict object that contains pruning parameters and configurations.
+
+    Returns:
+        pruners_info: A config dict object that contains pruning parameters and configurations.
+    """
     pruners_info = []
     default_all = global_config
     for key in default_config.keys():
@@ -143,6 +153,16 @@ def process_weight_config(global_config, local_configs, default_config):
 
 
 def process_yaml_config(global_config, local_configs, default_config):
+    """Process the yaml configuration file.
+
+    Args:
+        global_config: A config dict object that contains pruning parameters and configurations.
+        local_config: A config dict object that contains pruning parameters and configurations.
+        default_config: A config dict object that contains pruning parameters and configurations.
+
+    Returns:
+        pruners_info: A config dict object that contains pruning parameters and configurations.
+    """
     pruners_info = []
     default_all = global_config
     for key in default_config.keys():
@@ -192,6 +212,11 @@ def check_key_validity(template_config, user_config):
     return
 
 def process_and_check_config(val):
+    """Process and check configurations.
+    
+    Args:  
+        val: A dict that contains the layer-specific pruning configurations.
+    """
     default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
                              'excluded_op_names': [],
                              'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'pruning_frequency': 1,
@@ -223,15 +248,14 @@ def process_and_check_config(val):
         return process_yaml_config(global_configs, pruning_configs, default_config)
 
 def process_config(config):
-    """Obtain a config dict object from a config file.
+    """Obtain a config dict object from the config file.
 
     Args:
-        config: A string. The path to configuration file.
+        config: A string representing the path to the configuration file.
 
     Returns:
         A config dict object.
     """
-
     if isinstance(config, str):
         try:
             with open(config, 'r') as f:
@@ -257,7 +281,12 @@ def process_config(config):
 
 
 def parse_to_prune(config, model):
-    """Keep target pruned layers."""
+    """Keep target pruned layers.
+    
+    Args:
+        config: A string representing the path to the configuration file.
+        model: The model to be pruned.
+    """
     modules = {}
     if config["op_names"] == None or config["op_names"] == []:
         config["op_names"] = [".*"]
