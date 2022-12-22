@@ -43,6 +43,8 @@ class ConservativeTuneStrategy(TuneStrategy):
     def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, 
                  eval_func=None, dicts=None, q_hooks=None):
         """Init conservative tuning strategy."""
+        super().__init__(model, conf, q_dataloader, q_func, eval_dataloader, 
+                         eval_func, dicts, q_hooks)
         self.acc_meet_flag = False
 
     def next_tune_cfg(self):

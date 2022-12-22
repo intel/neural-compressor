@@ -40,6 +40,8 @@ class MSETuneStrategy(TuneStrategy):
     def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, 
                  eval_func=None, dicts=None, q_hooks=None):
         """Init an mse tuning strategy."""
+        super().__init__(model, conf, q_dataloader, q_func, eval_dataloader, 
+                         eval_func, dicts, q_hooks)
         self.ordered_ops = None
 
 
