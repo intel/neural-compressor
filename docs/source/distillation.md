@@ -60,8 +60,11 @@ Architecture from paper [Self-Distillation: Towards Efficient and Compact Neural
 Simplest launcher code if training behavior is defined in user-defined yaml.
 
 ```python
-from neural_compressor.experimental import Distillation, common
-distiller = Distillation('/path/to/user/yaml')
+from neural_compressor.experimental import Distillation
+from neural_compressor.config import DistillationConfig
+
+conf = DistillationConfig()
+distiller = Distillation(conf)
 distiller.student_model = student_model
 distiller.teacher_model = teacher_model
 model = distiller.fit()
@@ -70,8 +73,9 @@ Distillation class also support DistillationConf class as it's argument.
 
 ```python
 from neural_compressor.experimental import Distillation, common
-from neural_compressor.conf.config import DistillationConf
-conf = DistillationConf('/path/to/user/yaml')
+from neural_compressor.config import DistillationConfig
+
+conf = DistillationConfig()
 distiller = Distillation(conf)
 distiller.student_model = student_model
 distiller.teacher_model = teacher_model
@@ -123,7 +127,10 @@ In this case, the launcher code is like the following:
 ```python
 from neural_compressor.experimental import Distillation, common
 from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
-distiller = Distillation(args.config)
+from neural_compressor.config import DistillationConfig
+
+conf = DistillationConfig()
+distiller = Distillation(conf)
 distiller.student_model = model
 distiller.teacher_model = teacher
 distiller.criterion = PyTorchKnowledgeDistillationLoss()
