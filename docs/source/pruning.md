@@ -78,7 +78,7 @@ Pruning criteria defines the rules of which weights are least important to be pr
 
 - Pattern Lock
 
-  The algorithm locks the sparsity pattern in fine tune phase by freezing those zero values of weight tensor during weight update of training. 
+  The algorithm locks the sparsity pattern in finetuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied in the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
 
 - SNIP
 
