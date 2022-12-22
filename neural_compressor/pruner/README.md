@@ -96,7 +96,7 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 
 
 
-Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criteria and types are defined in pruning_type. Currently supported pruning types include **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive**, **snip_momentum**, **snip_momentum_progressive** and **pattern_lock**. [Details](../../docs/source/pruning_details.md#pruning-type).
+Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criteria and types are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. [Details](../../docs/source/pruning_details.md#pruning-type). We recommend using progressive pruning When using a relatively large size like 1xchannel and channelx1.
 
 
 
@@ -118,53 +118,17 @@ Regularization is a technique that discourages learning a more complex model and
 
 
 
-Neural Compressor `Pruning` API is defined under `neural_compressor.training`, which takes a user-defined config object as input. 
+Neural Compressor `Pruning` API is defined under `neural_compressor.pruner`, which takes a user-defined config object as input. 
 Users can pass the customized training/evaluation functions to `Pruning` in various scenarios. 
 
 
 
 The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default setting is used as a complement.
 
+Step 1: Define a dict-like configuration in your training codes. We provide you a template of configuration below.
 ```python
-""" All you need is to insert following API functions to your codes:
-on_train_begin() # Setup pruner
-on_step_begin() # Prune weights
-on_before_optimizer_step() # Do weight regularization
-on_after_optimizer_step() # Update weights' criteria, mask weights
-"""
-from neural_compressor.training import prepare_compression, WeightPruningConfig
-
-##setting configs
-pruning_configs=[
-{"op_names": ['layer1.*']，"pattern":'4x1'},
-{"op_names": ['layer2.*']，"pattern":'1x1', "target_sparsity":0.5}
-]
-config = WeightPruningConfig(pruning_configs,
-            target_sparsity=0.8,
-            excluded_op_names=['classifier'] ##default setting
-        )
-config = WeightPruningConfig(configs)
-compression_manager = prepare_compression(model, config)
-
-compression_manager.callbacks.on_train_begin() ##insert hook
-for epoch in range(num_train_epochs):
-    model.train()
-    for step, batch in enumerate(train_dataloader):
-        compression_manager.callbacks.on_step_begin(step) ##insert hook
-        outputs = model(**batch)
-        loss = outputs.loss
-        loss.backward()
-        compression_manager.callbacks.on_before_optimizer_step() ##insert hook
-        optimizer.step()
-        compression_manager.callbacks.on_after_optimizer_step() ##insert hook
-        lr_scheduler.step()
-        model.zero_grad()
-...
-```
-
-```python
-pruning_configs = [
-        {
+configs = [
+        { ## pruner1
             'target_sparsity': 0.9,   # Target sparsity ratio of modules.
             'pruning_type': "snip_momentum", # Default pruning type.
             'pattern': "4x1", # Default pruning pattern. 
@@ -179,13 +143,40 @@ pruning_configs = [
             'sparsity_decay_type': "exp", # Function applied to control pruning rate.
             'pruning_op_types': ['Conv', 'Linear'], # Types of op that would be pruned.
         },
-        {
+        { ## pruner2
             "op_names": ['layer3.*'], # A list of modules that would be pruned.
             "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
             # 'target_sparsity' 
         } # For layer3, the missing target_sparsity would be complemented by default setting (i.e. 0.8)
     ]
 ```
+Step 2: Insert API functions in your codes. Only 4 lines of codes are required.
+```python
+""" All you need is to insert following API functions to your codes:
+pruner.on_train_begin() # Setup pruner
+pruner.on_step_begin() # Prune weights
+pruner.on_before_optimizer_step() # Do weight regularization
+pruner.on_after_optimizer_step() # Update weights' criteria, mask weights
+"""
+from neural_compressor.pruner.pruning import Pruning, WeightPruningConfig
+config = WeightPruningConfig(configs)
+pruner = Pruning(config)  # Define a pruning object.
+pruner.model = model      # Set model object to prune.
+pruner.on_train_begin()
+for epoch in range(num_train_epochs):
+    model.train()    
+    for step, batch in enumerate(train_dataloader):
+        pruner.on_step_begin(step)
+        outputs = model(**batch)
+        loss = outputs.loss
+        loss.backward()
+        pruner.on_before_optimizer_step()
+        optimizer.step()
+        pruner.on_after_optimizer_step()
+        lr_scheduler.step()
+        model.zero_grad()
+```
+
 
  In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function. The pre-defined Neural Compressor hooks are listed below.
 
