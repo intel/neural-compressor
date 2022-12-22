@@ -12,6 +12,7 @@ function main {
 function init_params {
   tuned_checkpoint=saved_results
   tokenizer_name=bert-large-uncased-whole-word-masking-finetuned-squad
+  iters=100
   for var in "$@"
   do
     case $var in
@@ -53,8 +54,8 @@ function init_params {
 function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy_only"
-    elif [[ ${mode} == "benchmark" ]]; then
-        mode_cmd=" --benchmark"
+    elif [[ ${mode} == "performance" ]]; then
+        mode_cmd=" --benchmark --iters "${iters}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -85,23 +86,6 @@ function run_benchmark {
             --dataset_name squad \
             --do_eval \
             --max_seq_length 384 \
-            --no_cuda \
-            --output_dir $tuned_checkpoint \
-            --per_gpu_eval_batch_size $batch_size \
-            $mode_cmd \
-            ${extra_cmd}
-    fi
-    if [[ "${topology}" == "bert_large_1_10_ipex" ]]; then
-        pip install transformers==3.0.2
-        python run_qa_1_10.py \
-            --model_type bert \
-            --model_name_or_path $input_model \
-            --do_lower_case \
-            --predict_file $dataset_location \
-            --tokenizer_name $tokenizer_name \
-            --do_eval \
-            --max_seq_length 384 \
-            --doc_stride 128 \
             --no_cuda \
             --output_dir $tuned_checkpoint \
             --per_gpu_eval_batch_size $batch_size \

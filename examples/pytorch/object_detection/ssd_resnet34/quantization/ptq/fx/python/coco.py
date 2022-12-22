@@ -115,7 +115,7 @@ class Coco(dataset.Dataset):
         log.info("loaded {} images, cache={}, took={:.1f}sec".format(
             len(self.image_list), use_cache, time_taken))
 
-        self.label_list = np.array(self.label_list)
+        self.label_list = np.array(self.label_list, dtype=object)
 
     def get_item(self, nr):
         """Get image by number in the list."""
