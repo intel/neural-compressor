@@ -85,9 +85,10 @@ class BasePattern:
 
     Attributes:
         pattern: A config dict object that includes information of the pattern.    
-        is_global: A bool determining whether the pruning takes global pruning option.
-                   Global pruning means that a pruning criterion is applied to all pruning layers simultaneously.
-                   Local pruning, by contrast, means that the pruning criterion is applied to every pruning layer individually.
+        is_global:  A bool determining whether the pruning takes global pruning option.
+                    Global pruning means that a pruning criterion is applied to all pruning layers simultaneously.
+                    Local pruning, by contrast, means that the pruning criterion is applied to 
+                        every pruning layer individually.
         keep_mask_layers:A dict that includes the layers whose mask will not be updated.
         invalid_layers: The layers whose shapes don't fit the pattern.
         modules: Torch neural network modules to be pruned with the pattern.
@@ -135,13 +136,13 @@ class BasePattern:
         """Generate the weight masks according to the weight score and the current target sparsity ratio.
 
         Args:
-           scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
-           target_sparsity_ratio: A float representing the sparsity of the modules after pruning.
-           pre_masks: A dict{"layer_name": Tensor} that stores the masks generated at last pruning step.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            target_sparsity_ratio: A float representing the sparsity of the modules after pruning.
+            pre_masks: A dict{"layer_name": Tensor} that stores the masks generated at last pruning step.
 
         Returns:
-           A dict with the identical size as pre_masks and its 0/1 values are updated. 1 means unpruned and 0 means pruned.
-
+            A dict with the identical size as pre_masks and its 0/1 values are updated. 
+                1 means unpruned and 0 means pruned.
         """
         if self.is_global:
             return self.get_masks_global(scores, target_sparsity_ratio, pre_masks)
@@ -156,12 +157,13 @@ class BasePattern:
         """Generate the weight masks for local pruning.
         
         Args:
-           scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
-           target_sparsity_ratio: A float. After pruning, the sparsity of the modules will reach this value.
-           pre_masks: A dict{"layer_name": Tensor}. The previous masks generated at the last pruning step.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            target_sparsity_ratio: A float. After pruning, the sparsity of the modules will reach this value.
+            pre_masks: A dict{"layer_name": Tensor}. The previous masks generated at the last pruning step.
 
         Returns:
-           A dict with the identical size as pre_masks and its 0/1 values are updated. 1 means unpruned and 0 means pruned.
+            A dict with the identical size as pre_masks and its 0/1 values are updated. 
+                1 means unpruned and 0 means pruned.
         """
         masks = {}
         if isinstance(self, PatternNxM) and not isinstance(self.block_size, dict):
@@ -382,7 +384,7 @@ class PatternNxM(BasePattern):
         
     Attributes:
             block_size: A list of two integers representing the height and width of the block.
-            Please be aware that the vertical direction of a Linear layer's weight in PyTorch refers to the output channel.
+            Please note that the vertical direction of a Linear layer's weight refers to the output channel.
                 because PyTorch's tensor matmul has a hidden transpose operation.
     """
 
@@ -621,7 +623,8 @@ class PatternNxM(BasePattern):
             keep_pre_masks: A bool representing if the masks should remain unchanged.
             
         Returns:
-            A dict with the identical size as pre_masks and its 0/1 values are updated. 1 means unpruned and 0 means pruned.
+            A dict with the identical size as pre_masks and its 0/1 values are updated. 
+                1 means unpruned and 0 means pruned.
         """
         ##keep the masks if the layer exceed max sparsity ratio
 
@@ -989,7 +992,8 @@ class PatternNInM(BasePattern):
             score: the pruning scores of weights.
 
         Returns:
-            A dict with the identical size as pre_masks and its 0/1 values are updated. 1 means unpruned and 0 means pruned.
+            A dict with the identical size as pre_masks and its 0/1 values are updated. 
+                1 means unpruned and 0 means pruned.
         """
         current_score = score
         M = self.M
@@ -1164,7 +1168,8 @@ class PatternNInM(BasePattern):
             max_sparsity_ratio_per_op: A float representing the maximum sparsity that one layer can reach.
             
         Returns:
-            A dict with the identical size as pre_masks and its 0/1 values are updated. 1 means unpruned and 0 means pruned.
+            A dict with the identical size as pre_masks and its 0/1 values are updated. 
+                1 means unpruned and 0 means pruned.
         """
         masks = pre_masks
 
