@@ -96,7 +96,7 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 
 
 
-Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criteria and types are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. [Details](../../docs/source/pruning_details.md#pruning-type). We recommend using progressive pruning When using a relatively large size like 1xchannel and channelx1.
+Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criteria and types are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. [Details](../../docs/source/pruning_details.md#pruning-type). We recommend using progressive pruning When choosing large size patterns like 1xchannel and channelx1.
 
 
 
