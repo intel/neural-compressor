@@ -1,5 +1,9 @@
 TensorBoard
 ===========
+1. [Introduction](#introduction)
+2. [Supported Feature Matrix](#supported-feature-matrix)
+3. [Get Started with Tensorboard](#get-started-with-tensorboard)
+4. [Examples](#examples)
 
 ## Introduction
 
@@ -7,10 +11,14 @@ TensorBoard is a suite of web applications that provide measurements and visuali
 
 We collect the TensorBoard event summary during evaluation. The first time is on the baseline FP32 model and later on at the end of each tuning runs are based on the quantized model. The TensorBoard log directory is named baseline_acc_<accuracy> and tune_<runs>_acc_<accuracy>, to indicate the stage and accuracy of the data that is generated. Users can select their data of interest to observe with TensorBoard. 
 
+## Supported Feature Matrix
+| Optimized Framework | Tensorboard Support |
+|---------------------|:-------------------:|
+| PyTorch             |       &#10004;      |
+| TensorFlow          |       &#10004;      |
 
-## PyTorch TensorBoard
-
-### Design
+## Get Started with TensorBoard
+### PyTorch TensorBoard
 
 PyTorch TensorBoard implementation includes three steps:
 
@@ -109,7 +117,7 @@ def _post_eval_hook(self, model, **args):
 ```
  
 
-### Usage
+#### Usage
 
 1. Add "tensorboard: true" in the yaml file.
 2. Run quantization tuning; a "./runs" folder is generated in the working folder.
@@ -119,15 +127,8 @@ def _post_eval_hook(self, model, **args):
      tensorboard --bind_all --logdir_spec baseline:./runs/eval/tune_0_acc0.80,tune_1:././runs/eval/tune_1_acc0.79  
    ``
 
-### Examples
 
-```shell
-  examples/pytorch/eager/image_recognition/imagenet/cpu/ptq/run_tuning_dump_tensor.sh 
-```
-
-## TensorFlow Tensorboard
-
-### Design
+### TensorFlow Tensorboard
 
 TensorFlow TensorBoard implementation includes four steps:
 
@@ -138,7 +139,7 @@ TensorFlow TensorBoard implementation includes four steps:
 
 See the [tensorflow.py](https://github.com/intel/neural-compressor/tree/master/neural_compressor/adaptor/tensorflow.py) evaluate() function for details. 
 
-### Usage
+#### Usage
 
 1. Add "tensorboard: true" in the yaml file.
 
@@ -155,8 +156,15 @@ See the [tensorflow.py](https://github.com/intel/neural-compressor/tree/master/n
    ```shell
    tensorboard --bind_all --logdir_spec baseline:./runs_v3/eval/baseline_acc_0.776/,tune_1:./runs_v3/eval/tune_1_acc_0.095/ 
    ```
+## Examples
 
-### Examples
+### PyTorch Examples
+
+```shell
+  examples/pytorch/eager/image_recognition/imagenet/cpu/ptq/run_tuning_dump_tensor.sh 
+```
+
+### TensorFlow Examples
 
 1. Add "tensorboard: true" into examples/tensorflow/image_recognition/inceptionv3.yaml. In order to demonstrate the usage of TensorBoard, remove the following lines which are added to skip the quantization of 'v0/cg/conv0/conv2d/Conv2D' to avoid a known limitation.
 
