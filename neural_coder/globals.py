@@ -48,6 +48,9 @@ optimum_quant_config = ""
 # code domain
 code_domain = ""
 
+# fp8 datat format (e5m2 or e4m3)
+fp8_data_format = "e5m2"
+
 def reset_globals():
     global list_code_path
 

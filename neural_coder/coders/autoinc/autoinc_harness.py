@@ -273,7 +273,8 @@ class AutoInc_Harness(object):
 
                     optimum_quant_config_line = \
                         'IncQuantizationConfig.from_pretrained("' + globals.optimum_quant_config + '")'
-
+                    fp8_data_format = globals.fp8_data_format
+                    
                     # replace [+] indication with empty
                     lines_to_insert = lines_to_insert.replace(
                         "[+] ", " " * insert_indent_level)
@@ -286,6 +287,7 @@ class AutoInc_Harness(object):
                         .replace("INPUT_NAME", input_name) \
                         .replace("EVAL_FUNC_LINES", "return 1") \
                         .replace("OPTIMUM_QUANT_CONFIG", optimum_quant_config_line) \
+                        .replace("FP8_DATA_FORMAT", fp8_data_format) \
                         .replace("\n", " # [coder-enabled]\n")
                     # add end indicator
                     lines_to_insert += " # [coder-enabled]\n" + \

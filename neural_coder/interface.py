@@ -67,6 +67,7 @@ def enable(
     cache_load_transformers=True,
     optimum_quant_config="", # only for HF optimum optimizations, yaml or hub path
     use_inc=False,
+    fp8_data_format="e5m2",
 ):
     """enable a feature or a couple of features for the code
 
@@ -178,6 +179,7 @@ def enable(
 
     globals.cache_load_transformers = cache_load_transformers
     globals.optimum_quant_config = optimum_quant_config
+    globals.fp8_data_format = fp8_data_format
 
     # move "pytorch_benchmark" to the last
     from .utils.common import move_element_to_last
@@ -282,7 +284,9 @@ def enable(
                 opt.register_transformation()
             elif feature in [
                     "pytorch_inc_dynamic_quant",
+                    "pytorch_inc_dynamic_quant_fp8",
                     "pytorch_inc_static_quant_fx",
+                    "pytorch_inc_static_quant_fx_fp8",
                     "pytorch_inc_static_quant_ipex",
                     "pytorch_inc_huggingface_optimum_static",
                     "pytorch_inc_huggingface_optimum_dynamic",
