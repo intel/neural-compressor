@@ -1117,7 +1117,7 @@ quantization_default_schema = Schema({
     Optional('quantization', default={'approach': 'post_training_static_quant', \
                                       'precision': 'int8', \
                                       'calibration': {'sampling_size': [100],
-                                                      'batchnorm_sampling_size': [100]},
+                                                      'batchnorm_sampling_size': [3000]},
                                       'recipes': {'scale_propagation_max_pooling': True,
                                                       'scale_propagation_concat': True,
                                                       'first_conv_or_matmul_quantization': True,
