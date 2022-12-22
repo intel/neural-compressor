@@ -14,7 +14,7 @@ requirements:
     - python
     - pip
   run:
-    - python<=3.9
+    - python
     - pip
     - numpy=1.22.3
     - pyyaml
