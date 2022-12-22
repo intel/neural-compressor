@@ -117,6 +117,7 @@ class Objective(object):
 
 @objective_registry
 class Accuracy(Objective):
+    """Configuration Accuracy class."""
     representation = 'accuracy'
 
     def start(self):
@@ -129,35 +130,43 @@ class Accuracy(Objective):
 
 @objective_registry
 class Performance(Objective):
+    """Configuration Performance class."""
     representation = 'duration (seconds)'
 
     def start(self):
+        """Record the start time."""
         self.start_time = time.time()
     def end(self):
+        """Record the duration time."""
         self.duration = time.time() - self.start_time
         assert self.duration >= 0, 'please use start() before end()'
         self._result_list.append(self.duration)
 
 @objective_registry
 class Footprint(Objective):
+    """Configuration Footprint class."""
     representation = 'memory footprint (MB)'
 
     def start(self):
+        """Record the space allocation"""
         tracemalloc.start()
 
     def end(self):
+        """Calculate the space usage."""
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         self._result_list.append(peak // 1048576)
 
 @objective_registry
 class ModelSize(Objective):
+    """Configuration ModelSize class."""
     representation = 'model size (MB)'
 
     def start(self):
         pass
 
     def end(self):
+        """Get the actual model size."""
         model_size = get_size(self.model)
         self._result_list.append(model_size)
 
@@ -296,6 +305,7 @@ class MultiObjective:
         return acc_target
     
     def accuracy_meets(self):
+        """Verify the new model performance is better than the previous model performance"""
         last_acc, _ = deepcopy(self.val)
         got_better_result = False
         if not isinstance(last_acc, list):
@@ -346,9 +356,11 @@ class MultiObjective:
                 objective.end()
 
     def result(self):
+        """Get the results."""
         return [objective.result() for objective in self.objectives]
 
     def set_model(self, model):
+        """Set the objective model."""
         for objective in self.objectives:
             objective.model = model
 

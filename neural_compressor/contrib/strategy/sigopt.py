@@ -82,7 +82,7 @@ class SigOptTuneStrategy(TuneStrategy):
             eval_func,
             dicts,
             q_hooks)
-        # Initialize the SigOpt tuning strategy if the user specified to use it. 
+        """Initialize the SigOpt tuning strategy if the user specified to use it. """
         strategy_name = conf.usr_cfg.tuning.strategy.name
         if strategy_name.lower() == "sigopt":
             try:
@@ -127,6 +127,7 @@ class SigOptTuneStrategy(TuneStrategy):
         self.experiment = None
 
     def params_to_tune_configs(self, params):
+        """Get the parameters of the tuning strategy. """
         op_tuning_cfg = {}
         calib_sampling_size_lst = self.tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         for op_name_type, configs in self.op_configs.items():
@@ -157,6 +158,7 @@ class SigOptTuneStrategy(TuneStrategy):
             self.experiment = self.conn.experiments(self.experiment.id).fetch()
 
     def get_acc_target(self, base_acc):
+        """Get the tuning target of the accuracy ceiterion. """
         if self.cfg.tuning.accuracy_criterion.relative:
             return base_acc * (1. - self.cfg.tuning.accuracy_criterion.relative)
         else:
@@ -230,6 +232,7 @@ class SigOptTuneStrategy(TuneStrategy):
             quant_mode_wise_items[quant_mode] = filtered_items
 
         def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict):
+            """Initialize the op tuning mode. """
             for item in items_lst:
                 op_item_dtype_dict[item.name] = target_quant_mode
 
