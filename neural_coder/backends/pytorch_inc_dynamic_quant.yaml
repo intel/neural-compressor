@@ -18,6 +18,8 @@ transformation:
   content:
     - |-
       [+] if "GraphModule" not in str(type(MODEL_NAME)):
+      [+]     def eval_func(model):
+      [+]         EVAL_FUNC_LINES
       [+]     import torch
       [+]     torch.backends.quantized.engine = 'onednn'
       [+]     from neural_compressor.conf.config import QuantConf
@@ -27,6 +29,7 @@ transformation:
       [+]     quant_config.usr_cfg.model.framework = "pytorch"
       [+]     quantizer = Quantization(quant_config)
       [+]     quantizer.model = common.Model(MODEL_NAME)
+      [+]     quantizer.eval_func = eval_func
       [+]     MODEL_NAME = quantizer()
       [+]     MODEL_NAME = MODEL_NAME.model
       [+]     MODEL_NAME.eval()
