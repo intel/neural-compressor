@@ -757,7 +757,7 @@ schema = Schema({
                             'post_training_dynamic_quant',
                             'post_training_auto_quant',
                             'quant_aware_training']),
-        Optional('precision', default='fp8_e4m3'): And(
+        Optional('precision', default='int8'): And(
             str,
             lambda s: s in ['int8',
                             'fp8_e4m3',
@@ -1115,7 +1115,9 @@ quantization_default_schema = Schema({
     Optional('device', default='cpu'): str,
 
     Optional('quantization', default={'approach': 'post_training_static_quant', \
-                                      'calibration': {'sampling_size': [100]},
+                                      'precision': 'int8', \
+                                      'calibration': {'sampling_size': [100],
+                                                      'batchnorm_sampling_size': [100]},
                                       'recipes': {'scale_propagation_max_pooling': True,
                                                       'scale_propagation_concat': True,
                                                       'first_conv_or_matmul_quantization': True,

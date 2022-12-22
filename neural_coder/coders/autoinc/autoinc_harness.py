@@ -273,7 +273,7 @@ class AutoInc_Harness(object):
 
                     optimum_quant_config_line = \
                         'IncQuantizationConfig.from_pretrained("' + globals.optimum_quant_config + '")'
-                    fp8_data_format = globals.fp8_data_format
+                    fp8_data_format = '"fp8_' + globals.fp8_data_format + '"'
                     
                     # replace [+] indication with empty
                     lines_to_insert = lines_to_insert.replace(
