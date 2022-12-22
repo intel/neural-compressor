@@ -10,13 +10,13 @@ Export
 4. [Appendix](#appendix)
 
 # Introduction
-Open Neural Network eXchange (ONNX) is an open standard format for representing machine learning models. Exporting FP32 PyTorch/Tensorflow models has become popular and easy to use. However, for Intel Neural Compressor, we hope to export the int8 model to ONNX to achieve higher applicability on multiple frameworks.
+Open Neural Network Exchange (ONNX) is an open standard format for representing machine learning models. Exporting FP32 PyTorch/Tensorflow models has become popular and easy to use. However, for Intel Neural Compressor, we hope to export the INT8 model into the ONNX format to achieve higher applicability in multiple frameworks.
 
-Here we briefly introduce our export API for PyTorch FP32/INT8 models. First, the int8 ONNX model is not directly exported from the int8 PyTorch model, but quantized after obtaining the FP32 ONNX model using the mature torch.onnx.export API. To ensure that the quantization process of ONNX is as consistent as possible with PyTorch, we reuse three key pieces of information from the Neural Compressor model to perform ONNX quantization.
+Here we briefly introduce our export API for PyTorch FP32/INT8 models. First, the INT8 ONNX model is not directly exported from the INT8 PyTorch model, but quantized after obtaining the FP32 ONNX model using the mature torch.onnx.export API. To ensure the majority of the quantization process of ONNX is consistent with PyTorch, we reuse three key pieces of information from the Neural Compressor model to perform ONNX quantization.
 
- - Quantized operations: Only operations quantized in PyTorch will be quantized in ONNX.
- - Scale info: Scale information is collected from the PyTorch quantization process.
- - Weights of quantization aware training(QAT): for quantization-aware training, the updated weights are passed to the ONNX model.
+ - Quantized operations: Only operations quantized in PyTorch will be quantized in the quantization process of ONNX.
+ - Scale info: Scale information is collected from the quantization process of PyTorch.
+ - Weights of quantization aware training(QAT): For quantization aware training, the updated weights are passed to the ONNX model.
 
 <a target="_blank" href="./_static/imgs/export.png" text-align:center>
     <center> 
@@ -170,7 +170,7 @@ MatMulIntegerToFloat
  </tbody>
 </table>
 
-The default recipe is `QDQ_OP_FP32_BIAS`. If the accuracy of the exported ONNX INT8 model does not meet your criterion, we recommend you try recipe `QDQ_OP_INT32_BIAS` and `QDQ_OP_FP32_BIAS_QDQ` as follows:
+The default recipe is `QDQ_OP_FP32_BIAS`. If the accuracy of the exported ONNX INT8 model cannot meet your criterion, we recommend you try recipe `QDQ_OP_INT32_BIAS` and `QDQ_OP_FP32_BIAS_QDQ` as follows:
 ```python
 # q_model is a Neural Compressor model after performing quantization.
 from neural_compressor.config import Torch2ONNXConfig
