@@ -38,7 +38,9 @@ PyTorch 1.8 is needed for pytorch_fx backend and huggingface/transformers.
 ### 1. Enable bert-base-cased/uncased example with the auto quantization aware training strategy of Neural Compressor.
 
   The changes made are as follows:
-  * edit run_glue.py:  
+  1. add conf_qat.yaml:  
+    This file contains the configuration of quantization.  
+  2. edit run_glue_tune.py:  
     - For quantization, We used neural_compressor in it.  
     - For training, we enbaled early stop strategy.  
 
@@ -48,7 +50,7 @@ PyTorch 1.8 is needed for pytorch_fx backend and huggingface/transformers.
 
 or
 
-    python run_glue.py \
+    python run_glue_tune.py \
         --model_name_or_path ${input_model} \
         --task_name ${task_name} \
         --do_train \
@@ -75,7 +77,7 @@ or
 
 or
 
-    python run_glue.py \
+    python run_glue_tune.py \
         --model_name_or_path ${input_model}/${tuned_checkpoint} \
         --task_name ${task_name} \
         --do_train \
@@ -115,11 +117,3 @@ model = OptimizedModel.from_pretrained(
 ```
 
 We also upstreamed several int8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.
-
-# Appendix
-
-## Export to ONNX
-
-Right now, we experimentally support exporting PyTorch model to ONNX model, includes FP32 and INT8 model.
-
-By enabling `--onnx` argument, Intel Neural Compressor will export fp32 ONNX model, INT8 QDQ ONNX model, and INT8 QLinear ONNX model.

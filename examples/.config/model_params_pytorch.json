@@ -9,24 +9,6 @@
       "batch_size": 100,
       "new_benchmark": false
     },
-      "efficientnet_b0_fx": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "hawq_v2",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-      "efficientnet_b3_fx": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "hawq_v2",
-      "batch_size": 100,
-      "new_benchmark": false
-      },
     "resnet18_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
@@ -47,6 +29,96 @@
     },
     "resnet50": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
+    "googlenet_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
+    "shufflenet_v2_x0_5_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
+    "shufflenet_v2_x1_0_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
+    "vgg13_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
+    "vgg13_bn_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
+    "squeezenet1_0_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
+    "densenet121_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
+    "densenet169_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
+    "efficientnet_b0_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
+      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+      "input_model": "",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 100,
+      "new_benchmark": false
+    },
+    "efficientnet_b3_fx": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "",
       "yaml": "conf.yaml",
@@ -233,33 +305,6 @@
       "strategy": "basic",
       "batch_size": 100,
       "new_benchmark": false
-    },
-    "efficientnet_b0_fx": {
-        "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
-        "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-        "input_model": "",
-        "yaml": "conf.yaml",
-        "strategy": "mse_v2",
-        "batch_size": 100,
-        "new_benchmark": false
-    },
-    "efficientnet_b3_fx": {
-        "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
-        "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-        "input_model": "",
-        "yaml": "conf.yaml",
-        "strategy": "mse_v2",
-        "batch_size": 100,
-        "new_benchmark": false
-    },
-      "efficientnet_b7_fx": {
-        "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
-        "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-        "input_model": "",
-        "yaml": "conf.yaml",
-        "strategy": "mse_v2",
-        "batch_size": 100,
-        "new_benchmark": false
     },
     "bert_base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
@@ -576,15 +621,6 @@
       "batch_size": 64,
       "new_benchmark": false
     },
-    "gpt_j_wikitext":{
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/fx",
-      "dataset_location": "",
-      "input_model": "/tf_dataset2/models/pytorch/gpt-j-6B",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 8,
-      "new_benchmark": false
-    },
     "xlm-roberta-base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/eager",
       "dataset_location": "",
@@ -745,456 +781,6 @@
       "yaml": "conf_qat.yaml",
       "strategy": "basic",
       "batch_size": 8,
-      "new_benchmark": false
-    },
-    "wide_resnet101_2_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "wide_resnet50_2_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnext101_32x8d_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnext50_32x4d_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet152_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet101_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet50_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "vgg19_bn_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "vgg11_bn_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet34_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "vgg19_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "vgg11_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "vgg13_bn_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "vgg16_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "vgg13_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "resnet18-oob_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "vgg16_bn_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "inception_v3_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "densenet201_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "densenet169_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "squeezenet1_0_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "densenet121_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "squeezenet1_1_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "alexnet_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "densenet161_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "mnasnet1_0_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "fbnetc_100_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "spnasnet_100_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "mnasnet0_5_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "shufflenet_v2_x0_5_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "shufflenet_v2_x1_0_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "googlenet_fx": {
-      "model_src_dir": "oob_models/gen-efficientnet-pytorch",
-      "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "wide_deep_fx": {
-      "model_src_dir": "oob_models/wide_deep",
-      "dataset_location": "/tf_dataset2/scripts/pytorch/oob_models/wide_deep/data/adult.data",
-      "input_model": "/tf_dataset2/scripts/pytorch/oob_models/wide_deep/model/wide_deep.pth",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "pytorch-unet_fx": {
-      "model_src_dir": "oob_models/pytorch-unet",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "acgan_fx": {
-      "model_src_dir": "oob_models/PyTorch-GAN/implementations",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "ebgan_fx": {
-      "model_src_dir": "oob_models/PyTorch-GAN/implementations",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "dcgan_fx": {
-      "model_src_dir": "oob_models/PyTorch-GAN/implementations",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "sgan_fx": {
-      "model_src_dir": "oob_models/PyTorch-GAN/implementations",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "began_fx": {
-      "model_src_dir": "oob_models/PyTorch-GAN/implementations",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "srgan_fx": {
-      "model_src_dir": "oob_models/PyTorch-GAN/implementations",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "wgan_fx": {
-      "model_src_dir": "oob_models/PyTorch-GAN/implementations",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "cgan_fx": {
-      "model_src_dir": "oob_models/PyTorch-GAN/implementations",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "se_resnext50_32x4d_fx": {
-      "model_src_dir": "oob_models/pretrained-models",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "inceptionresnetv2_fx": {
-      "model_src_dir": "oob_models/pretrained-models",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "se_resnet50_fx": {
-      "model_src_dir": "oob_models/pretrained-models",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "dpn68_fx": {
-      "model_src_dir": "oob_models/pretrained-models",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "vggm_fx": {
-      "model_src_dir": "oob_models/pretrained-models",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "hbonet-1.0-224x224_fx": {
-      "model_src_dir": "oob_models/HBONet",
-      "dataset_location": "",
-      "input_model": "/tf_dataset2/models/pytorch/oob_models/HBONet/pretrained/hbonet_1_0.pth",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "hbonet-0.5-224x224_fx": {
-      "model_src_dir": "oob_models/HBONet",
-      "dataset_location": "",
-      "input_model": "/tf_dataset2/models/pytorch/oob_models/HBONet/pretrained/hbonet_0_5.pth",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
-    "hbonet-0.25-224x224_fx": {
-      "model_src_dir": "oob_models/HBONet",
-      "dataset_location": "",
-      "input_model": "/tf_dataset2/models/pytorch/oob_models/HBONet/pretrained/hbonet_0_25.pth",
-      "yaml": "../conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
       "new_benchmark": false
     }
   }
