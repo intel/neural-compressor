@@ -16,6 +16,8 @@ fake_bf8_yaml = '''
         framework: pytorch_fx
 
     quantization:
+        # per op-type auto quantization
+        optimization_level: 0
         # approach not needed for fp8_e5m2
         precision: fp8_e5m2   # select from fp8_e5m2, fp8_e4m3, int8
         calibration:
@@ -36,6 +38,7 @@ fake_dyn_yaml = '''
         framework: pytorch_fx
 
     quantization:
+        optimization_level: 0
         approach: post_training_dynamic_quant
         precision: fp8_e4m3
         calibration:
@@ -56,6 +59,7 @@ fake_ptq_yaml = '''
         framework: pytorch_fx
 
     quantization:
+        optimization_level: 0
         approach: post_training_static_quant
         precision: fp8_e4m3
         calibration:
@@ -215,8 +219,6 @@ def build_pytorch_yaml():
         f.write(fake_bf8_fallback_yaml)
 
 
-
-
 class DummyNLPDataloader(object):
     def __init__(self, model_name):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -285,7 +287,7 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 )
             elif fake_yaml == "static":
                 quant_conf = PostTrainingQuantConfig(
-                    approach="static", 
+                    approach="static",
                     precision="fp8_e4m3",
                     calibration_sampling_size=[300],
                     batchnorm_calibration_sampling_size=[3000],
@@ -319,7 +321,6 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 quant_conf,
                 eval_func=eval_func,
                 calib_dataloader=self.cv_dataloader)
-            q_model.save("./saved")
 
     def test_CV_quantization_new_API_fallback(self):
         op_type_list={
@@ -444,7 +445,6 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 quant_conf,
                 eval_func=eval_func,
                 calib_dataloader=self.nlp_dataloader)
-            q_model.save("./saved")
 
     def test_NLP_quantization_new_API_fallback(self):
         op_type_list={
@@ -542,7 +542,8 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
             q_model.save('./saved')
 
     def test_NLP_quantization_old_API(self):
-        for fake_yaml in ['ptq_fallback_yaml.yaml', 'dynamic_fallback_yaml.yaml', \
+        for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml', 'bf8_yaml.yaml', \
+                          'ptq_fallback_yaml.yaml', 'dynamic_fallback_yaml.yaml', \
                           'bf8_fallback_yaml.yaml']:
             model = self.nlp_model
             quantizer = Quantization(fake_yaml)
@@ -550,6 +551,19 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
             quantizer.calib_dataloader = self.nlp_dataloader
             q_model = quantizer.fit()
             q_model.save('./saved')
+
+    def test_NLP_quantization_pythonic_API(self):
+        model = self.nlp_model
+        from neural_compressor.conf.config import QuantConf
+        from neural_compressor.experimental import Quantization
+        quant_config = QuantConf()
+        quant_config.usr_cfg.quantization.approach = "post_training_dynamic_quant"
+        quant_config.usr_cfg.model.framework = "pytorch"
+        quantizer = Quantization(quant_config)
+        quantizer.model = model
+        quantizer.calib_dataloader = self.nlp_dataloader
+        q_model = quantizer.fit()
+        q_model.save('./saved')
 
 if __name__ == "__main__":
     unittest.main()

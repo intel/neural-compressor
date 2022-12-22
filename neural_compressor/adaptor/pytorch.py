@@ -3758,18 +3758,11 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                     module.register_forward_pre_hook(input_observer_forward_pre_hook)
 
     def _calibration_for_scale(self, model, dataloader):
-        # TODO: use config to set calib_sampling_size. 
-        # iterations = self.tune_cfg.get('calib_iteration', 1)
-        # self.model_calibration(
-        #     model, dataloader, iterations,
-        #     calib_sampling_size=self.tune_cfg.get('calib_sampling_size', 1))
-
         calib_sampling_size = self.tune_cfg['calib_sampling_size']
         iterations = math.ceil(calib_sampling_size / dataloader.batch_size)
         self.model_calibration(
             model, dataloader, iterations,
             calib_sampling_size=calib_sampling_size)
-        print('calib_sampling_size', calib_sampling_size)
 
         HF_max = torch.tensor(448)
         for name, module in model.named_modules():
@@ -3877,7 +3870,6 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
             self.model_calibration(
                 model, dataloader, iterations,
                 calib_sampling_size=calib_sampling_size)
-            print('bn_calib_sampling_size', calib_sampling_size)
             model.eval()
             # Recover all fp8 data back to fp32 after updating BN.
             for name, module in model.named_modules():
