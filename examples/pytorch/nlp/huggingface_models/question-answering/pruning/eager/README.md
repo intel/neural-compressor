@@ -57,7 +57,7 @@ python run_qa_no_trainer.py \
         --per_device_eval_batch_size 16 \
         --do_prune \
         --num_warmup_steps 1000 \
-        --output_dir "./spare_qa_distillbert" \
+        --output_dir "./sparse_qa_distilbert" \
         --weight_decay 1e-7 \
         --learning_rate 1e-4 \
         --cooldown_epochs 10 \
@@ -125,7 +125,7 @@ python ./run_qa_no_trainer.py \
 
 ### Results
 The snip-momentum pruning method is used by default and the initial dense models are all fine-tuned.
-|  Model  | Dataset  |  Sparsity pattern |Pruning method |Element-wise/matmul, Gemm, conv ratio | Init model | Dense F1 (mean/max)| Sparse F1 (mean/max)| Relative drop|
+|  Model  | Dataset  |  Sparsity pattern | Element-wise/matmul, Gemm, conv ratio | Dense F1 (mean/max)| Sparse F1 (mean/max)| Relative drop|
 |  :----:  | :----:  | :----: | :----: |:----: |:----:| :----: |
 | Bert-mini | SQuAD |  4x1  | 0.7993 | 0.7662/0.7687 | 0.7617/0.7627 | -0.78% |
 | Bert-mini | SQuAD |  2:4  | 0.4795 | 0.7662/0.7687 | 0.7733/0.7762 | +0.98% |

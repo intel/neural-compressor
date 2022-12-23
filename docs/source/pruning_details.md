@@ -1,5 +1,4 @@
 Pruning details
-
 ============
 
 
