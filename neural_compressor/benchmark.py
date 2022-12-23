@@ -94,8 +94,11 @@ class Benchmark(object):
 
         The postprocess function should take the outputs of the model as inputs, and
         outputs (predictions, labels) as inputs for metric updates.
-        "name" and "postprocess_cls" are the registered information of neural_compressor.data.transforms.postprocess to specific frameworks and initialization.
-        """
+        Args:
+        name (str, optional): Name for postprocess.
+        postprocess_cls (cls): Should be a sub_class of neural_compressor.data.transforms.postprocess.
+
+    """
         from .experimental.common import Postprocess as NCPostprocess
         nc_postprocess = NCPostprocess(postprocess_cls, name, **kwargs)
         self.exp_benchmarker.postprocess = nc_postprocess
