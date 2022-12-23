@@ -509,7 +509,7 @@ class _BaseQuantizationConfig:
     @precision.setter
     def precision(self, precision):
         if check_value('precision', precision, str, [
-                'int8', 'fp8_e5m2', 'fp8_e4m3'
+                'int8', 'fp8_e5m2', 'fp8_e4m3', 'fp8_e3m4',
         ]):
             self._precision = precision
 

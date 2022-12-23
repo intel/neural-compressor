@@ -40,7 +40,7 @@ fake_dyn_yaml = '''
     quantization:
         optimization_level: 0
         approach: post_training_dynamic_quant
-        precision: fp8_e4m3
+        precision: fp8_e3m4
         calibration:
             batchnorm_sampling_size: 3000
 
@@ -163,7 +163,7 @@ fake_ptq_fallback_yaml = '''
 
     quantization:
         approach: post_training_static_quant
-        precision: fp8_e4m3
+        precision: fp8_e3m4
         calibration:
             batchnorm_sampling_size: 3000
             sampling_size: 300
@@ -237,8 +237,8 @@ class DummyNLPDataloader(object):
 i = 0
 def eval_func(model):
     global i
-    if i == 0:
-        i = 1
+    i += 1
+    if i <= 3:
         return 1
     else:
         return 0
@@ -296,6 +296,26 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 model,
                 quant_conf,
                 calib_dataloader=self.cv_dataloader)
+        for fake_yaml in ["dynamic", "static"]:
+            model = self.cv_model
+            if fake_yaml == "dynamic":
+                quant_conf = PostTrainingQuantConfig(
+                    approach="dynamic", 
+                    precision="fp8_e3m4",
+                    calibration_sampling_size=[300],
+                    batchnorm_calibration_sampling_size=[3000],
+                )
+            elif fake_yaml == "static":
+                quant_conf = PostTrainingQuantConfig(
+                    approach="static",
+                    precision="fp8_e3m4",
+                    calibration_sampling_size=[300],
+                    batchnorm_calibration_sampling_size=[3000],
+                )
+            q_model = quantization.fit(
+                model,
+                quant_conf,
+                calib_dataloader=self.cv_dataloader)
             q_model.save("./saved")
 
     def test_CV_quantization_new_API_quant_level_0(self):
@@ -316,6 +336,19 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 quant_conf = PostTrainingQuantConfig(optimization_level=0, approach="dynamic", precision="fp8_e4m3")
             elif fake_yaml == "static":
                 quant_conf = PostTrainingQuantConfig(optimization_level=0, approach="static", precision="fp8_e4m3")
+            q_model = quantization.fit(
+                model,
+                quant_conf,
+                eval_func=eval_func,
+                calib_dataloader=self.cv_dataloader)
+
+        for fake_yaml in ["dynamic", "static"]:
+            i = 0
+            model = self.cv_model
+            if fake_yaml == "dynamic":
+                quant_conf = PostTrainingQuantConfig(optimization_level=0, approach="dynamic", precision="fp8_e3m4")
+            elif fake_yaml == "static":
+                quant_conf = PostTrainingQuantConfig(optimization_level=0, approach="static", precision="fp8_e3m4")
             q_model = quantization.fit(
                 model,
                 quant_conf,
@@ -365,6 +398,26 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 model,
                 quant_conf,
                 calib_dataloader=self.cv_dataloader)
+        for fake_yaml in ["dynamic", "static"]:
+            model = self.cv_model
+            if fake_yaml == "dynamic":
+                quant_conf = PostTrainingQuantConfig(
+                    approach="dynamic",
+                    precision="fp8_e3m4",
+                    op_type_list=op_type_list,
+                    op_name_list=op_name_list,
+                )
+            elif fake_yaml == "static":
+                quant_conf = PostTrainingQuantConfig(
+                    approach="static",
+                    precision="fp8_e3m4",
+                    op_type_list=op_type_list,
+                    op_name_list=op_name_list,
+                )
+            q_model = quantization.fit(
+                model,
+                quant_conf,
+                calib_dataloader=self.cv_dataloader)
             q_model.save("./saved")
 
     def test_CV_quantization_new_API_fallback_env(self):
@@ -399,6 +452,22 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 model,
                 quant_conf,
                 calib_dataloader=self.cv_dataloader)
+        for fake_yaml in ["dynamic", "static"]:
+            model = self.cv_model
+            if fake_yaml == "dynamic":
+                quant_conf = PostTrainingQuantConfig(
+                    approach="dynamic",
+                    precision="fp8_e3m4",
+                )
+            elif fake_yaml == "static":
+                quant_conf = PostTrainingQuantConfig(
+                    approach="static",
+                    precision="fp8_e3m4",
+                )
+            q_model = quantization.fit(
+                model,
+                quant_conf,
+                calib_dataloader=self.cv_dataloader)
             q_model.save("./saved")
 
     def test_NLP_quantization_new_API(self):
@@ -420,7 +489,18 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 quant_conf,
                 calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None
             )
-            q_model.save("./saved")
+        for fake_yaml in ["dynamic", "static"]:
+            model = self.nlp_model
+            if fake_yaml == "dynamic":
+                quant_conf = PostTrainingQuantConfig(approach="dynamic", precision="fp8_e3m4",)
+            elif fake_yaml == "static":
+                quant_conf = PostTrainingQuantConfig(approach="static", precision="fp8_e3m4",)
+            q_model = quantization.fit(
+                model,
+                quant_conf,
+                calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None
+            )
+        q_model.save("./saved")
 
     def test_NLP_quantization_new_API_quant_level_0(self):
         model = self.nlp_model
@@ -440,6 +520,19 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 quant_conf = PostTrainingQuantConfig(optimization_level=0, approach="dynamic", precision="fp8_e4m3")
             elif fake_yaml == "static":
                 quant_conf = PostTrainingQuantConfig(optimization_level=0, approach="static", precision="fp8_e4m3")
+            q_model = quantization.fit(
+                model,
+                quant_conf,
+                eval_func=eval_func,
+                calib_dataloader=self.nlp_dataloader)
+
+        for fake_yaml in ["dynamic", "static"]:
+            i = 0
+            model = self.nlp_model
+            if fake_yaml == "dynamic":
+                quant_conf = PostTrainingQuantConfig(optimization_level=0, approach="dynamic", precision="fp8_e3m4")
+            elif fake_yaml == "static":
+                quant_conf = PostTrainingQuantConfig(optimization_level=0, approach="static", precision="fp8_e3m4")
             q_model = quantization.fit(
                 model,
                 quant_conf,
@@ -493,7 +586,27 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 quant_conf,
                 calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None
             )
-            q_model.save("./saved")
+
+        for fake_yaml in ["static"]:
+            model = self.nlp_model
+            if fake_yaml == "dynamic":
+                quant_conf = PostTrainingQuantConfig(
+                    approach="dynamic",
+                    precision="fp8_e3m4",
+                    op_type_list=op_type_list,
+                )
+            elif fake_yaml == "static":
+                quant_conf = PostTrainingQuantConfig(
+                    approach="static",
+                    precision="fp8_e3m4",
+                    op_type_list=op_type_list,
+                )
+            q_model = quantization.fit(
+                model,
+                quant_conf,
+                calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None
+            )
+        q_model.save("./saved")
 
 
     def test_NLP_quantization_new_API_fallback_env(self):
@@ -528,7 +641,25 @@ class TestPytorchFP8Adaptor(unittest.TestCase):
                 quant_conf,
                 calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None
             )
-            q_model.save("./saved")
+
+        for fake_yaml in ["static"]:
+            model = self.nlp_model
+            if fake_yaml == "dynamic":
+                quant_conf = PostTrainingQuantConfig(
+                    approach="dynamic",
+                    precision="fp8_e3m4",
+                )
+            elif fake_yaml == "static":
+                quant_conf = PostTrainingQuantConfig(
+                    approach="static",
+                    precision="fp8_e3m4",
+                )
+            q_model = quantization.fit(
+                model,
+                quant_conf,
+                calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None
+            )
+        q_model.save("./saved")
 
     def test_CV_quantization_old_API(self):
         for fake_yaml in ['dynamic_yaml.yaml', 'ptq_yaml.yaml', 'bf8_yaml.yaml', \
