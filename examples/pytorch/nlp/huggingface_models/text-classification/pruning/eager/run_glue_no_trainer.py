@@ -587,8 +587,8 @@ def main():
                 # if args.push_to_hub:
                 #     repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
-    # pattern_sparsity_over_conv_linear, element_sparsity_over_conv_linear, element_sparsity_over_all = pruner.get_sparsity_ratio()
-    # print(pattern_sparsity_over_conv_linear, element_sparsity_over_conv_linear, element_sparsity_over_all )
+    compression_manager.callbacks.on_train_end()
+
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
         unwrapped_model = accelerator.unwrap_model(model)

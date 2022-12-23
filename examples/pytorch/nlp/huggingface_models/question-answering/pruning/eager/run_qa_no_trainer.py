@@ -1102,6 +1102,7 @@ def main():
         eval_metric = metric.compute(predictions=prediction.predictions, references=prediction.label_ids)
         logger.info(f"Evaluation metrics of epoch{epoch}: {eval_metric}")
 
+    compression_manager.callbacks.on_train_end()
     # Prediction
     if args.do_predict:
         logger.info("***** Running Prediction *****")
