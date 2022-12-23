@@ -232,8 +232,10 @@
       "model_src_dir": "object_detection/onnx_model_zoo/ssd/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/onnx/ssd/ssd-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "ssd.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "fcn": {
       "model_src_dir": "image_recognition/onnx_model_zoo/fcn/quantization/ptq",
@@ -257,15 +259,19 @@
       "model_src_dir": "object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/faster_rcnn/FasterRCNN-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "faster_rcnn.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "mask_rcnn": {
       "model_src_dir": "object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/mask_rcnn/MaskRCNN-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "mask_rcnn.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "densenet": {
       "model_src_dir": "image_recognition/onnx_model_zoo/densenet/quantization/ptq",
@@ -503,8 +509,10 @@
       "model_src_dir": "object_detection/onnx_model_zoo/ssd/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/onnx/ssd/ssd-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "ssd_qdq.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "fcn_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/fcn/quantization/ptq",
@@ -528,15 +536,19 @@
       "model_src_dir": "object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/faster_rcnn/FasterRCNN-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "faster_rcnn_qdq.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "mask_rcnn_qdq": {
       "model_src_dir": "object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/mask_rcnn/MaskRCNN-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "mask_rcnn_qdq.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "yolov4": {
       "model_src_dir": "object_detection/onnx_model_zoo/yolov4/quantization/ptq",

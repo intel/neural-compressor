@@ -1031,19 +1031,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Faster R-CNN</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq">qlinearops</a> / <a href="./onnxrt/object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>Mask R-CNN</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq">qlinearops</a> / <a href="./onnxrt/object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>SSD</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/object_detection/onnx_model_zoo/ssd/quantization/ptq">qlinearops</a> / <a href="./onnxrt/object_detection/onnx_model_zoo/ssd/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/object_detection/onnx_model_zoo/ssd/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/object_detection/onnx_model_zoo/ssd/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>Tiny YOLOv3</td>
