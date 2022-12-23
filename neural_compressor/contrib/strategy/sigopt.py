@@ -142,8 +142,7 @@ class SigOptTuneStrategy(TuneStrategy):
         return op_tuning_cfg
 
     def next_tune_cfg(self):
-        """Yielding the tuning config to traverse by concreting strategies according to last tuning result.
-        """
+        """Yielding the tuning config to traverse by concreting strategies according to last tuning result."""
         while self.experiment.progress.observation_count < self.experiment.observation_budget:
             suggestion = self.conn.experiments(self.experiment.id).suggestions().create()
             yield self.params_to_tune_configs(suggestion.assignments)
