@@ -101,7 +101,7 @@ Neural network pruning is a promising model compression technique that removes t
 
  
 
-Unstructured pruning means pruning the least salient connections in the model. The nonzero patterns are irregular and could be anywhere in the matrix.
+  Unstructured pruning means pruning the least salient connections in the model. The nonzero patterns are irregular and could be anywhere in the matrix.
 
 
 
@@ -113,7 +113,7 @@ Unstructured pruning means pruning the least salient connections in the model. T
 
  
 
-Structured pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. In general, structured pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.
+  Structured pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. In general, structured pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.
 
 
 
@@ -264,10 +264,44 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
   
 
 
-
+### Pruning Scope
+Range of sparse score calculation in iterative pruning, default scope is global.
 
 
  
+
+- Gloabl
+
+
+
+
+  The score map is computed out of entire parameters, Some layers are higher than the target sparsity and some are lower, the total sparsity of the model reaches the target.
+
+
+
+
+- Local
+
+
+
+
+  The score map is computed from the corresponding layer's weight, The sparsity of each layer is equal to the target.
+
+
+
+
+### Sparsity Decay Type
+
+
+
+
+Growth rules for the sparsity of iterative pruning, "exp", "linear", "cos" and "cube" are available，We use exp by default。
+
+
+
+
+
+
 
 ### Regularization
 
@@ -287,7 +321,7 @@ Regularization is a technique that discourages learning a more complex model and
 
  
 
-  The Group-lasso algorithm is used to prune entire rows, columns or blocks of parameters that result in a smaller dense network.
+  The main idea of Group Lasso is to construct an objective function that penalizes the L2 parametrization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
 
 
 
