@@ -280,7 +280,7 @@ tuning configs to generate a better-performance quantized model.
 
 #### Usage
 
-`Random` usage is similar to `basic` but specifies the `strategy` field with `random` in the `TuningCriterion`.
+`Random` usage is similar to `basic`, with `random` specified to `strategy` field in the `TuningCriterion`.
 
 ```python
 from neural_compressor import config
@@ -301,7 +301,7 @@ conf = config.PostTrainingQuantConfig(
 
 #### Usage
 
-Compare to `Basic`, `sigopt_api_token` and `sigopt_project_id` are necessary for `SigOpt`.
+Compared to `Basic`, `sigopt_api_token` and `sigopt_project_id` are necessary for `SigOpt`.
 For details, [how to use sigopt strategy in neural_compressor](./sigopt_strategy.md) is available.
 
 Note that the `sigopt_api_token`, `sigopt_project_id`, and `sigopt_experiment_name` should be set inside the `strategy_kwargs`.
@@ -357,14 +357,14 @@ hyperparameters on the objective function.
 8. Repeat steps 4-7 with a fixed number of trials.
 
 >Note: TPE requires many iterations in order to reach an optimal solution.
-We recommend running at least 200 iterations. Because every iteration
-requires evaluation of a generated model--which means accuracy measurements
-on a dataset and latency measurements using a benchmark--this process can
+It is recommended to run at least 200 iterations, because every iteration
+requires evaluation of a generated model -- which means accuracy measurements
+on a dataset and latency measurements using a benchmark -- this process can
 take from 24 hours to a few days to complete, depending on the model.
 
 #### Usage
 
-`TPE` usage is similar to `basic` but specifies the `strategy` field with `tpe` in the `TuningCriterion`.
+`TPE` usage is similar to `basic` with `tpe` specified to `strategy` field in the `TuningCriterion`.
 
 ```python
 from neural_compressor import config
@@ -403,6 +403,6 @@ class AbcTuneStrategy(TuneStrategy):
 
 The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.
 
-If the traverse behavior of the `TuneStrategy` base class does not meet the new strategy requirement, it could re-implement a `traverse` function with its own logic.
+The `traverse` function can be overrided optionally if the traverse logic required by the new strategy is different from the one `TuneStrategy` base class implemented.
 
-An example like this is under the [TPE Strategy](../../neural_compressor/contrib/strategy/tpe.py).
+An example of customizing a new tuning strategy can be reached at [TPE Strategy](../../neural_compressor/contrib/strategy/tpe.py).
