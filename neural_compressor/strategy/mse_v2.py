@@ -44,12 +44,11 @@ class MSE_V2TuneStrategy(TuneStrategy):
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
-        
-           MSE_v2 is a strategy with a two stages fallback and revert fallback.
-           In the fallback stage, it uses multi-batch data to score the op impact
+           
+           1. In the fallback stage, it uses multi-batch data to score the op impact
            and then fallback the op with the highest score util found the quantized
            model meets accuracy criteria. 
-           In the revert fallback stage, it also scores the impact of fallback OPs
+           2. In the revert fallback stage, it also scores the impact of fallback OPs
            in the previous stage and selects the op with the lowest score to revert
            the fallback until the quantized model not meets accuracy criteria.
     

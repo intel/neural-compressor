@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The BaySian tuning strategy."""
+"""The Bayesian tuning strategy."""
 
 import copy
 import warnings
@@ -35,7 +35,7 @@ from .utils.tuning_structs import OpTuningConfig
 
 @strategy_registry
 class BayesianTuneStrategy(TuneStrategy):
-    """The BaySian tuning strategy."""
+    """The Bayesian tuning strategy."""
     
     def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, 
                  eval_func=None, dicts=None, q_hooks=None):

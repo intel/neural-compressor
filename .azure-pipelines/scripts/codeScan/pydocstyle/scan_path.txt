@@ -1,1 +1,2 @@
 /neural-compressor/neural_compressor/experimental
+/neural-compressor/neural_compressor/strategy

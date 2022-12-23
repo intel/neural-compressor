@@ -35,7 +35,7 @@ class BasicTuneStrategy(TuneStrategy):
         """Generate and yield the next tuning config with below order.
         
             1. OP Type Wise Tuning
-            2. Stage II. Fallback OP One by One
+            2. Fallback OP One by One
             3. Fallback Multiple OPs Accumulated
 
         Yields:
