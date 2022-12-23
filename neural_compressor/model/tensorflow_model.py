@@ -174,7 +174,20 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 with graph.device(node_device):
                     tf.import_graph_def(model, name='')
             else:
-                tf.import_graph_def(model, name='')
+                found_device = False
+                gpus = tf.config.list_physical_devices("GPU")
+                for gpu in gpus:
+                    if gpu.name.replace('physical_device:', '') == device:
+                        found_device = True
+                xpus = tf.config.list_physical_devices("XPU")
+                for xpu in xpus:
+                    if xpu.name.replace('physical_device:', '') == device:
+                        found_device = True
+                if found_device:
+                    with graph.device(device):
+                        tf.import_graph_def(model, name='')
+                else:
+                    tf.import_graph_def(model, name='')
     except:
         input_tensor_names, output_tensor_names = validate_and_inference_input_output(\
             model, input_tensor_names, output_tensor_names)
@@ -191,7 +204,20 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 with graph.device(node_device):
                     tf.import_graph_def(model, name='')
             else:
-                tf.import_graph_def(model, name='')
+                found_device = False
+                gpus = tf.config.list_physical_devices("GPU")
+                for gpu in gpus:
+                    if gpu.name.replace('physical_device:', '') == device:
+                        found_device = True
+                xpus = tf.config.list_physical_devices("XPU")
+                for xpu in xpus:
+                    if xpu.name.replace('physical_device:', '') == device:
+                        found_device = True
+                if found_device:
+                    with graph.device(device):
+                        tf.import_graph_def(model, name='')
+                else:
+                    tf.import_graph_def(model, name='')
 
     return graph_session(graph, input_tensor_names, output_tensor_names, **kwargs)
 
@@ -535,8 +561,22 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
                 saver = tf.compat.v1.train.import_meta_graph(\
                     os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
         else:
-            saver = tf.compat.v1.train.import_meta_graph(\
-                os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
+            found_device = False
+            gpus = tf.config.list_physical_devices("GPU")
+            for gpu in gpus:
+                if gpu.name.replace('physical_device:', '') == device:
+                    found_device = True
+            xpus = tf.config.list_physical_devices("XPU")
+            for xpu in xpus:
+                if xpu.name.replace('physical_device:', '') == device:
+                    found_device = True
+            if found_device:
+                with graph.device(device):
+                    saver = tf.compat.v1.train.import_meta_graph(\
+                        os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
+            else:
+                saver = tf.compat.v1.train.import_meta_graph(\
+                    os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
 
         sess.run(tf.compat.v1.global_variables_initializer())
         saver.restore(sess, os.path.join(model, ckpt_prefix))
