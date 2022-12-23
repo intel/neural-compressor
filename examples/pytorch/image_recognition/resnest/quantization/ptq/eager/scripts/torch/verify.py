@@ -131,7 +131,8 @@ def main():
                                format(args.resume))
 
     model.eval()
-    model.fuse_model()
+    # Fusion will remove BN, and the batchnorm calibration will be useless.
+    # model.fuse_model()
 
     if args.tune:
         from neural_compressor.experimental import Quantization, common

@@ -119,7 +119,8 @@ def main():
 
     if args.tune:
         model.eval()
-        model.fuse_model()
+        # Fusion will remove BN, and the batchnorm calibration will be useless.
+        # model.fuse_model()
         conf_yaml = "conf_" + args.model + ".yaml"
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization(conf_yaml)
@@ -147,7 +148,8 @@ def main():
     top5 = AverageMeter()
 
     model.eval()
-    model.fuse_model()
+    # Fusion will remove BN, and the batchnorm calibration will be useless.
+# model.fuse_model()()
     if args.int8:
         from neural_compressor.utils.pytorch import load
         new_model = load(

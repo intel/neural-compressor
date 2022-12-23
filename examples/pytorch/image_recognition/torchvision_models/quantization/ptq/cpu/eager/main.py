@@ -170,7 +170,8 @@ def main():
     if args.tune:
         from neural_compressor.experimental import Quantization, common
         model.eval()
-        model.fuse_model()
+        # Fusion will remove BN, and the batchnorm calibration will be useless.
+        # model.fuse_model()
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         q_model = quantizer.fit()
@@ -179,7 +180,8 @@ def main():
 
     if args.benchmark or args.accuracy_only:
         model.eval()
-        model.fuse_model()
+        # Fusion will remove BN, and the batchnorm calibration will be useless.
+        # model.fuse_model()
         if args.int8:
             from neural_compressor.utils.pytorch import load
             new_model = load(
