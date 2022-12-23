@@ -22,17 +22,16 @@ from .algorithm import Algorithm, algorithm_registry
 
 @algorithm_registry(algorithm_type='weight_correction')
 class WeightCorrection(Algorithm):
-    """
-    FastBiasCorrection algorithm class.
+    """FastBiasCorrection algorithm class.
 
-    correct int8 weight distribution close to fp32 weight
-    r*(W_int8 + u) -> W_fp32, r is variance ratio between fp32 and int8
-    u is the difference between fp32 and int8 channel wise, it's equal to minimize:
+    Correct INT8 weight distribution close to FP32 weight
+    r*(W_int8 + u) -> W_fp32, r is variance ratio between FP32 and INT8
+    u is the difference between FP32 and INT8 channel wise, it's equal to minimize:
     round(scale_c * (W_fp32 + shift))/scale - r*(round(scale * W_fp32) + scale*u)/scale
     notice we can only change the first round: round(scale_c * (W_fp32 + shift))
     an empirical solution is to make:
     scale_c = r * scale and shift = u
-    with this we don't change the min/max value, and correct the weight
+    with this we don't change the min/max value, and correct the weight.
     """
 
     def __init__(self, eps=1e-5, channel_axis=1):
