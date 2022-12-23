@@ -589,13 +589,13 @@ def main():
         from neural_compressor.experimental import Benchmark, common
         model = onnx.load(model_args.model_path)
         if model_args.mode == 'performance':
-            from neural_compressor.data import DATALOADERS, DATASETS
+            from neural_compressor.data import DATALOADERS, Datasets
             session = ort.InferenceSession(model_args.model_path, None)
             input_tensors = session.get_inputs()
             shape = []
             for i in range(len(input_tensors)):
                 shape.append((1, 512))
-            onnx_datasets = DATASETS('onnxrt_integerops')
+            onnx_datasets = Datasets('onnxrt_integerops')
             dummy_dataset = onnx_datasets['dummy'](shape=shape, low=1, high=1, dtype='int64', label=True)
             evaluator = Benchmark(model_args.config)
             evaluator.model = common.Model(model)

@@ -27,7 +27,7 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Union
 import sys
-from neural_compressor.data import DATALOADERS, DATASETS
+from neural_compressor.data import DATALOADERS, Dataset
 
 
 class ONNXRTBertDataset:
@@ -384,7 +384,7 @@ if __name__ == "__main__":
             shape = []
             for i in range(len(input_tensors)):
                 shape.append((1, 128))
-            datasets = DATASETS('onnxrt_integerops')
+            datasets = Datasets('onnxrt_integerops')
             dummy_dataset = datasets['dummy'](shape=shape, low=1, high=1, dtype='int64', label=True)
             evaluator = Benchmark(args.config)
             evaluator.model = common.Model(model)
