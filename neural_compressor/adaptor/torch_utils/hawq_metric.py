@@ -335,8 +335,8 @@ class HessianTrace:
 
     def get_params(self):
         weight_names = [n for n, p in self.model.named_parameters() if
-                        p.requires_grad ]  ##remove bias and "bias" not in n
-        params = [p for n, p in self.model.named_parameters() if p.requires_grad ]  ##remove bias and "bias" not in n
+                        p.requires_grad]  ##remove bias and "bias" not in n
+        params = [p for n, p in self.model.named_parameters() if p.requires_grad]  ##remove bias and "bias" not in n
         self.weight_names = weight_names
         self.params = params
 
@@ -389,6 +389,7 @@ class HessianTrace:
             # logger.info("batch_size:"+str(batch_size)+"|"+str(self.dataloader.batch_size))
             cnt += batch_size
             gradients = self.forward_backward(self.model, data, create_graph=True)
+            # logger.info("gradients:"+str(step)+str(gradients))
             H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
             H_v = [pre + cur * float(batch_size) for cur, pre in zip(H_v_one, H_v)]
             if cnt >= num_samples:
@@ -427,8 +428,10 @@ class HessianTrace:
             layer_traces_per_iter.append(layer_traces)
             layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
             model_trace = torch.sum(layer_traces_estimate)
-            diff_ratio = abs(model_trace - prev_avg_model_trace) / (prev_avg_model_trace + self.eps)
+            diff_ratio = abs(model_trace - prev_avg_model_trace) / (abs(prev_avg_model_trace + self.eps))
+            logger.info("diff_ratio:"+str(diff_ratio)+"|"+str(self.tolerance))
             if diff_ratio < self.tolerance:  ##TODO magic number
+                logger.info("End of hessian computation!")
                 break
             # if iter == 20:  ##TODO for debugging
             #     break
@@ -439,7 +442,7 @@ class HessianTrace:
             weight_name_to_traces[weight_name] = float(trace)  # tensor->float
         op_name_to_trace = {}
         for weight_name in self.weight_names:
-            if "weight" in weight_name:
+            if "weight" in weight_name: # remove bias op mapping
                 op_name = self.weight_to_op[weight_name]
                 op_name_to_trace[op_name] = weight_name_to_traces[weight_name]
         return op_name_to_trace
