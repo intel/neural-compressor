@@ -2,31 +2,41 @@ Distributed Training and Inference (Evaluation)
 ============
 
 1. [Introduction](#introduction)
-2. [Horovod Installation](#horovod-installation)
-3. [Distributed Training and Inference (Evaluation)](#distributed-training-and-inference-evaluation-1)
+2. [Supported Feature Matrix](#supported-feature-matrix)
+3. [Get Started with Distributed Training and Inference API](#get-started-with-distributed-training-and-inference-api)
 
     3.1. [Option 1: Pure Yaml Configuration](#option-1-pure-yaml-configuration)
 
     3.2. [Option 2: User Defined Training Function](#option-2-user-defined-training-function)
 
     3.3. [Horovodrun Execution](#horovodrun-execution)
-4. [Security](#security)
-5. [Examples](#examples)
 
+    3.4. [Security](#security)
+4. [Examples](#examples)
+
+    4.1. [Pytorch Examples](#pytorch-examples)
+
+    4.2. [Tensorflow Examples](#tensorflow-examples)
 ## Introduction
 
 Neural Compressor uses [horovod](https://github.com/horovod/horovod) for distributed training.
-
-## Horovod Installation
 
 Please check horovod installation documentation and use following commands to install horovod:
 ```
 pip install horovod
 ```
 
-## Distributed Training and Inference (Evaluation)
+## Supported Feature Matrix
+Distributed training and inference are supported in PyTorch and TensorFlow currently.
+| Framework  | Type    | Distributed Support |
+|------------|---------|:-------------------:|
+| PyTorch    | QAT     |       &#10004;      |
+| PyTorch    | PTQ     |       &#10004;      |
+| TensorFlow | PTQ     |       &#10004;      |
+| Keras      | Pruning |       &#10004;      |
 
-Distributed training and inference are supported in PyTorch and TensorFlow currently. (i.e. PyTorch currently supports distributed QAT and PTQ. TensorFlow currently supports distributed PTQ and Keras-backend Pruning). To enable distributed training or inference, the steps are:
+## Get Started with Distributed Training and Inference API
+To enable distributed training or inference, the steps are:
 
 1. Setting up distributed training or inference scripts. We have 2 options here:
     - Option 1: Enable distributed training or inference with pure yaml configuration. In this case, Neural Compressor builtin training function is used.
@@ -145,19 +155,19 @@ For example, the following command means that two processes will be assigned to 
 horovodrun -np 2 -H node-001:1,node-002:1 python example.py
 ```
 
-## Security
+### Security
 
 Horovodrun requires user set up SSH on all hosts without any prompts. To do distributed training with Neural Compressor, user needs to ensure the SSH setting on all hosts.
 
 ## Examples
-PyTorch:
+### PyTorch Examples:
 - PyTorch example-1: MNIST
   - Please follow this README.md exactly：[MNIST](../../examples/pytorch/image_recognition/mnist)
 
 - PyTorch example-2: QAT (Quantization Aware Training)
   - Please follow this README.md exactly：[QAT](../../examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed)
 
-TensorFlow:
+### TensorFlow Examples:
 - TensorFlow example-1: 'ResNet50 V1.0' PTQ (Post Training Quantization) with distributed inference    
   - Step-1: Please cd (change directory) to the [TensorFlow Image Recognition Example](../../examples/tensorflow/image_recognition) and follow the readme to run PTQ, ensure that PTQ of 'ResNet50 V1.0' can be successfully executed.
   - Step-2: We only need to modify the [resnet50_v1.yaml](../../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/resnet50_v1.yaml), add a line 'distributed: True' in the 'evaluation' field.
