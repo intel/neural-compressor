@@ -1001,6 +1001,13 @@ class TemplateAdaptor(Adaptor):
             else:
                 capability_pair = [
                     (self.query_handler.get_quantization_capability()['fp8_e4m3']['static'], 'static')]
+        elif self.precision == 'fp8_e3m4':
+            if self.approach == "post_training_dynamic_quant":
+                capability_pair = [
+                    (self.query_handler.get_quantization_capability()['fp8_e3m4']['dynamic'], 'dynamic')]
+            else:
+                capability_pair = [
+                    (self.query_handler.get_quantization_capability()['fp8_e3m4']['static'], 'static')]
         fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
 
         if self.precision == 'int8':
@@ -1065,7 +1072,7 @@ class TemplateAdaptor(Adaptor):
                     if fp32_config not in q_capability['optypewise'][q_op[1]]:
                         q_capability['optypewise'][q_op[1]].append(fp32_config)
             # used in quant_level=0/1 to decide the quantize/fallback order.
-            q_capability['op_type_priority'] = self.query_handler.get_op_types_by_precision('hf8')
+            q_capability['op_type_priority'] = self.query_handler.get_op_types_by_precision(self.precision)
 
         # get bf16 capability
         if False and self.use_bf16 and (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1') and \
@@ -3676,7 +3683,7 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
         # Insert input observer and execute calibration with input observer.
         if self.approach == 'post_training_static_quant':
             self._prepare_observer(q_model._model)
-            self._calibration_for_scale(q_model._model, dataloader)
+            self._calibration_for_scale(q_model._model, dataloader, model_qconfig_dict)
 
         # add fp8 emulation hook
         from mpemu import qutils
@@ -3691,13 +3698,8 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
     def _build_module_quant_config(self, dtype_w, scheme_w, dtype_i, scheme_i):
         # only quantize input and weight
         from mpemu.qutils import TensorQuantConfig, ModuleQuantConfig
-        dtype_w = dtype_w.split('_')[1]
-        self.wt_qconfig = TensorQuantConfig(dtype_w, scheme_w)
-        if dtype_i == 'fp32':
-            self.iact_qconfig = None
-        else:
-            dtype_i = dtype_i.split('_')[1]
-            self.iact_qconfig = TensorQuantConfig(dtype_i, scheme_i)
+        self.wt_qconfig = TensorQuantConfig(dtype_w.split('_')[1], scheme_i) if 'fp8' in dtype_w else None
+        self.iact_qconfig = TensorQuantConfig(dtype_i.split('_')[1], scheme_i) if 'fp8' in dtype_i else None
         self.oact_qconfig   = None #TensorQuantConfig("e4m3", "rne")
         mod_qconfig = ModuleQuantConfig(wt_qconfig=self.wt_qconfig,
                                         iact_qconfig=self.iact_qconfig,
@@ -3709,13 +3711,13 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
         model_qconfig_dict = {}
         for k, v in self.tune_cfg['op'].items():
             dtype_w = v['weight']['dtype']
-            # skip fallbacked module
-            if dtype_w == 'fp32':
-                continue
             dtype_i = v['activation']['dtype']
             scheme_w = v['weight']['scheme'] if 'scheme' in v['weight'] else 'rne'
             scheme_i = v['activation']['scheme'] if 'scheme' in v['activation'] else 'rne'
-            # TODO： Precision from strategy need to split for weight and activation
+            # skip fallbacked module
+            if dtype_w == 'fp32' and dtype_i == 'fp32':
+                continue
+            # TODO： FP8_E5M2 Precision from strategy need to split for weight and activation
             # Here is a workaround for Embedding and EmbeddingBag.
             if k[1] in ['Embedding', 'EmbeddingBag']:
                 dtype_i = 'fp32'
@@ -3736,7 +3738,7 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
             op_type = str(module.__class__.__name__)
             if (name, op_type) in self.tune_cfg['op']:
                 config = self.tune_cfg['op'][(name, op_type)]
-                if config['activation']['dtype'] == 'fp8_e4m3':
+                if config['activation']['dtype'] in ['fp8_e4m3', 'fp8_e3m4']:
                     algorithm = config['activation']['algorithm']
                     from mpemu.module_wrappers import BatchMatmul, Matmul
                     if algorithm == 'kl':
@@ -3757,16 +3759,16 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                             )
                     module.register_forward_pre_hook(input_observer_forward_pre_hook)
 
-    def _calibration_for_scale(self, model, dataloader):
+    def _calibration_for_scale(self, model, dataloader, model_qconfig_dict):
         calib_sampling_size = self.tune_cfg['calib_sampling_size']
         iterations = math.ceil(calib_sampling_size / dataloader.batch_size)
         self.model_calibration(
             model, dataloader, iterations,
             calib_sampling_size=calib_sampling_size)
 
-        HF_max = torch.tensor(448)
         for name, module in model.named_modules():
             if hasattr(module, 'input_activation_post_process'):
+                HF_max = model_qconfig_dict[name].iact_qconfig.get_flt_max()
                 max_val = module.input_activation_post_process.max_val
                 min_val = module.input_activation_post_process.min_val
                 amax = torch.max(torch.abs(max_val), torch.abs(min_val))
@@ -3774,6 +3776,7 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                 module.register_parameter('scale', torch.nn.Parameter(scale))
                 delattr(module, 'input_activation_post_process')
             if hasattr(module, 'input_activation_post_process1'):
+                HF_max = model_qconfig_dict[name].iact_qconfig.get_flt_max()
                 max_val = module.input_activation_post_process1.max_val
                 min_val = module.input_activation_post_process1.min_val
                 amax = torch.max(torch.abs(max_val), torch.abs(min_val))
@@ -3947,14 +3950,18 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
             if 'FP8_' in dtype:
                 dtype = dtype.split('_')[0] + '(' + dtype.split('_')[1] + ')'
             if k[1] not in res:
-                res[k[1]] = {'FP8(E5M2)':0, 'FP8(E4M3)': 0, 'FP32':0}
+                res[k[1]] = {'FP8(E5M2)':0, 'FP8(E4M3)': 0, 'FP8(E3M4)': 0, 'FP32':0}
             res[k[1]][dtype] += 1
 
-        field_names=["Op Type", "Total", "FP8(E5M2)", "FP8(E4M3)", "FP32"]
-        output_data = [[
-            op_type, sum(res[op_type].values()),
-            res[op_type]['FP8(E5M2)'], res[op_type]['FP8(E4M3)'], res[op_type]['FP32']]
-        for op_type in res.keys()]
+        field_names=["Op Type", "Total", "FP8(E5M2)", "FP8(E4M3)", 'FP8(E3M4)', "FP32"]
+        output_data = [
+                [
+                    op_type, sum(res[op_type].values()),
+                    res[op_type]['FP8(E5M2)'], res[op_type]['FP8(E4M3)'], 
+                    res[op_type]['FP8(E3M4)'], res[op_type]['FP32']
+                ]
+            for op_type in res.keys()
+        ]
 
         Statistics(output_data,
                    header='Mixed Precision Statistics',

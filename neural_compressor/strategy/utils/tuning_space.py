@@ -25,7 +25,7 @@ from ...utils import logger
 
 PRECISION_SET = {'fp8_e5m2', 'bf16', 'fp32'}
 QUANT_MODE_SET = {'static', 'dynamic'}
-QUNAT_BIT_SET = {'fp8_e4m3', 'int8', 'uint8', 'int4', 'uint4'}
+QUNAT_BIT_SET = {'fp8_e3m4', 'fp8_e4m3', 'int8', 'uint8', 'int4', 'uint4'}
 
 TUNING_ITEMS_LST = [('activation','scheme'), ('activation','algorithm'), ('activation','granularity'),
                     ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'),

@@ -760,13 +760,14 @@ schema = Schema({
         Optional('precision', default='int8'): And(
             str,
             lambda s: s in ['int8',
+                            'fp8_e3m4',
                             'fp8_e4m3',
                             'fp8_e5m2',]),
         Optional('train', default=None): train_schema,
         Optional('advance', default=None): {
             Optional('bias_correction'): And(str, lambda s: s in ['weight_empirical']),
         },
-        Optional('calibration', default={'sampling_size': [100]}): {
+        Optional('calibration', default={'sampling_size': [100], 'batchnorm_sampling_size': [3000]}): {
             Optional('sampling_size', default=[100]): And(Or(str, int, list), Use(input_to_list)),
             Optional('batchnorm_sampling_size', default=[3000]): And(Or(str, int, list), Use(input_to_list)),
             Optional('dataloader', default=None): dataloader_schema

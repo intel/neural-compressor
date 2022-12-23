@@ -29,9 +29,11 @@
     uint8: ['Conv1d', 'Conv2d', 'Conv3d', 'BatchNorm2d', 'BatchNorm3d', 'Linear', 'ReLU', 'ReLU6',
             'QuantStub', 'FloatFunctional', 'ConvReLU2d', 'ConvReLU3d', 'LinearReLU', 'BNReLU2d',
             'BNReLU3d', 'ConvBn2d', 'ConvBnReLU2d']
-    bf8: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'AddMatmul', 'EltwiseAdd', 'EltwiseMul', 
+    fp8_e5m2: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'AddMatmul', 'EltwiseAdd', 'EltwiseMul', 
           'EltwiseDiv', 'Embedding', 'LayerNorm']
-    hf8: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'AddMatmul', 'EltwiseAdd', 'EltwiseMul', 
+    fp8_e4m3: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'AddMatmul', 'EltwiseAdd', 'EltwiseMul', 
+          'EltwiseDiv', 'Embedding', 'LayerNorm']
+    fp8_e3m4: ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'AddMatmul', 'EltwiseAdd', 'EltwiseMul', 
           'EltwiseDiv', 'Embedding', 'LayerNorm']
     bf16: ['Linear', 'bmm', 'mm', 'baddbmm', 'addmm', 'addbmm',
             '_convolution', 'LSTM', 'LSTMCell', 'GRU', 'GRUCell']
@@ -274,9 +276,9 @@
                         },
                     },
           }
-    # fp8_e5m2(bf8) is direct cast.
-    fp8_e5m2: &cap_bf8_1_11 {
-          'Conv2d': &cap_bf8_1_11_Conv2d {
+    # fp8_e5m2 is direct cast.
+    fp8_e5m2: &cap_fp8_e5m2_1_11 {
+          'Conv2d': &cap_fp8_e5m2_1_11_Conv2d {
             'weight': {
                         'dtype': ['fp8_e5m2'],
                         },
@@ -284,8 +286,8 @@
                         'dtype': ['fp8_e5m2'],
                         },
                     },
-          'Linear': *cap_bf8_1_11_Conv2d,
-          'Matmul': &cap_bf8_1_11_Matmul {
+          'Linear': *cap_fp8_e5m2_1_11_Conv2d,
+          'Matmul': &cap_fp8_e5m2_1_11_Matmul {
             'weight': {
                         'dtype': ['fp32'], # no weight
                         },
@@ -293,12 +295,12 @@
                         'dtype': ['fp8_e5m2'],
                         },
                     },
-          'BatchMatmul': *cap_bf8_1_11_Matmul,
-          'AddMatmul': *cap_bf8_1_11_Matmul,
-          'EltwiseAdd': *cap_bf8_1_11_Matmul, 
-          'EltwiseMul': *cap_bf8_1_11_Matmul, 
-          'EltwiseDiv': *cap_bf8_1_11_Matmul,
-          'Embedding': &cap_bf8_1_11_Embedding {
+          'BatchMatmul': *cap_fp8_e5m2_1_11_Matmul,
+          'AddMatmul': *cap_fp8_e5m2_1_11_Matmul,
+          'EltwiseAdd': *cap_fp8_e5m2_1_11_Matmul, 
+          'EltwiseMul': *cap_fp8_e5m2_1_11_Matmul, 
+          'EltwiseDiv': *cap_fp8_e5m2_1_11_Matmul,
+          'Embedding': &cap_fp8_e5m2_1_11_Embedding {
             'weight': {
                         'dtype': ['fp8_e5m2'],
                         },
@@ -306,8 +308,8 @@
                         'dtype': ['fp32'],
                         },
                     },
-          'EmbeddingBag': *cap_bf8_1_11_Embedding,
-          'LayerNorm': *cap_bf8_1_11_Conv2d,
+          'EmbeddingBag': *cap_fp8_e5m2_1_11_Embedding,
+          'LayerNorm': *cap_fp8_e5m2_1_11_Conv2d,
           'default': {
             'activation': {
                         'dtype': ['fp32'],
@@ -317,10 +319,10 @@
                         },
                     },
     }
-    # fp8_e4m3(hf8) has scale and therefore have dynamic and static method.
-    fp8_e4m3: &cap_hf8_1_11
-        dynamic: &cap_dynamic_hf8_1_11 {
-          'Conv2d': &cap_dynamic_hf8_1_11_Conv2d {
+
+    fp8_e4m3: &cap_fp8_e4m3_1_11
+        dynamic: &cap_dynamic_fp8_e4m3_1_11 {
+          'Conv2d': &cap_dynamic_fp8_e4m3_1_11_Conv2d {
             'weight': {
                         'dtype': ['fp8_e4m3'],
                         'scheme': ['rne'],
@@ -334,8 +336,8 @@
                         'algorithm': ['minmax']
                         },
                     },
-          'Linear': *cap_dynamic_hf8_1_11_Conv2d,
-          'Matmul': &cap_dynamic_hf8_1_11_Matmul {
+          'Linear': *cap_dynamic_fp8_e4m3_1_11_Conv2d,
+          'Matmul': &cap_dynamic_fp8_e4m3_1_11_Matmul {
             'weight': {
                         'dtype': ['fp32'], # no weight
                         },
@@ -346,12 +348,12 @@
                         'algorithm': ['minmax'],
                         },
                     },
-          'BatchMatmul': *cap_dynamic_hf8_1_11_Matmul,
-          'AddMatmul': *cap_dynamic_hf8_1_11_Matmul,
-          'EltwiseAdd': *cap_dynamic_hf8_1_11_Matmul, 
-          'EltwiseMul': *cap_dynamic_hf8_1_11_Matmul, 
-          'EltwiseDiv': *cap_dynamic_hf8_1_11_Matmul,
-          'Embedding': &cap_hf8_1_11_Embedding {
+          'BatchMatmul': *cap_dynamic_fp8_e4m3_1_11_Matmul,
+          'AddMatmul': *cap_dynamic_fp8_e4m3_1_11_Matmul,
+          'EltwiseAdd': *cap_dynamic_fp8_e4m3_1_11_Matmul, 
+          'EltwiseMul': *cap_dynamic_fp8_e4m3_1_11_Matmul, 
+          'EltwiseDiv': *cap_dynamic_fp8_e4m3_1_11_Matmul,
+          'Embedding': &cap_fp8_e4m3_1_11_Embedding {
             'weight': {
                         'dtype': ['fp8_e4m3'],
                         'scheme': ['rne'],
@@ -362,8 +364,8 @@
                         'dtype': ['fp32'],
                         },
                     },
-          'EmbeddingBag': *cap_hf8_1_11_Embedding,
-          'LayerNorm': *cap_dynamic_hf8_1_11_Conv2d,
+          'EmbeddingBag': *cap_fp8_e4m3_1_11_Embedding,
+          'LayerNorm': *cap_dynamic_fp8_e4m3_1_11_Conv2d,
           #'LayerNorm': *cap_bf8_1_11_Conv2d,
           'default': {
             'activation': {
@@ -374,8 +376,8 @@
                         },
                     },
         }
-        static: &cap_static_hf8_1_11 {
-          'Conv2d': &cap_static_hf8_1_11_Conv2d {
+        static: &cap_static_fp8_e4m3_1_11 {
+          'Conv2d': &cap_static_fp8_e4m3_1_11_Conv2d {
             'weight': {
                         'dtype': ['fp8_e4m3'],
                         'scheme': ['rne'],
@@ -386,11 +388,11 @@
                         'dtype': ['fp8_e4m3'],
                         'scheme': ['rne'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['kl', 'minmax']
+                        'algorithm': ['minmax', 'kl']
                         },
                     },
-          'Linear': *cap_static_hf8_1_11_Conv2d,
-          'Matmul': &cap_static_hf8_1_11_Matmul {
+          'Linear': *cap_static_fp8_e4m3_1_11_Conv2d,
+          'Matmul': &cap_static_fp8_e4m3_1_11_Matmul {
             'weight': {
                         'dtype': ['fp32'], # no weight
                         },
@@ -398,17 +400,119 @@
                         'dtype': ['fp8_e4m3'],
                         'scheme': ['rne'],
                         'granularity': ['per_tensor'],
-                        'algorithm': ['kl', 'minmax']
+                        'algorithm': ['minmax', 'kl']
                         },
                     },
-          'BatchMatmul': *cap_static_hf8_1_11_Matmul,
-          'AddMatmul': *cap_static_hf8_1_11_Matmul,
-          'EltwiseAdd': *cap_static_hf8_1_11_Matmul, 
-          'EltwiseMul': *cap_static_hf8_1_11_Matmul, 
-          'EltwiseDiv': *cap_static_hf8_1_11_Matmul,
-          'Embedding': *cap_hf8_1_11_Embedding,
-          'EmbeddingBag': *cap_hf8_1_11_Embedding,
-          'LayerNorm': *cap_static_hf8_1_11_Conv2d,
+          'BatchMatmul': *cap_static_fp8_e4m3_1_11_Matmul,
+          'AddMatmul': *cap_static_fp8_e4m3_1_11_Matmul,
+          'EltwiseAdd': *cap_static_fp8_e4m3_1_11_Matmul, 
+          'EltwiseMul': *cap_static_fp8_e4m3_1_11_Matmul, 
+          'EltwiseDiv': *cap_static_fp8_e4m3_1_11_Matmul,
+          'Embedding': *cap_fp8_e4m3_1_11_Embedding,
+          'EmbeddingBag': *cap_fp8_e4m3_1_11_Embedding,
+          'LayerNorm': *cap_static_fp8_e4m3_1_11_Conv2d,
+          #'LayerNorm': *cap_bf8_1_11_Conv2d,
+          'default': {
+            'activation': {
+                        'dtype': ['fp32'],
+                        },
+            'weight': {
+                        'dtype': ['fp32'],
+                        },
+                    },
+        }
+
+    fp8_e3m4: &cap_fp8_e3m4_1_11
+        dynamic: &cap_dynamic_fp8_e3m4_1_11 {
+          'Conv2d': &cap_dynamic_fp8_e3m4_1_11_Conv2d {
+            'weight': {
+                        'dtype': ['fp8_e3m4'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['fp8_e3m4'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax']
+                        },
+                    },
+          'Linear': *cap_dynamic_fp8_e3m4_1_11_Conv2d,
+          'Matmul': &cap_dynamic_fp8_e3m4_1_11_Matmul {
+            'weight': {
+                        'dtype': ['fp32'], # no weight
+                        },
+            'activation': {
+                        'dtype': ['fp8_e3m4'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax'],
+                        },
+                    },
+          'BatchMatmul': *cap_dynamic_fp8_e3m4_1_11_Matmul,
+          'AddMatmul': *cap_dynamic_fp8_e3m4_1_11_Matmul,
+          'EltwiseAdd': *cap_dynamic_fp8_e3m4_1_11_Matmul, 
+          'EltwiseMul': *cap_dynamic_fp8_e3m4_1_11_Matmul, 
+          'EltwiseDiv': *cap_dynamic_fp8_e3m4_1_11_Matmul,
+          'Embedding': &cap_fp8_e3m4_1_11_Embedding {
+            'weight': {
+                        'dtype': ['fp8_e3m4'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['fp32'],
+                        },
+                    },
+          'EmbeddingBag': *cap_fp8_e3m4_1_11_Embedding,
+          'LayerNorm': *cap_dynamic_fp8_e3m4_1_11_Conv2d,
+          #'LayerNorm': *cap_bf8_1_11_Conv2d,
+          'default': {
+            'activation': {
+                        'dtype': ['fp32'],
+                        },
+            'weight': {
+                        'dtype': ['fp32'],
+                        },
+                    },
+        }
+        static: &cap_static_fp8_e3m4_1_11 {
+          'Conv2d': &cap_static_fp8_e3m4_1_11_Conv2d {
+            'weight': {
+                        'dtype': ['fp8_e3m4'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_channel'],
+                        'algorithm': ['minmax']
+                        },
+            'activation': {
+                        'dtype': ['fp8_e3m4'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        },
+                    },
+          'Linear': *cap_static_fp8_e3m4_1_11_Conv2d,
+          'Matmul': &cap_static_fp8_e3m4_1_11_Matmul {
+            'weight': {
+                        'dtype': ['fp32'], # no weight
+                        },
+            'activation': {
+                        'dtype': ['fp8_e3m4'],
+                        'scheme': ['rne'],
+                        'granularity': ['per_tensor'],
+                        'algorithm': ['minmax', 'kl']
+                        },
+                    },
+          'BatchMatmul': *cap_static_fp8_e3m4_1_11_Matmul,
+          'AddMatmul': *cap_static_fp8_e3m4_1_11_Matmul,
+          'EltwiseAdd': *cap_static_fp8_e3m4_1_11_Matmul, 
+          'EltwiseMul': *cap_static_fp8_e3m4_1_11_Matmul, 
+          'EltwiseDiv': *cap_static_fp8_e3m4_1_11_Matmul,
+          'Embedding': *cap_fp8_e3m4_1_11_Embedding,
+          'EmbeddingBag': *cap_fp8_e3m4_1_11_Embedding,
+          'LayerNorm': *cap_static_fp8_e3m4_1_11_Conv2d,
           #'LayerNorm': *cap_bf8_1_11_Conv2d,
           'default': {
             'activation': {
