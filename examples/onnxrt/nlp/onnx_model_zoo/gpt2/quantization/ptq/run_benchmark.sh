@@ -26,6 +26,9 @@ function init_params {
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)
       ;;
+      --iters=*)
+          iters=$(echo ${var} |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -40,7 +43,7 @@ function define_mode {
     if [[ ${mode} == "accuracy" ]]; then
       mode_cmd=" --benchmark --mode=accuracy"
     elif [[ ${mode} == "benchmark" ]]; then
-      mode_cmd=" --iter 500 --benchmark"
+      mode_cmd=" --iter ${iters} --benchmark"
     else
       echo "Error: No such mode: ${mode}"
       exit 1
