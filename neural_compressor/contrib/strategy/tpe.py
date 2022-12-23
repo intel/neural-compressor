@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Fefine the tuning strategy that uses tpe search in tuning space."""
 import copy
 import os
 from pathlib import Path
@@ -174,8 +175,7 @@ class TpeTuneStrategy(TuneStrategy):
         return True
 
     def traverse(self):
-        """Tpe traverse logic.
-        """
+        """Tpe traverse logic."""
         logger.info("Start to run tpe strategy.")
         # prepare log file
         trials_file = os.path.join(os.path.dirname(self.history_path), 'tpe_trials.csv')

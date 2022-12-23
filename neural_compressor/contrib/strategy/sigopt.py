@@ -16,9 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""The SigOpt Tuning Strategy provides support for the quantization process.
-"""
-
+"""The SigOpt Tuning Strategy provides support for the quantization process."""
 import copy
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
@@ -144,8 +142,7 @@ class SigOptTuneStrategy(TuneStrategy):
         return op_tuning_cfg
 
     def next_tune_cfg(self):
-        """The generator of yielding next tuning config to traverse
-        by concreting strategies according to last tuning result.
+        """Yielding the tuning config to traverse by concreting strategies according to last tuning result.
         """
         while self.experiment.progress.observation_count < self.experiment.observation_budget:
             suggestion = self.conn.experiments(self.experiment.id).suggestions().create()
@@ -168,10 +165,9 @@ class SigOptTuneStrategy(TuneStrategy):
             return base_acc - self.cfg.tuning.accuracy_criterion.absolute
 
     def traverse(self):
-        """The main traverse logic, which could be override by some concrete strategy which needs
-       more hooks.
+        """The main traverse logic, which could be override by some concrete strategy which needs more hooks.
 
-           This is SigOpt version of traverse -- with additional constraints setting to HPO.
+        This is SigOpt version of traverse -- with additional constraints setting to HPO.
         """
         #get fp32 model baseline
         if self.baseline is None:
