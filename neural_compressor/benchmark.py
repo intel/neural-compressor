@@ -98,7 +98,7 @@ class Benchmark(object):
         name (str, optional): Name for postprocess.
         postprocess_cls (cls): Should be a sub_class of neural_compressor.data.transforms.postprocess.
 
-    """
+        """
         from .experimental.common import Postprocess as NCPostprocess
         nc_postprocess = NCPostprocess(postprocess_cls, name, **kwargs)
         self.exp_benchmarker.postprocess = nc_postprocess
