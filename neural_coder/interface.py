@@ -468,7 +468,7 @@ def enable(
             sp_overwrite = subprocess.Popen(
                 "patch -d/ -p0 < " + abs_patch_path, env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec
             sp_overwrite.wait()
-            os.remove(abs_patch_path)  # remove patch after overwrite
+            # os.remove(abs_patch_path)  # remove patch after overwrite
 
         if patch_imports:
             whole_patch_import_modules = ""
