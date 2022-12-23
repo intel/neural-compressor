@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Class for Keras model."""
+
 import os
 from abc import abstractmethod
 from neural_compressor.model.base_model import BaseModel
@@ -22,15 +24,14 @@ from neural_compressor.utils.utility import LazyImport
 tf = LazyImport('tensorflow')
 
 class KerasModel(BaseModel):
-    """Build KerasModel object
-
-    Args:
-        model (string or keras model object): model path or model object
-        kwargs (dict): other required parameters
-
-    """
+    """Build Keras model."""
 
     def __init__(self, model, **kwargs):
+        """Initialize a Keras model.
+
+        Args:
+            model (string or keras model object): model path or model object.
+        """
         self.component = None
         self._model = model
         if not isinstance(model, tf.keras.Model):
@@ -41,28 +42,32 @@ class KerasModel(BaseModel):
 
     @property
     def q_config(self):
+        """Return q_config."""
         return self._q_config
 
     @q_config.setter
     def q_config(self, q_config):
+        """Set q_config."""
         self._q_config = q_config
 
     @property
     def model(self):
+        """Return model itself."""
         return self._model_object
 
     @property
     def graph_info(self):
-        ''' return {Node: Node_type} like {'conv0': 'conv2d'} '''
+        """Return graph info."""
         #(TODO) get the graph info
         return None
 
     @abstractmethod
     def save(self, root, *args, **kwargs):
+        """Save Keras model."""
         self._model_object.save(root)
 
     @abstractmethod
-    def export(
+    def _export(
         self,
         save_path: str,
         conf,
@@ -71,4 +76,5 @@ class KerasModel(BaseModel):
 
     @abstractmethod
     def framework(self):
+        """Return framework."""
         return 'keras'

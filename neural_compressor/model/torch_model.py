@@ -38,10 +38,10 @@ ortq = LazyImport('onnxruntime.quantization')
 
 
 class PyTorchBaseModel(torch.nn.Module, BaseModel):
-    """A wrapper of the information needed to construct a PyTorch Base Model."""
+    """Build PyTorch base model."""
 
     def __init__(self, model, **kwargs):
-        """Initialize an ONNX Model.
+        """Initialize a PyTorch model.
 
         Args:
             model (torch.nn.model): torch.nn.model instance.
@@ -755,8 +755,7 @@ class IPEXModel(PyTorchBaseModel):   # pragma: no cover
         self.ipex_config_path = None
 
     @property
-    def graph_info(self):
-        """Return graph info."""
+    def _graph_info(self):
         pass
 
     @property

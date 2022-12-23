@@ -30,10 +30,10 @@ ortq = LazyImport("neural_compressor.adaptor.ox_utils.util")
 logger = logging.getLogger("neural_compressor")
 
 class ONNXModel(BaseModel):
-    """A wrapper of the information needed to construct an ONNX Model."""
+    """Build ONNX model."""
 
     def __init__(self, model, **kwargs):
-        """Initialize an ONNX Model.
+        """Initialize an ONNX model.
 
         Args:
             model (str or ModelProto): path to onnx model or loaded ModelProto model object.

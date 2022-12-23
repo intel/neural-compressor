@@ -146,7 +146,7 @@ caused by unsupported model or inappropriate framework installation.'
     return fwk_name
 
 class Model(object):
-    """A wrapper of the information needed to construct a Neural Compressor Model."""
+    """A wrapper to construct a Neural Compressor Model."""
     
     def __new__(cls, root, **kwargs):
         """Create a new instance object of Model.
