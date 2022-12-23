@@ -14,4 +14,5 @@ The utils API information is available:
    neural_compressor.utils.options
    neural_compressor.utils.pytorch
    neural_compressor.utils.utility  
+   neural_compressor.utils.kl_divergence
    
