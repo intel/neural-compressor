@@ -111,6 +111,7 @@ class GradientCriterion(PruningCriterion):
     def __init__(self, modules, config):
         """Initiliaze a gradient pruning criterion."""
         super(GradientCriterion, self).__init__(modules, config)
+        assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
 
     def on_after_optimizer_step(self):
         """Calculate and store the pruning scores based on gradient criterion."""
@@ -140,7 +141,7 @@ class SnipCriterion(PruningCriterion):
     def __init__(self, modules, config):
         """Initiliaze a snip pruning criterion."""
         super(SnipCriterion, self).__init__(modules, config)
-        assert self.config.end_step > 0, "gradient based criterion does not work on step 0"
+        assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
 
     def on_after_optimizer_step(self):
         """Calculate and store the pruning scores based on snip criterion."""
@@ -171,7 +172,7 @@ class SnipMomentumCriterion(PruningCriterion):
     def __init__(self, modules, config):
         """Initiliaze a snip_momentum pruning criterion."""
         super(SnipMomentumCriterion, self).__init__(modules, config)
-        assert self.config.end_step > 0, "gradient based criterion does not work on step 0"
+        assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
         for key in modules.keys():
             p = modules[key].weight
             self.scores[key] = torch.zeros(p.shape).to(p.device)
