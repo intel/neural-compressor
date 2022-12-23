@@ -601,6 +601,7 @@ def main():
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         quantizer.eval_func = eval_func_for_nc
+        quantizer.calib_dataloader = trainer.get_eval_dataloader()
         q_model = quantizer.fit()
         q_model.save(training_args.output_dir)
         exit(0)
