@@ -141,6 +141,10 @@ def get_imports_path(user_code_path: List) -> List:
         "traceback",
         "unittest",
         "warnings",
+        "classy_vision",
+        "packaging",
+        "vissl",
+        "pytorch_lightning",
     ]
 
     if globals.cache_load_transformers:

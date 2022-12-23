@@ -252,8 +252,37 @@ def enable(
         for i in globals.list_code_path:
             list_transformed_code.append(open(i, 'r').read())
 
+        ## 0. Features for FP8 Matmul Swap
+        if feature == "fp8_matmul_swap":
+            # reset globals
+            globals.reset_globals()
+            globals.print_code_line_info = False
+
+            from .utils import handle_user_input
+            globals.list_code_path, num_user_code_path = handle_user_input.get_all_code_path(code)
+            if len(transformed_list_code_path) > 0:
+                globals.list_code_path = transformed_list_code_path
+
+            # common for all features (transformations),
+            list_transformed_code = []
+            # in this list, each item stores the transformed code
+            # of the corresponding original code
+            # by the order in code_path
+
+            list_file_path = []
+            for i in globals.list_code_path:
+                list_transformed_code.append(open(i, 'r').read())
+                list_file_path.append(i)
+            
+            # code analysis
+            from .graphers.code_line import register_code_line
+            register_code_line()
+            from .coders.tools.fp8 import fp8_matmul_swap
+            list_transformed_code = fp8_matmul_swap(list_transformed_code, list_file_path)
+            
+            
         ## 1. Features in Harness Scope
-        if feature not in features_outside_harness:
+        elif feature not in features_outside_harness:
             from .graphers.code_line import register_code_line
             from .graphers.model import register_nnModule_class, register_nnModule_instance_definition
             from .graphers.function import register_func_wrap_pair
