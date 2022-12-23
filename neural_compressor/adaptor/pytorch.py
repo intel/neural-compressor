@@ -3982,12 +3982,12 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
             None
         """
 
-        first_conv, last_linear = torch_utils.util.get_first_and_last(model)
+        self.first_conv, self.last_linear = torch_utils.util.get_first_and_last(model)
         exempt_modules = []
         if os.getenv('DISABLE_FIRST_CONV') == "True":
-            exempt_modules.append(first_conv)
+            exempt_modules.append(self.first_conv)
         if os.getenv('DISABLE_LAST_LINEAR') == "True":
-            exempt_modules.append(last_linear)
+            exempt_modules.append(self.last_linear)
         module_dict = dict(model.named_modules())
         for op_name, child in module_dict.items():
             if type(child) in self.white_list and op_name not in exempt_modules:
