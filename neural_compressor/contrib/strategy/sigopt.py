@@ -25,6 +25,9 @@ from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
 
 sigopt = LazyImport('sigopt')
 
+"""The SigOpt Tuning Strategy provides support for the quantization process.
+"""
+
 @strategy_registry
 class SigOptTuneStrategy(TuneStrategy):
     """The tuning strategy using SigOpt HPO search in tuning space.
@@ -73,6 +76,7 @@ class SigOptTuneStrategy(TuneStrategy):
 
     def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
+        """Initialize the SigOpt tuning strategy if the user specified to use it."""
         super().__init__(
             model,
             conf,
@@ -82,7 +86,6 @@ class SigOptTuneStrategy(TuneStrategy):
             eval_func,
             dicts,
             q_hooks)
-        """Initialize the SigOpt tuning strategy if the user specified to use it. """
         strategy_name = conf.usr_cfg.tuning.strategy.name
         if strategy_name.lower() == "sigopt":
             try:
@@ -127,7 +130,7 @@ class SigOptTuneStrategy(TuneStrategy):
         self.experiment = None
 
     def params_to_tune_configs(self, params):
-        """Get the parameters of the tuning strategy. """
+        """Get the parameters of the tuning strategy."""
         op_tuning_cfg = {}
         calib_sampling_size_lst = self.tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         for op_name_type, configs in self.op_configs.items():
@@ -140,10 +143,10 @@ class SigOptTuneStrategy(TuneStrategy):
         return op_tuning_cfg
 
     def next_tune_cfg(self):
-        """The generator of yielding next tuning config to traverse by concrete strategies
-           according to last tuning result.
-
+        """The generator of yielding next tuning config to traverse
+           by concreting strategies according to last tuning result.
         """
+
         while self.experiment.progress.observation_count < self.experiment.observation_budget:
             suggestion = self.conn.experiments(self.experiment.id).suggestions().create()
             yield self.params_to_tune_configs(suggestion.assignments)
@@ -158,7 +161,7 @@ class SigOptTuneStrategy(TuneStrategy):
             self.experiment = self.conn.experiments(self.experiment.id).fetch()
 
     def get_acc_target(self, base_acc):
-        """Get the tuning target of the accuracy ceiterion. """
+        """Get the tuning target of the accuracy ceiterion."""
         if self.cfg.tuning.accuracy_criterion.relative:
             return base_acc * (1. - self.cfg.tuning.accuracy_criterion.relative)
         else:
@@ -169,6 +172,7 @@ class SigOptTuneStrategy(TuneStrategy):
            more hooks.
            This is SigOpt version of traverse -- with additional constraints setting to HPO.
         """
+
         #get fp32 model baseline
         if self.baseline is None:
             logger.info("Get FP32 model baseline.")
@@ -212,6 +216,7 @@ class SigOptTuneStrategy(TuneStrategy):
                 break
 
     def create_exp(self, acc_target):
+        """Set the config for the experiment."""
         params = []
         from copy import deepcopy
         tuning_space = self.tuning_space
@@ -232,7 +237,7 @@ class SigOptTuneStrategy(TuneStrategy):
             quant_mode_wise_items[quant_mode] = filtered_items
 
         def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict):
-            """Initialize the op tuning mode. """
+            """Initialize the op tuning mode."""
             for item in items_lst:
                 op_item_dtype_dict[item.name] = target_quant_mode
 

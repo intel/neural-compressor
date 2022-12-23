@@ -415,7 +415,9 @@ class TpeTuneStrategy(TuneStrategy):
         config['lat_scale'] = 10 / np.abs(lat_max - lat_min)
 
     def _save_trials(self, trials_log):
-        """ save trial result to log file"""
+        """Save the trial result to the log file.
+        """
+
         tpe_trials_results = pd.DataFrame(self.hpopt_trials.results)
         csv_file = trials_log
         tpe_trials_results.to_csv(csv_file)
@@ -468,12 +470,12 @@ class TpeTuneStrategy(TuneStrategy):
                                                         self.best_result['quantization_ratio']))
 
     def stop(self, timeout, trials_count):
-        """Check if need to stop traversing the tuning space, either accuracy goal is met
-           or timeout is reach.
+        """Check if need to stop traversing the tuning space, either accuracy goal is met or timeout is reach.
 
         Returns:
-            bool: True if need stop, otherwise False
+            bool: True if need stop, otherwise False.
         """
+
         need_stop = False
         if not self.cfg_evaluated:
             if self.objectives.compare(self.best_tune_result, self.baseline):
