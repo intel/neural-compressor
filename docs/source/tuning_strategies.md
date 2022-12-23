@@ -358,8 +358,8 @@ hyperparameters on the objective function.
 
 >Note: TPE requires many iterations in order to reach an optimal solution.
 It is recommended to run at least 200 iterations, because every iteration
-requires evaluation of a generated model -- which means accuracy measurements
-on a dataset and latency measurements using a benchmark -- this process can
+requires evaluation of a generated model, which means accuracy measurements
+on a dataset and latency measurements using a benchmark. This process may
 take from 24 hours to a few days to complete, depending on the model.
 
 #### Usage
