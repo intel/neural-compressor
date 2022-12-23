@@ -867,8 +867,7 @@ def run():
                                  cores_per_instance=4,
                                  num_of_instance=1)
         def b_func(model):
-            with torch.no_grad():
-                return inference(
+            return inference(
                           args,
                           model,
                           best_acc_test,
@@ -876,7 +875,8 @@ def run():
                           test_ld,
                           trace=args.int8
                         )
-        benchmark.fit(dlrm, b_conf, b_func=b_func)
+        with torch.no_grad():
+            benchmark.fit(dlrm, b_conf, b_func=b_func)
         exit(0)
 
     if args.accuracy_only:

@@ -124,13 +124,11 @@ def main():
         def calib_func(model):
             for index, wave in enumerate(val_dataloader):
                 model(wave[0][0])
-                if index == 50:
+                if index == 100:
                     break
 
         from neural_compressor import PostTrainingQuantConfig, quantization
-        from neural_compressor.config import TuningCriterion
-        tuning_criterion = TuningCriterion(strategy="mse_v2")
-        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion)
+        conf = PostTrainingQuantConfig(approach="static")
         q_model = quantization.fit(model,
                                    conf=conf,
                                    eval_func=eval_func,
