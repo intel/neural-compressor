@@ -23,7 +23,7 @@ transformation:
       [+]     try:
       [+]         torch.backends.quantized.engine = 'onednn'
       [+]     except:
-      [+]         import torch; torch.backends.quantized.engine = 'onednn'
+      [+]         from torch.backends.quantized import engine; engine = 'onednn'
       [+]     from neural_compressor.conf.config import QuantConf
       [+]     from neural_compressor.experimental import Quantization, common
       [+]     quant_config = QuantConf()
