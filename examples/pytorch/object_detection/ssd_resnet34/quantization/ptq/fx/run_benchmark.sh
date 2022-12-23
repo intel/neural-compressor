@@ -51,7 +51,8 @@ function run_benchmark {
 
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd="--accuracy "
-    elif [[ ${mode} == "benchmark" ]]; then
+        mode_cmd="${mode_cmd} --batch_size ${batch_size} "
+    elif [[ ${mode} == "performance" ]]; then
         mode_cmd="--benchmark "
     else
         echo "Error: No such mode: ${mode}"
