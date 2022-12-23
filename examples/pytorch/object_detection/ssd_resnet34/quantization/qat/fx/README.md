@@ -10,7 +10,7 @@ Our example comes from MLPerf Training Inference Suite
 
 ### 1. Installation
 
-PyTorch 1.8 or higher version is needed with pytorch_fx backend.
+PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to use Python 3.10.
 
   ```shell
   cd examples/pytorch/object_detection/ssd_resnet34/quantization/qat/fx
@@ -32,12 +32,11 @@ Follow the instructions on https://github.com/mlcommons/training/tree/master/sin
 ### 1. Enable ssd_resnet34 example with quant aware training strategy of Neural Compressor.
 
   The changes made are as follows:
-  1. add conf.yaml:
-    This file contains the configuration of quantization.
-  2. add ssd/main.py:\
-    we add the eval_func and training_func_for_nc with reference to https://github.com/mlcommons/training/blob/master/single_stage_detector/ssd/train.py \
+  1. add ssd/main.py:\
+    We import neural_compressor and pass `QuantizationAwareTrainingConfig` to the quant aware training process.
+    We then add the eval_func and training_func_for_nc with reference to https://github.com/mlcommons/training/blob/master/single_stage_detector/ssd/train.py \
     we import neural_compressor in it.
-  3. edit ssd/ssd300.py:
+  2. edit ssd/ssd300.py:
     we replace view() with reshape() in function bbox_view().
 
 ### 2. To get the tuned model and its accuracy: 
@@ -46,6 +45,6 @@ Follow the instructions on https://github.com/mlcommons/training/tree/master/sin
 
 ### 3. To get the benchmark of tuned model, includes Batch_size and Throughput: 
 
-    bash run_benchmark.sh --topology=resnet34 --dataset_location=coco/ --input_model=$trained model path$ --mode=benchmark --int8=true/false
+    bash run_benchmark.sh --topology=resnet34 --dataset_location=coco/ --input_model=$trained model path$ --mode=performance --int8=true/false
 
 

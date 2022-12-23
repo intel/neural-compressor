@@ -27,6 +27,7 @@ import functools
 
 import datasets
 import numpy as np
+import shutil
 import torch
 from datasets import load_dataset, load_metric
 from torch.utils.data.dataloader import DataLoader
@@ -279,7 +280,18 @@ def parse_args():
 
     return args
 
-def train(args, model, train_dataloader, lr_scheduler, distiller, accelerator):
+
+def save_checkpoint(state, is_best, save_dir):
+    """Saves checkpoint to disk"""
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    filename = save_dir + "checkpoint.pth"
+    torch.save(state, filename)
+    if is_best:
+        shutil.copyfile(filename, save_dir + 'model_best.pth')
+
+def train(args, model, train_dataloader, lr_scheduler, compression_manager, accelerator, optimizer,
+          eval_dataloader, metric):
     # Train!
     total_batch_size = args.per_device_train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
@@ -293,7 +305,6 @@ def train(args, model, train_dataloader, lr_scheduler, distiller, accelerator):
 
     completed_steps = 0
 
-    distiller.on_train_begin()
     for epoch in range(args.num_train_epochs):
         model.train()
         for step, batch in enumerate(tqdm(train_dataloader)):
@@ -308,23 +319,31 @@ def train(args, model, train_dataloader, lr_scheduler, distiller, accelerator):
                 del batch[col]
 
             outputs = model(**batch)
+            loss = outputs.loss
             outputs = torch.vstack([torch.vstack([sx, ex]) \
                 for sx, ex in zip(outputs.start_logits, outputs.end_logits)])
-            labels = torch.hstack([torch.tensor([sx, ex]) \
-                for sx, ex in zip(batch["start_positions"], batch["end_positions"])])
-            loss = distiller.criterion(outputs, labels)
-            loss = distiller.on_after_compute_loss(teacher_batch, outputs, loss, teacher_logits)
+            loss = compression_manager.callbacks.on_after_compute_loss(teacher_batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                distiller.optimizer.step()
+                optimizer.step()
                 lr_scheduler.step()
-                distiller.optimizer.zero_grad()
+                optimizer.zero_grad()
                 completed_steps += 1
 
             if completed_steps >= args.max_train_steps:
                 break
-        distiller.on_epoch_end()
+        compression_manager.callbacks.on_epoch_end()
+        best_score = evaluation(args, model, accelerator, eval_dataloader, metric)
+        # remember best prec@1 and save checkpoint
+        is_best = best_score > best_prec1
+        best_prec1 = max(best_score, best_prec1)
+        save_checkpoint({
+            'epoch': epoch + 1,
+            'state_dict': model.state_dict(),
+            'best_prec1': best_prec1,
+            }, is_best, args.output_dir)
+    model.load_state_dict(torch.load(args.output_dir + "/model_best.pth")["state_dict"])
 
 # Create and fill numpy array of size len_of_validation_data * max_length_of_output_tensor
 def create_and_fill_np_array(start_or_end_logits, dataset, max_len):
@@ -398,7 +417,7 @@ def evaluation(args, model, accelerator, eval_dataloader, metric):
                 # delete useless inputs keys to fit student model input
                 for col in missing_columns_for_teacher:
                     del batch[col]
-                    
+
             outputs = model(**batch)
             if torch.is_tensor(outputs):
                 start_logits = torch.vstack([x for x in outputs[0::2]])
@@ -514,7 +533,7 @@ def main():
     else:
         logger.info("Training new model from scratch")
         model = AutoModelForQuestionAnswering.from_config(config)
-    
+
     # Preprocessing the datasets.
     # Preprocessing is slighlty different for training and evaluation.
 
@@ -763,7 +782,7 @@ def main():
         if args.loss_weights[1] > 0:
             # Create train feature for teacher model from train_examples
             teacher_train_dataset = train_examples.map(
-                functools.partial(prepare_train_features, tokenizer=teacher_tokenizer), 
+                functools.partial(prepare_train_features, tokenizer=teacher_tokenizer),
                 batched=True,
                 num_proc=args.preprocessing_num_workers,
                 remove_columns=column_names,
@@ -871,30 +890,22 @@ def main():
         num_training_steps=args.max_train_steps,
     )
 
-    def train_func(model):
-        return train(args, model, train_dataloader, lr_scheduler, distiller, accelerator)
-
-    def eval_func(model):
-        return evaluation(args, model, accelerator, eval_dataloader, metric)
-
     # Distillation
     if args.do_distillation:
-        from neural_compressor.experimental import Distillation, common
-        from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
-        
-        distiller = Distillation(args.config)
-        distiller.teacher_model = common.Model(teacher_model)
-        distiller.student_model = common.Model(model)
-        distiller.train_func = train_func
-        distiller.eval_func = eval_func
-        distiller.optimizer = optimizer
-        distiller.criterion = PyTorchKnowledgeDistillationLoss(
-                                temperature=args.temperature,
-                                loss_types=args.loss_types,
-                                loss_weights=args.loss_weights)
-        model = distiller.fit()
-        model.save(args.output_dir)
-        # change to framework model for further use
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+        distillation_criterion = KnowledgeDistillationLossConfig(temperature=args.temperature,
+                                                                 loss_types=args.loss_types,
+                                                                 loss_weights=args.loss_weights)
+        conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+        compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        # Here is neural_compressor model
+        model = compression_manager.model
+
+        train(args, model, train_dataloader, lr_scheduler, compression_manager,
+              accelerator, optimizer, eval_dataloader, metric)
+
         model = model.model
 
     # Prediction

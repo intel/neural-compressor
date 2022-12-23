@@ -534,7 +534,7 @@ def main():
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
-        
+
     if args.distill_loss_weight > 0:
         teacher_path = args.teacher_model_name_or_path 
         if teacher_path is None:
@@ -988,11 +988,9 @@ def main():
         start_step=pruning_start,
         end_step=pruning_end
     )
-    # pruner = Pruning(config)
-    # pruner.model = model
-    # pruner.on_train_begin()
     compression_manager = prepare_compression(model=model, confs=config)
     compression_manager.callbacks.on_train_begin()
+    model = compression_manager.model
 
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
@@ -1019,10 +1017,8 @@ def main():
                 loss = loss / args.gradient_accumulation_steps
                 accelerator.backward(loss)
                 if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                    # pruner.on_before_optimizer_step()
                     compression_manager.callbacks.on_before_optimizer_step()
                     optimizer.step()
-                    # pruner.on_after_optimizer_step()
                     compression_manager.callbacks.on_after_optimizer_step()
                     lr_scheduler.step()
                     optimizer.zero_grad()
