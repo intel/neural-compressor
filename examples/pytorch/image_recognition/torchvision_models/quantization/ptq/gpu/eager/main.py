@@ -252,7 +252,7 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.tune:
         model.eval()
         # Fusion will remove BN, and the batchnorm calibration will be useless.
-# model.module.fuse_model()()
+        # model.module.fuse_model()
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
