@@ -864,7 +864,8 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
                 names.append(index)
         return names
 
-    def _update_weights(self, tensor_name, new_tensor):
+    def update_weights(self, tensor_name, new_tensor):
+        """Update model weights."""
         pass
 
     def get_weight(self, tensor_name):
