@@ -2464,6 +2464,13 @@ Thalaiyasingam
 Torr
 QOperator
 MixedPrecisionConfig
+ONNXConfig
+Arial
+MatMulInteger
+MatMulIntegerToFloat
+QuantizeLinear
+css
+subgraph
 AccuracyCriterion
 AccuracyLoss
 TuningCriterion
