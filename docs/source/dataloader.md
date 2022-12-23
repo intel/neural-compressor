@@ -29,7 +29,7 @@ The internal dataloader takes a [dataset](./dataset.md) as the input parameter a
 |---------------|:----------:|
 | TensorFlow    |  &#10004;  |
 | PyTorch       |  &#10004;  |
-| ONNXRuntime   |  &#10004;  |
+| ONNX Runtime   |  &#10004;  |
 | MXNet         |  &#10004;  |
 
 ## Get start with Dataloader API
