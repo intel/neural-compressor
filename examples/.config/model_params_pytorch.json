@@ -67,15 +67,6 @@
       "main_script": "main.py",
       "batch_size": 100
     },
-    "rnnt_ipex": {
-      "model_src_dir": "speech_recognition/rnnt/quantization/ptq_static/ipex",
-      "dataset_location": "/tf_dataset/pytorch/rnnt/convert_dataset/",
-      "input_model": "/tf_dataset/pytorch/rnnt/rnnt.pt",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
     "distilbert_base_ipex":{
       "model_src_dir": "nlp/huggingface_models/question-answering/quantization/ptq_static/ipex",
       "dataset_location": "",
@@ -315,19 +306,15 @@
       "model_src_dir": "recommendation/dlrm/quantization/ptq/fx",
       "dataset_location": "/mnt/local_disk3/dataset/dlrm/dlrm/input",
       "input_model": "/mnt/local_disk3/dataset/dlrm/dlrm/dlrm_weight/tb00_40M.pt",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 16384,
-      "new_benchmark": false
+      "main_script": "dlrm_s_pytorch_tune.py",
+      "batch_size": 16384
     },
     "dlrm_ipex": {
       "model_src_dir": "recommendation/dlrm/quantization/ptq/ipex",
       "dataset_location": "/mnt/local_disk3/dataset/dlrm/dlrm/input",
       "input_model": "/mnt/local_disk3/dataset/dlrm/dlrm/dlrm_weight/tb00_40M.pt",
-      "yaml": "conf_ipex.yaml",
-      "strategy": "basic",
-      "batch_size": 16384,
-      "new_benchmark": false
+      "main_script": "dlrm_s_pytorch.py",
+      "batch_size": 16384
     },
     "blendcnn": {
       "model_src_dir": "nlp/blendcnn/quantization/ptq/eager",
@@ -418,6 +405,13 @@
        "strategy": "basic",
        "batch_size": 1,
        "new_benchmark": false
+    },
+    "hubert_fx":{
+       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
+       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
+       "input_model": "hubert",
+       "main_script": "run_asr.py",
+       "batch_size": 1
     },
     "distilbert_base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/eager",

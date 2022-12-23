@@ -239,7 +239,7 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 
  
 
-Pattern_lock pruning type uses masks of a fixed pattern during the pruning process.
+  Pattern_lock pruning type uses masks of a fixed pattern during the pruning process. It locks the sparsity pattern in finetuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied in the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
 
 
 
@@ -249,10 +249,19 @@ Pattern_lock pruning type uses masks of a fixed pattern during the pruning proce
 
 
 
- 
 
-Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure. 
-Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
+
+  Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
+  typical implementations of mask interpolation:
+  <div style = "width: 77%; margin-bottom: 2%;">
+    <a target="_blank" href="../../docs/source/_static/imgs/pruning/progressive_pruning.png">
+      <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=500>
+    </a>
+  </div>
+
+  Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
+
+
 
 
 
@@ -299,11 +308,7 @@ We validate the pruning technique on typical models across various domains (incl
 
  
 
-[1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: SINGLE-SHOT NETWORK
-
-PRUNING BASED ON CONNECTION SENSITIVITY. In International Conference on
-
-Learning Representations, 2019.
+[1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.
 
 
 
@@ -314,3 +319,4 @@ Learning Representations, 2019.
 
 
  
+

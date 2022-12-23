@@ -1666,7 +1666,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[m, mm] = [84.57, 84.79]</br>[m, mm] = [82.45, 83.27]</td>
     <td>[-2.51%, -1.80%]</td>
     <td>70%</br>unstructured</td>
-    <td>pattern lock</br>balanced</td>    
+    <td>Prune once for all</br>balanced</td>    
   </tr>
   <tr>
   </tr>
@@ -1676,7 +1676,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[m, mm] = [84.57, 84.79]</br>[m, mm] = [83.20, 84.11]</td>
     <td>[-1.62%, -0.80%]</td>
     <td>50%</br>structured 1:2</td>
-    <td>pattern lock</br>balanced</td>    
+    <td>Prune once for all</br>balanced</td>    
   </tr>
   <tr>
   </tr>  
@@ -1686,7 +1686,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>accuracy = 92.32</br>accuracy = 91.51</td>
     <td>-0.88%</td>
     <td>70%</br>unstructured</td>
-    <td>pattern lock</br>balanced</td>    
+    <td>Prune once for all</br>balanced</td>    
   </tr>
   <tr>
   <tr>
@@ -1695,7 +1695,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>accuracy = 92.32</br>accuracy = 92.20</td>
     <td>-0.13%</td>
     <td>50%</br>structured 1:2</td>
-    <td>pattern lock</br>balanced</td>       
+    <td>Prune once for all</br>balanced</td>       
   </tr>
   <tr>  
   </tr>
@@ -1715,7 +1715,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[accuracy, f1] = [91.10, 88.05]</br>[accuracy, f1] = [90.48, 87.06]</td>
     <td>[-0.68%, -1.12%]</td>
     <td>70%</br>unstructured</td>
-    <td>pattern lock</br>balanced</td>        
+    <td>Prune once for all</br>balanced</td>        
   </tr>
   <tr>
   </tr>
@@ -1725,7 +1725,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[accuracy, f1] = [91.10, 88.05]</br>[accuracy, f1] = [90.92, 87.78]</td>
     <td>[-0.20%, -0.31%]</td>
     <td>50%</br>structured 1:2</td>
-    <td>pattern lock</br>balanced</td>        
+    <td>Prune once for all</br>balanced</td>        
   </tr>
   <tr>
   </tr>   
@@ -1735,7 +1735,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>accuracy = 91.54</br>accuracy = 90.39</td>
     <td>-1.26%</td>
     <td>70%</br>unstructured</td>
-    <td>pattern lock</br>balanced</td>        
+    <td>Prune once for all</br>balanced</td>        
   </tr>
   <tr>
   </tr>
@@ -1745,7 +1745,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>accuracy = 91.54</br>accuracy = 90.87</td>
     <td>-0.73%</td>
     <td>50%</br>structured 1:2</td>
-    <td>pattern lock</br>balanced</td>      
+    <td>Prune once for all</br>balanced</td>      
   </tr>
   <tr>
   </tr>   
@@ -1755,7 +1755,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[em, f1] = [79.34, 87.10]</br>[em, f1] = [77.27, 85.75]</td>
     <td>[-2.61%, -1.54%]</td>
     <td>70%</br>unstructured</td>
-    <td>pattern lock</br>balanced</td>   
+    <td>Prune once for all</br>balanced</td>   
   </tr>  
   <tr>
   </tr>
@@ -1765,7 +1765,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[em, f1] = [79.34, 87.10]</br>[em, f1] = [78.03, 86.50]</td>
     <td>[-1.65%, -0.69%]</td>
     <td>50%</br>structured 1:2</td>
-    <td>pattern lock</br>balanced</td>       
+    <td>Prune once for all</br>balanced</td>       
   </tr>  
   <tr>
   </tr>     

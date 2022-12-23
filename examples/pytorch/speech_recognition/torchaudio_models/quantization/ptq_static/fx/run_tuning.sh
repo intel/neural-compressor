@@ -4,12 +4,11 @@ set -x
 function main {
 
   init_params "$@"
-  run_benchmark
+  run_tuning
 }
 
 # init params
 function init_params {
-  iters=100
   batch_size=1
   output_model=saved_results
   folder_in_archive=LibriSpeech
@@ -28,23 +27,13 @@ function init_params {
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
-      --mode=*)
-          mode=$(echo $var |cut -f2 -d=)
-      ;;
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)
-      ;;
-      --iters=*)
-          iters=$(echo ${var} |cut -f2 -d=)
-      ;;
-      --int8=*)
-          int8=$(echo ${var} |cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
       ;;
-
     esac
   done
 
@@ -52,35 +41,17 @@ function init_params {
   root=${dataset_location%${folder_in_archive}*}
 }
 
-# run_benchmark
-function run_benchmark {
-    if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
-    elif [[ ${mode} == "benchmark" ]]; then
-        mode_cmd=" --iter ${iters} --benchmark "
-    else
-        echo "Error: No such mode: ${mode}"
-        exit 1
-    fi
-    extra_cmd=""
-
-    if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --int8"
-    fi
-
-    if [ -n "$input_model"];then
-        input_model=$topology
-    fi
+# run_tuning
+function run_tuning {
 
     python run_asr.py \
             --model $input_model \
             --root $root \
             --folder_in_archive $folder_in_archive \
             --url $url \
-            --tuned_checkpoint ${output_model} \
+            --tune \
             --batch_size $batch_size \
-            ${mode_cmd} \
-            ${extra_cmd}
+            --tuned_checkpoint ${output_model} \
 
 }
 

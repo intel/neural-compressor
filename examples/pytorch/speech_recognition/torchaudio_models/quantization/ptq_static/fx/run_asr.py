@@ -40,7 +40,7 @@ parser.add_argument('--accuracy_only', dest='accuracy_only', action='store_true'
                     help='For accuracy measurement only.')
 parser.add_argument('--tuned_checkpoint', default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
-parser.add_argument('--iter', default=0, type=int,
+parser.add_argument('--iters', default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('--warmup_iter', default=5, type=int,
                     help='For benchmark measurement only.')
@@ -119,30 +119,41 @@ def main():
                     text.append(wave[2][0])
                 prediction = [pre.replace("|", " ")for pre in predict]
                 WER = wer(text, prediction)
+            print("Accuracy: %.5f" % (1-WER))
             return 1-WER
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(model)
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
+        def calib_func(model):
+            for index, wave in enumerate(val_dataloader):
+                model(wave[0][0])
+                if index == 50:
+                    break
+
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        from neural_compressor.config import TuningCriterion
+        tuning_criterion = TuningCriterion(strategy="mse_v2")
+        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion)
+        q_model = quantization.fit(model,
+                                   conf=conf,
+                                   eval_func=eval_func,
+                                   calib_func=calib_func,
+                                   calib_dataloader=val_dataloader
+                                   )
         q_model.save(args.tuned_checkpoint)
         exit(0)
     
     #benchmark
-    if args.benchmark or args.accuracy_only:
-        if args.int8:
-            from neural_compressor.utils.pytorch import load
-            new_model = load(
-                    os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
-        else:
-            new_model = model
-        def eval_func(model):
+    if args.int8:
+        from neural_compressor.utils.pytorch import load
+        model = load(
+                os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
+
+    if args.benchmark:
+        def b_func(model):
             predict = []
             text = []
             results = {}
             batch_time = AverageMeter('Time', ':6.3f')
             with torch.inference_mode():
-                for i, wave in enumerate(val_dataloader):
+                for i, wave in enumerate(val_dataloader): 
                     if i >= args.warmup_iter:
                         start = time.time()
                     emission, _ = model(wave[0][0])
@@ -152,7 +163,7 @@ def main():
                         batch_time.update(time.time() - start)
                     predict.append(transcript)
                     text.append(wave[2][0])
-                    if args.iter > 0 and i >= (args.warmup_iter + args.iter - 1):
+                    if args.iters > 0 and i >= (args.warmup_iter + args.iters - 1):
                         break
                 prediction = [pre.replace("|", " ")for pre in predict]
                 WER = wer(text, prediction)
@@ -164,7 +175,18 @@ def main():
             print('Throughput: %.3f images/sec' % (args.batch_size / results['average_batch_time']))
             print('Batch size = %d' % args.batch_size)
             return results['accuracy']
-        acc = eval_func(new_model)
+
+        from neural_compressor.config import BenchmarkConfig
+        from neural_compressor import benchmark
+        b_conf = BenchmarkConfig(
+                                 cores_per_instance=4,
+                                 num_of_instance=1
+                                 )
+        benchmark.fit(model, b_conf, b_func=b_func)
+        exit(0)
+
+    if args.accuracy_only:
+        eval_func(model)
         exit(0)
 
 
