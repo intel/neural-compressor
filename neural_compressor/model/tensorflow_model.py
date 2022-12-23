@@ -164,11 +164,17 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
-
+    device = kwargs.get('device')
     graph = tf.Graph()
     try:
         with graph.as_default():
-            tf.import_graph_def(model, name='')
+            if device == "cpu":
+                cpus = tf.config.list_physical_devices("CPU")
+                node_device = cpus[0].name.replace('physical_device:', '')
+                with graph.device(node_device):
+                    tf.import_graph_def(model, name='')
+            else:
+                tf.import_graph_def(model, name='')
     except:
         input_tensor_names, output_tensor_names = validate_and_inference_input_output(\
             model, input_tensor_names, output_tensor_names)
@@ -179,7 +185,13 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
         output_node_names = tensor_to_node(output_tensor_names)
         model = strip_unused_nodes(model, input_node_names, output_node_names)
         with graph.as_default():
-            tf.import_graph_def(model, name='')
+            if device == "cpu":
+                cpus = tf.config.list_physical_devices("CPU")
+                node_device = cpus[0].name.replace('physical_device:', '')
+                with graph.device(node_device):
+                    tf.import_graph_def(model, name='')
+            else:
+                tf.import_graph_def(model, name='')
 
     return graph_session(graph, input_tensor_names, output_tensor_names, **kwargs)
 
@@ -489,7 +501,7 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 clear_devices=True,
                 initializer_nodes='')
 
-    return graph_def_session(graph_def, ['input'], output_tensor_names)
+    return graph_def_session(graph_def, ['input'], output_tensor_names, **kwargs)
 
 def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with ckpt model
@@ -515,8 +527,16 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     graph = tf.Graph()
     sess = tf.compat.v1.Session(graph=graph, config=config)
     with graph.as_default():
-        saver = tf.compat.v1.train.import_meta_graph(\
-            os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
+        device = kwargs.get('device')
+        if device == "cpu":
+            cpus = tf.config.list_physical_devices("CPU")
+            node_device = cpus[0].name.replace('physical_device:', '')
+            with graph.device(node_device):
+                saver = tf.compat.v1.train.import_meta_graph(\
+                    os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
+        else:
+            saver = tf.compat.v1.train.import_meta_graph(\
+                os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
 
         sess.run(tf.compat.v1.global_variables_initializer())
         saver.restore(sess, os.path.join(model, ckpt_prefix))
@@ -570,7 +590,7 @@ def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
             graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(sess,
               g.as_graph_def(), output_nodes)
 
-        return graph_def_session(graph_def, input_tensor_names, outputs)
+        return graph_def_session(graph_def, input_tensor_names, outputs, **kwargs)
 
 def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with saved model
@@ -700,9 +720,10 @@ class TensorflowBaseModel(BaseModel):
     def graph_def(self, graph_def):
         if self._sess is not None:
             self._sess.close()
-        output_sess =  SESSIONS['graph_def'](graph_def,\
+        output_sess = SESSIONS['graph_def'](graph_def,\
                                              self._input_tensor_names, \
-                                             self._output_tensor_names)
+                                             self._output_tensor_names, \
+                                             **self.kwargs)
 
         self._sess = output_sess[0]
         self._input_tensor_names = output_sess[1]
@@ -975,7 +996,8 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
             self._sess.close()
         output_sess = SESSIONS['graph_def'](graph_def,
                                             self._input_tensor_names, \
-                                            self._output_tensor_names)
+                                            self._output_tensor_names, \
+                                            **self.kwargs)
         self._sess = output_sess[0]
         self._input_tensor_names = output_sess[1]
         self._output_tensor_names = output_sess[2]
