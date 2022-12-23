@@ -29,12 +29,11 @@ def register_scheduler(name):
     
     Args:
         cls (class): The class of register.
-        name: A string. Define the scheduler type.
+        name: A string that defines the scheduler type.
         
     Returns:
         cls: The class of register.
     """
-
     def register(scheduler):
         SCHEDULERS[name] = scheduler
         return scheduler
@@ -48,7 +47,7 @@ def get_scheduler(config):
     Get a scheduler object from SCHEDULERS.
     
     Args:
-        config: A config dict object. Contains the scheduler information.
+        config: A config dict object that contains the scheduler information.
         
     Returns:
         A Scheduler object.
@@ -68,12 +67,12 @@ class PruningScheduler:
         2. one-shot scheduler. Prune the model in a single step and reach the target sparsity.
         
     Args:
-        config: A config dict object. Contains the scheduler information.
+        config: A config dict object that contains the scheduler information.
         
     Attributes:
-        config: A config dict object. Contains the scheduler information.
+        config: A config dict object that contains the scheduler information.
     """
-
+    
     def __init__(self, config):
         """Initialize."""
         self.config = config
@@ -91,7 +90,7 @@ class OneshotScheduler(PruningScheduler):
     Prune the model to target sparsity once.
     
     Args:
-        config: A config dict object. Contains the scheduler information.
+        config: A config dict object that contains the scheduler information.
         
     Attributes:
         Inherit from parent class Scheduler.
@@ -125,7 +124,7 @@ class IterativeScheduler(PruningScheduler):
     Prune the model from dense to target sparsity in several steps.
     
     Args:
-        config: A config dict object. Contains the scheduler information.
+        config: A config dict object that contains the scheduler information.
 
     Attributes:
         Inherit from parent class Scheduler.
