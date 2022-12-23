@@ -10,7 +10,8 @@ pr:
     include:
       - neural_compressor
       - setup.py
-      - .azure-pipelines
+      - .azure-pipelines/code-scan.yml
+      - .azure-pipelines/scripts/codeScan
 
 pool:
   vmImage: "ubuntu-latest"
