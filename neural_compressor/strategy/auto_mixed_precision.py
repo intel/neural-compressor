@@ -48,7 +48,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         # TODO align with the old mixed-precison
         target_dtypes = self.cfg.graph_optimization.precisions if self.cfg.graph_optimization \
             else self.cfg.mixed_precision.precisions
-
+        target_dtypes = list(set(target_dtypes) - set(['fp32']))
         tuning_space = self.tuning_space
         initial_op_tuning_cfg = {}
         for item in tuning_space.root_item.options:
@@ -61,9 +61,10 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         # step1. target_dtype AMAP, collect the ops that support target_dtype
         bf16_items_name = []
         op_tuning_cfg = {}
-        for target_dtype in target_dtypes:
+        for idx, target_dtype in enumerate(target_dtypes):
             bf16_items = tuning_space.query_items_by_quant_mode(target_dtype)
-            if len(bf16_items) == 0:
+            if len(bf16_items) == 0 and \
+                not (idx == len(target_dtypes) - 1 and len(bf16_items_name) == 0):
                 continue
             bf16_items_name = [item.name for item in bf16_items]
             op_tuning_cfg = deepcopy(initial_op_tuning_cfg)
