@@ -403,6 +403,6 @@ class AbcTuneStrategy(TuneStrategy):
 
 The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.
 
-The `traverse` function can be overrided optionally if the traverse logic required by the new strategy is different from the one `TuneStrategy` base class implemented.
+The `traverse` function can be overridden optionally if the traverse logic required by the new strategy is different from the one `TuneStrategy` base class implemented.
 
 An example of customizing a new tuning strategy can be reached at [TPE Strategy](../../neural_compressor/contrib/strategy/tpe.py).
