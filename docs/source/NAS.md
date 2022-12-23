@@ -16,7 +16,7 @@
 4. [Examples](#examples)
 
 ## Introduction
-Neural Architecture Search (NAS) is the process of automating the design of artificial neural networks (ANN) architecture. NAS has been used to design networks that are on par or outperform hand-designed architectures. Intel® Neural Compressor has supported two different NAS methods: Basic NAS and Dynamic NAS.
+Neural Architecture Search (NAS) is the process of automating the design of artificial neural networks (ANN) architecture. NAS has been used to design networks that are on par with or outperform hand-designed architectures. Intel® Neural Compressor has supported two different NAS methods: Basic NAS and Dynamic NAS.
 
 ### Basic NAS
 Our Basic NAS method leverages a specific search algorithm from built-in search algorithms (grid search, random search and bayesian optimization are supported in Intel® Neural Compressor now) or user defined search algorithms to propose the model architecture based on the given search space, then perform the train evaluation process to evaluate the potential of the proposed model architecture, after several iterations of such procedure, best performing model architectures which lie in pareto front will be returned.
