@@ -15,29 +15,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from ...utils.utility import LazyImport
+
 torch = LazyImport("torch")
 
 import copy
 import numpy as np
-from collections import OrderedDict
 import torch.nn
 from torch.quantization.quantize_fx import fuse_fx
-import torch.nn.intrinsic.quantized as nniq
-from torch.fx import symbolic_trace, graph_module
-import torch.nn as nn
 import logging
+
 logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional, Any, Union, Callable, Set
+
+
 # Define Collector based on hook, which is used to record the intermediate result
 class Node_collector:
     def __init__(self, m):
         self.handle = m.register_forward_hook(self.hook_fn_act)
+
     def hook_fn_act(self, m, inp, outp):
         self.out_features = outp.clone()
         self.in_features = inp
         self.m = m
+
     def remove(self):
         self.handle.remove()
+
+
 class HessianTrace:
     """
     please refer to
@@ -48,13 +52,13 @@ class HessianTrace:
     https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py
     """
 
-    def __init__(self, model, dataloader,q_model,criterion=None):
+    def __init__(self, model, dataloader, q_model, criterion=None):
         self.unfused_model = model.model
-        self.q_model=q_model
-        tmp_model=model.model
-        if 'graph' in (str(dir(tmp_model))): #check the attribute and it's length
+        self.q_model = q_model
+        tmp_model = model.model
+        if 'graph' in (str(dir(tmp_model))):  # check the attribute and it's length
             logger.info("This is aready fused model")
-            self.model=model.model
+            self.model = model.model
         else:
             logger.info("fusing model")
             self.model = fuse_fx(model.model)  ##TODO need to check whether model has been already fused
@@ -91,7 +95,8 @@ class HessianTrace:
         #     return name
         # else:
         return name
-    def mse_metric_gap(self,fp32_tensor, dequantize_tensor):
+
+    def mse_metric_gap(self, fp32_tensor, dequantize_tensor):
         """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor
         Args:
             fp32_tensor (tensor): The FP32 tensor.
@@ -103,10 +108,11 @@ class HessianTrace:
         dequantize_min = np.min(dequantize_tensor)
         fp32_tensor = (fp32_tensor - fp32_min) / (fp32_max - fp32_min)
         dequantize_tensor = (dequantize_tensor - dequantize_min) / \
-            (dequantize_max - dequantize_min)
+                            (dequantize_max - dequantize_min)
         diff_tensor = fp32_tensor - dequantize_tensor
         euclidean_dist = np.sum(diff_tensor ** 2)
         return euclidean_dist / fp32_tensor.size
+
     def get_fused_mapping(self):
         model = self.model
         weights_info = dict(model.named_parameters())
@@ -241,26 +247,6 @@ class HessianTrace:
         v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
         return v_t_H_v
 
-    # def get_vtHv_act(self, params, num_samples):
-    #     v = self.sample_rademacher(params)
-    #     H_v = [0] * len(v)
-    #     cnt = 0
-    #     for step, data in enumerate(self.dataloader):
-    #         if cnt >= num_samples:
-    #             break
-    #         for i in range(self.dataloader.batchsize):  ##force to batchsize to be 1
-    #             input = data[0][i:i + 1]
-    #             target = data[1][i:i + 1]
-
-    #             self.get_gradients(self.model, (input, target), self.criterion, create_graph=True)
-    #             layer_acts = [self.layer_acts[key] for key in self.layer_acts.keys()]
-    #             layer_act_gradients = [self.layer_acts_grads[key] for key in self.layer_acts.keys()]
-    #             hv_one = torch.autograd.grad(layer_act_gradients, layer_acts, v, 
-    #                                          only_inputs=True, retain_graph=False)
-    #             cnt += 1
-    #             if cnt >= num_samples:
-    #                 break
-
     def get_weight_traces(self, num_samples):
         import tqdm
         layer_traces_per_iter = []
@@ -279,12 +265,13 @@ class HessianTrace:
         weight_name_to_traces = {}
         layer_traces = layer_traces_estimate
         for weight_name, trace in zip(self.weight_names, layer_traces):
-            weight_name_to_traces[weight_name] = float(trace)# tensor->float
+            weight_name_to_traces[weight_name] = float(trace)  # tensor->float
         op_name_to_trace = {}
         for weight_name in self.weight_names:
             op_name = self.weight_to_op[weight_name]
             op_name_to_trace[op_name] = weight_name_to_traces[weight_name]
         return op_name_to_trace
+
     def get_act_traces(self, num_samples):
         unfused_training = self.unfused_model.training
         self.unfused_model.eval()
@@ -347,85 +334,89 @@ class HessianTrace:
 
         self.layer_acts = []
         self.layer_acts_grads = []
-        return res_dict    
+        return res_dict
+
     def insert_hook(self, model, target_module_list):
         intern_outputs = []
-        for layer,module in model.named_modules():     
+        for layer, module in model.named_modules():
             for target_module in target_module_list:
                 # print("layer:",layer)
                 # print("target_model:",target_module)   
-                if  layer == target_module:
+                if layer == target_module:
                     logging.debug("Collect: %s" % (module))
                     # print("Collect: %s" % (module))
                     intern_outputs.append(Node_collector(module))
-                
+
         logging.info("Total %d hook inserted" % (len(intern_outputs)))
         # print("Total %d hook inserted" % (len(intern_outputs)))
         return model, intern_outputs
-    def insert_hook_quantize(self,model, target_module_list):
+
+    def insert_hook_quantize(self, model, target_module_list):
         intern_outputs = []
-        for layer,module in model.named_modules():     
+        for layer, module in model.named_modules():
             for target_module in target_module_list:
                 # print("layer:",layer)
                 length = len("_model.")
                 new_key = layer[length:]
                 # print("target_model:",target_module)   
-                if  new_key == target_module:
+                if new_key == target_module:
                     logging.debug("Collect: %s" % (module))
                     # print("Collect: %s" % (module))
                     intern_outputs.append(Node_collector(module))
         logging.info("Total %d hook inserted" % (len(intern_outputs)))
         # print("Total %d hook inserted" % (len(intern_outputs)))
         return model, intern_outputs
-    def get_act_gap(self,fp32_model,q_model):
+
+    def get_act_gap(self, fp32_model, q_model):
         """
         Estimates each activation gap between quantized model and float model 
         """
-        self.handle_acts=[]
+        self.handle_acts = []
         fp32_model.eval()
         # temp_model = fuse_fx(fp32_model.model)
-        temp_model=fp32_model
+        temp_model = fp32_model
         # target_module_list = [nn.ReLU] # Insert hook for FP32 model
         target_module_list = self.op_list
-        temp_model, intern_outputs =self.insert_hook(temp_model, target_module_list)
+        temp_model, intern_outputs = self.insert_hook(temp_model, target_module_list)
         # intern_outputs={}
         for input, target in self.dataloader:
             temp_model(input)
             break
 
-        fp32_act_out={}
+        fp32_act_out = {}
         for i, intern_output in enumerate(intern_outputs):
             stat_features = intern_output.out_features.view(-1)
             # print ("No.", i, " ", intern_output.out_features.shape)
             # print ("Numpy No.", i, " ", intern_output.out_features.cpu().data.numpy().shape)
             # print ("No.", i, " ", stat_features.cpu().data.numpy().shape)
             # print ("Numpy No.", i, " ", stat_features.cpu().data.numpy())
-            fp32_act_out[target_module_list[i]]=stat_features.cpu().data.numpy()
+            fp32_act_out[target_module_list[i]] = stat_features.cpu().data.numpy()
             # break
         for i in intern_outputs:
             # print(i)
             i.remove()
         target_module_list = self.op_list
-        q_model, intern_outputs=self.insert_hook_quantize(q_model, target_module_list)
-        for input, target in self.dataloader: #only one sample
+        q_model, intern_outputs = self.insert_hook_quantize(q_model, target_module_list)
+        for input, target in self.dataloader:  # only one sample
             q_model(input)
             break
-        qnt_act_out={}
-        intern_outputs={}
+        qnt_act_out = {}
+        intern_outputs = {}
         for i, intern_output in enumerate(intern_outputs):
             stat_features = intern_output.out_features.view(-1)
-            qnt_act_out[target_module_list[i]]=stat_features.dequantize().cpu().data.numpy()
+            qnt_act_out[target_module_list[i]] = stat_features.dequantize().cpu().data.numpy()
             # break
         for i in intern_outputs:
             # print(i)
             i.remove()
-        act_gap={}
-        mse_gap={}
-        for fp_i,int_i in zip(fp32_act_out,qnt_act_out):
-            activation_qnt_error=fp32_act_out[fp_i]-qnt_act_out[int_i]
-            mse_gap[fp_i]=self.mse_metric_gap(fp32_act_out[fp_i],qnt_act_out[int_i])
-            act_gap[fp_i]=np.sum(activation_qnt_error)/activation_qnt_error.size
-        return act_gap,mse_gap
+        act_gap = {}
+        mse_gap = {}
+        for fp_i, int_i in zip(fp32_act_out, qnt_act_out):
+            activation_qnt_error = fp32_act_out[fp_i] - qnt_act_out[int_i]
+            mse_gap[fp_i] = self.mse_metric_gap(fp32_act_out[fp_i], qnt_act_out[int_i])
+            act_gap[fp_i] = np.sum(activation_qnt_error) / activation_qnt_error.size
+        return act_gap, mse_gap
+
     def get_avg_traces(self, enable_act=True, num_samples=32):
         """
         Estimates average hessian trace for each parameter
@@ -434,13 +425,13 @@ class HessianTrace:
         traces = {}
         weight_traces = self.get_weight_traces(num_samples)
         traces['weight'] = weight_traces
-        act_trace={}
+        act_trace = {}
         if enable_act:
-            act_gap,mse_gap=self.get_act_gap(self.model,self.q_model)
+            act_gap, mse_gap = self.get_act_gap(self.model, self.q_model)
             act_traces = self.get_act_traces(num_samples)
-            for i,j in zip(act_traces,mse_gap):
-                #currently use mse to analysis 
-                act_trace[i]=float(act_traces[i])+float(mse_gap[j])# Tensor->float
+            for i, j in zip(act_traces, mse_gap):
+                # currently use mse to analysis
+                act_trace[i] = float(act_traces[i]) + float(mse_gap[j])  # Tensor->float
             traces['activation'] = act_traces
         return traces
 
@@ -547,36 +538,36 @@ def compare_weights(
                 )
 
     return weight_dict
-def hawq_top(fp32_model,q_model,dataloader,criterion,enable_act):
-    orig_eval=True
+
+
+def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
+    orig_eval = True
     if fp32_model.training:
-        orig_eval=False
+        orig_eval = False
     fp32_model.eval()
-    ht=HessianTrace(fp32_model,dataloader=dataloader,q_model=q_model)
-    q_model_state_dict={}
+    ht = HessianTrace(fp32_model, dataloader=dataloader, q_model=q_model)
+    q_model_state_dict = {}
     for key in q_model.state_dict().keys():
-        length=len("_model.")
-        new_key=key[length:] 
-        q_model_state_dict[new_key]=q_model.state_dict()[key]
-    weight_quant_loss=compare_weights(ht.model.state_dict(),q_model_state_dict)
-    pertur_lst={}
+        length = len("_model.")
+        new_key = key[length:]
+        q_model_state_dict[new_key] = q_model.state_dict()[key]
+    weight_quant_loss = compare_weights(ht.model.state_dict(), q_model_state_dict)
+    pertur_lst = {}
     for key in weight_quant_loss:
-        op_float_tensor=weight_quant_loss[key]['float']
-        op_qnt_tensor=weight_quant_loss[key]['quantized'].dequantize()
+        op_float_tensor = weight_quant_loss[key]['float']
+        op_qnt_tensor = weight_quant_loss[key]['quantized'].dequantize()
         diff_l2 = (torch.norm(op_float_tensor - op_qnt_tensor, p=2) ** 2)
-        pertur_lst[key]=diff_l2
-    traces=ht.get_avg_traces(enable_act)
-    op_to_traces=traces['weight']
+        pertur_lst[key] = diff_l2
+    traces = ht.get_avg_traces(enable_act)
+    op_to_traces = traces['weight']
     if enable_act:
-        act_to_traces=traces['activation']
-        for trace_i, pertur_i,act_i in zip(op_to_traces.keys(),pertur_lst.keys(),act_to_traces.keys()):
-            #Formula:Omig=Trace*L2+act_trace
-            op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i]+act_to_traces[act_i] 
+        act_to_traces = traces['activation']
+        for trace_i, pertur_i, act_i in zip(op_to_traces.keys(), pertur_lst.keys(), act_to_traces.keys()):
+            # Formula:Omig=Trace*L2+act_trace
+            op_to_traces[trace_i] = pertur_lst[pertur_i] * op_to_traces[trace_i] + act_to_traces[act_i]
     else:
-         for trace_i, pertur_i in zip(op_to_traces.keys(),pertur_lst.keys()):
-                op_to_traces[trace_i]=pertur_lst[pertur_i]*op_to_traces[trace_i] #Formula:Omig=Trace*L2       
-    if orig_eval==False:
+        for trace_i, pertur_i in zip(op_to_traces.keys(), pertur_lst.keys()):
+            op_to_traces[trace_i] = pertur_lst[pertur_i] * op_to_traces[trace_i]  # Formula:Omig=Trace*L2
+    if orig_eval == False:
         fp32_model.train()
     return op_to_traces
-    
-    

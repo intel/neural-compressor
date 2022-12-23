@@ -63,5 +63,5 @@ bash run_tuning.sh --dataset_location=dataset --input_model=model
 ```
 
 ```
-bash run_benchmark.sh --dataset_location=dataset --input_model=model --mode=accuracy/benchmark --int8=True/False
+bash run_benchmark.sh --dataset_location=dataset --input_model=model --mode=accuracy/performance --int8=True/False
 ```
