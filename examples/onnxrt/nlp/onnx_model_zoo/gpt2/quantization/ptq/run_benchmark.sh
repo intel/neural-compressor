@@ -41,9 +41,9 @@ function init_params {
 
 function define_mode {
     if [[ ${mode} == "accuracy" ]]; then
-      mode_cmd=" --benchmark --mode=accuracy"
-    elif [[ ${mode} == "benchmark" ]]; then
-      mode_cmd=" --iter ${iters} --benchmark"
+      mode_cmd=""
+    elif [[ ${mode} == "performance" ]]; then
+      mode_cmd=" --iter ${iters}"
     else
       echo "Error: No such mode: ${mode}"
       exit 1
@@ -60,6 +60,8 @@ function run_benchmark {
                         --model_type ${model_type} \
                         --model_name_or_path ${model_name_or_path} \
                         --per_gpu_eval_batch_size ${batch_size} \
+                        --benchmark \
+                        --mode ${mode} \
                         ${mode_cmd}
 }
 

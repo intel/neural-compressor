@@ -383,7 +383,7 @@ if __name__ == "__main__":
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=28,
                                    num_of_instance=1)
-            fit(model, conf, b_dataloader=dataloader)
+            fit(model, conf, b_dataloader=dataloader, b_func=eval_func)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
             print("Batch size = %d" % args.batch_size)
