@@ -61,6 +61,10 @@ class PruningCriterion:
         """Calculate and store the pruning scores of pruning modules at the beginning of a step."""
         pass
 
+    def on_before_optimizer_step(self):
+        """Calculate and store the pruning scores of pruning modules before the optimizer step."""
+        pass
+
     def on_after_optimizer_step(self):
         """Calculate and store the pruning scores of pruning modules after the optimizer step."""
         pass
