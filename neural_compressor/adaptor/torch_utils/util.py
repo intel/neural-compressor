@@ -774,6 +774,8 @@ def quantize_tensor(tensor, qtconfig, scale=None, inplace=False):
 
 def get_first_and_last(model):
     try:
+        first_conv = None
+        last_linear = None
         traced_model = torch.fx.symbolic_trace(model)
         modules = dict(model.named_modules())
         # save key names to match fx name
