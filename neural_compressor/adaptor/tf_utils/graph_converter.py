@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""Graph Converter Class."""
 
 import copy
 import os
@@ -77,6 +78,7 @@ logger = logging.getLogger("neural_compressor")
 debug = bool(logger.level == logging.DEBUG)
 
 class GraphConverter:
+    """Graph Converter Class is used to generate the quantization graph."""
     def __init__(self,
                  model,
                  qt_config={},
@@ -154,9 +156,10 @@ class GraphConverter:
         self.performance_only = performance_only
         self.use_bf16 = use_bf16
         self.exclude_node_names = []
+
     # pylint: disable=no-member
     def _inference(self, model):
-        """Run the calibration on the input graph
+        """Run the calibration on the input graph.
 
         Args:
             model(TensorflowBaseModel): input TensorflowBaseModel
@@ -246,6 +249,7 @@ class GraphConverter:
         os.environ["ITEX_REMAPPER"] = "1"
 
     def _check_tf_version(self):
+        """Check if the installed tensorflow version is supported."""
         is_supported_version = False
         is_sprbase_version = False
         try:
@@ -298,12 +302,14 @@ class GraphConverter:
                     .format(TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
 
     def _check_args(self):
+        """Check model's arguments."""
         if self.model.workspace_path and not os.path.isdir(self.model.workspace_path) \
                 and not os.path.exists(os.path.dirname(self.model.workspace_path)):
             raise ValueError('"output_graph" directory does not exist.')
         self._output_path = self.model.workspace_path
 
     def _gen_tmp_filenames(self):
+        """Generate the temporary file names."""
         self._int8_dynamic_range_model_path = os.path.join(self._output_path, \
                                                       'int8_dynamic_range_graph')
         self._int8_logged_model_path = os.path.join(self._output_path, 'int8_logged_graph')
@@ -321,7 +327,9 @@ class GraphConverter:
         self._tmp_model.input_tensor_names = self.input_tensor_names
 
     def convert(self):
-        """Do convert, including:
+        """Do convertion.
+
+        Including:
             1) optimize fp32_frozen_graph,
             2) quantize graph,
             3) calibration,
@@ -367,6 +375,7 @@ class GraphConverter:
         return model
 
     def _get_fp32_print_node_names(self, specified_op_list):
+        """Get the print node name of the fp32 graph."""
         offset_map = {
             "QuantizedConv2DWithBiasSumAndRelu": 3,
             "QuantizedConv2DWithBiasAndRelu": 2,
@@ -429,8 +438,7 @@ class GraphConverter:
         return self._fp32_model
 
     def _search_y_pattern_for_itex(self):
-        """Search the Y pattern for itex and return the op name.
-        """
+        """Search the Y pattern for itex and return the op name."""
         g = GraphAnalyzer()
         g.graph = self._fp32_model.graph_def
         g.parse_graph()
@@ -454,7 +462,9 @@ class GraphConverter:
         return matched_add_nodes
 
     def quantize(self):
-        """Quantize graph only (without optimizing fp32 graph), including:
+        """Quantize graph only (without optimizing fp32 graph).
+
+        Including:
             1) quantize graph,
             2) calibration,
             3) fuse RequantizeOp with fused quantized conv, and so on.
@@ -520,9 +530,7 @@ class GraphConverter:
         return self._tmp_model
 
     def bf16_convert(self):
-        """Convert fp32 nodes in bf16_node to bf16 dtype based on
-           FP32 + INT8 mixed precision graph.
-        """
+        """Convert fp32 nodes in bf16_node to bf16 dtype based on FP32 + INT8 mixed precision graph."""
         try:
             logger.info("Start BF16 conversion.")
             self._tmp_model.graph_def = BF16Convert(
@@ -542,8 +550,7 @@ class GraphConverter:
             return self._tmp_model
 
     def _quantize_graph(self):
-        """quantize graph."""
-
+        """Quantize graph."""
         non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
 
         self._tmp_graph_def = FusePadWithConv2DOptimizer(
@@ -576,7 +583,7 @@ class GraphConverter:
             self._tmp_model.save(self._int8_dynamic_range_model_path)
 
     def _generate_calibration_data(self, tmp_path, output_data, enable_kl_algo=False):
-
+        """Generate the calibration data."""
         tmp_dump_file = os.path.join(os.path.dirname(self.output_graph), 'requant_min_max.log')
 
         logger.debug("Generate calibration data and save to {}.".format(tmp_dump_file))
@@ -602,6 +609,7 @@ class GraphConverter:
                     self._kl_op_dict[key] = combine_histogram(self._kl_op_dict[key], fp32_data)
 
     def _freeze_requantization_ranges(self, additional_data=None):
+        """Freeze requantization ranges after doing quantization."""
         self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
             self._tmp_graph_def,
             self._calibration_data,
@@ -633,6 +641,7 @@ class GraphConverter:
             self._tmp_model.save(self._int8_frozen_range_model_path)
 
     def _fuse_requantize_with_fused_quantized_node(self):
+        """Fuse the Requantize/Dequantize with fused quantized Ops."""
         if self.fake_quant:
             self._tmp_graph_def = FreezeFakeQuantOpOptimizer(
                 self._tmp_graph_def).do_transformation()
@@ -702,9 +711,10 @@ class GraphConverter:
             os.remove(self._int8_logged_model_path + '.pb')
 
     def quantize_with_qdq_pattern(self):
-        """ Quantize model by inserting QDQ
-            step 1: insert QDQ pairs and update node info
-            step 2: convert Q-DQ-node-Q-DQ to Q-newAPI node-DQ
+        """Quantize model by inserting QDQ.
+
+        step 1: insert QDQ pairs and update node info
+        step 2: convert Q-DQ-node-Q-DQ to Q-newAPI node-DQ
         """
         try:
             self._insert_qdq_pairs()
@@ -726,6 +736,7 @@ class GraphConverter:
         return self._tmp_model
 
     def _insert_qdq_pairs(self):
+        """Insert QDQ pairs before Conv/MatMul/Pooling Ops."""
         # Fuse Pad into Conv2D, Conv3D, DepthwiseConv2dNative 
         non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
         self._tmp_graph_def = FusePadWithConv2DOptimizer(
@@ -801,6 +812,7 @@ class GraphConverter:
               self.device, self.performance_only, self.itex_mode).do_transformation()
 
     def _convert_qdq(self):
+        """Convert Dequantize + Op + QuantizeV2 into QuantizedOps."""
         if self.itex_mode:
             self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
                 self._tmp_graph_def,
