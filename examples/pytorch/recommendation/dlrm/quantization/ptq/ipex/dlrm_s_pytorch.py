@@ -424,8 +424,6 @@ def trace_model(args, dlrm, test_ld, inplace=True):
 
 
 def run_throughput_benchmark(args, dlrm, test_ld):
-    if args.num_cpu_cores != 0:
-        torch.set_num_threads(1)
     bench = ThroughputBenchmark(dlrm)
     for j, inputBatch in enumerate(test_ld):
         X, lS_o, lS_i, T, W, CBPP = unpack_batch(inputBatch)
@@ -842,8 +840,7 @@ def run():
                     model,
                     best_acc_test,
                     best_auc_test,
-                    test_ld,
-                    trace=args.int8
+                    test_ld
                 )
 
         assert args.inference_only, "Please set inference_only in arguments"
@@ -866,14 +863,16 @@ def run():
         b_conf = BenchmarkConfig(
                                  cores_per_instance=4,
                                  num_of_instance=1)
+        args.share_weight_instance = b_conf.cores_per_instance
+        args.num_cpu_cores = b_conf.cores_per_instance
+
         def b_func(model):
             return inference(
                           args,
                           model,
                           best_acc_test,
                           best_auc_test,
-                          test_ld,
-                          trace=args.int8
+                          test_ld
                         )
         with torch.no_grad():
             benchmark.fit(dlrm, b_conf, b_func=b_func)
@@ -886,8 +885,7 @@ def run():
                   dlrm,
                   best_acc_test,
                   best_auc_test,
-                  test_ld,
-                  trace=args.int8
+                  test_ld
                   )
         exit(0)
 
