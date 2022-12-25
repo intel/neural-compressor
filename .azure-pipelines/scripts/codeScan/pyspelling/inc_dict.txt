@@ -2463,6 +2463,7 @@ Namhoon
 Thalaiyasingam
 Torr
 MixedPrecisionConfig
+contrib
 ONNXConfig
 Arial
 MatMulInteger
