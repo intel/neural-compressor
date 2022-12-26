@@ -182,7 +182,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                    "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
                    "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul", "BatchMatMulV2",
                    "FakeQuantWithMinMaxVars", "_MklFusedInstanceNorm",
-                   "Conv2DBackpropInput", "Conv3DBackpropInputV2", "Sigmoid", "BiasAdd")
+                   "Conv2DBackpropInput", "Conv3DBackpropInputV2", "Sigmoid")
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
