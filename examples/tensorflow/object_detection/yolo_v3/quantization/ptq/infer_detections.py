@@ -145,8 +145,6 @@ def main(_):
         quantizer.model = common.Model(FLAGS.input_graph)
         kwargs = {'conf_threshold': FLAGS.conf_threshold,
                   'iou_threshold': FLAGS.iou_threshold}
-        # from neural_compressor.data.transforms.postprocess import Postprocess
-        # quantizer.postprocess = Postprocess(NMS, 'NMS', **kwargs)
         quantizer.postprocess = common.Postprocess(NMS, 'NMS', **kwargs)
         q_model = quantizer.fit()
         q_model.save(FLAGS.output_graph)
