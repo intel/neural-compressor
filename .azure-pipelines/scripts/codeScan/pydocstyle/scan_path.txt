@@ -1,3 +1,4 @@
 /neural-compressor/neural_compressor/experimental
 /neural-compressor/neural_compressor/strategy
 /neural-compressor/neural_compressor/adaptor/ox_utils
+/neural-compressor/neural_compressor/adaptor/tf_utils
