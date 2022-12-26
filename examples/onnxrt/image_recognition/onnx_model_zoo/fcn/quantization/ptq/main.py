@@ -138,7 +138,7 @@ class Dataloader:
                 output_tensor[0] = 1 - np.max(output_tensor, axis=0)
                 self.data.append((input_tensor, output_tensor))
 
-    def __iter__(self, index):
+    def __iter__(self):
         inputs = []
         labels = []
         idx = self.batch_size

@@ -235,7 +235,7 @@ if __name__ == "__main__":
         accuracy_criterion.relative = 0.02
         config = PostTrainingQuantConfig(
             accuracy_criterion=accuracy_criterion,
-            op_name_list={'Conv_nc_rename_431': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}}}
+            op_name_list={'Conv_nc_rename_431': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}}})
  
         q_model = quantization.fit(model, config, calib_dataloader=dataloader,
 			     eval_func=eval)
