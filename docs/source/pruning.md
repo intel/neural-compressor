@@ -161,14 +161,6 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 
 ## Get Started with Pruning API
 
-Neural Compressor `Pruning` API is defined under `neural_compressor.experimental.Pruning`, which takes a user defined yaml file as input. Below is the launcher code of applying the API to execute a pruning process.
-
-```python
-from neural_compressor.experimental import Pruning
-prune = Pruning('/path/to/user/pruning/yaml')
-prune.model = model
-model = prune.fit()
-```
 
 Users can pass the customized training/evaluation functions to `Pruning` for flexible scenarios. In this case, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to put those hooks inside the training function.
 
@@ -220,11 +212,11 @@ def pruning_func(model):
 In this case, the launcher code is like the following:
 
 ```python
-from neural_compressor.experimental import Pruning, common
-prune = Pruning(args.config)
-prune.model = model
-prune.train_func = pruning_func
-model = prune.fit()
+from neural_compressor.pruner.pruning import Pruning
+from neural_compressor.config import WeightPruningConfig
+
+model = torchvision.models.resnet18()
+pruning_func(model)
 ```
 
 ## Examples
