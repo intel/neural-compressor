@@ -55,10 +55,12 @@ class AutoInc_Harness(object):
         # overwrite with API pre-defined adaption
         if self.backend == "pytorch_inc_huggingface_optimum_dynamic":
             from optimum.intel.neural_compressor.neural_coder_adaptor import APIAdaptor
-            bk_trans_content = APIAdaptor.default_quant_dynamic
+            content = APIAdaptor.default_quant_dynamic
+            bk_trans_content = ["[+] " + content.replace("\n", "\n[+] ")[:-5]]
         if self.backend == "pytorch_inc_huggingface_optimum_static":
             from optimum.intel.neural_compressor.neural_coder_adaptor import APIAdaptor
-            bk_trans_content = APIAdaptor.default_quant_static
+            content = APIAdaptor.default_quant_static
+            bk_trans_content = ["[+] " + content.replace("\n", "\n[+] ")[:-5]]
 
         list_code = []
         history = set()
