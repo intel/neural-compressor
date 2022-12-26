@@ -205,7 +205,7 @@ class HessianTrace:
             self.model = fuse_fx(model.model)  ##TODO need to check whether model has been already fused
         self.dataloader = dataloader
         self.max_iter = 500
-        self.tolerance = 1e-5
+        self.tolerance = 1e-4
         self.eps = 1e-6
         self.index = 0
         self.device = self.get_device(self.model)
