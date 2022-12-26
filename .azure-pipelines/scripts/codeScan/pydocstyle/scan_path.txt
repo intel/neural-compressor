@@ -2,3 +2,4 @@
 /neural-compressor/neural_compressor/strategy
 /neural-compressor/neural_compressor/adaptor/ox_utils
 /neural-compressor/neural_compressor/adaptor/tf_utils
+/neural_compressor/neural_compressor/adaptor/mxnet_utils
