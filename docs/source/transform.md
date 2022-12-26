@@ -17,7 +17,7 @@ Transform
 
 Neural Compressor supports built-in preprocessing methods on different framework backends. Refer to [this HelloWorld example](/examples/helloworld/tf_example1) on how to configure a transform in a dataloader.
 
-## Transform support list
+## Transform Support List
 
 ### TensorFlow
 
