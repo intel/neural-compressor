@@ -198,18 +198,18 @@ def validate(val_loader, model, criterion, args):
     return top1.avg
 
 # Quantization code
-def eval_func(model):
-    return validate(val_dataloader, model, criterion, args)
+def train_func(model):
+    ...
 
-from neural_compressor import quantization
 from neural_compressor import QuantizationAwareTrainingConfig
-
+from neural_compressor.training import prepare_compression
 conf = QuantizationAwareTrainingConfig()
-q_model = quantization.fit(model=model,
-                           conf=conf,
-                           calib_dataloader=val_dataloader,
-                           eval_func=eval_func)
-q_model.save('./output')
+compression_manager = prepare_compression(model, conf)
+compression_manager.callbacks.on_train_begin()
+model = compression_manager.model
+train_func(model)
+compression_manager.callbacks.on_train_end()
+compression_manager.save('./output')
 
 ```
 
