@@ -140,11 +140,11 @@ Pruning type defines how the masks are generated and applied to a neural network
   Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
   Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
 
-    <div  align = "center", style = "width: 77%; margin-bottom: 2%;">
-        <a target="_blank" href="../../docs/source/_static/imgs/pruning/progressive_pruning.png">
+<div align = "center", style = "width: 77%; margin-bottom: 2%;">
+    <a target="_blank" href="../../docs/source/_static/imgs/pruning/progressive_pruning.png">
         <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=500>
-        </a>
-    </div>
+    </a>
+</div>
         (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation. (b) uses masks with smaller structured blocks during every pruning step. (c) inserts masks with smaller structured blocks between every pruning steps. (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps. We use (d) as the mask interpolation implementation of progressive pruning.
 
 
@@ -255,7 +255,7 @@ The following section exemplifies how to use hooks in user pass-in training func
 
 We validate the pruning technique on typical models across various domains (including CV and NLP) and the examples are listed in [Pruning Examples](../../docs/source/pruning_details.md#examples). A complete overview of validated examples including quantization, pruning and distillation results could be found in  [Intel Neural Compressor Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
 
-<div style = "width: 77%; margin-bottom: 2%;">
+<div align = "center", style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG">
     <img src="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG" alt="Architecture" width=800 height=500>
   </a>
