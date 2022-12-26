@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""Insert logging graph transformation."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -27,9 +28,7 @@ from .graph_transform_base import GraphTransformBase
 
 
 class InsertLogging(GraphTransformBase):
-    """
-    Insert logging graph transformation.
-    """
+    """Insert logging graph transformation."""
     op_output_type_mapping = {
         "RequantizationRange":
         [dtypes.float32.as_datatype_enum, dtypes.float32.as_datatype_enum],
@@ -66,6 +65,7 @@ class InsertLogging(GraphTransformBase):
                  summarize=1024,
                  message="",
                  dump_fp32=False):
+        """Initilization."""
         super(InsertLogging, self).__init__(input_pb)
 
         self.parse_input_pb()
@@ -81,8 +81,8 @@ class InsertLogging(GraphTransformBase):
         self.dump_fp32 = dump_fp32
 
     def _get_suffix(self, input_str):
-        """
-        Split the node name into two parts.
+        """Split the node name into two parts.
+
         Returns:
             Pure string name without suffix
             Index of the node
@@ -94,9 +94,7 @@ class InsertLogging(GraphTransformBase):
         return splitted_str[0], int(splitted_str[-1])
 
     def _get_output_index_mapping(self):
-        """
-        Get the output_node_name and index mapping.
-        """
+        """Get the output_node_name and index mapping."""
         for node_name in self.node_mapping:
             for node_input in self.node_mapping[node_name].input:
                 node_stripped_name, suffix = self._get_suffix(node_input)
@@ -107,9 +105,7 @@ class InsertLogging(GraphTransformBase):
                 self.output_name_index_mapping[node_stripped_name].add(suffix)
 
     def _insert_node(self):
-        """
-        Insert the Print OP into the graph
-        """
+        """Insert the Print OP into the graph."""
         for node_name in self.node_mapping:
             if node_name not in self.output_name_index_mapping or (
                     not self.dump_fp32 and node_name.find("eightbit") == -1):
@@ -202,9 +198,7 @@ class InsertLogging(GraphTransformBase):
                 self.input_rename[node_name + ':0'] = print_node.name + ':0'
 
     def _rename_node(self):
-        """
-        Rename the original input node and connect to new added print node.
-        """
+        """Rename the original input node and connect to new added print node."""
         for node_name in self.node_mapping:
             for index, input_name in enumerate(
                     self.node_mapping[node_name].input):
@@ -216,8 +210,8 @@ class InsertLogging(GraphTransformBase):
                         index] = self.input_rename[input_name + ':0']
 
     def do_transformation(self):
-        """
-        Execute the insert logging transformation.
+        """Execute the insert logging transformation.
+
         :return: Transformed graph
         """
         self._get_output_index_mapping()

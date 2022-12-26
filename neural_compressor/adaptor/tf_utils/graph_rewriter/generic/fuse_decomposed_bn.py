@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse Decomposed BatchNorm Graph Rewriter."""
 
 import collections
 import math
@@ -34,12 +35,16 @@ from tensorflow.python.tools import strip_unused_lib
 from neural_compressor.utils.utility import dump_elapsed_time
 
 class FuseDecomposedBNOptimizer():
+    """Fuse decomposed small ops to BatchNormalization."""
+
     def __init__(self, input_graph_def):
+        """Initilization."""
         self.input_graph_def = input_graph_def
 
     @dump_elapsed_time("Pass FuseDecomposedBNOptimizer")
     def do_transformation(self):
         """Fuse individual ops in batch normalization to FusedBatchNorm.
+
         In some models, the batch normalizatin is performed via a group of individual
         ops instead of using single FusedBatchNorm op. This function identifies a
         pattern of batch normalization subgraph which is made of multiple ops and
@@ -123,9 +128,11 @@ class FuseDecomposedBNOptimizer():
         }  // end - Add
         Args:
             input_graph_def: A GraphDef containing a model.
+
         Returns:
             Modified graph with individual ops that made up of batch normalization
             fused to FusedBatchNorm.
+
         Raises:
             ValueError: If the graph is badly formed with duplicate node names.
         """
@@ -316,11 +323,14 @@ def node_name_from_input(node_name):
 
 def node_from_map(node_map, name):
     """Pulls a node def from a dictionary for a given name.
+
     Args:
         node_map: Dictionary containing an entry indexed by name for every node.
         name: Identifies the node we want to find.
+
     Returns:
         NodeDef of the node with the given name.
+
     Raises:
         ValueError: If the node isn't present in the dictionary.
     """
@@ -331,10 +341,13 @@ def node_from_map(node_map, name):
 
 def values_from_const(node_def):
     """Extracts the values from a const NodeDef as a numpy ndarray.
+
     Args:
         node_def: Const NodeDef that has the values we want to access.
+
     Returns:
         Numpy ndarray containing the values.
+
     Raises:
         ValueError: If the node isn't a Const.
     """
@@ -347,6 +360,7 @@ def values_from_const(node_def):
     return tensor_value
 
 def valid_reshape_inputs(reshape_in0_ndef, reshape_in1_ndef):
+    """Check if the inputs of the Reshape are valid."""
     if reshape_in0_ndef.op != "Const" or reshape_in1_ndef.op != "Const" \
     or get_const_dim_count(reshape_in0_ndef) != 1:
         return False
@@ -364,6 +378,7 @@ def valid_reshape_inputs(reshape_in0_ndef, reshape_in1_ndef):
     return True
 
 def bypass_reshape(input_node_map, input_name):
+    """Get Reshape input nodes."""
     reshape_ndef = None
     maybe_reshape_ndef = node_from_map(input_node_map, input_name)
     input_ndef = maybe_reshape_ndef
@@ -380,8 +395,10 @@ def bypass_reshape(input_node_map, input_name):
 
 def get_const_dim_count(node_def):
     """Get the number of dimensions for a Const node.
+
     Args:
         node_def: Const NodeDef.
+
     Returns:
         Number of dimensions for the Const node.
     """

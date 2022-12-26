@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Convert LeakyRelu Graph Rewriter."""
 
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import tensor_util
@@ -25,18 +26,20 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 
 
 class ConvertLeakyReluOptimizer(GraphRewriterBase):
-    """ Convert below subgraph to Node A + LeakyRelu.
-                Node A             Node A
-                  |    \              |
-                  |     \             |
-                  |     Mul  --->     |
-                  |      /            |
-                  |     /             |
-                 Maximum           LeakyRelu
-        Note, the coefficient of Mul should be less than 1 or the conversion is not valid.
+    """Convert below subgraph to Node A + LeakyRelu.
+
+    Node A             Node A
+        |   x               |
+        |    x              |
+        |     Mul  --->     |
+        |     x             |
+        |   x               |
+        Maximum           LeakyRelu
+    Note, the coefficient of Mul should be less than 1 or the conversion is not valid.
     """
     @dump_elapsed_time("Pass ConvertLeakyReluOptimizer")
     def do_transformation(self):
+        """Fuse small ops to LeakyRelu."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()

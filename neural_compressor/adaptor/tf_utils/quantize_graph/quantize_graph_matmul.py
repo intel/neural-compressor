@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize MatMul."""
+
 import numpy as np
 
 from tensorflow.core.framework import graph_pb2
@@ -25,8 +27,10 @@ from .quantize_graph_base import QuantizeNodeBase
 from tensorflow.python.framework import tensor_util
 
 class FuseNodeStartWithMatmul(QuantizeNodeBase):
+    """Quantize MatMul and apply the fusion."""
 
     def __init__(self, **kwargs):
+        """Initilization."""
         super().__init__(**kwargs)
 
         self.sorted_patterns = sorted(self.patterns,
@@ -42,6 +46,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         }
 
     def apply_matmul_biasadd_relu_fusion(self, match_node_name):
+        """Apply the MatMul BiasAdd Relu fusion."""
         matched_node = self.node_name_mapping[match_node_name[0]]
         control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
         weight_name = normal_inputs[1]
@@ -138,6 +143,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         return match_node_name
 
     def apply_matmul_biasadd_fusion(self, match_node_name):
+        """Apply MatMul BiasAdd fusion."""
         skip_node_name = match_node_name[1:]
         matched_node = self.node_name_mapping[match_node_name[0]]
         control_inputs, normal_inputs = self._get_node_input(
@@ -253,11 +259,13 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         return match_node_name
 
     def get_longest_fuse(self):
+        """Get the longest fusion pattern."""
         self._get_op_list()
         matched_rule, _ = self._is_match(self.sorted_patterns)
         return matched_rule
 
     def apply_the_transform(self):
+        """Quantize MatMul and apply the fusion pattern."""
         self._get_op_list()
         matched_rule, matched_node_name = self._is_match(self.sorted_patterns)
 

@@ -841,7 +841,7 @@ class TensorFlowAdaptor(Adaptor):
             if control_flow:
                 matched_nodes.remove(i)
 
-    def _query_fw_capability(self, model):
+    def query_fw_capability(self, model):
         """Collect the model-wise and op-wise configuration for quantization.
 
         Args:
@@ -1410,7 +1410,7 @@ class TensorFlowAdaptor(Adaptor):
             destination (string): The destination model format.
         """
         assert source.lower() == 'qat' and destination.lower() == 'default'
-        capability = self._query_fw_capability(model)
+        capability = self.query_fw_capability(model)
 
         quantize_config = {'op_wise_config': {}}
         for each_op_info in capability['opwise']:

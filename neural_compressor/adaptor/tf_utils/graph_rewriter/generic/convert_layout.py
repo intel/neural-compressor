@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Convert Layout Graph Rewriter."""
 
 import tensorflow as tf
 from tensorflow.python.training import saver as saver_lib
@@ -26,21 +27,23 @@ from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 class ConvertLayoutOptimizer(GraphRewriterBase):
-    """ The layout convertion optimizer, convert NCHW to NHWC format.
-        It is executed only when NCHW node exists and tensorflow version is 2.4.0 and above.
+    """The layout convertion optimizer, convert NCHW to NHWC format.
+
+    It is executed only when NCHW node exists and tensorflow version is 2.4.0 and above.
 
     Args: model: input graph_def
           outputs: output name list
 
     Return: converted graph_def
     """
-
     def __init__(self, model, outputs):
+        """Initilization."""
         super().__init__(model)
         self.outputs = outputs
 
     @dump_elapsed_time("ConvertLayoutOptimizer")
     def do_transformation(self):
+        """Execute converting layout."""
         convert = False
         for node in self.model.node:
             if 'Conv' in node.op and \

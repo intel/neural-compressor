@@ -14,11 +14,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""QuantizeLayer Base Class."""
 
 from ..quantize_config import global_config
 
 class QuantizeLayerBase(): # pragma: no cover
-
+    """QuantizeLayer Base Class."""
     def __init__(self):
         """Initialize QuantizeLayerBase class."""
         self.quantize_patterns = []
@@ -47,7 +48,7 @@ class QuantizeLayerBase(): # pragma: no cover
         return input_layers
 
     def _find_patterns(self, layer):
-        """ Checks if the input layer can satisfy the patterns.
+        """Checks if the input layer can satisfy the patterns.
 
         Args:
             layer (tf.keras.layers.Layer): The input keras layer that this method 
@@ -74,6 +75,7 @@ class QuantizeLayerBase(): # pragma: no cover
 
     def __call__(self, layer):
         """The main logic of QuantizeLayerBase.
+
         Neural Compressor will enumerate all layers of the input model to check
         if there are any layer meeting the criteria. The choosen ones will be marked
         as quantizable by QuantizeConfig.

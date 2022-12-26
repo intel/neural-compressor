@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tensorflow Grappler Graph Rewriter."""
 
 from neural_compressor.utils.utility import dump_elapsed_time
 
@@ -27,9 +28,10 @@ from tensorflow.core.protobuf import meta_graph_pb2
 import tensorflow as tf
 
 class GrapplerOptimizer(GraphRewriterBase):
-    """A python wrapper that leverages the built-in tensorflow grappler API to optimize the graph.
-    """
+    """A python wrapper that leverages the built-in tensorflow grappler API to optimize the graph."""
+
     def __init__(self, model, input_output_names, opt_cfg):
+        """Initilization."""
         super().__init__(model)
         self.input_output_names = input_output_names
         self.opt_cfg = opt_cfg
@@ -38,6 +40,7 @@ class GrapplerOptimizer(GraphRewriterBase):
 
     @dump_elapsed_time("Pass GrapplerOptimizer")
     def do_transformation(self):
+        """Apply tensorflow Grappler optimization."""
         try:
             g = tf.Graph()
             with g.as_default():
