@@ -38,7 +38,11 @@ class Launcher():
         parser.add_argument('script_args', nargs=REMAINDER)
         return parser.parse_args()
         
-    def execute(args):
+    def execute(
+        args,
+        use_modular=False,
+        modular_pattern={},
+    ):
         # copy user entry script (main.py -> main_optimized.py)
         script_copied = args.script[:-3] + "_optimized.py"
         shutil.copy(args.script, script_copied)
@@ -48,21 +52,29 @@ class Launcher():
             from neural_coder import enable
             if args.opt == "":
                 if args.approach == "static":
-                    features = ["pytorch_inc_static_quant_fx"]
+                    args.opt = "pytorch_inc_static_quant_fx"
                 if args.approach == "static_ipex":
-                    features = ["pytorch_inc_static_quant_ipex"]
+                    args.opt = "pytorch_inc_static_quant_ipex"
                 if args.approach == "dynamic":
-                    features = ["pytorch_inc_dynamic_quant"]
+                    args.opt = "pytorch_inc_dynamic_quant"
                 if args.approach == "auto":
-                    features = ["inc_auto"]
+                    args.opt = "inc_auto"
+                features = [args.opt]
             else:
                 features = args.opt.split(",")
-
+            
+            # modular design
+            modular_item = ""
+            if use_modular:
+                modular_item = modular_pattern[args.opt]
+            
             # execute optimization enabling
             enable(
                 code=script_copied,
                 features=features,
                 overwrite=True,
+                use_modular=use_modular,
+                modular_item=modular_item,
             )
 
             if not args.enable: # enable and run
