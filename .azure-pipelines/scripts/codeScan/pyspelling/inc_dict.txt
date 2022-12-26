@@ -35,6 +35,7 @@ aea
 af
 AGS
 ai
+aia
 ailab
 al
 albert
@@ -860,6 +861,7 @@ Jie
 jim
 Jingfei
 Jiong
+JIRA
 jit
 jitter
 Joshi
@@ -2463,6 +2465,7 @@ Namhoon
 Thalaiyasingam
 Torr
 MixedPrecisionConfig
+contrib
 ONNXConfig
 Arial
 MatMulInteger
