@@ -335,8 +335,6 @@ class TRANSFORMS(object):
         Returns:
             Transforms: the registered Transforms
         """
-        print("xxxx")
-        print(transform_type)
         assert transform_type in self.transforms.keys(), "transform support {}".\
             format(self.transforms.keys())
         return self.transforms[transform_type]
