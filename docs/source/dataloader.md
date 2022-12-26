@@ -5,7 +5,7 @@ DataLoader
 
 2. [Supported Framework Dataloader Matrix](#supported-framework-dataloader-matrix)
 
-3. [Get start with Dataloader API](#get-start-with-dataloader-api)
+3. [Get Start with Dataloader API](#get-start-with-dataloader-api)
 
 4. [Examples](#examples)
 
@@ -32,9 +32,9 @@ The internal dataloader takes a [dataset](./dataset.md) as the input parameter a
 | ONNX Runtime   |  &#10004;  |
 | MXNet         |  &#10004;  |
 
-## Get start with Dataloader API
+## Get Start with Dataloader API
 
-### Config dataloader in a yaml file
+### Config Dataloader in a Yaml File
 
 Users can use internal dataloader in the following manners. In this case, the dataloader is created after the Quantization object is initialized. As calibration and evaluation may have different transforms and datasets, users can config different dataloaders in a yaml file.
 
@@ -73,7 +73,7 @@ evaluation:
           input_shape: [224, 224, 3] 
 ```
 
-### Create a user-specific dataloader
+### Create a User-specific Dataloader
 
 Users can define their own dataloaders as shown as below:
 
