@@ -1,5 +1,5 @@
 
-dels
+Validated Models
 ===
 ## Validated MLPerf Models
 <table class="docutils">

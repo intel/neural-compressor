@@ -149,9 +149,30 @@ Pruning type defines how the masks are generated and applied to a neural network
 
 
 
+### Pruning Scope
+
+Range of sparse score calculation in iterative pruning, default scope is global.
+
+- Global
+
+  The score map is computed out of entire parameters, Some layers are higher than the target sparsity and some are lower, the total sparsity of the model reaches the target.
+
+
+
+
+- Local
+
+  The score map is computed from the corresponding layer's weight, The sparsity of each layer is equal to the target.
+
+
+
+
+### Sparsity Decay Type
+
+Growth rules for the sparsity of iterative pruning, "exp", "linear", "cos" and "cube" are available，We use exp by default.
+
+
 ### Regularization
-
-
 
 Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection. In the image below, some weights are pushed to be as small as possible and the connections are thus sparsified. **Group-lasso** method is used in Intel Neural Compressor. 
 

@@ -269,7 +269,7 @@ Range of sparse score calculation in iterative pruning, default scope is global.
 
  
 
-- Gloabl
+- Global
 
 
 
@@ -294,7 +294,7 @@ Range of sparse score calculation in iterative pruning, default scope is global.
 
 
 
-Growth rules for the sparsity of iterative pruning, "exp", "linear", "cos" and "cube" are available，We use exp by default。
+Growth rules for the sparsity of iterative pruning, "exp", "linear", "cos" and "cube" are available，We use exp by default.
 
 
 
@@ -354,4 +354,5 @@ We validate the pruning technique on typical models across various domains (incl
 
 
  
+
 
