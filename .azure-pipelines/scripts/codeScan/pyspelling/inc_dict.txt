@@ -2463,6 +2463,14 @@ Namhoon
 Thalaiyasingam
 Torr
 MixedPrecisionConfig
+contrib
+ONNXConfig
+Arial
+MatMulInteger
+MatMulIntegerToFloat
+QuantizeLinear
+css
+subgraph
 AccuracyCriterion
 AccuracyLoss
 TuningCriterion

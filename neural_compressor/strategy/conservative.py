@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The conservative tuning strategy for quantization level 0."""
+
 import copy
 import os
 import numpy as np
@@ -31,39 +33,33 @@ from ..utils.utility import Statistics
 
 @strategy_registry
 class ConservativeTuneStrategy(TuneStrategy):
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        super(
-            ConservativeTuneStrategy,
-            self).__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
+    """Tuning strategy with accuracy first, performance second.
+    
+    The quantization level O0 is designed for user who want to keep the accuracy
+    of the model after quantization. It starts with the original(fp32) model,
+    and then quantize the OPs to lower precision OP type wisely and OP wisely.
+    """
+
+    def __init__(self, model, conf, q_dataloader, q_func=None, eval_dataloader=None, 
+                 eval_func=None, dicts=None, q_hooks=None):
+        """Init conservative tuning strategy."""
+        super().__init__(model, conf, q_dataloader, q_func, eval_dataloader, 
+                         eval_func, dicts, q_hooks)
         self.acc_meet_flag = False
 
     def next_tune_cfg(self):
-        """
-        Conservative tuning: accuracy first, performance second
-        
-        1. Query all quantifiable ops and save as a list: quantifiable_ops = [(op_name, op_type), ...]
+        """Generate and yield the next tuning config with below order.
+
+        1. Query all quantifiable ops and save as a list of [(op_name, op_type), ...]
         2. Classify the op by its op type
         3. Add op to quant_queue according to the op type priority
         4. Go through the quant_queue and replace it with the fp32 config in tune_cfg if
-           accuracy meets the requirements else continue
-        
-        For bf16 and fp16, do the same thing as int8
-        Note:
-        1) other tunable items will using the first option as the default value.
+        accuracy meets the requirements else continue
+        5. For bf16 and fp16 operators, do the same as int8 operators.
 
         Yields:
             tune_config (dict): It's a dict containing the tuning configuration to run.
         """
-        
         tuning_space = self.tuning_space
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         calib_sampling_size = calib_sampling_size_lst[0]
@@ -104,6 +100,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         logger.info(f"*** Ending tuning process due to no quantifiable op left.")
 
     def traverse(self):
+        """Traverse the tuning space."""
         if not (self.cfg.evaluation and self.cfg.evaluation.accuracy and \
             (self.cfg.evaluation.accuracy.metric or self.cfg.evaluation.accuracy.multi_metrics)) \
             and self.eval_func is None:
@@ -162,7 +159,7 @@ class ConservativeTuneStrategy(TuneStrategy):
                     self.best_tune_result = self.last_tune_result
                 else:
                     # Update current tuning config and model with best performance
-                    get_better_performance = self.compare_performace(self.last_tune_result, self.best_tune_result)
+                    get_better_performance = self._compare_performace(self.last_tune_result, self.best_tune_result)
                     if get_better_performance:
                         logger.info(f"*** Update the model with better performance.")
                         self.best_qmodel = self.last_qmodel
@@ -170,7 +167,7 @@ class ConservativeTuneStrategy(TuneStrategy):
                     else:
                         logger.info(f"*** The qmodel was not updated due to not achieving better performance.")
             # Dump the current state to log
-            self.dump_tuning_state(trials_count, self.last_tune_result, self.best_tune_result, self.baseline)
+            self._dump_tuning_state(trials_count, self.last_tune_result, self.best_tune_result, self.baseline)
             # Judge stop or continue tuning
             need_stop = self.stop(trials_count)
             # Record the tuning history
@@ -200,17 +197,35 @@ class ConservativeTuneStrategy(TuneStrategy):
                 break
 
     def stop(self, trials_count):
+        """Check whether needed to stop the traverse procedure.
+
+        Args:
+            trials_count (int): current total count of tuning trails.
+
+        Returns:
+            bool: whether needed to stop the traverse procedure.
+        """
         need_stop = False
         if trials_count >= self.cfg.tuning.exit_policy.max_trials:
             need_stop = True
         return need_stop
             
-    def compare_performace(self, last_tune_result, best_tune_result): # pragma: no cover
+    def _compare_performace(self, last_tune_result, best_tune_result): # pragma: no cover
+        """Compare the tuning result with performance only.
+
+        Args:
+            last_tune_result (list): The list of last tuning result.
+            best_tune_result (list): The list of best tuning result.
+
+        Returns:
+            bool: whether the best tuning result is better than last tuning result
+              in performance.
+        """
         _, last_perf = last_tune_result
         _, best_perf = best_tune_result
         return last_perf[0] < best_perf[0]
     
-    def dump_tuning_state(self, trials_count, last_tune_result, best_tune_result, baseline):
+    def _dump_tuning_state(self, trials_count, last_tune_result, best_tune_result, baseline):
         if last_tune_result:
             last_tune = last_tune_result[0] if \
                 isinstance(last_tune_result[0], list) else [last_tune_result[0]]
@@ -307,7 +322,7 @@ class ConservativeTuneStrategy(TuneStrategy):
     def _sorted_item_by_op_type(self, 
                                 items_lst: List[Tuple[TuningItem, str]], 
                                 op_type_priority: List[str]) -> OrderedDict[str, List]:
-        """ Socring the tuning items according to its op type.
+        """Socring the tuning items according to its op type.
         
         Args:
             items_lst: The tuning item list. # [(op_item, quant_mode), ... ]
@@ -407,19 +422,3 @@ class ConservativeTuneStrategy(TuneStrategy):
                 op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
                 quant_items_pool['int8'] = op_item_pairs
         return quant_items_pool
-        
-        
-            
-            
-            
-            
-            
-                
-            
-        
-         
-         
-        
-
-            
-            
