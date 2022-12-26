@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""Conv Operator."""
 
 
 import onnx
@@ -24,10 +24,13 @@ from neural_compressor.adaptor.ox_utils.util import find_by_name, attribute_to_k
 
 @op_registry(op_types="Conv, FusedConv")
 class ConvOperator(Operator):
+    """Conv Operator."""
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(ConvOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         if node.op_type == "FusedConv":
             kwargs = {}
@@ -57,12 +60,14 @@ class ConvOperator(Operator):
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['dynamic', 'static'], \
             'convert format for {} should be in [dynamic, static]'.format(node.op_type)
         return True
 
     def convert(self, convert_format):
+        """Convert to QOperator format."""
         node = self.node
         if convert_format == 'dynamic':
             inputs = []
@@ -167,10 +172,14 @@ class ConvOperator(Operator):
 
 @qop_registry(op_types="QLinearConv")
 class QConvOperator(QOperator):
+    """QLinearConv Operator."""
+
     def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
         super().__init__(onnx_node, children, initializers)
 
     def convert(self):
+        """Convert to QDQ format."""
         node = self.node
         add_nodes = []
         inits = []
