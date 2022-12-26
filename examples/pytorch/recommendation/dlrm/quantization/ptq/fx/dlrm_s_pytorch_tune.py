@@ -512,7 +512,7 @@ if __name__ == "__main__":
     parser.add_argument("--mlperf-bin-shuffle", action='store_true', default=False)
     parser.add_argument("--tune", action='store_true', default=False)
     parser.add_argument("--output-model", type=str, default="")
-    parser.add_argument('-i', "--iter", default=0, type=int,
+    parser.add_argument('-i', "--iters", default=0, type=int,
                         help='For accuracy measurement only.')
     parser.add_argument('-w', "--warmup_iter", default=5, type=int,
                         help='For benchmark measurement only.')
@@ -522,6 +522,7 @@ if __name__ == "__main__":
                         help='path to checkpoint tuned by Neural Compressor (default: ./)')
     parser.add_argument('--int8', dest='int8', action='store_true',
                         help='run benchmark for int8')
+    parser.add_argument("--accuracy_only", action='store_true', default=False)
     args = parser.parse_args()
 
     if args.mlperf_logging:
@@ -881,7 +882,7 @@ if __name__ == "__main__":
             targets.append(T)
             if j >= args.warmup_iter:
                 batch_time.update(time_wrap(False) - start)
-            if args.iter > 0 and j >= args.warmup_iter + args.iter - 1:
+            if args.iters > 0 and j >= args.warmup_iter + args.iters - 1:
                 break
 
         scores = np.concatenate(scores, axis=0)
@@ -897,23 +898,36 @@ if __name__ == "__main__":
     if args.tune:
         print('tune')
         dlrm.eval()
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(dlrm)
-        quantizer.calib_dataloader = eval_dataloader
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
+        from neural_compressor import PostTrainingQuantConfig, quantization
+        conf = PostTrainingQuantConfig(approach="static")
+        q_model = quantization.fit(
+                            dlrm,
+                            conf=conf,
+                            calib_dataloader=eval_dataloader
+                            )
         q_model.save(args.tuned_checkpoint)
         exit(0)
-
-    if args.benchmark:
+    
+    dlrm.eval()
+    if args.int8:
+        from neural_compressor.utils.pytorch import load
+        import os
+        dlrm = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
+                    dlrm,
+                    dataloader=eval_dataloader)
         dlrm.eval()
-        if args.int8:
-            from neural_compressor.utils.pytorch import load
-            import os
-            dlrm = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
-                        dlrm,
-                        dataloader=eval_dataloader)
+    
+    if args.benchmark:
+        from neural_compressor.config import BenchmarkConfig
+        from neural_compressor import benchmark
+        b_conf = BenchmarkConfig(
+                                 cores_per_instance=4,
+                                 num_of_instance=1
+                                 )
+        benchmark.fit(dlrm, b_conf, b_func=eval_func)
+        exit(0)
+    
+    if args.accuracy_only:
         eval_func(dlrm)
         exit(0)
 
