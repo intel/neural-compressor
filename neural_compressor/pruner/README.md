@@ -86,11 +86,11 @@ Pruning Criteria determines how should the weights of a neural network be scored
 
 - Gradient
 
-The algorithm prunes the weight by the lowest gradient value at each layer with given sparsity target.
+    The algorithm prunes the weight by the lowest gradient value at each layer with given sparsity target.
 
 - SNIP
 
-The algorithm prunes the dense model at its initialization, by analyzing the weights' effect to the loss function when they are masked. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for details
+    The algorithm prunes the dense model at its initialization, by analyzing the weights' effect to the loss function when they are masked. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for details
 
 - SNIP with momentum
 
@@ -140,12 +140,12 @@ Pruning type defines how the masks are generated and applied to a neural network
   Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
   Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
 
-  <div style = "width: 77%; margin-bottom: 2%;">
-    <a target="_blank" href="../../docs/source/_static/imgs/pruning/progressive_pruning.png">
-      <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=500>
-    </a>
-  </div>
-  (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation. (b) uses masks with smaller structured blocks during every pruning step. (c) inserts masks with smaller structured blocks between every pruning steps. (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps. We use (d) as the mask interpolation implementation of progressive pruning.
+    <div style = "width: 77%; margin-bottom: 2%;">
+        <a target="_blank" href="../../docs/source/_static/imgs/pruning/progressive_pruning.png">
+        <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=500>
+        </a>
+    </div>
+    (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation. (b) uses masks with smaller structured blocks during every pruning step. (c) inserts masks with smaller structured blocks between every pruning steps. (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps. We use (d) as the mask interpolation implementation of progressive pruning.
 
 
 
@@ -157,7 +157,7 @@ Regularization is a technique that discourages learning a more complex model and
 
 - Group Lasso
 
-The main idea of Group Lasso is to construct an objective function that penalizes the L2 parametrization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
+    The main idea of Group Lasso is to construct an objective function that penalizes the L2 parametrization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Regularization.JPG">
@@ -177,56 +177,56 @@ Users can pass the customized training/evaluation functions to `Pruning` in vari
 
 The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default setting is used as a complement.
 
-Step 1: Define a dict-like configuration in your training codes. We provide you a template of configuration below.
+- Step 1: Define a dict-like configuration in your training codes. We provide you a template of configuration below.
 ```python
-configs = [
-        { ## pruner1
-            'target_sparsity': 0.9,   # Target sparsity ratio of modules.
-            'pruning_type': "snip_momentum", # Default pruning type.
-            'pattern': "4x1", # Default pruning pattern. 
-            'op_names': ['layer1.*'],  # A list of modules that would be pruned.
-            'excluded_op_names': ['layer3.*'],  # A list of modules that would not be pruned.
-            'start_step': 0,  # Step at which to begin pruning.
-            'end_step': 10,   # Step at which to end pruning.
-            'pruning_scope': "global", # Default pruning scope.
-            'pruning_frequency': 1, # Frequency of applying pruning.
-            'min_sparsity_ratio_per_op': 0.0,  # Minimum sparsity ratio of each module.
-            'max_sparsity_ratio_per_op': 0.98, # Maximum sparsity ratio of each module.
-            'sparsity_decay_type': "exp", # Function applied to control pruning rate.
-            'pruning_op_types': ['Conv', 'Linear'], # Types of op that would be pruned.
-        },
-        { ## pruner2
-            "op_names": ['layer3.*'], # A list of modules that would be pruned.
-            "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
-            # 'target_sparsity' 
-        } # For layer3, the missing target_sparsity would be complemented by default setting (i.e. 0.8)
-    ]
+    configs = [
+            { ## pruner1
+                'target_sparsity': 0.9,   # Target sparsity ratio of modules.
+                'pruning_type': "snip_momentum", # Default pruning type.
+                'pattern': "4x1", # Default pruning pattern. 
+                'op_names': ['layer1.*'],  # A list of modules that would be pruned.
+                'excluded_op_names': ['layer3.*'],  # A list of modules that would not be pruned.
+                'start_step': 0,  # Step at which to begin pruning.
+                'end_step': 10,   # Step at which to end pruning.
+                'pruning_scope': "global", # Default pruning scope.
+                'pruning_frequency': 1, # Frequency of applying pruning.
+                'min_sparsity_ratio_per_op': 0.0,  # Minimum sparsity ratio of each module.
+                'max_sparsity_ratio_per_op': 0.98, # Maximum sparsity ratio of each module.
+                'sparsity_decay_type': "exp", # Function applied to control pruning rate.
+                'pruning_op_types': ['Conv', 'Linear'], # Types of op that would be pruned.
+            },
+            { ## pruner2
+                "op_names": ['layer3.*'], # A list of modules that would be pruned.
+                "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
+                # 'target_sparsity' 
+            } # For layer3, the missing target_sparsity would be complemented by default setting (i.e. 0.8)
+        ]
 ```
-Step 2: Insert API functions in your codes. Only 4 lines of codes are required.
+- Step 2: Insert API functions in your codes. Only 4 lines of codes are required.
 ```python
-""" All you need is to insert following API functions to your codes:
-pruner.on_train_begin() # Setup pruner
-pruner.on_step_begin() # Prune weights
-pruner.on_before_optimizer_step() # Do weight regularization
-pruner.on_after_optimizer_step() # Update weights' criteria, mask weights
-"""
-from neural_compressor.pruner.pruning import Pruning, WeightPruningConfig
-config = WeightPruningConfig(configs)
-pruner = Pruning(config)  # Define a pruning object.
-pruner.model = model      # Set model object to prune.
-pruner.on_train_begin()
-for epoch in range(num_train_epochs):
-    model.train()    
-    for step, batch in enumerate(train_dataloader):
-        pruner.on_step_begin(step)
-        outputs = model(**batch)
-        loss = outputs.loss
-        loss.backward()
-        pruner.on_before_optimizer_step()
-        optimizer.step()
-        pruner.on_after_optimizer_step()
-        lr_scheduler.step()
-        model.zero_grad()
+    """ All you need is to insert following API functions to your codes:
+    pruner.on_train_begin() # Setup pruner
+    pruner.on_step_begin() # Prune weights
+    pruner.on_before_optimizer_step() # Do weight regularization
+    pruner.on_after_optimizer_step() # Update weights' criteria, mask weights
+    """
+    from neural_compressor.pruner.pruning import Pruning, WeightPruningConfig
+    config = WeightPruningConfig(configs)
+    pruner = Pruning(config)  # Define a pruning object.
+    pruner.model = model      # Set model object to prune.
+    pruner.on_train_begin()
+    for epoch in range(num_train_epochs):
+        model.train()    
+        for step, batch in enumerate(train_dataloader):
+            pruner.on_step_begin(step)
+            outputs = model(**batch)
+            loss = outputs.loss
+            loss.backward()
+            pruner.on_before_optimizer_step()
+            optimizer.step()
+            pruner.on_after_optimizer_step()
+            lr_scheduler.step()
+            model.zero_grad()
 ```
 
 
@@ -234,14 +234,14 @@ for epoch in range(num_train_epochs):
 
 
 
-```
-on_train_begin() : Execute at the beginning of training phase.
-on_epoch_begin(epoch) : Execute at the beginning of each epoch.
-on_step_begin(batch) : Execute at the beginning of each batch.
-on_step_end() : Execute at the end of each batch.
-on_epoch_end() : Execute at the end of each epoch.
-on_before_optimizer_step() : Execute before optimization step.
-on_after_optimizer_step() : Execute after optimization step.
+```python
+    on_train_begin() : Execute at the beginning of training phase.
+    on_epoch_begin(epoch) : Execute at the beginning of each epoch.
+    on_step_begin(batch) : Execute at the beginning of each batch.
+    on_step_end() : Execute at the end of each batch.
+    on_epoch_end() : Execute at the end of each epoch.
+    on_before_optimizer_step() : Execute before optimization step.
+    on_after_optimizer_step() : Execute after optimization step.
 ```
 
 
