@@ -52,6 +52,14 @@ class AutoInc_Harness(object):
         bk_trans_content = backend_dict["transformation"]["content"]  # string
         bk_trans_order = backend_dict["transformation"]["order"]  # list
 
+        # overwrite with API pre-defined adaption
+        if self.backend == "pytorch_inc_huggingface_optimum_dynamic":
+            from optimum.intel.neural_compressor.neural_coder_adaptor import APIAdaptor
+            bk_trans_content = APIAdaptor.default_quant_dynamic
+        if self.backend == "pytorch_inc_huggingface_optimum_static":
+            from optimum.intel.neural_compressor.neural_coder_adaptor import APIAdaptor
+            bk_trans_content = APIAdaptor.default_quant_static
+
         list_code = []
         history = set()
         for i in globals.list_code_path:
