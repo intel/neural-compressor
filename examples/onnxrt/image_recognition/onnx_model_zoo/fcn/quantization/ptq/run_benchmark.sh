@@ -19,9 +19,6 @@ function init_params {
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
-      --batch_size=*)
-          mode=$(echo $var |cut -f2 -d=)
-      ;;
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
@@ -37,7 +34,6 @@ function run_benchmark {
             --model_path ${input_model} \
             --mode ${mode} \
             --dataset_location ${dataset_location} \
-            --batch_size ${batch_size} \
             --benchmark
 }
 
