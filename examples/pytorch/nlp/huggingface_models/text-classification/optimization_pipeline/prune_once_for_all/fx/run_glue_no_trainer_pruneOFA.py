@@ -15,6 +15,7 @@
 """ Finetuning a 🤗 Transformers model for sequence classification on GLUE."""
 import argparse
 import logging
+import shutil
 from neural_compressor.utils.logger import log
 import math
 import os
@@ -218,7 +219,16 @@ def evaluation(model, accelerator, eval_dataloader, metric):
     logger.info(f"eval_metric : {eval_metric}")
     return eval_metric['accuracy']
 
-def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, agent, accelerator, eval_dataloader, metric):
+def save_checkpoint(state, is_best, save_dir):
+    """Saves checkpoint to disk"""
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    filename = save_dir + "checkpoint.pth"
+    torch.save(state, filename)
+    if is_best:
+        shutil.copyfile(filename, save_dir + 'model_best.pth')
+
+def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_manager, accelerator, eval_dataloader, metric):
     # Train!
     total_batch_size = args.batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
@@ -231,42 +241,52 @@ def train(args, model, train_dataloader, lr_scheduler, criterion, optimizer, age
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
     # Only show the progress bar once on each machine.
     completed_steps = 0
+    best_prec = 0
 
-    agent.on_train_begin()
-    model = agent.model.model
+    compression_manager.on_train_begin()
     model_device = next(model.parameters()).device
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
-        agent.on_epoch_begin(epoch)
+        compression_manager.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
             batch = move_input_to_device(batch, model_device)
-            agent.on_step_begin(step)
+            compression_manager.on_step_begin(step)
             teacher_logits = None
             if 'teacher_logits' in batch:
                 teacher_logits = batch['teacher_logits']
                 del batch['teacher_logits']
             outputs = model(**batch)
-            if criterion is None:
-                loss = outputs.loss
-            else:
-                criterion.teacher_outputs = teacher_logits
-                loss = criterion(outputs['logits'], batch["labels"])
-                loss = agent.on_after_compute_loss(batch, outputs, loss, teacher_logits)
+
+            outputs_for_kd = torch.vstack([torch.vstack([sx, ex]) \
+                for sx, ex in zip(outputs['start_logits'], outputs['end_logits'])])
+            loss = outputs['loss'].item()
+            loss = compression_manager.on_after_compute_loss(batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
+
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                agent.on_before_optimizer_step()
+                compression_manager.on_before_optimizer_step()
                 optimizer.step()
                 lr_scheduler.step()
                 optimizer.zero_grad()
                 completed_steps += 1
-            agent.on_step_end()
+            compression_manager.on_step_end()
             if completed_steps >= args.max_train_steps:
                 break
-        agent.on_epoch_end()
-        evaluation(model, accelerator, eval_dataloader, metric)
-    agent.on_train_end()
+
+        compression_manager.callbacks.on_epoch_end()
+        best_score = evaluation(model, accelerator, eval_dataloader, metric)
+        is_best = best_score > best_prec
+        best_prec = max(best_score, best_prec)
+        save_checkpoint({
+            'epoch': epoch + 1,
+            'state_dict': model.state_dict(),
+            'best_prec1': best_prec,
+        }, is_best, args.output_dir)
+
+    model.load_state_dict(torch.load(args.output_dir + "/model_best.pth")["state_dict"])
+    compression_manager.on_train_end()
 
 
 def main():
@@ -552,60 +572,58 @@ def main():
     if args.task_name is not None:
         metric = load_metric("glue", args.task_name)
 
-    def train_func(model):
-        return train(args, model, train_dataloader, lr_scheduler, \
-                     criterion, optimizer, agent, accelerator, eval_dataloader, metric)
-
-    def eval_func(model):
-        return evaluation(model, accelerator, eval_dataloader, metric)
+    combs = []
 
     if args.do_prune:
         # Pruning!
-        from neural_compressor.experimental import Pruning, common
-        agent = Pruning(args.prune_config)
-        criterion = None # use huggingface's loss
-        if args.do_distillation:
-            logger.info('='*30 + 'Teacher model on validation set' + '='*30)
-            evaluation(teacher_model, accelerator, eval_dataloader, metric)  
+        from neural_compressor.config import WeightPruningConfig
+        p_conf = WeightPruningConfig(pruning_type="pattern_lock")
+        combs.append(p_conf)
 
-            # from neural_compressor.experimental import Distillation
-            from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
-            criterion = PyTorchKnowledgeDistillationLoss(
-                                    temperature=args.temperature,
-                                    loss_types=args.loss_types,
-                                    loss_weights=args.loss_weights)
-            criterion.teacher_model = teacher_model
+    if args.do_distillation:
+        logger.info('='*30 + 'Teacher model on validation set' + '='*30)
+        evaluation(teacher_model, accelerator, eval_dataloader, metric)
 
-        if args.do_quantization:
-            # transforming the student model to fx mode for QAT
-            from transformers.utils.fx import symbolic_trace
-            for input in eval_dataloader:
-                input_names = input.keys()
-                break
-            model = symbolic_trace(accelerator.unwrap_model(model), input_names=input_names, \
-                                   batch_size=args.batch_size, sequence_length=args.max_seq_length)
+        # from neural_compressor.experimental import Distillation
+        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+        distillation_criterion = KnowledgeDistillationLossConfig(temperature=args.temperature,
+                                                                 loss_types=args.loss_types,
+                                                                 loss_weights=args.loss_weights)
+        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+        combs.append(d_conf)
 
-            from neural_compressor.experimental.scheduler import Scheduler
-            from neural_compressor.experimental import Quantization
-            combs = [agent, Quantization(args.quantization_config)]
-            scheduler = Scheduler()
-            scheduler.model = common.Model(model)
-            agent = scheduler.combine(*combs)
-            agent.train_func = train_func
-            agent.eval_func = eval_func
-            print(agent)
-            scheduler.append(agent)
-            model = scheduler.fit()
-        else:
-            agent.model = common.Model(model)
-            agent.pruning_func = train_func
-            agent.eval_func = eval_func
-            model = agent()
-        model = common.Model(accelerator.unwrap_model(model.model))
-        if accelerator.local_process_index in [-1, 0]:
-            model.save(args.output_dir)
-        # change to framework model for further use
-        model = model.model
+    if args.do_quantization:
+        # transforming the student model to fx mode for QAT
+        from transformers.utils.fx import symbolic_trace
+        for input in eval_dataloader:
+            input_names = input.keys()
+            break
+        model = symbolic_trace(accelerator.unwrap_model(model), input_names=input_names, \
+                               batch_size=args.batch_size, sequence_length=args.max_seq_length)
+
+        from neural_compressor import QuantizationAwareTrainingConfig
+        q_conf = QuantizationAwareTrainingConfig()
+        combs.append(q_conf)
+
+    from neural_compressor.training import prepare_compression
+    compression_manager = prepare_compression(model, combs)
+    compression_manager.callbacks.on_train_begin()
+    model = compression_manager.model
+
+    train(args,
+          model,
+          train_dataloader=train_dataloader,
+          lr_scheduler=lr_scheduler,
+          optimizer=optimizer,
+          compression_manager=compression_manager,
+          accelerator=accelerator,
+          eval_dataloader=eval_dataloader,
+          metric=metric)
+
+    if accelerator.local_process_index in [-1, 0]:
+        model.save(args.output_dir)
+    # change to framework model for further use
+    model = model.model
 
     if args.do_eval:
         eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
