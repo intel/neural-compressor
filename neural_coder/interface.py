@@ -434,6 +434,8 @@ def enable(
         whole_patch_user_code = ""
         for path in globals.list_code_path[0:num_user_code_path]:
             path_transformed = path[:-3] + "_nc_enabled.py"
+            if path_transformed[-25:] == "_nc_enabled_nc_enabled.py":
+                continue
             cmd_gen_patch = "diff -up " + path + " " + path_transformed
             sp_gen_patch = subprocess.Popen(
                 cmd_gen_patch, env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec
