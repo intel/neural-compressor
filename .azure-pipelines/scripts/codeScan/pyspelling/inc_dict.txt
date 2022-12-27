@@ -2464,6 +2464,7 @@ WeightPruningConfig
 Namhoon
 Thalaiyasingam
 Torr
+QOperator
 MixedPrecisionConfig
 contrib
 ONNXConfig
