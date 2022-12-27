@@ -1,8 +1,0 @@
-torch
-transformers==4.16.0
-onnx
-onnxruntime
-coloredlogs
-sympy
-onnxruntime-extensions; python_version < '3.10'
-numpy==1.23.5

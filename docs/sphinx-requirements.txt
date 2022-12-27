@@ -1,6 +1,0 @@
-sphinx
-pytorch_sphinx_theme
-recommonmark
-sphinx-markdown-tables
-sphinx-md
-sphinx-autoapi
