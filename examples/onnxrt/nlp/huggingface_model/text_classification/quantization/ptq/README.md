@@ -40,17 +40,16 @@ python export.py --model_name_or_path=Intel/bert-base-uncased-mrpc \ # or other 
 Quantize model with dynamic quantization:
 
 ```bash
-bash run_tuning.sh --config=glue_dynamic.yaml \ 
-                   --input_model=path/to/model \ # model path as *.onnx
+bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune \ # model path as *.onnx
-                   --data_path=path/to/glue/data
+                   --dataset_location=path/to/glue/data
 ```
 
 ### Benchmark
 
 ```bash
-bash run_benchmark.sh --config=glue_dynamic.yaml \ 
-                   --input_model=path/to/model \ # model path as *.onnx
-                   --data_path=path/to/glue/data \ 
-                   --mode=performance # or accuracy
+bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
+                      --dataset_location=path/to/glue/data \ 
+                      --batch_size=batch_size \ 
+                      --mode=performance # or accuracy
 ```

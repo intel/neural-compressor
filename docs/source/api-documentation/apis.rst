@@ -11,3 +11,5 @@ The following API information is available:
    strategy
    adaptor
    pythonic
+   model
+   utils

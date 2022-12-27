@@ -14,7 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""Base Operator."""
+
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
 onnx = LazyImport('onnx')
@@ -23,11 +24,7 @@ OPERATORS = {}
 QOPERATORS= {}
 
 def op_registry(op_types):
-    '''The class decorator used to register all Operator subclasses.
-
-       Args:
-           cls (class): The class of register.
-    '''
+    """The class decorator used to register all Operator subclasses."""
     def decorator_op(cls):
         assert cls.__name__.endswith(
             'Operator'), "The name of subclass of Operator should end with \'Operator\' substring."
@@ -39,11 +36,7 @@ def op_registry(op_types):
     return decorator_op
 
 def qop_registry(op_types):
-    '''The class decorator used to register all qOperator subclasses.
-
-       Args:
-           cls (class): The class of register.
-    '''
+    """The class decorator used to register all QOperator subclasses."""
     def decorator_op(cls):
         assert cls.__name__.endswith(
             'Operator'), "The name of subclass of QOperator should end with \'Operator\' substring."
@@ -60,7 +53,10 @@ def qop_registry(op_types):
 
 
 class Operator(object):
+    """Base Operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         self.quantizer = onnx_quantizer
         self.node = onnx_node
         if self.node.name in self.quantizer.config:
@@ -91,25 +87,33 @@ class Operator(object):
                         ['activation']['scheme']
 
     def quantize_check(self):
+        """Check if quantizaion can be done."""
         return True
 
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         self.quantizer.quantize_inputs(node)
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
             self.quantizer.quantize_outputs(node)
 
     def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         return True
 
     def convert(self, convert_format):
+        """Convert to QOperator format."""
         return
 
     def cast(self): # pragma: no cover
+        """Cast node."""
         self.quantizer.dtype_cast(self.node, self.dtype)
 
 class QOperator(object):
+    """Base QOperator."""
+
     def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
         self.node = onnx_node
         self.children = children
         self.initializers = initializers
@@ -119,6 +123,7 @@ class QOperator(object):
                        'QLinearMatMul', 'QLinearAveragePool']
 
     def convert(self):
+        """Convert to QDQ format."""
         node = self.node
         add_nodes = []
         inputs = []

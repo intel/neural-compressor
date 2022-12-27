@@ -48,6 +48,10 @@ optimum_quant_config = ""
 # code domain
 code_domain = ""
 
+# modular design
+use_modular = True
+modular_item = "" # str
+
 def reset_globals():
     global list_code_path
 
