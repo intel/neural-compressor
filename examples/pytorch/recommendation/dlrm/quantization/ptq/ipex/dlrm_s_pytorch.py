@@ -840,7 +840,8 @@ def run():
                     model,
                     best_acc_test,
                     best_auc_test,
-                    test_ld
+                    test_ld,
+                    trace=args.int8
                 )
 
         assert args.inference_only, "Please set inference_only in arguments"

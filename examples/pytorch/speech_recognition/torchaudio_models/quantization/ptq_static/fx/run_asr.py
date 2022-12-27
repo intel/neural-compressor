@@ -106,21 +106,22 @@ def main():
     val_dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     decoder = GreedyCTCDecoder(labels=bundle.get_labels())
 
-    #tune
-    if args.tune:
-        def eval_func(model):
-            predict = []
-            text = []
-            with torch.inference_mode():
-                for index, wave in enumerate(val_dataloader):
-                    emission, _ = model(wave[0][0])
-                    transcript = decoder(emission[0])
-                    predict.append(transcript)
-                    text.append(wave[2][0])
+    def eval_func(model):
+        predict = []
+        text = []
+        with torch.inference_mode():
+            for index, wave in enumerate(val_dataloader):
+                emission, _ = model(wave[0][0])
+                transcript = decoder(emission[0])
+                predict.append(transcript)
+                text.append(wave[2][0])
                 prediction = [pre.replace("|", " ")for pre in predict]
                 WER = wer(text, prediction)
             print("Accuracy: %.5f" % (1-WER))
-            return 1-WER
+        return 1-WER
+    
+    #tune
+    if args.tune:
         def calib_func(model):
             for index, wave in enumerate(val_dataloader):
                 model(wave[0][0])
