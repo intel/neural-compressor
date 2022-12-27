@@ -15,27 +15,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Base model for multiple framework backends."""
+
 from abc import abstractmethod
 
 class BaseModel:
-    ''' base class of all neural_compressor.model, will play graph role'''
+    """Base class of all neural_compressor.model, will play graph role."""
 
     def __init__(self, model, **kwargs):
+        """Initialize a BaseModel.
+
+        Args:
+            model (object): raw model format. For Tensorflow model, could be path to frozen pb file, 
+                path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras model object.
+                For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol 
+                or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto 
+                model object.
+        """
         self.component = None
 
     @property
     def model(self):
-        ''' return model itself '''
+        """Return model itself."""
         raise NotImplementedError
 
     @property
     def graph_info(self):
-        ''' return {Node: Node_type} like {'conv0': 'conv2d'} '''
+        """Return a dict with content 'Node: Node_type'."""
         raise NotImplementedError
 
     @abstractmethod
     def save(self, root, *args, **kwargs):
-        ''' abstract method of model saving'''
+        """Abstract method of model saving."""
         raise NotImplementedError
 
     @abstractmethod
@@ -44,10 +55,10 @@ class BaseModel:
         save_path: str,
         conf,
     ):
-        ''' abstract method of model convertion to ONNX'''
+        """Abstract method of model convertion to ONNX."""
         raise NotImplementedError
 
     @abstractmethod
     def framework(self):
-        ''' abstract method of model framework'''
+        """Abstract method of model framework."""
         raise NotImplementedError

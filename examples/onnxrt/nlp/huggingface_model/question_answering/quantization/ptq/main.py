@@ -109,10 +109,6 @@ class ModelArguments:
         default='performance',
         metadata={"help": ("INC benchmark mode")},
     )
-    config: str = field(
-        default='bert-base-multilingual-cased-static.yaml',
-        metadata={"help": ("INC config")},
-    )
     save_path: str = field(
         default=None,
         metadata={"help": ("onnx int8 model path")},
@@ -124,6 +120,10 @@ class ModelArguments:
     hidden_size: int = field(
         default=768,
         metadata={"help": ("onnx model optimize hidden_size")},
+    )
+    batch_size: int = field(
+        default=1,
+        metadata={"help": ("batch size for benchmark")},
     )
 
 
@@ -281,7 +281,7 @@ def main():
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     training_args.do_eval = True
-    training_args.per_device_eval_batch_size = 1
+    training_args.per_device_eval_batch_size = model_args.batch_size
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
@@ -343,7 +343,6 @@ def main():
             cache_dir=model_args.cache_dir,
             use_auth_token=True if model_args.use_auth_token else None,
         )
-        print(type(raw_datasets))
     else:
         data_files = {}
         if data_args.train_file is not None:
@@ -552,7 +551,6 @@ def main():
     def eval_func(model, *args):
         logger.info("*** Evaluate ***")
         metrics = trainer.evaluate(onnx_model=model)
-        print('eval_func', metrics)
 
         max_eval_samples = data_args.max_eval_samples if data_args.max_eval_samples is not None else len(eval_dataset)
         metrics["eval_samples"] = min(max_eval_samples, len(eval_dataset))
@@ -575,40 +573,29 @@ def main():
             optimization_options=opt_options)
         model = model_optimizer.model
 
-        b_dataloader = SquadDataset(eval_dataloader)
-        b_dataloader = DataLoader(b_dataloader)
-        from neural_compressor.experimental import Quantization, common
-        quantize = Quantization(model_args.config)
-        quantize.model = common.Model(model)
-        quantize.calib_dataloader = b_dataloader
-        quantize.eval_func = eval_func
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        config = PostTrainingQuantConfig(approach='dynamic')
+        q_model = quantization.fit(model, 
+                                   config,
+                                   eval_func=eval_func)
         q_model.save(model_args.save_path)
 
     if model_args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
         model = onnx.load(model_args.model_path)
         if model_args.mode == 'performance':
-            from neural_compressor.data import DATALOADERS, DATASETS
-            session = ort.InferenceSession(model_args.model_path, None)
-            input_tensors = session.get_inputs()
-            shape = []
-            for i in range(len(input_tensors)):
-                shape.append((1, 512))
-            onnx_datasets = DATASETS('onnxrt_integerops')
-            dummy_dataset = onnx_datasets['dummy'](shape=shape, low=1, high=1, dtype='int64', label=True)
-            evaluator = Benchmark(model_args.config)
-            evaluator.model = common.Model(model)
-            evaluator.b_dataloader = common.DataLoader(dummy_dataset)
-            evaluator(model_args.mode)
-        elif model_args.mode == 'accuracy':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            
+            conf = BenchmarkConfig(iteration=100,
+                                   cores_per_instance=28,
+                                   num_of_instance=1)
             b_dataloader = SquadDataset(eval_dataloader)
-            b_dataloader = DataLoader(b_dataloader)
-            evaluator = Benchmark(model_args.config)
-            evaluator.b_dataloader = b_dataloader
-            evaluator.b_func = eval_func
-            evaluator.model = common.Model(model)
-            evaluator(model_args.mode)
+            b_dataloader = DataLoader(b_dataloader, model_args.batch_size)
+            fit(model, conf, b_dataloader=b_dataloader)
+        elif model_args.mode == 'accuracy':
+            eval_f1 = eval_func(model)
+            print("Batch size = %d" % model_args.batch_size)
+            print("Accuracy: %.5f" % eval_f1)
 
 if __name__ == "__main__":
     main()
