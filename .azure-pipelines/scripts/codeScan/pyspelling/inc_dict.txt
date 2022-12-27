@@ -2485,3 +2485,8 @@ SSDSCKKB
 aarch
 Hanwen
 Suyue
+DistillationConfig
+SelfKnowledgeDistillationLossConfig
+DistillationConfig
+KnowledgeDistillationLossConfig
+confs
