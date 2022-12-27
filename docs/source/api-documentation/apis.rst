@@ -12,3 +12,4 @@ The following API information is available:
    adaptor
    pythonic
    model
+   utils
