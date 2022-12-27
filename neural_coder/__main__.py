@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from launcher import Launcher
+from .launcher import Launcher
 
 args = Launcher.parse_args()
 Launcher.execute(args)
