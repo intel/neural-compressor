@@ -5,7 +5,7 @@ scikit-image>=0.14
 medpy
 scipy
 batchgenerators==0.21.0
-numpy
+numpy==1.23.5
 sklearn
 SimpleITK
 pandas
