@@ -613,10 +613,9 @@ def main():
         import torchvision.datasets as dset
         import torchvision.transforms as transforms
         import torch
-        dataset = dset.CocoDetection(root=args.dataset_path + "/val2017",
-                                     annFile=args.dataset_path +
-                                     "/annotations/instances_val2017.json",
-                                     transform=transforms.ToTensor())
+        from neural_compressor.experimental.data.datasets.coco_dataset import COCONpy
+        dataset = COCONpy(root='./', npy_dir='preprocessed/coco-1200-pt/NCHW/val2017/',
+            anno_dir='convert_dataset/annotations/instances_val2017.json')
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size)
         int8_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
                           raw_model,
