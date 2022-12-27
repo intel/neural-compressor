@@ -21,13 +21,14 @@ import logging
 import argparse
 
 import onnx
-from PIL import Image
 import math
-import numpy as np
-import cv2 as cv
 import cityscapes_labels
 import glob
 import os
+import numpy as np
+import cv2 as cv
+import onnxruntime as ort
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -39,10 +40,6 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument(
     '--data_path',
-    type=str,
-)
-parser.add_argument(
-    '--label_path',
     type=str,
 )
 parser.add_argument(
@@ -83,8 +80,9 @@ stride = 8
 rgb_mean = [122.675, 116.669, 104.008]
 labels = cityscapes_labels.labels
  
-class Dataset:
-    def __init__(self, data_dir, label_dir):
+class Dataloader:
+    def __init__(self, data_dir, label_dir, batch_size=1):
+        self.batch_size = batch_size
         index = 0
         val_lst = []
         all_images = glob.glob(os.path.join(data_dir, '*/*.png'))
@@ -111,6 +109,10 @@ class Dataset:
     def __getitem__(self, index):
         item = self.data[index]
         return self.preprocess(item)
+
+    def __iter__(self):
+        for item in self.data:
+            yield np.expand_dims(self.preprocess(item)[0], 0), self.preprocess(item)[1]
 
     def preprocess(self, frags):
         im = cv.imread(frags[0])
@@ -204,30 +206,59 @@ class IoU:
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    dataset  = Dataset(args.data_path, args.label_path)
+    batch_size = 1
+    label_path = args.data_path.split('/leftImg8bit/val')[0] + '/gtFine/val'
+    dataloader  = Dataloader(args.data_path, label_path, batch_size=batch_size)
+    metric = IoU()
+
+    def eval_func(model):
+        metric.reset()
+        session = ort.InferenceSession(model.SerializeToString(), None)
+        ort_inputs = {}
+        len_inputs = len(session.get_inputs())
+        inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+        for idx, (inputs, labels) in enumerate(dataloader):
+                if not isinstance(labels, list):
+                    labels = [labels]
+                if len_inputs == 1:
+                    ort_inputs.update(
+                        inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
+                    )
+                else:
+                    assert len_inputs == len(inputs), 'number of input tensors must align with graph inputs'
+                    if isinstance(inputs, dict):
+                        ort_inputs.update(inputs)
+                    else:
+                        for i in range(len_inputs):
+                            if not isinstance(inputs[i], np.ndarray):
+                                ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                            else:
+                                ort_inputs.update({inputs_names[i]: inputs[i]})
+                predictions = session.run(None, ort_inputs)
+                metric.update(predictions, labels)
+        return metric.result()
+    
     if args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
-        if args.mode == 'accuracy':
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(model)
-            evaluator.metric = IoU()
-            evaluator.b_dataloader = common.DataLoader(dataset)
-            evaluator(args.mode)
-        else:
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(model)
-            evaluator(args.mode)
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100,
+                                   cores_per_instance=4,
+                                   num_of_instance=1)
+            fit(model, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval_func(model)
+            print("Batch size = %d" % batch_size)
+            print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        from neural_compressor import options
-        from neural_compressor.experimental import Quantization, common
-        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
-
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.eval_dataloader = common.DataLoader(dataset)
-        quantize.calib_dataloader = common.DataLoader(dataset)
-        quantize.metric = IoU()
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.config import AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion(higher_is_better=False, criterion='absolute')
+        config = PostTrainingQuantConfig(approach='static', 
+                                         accuracy_criterion=accuracy_criterion)
+        q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)
+
+
         

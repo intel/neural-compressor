@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""MatMul Operator."""
 
 import onnx
 from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
@@ -23,10 +23,14 @@ from onnx import onnx_pb as onnx_proto
 
 @op_registry(op_types="MatMul")
 class MatMulOperator(Operator):
+    """MatMul Operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(MatMulOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         self.quantizer.quantize_inputs(node, [0])
         if self.per_channel and find_by_name(node.input[1], self.quantizer.model.initializer()):
@@ -39,13 +43,15 @@ class MatMulOperator(Operator):
             self.quantizer.quantize_outputs(node)
         node.name = node.name + "_quant"
 
-    def convert_check(self, convert_format): 
+    def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['dynamic', 'static'], \
             "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
         return True
 
     def convert(self, convert_format):
+        """Convert to QOperator format."""
         node = self.node
 
         if convert_format == 'dynamic':
@@ -126,10 +132,14 @@ class MatMulOperator(Operator):
             
 @qop_registry(op_types="QLinearMatMul")
 class QMatMulOperator(QOperator):
+    """QLinearMatMul Operator."""
+
     def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
         super().__init__(onnx_node, children, initializers)
 
     def convert(self):
+        """Convert to QDQ format."""
         node = self.node
         add_nodes = []
         inits = []

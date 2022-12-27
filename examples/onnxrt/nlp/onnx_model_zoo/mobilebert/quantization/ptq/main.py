@@ -14,7 +14,6 @@ from squad_evaluate import evaluate
 max_seq_length = 384
 doc_stride = 128
 max_query_length = 64
-batch_size = 1
 n_best_size = 20
 max_answer_length = 30
 
@@ -104,8 +103,6 @@ def main():
     parser = argparse.ArgumentParser(description='onnx squad')
     parser.add_argument('--model_path', required=True, type=str,
                         help='model path')
-    parser.add_argument('--config', required=True, type=str,
-                        help='Tuning config file path')
     parser.add_argument('--save_path', type=str, default='mobilbert_tune.onnx', 
                         help='save tuned model path')
     parser.add_argument('--data_path', type=str,
@@ -118,6 +115,11 @@ def main():
                         help="benchmark mode of performance or accuracy")
     parser.add_argument('--benchmark_nums', type=int, default=1000,
                         help="Benchmark numbers of samples")
+    parser.add_argument('--quant_format', type=str, default='Default',
+                        choices=['default', 'QDQ'],
+                        help="quantization format")
+    parser.add_argument('--batch_size', type=int, default=1,
+                        help="batch size for benchmark")
     args = parser.parse_args()
 
     model = onnx.load(args.model_path)
@@ -132,39 +134,39 @@ def main():
                                                                             max_seq_length, doc_stride, max_query_length)
 
     dataset = squadDataset(input_ids, input_mask, segment_ids, 1) 
-    eval_dataloader = DataLoader(dataset, batch_size=batch_size)
+    eval_dataloader = DataLoader(dataset, batch_size=args.batch_size)
 
     def eval_func(model):
         return evaluate_squad(model, eval_dataloader, input_ids, eval_examples, extra_data, input_file)
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.calib_dataloader = eval_dataloader
-        quantize.eval_func = eval_func
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        if args.quant_format == 'QDQ':
+            config = PostTrainingQuantConfig(approach='static', 
+                                            calibration_sampling_size=[8],
+                                            quant_format=args.quant_format)
+        else:
+            config = PostTrainingQuantConfig(approach='dynamic', 
+                                            calibration_sampling_size=[8])
+        q_model = quantization.fit(model, 
+                                   config,
+                                   calib_dataloader=eval_dataloader,
+                                   eval_func=eval_func)
         q_model.save(args.save_path)
 
-    if args.benchmark and args.mode == "accuracy":
-        results = evaluate_squad(model, eval_dataloader, input_ids, eval_examples, extra_data, input_file)
-        print("Batch size = %d" % batch_size)
-        print("Accuracy: %.5f" % results)
+    if args.benchmark:
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100,
+                                   cores_per_instance=4,
+                                   num_of_instance=7)
+            fit(model, conf, b_dataloader=eval_dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval_func(model)
+            print("Batch size = %d" % args.batch_size)
+            print("Accuracy: %.5f" % acc_result)
 
-    if args.benchmark and args.mode == "performance":
-        model = onnx.load(args.model_path)
-        
-        from neural_compressor.experimental.data.datasets.dummy_dataset import DummyDataset
-        from neural_compressor.experimental.data.dataloaders.onnxrt_dataloader import ONNXRTDataLoader
-        shapes, lows, highs = parse_dummy_input(model, args.benchmark_nums, max_seq_length)
-        dummy_dataset = DummyDataset(shapes, low=lows, high=highs, dtype="int32", label=True)
-        dummy_dataloader = ONNXRTDataLoader(dummy_dataset)
-        
-        from neural_compressor.experimental import Benchmark, common
-        evaluator = Benchmark(args.config)
-        evaluator.b_dataloader = dummy_dataloader
-        evaluator.model = common.Model(model)
-        evaluator(args.mode)
 
 if __name__ == "__main__":
     main()
