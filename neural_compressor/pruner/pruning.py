@@ -31,18 +31,17 @@ from neural_compressor.config import WeightPruningConfig
 class Pruning:
     """Pruning.
 
-    The main class that users will used in codes to do pruning.
-    Contain at least one Pruner object.
+    The main class to do pruning; it contains at least one Pruner object.
 
     Args:
-        config: a string. The path to a config file. For config file template, please refer to
+        config: a string representing the path to a config file. For config file template, please refer to
             https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
 
     Attributes:
         model: The model object to prune.
-        config_file_path: A string. The path to a config file.
+        config_file_path: A string representing the path to a config file.
         pruners: A list. A list of Pruner objects.
-        pruner_info: A config dict object. Contains pruners' information.
+        pruner_info: A config dict object that contains pruners' information.
     """
 
     def __init__(self, config):
@@ -53,7 +52,7 @@ class Pruning:
 
     @property
     def model(self):
-        """Getter of model in neural_compressor.model."""
+        """Obtain model in neural_compressor.model."""
         return self._model
 
     @model.setter
@@ -65,7 +64,7 @@ class Pruning:
 
         The original config of pruning is read from a file.
         However, users can still modify configurations by passing key-value arguments in this function.
-        Please note that the key-value arguments' keys are analysable in current configuration.
+        Please note that the key-value arguments' keys could be processed in current configuration.
         """
         for item in self.pruners_info:
             for key in kwargs:

@@ -26,8 +26,8 @@ import torch
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Union
-import sys
-from neural_compressor.data import DATALOADERS, DATASETS
+from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+from neural_compressor.data.datasets.dummy_dataset import DummyDataset
 
 
 class ONNXRTBertDataset:
@@ -355,7 +355,7 @@ if __name__ == "__main__":
     dataset = ONNXRTBertDataset(data_dir=args.data_path,
                                 model_name_or_path=args.model_name_or_path,
                                 task=args.task)
-    dataloader = DATALOADERS['onnxrt_integerops'](dataset, batch_size=args.batch_size)
+    dataloader = DefaultDataLoader(dataset, args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
     def eval_func(model, *args):
@@ -376,7 +376,6 @@ if __name__ == "__main__":
         return metric.result()
 
     if args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
         model = onnx.load(args.model_path)
         if args.mode == 'performance':
             session = ort.InferenceSession(args.model_path, None)
@@ -384,19 +383,20 @@ if __name__ == "__main__":
             shape = []
             for i in range(len(input_tensors)):
                 shape.append((1, 128))
-            datasets = DATASETS('onnxrt_integerops')
-            dummy_dataset = datasets['dummy'](shape=shape, low=1, high=1, dtype='int64', label=True)
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(model)
-            evaluator.b_dataloader = common.DataLoader(dummy_dataset)
-            evaluator(args.mode)
+            dummy_dataset = DummyDataset(shape=shape, low=1, high=1, dtype='int64', label=True)
+            dummy_dataloader = DefaultDataLoader(dummy_dataset, args.batch_size)
+            
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100,
+                                   cores_per_instance=28,
+                                   num_of_instance=1)
+            fit(model, conf, b_dataloader=dummy_dataloader)
         elif args.mode == 'accuracy':
-            evaluator = Benchmark(args.config)
-            evaluator.model = common.Model(model)
-            evaluator.b_dataloader = dataloader
-            evaluator.metric = metric
-            evaluator.b_func = eval_func
-            evaluator(args.mode)
+            acc_result = eval_func(model)
+            print("Batch size = %d" % args.batch_size)
+            print("Accuracy: %.5f" % acc_result)
+
 
     if args.tune:
         from onnxruntime.transformers import optimizer
@@ -412,11 +412,9 @@ if __name__ == "__main__":
             optimization_options=opt_options)
         model = model_optimizer.model
 
-        from neural_compressor import options
-        from neural_compressor.experimental import Quantization, common
-        options.onnxrt.graph_optimization.level = 'ENABLE_BASIC'
-        quantize = Quantization(args.config)
-        quantize.model = model
-        quantize.eval_func = eval_func
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        config = PostTrainingQuantConfig(approach='dynamic')
+        q_model = quantization.fit(model, 
+                                   config,
+                                   eval_func=eval_func)
         q_model.save(args.output_model)
