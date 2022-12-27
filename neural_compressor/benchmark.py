@@ -25,6 +25,7 @@ from .config import BenchmarkConfig
 
 class Benchmark(object):
     """Benchmark class can be used to evaluate the model performance.
+    
     With the objective setting, user can get the data of what they configured in yaml.
 
     Args:
