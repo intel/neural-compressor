@@ -27,7 +27,9 @@ transformation:
       [+]     from neural_compressor.conf.config import QuantConf
       [+]     from neural_compressor.experimental import Quantization, common
       [+]     quant_config = QuantConf()
-      [+]     quant_config.usr_cfg.model.framework = "pytorch_fx"
+      [+]     quant_config.usr_cfg.quantization.approach = "post_training_dynamic_quant"
+      [+]     quant_config.usr_cfg.model.framework = "pytorch"
+      [+]     quant_config.usr_cfg.quantization.precision = FP8_DATA_FORMAT
       [+]     quantizer = Quantization(quant_config)
       [+]     quantizer.model = common.Model(MODEL_NAME)
       [+]     quantizer.calib_dataloader = DATALOADER_NAME
@@ -41,7 +43,6 @@ transformation:
       [+]         MODEL_NAME = torch.jit.freeze(MODEL_NAME)
       [+]     except:
       [+]         pass
-      
   order:
     - below:
       above:
