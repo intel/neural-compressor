@@ -28,7 +28,7 @@ class BF16ModuleWrapper(nn.Module):
         self.train(module.training)
 
     def forward(self, X):
-        """Convert dtype"""
+        """Convert dtype."""
         X = X.to(torch.bfloat16)
         self.module.bfloat16()
         X = self.module(X)
