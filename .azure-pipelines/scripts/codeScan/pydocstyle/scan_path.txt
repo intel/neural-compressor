@@ -4,3 +4,4 @@
 /neural_compressor/adaptor/mxnet_utils
 /neural-compressor/neural_compressor/algorithm
 /neural-compressor/neural_compressor/model
+/neural_compressor/pruner
