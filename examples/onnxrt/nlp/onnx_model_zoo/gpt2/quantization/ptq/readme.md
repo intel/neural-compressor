@@ -18,14 +18,18 @@ Use `export.py` script for ONNX model conversion.
 python export.py
 ```
 
-### Evaluating
-To evaluate the model, run `gpt2.py` with the path to the model:
+### Quantization
 
 ```bash
-bash run_tuning.sh --topology=gpt2_lm_wikitext2 \ 
-                   --data_path=/path/to/wikitext-2-raw/ \ # NOTE: path must end with /
+bash run_tuning.sh --dataset_location=/path/to/wikitext-2-raw/ \ # NOTE: path must end with /
                    --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune
 ```
 
-
+### Benchmark
+```bash
+bash run_benchmark.sh --dataset_location=/path/to/wikitext-2-raw/ \ # NOTE: path must end with /
+                      --input_model=path/to/model \ # model path as *.onnx
+                      --batch_size=batch_size \
+                      --mode=performance # or accuracy
+```

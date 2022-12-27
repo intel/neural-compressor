@@ -117,32 +117,26 @@
       "batch_size": 1,
       "new_benchmark": true
     },
-    "bert_squad_model_zoo": {
+    "bert_squad_model_zoo_dynamic": {
       "model_src_dir": "nlp/onnx_model_zoo/bert-squad/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/squad",
       "input_model": "/tf_dataset2/models/onnx/bert_squad/bert_squad_model_zoo.onnx",
-      "yaml": "bert.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
-    "mobilebert_squad_mlperf": {
+    "mobilebert_squad_mlperf_dynamic": {
       "model_src_dir": "nlp/onnx_model_zoo/mobilebert/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/squad",
       "input_model": "/tf_dataset2/models/onnx/mobilebert_squad/mobilebert_squad_mlperf.onnx",
-      "yaml": "mobilebert.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
-    "gpt2_lm_head_wikitext_model_zoo": {
+    "gpt2_lm_head_wikitext_model_zoo_dynamic": {
       "model_src_dir": "nlp/onnx_model_zoo/gpt2/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/",
       "input_model": "/tf_dataset2/models/onnx/gpt2/gpt2_lm_head_wikitext_model_zoo.onnx",
-      "yaml": "gpt2.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
+      "main_script": "gpt2.py",
+      "batch_size": 1
     },
     "vgg16_model_zoo": {
       "model_src_dir": "image_recognition/onnx_model_zoo/vgg16/quantization/ptq",
@@ -414,23 +408,12 @@
       "batch_size": 1,
       "new_benchmark": true
     },
-    "bert_squad_model_zoo_qdq": {
-      "model_src_dir": "nlp/onnx_model_zoo/bert-squad/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/squad",
-      "input_model": "/tf_dataset2/models/onnx/bert_squad/bert_squad_model_zoo.onnx",
-      "yaml": "bert_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
-    },
     "mobilebert_squad_mlperf_qdq": {
       "model_src_dir": "nlp/onnx_model_zoo/mobilebert/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/squad",
       "input_model": "/tf_dataset2/models/onnx/mobilebert_squad/mobilebert_squad_mlperf-13.onnx",
-      "yaml": "mobilebert_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
    "vgg16_model_zoo_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/vgg16/quantization/ptq",
@@ -589,10 +572,8 @@
       "model_src_dir": "object_detection/onnx_model_zoo/DUC/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/leftImg8bit/val",
       "input_model": "/tf_dataset2/models/onnx/DUC/ResNet101-DUC-12.onnx",
-      "yaml": "DUC.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "arcface": {
       "model_src_dir": "image_recognition/onnx_model_zoo/arcface/quantization/ptq",
@@ -630,104 +611,83 @@
       "batch_size": 1,
       "new_benchmark": true
     },
-    "BiDAF": {
+    "BiDAF_dynamic": {
       "model_src_dir": "nlp/onnx_model_zoo/BiDAF/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/squad/dev-v1.1.json",
       "input_model": "/tf_dataset2/models/onnx/BiDAF/bidaf-11.onnx",
-      "yaml": "bidaf.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "hf_bert-base-uncased_dynamic": {
       "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/hf_bert-base-uncased_dynamic/bert-base-uncased-mrpc.onnx",
-      "yaml": "glue_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "hf_roberta-base_dynamic": {
       "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/hf_roberta-base_dynamic/roberta-base-mrpc.onnx",
-      "yaml": "glue_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "hf_xlm-roberta-base_dynamic": {
       "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/hf_xlm-roberta-base_dynamic/xlm-roberta-base-mrpc.onnx",
-      "yaml": "glue_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "hf_camembert-base_dynamic": {
       "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/hf_camembert-base_dynamic/camembert-base-mrpc.onnx",
-      "yaml": "glue_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "hf_MiniLM-L12-H384-uncased_dynamic": {
       "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/hf_MiniLM-L12-H384-uncased_dynamic/MiniLM-L12-H384-uncased-mrpc.onnx",
-      "yaml": "glue_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "hf_distilbert-base-uncased_dynamic": {
       "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/SST-2/",
       "input_model": "/tf_dataset2/models/onnx/hf_distilbert-base-uncased_dynamic/distilbert-base-uncased-finetuned-sst-2-english.onnx",
-      "yaml": "glue_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "hf_albert-base-v2_dynamic": {
       "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/SST-2/",
       "input_model": "/tf_dataset2/models/onnx/hf_albert-base-v2_dynamic/albert-base-v2-sst2.onnx",
-      "yaml": "glue_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "hf_MiniLM-L6-H384-uncased_dynamic": {
       "model_src_dir": "nlp/huggingface_model/text_classification/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/SST-2/",
       "input_model": "/tf_dataset2/models/onnx/hf_MiniLM-L6-H384-uncased_dynamic/MiniLM-L6-H384-uncased-sst2.onnx",
-      "yaml": "glue_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "hf_spanbert_dynamic": {
       "model_src_dir": "nlp/huggingface_model/question_answering/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/squad",
       "input_model": "/tf_dataset2/models/onnx/hf_spanbert_dynamic/spanbert-finetuned-squadv1.onnx",
-      "yaml": "qa_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "hf_bert-base-multilingual-cased_dynamic": {
       "model_src_dir": "nlp/huggingface_model/question_answering/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/squad",
       "input_model": "/tf_dataset2/models/onnx/hf_bert-base-multilingual-cased_dynamic/bert-base-multilingual-cased-finetuned-squad.onnx",
-      "yaml": "qa_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     }
   }
 }
+
