@@ -4,10 +4,14 @@ The script ```run_diffusion.py``` is based on [huggingface/diffusers](https://gi
 
 
 ## Requirements
- The dataset [pokemon-blip-captions](https://huggingface.co/datasets/lambdalabs/pokemon-blip-captions) and metric FID from ```pyotrch_fid``` is necessary for the work. the [image](https://datasets-server.huggingface.co/assets/lambdalabs/pokemon-blip-captions/--/lambdalabs--pokemon-blip-captions/train/14/image/image.jpg) in folder ```base_images``` is used in the following example.
+ The dataset [pokemon-blip-captions](https://huggingface.co/datasets/lambdalabs/pokemon-blip-captions) and metric FID from ```pyotrch_fid``` is necessary for the work.
 ```
 pip install -r requirements.txt
 ```
+
+## Metric and Ground Truth Image
+In this case, we used FID metric to evaluate the model, so we should download training datasets and choose one image to a directory(like "base_images").
+>**Note:** In this case we used picture: [Ground_Truth_Image](https://datasets-server.huggingface.co/assets/lambdalabs/pokemon-blip-captions/--/lambdalabs--pokemon-blip-captions/train/14/image/image.jpg).
 
 ## Quantization
 ```bash
