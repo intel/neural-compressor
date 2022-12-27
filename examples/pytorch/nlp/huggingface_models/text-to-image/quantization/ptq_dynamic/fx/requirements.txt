@@ -1,4 +1,0 @@
-diffusers
-accelerate
-pytorch_fid
-torch >= 1.9
