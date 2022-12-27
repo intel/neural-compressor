@@ -940,17 +940,28 @@ class TensorflowQATModel(TensorflowSavedModelModel):
     def model(self, q_model):
         self.keras_model = q_model
 
+    @property
+    def freezed_graph_def(self):
+        graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(
+            self.sess, self.sess.graph_def, self.output_node_names) 
+        return graph_def
+
     def save(self, root=None):
         if not root:
             root = cfg.default_workspace + '/saved_model'
         root = os.path.abspath(os.path.expanduser(root))
-        # if not have suffix, default append .pb
         os.makedirs(os.path.dirname(root), exist_ok=True)
-        q_aware_model = self.keras_model
-        q_aware_model.save(root)
-        saved_format = 'saved_model'
-        if root.endswith('.h5'):
-            saved_format = 'h5 file'
+        if root.endswith('.pb'):
+            saved_format = 'pb file'
+            graph_def = self.freezed_graph_def
+            f=tf.io.gfile.GFile(root,'wb')
+            f.write(graph_def.SerializeToString()) 
+        else:
+            q_aware_model = self.keras_model
+            q_aware_model.save(root)
+            saved_format = 'saved_model'
+            if root.endswith('.h5'):
+                saved_format = 'h5 file'
         logger.info("Save quantized model to {}.".format(saved_format))
         return root
 

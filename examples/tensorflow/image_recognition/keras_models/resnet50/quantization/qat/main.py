@@ -129,7 +129,7 @@ def evaluate(model):
 
     from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
     dataset = TensorflowImageRecord(root=FLAGS.dataset_location, transform=ComposeTransform(transform_list=[
-            TensorflowResizeCropImagenetTransform(height=224, width=224)]))
+            TensorflowResizeCropImagenetTransform(height=224, width=224, mean_value=[123.68, 116.78, 103.94])]))
     dataloader = DefaultDataLoader(dataset, batch_size=FLAGS.batch_size)
     latency = eval_func(dataloader)
     if FLAGS.benchmark and FLAGS.mode == 'performance':
@@ -166,12 +166,12 @@ def main():
 
     if FLAGS.benchmark:
         from neural_compressor.benchmark import fit
-        from neural_compressor.model.model import Model
         from neural_compressor.config import BenchmarkConfig
+        from neural_compressor.model.tensorflow_model import TensorflowQATModel
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
         "Benchmark only supports performance or accuracy mode."
 
-        model = Model(FLAGS.input_model).graph_def
+        model = TensorflowQATModel(FLAGS.input_model).freezed_graph_def
         if FLAGS.mode == 'performance':
             conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
             fit(model, conf, b_func=evaluate)
