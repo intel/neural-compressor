@@ -24,7 +24,8 @@ import numpy as np
 import string
 from nltk import word_tokenize
 import re
-from collections import Counter
+import onnxruntime as ort
+import tqdm
 
 # answer normalization specific for squad evaluation
 def normalize_answer(s):
@@ -65,8 +66,8 @@ def preprocess(text):
    return words, chars
 
 class squadDataset():
-    def __init__(self, datapath):
-        self.batch_size = 1
+    def __init__(self, datapath, batch_size):
+        self.batch_size = batch_size
         self.data = []
         with open(datapath, "r") as f:
             input_data = json.load(f)["data"]
@@ -151,22 +152,55 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     model = onnx.load(args.model_path)
-    dataloader = squadDataset(args.data_path)
+    batch_size = 1
+    dataloader = squadDataset(args.data_path, batch_size)
+    metric = EM()
+
+    def eval_func(model):
+        metric.reset()
+        session = ort.InferenceSession(model.SerializeToString(), None)
+        ort_inputs = {}
+        len_inputs = len(session.get_inputs())
+        inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+        for idx, (inputs, labels) in tqdm.tqdm(enumerate(dataloader), desc='eval'):
+                if not isinstance(labels, list):
+                    labels = [labels]
+                if len_inputs == 1:
+                    ort_inputs.update(
+                        inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
+                    )
+                else:
+                    assert len_inputs == len(inputs), 'number of input tensors must align with graph inputs'
+                    if isinstance(inputs, dict):
+                        ort_inputs.update(inputs)
+                    else:
+                        for i in range(len_inputs):
+                            if not isinstance(inputs[i], np.ndarray):
+                                ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                            else:
+                                ort_inputs.update({inputs_names[i]: inputs[i]})
+                predictions = session.run(None, ort_inputs)
+                metric.update(predictions, labels)
+        return metric.result()
  
     if args.benchmark:
-        from neural_compressor.experimental import Benchmark, common
-        evaluator = Benchmark(args.config)
-        evaluator.model = common.Model(model)
-        evaluator.b_dataloader = dataloader
-        evaluator.metric = EM()
-        evaluator(args.mode)
+        model = onnx.load(args.model_path)
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            conf = BenchmarkConfig(iteration=100,
+                                   cores_per_instance=4,
+                                   num_of_instance=7)
+            fit(model, conf, b_dataloader=dataloader)
+        elif args.mode == 'accuracy':
+            acc_result = eval_func(model)
+            print("Batch size = %d" % batch_size)
+            print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.calib_dataloader = dataloader
-        quantize.eval_dataloader = dataloader
-        quantize.metric = EM()
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        config = PostTrainingQuantConfig(approach='dynamic')
+        q_model = quantization.fit(model, 
+                                   config,
+                                   eval_func=eval_func)
         q_model.save(args.output_model)

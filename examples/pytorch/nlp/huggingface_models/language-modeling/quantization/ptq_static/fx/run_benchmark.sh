@@ -58,7 +58,7 @@ function run_benchmark {
 
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy_only "
-    elif [[ ${mode} == "benchmark" ]]; then
+    elif [[ ${mode} == "performance" ]]; then
         mode_cmd=" --benchmark "
         extra_cmd=$extra_cmd" --max_eval_samples ${max_eval_samples}"
     else

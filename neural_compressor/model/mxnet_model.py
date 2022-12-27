@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Class for MXNet model."""
+
 import os
 from neural_compressor.conf import config as cfg
 from neural_compressor.utils.utility import LazyImport
@@ -23,30 +25,35 @@ from .base_model import BaseModel
 mx = LazyImport('mxnet')
 
 class MXNetModel(BaseModel):
-    """Build MXNetModel object
-
-    Args:
-        model (mxnet model): model path
-    """
+    """Build MXNet model."""
 
     def __init__(self, model, **kwargs):
+        """Initialize a MXNet model.
+        
+        Args:
+            model (mxnet model): model path
+        """
         #(TODO) MXNet does not support recover model from tuning history currently
         self.q_config = None
         self._model = model
         self.calib_cache = {}
 
     def framework(self):
+        """Return framework."""
         return 'mxnet'
 
     @property
     def model(self):
+        """Return model itself."""
         return self._model
 
     @model.setter
     def model(self, model):
+        """Set model."""
         self._model = model
 
     def save(self, root=None):
+        """Save MXNet model."""
         if root is None:
             root = cfg.default_workspace
         root = os.path.abspath(os.path.expanduser(root))
