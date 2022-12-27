@@ -980,7 +980,7 @@ def main():
             "max_sparsity_ratio_per_op": 0.98
         }
     ]
-    config = WeightPruningConfig(
+    configs = WeightPruningConfig(
         pruning_configs,
         target_sparsity=args.target_sparsity,
         pattern=args.pruning_pattern,
@@ -988,7 +988,7 @@ def main():
         start_step=pruning_start,
         end_step=pruning_end
     )
-    compression_manager = prepare_compression(model=model, confs=config)
+    compression_manager = prepare_compression(model=model, confs=configs)
     compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
 
@@ -1058,12 +1058,14 @@ def main():
 
         if args.push_to_hub and epoch < args.num_train_epochs - 1:
             accelerator.wait_for_everyone()
-            unwrapped_model = accelerator.unwrap_model(model)
-            unwrapped_model.save_pretrained(
-                args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
-            )
+            # unwrapped_model = accelerator.unwrap_model(model)
+            # unwrapped_model.save_pretrained(
+            #     args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
+            # )
+            accelerator.save_state(args.output_dir)
             if accelerator.is_main_process:
                 tokenizer.save_pretrained(args.output_dir)
+                config.save_pretrained(args.output_dir)
                 repo.push_to_hub(
                     commit_message=f"Training in progress epoch {epoch}", blocking=False, auto_lfs_prune=True
                 )
@@ -1155,13 +1157,14 @@ def main():
 
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
-        unwrapped_model = accelerator.unwrap_model(model)
-        unwrapped_model.save_pretrained(
-            args.output_dir + f"eph{args.num_train_epochs}_lr{args.learning_rate}_bs{total_batch_size}",
-            is_main_process=accelerator.is_main_process, save_function=accelerator.save
-        )
+        # unwrapped_model = accelerator.unwrap_model(model)
+        # unwrapped_model.save_pretrained(
+        #     args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
+        # )
+        accelerator.save_state(args.output_dir)
         if accelerator.is_main_process:
             tokenizer.save_pretrained(args.output_dir)
+            config.save_pretrained(args.output_dir)
             if args.push_to_hub:
                 repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
