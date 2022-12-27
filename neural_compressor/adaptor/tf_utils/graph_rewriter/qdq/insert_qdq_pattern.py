@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Insert QDQ pattern Graph Rewriter."""
 
 import copy
 import numpy as np
@@ -28,17 +29,10 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 import re
 
 class GenerateGraphWithQDQPattern(GraphRewriterBase):
-    """ Insert Q/DQ pairs before quantizable ops.
-
-    Args: model: input model.
-          data: sampling data.
-          device: cpu or gpu
-
-    Return: converted model with QDQ pattern
-    """
-
+    """Insert Q/DQ pairs before quantizable ops."""
     def __init__(self, model, calibration_data, op_wise_config, fake_quant, fp32_ops,
                  bf16_ops, quantized_nodes, device, performance_only, itex_mode):
+        """Initilization."""
         super().__init__(model)
         self.data = calibration_data
         self.op_wise_config = op_wise_config
@@ -63,6 +57,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
     @dump_elapsed_time("Pass GenerateGraphWithQDQPattern")
     def do_transformation(self):
+        """Generate the graph with QDQ patterns, this is the first step to do new api quantizaiton."""
         min_max_values = {}
         for i in self.data:
             if i.find('_requant') == -1:
@@ -178,6 +173,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         return self.g_qdq.dump_graph()
 
     def _check_op_list(self, node_type):
+        """Check if the node_type in the allowed op list."""
         op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
                    "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
                    "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul", "BatchMatMulV2",
@@ -186,6 +182,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
+        """Find Relu node algorithm to identify the positive input."""
         if (node.op in ("Relu", "Relu6", "Elu") or \
             (node.op.find("AndRelu") != -1 and \
             ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0)))) \
@@ -225,6 +222,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             return False
 
     def _insert_qdq_pattern_for_common_ops(self, original_node, is_asymmetric):
+        """Insert QDQ patterns for common OPs."""
         namespace_prefix = original_node.name + "_eightbit"
         if original_node.op in ("Conv2DBackpropInput", "Conv3DBackpropInputV2"):
             all_inputs = self.node_name_mapping[original_node.name].node.input[-1:]
@@ -262,6 +260,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
 
     def _insert_qdq_pattern_for_concatv2(self, original_node, is_asymmetric):
+        """Insert QDQ patterns for each input of ConcatV2."""
         namespace_prefix = original_node.name + "_eightbit"
         normal_inputs = [i for i in original_node.input if i[0] != '^']
         num_input = len(normal_inputs)
@@ -417,6 +416,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                                             per_channel,
                                             weight_bit=7.0,
                                             device='cpu'):
+        """Insert QDQ pattern for weight node."""
         host_op_type = computational_node.op
         base_name = weight_node.name + "_"
         qint8_const_name = base_name + "qint8_const"
@@ -615,6 +615,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 computational_node.input[1] = dequant_node.name
 
     def _ignore_insert_qdq_pattern(self, matched_node_name):
+        """For some cases we don't need to insert QDQ patterns."""
         if (matched_node_name in self.fp32_ops or matched_node_name in self.bf16_ops) and \
            ((matched_node_name,) not in self.quantized_nodes):
             return True

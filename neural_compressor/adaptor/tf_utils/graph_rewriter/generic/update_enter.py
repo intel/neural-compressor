@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Update Enter Graph Rewriter."""
 
 
 from ..graph_base import GraphRewriterBase
@@ -23,12 +23,11 @@ from neural_compressor.utils.utility import dump_elapsed_time
 
 
 class UpdateEnterOptimizer(GraphRewriterBase): # pragma: no cover
-    """ This is a workaround of control ops
-        exclude all nodes following Enters
-    """
+    """This is a workaround of control ops exclude all nodes following Enters."""
     supported_ops = ["MatMul", "BiasAdd"]
 
     def __init__(self, model):
+        """Initilization."""
         super().__init__(model)
         self.graph_analyzer = GraphAnalyzer()
         self.graph_analyzer.graph = self.model
@@ -37,7 +36,7 @@ class UpdateEnterOptimizer(GraphRewriterBase): # pragma: no cover
 
     @dump_elapsed_time("Pass UpdateEnterOptimizer")
     def do_transformation(self):
-        """ replace all enter ops whose output is matmul with const
+        """Replace all enter ops whose output is matmul with const.
 
         Args:
           input_graph_def (graphdef): graphdef object

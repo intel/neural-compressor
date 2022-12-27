@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse Conv with Math Graph Rewriter."""
+
 import numpy as np
 
 from tensorflow.python.framework import dtypes
@@ -26,19 +28,21 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 
 
 class FuseConvWithMathOptimizer(GraphRewriterBase):
-    """ Convert below subgraph to Conv2D + BiasAdd by eliminating math ops.
-                Conv2D            Conv2D
-                  |                  |
-                 Sub                 |
-                  |       ---->      |
-                RealDiv              |
-                  |                  |
-                 Mul                 |
-                  |                  |
-                BiasAdd           BiasAdd
+    """Convert below subgraph to Conv2D + BiasAdd by eliminating math ops.
+
+    Conv2D            Conv2D
+      |                  |
+      Sub                 |
+      |       ---->      |
+    RealDiv              |
+      |                  |
+      Mul                 |
+      |                  |
+    BiasAdd           BiasAdd
     """
     @dump_elapsed_time("Pass FuseConvWithMathOptimizer")
     def do_transformation(self):
+        """Fuse Conv + Sub + RealDiv + Mul + BiasAdd to Conv + BiasAdd."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()

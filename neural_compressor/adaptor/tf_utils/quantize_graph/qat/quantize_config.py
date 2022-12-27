@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""QAT Quantize Config Class."""
 
 import logging
 
@@ -22,13 +23,13 @@ logger = logging.getLogger("neural_compressor")
 
 class QuantizeConfig():
     """Class for building custom quantize config.
+
     There should be only one QuantizeConfig instance for global setting.
     """
-
     def __new__(cls):
         """Created a QuantizeConfig instance and add it to the global_config dict.
 
-         Returns:
+        Returns:
             instance (QuantizeConfig) : The created QuantizeConfig instance.
         """
         instance = super().__new__(cls)
@@ -62,6 +63,7 @@ class QuantizeConfig():
 
         Args:
             layer_name (string): The input layer name.
+
         Returns:
             layer_recipe (dict): The quantize recipe for this input layer.
         """
@@ -82,7 +84,7 @@ class QuantizeConfig():
         """Remove a batch of layers from the quantize_recipe dict.
 
         Args:
-            layers_names (List): The names of layers to be removed.
+            layer_names (List): The names of layers to be removed.
         """
         for layer_name in layer_names:
             self.remove_layer(layer_name)
