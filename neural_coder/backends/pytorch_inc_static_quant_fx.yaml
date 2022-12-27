@@ -28,7 +28,6 @@ transformation:
       [+]     from neural_compressor.experimental import Quantization, common
       [+]     quant_config = QuantConf()
       [+]     quant_config.usr_cfg.model.framework = "pytorch_fx"
-      [+]     quant_config.usr_cfg.quantization.optimization_level = 0
       [+]     quantizer = Quantization(quant_config)
       [+]     quantizer.model = common.Model(MODEL_NAME)
       [+]     quantizer.calib_dataloader = DATALOADER_NAME
