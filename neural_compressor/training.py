@@ -168,7 +168,6 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                 compression_manager.on_epoch_end()
             compression_manager.on_train_end()
     """
-
     if isinstance(confs, List) and len(confs) > 1:
         from .experimental.scheduler import Scheduler
         comps = []

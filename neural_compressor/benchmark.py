@@ -33,7 +33,6 @@ class Benchmark(object):
             calibration & quantization tuning space etc.
 
     """
-
     def __init__(self, conf_fname_or_obj):
         """Init a Benchmark object."""
         self.exp_benchmarker = ExpBenchmark(conf_fname_or_obj)
@@ -44,7 +43,7 @@ class Benchmark(object):
         Args:
             model: Get the model
             b_dataloader: Set dataloader for benchmarking
-            b_function: Eval function for benchmark
+            b_func: Eval function for benchmark
         """
         logger.warning("This API is going to be deprecated. Please "
             "use benchmark(model, config, b_dataloader=None, b_func=None) instead.")

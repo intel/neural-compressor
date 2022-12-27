@@ -16,7 +16,8 @@
 # limitations under the License.
 
 """The objectives supported by neural_compressor, which is driven by accuracy.
-   To support new objective, developer just need implement a new subclass in this file.
+
+To support new objective, developers just need implement a new subclass in this file.
 """
 from abc import abstractmethod
 import time
@@ -59,10 +60,7 @@ class Objective(object):
 
     @abstractmethod
     def reset(self):
-        """The interface reset benchmark measuring.
-
-        Args:
-        """
+        """The interface reset benchmark measuring."""
         self._result_list = []
         return self._result_list
 
@@ -86,9 +84,10 @@ class Objective(object):
         self._model = model
 
     def result(self, start=None, end=None):
-        """The interface to get benchmark measuring result measurer may sart and end many times. 
-           The result will return the total mean of the result, can set the start and end index
-            of the result list to calculate.
+        """The result will return the total mean of the result.
+
+        The interface to get benchmark measuring result measurer may sart and end many times,
+        can set the start and end index of the result list to calculate.
 
         Args:
             start (int): start point to calculate result from result list
@@ -105,9 +104,8 @@ class Objective(object):
 
     def result_list(self):
         """The interface to get benchmark measuring result list.
-        This interface will return a list of each start-end loop measure value.
 
-        Args:
+        This interface will return a list of each start-end loop measure value.
         """
         return self._result_list
 
@@ -150,7 +148,7 @@ class Footprint(Objective):
     representation = 'memory footprint (MB)'
 
     def start(self):
-        """Record the space allocation"""
+        """Record the space allocation."""
         tracemalloc.start()
 
     def end(self):
@@ -174,9 +172,10 @@ class ModelSize(Objective):
         self._result_list.append(model_size)
 
 class MultiObjective:
+    """The base class for multiple benchmarks supported by neural_compressor."""
     def __init__(self, objectives, accuracy_criterion, metric_criterion=[True], \
         metric_weight=None, obj_criterion=None, obj_weight=None, is_measure=False):
-        """The base class for multiple benchmarks supported by neural_compressor."""
+        """Load the configuration."""
         assert isinstance(accuracy_criterion, dict), 'accuracy criterian should be dict'
         assert 'relative' in accuracy_criterion or 'absolute' in accuracy_criterion, \
             'accuracy criterion should set relative or absolute'
@@ -334,7 +333,6 @@ class MultiObjective:
             eval_func (function): function to do evaluation.
             model (object): model to do evaluation.
         """
-
         self.reset()
         self.set_model(model)
         if self.is_measure:
@@ -375,7 +373,7 @@ class MultiObjective:
             objective.model = model
 
     def best_result(self, tune_data, baseline):
-        """Calculate the best results. 
+        """Calculate the best results.
 
         metric + multi-objectives case:
             tune_data = [
