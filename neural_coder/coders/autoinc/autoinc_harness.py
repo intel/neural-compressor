@@ -51,7 +51,12 @@ class AutoInc_Harness(object):
         bk_trans_location = backend_dict["transformation"]["location"]  # string
         bk_trans_content = backend_dict["transformation"]["content"]  # string
         bk_trans_order = backend_dict["transformation"]["order"]  # list
-
+        
+        # modular design
+        if globals.use_modular:
+            content = globals.modular_item
+            bk_trans_content = ["[+] " + content.replace("\n", "\n[+] ")[:-5]]
+        
         list_code = []
         history = set()
         for i in globals.list_code_path:

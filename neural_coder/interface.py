@@ -67,6 +67,8 @@ def enable(
     cache_load_transformers=True,
     optimum_quant_config="", # only for HF optimum optimizations, yaml or hub path
     use_inc=False,
+    use_modular=False,
+    modular_item="",
 ):
     """enable a feature or a couple of features for the code
 
@@ -181,6 +183,9 @@ def enable(
     globals.cache_load_transformers = cache_load_transformers
     globals.optimum_quant_config = optimum_quant_config
 
+    globals.use_modular = use_modular
+    globals.modular_item = modular_item
+    
     # move "pytorch_benchmark" to the last
     from .utils.common import move_element_to_last
     features = move_element_to_last(features, "pytorch_benchmark")
