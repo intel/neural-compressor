@@ -6,3 +6,6 @@
 /neural-compressor/neural_compressor/algorithm
 /neural-compressor/neural_compressor/model
 /neural-compressor/neural_compressor/utils
+/neural-compressor/neural_compressor/config
+/neural-compressor/neural_compressor/mix_precision
+/neural-compressor/neural_compressor/adaptor/torch_utils

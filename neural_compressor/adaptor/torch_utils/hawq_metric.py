@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Torch Utils for Hessian Aware Weighted Quantization."""
 from ...utils.utility import LazyImport
 
 torch = LazyImport("torch")
@@ -28,24 +29,28 @@ logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional, Any, Union, Callable, Set
 
 
-# Define Collector based on hook, which is used to record the intermediate result
 class Node_collector:
+    """Define Collector based on hook, which is used to record the intermediate result."""
+
     def __init__(self, m):
+        """Init a Node_collector object."""
         self.handle = m.register_forward_hook(self.hook_fn_act)
 
     def hook_fn_act(self, m, inp, outp):
+        """Get out and in features."""
         self.out_features = outp.clone()
         self.in_features = inp
         self.m = m
 
     def remove(self):
+        """Remove handle."""
         self.handle.remove()
 
 
 class HessianTrace:
-    """
-    please refer to
-    Yao, Zhewei, et al. "Pyhessian: Neural networks through the lens of the hessian." 
+    """HessianTrace Class.
+
+    Please refer to Yao, Zhewei, et al. "Pyhessian: Neural networks through the lens of the hessian." 
     2020 IEEE international conference on big data (Big data). IEEE, 2020.
     Dong, Zhen, et al. "Hawq-v2: Hessian aware trace-weighted quantization of neural networks." 
     Advances in neural information processing systems 33 (2020): 18518-18529.
@@ -53,6 +58,7 @@ class HessianTrace:
     """
 
     def __init__(self, model, dataloader, q_model, criterion=None):
+        """Init a HessianTrace object."""
         self.unfused_model = model.model
         self.q_model = q_model
         tmp_model = model.model
@@ -76,10 +82,11 @@ class HessianTrace:
         self.get_params()
 
     def is_fused_module(self, module):
-        """This is a helper function for `_propagate_qconfig_helper` to detecte
-           if this module is fused.
+        """This is a helper function for `_propagate_qconfig_helper` to detecte if this module is fused.
+
         Args:
-            module (object): input module
+            module (object): the input module.
+
         Returns:
             (bool): is fused or not
         """
@@ -89,7 +96,7 @@ class HessianTrace:
         else:
             return False
 
-    def mapping_module_to_op(self, name):
+    def _mapping_module_to_op(self, name):
         # length = len("_model.")
         # if len(name) < length:
         #     return name
@@ -97,7 +104,8 @@ class HessianTrace:
         return name
 
     def mse_metric_gap(self, fp32_tensor, dequantize_tensor):
-        """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor
+        """Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+
         Args:
             fp32_tensor (tensor): The FP32 tensor.
             dequantize_tensor (tensor): The INT8 dequantize tensor.
@@ -114,6 +122,12 @@ class HessianTrace:
         return euclidean_dist / fp32_tensor.size
 
     def get_fused_mapping(self):
+        """Map the ops of both fused or not modules to weights.
+
+        Returns:
+            weight_to_op (dict): weights of each op.
+            op_list (list): ops.
+        """
         model = self.model
         weights_info = dict(model.named_parameters())
         weight_to_op = {}
@@ -122,7 +136,7 @@ class HessianTrace:
                 for name, _ in child.named_children():
                     if op_name + "." + name + ".weight" in weights_info:  ##TODO check if this is right
 
-                        weight_to_op[op_name + "." + name + ".weight"] = self.mapping_module_to_op(op_name)
+                        weight_to_op[op_name + "." + name + ".weight"] = self._mapping_module_to_op(op_name)
                         break
             else:
                 name = op_name + ".weight"
@@ -134,6 +148,11 @@ class HessianTrace:
         return weight_to_op, op_list
 
     def get_device(self, model: torch.nn.Module):
+        """Get the device.
+
+        Args:
+            model (torch.nn.Module): the input model.
+        """
         for n, p in model.named_parameters():
             return p.data.device
 
@@ -174,14 +193,16 @@ class HessianTrace:
             handel.remove()
 
     def register_act_grad_hooks(self, model):
+        """Append hook handles."""
         for name, module in model.named_modules():
-            if self.mapping_module_to_op(name) in self.op_list:
+            if self._mapping_module_to_op(name) in self.op_list:
                 hook_handle = module.register_forward_hook(self._get_enable_act_grad_hook(name))
                 self.hook_handles.append(hook_handle)
                 hook_handle = module.register_backward_hook(self._get_act_grad_hook(name))
                 self.hook_handles.append(hook_handle)
 
     def reset_act_gradient_and_hooks(self):
+        """Reset hook."""
         # tmp_input = torch.zeros(self._input_shape, device=self.device)
         # for name, module in self.model.named_modules():
         #     if name in self.op_list:
@@ -191,13 +212,14 @@ class HessianTrace:
         self._unregister_hook()
 
     def get_params(self):
+        """Get weight names and parameters."""
         weight_names = [n for n, p in self.model.named_parameters() if
                         p.requires_grad and "bias" not in n]  ##remove bias
         params = [p for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]  ##remove bias
         self.weight_names = weight_names
         self.params = params
 
-    def forward_backward(self, model, data, create_graph=False, return_w_grad=True):
+    def _forward_backward(self, model, data, create_graph=False, return_w_grad=True):
         model.zero_grad()
         input = data[0].to(self.device)
         ##self._input_shape = input.shape  ## for resetting input activation
@@ -222,7 +244,7 @@ class HessianTrace:
     #     parameters = [p for p in model.parameters() if p.requires_grad]
     #     return parameters
 
-    def sample_rademacher(self, params):
+    def _sample_rademacher(self, params):
         samples = []
         for param in params:
             r = torch.randint_like(param, high=2, device=self.device)
@@ -231,13 +253,14 @@ class HessianTrace:
         return samples
 
     def get_vtHv_weight(self, params, num_samples):
-        v = self.sample_rademacher(params)
+        """Get vtHv weight."""
+        v = self._sample_rademacher(params)
         H_v = [0] * len(v)
         cnt = 0
         for step, data in enumerate(self.dataloader):
             batch_size = data[0].shape[0]
             cnt += batch_size
-            gradients = self.forward_backward(self.model, data, create_graph=True)
+            gradients = self._forward_backward(self.model, data, create_graph=True)
             H_v_one = torch.autograd.grad(gradients, params, v, only_inputs=True, retain_graph=False)
             H_v = [pre + cur * float(batch_size) for cur, pre in zip(H_v_one, H_v)]
             if cnt >= num_samples:
@@ -248,6 +271,14 @@ class HessianTrace:
         return v_t_H_v
 
     def get_weight_traces(self, num_samples):
+        """Get op names to trace.
+
+        Args:
+            num_samples (int): sample number.
+
+        Returns:
+            op_name_to_trace (dict): op names to trace.
+        """
         import tqdm
         layer_traces_per_iter = []
         prev_avg_model_trace = 0
@@ -273,6 +304,14 @@ class HessianTrace:
         return op_name_to_trace
 
     def get_act_traces(self, num_samples):
+        """Get op names to trace.
+
+        Args:
+            num_samples (int): sample number.
+
+        Returns:
+            res_dict (dict).
+        """
         unfused_training = self.unfused_model.training
         self.unfused_model.eval()
         self.hook_handles = []
@@ -292,7 +331,7 @@ class HessianTrace:
             for i in range(bs):  ##force the bs to be one
                 input = data[0][i:i + 1]
                 target = data[1][i:i + 1]
-                self.forward_backward(self.unfused_model, (input, target), create_graph=True, return_w_grad=False)
+                self._forward_backward(self.unfused_model, (input, target), create_graph=True, return_w_grad=False)
                 acts = [self.layer_acts[key] for key in self.layer_acts.keys()]
                 if act_traces_sums == None:
                     act_traces_sums = [0] * len(acts)
@@ -301,7 +340,7 @@ class HessianTrace:
 
                 prev_model_act_trace = 0
                 for iter in range(self.max_iter):
-                    v = self.sample_rademacher(acts)
+                    v = self._sample_rademacher(acts)
                     H_v = torch.autograd.grad(acts_grad, acts, v, only_inputs=True, retain_graph=True)
                     vt_H_v = [torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)]
 
@@ -336,7 +375,7 @@ class HessianTrace:
         self.layer_acts_grads = []
         return res_dict
 
-    def insert_hook(self, model, target_module_list):
+    def _insert_hook(self, model, target_module_list):
         intern_outputs = []
         for layer, module in model.named_modules():
             for target_module in target_module_list:
@@ -351,7 +390,7 @@ class HessianTrace:
         # print("Total %d hook inserted" % (len(intern_outputs)))
         return model, intern_outputs
 
-    def insert_hook_quantize(self, model, target_module_list):
+    def _insert_hook_quantize(self, model, target_module_list):
         intern_outputs = []
         for layer, module in model.named_modules():
             for target_module in target_module_list:
@@ -368,16 +407,14 @@ class HessianTrace:
         return model, intern_outputs
 
     def get_act_gap(self, fp32_model, q_model):
-        """
-        Estimates each activation gap between quantized model and float model 
-        """
+        """Estimates each activation gap between quantized model and float model."""
         self.handle_acts = []
         fp32_model.eval()
         # temp_model = fuse_fx(fp32_model.model)
         temp_model = fp32_model
         # target_module_list = [nn.ReLU] # Insert hook for FP32 model
         target_module_list = self.op_list
-        temp_model, intern_outputs = self.insert_hook(temp_model, target_module_list)
+        temp_model, intern_outputs = self._insert_hook(temp_model, target_module_list)
         # intern_outputs={}
         for input, target in self.dataloader:
             temp_model(input)
@@ -396,7 +433,7 @@ class HessianTrace:
             # print(i)
             i.remove()
         target_module_list = self.op_list
-        q_model, intern_outputs = self.insert_hook_quantize(q_model, target_module_list)
+        q_model, intern_outputs = self._insert_hook_quantize(q_model, target_module_list)
         for input, target in self.dataloader:  # only one sample
             q_model(input)
             break
@@ -418,9 +455,7 @@ class HessianTrace:
         return act_gap, mse_gap
 
     def get_avg_traces(self, enable_act=True, num_samples=32):
-        """
-        Estimates average hessian trace for each parameter
-        """
+        """Estimates average hessian trace for each parameter."""
         assert num_samples > 0
         traces = {}
         weight_traces = self.get_weight_traces(num_samples)
@@ -474,7 +509,9 @@ def compare_weights(
         float_dict: Dict[str, Any], quantized_dict: Dict[str, Any]
 ) -> Dict[str, Dict[str, torch.Tensor]]:
     r"""Compare the weights of the float module with its corresponding quantized
-    module. Return a dict with key corresponding to module names and each entry being
+    module.
+    
+    Returns a dict with key corresponding to module names and each entry being
     a dictionary with two keys 'float' and 'quantized', containing the float and
     quantized weights. This dict can be used to compare and compute the quantization
     error of the weights of float and quantized models.
@@ -493,13 +530,13 @@ def compare_weights(
             )
 
     Args:
-        float_dict: state dict of the float model
-        quantized_dict: state dict of the quantized model
+        float_dict: state dict of the float model.
+        quantized_dict: state dict of the quantized model.
 
-    Return:
+    Returns:
         weight_dict: dict with key corresponding to module names and each entry being
         a dictionary with two keys 'float' and 'quantized', containing the float and
-        quantized weights
+        quantized weights.
     """
 
     weight_dict: Dict[str, Dict] = {}
@@ -541,6 +578,7 @@ def compare_weights(
 
 
 def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
+    """Enable hawq on an HessianTrace object and returns op list."""
     orig_eval = True
     if fp32_model.training:
         orig_eval = False
