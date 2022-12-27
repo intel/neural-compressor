@@ -151,6 +151,7 @@ class BasicTuneStrategy(TuneStrategy):
                     continue
                 elif i == 1 and 'Conv2d' in all_op_type and 'Linear' in all_op_type:
                     exempt_modules = [self.adaptor.first_conv, self.adaptor.last_linear]
+                    logger.info("Disable first conv and last linear:{}".format(exempt_modules))
                     for k ,v in op_tuning_cfg.items():
                         if len(k) != 2:
                             continue

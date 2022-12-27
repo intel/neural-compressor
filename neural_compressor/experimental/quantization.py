@@ -69,6 +69,7 @@ class Quantization(Component):
         seed = self.cfg.tuning.random_seed
         random.seed(seed)
         np.random.seed(seed)
+        self.precision = self.cfg.quantization.precision
         self._calib_dataloader = None
         self._calib_func = None
 
@@ -102,21 +103,13 @@ class Quantization(Component):
         approach_cfg = deep_get(cfg, 'quantization.approach')
 
         if self._calib_dataloader is None and self._calib_func is None:
-            if approach_cfg in ['post_training_static_quant', 'post_training_auto_quant']:
+            if approach_cfg in ['post_training_static_quant', 'post_training_auto_quant'] or \
+              'fp8' in self.precision:
                 calib_dataloader_cfg = deep_get(cfg, 'quantization.calibration.dataloader')
 
                 if approach_cfg == "post_training_auto_quant" and calib_dataloader_cfg == None:
                     logger.error("dataloader is required for 'post_training_auto_quant'. "
                                  "use 'post_training_dynamic_quant' instead if no dataloader provided.")
-                assert calib_dataloader_cfg is not None, \
-                       'dataloader field of calibration field of quantization section ' \
-                       'in yaml file should be configured as calib_dataloader property is NOT set!'
-
-                # if deep_get(calib_dataloader_cfg, 'shuffle'):
-                #     logger.warning("Reset `shuffle` field to False when post_training_static_quant"
-                #                    " is selected.")
-                # TODO: built-in dataloader is for old API, so we use hard code here.
-                deep_set(calib_dataloader_cfg, 'shuffle', True)
             elif approach_cfg == 'quant_aware_training':
                 calib_dataloader_cfg = deep_get(cfg, 'quantization.train.dataloader')
                 assert calib_dataloader_cfg is not None, \
@@ -126,6 +119,7 @@ class Quantization(Component):
                 calib_dataloader_cfg = None
 
             if calib_dataloader_cfg:
+                deep_set(calib_dataloader_cfg, 'shuffle', True)
                 self._calib_dataloader = create_dataloader(self.framework, calib_dataloader_cfg)
 
     def pre_process(self):
