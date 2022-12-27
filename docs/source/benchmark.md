@@ -1,89 +1,58 @@
-Benchmarking
+Benchmark
 ============
+1. [Introduction](#Introduction)
+2. [Benchmark Support Matrix](#Benchmark-Support-Matrix)
+3. [Get Started with Benchmark](#Get-Started-with-Benchmark)
+4. [Examples](#Examples)
 
-The benchmarking feature of Neural Compressor is used to measure the model performance with the objective settings; the user can get the performance (default) or accuracy of the models between the float32 model and the quantized low precision model in the same scenarios that they configured in Yaml. Benchmarking is always used after a quantization process.
+## Introduction
+The benchmarking feature of Neural Compressor is used to measure the model performance with the objective settings. 
+Users can get the performance of the float32 model and the optimized low precision model in the same scenarios.
 
-The following examples show how to use benchmarking.
+## Benchmark Support Matrix
+<table>
+    <thead>
+        <tr>
+            <th>Environment</th>
+            <th>Category</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan=2>Operating System</td>
+            <td> linux </td>
+        </tr>
+        <tr>
+            <td> windows </td>
+        </tr>
+        <tr>
+            <td rowspan=3> Architecture </td>
+            <td> x86_64 </td>
+        </tr>
+        <tr>
+            <td> aarch64 </td>
+        </tr>
+        <tr>
+            <td> gpu </td>
+        </tr>
+    </tbody>
+</table>
 
-## Config evaluation filed in a yaml file
+## Get Started with Benchmark API
 
-```yaml
-evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
-    metric:
-      topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
-    dataloader:
-      batch_size: 30
-      dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
-      transform:
-        Resize:
-          size: 256
-        CenterCrop:
-          size: 224
-        ToTensor: {}
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
-          std: [0.229, 0.224, 0.225]
-  performance:                                       # optional. used to benchmark performance of passing model.
-    configs:
-      cores_per_instance: 4
-      num_of_instance: 7
-    dataloader:
-      batch_size: 1
-      dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
-      transform:
-        Resize:
-          size: 256
-        CenterCrop:
-          size: 224
-        ToTensor: {}
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
-```
-
-The above example config two sub-fields named 'accuracy' and 'performance' which indicates that the benchmark module will get the accuracy and performance of the model. The user can also remove the performance field to only get model accuracy or performance. It's flexible enough to configure the benchmark you want.
-
-## Use a user-specific dataloader to run benchmark
-
-In this case, configure your dataloader and Neural Compressor will construct an evaluation function to run the benchmarking. The user can also register the postprocess transform and metric to get the accuracy.
+Benchmark provide capability to automatically run with multiple instance through `cores_per_instance` and `num_of_instance` config (CPU only). 
+And please make sure `cores_per_instance * num_of_instance` must be less than CPU physical core numbers. 
+`benchmark.fit` accept `b_dataloader` or `b_func` as input. 
+`b_func` is customized benchmark function. If user passes the `b_dataloader`, then `b_func` is not required.
 
 ```python
-dataset = Dataset() #  dataset class that implement __getitem__ method or __iter__ method
-from neural_compressor.experimental import Benchmark, common
-evaluator = Benchmark(config.yaml)
-evaluator.b_dataloader = common.DataLoader(dataset, batch_size=batch_size)
-# user can also register postprocess and metric, this is optional
-evaluator.postprocess = common.Postprocess(postprocess_cls)
-evaluator.metric = common.Metric(metric_cls)
-# performance
-results = evaluator()
-# accuracy
-results = evaluator(mode='accuracy')
-
-```
-Benchmark class also support BenchmarkConf class as it's argument:
-```python
-dataset = Dataset() #  dataset class that implement __getitem__ method or __iter__ method
-from lpot.experimental import Benchmark, common
-from lpot.conf.config import BenchmarkConf
-conf = BenchmarkConf(config.yaml)
-evaluator = Benchmark(conf)
-evaluator.b_dataloader = common.DataLoader(dataset, batch_size=batch_size)
-# user can also register postprocess and metric, this is optional
-evaluator.postprocess = common.Postprocess(postprocess_cls)
-evaluator.metric = common.Metric(metric_cls)
-# performance
-results = evaluator(mode='performance')
-# accuracy
-results = evaluator(mode='accuracy')
-
+from neural_compressor.config import BenchmarkConfig
+from neural_compressor.benchmark import fit
+conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
+fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
 ```
 
-### Examples
+## Examples
 
-Refer to the [Benchmark example](../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/run_benchmark.sh).
+Refer to the [Benchmark example](../../examples/helloworld/tf_example5).
 

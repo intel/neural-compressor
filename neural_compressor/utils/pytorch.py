@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Pytorch utilities."""
+
 from ..adaptor.pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs
 from ..adaptor.pytorch import _propagate_qconfig, get_torch_version
 from ..adaptor.pytorch import PyTorch_FXAdaptor
@@ -33,7 +35,7 @@ yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple',
 
 
 def _set_sub_module_scale_zeropoint(model, tune_cfg, prefix=''):
-    """set activation scale and zero_point for converted sub modules recursively.
+    """Set activation scale and zero_point for converted sub modules recursively.
 
     Args:
         q_model (dir): Int8 model converted from fp32 model. 
@@ -57,7 +59,7 @@ def _set_sub_module_scale_zeropoint(model, tune_cfg, prefix=''):
 
 
 def _set_activation_scale_zeropoint(q_model, tune_cfg):
-    """set activation scale and zero_point for converted model.
+    """Set activation scale and zero_point for converted model.
 
     Args:
         q_model (dir): Int8 model converted from fp32 model. 
@@ -169,8 +171,6 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     Returns:
         (object): quantized model
     """
-
-
     if checkpoint_dir is not None:
         if isinstance(checkpoint_dir, dict):
             stat_dict = checkpoint_dir
