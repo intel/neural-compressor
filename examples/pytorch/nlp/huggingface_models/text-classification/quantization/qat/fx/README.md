@@ -10,7 +10,7 @@ Our example comes from [Huggingface/transformers](https://github.com/huggingface
 
 ### 1. Installation
 
-PyTorch 1.8 is needed for pytorch_fx backend and huggingface/transformers.
+PyTorch >=1.12.0 is needed for pytorch_fx backend and huggingface/transformers.
 
   ```shell
   cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/qat/fx

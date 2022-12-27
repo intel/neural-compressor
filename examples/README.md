@@ -445,7 +445,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>3D-UNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/image_recognition/3d-unet/quantization/ptq/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/3d-unet/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
     <td>SSD ResNet34</td>
@@ -457,43 +457,43 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Mask R-CNN</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/object_detection/maskrcnn/quantization/ptq/fx">fx</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/object_detection/maskrcnn/quantization/ptq/fx">fx</a></td>
   </tr>
   <tr>
     <td>YOLOv3</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/object_detection/yolo_v3/quantization/ptq/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/object_detection/yolo_v3/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
     <td>DLRM</td>
     <td>Recommendation</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/recommendation/dlrm/quantization/ptq/eager">eager</a> / <a href="./pytorch/recommendation/dlrm/quantization/ptq/ipex">ipex</a> / <a href="./pytorch/recommendation/dlrm/quantization/ptq/fx">fx</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/recommendation/dlrm/quantization/ptq/eager">eager</a> / <a href="./pytorch/recommendation/dlrm/quantization/ptq/ipex">ipex</a> / <a href="./pytorch/recommendation/dlrm/quantization/ptq/fx">fx</a></td>
   </tr>
   <tr>
     <td>RNN-T</td>
     <td>Speech Recognition</td>
-    <td>Post-Training Dynamic / Static Quantization</td>
-    <td><a href="./pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/eager">eager</a> </td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/eager">eager</a> </td>
   </tr>
   <tr>
     <td>Wav2Vec2</td>
     <td>Speech Recognition</td>
-    <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager">eager</a></td>
+    <td>Post-Training Dynamic</td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager">eager</a> </td>
   </tr>
   <tr>
     <td>HuBERT</td>
     <td>Speech Recognition</td>
-    <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager">eager</a></td>
+    <td>Post-Training Dynamic /Static Quantization</td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager">eager</a> / <a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
     <td>BlendCNN</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/nlp/blendcnn/quantization/ptq/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/blendcnn/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
@@ -585,7 +585,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Intel/bert-base-uncased-sparse-70-unstructured</td>
     <td>Natural Language Processing (question-answering)</td>
     <td>Unstructured</td>
-    <td>Pattern Lock</td>
+    <td>Prune once for all</td>
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/pattern_lock/eager">eager</a></td>
   </tr>
   <tr>
@@ -606,7 +606,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Intel/bert-base-uncased-sparse-70-unstructured</td>
     <td>Natural Language Processing (text-classification)</td>
     <td>Unstructured</td>
-    <td>Pattern Lock</td>
+    <td>Prune once for all</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/pattern_lock/eager">eager</a></td>
   </tr>
   <tr>
