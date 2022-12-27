@@ -13,6 +13,13 @@ source env_sphinx/bin/activate
 cd ${WORK_DIR}
 cp -rf ../docs/ ./source
 
+cp -rf ../docs ./source
+cp -f "../README.md" "./source/docs/source/Welcome.md"
+cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
+cp -f "./source/docs/source/Welcome.md" "./source/docs/source/Welcome.md.tmp"
+sed 's/.md/.html/g; s/.\/docs\/source\//.\//g; s/.\/neural_coder\/extensions\/screenshots/imgs/g; s/.\/docs\/source\/_static/..\/\/_static/g; ' "./source/docs/source/Welcome.md.tmp" > "./source/docs/source/Welcome.md"
+rm -f "./source/docs/source/Welcome.md.tmp"
+
 make clean
 make html
 

@@ -1,6 +1,6 @@
 <div align="center">
   
-Intel® Neural Compressor
+zjy Intel® Neural Compressor
 ===========================
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3>
 
