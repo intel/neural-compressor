@@ -5,3 +5,4 @@
 /neural_compressor/neural_compressor/adaptor/mxnet_utils
 /neural_compressor/adaptor/mxnet_utils
 /neural-compressor/neural_compressor/algorithm
+/neural-compressor/neural_compressor/model
