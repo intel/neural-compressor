@@ -508,8 +508,7 @@ def _find_match(
 def compare_weights(
         float_dict: Dict[str, Any], quantized_dict: Dict[str, Any]
 ) -> Dict[str, Dict[str, torch.Tensor]]:
-    r"""Compare the weights of the float module with its corresponding quantized
-    module.
+    r"""Compare the weights of the float module with its corresponding quantized module.
     
     Returns a dict with key corresponding to module names and each entry being
     a dictionary with two keys 'float' and 'quantized', containing the float and
@@ -538,7 +537,6 @@ def compare_weights(
         a dictionary with two keys 'float' and 'quantized', containing the float and
         quantized weights.
     """
-
     weight_dict: Dict[str, Dict] = {}
     for key in quantized_dict:
         match_key = _find_match(float_dict, key, "weight")
