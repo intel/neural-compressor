@@ -293,6 +293,13 @@
       "batch_size": 64,
       "new_benchmark": false
     },
+    "pokemon_diffusers": {
+      "model_src_dir": "nlp/huggingface_models/text-to-image/quantization/ptq_static/fx",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "../../run_diffusion.py",
+      "batch_size": 64
+    },
     "dlrm": {
       "model_src_dir": "recommendation/dlrm/quantization/ptq/eager",
       "dataset_location": "/mnt/local_disk3/dataset/dlrm/dlrm/input",
