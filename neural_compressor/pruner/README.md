@@ -121,7 +121,7 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG">
     <img src="./../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG" width=1050 height=240 alt="Pruning schedule">
-</a>  
+</a>
 </div>
 
 
@@ -174,7 +174,7 @@ Growth rules for the sparsity of iterative pruning, "exp", "linear", "cos" and "
 
 ### Regularization
 
-Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection. In the image below, some weights are pushed to be as small as possible and the connections are thus sparsified. **Group-lasso** method is used in Intel Neural Compressor. 
+Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection. In the image below, some weights are pushed to be as small as possible and the connections are thus sparsified. **Group-lasso** method is used in Intel Neural Compressor.
 
 - Group Lasso
 
@@ -191,8 +191,8 @@ Regularization is a technique that discourages learning a more complex model and
 
 
 
-Neural Compressor `Pruning` API is defined under `neural_compressor.pruner`, which takes a user-defined config object as input. 
-Users can pass the customized training/evaluation functions to `Pruning` in various scenarios. 
+Neural Compressor `Pruning` API is defined under `neural_compressor.pruner`, which takes a user-defined config object as input.
+Users can pass the customized training/evaluation functions to `Pruning` in various scenarios.
 
 
 
@@ -204,7 +204,7 @@ The following section exemplifies how to use hooks in user pass-in training func
             { ## pruner1
                 'target_sparsity': 0.9,   # Target sparsity ratio of modules.
                 'pruning_type': "snip_momentum", # Default pruning type.
-                'pattern': "4x1", # Default pruning pattern. 
+                'pattern': "4x1", # Default pruning pattern.
                 'op_names': ['layer1.*'],  # A list of modules that would be pruned.
                 'excluded_op_names': ['layer3.*'],  # A list of modules that would not be pruned.
                 'start_step': 0,  # Step at which to begin pruning.
@@ -219,7 +219,7 @@ The following section exemplifies how to use hooks in user pass-in training func
             { ## pruner2
                 "op_names": ['layer3.*'], # A list of modules that would be pruned.
                 "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
-                # 'target_sparsity' 
+                # 'target_sparsity'
             } # For layer3, the missing target_sparsity would be complemented by default setting (i.e. 0.8)
         ]
 ```
@@ -237,7 +237,7 @@ The following section exemplifies how to use hooks in user pass-in training func
     pruner.model = model      # Set model object to prune.
     pruner.on_train_begin()
     for epoch in range(num_train_epochs):
-        model.train()    
+        model.train()
         for step, batch in enumerate(train_dataloader):
             pruner.on_step_begin(step)
             outputs = model(**batch)
@@ -274,7 +274,7 @@ The following section exemplifies how to use hooks in user pass-in training func
 
 
 
-We validate the pruning technique on typical models across various domains (including CV and NLP) and the examples are listed in [Pruning Examples](../../docs/source/pruning_details.md#examples). A complete overview of validated examples including quantization, pruning and distillation results could be found in  [Intel Neural Compressor Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
+We validate the pruning technique on typical models across various domains (including CV and NLP) and the examples are listed in [Pruning Examples](../../examples/README.md#PyTorch-Examples#Pruning). A complete overview of validated examples including quantization, pruning and distillation results could be found in  [Intel Neural Compressor Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG">
@@ -289,6 +289,6 @@ Please refer to pruning examples([PyTorch](../../examples/README.md#Pruning-1)) 
 ## Reference
 
 
- 
+
 
 [1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.

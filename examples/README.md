@@ -363,7 +363,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
-# PyTorch  Examples
+# PyTorch Examples
 ## Quantization
 <table>
 <thead>
