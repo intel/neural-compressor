@@ -359,7 +359,7 @@ if __name__ == "__main__":
     dataloader = DefaultDataLoader(dataset, args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
-    def eval_func(model, *args):
+    def eval_func(model):
         metric.reset()
         import tqdm
         session = ort.InferenceSession(model.SerializeToString(), None)
@@ -374,6 +374,9 @@ if __name__ == "__main__":
                 ort_inputs.update({inputs_names[i]: inputs[i]})
             predictions = session.run(None, ort_inputs)
             metric.update(predictions[0], labels)
+        if args.benchmark:
+            print("Batch size = %d" % args.batch_size)
+            print("Accuracy: %.5f" %  metric.result())
         return metric.result()
 
     if args.benchmark:
