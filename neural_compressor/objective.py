@@ -87,7 +87,8 @@ class Objective(object):
 
     def result(self, start=None, end=None):
         """The interface to get benchmark measuring result measurer may sart and end many times. 
-           The result will return the total mean of the result, can set the start and end index of the result list to calculate.
+           The result will return the total mean of the result, can set the start and end index
+            of the result list to calculate.
 
         Args:
             start (int): start point to calculate result from result list
@@ -103,7 +104,8 @@ class Objective(object):
         return np.array(self._result_list[start_idx:end_idx]).mean()
 
     def result_list(self):
-        """The interface to get benchmark measuring result list this interface will return a list of each start-end loop measure value.
+        """The interface to get benchmark measuring result list.
+        This interface will return a list of each start-end loop measure value.
 
         Args:
         """

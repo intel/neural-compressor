@@ -24,7 +24,8 @@ from .conf.pythonic_config import Config
 from .config import BenchmarkConfig
 
 class Benchmark(object):
-    """Benchmark class can be used to evaluate the model performance, with the objective setting, user can get the data of what they configured in yaml.
+    """Benchmark class can be used to evaluate the model performance.
+    With the objective setting, user can get the data of what they configured in yaml.
 
     Args:
         conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
