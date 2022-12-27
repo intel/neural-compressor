@@ -74,6 +74,7 @@ python run_qa_no_trainer.py \
         --max_seq_length 384 \
         --doc_stride 128 \
         --per_device_train_batch_size 12 \
+        --do_prune \
         --num_warmup_steps 1000 \
         --output_dir "./sparse_qa_bertbase" \
         --weight_decay 1e-7 \
@@ -139,4 +140,5 @@ The snip-momentum pruning method is used by default and the initial dense models
 ## References
 * [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
 * [Knowledge Distillation with the Reused Teacher Classifier](https://arxiv.org/abs/2203.14001)
+
 
