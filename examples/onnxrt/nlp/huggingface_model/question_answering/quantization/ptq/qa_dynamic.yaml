@@ -20,6 +20,7 @@ model:                                               # mandatory. used to specif
   framework: onnxrt_integerops                       # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
 
 evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+  accuracy:
   performance:                                       # optional. used to benchmark performance of passing model.
     warmup: 0
     iteration: 100
