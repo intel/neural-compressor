@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Class for Tensorflow model."""
+
 import copy
 import os
 import shutil
@@ -34,13 +36,14 @@ np = LazyImport('numpy')
 tensor_to_node = lambda s: list(set([x.split(':')[0] for x in s]))
 
 def get_model_type(model):
-    """Get mode type
-    Args:
-        model (string or model object): model path or model object
-    Returns:
-        type (string): model type
-    """
+    """Get Tensorflow mode type.
 
+    Args:
+        model (string or model object): model path or model object.
+
+    Returns:
+        string: model type
+    """
     from neural_compressor.adaptor.tf_utils.util import is_saved_model_format, is_ckpt_format
     if isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
@@ -87,12 +90,12 @@ def get_model_type(model):
 
 
 def validate_graph_node(graph_def, node_names):
-    """Validate nodes exist in the graph_def
-    Args:
-        graph_def (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object
-        node_names (list of string): node names to be validated
-    """
+    """Validate nodes exist in the graph_def.
 
+    Args:
+        graph_def (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object.
+        node_names (list of string): node names to be validated.
+    """
     if len(node_names) == 0:
         return False
     all_node_name = [node.name for node in graph_def.node]
@@ -106,14 +109,16 @@ def validate_graph_node(graph_def, node_names):
 
 def validate_and_inference_input_output(graph_def, \
     input_tensor_names, output_tensor_names):
-    """validate and inference the input and output tensor names of graph_def
+    """Validate and inference the input and output tensor names of graph_def.
+
     Args:
-        graph_def (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object
-        input_tensor_names (list of string): input_tensor_names of graph_def
-        output_tensor_names (list of string): output_tensor_names of graph_def
+        graph_def (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object.
+        input_tensor_names (list of string): input_tensor_names of graph_def.
+        output_tensor_names (list of string): output_tensor_names of graph_def.
+
     Returns:
-        input_tensor_names (list of string): validated input_tensor_names
-        output_tensor_names (list of string): validated output_tensor_names
+        input_tensor_names (list of string): validated input_tensor_names.
+        output_tensor_names (list of string): validated output_tensor_names.
     """
     from neural_compressor.adaptor.tf_utils.util import get_input_output_node_names
     temp_output_tensor_names = []
@@ -132,17 +137,18 @@ def validate_and_inference_input_output(graph_def, \
     return input_tensor_names, output_tensor_names
 
 def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
-    """Build session with tf.compat.v1.Graph
-    Args:
-        model (tf.compat.v1.Graph): tf.compat.v1.Graph object
-        input_tensor_names (list of string): input_tensor_names of model
-        output_tensor_names (list of string): output_tensor_names of model
-     Returns:
-        sess (tf.compat.v1.Session): tf.compat.v1.Session object
-        input_tensor_names (list of string): validated input_tensor_names
-        output_tensor_names (list of string): validated output_tensor_names
-    """
+    """Helper to build session with tf.compat.v1.Graph.
 
+    Args:
+        model (tf.compat.v1.Graph): tf.compat.v1.Graph object.
+        input_tensor_names (list of string): input_tensor_names of model.
+        output_tensor_names (list of string): output_tensor_names of model.
+
+    Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object.
+        input_tensor_names (list of string): validated input_tensor_names.
+        output_tensor_names (list of string): validated output_tensor_names.
+    """
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
@@ -154,17 +160,18 @@ def graph_session(model, input_tensor_names, output_tensor_names, **kwargs):
     return sess, input_tensor_names, output_tensor_names
 
 def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
-    """Build session with tf.compat.v1.GraphDef
+    """Build session with tf.compat.v1.GraphDef.
+
     Args:
-        model (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object
-        input_tensor_names (list of string): input_tensor_names of model
-        output_tensor_names (list of string): output_tensor_names of model
-     Returns:
+        model (tf.compat.v1.GraphDef): tf.compat.v1.GraphDef object.
+        input_tensor_names (list of string): input_tensor_names of model.
+        output_tensor_names (list of string): output_tensor_names of model.
+
+    Returns:
         sess (tf.compat.v1.Session): tf.compat.v1.Session object
         input_tensor_names (list of string): validated input_tensor_names
         output_tensor_names (list of string): validated output_tensor_names
     """
-
     graph = tf.Graph()
     try:
         with graph.as_default():
@@ -184,17 +191,18 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
     return graph_session(graph, input_tensor_names, output_tensor_names, **kwargs)
 
 def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
-    """Build session with frozen pb
-    Args:
-        model (string): model path
-        input_tensor_names (list of string): input_tensor_names of model
-        output_tensor_names (list of string): output_tensor_names of model
-     Returns:
-        sess (tf.compat.v1.Session): tf.compat.v1.Session object
-        input_tensor_names (list of string): validated input_tensor_names
-        output_tensor_names (list of string): validated output_tensor_names
-    """
+    """Build session with frozen pb.
 
+    Args:
+        model (string): model path.
+        input_tensor_names (list of string): input_tensor_names of model.
+        output_tensor_names (list of string): output_tensor_names of model.
+
+    Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object.
+        input_tensor_names (list of string): validated input_tensor_names.
+        output_tensor_names (list of string): validated output_tensor_names.
+    """
     graph_def = tf.compat.v1.GraphDef()
     model = model if model.endswith('.pb') else model + '.pb'
     with open(model, 'rb') as f:
@@ -212,14 +220,16 @@ def _contains_function_with_implements_attr(saved_model_proto):
 
 def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_names):
     """Load graph_def from saved model with the default serving signature key.
+
     Args:
-      saved_model_dir: Directory of the SavedModel.
-      saved_model_tags: Set of tags identifying the MetaGraphDef within the
-        SavedModel to analyze.
+        saved_model_dir: Directory of the SavedModel.
+        saved_model_tags: Set of tags identifying the MetaGraphDef within the
+            SavedModel to analyze.
+
     Returns:
-      graph_def: The loaded GraphDef.
-      input_tensors: List of input tensors.
-      output_tensors: List of output tensors.
+        graph_def: The loaded GraphDef.
+        input_tensors: List of input tensors.
+        output_tensors: List of output tensors.
     """
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
@@ -278,7 +288,7 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
                                          grappler_meta_graph_def, graph_id=b"tf_graph")
         return opt, input_tensor_names, output_tensor_names
 
-def get_graph_from_saved_model_v2(saved_model_dir,
+def _get_graph_from_saved_model_v2(saved_model_dir,
         input_tensor_names, output_tensor_names):
     from tensorflow.python.saved_model import tag_constants
     from tensorflow.python.saved_model import signature_constants
@@ -289,7 +299,7 @@ def get_graph_from_saved_model_v2(saved_model_dir,
     return load_saved_model(saved_model_dir, saved_model_tags,
                             input_tensor_names, output_tensor_names)
 
-def get_graph_from_original_keras_v2(model, output_dir):
+def _get_graph_from_original_keras_v2(model, output_dir):
     from tensorflow.python.eager import def_function
     from tensorflow.lite.python.util import trace_model_call
     from tensorflow.lite.python.util import model_input_signature
@@ -333,7 +343,7 @@ def get_graph_from_original_keras_v2(model, output_dir):
     output_names = [tensor.name.split(':')[0] for tensor in output_tensors]
     return graph_def, input_names, output_names
 
-def check_keras_format(model, saved_model_dir):
+def _check_keras_format(model, saved_model_dir):
     from tensorflow.python import saved_model
     from tensorflow.python.saved_model.load import load
     from tensorflow.python.saved_model import save_options
@@ -355,7 +365,7 @@ def check_keras_format(model, saved_model_dir):
             saved_model_version))
     return version
 
-def get_graph_from_saved_model_v1(model):
+def _get_graph_from_saved_model_v1(model):
     from tensorflow.python.framework import ops
     from tensorflow.python.saved_model import constants
     from tensorflow.python.client import session
@@ -399,24 +409,26 @@ def get_graph_from_saved_model_v1(model):
     return graph_def, inputs, outputs
 
 def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
-    """Build session with keras model
+    """Build session with keras model.
+
     Args:
-        model (string or tf.keras.Model): model path or tf.keras.Model object
-        input_tensor_names (list of string): input_tensor_names of model
-        output_tensor_names (list of string): output_tensor_names of model
-     Returns:
-        sess (tf.compat.v1.Session): tf.compat.v1.Session object
-        input_tensor_names (list of string): validated input_tensor_names
-        output_tensor_names (list of string): validated output_tensor_names
+        model (string or tf.keras.Model): model path or tf.keras.Model object.
+        input_tensor_names (list of string): input_tensor_names of model.
+        output_tensor_names (list of string): output_tensor_names of model.
+
+    Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object.
+        input_tensor_names (list of string): validated input_tensor_names.
+        output_tensor_names (list of string): validated output_tensor_names.
     """
     temp_dir = tempfile.mkdtemp()
     if tf.version.VERSION > '2.1.0':
         if not isinstance(model, tf.keras.Model):
             model = tf.keras.models.load_model(model)
-        keras_format = check_keras_format(model, temp_dir)
+        keras_format = _check_keras_format(model, temp_dir)
         if keras_format == 'saved_model_v2':
             try:
-                graph_def, input_names, output_names = get_graph_from_saved_model_v2(
+                graph_def, input_names, output_names = _get_graph_from_saved_model_v2(
                     temp_dir, input_tensor_names, output_tensor_names)
                 if '_FusedBatchNormEx' in [node.op for node in graph_def.node]:
                     keras_format = 'trackable_object'
@@ -424,37 +436,38 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
                 keras_format = 'trackable_object'
         if keras_format == 'trackable_object':
             try:
-                graph_def, input_names, output_names = get_graph_from_original_keras_v2(
+                graph_def, input_names, output_names = _get_graph_from_original_keras_v2(
                                                        model, temp_dir)
             except:
                 keras_format = 'saved_model_v1'
         if keras_format == 'saved_model_v1':
             try:
                 tf.keras.backend.set_learning_phase(0)
-                graph_def, input_names, output_names = get_graph_from_saved_model_v1(model)
+                graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
             except:
                 raise ValueError('Not supported keras model type...')
 
     # tensorflow 1.x use v1 convert method
     else:
         tf.keras.backend.set_learning_phase(0)
-        graph_def, input_names, output_names = get_graph_from_saved_model_v1(model)
+        graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
     shutil.rmtree(temp_dir, True)
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
 
 def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
-    """Build session with slim model
-    Args:
-        model (string): model path
-        input_tensor_names (list of string): input_tensor_names of model
-        output_tensor_names (list of string): output_tensor_names of model
-     Returns:
-        sess (tf.compat.v1.Session): tf.compat.v1.Session object
-        input_tensor_names (list of string): validated input_tensor_names
-        output_tensor_names (list of string): validated output_tensor_names
-    """
+    """Build session with slim model.
 
+    Args:
+        model (string): model path.
+        input_tensor_names (list of string): input_tensor_names of model.
+        output_tensor_names (list of string): output_tensor_names of model.
+
+    Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object.
+        input_tensor_names (list of string): validated input_tensor_names.
+        output_tensor_names (list of string): validated output_tensor_names.
+    """
     assert version1_lt_version2(tf.version.VERSION, '2.0.0'), 'slim model only used in tensorflow 1.x'
     from .nets_factory import TFSlimNetsFactory
     factory = TFSlimNetsFactory()
@@ -492,17 +505,18 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):
     return graph_def_session(graph_def, ['input'], output_tensor_names)
 
 def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs):
-    """Build session with ckpt model
-    Args:
-        model (string): model path
-        input_tensor_names (list of string): input_tensor_names of model
-        output_tensor_names (list of string): validated output_tensor_names of model
-     Returns:
-        sess (tf.compat.v1.Session): tf.compat.v1.Session object
-        input_tensor_names (list of string): validated input_tensor_names
-        output_tensor_names (list of string): validated output_tensor_names
-    """
+    """Build session with ckpt model.
 
+    Args:
+        model (string): model path.
+        input_tensor_names (list of string): input_tensor_names of model.
+        output_tensor_names (list of string): validated output_tensor_names of model.
+
+    Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object.
+        input_tensor_names (list of string): validated input_tensor_names.
+        output_tensor_names (list of string): validated output_tensor_names.
+    """
     assert output_tensor_names is not None and len(output_tensor_names) > 0, \
         'outputs should not be None of checkpoint....'
 
@@ -529,18 +543,19 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     return sess, input_tensor_names, output_tensor_names
 
 def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
-    """Build session with estimator model
-    Args:
-        model (tf.estimator.Estimator): tf.estimator.Estimator object
-        input_tensor_names (list of string): input_tensor_names of model
-        output_tensor_names (list of string): output_tensor_names of model
-        kwargs (dict): other required parameters, like input_fn
-     Returns:
-        sess (tf.compat.v1.Session): tf.compat.v1.Session object
-        input_tensor_names (list of string): validated input_tensor_names
-        output_tensor_names (list of string): validated output_tensor_names
-    """
+    """Build session with estimator model.
 
+    Args:
+        model (tf.estimator.Estimator): tf.estimator.Estimator object.
+        input_tensor_names (list of string): input_tensor_names of model.
+        output_tensor_names (list of string): output_tensor_names of model.
+        kwargs (dict): other required parameters, like input_fn.
+
+    Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object.
+        input_tensor_names (list of string): validated input_tensor_names.
+        output_tensor_names (list of string): validated output_tensor_names.
+    """
     assert 'input_fn' in kwargs, 'input func should be supplied for estimator session....'
     with tf.Graph().as_default() as g:
         features, input_hooks = model._get_features_from_input_fn(
@@ -573,21 +588,23 @@ def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
         return graph_def_session(graph_def, input_tensor_names, outputs)
 
 def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs):
-    """Build session with saved model
+    """Build session with saved model.
+
     Args:
-        model (string): model path
-        input_tensor_names (list of string): input_tensor_names of model
-        output_tensor_names (list of string): output_tensor_names of model
-     Returns:
-        sess (tf.compat.v1.Session): tf.compat.v1.Session object
-        input_tensor_names (list of string): validated input_tensor_names
-        output_tensor_names (list of string): validated output_tensor_names
+        model (string): model path.
+        input_tensor_names (list of string): input_tensor_names of model.
+        output_tensor_names (list of string): output_tensor_names of model.
+
+    Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object.
+        input_tensor_names (list of string): validated input_tensor_names.
+        output_tensor_names (list of string): validated output_tensor_names.
     """
     try:
-        graph_def, input_names, output_names = get_graph_from_saved_model_v2(
+        graph_def, input_names, output_names = _get_graph_from_saved_model_v2(
             model, input_tensor_names, output_tensor_names)
     except:
-        graph_def, input_names, output_names = get_graph_from_saved_model_v1(model)
+        graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
     assert graph_def is not None, 'Can not parse the saved model...'
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
@@ -603,14 +620,14 @@ SESSIONS = {'frozen_pb': frozen_pb_session,
 
 
 class TensorflowBaseModel(BaseModel):
-    """Build TensorflowBaseModel object
-    Args:
-        model (string or tensorflow model object): model path or model object
-        kwargs (dict): other required parameters, like input_fn
-    """
+    """Build Tensorflow Base Model."""
 
     def __init__(self, model, **kwargs):
+        """Initialize a Tensorflow model.
 
+        Args:
+            model (string or tensorflow model object): model path or model object.
+        """
         self._model = model
         self._name = ''
         self._weights = None
@@ -625,62 +642,74 @@ class TensorflowBaseModel(BaseModel):
         self._q_config = None
 
     def framework(self):
+        """Return framework."""
         return 'tensorflow'
 
     @property
     def name(self):
+        """Renturn name."""
         return self._name
 
     @name.setter
     def name(self, name):
+        """Set name."""
         self.kwargs.update({'name': name})
         self._name = name
 
     @property
     def weights(self):
-        """ Getter to weights """
+        """Return weights."""
         return self._weights
 
     @weights.setter
     def weights(self, new_weights):
-        """ Setter to weights """
+        """Set weights."""
         self._weights = new_weights
 
     @property
     def q_config(self):
+        """Return q_config."""
         return self._q_config
 
     @q_config.setter
     def q_config(self, q_config):
+        """Set q_config."""
         self._q_config = q_config
 
     @property
     def workspace_path(self):
+        """Return workspace path."""
         return self._workspace_path
 
     @workspace_path.setter
     def workspace_path(self, path):
+        """Set workspace path."""
         self._workspace_path = path
 
     @property
     def model_type(self):
+        """Return model type."""
         return self._model_type
 
     @model_type.setter
     def model_type(self, model_type):
+        """Set model type."""
         assert model_type in SESSIONS, 'model type not supported....'
         self._model_type = model_type
 
     @property
     def model(self):
+        """Return model itself."""
         return self.graph
 
     @property
     def graph_def(self):
+        """Return graph defination."""
         return self.graph.as_graph_def()
 
     @property
     def graph_info(self):
+        """Return graph info."""
         self._graph_info = {}
         for node in self.graph_def.node:
             self._graph_info[node.name] = node.op
@@ -688,16 +717,19 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def sess(self):
+        """Return Session object."""
         if self._sess is None:
             self._load_sess(self._model, **self.kwargs)
         return self._sess
 
     @property
     def graph(self):
+        """Return model graph."""
         return self.sess.graph
 
     @graph_def.setter
     def graph_def(self, graph_def):
+        """Set graph defination."""
         if self._sess is not None:
             self._sess.close()
         output_sess =  SESSIONS['graph_def'](graph_def,\
@@ -726,6 +758,7 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def iter_op(self):
+        """Return model iter op list."""
         self._iter_op = []
         if self._sess is None:
             self._load_sess(self._model, **self.kwargs)
@@ -736,12 +769,14 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def input_tensor_names(self):
+        """Return input tensor names."""
         if self._sess is None:
             self._load_sess(self._model, **self.kwargs)
         return copy.deepcopy(self._input_tensor_names)
 
     @input_tensor_names.setter
     def input_tensor_names(self, tensor_names):
+        """Set input tensor names."""
         if len(tensor_names) == 0:
             logger.warn("Input tensor names is empty.")
             return
@@ -753,12 +788,14 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def output_tensor_names(self):
+        """Return output tensor names."""
         if len(self._output_tensor_names) == 0:
             self._load_sess(self._model, **self.kwargs)
         return copy.deepcopy(self._output_tensor_names)
 
     @output_tensor_names.setter
     def output_tensor_names(self, tensor_names):
+        """Set output tensor names."""
         if len(tensor_names) == 0:
             logger.warn("Output tensor names should not be empty.")
             return
@@ -772,10 +809,12 @@ class TensorflowBaseModel(BaseModel):
     # come from input/output tensor names, so do not support assign these values
     @property
     def input_node_names(self):
+        """Return input node names."""
         return copy.deepcopy(tensor_to_node(self.input_tensor_names))
 
     @property
     def output_node_names(self):
+        """Return output node names."""
         output_node_names = tensor_to_node(self.output_tensor_names)
         iter_op_list = self.iter_op
         if iter_op_list != []:
@@ -784,17 +823,20 @@ class TensorflowBaseModel(BaseModel):
 
     @property
     def input_tensor(self):
+        """Return input tensor."""
         from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name
         return [get_tensor_by_name(\
             self.graph, x) for x in self.input_tensor_names]
 
     @property
     def output_tensor(self):
+        """Return output tensor."""
         from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name
         return [get_tensor_by_name(\
             self.graph, x) for x in self.output_tensor_names]
 
     def save(self, root=None):
+        """Save Tensorflow model."""
         if not root:
             root = cfg.default_workspace + '/save.pb'
         root = os.path.abspath(os.path.expanduser(root))
@@ -807,7 +849,14 @@ class TensorflowBaseModel(BaseModel):
 
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
+    """Build Tensorflow saved model."""
+
     def get_all_weight_names(self):
+        """Get weight names of model.
+
+        Returns:
+            list: weight names list.
+        """
         import tensorflow as tf
         names = []
         for index, layer in enumerate(tf.keras.models.load_model(self._model).layers):
@@ -816,13 +865,20 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         return names
 
     def update_weights(self, tensor_name, new_tensor):
+        """Update model weights."""
         pass
 
     def get_weight(self, tensor_name):
+        """Return model wight with a given tensor name.
+
+        Args:
+            tensor_name (str): name of a tensor.
+        """
         return self.weights[tensor_name]
 
     @property
     def model(self):
+        """Return model itself."""
         import time
         import shutil
         root = os.path.abspath(os.path.expanduser(cfg.default_workspace))
@@ -839,11 +895,11 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         return model
 
     def report_sparsity(self):
-        """ Get sparsity of the model
-        Args:
+        """Get sparsity of the model.
+
         Returns:
-            df (DataFrame): DataFrame of sparsity of each weight
-            total_sparsity (float): total sparsity of model
+            df (DataFrame): DataFrame of sparsity of each weight.
+            total_sparsity (float): total sparsity of model.
         """
         import pandas as pd
         import tensorflow as tf
@@ -890,6 +946,16 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         return df, total_sparsity
 
     def build_saved_model(self, root=None):
+        """Build Tensorflow saved model.
+
+        Args:
+            root (str, optional): path to saved model. Defaults to None.
+
+        Returns:
+            root (str): path to saved model.
+            builder (tf.compat.v1.saved_model.builder.SavedModelBuilder): builds 
+                the SavedModel protocol buffer and saves variables and assets.
+        """
         if not root:
             root = cfg.default_workspace
         root = os.path.abspath(os.path.expanduser(root))
@@ -920,27 +986,38 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         return root, builder
 
     def save(self, root=None):
+        """Save Tensorflow model."""
         root, builder = self.build_saved_model(root)
         builder.save()
         logger.info("Save quantized model to {}.".format(root))
 
 class TensorflowQATModel(TensorflowSavedModelModel):
+    """Build Tensorflow QAT model."""
+
     def __init__(self, model='', **kwargs):
+        """Initialize a Tensorflow QAT model.
+
+        Args:
+            model (string or tensorflow model object): model path or model object.
+        """
         super(TensorflowQATModel, self).__init__(model)
         self.keras_model = None
         self.model_type = 'keras'
 
     @property
     def model(self):
+        """Return model itself."""
         if self.keras_model == None:
             self.keras_model = tf.keras.models.load_model(self._model)
         return self.keras_model
 
     @model.setter
     def model(self, q_model):
+        """Set model itself."""
         self.keras_model = q_model
 
     def save(self, root=None):
+        """Save Tensorflow QAT model."""
         if not root:
             root = cfg.default_workspace + '/saved_model'
         root = os.path.abspath(os.path.expanduser(root))
@@ -955,9 +1032,11 @@ class TensorflowQATModel(TensorflowSavedModelModel):
         return root
 
 class TensorflowCheckpointModel(TensorflowBaseModel):
+    """Build Tensorflow checkpoint model."""
 
     @property
     def graph_def(self):
+        """Return graph defination."""
         if self.model_type == 'graph_def':
             return self.sess.graph.as_graph_def()
         from neural_compressor.adaptor.tf_utils.util import _parse_ckpt_bn_input
@@ -971,6 +1050,7 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
 
     @graph_def.setter
     def graph_def(self, graph_def):
+        """Set graph defination."""
         if self._sess is not None:
             self._sess.close()
         output_sess = SESSIONS['graph_def'](graph_def,
@@ -993,7 +1073,18 @@ TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      }
 
 class TensorflowModel(object):
+    """A wrapper to construct a Tensorflow Model."""
+
     def __new__(cls, model_type, root, **kwargs):
+        """Create a new instance object of TensorflowModel.
+
+        Args:
+            model_type (str): model type.
+            root (str): model path.
+
+        Returns:
+            tensorflow model object: tensorflow model.
+        """
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         model = TENSORFLOW_MODELS[model_type](root, **kwargs)
