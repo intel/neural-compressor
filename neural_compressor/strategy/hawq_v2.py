@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The HAWQ_V2 tuning strategy."""
+
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -27,65 +29,20 @@ from ..utils import logger
 
 @strategy_registry
 class HAWQ_V2TuneStrategy(TuneStrategy):
-    """The HAWQ v2 tuning strategy.
-
-    Args:
-        model (object):                        The FP32 model specified for low precision tuning.
-        conf (Class):                          The Conf class instance initialized from user yaml
-                                               config file.
-        q_dataloader (generator):              Data loader for calibration, mandatory for
-                                               post-training quantization.
-                                               It is iterable and should yield a tuple (input,
-                                               label) for calibration dataset containing label,
-                                               or yield (input, _) for label-free calibration
-                                               dataset. The input could be a object, list, tuple or
-                                               dict, depending on user implementation, as well as
-                                               it can be taken as model input.
-        q_func (function, optional):           Reserved for future use.
-        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
-                                               and should yield a tuple of (input, label).
-                                               The input could be a object, list, tuple or dict,
-                                               depending on user implementation, as well as it can
-                                               be taken as model input. The label should be able
-                                               to take as input of supported metrics. If this
-                                               parameter is not None, user needs to specify
-                                               pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" parameter as None.
-                                               Tuner will combine model, eval_dataloader and
-                                               pre-defined metrics to run evaluation process.
-        eval_func (function, optional):        The evaluation function provided by user.
-                                               This function takes model as parameter, and
-                                               evaluation dataset and metrics should be
-                                               encapsulated in this function implementation and
-                                               outputs a higher-is-better accuracy scalar value.
-
-                                               The pseudo code should be something like:
-
-                                               def eval_func(model):
-                                                    input, label = dataloader()
-                                                    output = model(input)
-                                                    accuracy = metric(output, label)
-                                                    return accuracy
-        dicts (dict, optional):                The dict containing resume information.
-                                               Defaults to None.
-
+    """The HAWQ V2 tuning strategy.
+    
+    HAWQ_V2 implements the "Hawq-v2: Hessian aware trace-weighted quantization of neural networks".
+    We made a small change to it by using the hessian trace to score the op impact and then
+    fallback the OPs according to the scoring result.
+    
     """
 
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        super(
-            HAWQ_V2TuneStrategy,
-            self).__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
-
     def next_tune_cfg(self):
+        """Generate and yield the next tuning config using HAWQ v2 search in tuning space.
+    
+        Yields:
+            tune_config (dict): A dict containing the tuning configuration for quantization.
+        """
         tuning_space = self.tuning_space
         calib_size = tuning_space.root_item.get_option_by_name('calib_sampling_size').options[0]
 
@@ -108,7 +65,7 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
             yield op_tuning_cfg
         # Start compute the hessian trace
         logger.info(f"**************  Start compute the hessian trace  *****************")
-        target_dtype = "int8"  
+        target_dtype = "fp32"  
         hawq_v2_criterion =self.cfg.tuning.strategy.hawq_v2_loss
         # assert hawq_v2_criterion is not None, "HAWQ-V2 strategy needs model loss function to compute the gradient, \
         #     Please assign it by strategy_kwargs({'hawq_v2_loss': hawq_v2_loss})."
@@ -153,7 +110,7 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
             op_tuning_cfg['calib_sampling_size'] = calib_size
             yield op_tuning_cfg
 
-    def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg: OpTuningConfig):
+    def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg: OpTuningConfig):
         op_state = op_static_cfg.get_state()
         op_name = op_static_cfg.op_name
         op_type = op_static_cfg.op_type

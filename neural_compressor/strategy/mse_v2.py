@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The MSE_V2 tuning strategy."""
+
 import copy
 from copy import deepcopy
 import numpy as np
@@ -24,74 +26,16 @@ from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 from time import time 
 
-from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
+from .utils.tuning_sampler import OpTypeWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
 
 @strategy_registry
 class MSE_V2TuneStrategy(TuneStrategy):
-    """The tuning strategy using MSE policy in tuning space.
-
-       This MSE policy runs fp32 model and int8 model seperately to get all activation tensors,
-       and then compares those tensors by MSE algorithm to order all ops with MSE distance for
-       deciding the impact of each op to final accuracy.
-       It will be used to define opwise tuningspace by priority.
-
-    Args:
-        model (object):                        The FP32 model specified for low precision tuning.
-        conf (Class):                          The Conf class instance initialized from user yaml
-                                               config file.
-        q_dataloader (generator):              Data loader for calibration, mandatory for
-                                               post-training quantization.
-                                               It is iterable and should yield a tuple (input,
-                                               label) for calibration dataset containing label,
-                                               or yield (input, _) for label-free calibration
-                                               dataset. The input could be a object, list, tuple or
-                                               dict, depending on user implementation, as well as
-                                               it can be taken as model input.
-        q_func (function, optional):           Reserved for future use.
-        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
-                                               and should yield a tuple of (input, label).
-                                               The input could be a object, list, tuple or dict,
-                                               depending on user implementation, as well as it can
-                                               be taken as model input. The label should be able
-                                               to take as input of supported metrics. If this
-                                               parameter is not None, user needs to specify
-                                               pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" parameter as None.
-                                               Tuner will combine model, eval_dataloader and
-                                               pre-defined metrics to run evaluation process.
-        eval_func (function, optional):        The evaluation function provided by user.
-                                               This function takes model as parameter, and
-                                               evaluation dataset and metrics should be
-                                               encapsulated in this function implementation and
-                                               outputs a higher-is-better accuracy scalar value.
-
-                                               The pseudo code should be something like:
-
-                                               def eval_func(model):
-                                                    input, label = dataloader()
-                                                    output = model(input)
-                                                    accuracy = metric(output, label)
-                                                    return accuracy
-        dicts (dict, optional):                The dict containing resume information.
-                                               Defaults to None.
-
+    """The `mse_v2` tuning strategy.
+    
+    Note that, only tensorflow framework and pytorch FX backend is currently supported for mse_v2
+    tuning strategy.
     """
-
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        self.ordered_ops = None
-        super(
-            MSE_V2TuneStrategy,
-            self).__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
     
     def _tuning_record_msg(self, records):
         records_str_lst = [[str(e) for e in record] for record in records]
@@ -99,13 +43,18 @@ class MSE_V2TuneStrategy(TuneStrategy):
         return record_msg
 
     def next_tune_cfg(self):
-        """The generator of yielding next tuning config to traverse by concrete strategies
-           according to last tuning result.
-
+        """Generate and yield the next tuning config with below order.
+           
+           1. In the fallback stage, it uses multi-batch data to score the op impact
+           and then fallback the op with the highest score util found the quantized
+           model meets accuracy criteria. 
+           2. In the revert fallback stage, it also scores the impact of fallback OPs
+           in the previous stage and selects the op with the lowest score to revert
+           the fallback until the quantized model not meets accuracy criteria.
+    
         Yields:
-            tune_config (dict): It's a dict containing the tuning configuration to run.
+            tune_config (dict): A dict containing the tuning configuration for quantization.
         """
-
         best_op_tuning_cfg = None
         if len(self.metric_name) == 1 or self.metric_weight is not None:
             best_acc = float('-inf') if self.higher_is_better else float('inf')

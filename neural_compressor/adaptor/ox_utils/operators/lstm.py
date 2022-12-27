@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""LSTM Operator."""
 
 import onnx
 from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
@@ -23,13 +23,18 @@ import numpy
 
 @op_registry(op_types="LSTM")
 class LSTMOperator(Operator):
+    """LSTM Operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(LSTMOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
+        """Do quantizaion."""
         return
     
-    def convert_check(self, convert_format): 
+    def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['dynamic'], \
             "convert format for {} should be in ['dynamic']".format(node.op_type)
@@ -48,6 +53,7 @@ class LSTMOperator(Operator):
         return True
 
     def convert(self, convert_format):
+        """Convert to QOperator format."""
         node = self.node
 
         model = self.quantizer.model
