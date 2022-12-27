@@ -131,6 +131,7 @@ class Dataloader:
                     
                 # Set everything not labeled to be background
                 output_tensor[0] = 1 - np.max(output_tensor, axis=0)
+                input_tensor = input_tensor[np.newaxis, ...]
                 self.data.append((input_tensor, output_tensor))
 
     def __iter__(self):
@@ -176,7 +177,6 @@ def evaluate(model, dataloader):
                                         providers=onnxruntime.get_available_providers())
     idx = 1
     for input_tensor, target_tensor in dataloader:
-        input_tensor = input_tensor[np.newaxis, ...]
         target_tensor = target_tensor[np.newaxis, ...]
         model_tensor = sess.run(["out"], {"input": input_tensor})[0]
         
