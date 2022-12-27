@@ -15,6 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Insert print node Graph Rewriter."""
 
 import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2
@@ -26,10 +27,10 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 class InsertPrintMinMaxNode(GraphRewriterBase):
-    """InsertPrintMinMaxNode Pass for tensorflow sampling.
-    """
+    """InsertPrintMinMaxNode Pass for tensorflow sampling."""
 
     def __init__(self, model, pre_node_name, post_node_name, new_api):
+        """Intilization."""
         super().__init__(model)
         self.pre_node_name = pre_node_name
         self.post_node_name = post_node_name
@@ -37,6 +38,7 @@ class InsertPrintMinMaxNode(GraphRewriterBase):
         self.new_api = new_api
 
     def do_transformation(self):
+        """Insert print node in the graph to do the calibration."""
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 

@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Freeze value with calibration Graph Rewriter."""
 
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
@@ -29,8 +29,10 @@ import numpy as np
 import re
 
 class FreezeValueTransformer(GraphRewriterBase):
+    """Freeze Value with calibration."""
     def __init__(self, model, max_min_data, postfix, tensor_data=None, th=1, device='gpu', itex_mode=False):
         """Free Max/Min value into QuantizeV2 op.
+
         Args:
             model (graphdef): input model
             max_min_data (string list): the string context contains max/min values.
@@ -39,6 +41,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                                 which calculated by KL.
             th (float, optional): The percentage of overall data.Defaults to 0.95.
             device (string, optional): The hardware device type, 'cpu' or 'gpu'.
+            itex_mode: itex mode.
         """
         super().__init__(model)
         self.data = max_min_data
@@ -63,6 +66,10 @@ class FreezeValueTransformer(GraphRewriterBase):
         self.scale_info = {}
 
     def _get_valid_log(self):
+        """Get valid sampling log.
+
+        :return: get the valid sampling log output.
+        """
         output = []
 
         target_lines = [i.strip() for i in self.data if i.strip().find(';') != -1]
@@ -81,8 +88,8 @@ class FreezeValueTransformer(GraphRewriterBase):
         return output
 
     def _parse_max_min_log(self):
-        """
-        Parse the max_ming log file
+        """Parse the max_ming log file.
+
         :return: get the node name and value mapping
         """
         print_suffix = "__print__"
@@ -114,8 +121,8 @@ class FreezeValueTransformer(GraphRewriterBase):
         return res
 
     def _parse_requantization_ranges(self):
-        """
-        Parse the max_min log to get requantization values
+        """Parse the max_min log to get requantization values.
+
         :return: dict saved the result
         """
         res = {}
@@ -167,8 +174,8 @@ class FreezeValueTransformer(GraphRewriterBase):
         return res
 
     def generate_output_graph(self, max_name_value):
-        """
-        Generate transformed graph for freeze_max/freeze_min transformation.
+        """Generate transformed graph for freeze_max/freeze_min transformation.
+
         :param max_name_value: target values
         :return: transformed graph
         """
@@ -221,8 +228,8 @@ class FreezeValueTransformer(GraphRewriterBase):
         return GraphAnalyzer().dump_graph(), self.scale_info
 
     def generate_output_graph_ranges(self, max_name_value):
-        """
-        Generate transformed graph for freeze_max/freeze_min transformation.
+        """Generate transformed graph for freeze_max/freeze_min transformation.
+
         :param max_name_value: target values
         :return: transformed graph
         """
@@ -361,6 +368,7 @@ class FreezeValueTransformer(GraphRewriterBase):
         return GraphAnalyzer().dump_graph(), self.scale_info
 
     def do_transformation(self):
+        """Apply the transformation of freeze value."""
         if self.postfix == '__requant_min_max':
             range_data = self._parse_requantization_ranges()
 

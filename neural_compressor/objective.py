@@ -487,6 +487,6 @@ class MultiObjective:
             weighted_result = np.sum(obj_data, axis=1)
 
         weighted_result[acc_mask == False] = 0.
-        best_trail = np.argmax(weighted_result)
-        return best_trail, tune_data[best_trail]
+        best_trial = np.argmax(weighted_result)
+        return best_trial, tune_data[best_trial]
 

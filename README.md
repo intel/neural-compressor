@@ -29,9 +29,9 @@ Python version: 3.7, 3.8, 3.9, 3.10
 ### Install on Linux
 - Release binary install 
   ```Shell
-  # install stable basic version from pip
+  # install stable basic version from pypi
   pip install neural-compressor
-  # Or install stable full version from pip (including GUI)
+  # or install stable full version from pypi (including GUI)
   pip install neural-compressor-full
   ```
 - Nightly binary install
@@ -39,9 +39,9 @@ Python version: 3.7, 3.8, 3.9, 3.10
   git clone https://github.com/intel/neural-compressor.git
   cd neural-compressor
   pip install -r requirements.txt
-  # install nightly basic version from pip
+  # install nightly basic version from pypi
   pip install -i https://test.pypi.org/simple/ neural-compressor
-  # Or install nightly full version from pip (including GUI)
+  # or install nightly full version from pypi (including GUI)
   pip install -i https://test.pypi.org/simple/ neural-compressor-full
   ```
 More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
@@ -245,7 +245,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 ## Additional Content
 
 * [Release Information](./docs/source/releases_info.md)
-* [Contribution Guidelines](./docs/source/contributions.md)
+* [Contribution Guidelines](./docs/source/CONTRIBUTING.md)
 * [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
 * [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)

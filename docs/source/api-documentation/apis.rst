@@ -12,3 +12,5 @@ The following API information is available:
    adaptor
    pythonic
    contrib
+   model
+   utils

@@ -1,82 +1,33 @@
 Validated Models
-===
-## Validated MLPerf Models
-<table class="docutils">
-<thead>
-  <tr>
-    <th>Model</th>
-    <th>Framework</th>
-    <th>Support</th>
-    <th>Example</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td rowspan="2">ResNet50 V1.5</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex">Link</a></td>
-  </tr>
-  <tr>
-    <td>DLRM</td>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/recommendation/dlrm/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td rowspan="2">BERT large</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/nlp/bert_large_squad/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">Link</a></td>
-  </tr>
-  <tr>
-    <td rowspan="2">SSD ResNet34</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/object_detection/ssd_resnet34/quantization">Link</a></td>
-  </tr>
-  <tr>
-    <td>RNN-T</td>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/speech_recognition/rnnt/quantization">Link</a></td>    
-  </tr>
-  <tr>
-    <td rowspan="2">3D-UNet</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/semantic_image_segmentation/3dunet-mlperf/quantization">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/image_recognition/3d-unet/quantization">Link</a></td>
-  </tr>
-</tbody>
-</table>
+======
+
+1. [Validated Quantization Examples](#Validated-Quantization-Examples)
+
+    1.1. [TensorFlow Models with TensorFlow 2.10.0](#tensorflow-models-with-tensorflow-2100)
+
+    1.2. [PyTorch Models with Torch 1.12.1+cpu in PTQ Mode](#pytorch-models-with-torch-1121cpu-in-qat-mode)
+
+    1.3. [PyTorch Models with Torch 1.12.1+cpu in QAT Mode](#pytorch-models-with-torch-1121cpu-in-qat-mode)
+
+    1.4. [PyTorch Models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu](#pytorch-models-with-torch-and-intel-extension-for-pytorch-1110cpu)
+    
+    1.5. [ONNX Models with ONNX Runtime 1.12.1](#onnx-models-with-onnx-runtime-1121)
+
+    1.6. [MXNet Models with MXNet 1.7.0](#mxnet-models-with-mxnet-170)
+
+2. [Validated Pruning Examples](#Validated-Pruning-Examples)
+
+3. [Validated Knowledge Distillation Examples](#Validated-Knowledge-Distillation-Examples)
+
+4. [Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime](#validated-onnx-qdq-int8-models-on-multiple-hardware-through-onnx-runtime)
 
 ## Validated Quantization Examples
 
-Performance results test on ​​09/24/2022 with Intel Xeon Platinum 8380 Scalable processor, using 1 socket, 4 cores/instance, 10 instances and batch size 1. 
+Performance results test on ​​09/24/2022 with Intel Xeon Platinum 8380 Scalable processor, using 1 socket, 4 cores/instance, 8 instances and batch size 1. 
 
 Performance varies by use, configuration and other factors. See [platform configuration](./platform_configuration.md) for configuration details. For more complete information about performance and benchmark results, visit www.intel.com/benchmarks
 
-### TensorFlow models with TensorFlow 2.10.0
+### TensorFlow Models with TensorFlow 2.10.0
 
 <table class="tg">
 <thead>
@@ -359,7 +310,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch 1.12.1+cpu in PTQ mode
+### PyTorch Models with Torch 1.12.1+cpu in PTQ Mode
 
 <table class="tg">
 <thead>
@@ -742,7 +693,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch 1.12.1+cpu in QAT mode
+### PyTorch Models with Torch 1.12.1+cpu in QAT Mode
 
 <table class="tg">
 <thead>
@@ -805,7 +756,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu
+### PyTorch Models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu
 
 <table class="tg">
 <thead>
@@ -1491,7 +1442,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### MXNet models with MXNet 1.7.0
+### MXNet Models with MXNet 1.7.0
 
 <table class="tg">
 <thead>
@@ -1862,7 +1813,6 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-
 ## Validated Knowledge Distillation Examples
 |  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  | Student With Distributed Distillation<br>(Metrics Improvement)  |
 |---------------------|-----------|--------------------------------------|------------------------------------|-----------------------------------------------------|-----------------------------------------------------|
@@ -1877,7 +1827,7 @@ Performance varies by use, configuration and other factors. See [platform config
 |BERT-3 example       |  QQP      | BERT-3<br>(0.8626/0.8213 EM/F1)      | BERT-Base<br>(0.9091/0.8782 EM/F1) |   0.8684/0.8259 EM/F1<br>(0.0058/0.0046 EM/F1)      |   WIP                        |
 |DistilRoBERTa example|  COLA     | DistilRoBERTa<br>(0.6057 ACC)        | RoBERTa-Large<br>(0.6455 ACC)      |   0.6187 ACC<br>(0.0130 ACC)                        |   WIP                        |
 
-## Validated ONNX QDQ INT8 models on multiple hardware through ONNX Runtime
+## Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime
 
 <table class="tg">
 <thead>

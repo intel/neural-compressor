@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Scale propagation Graph Rewriter."""
 
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
@@ -26,6 +27,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 
 
 class ScaleProPagationTransformer(GraphRewriterBase):
+    """Scale propagation converter."""
     cac_pattern = [['QuantizeV2', 'Requantize', 'RequantizePerChannel'], ['QuantizedAvgPool'],
                    [
                        'QuantizedConv2DWithBias', 'QuantizedConv2DWithBiasAndRelu',
@@ -34,6 +36,7 @@ class ScaleProPagationTransformer(GraphRewriterBase):
                    ], ['Requantize', 'RequantizePerChannel']]
 
     def __init__(self, model, direction='Up'):
+        """Initilization."""
         super().__init__(model)
         self.direction = direction if direction not in ('Up', 'Down') else 'Up'
         self.cur_graph = GraphAnalyzer()
@@ -42,6 +45,7 @@ class ScaleProPagationTransformer(GraphRewriterBase):
         self.graph_info = self.cur_graph.parse_graph()
 
     def _create_new_const_node(self, new_const_node_name, value, old_const_node_name):
+        """Create new Const node."""
         new_node = node_def_pb2.NodeDef()
         new_node.op = "Const"
         new_node.name = new_const_node_name
@@ -57,6 +61,7 @@ class ScaleProPagationTransformer(GraphRewriterBase):
         self.cur_graph.remove_node(old_const_node_name)
 
     def _cac_transformation(self):
+        """Scale propagation pattern match and create new const nodes."""
         target_nodes = self.cur_graph.query_fusion_pattern_nodes(self.cac_pattern)
         quantize_v2_min_index = 1
         requntize_min_index = 3
@@ -98,6 +103,7 @@ class ScaleProPagationTransformer(GraphRewriterBase):
                                         requantize_max_value, pre_node.input[pre_max_index])
 
     def do_transformation(self):
+        """Apply the scale propagation algrothim."""
         self._cac_transformation()
 
         return self.cur_graph.dump_graph()

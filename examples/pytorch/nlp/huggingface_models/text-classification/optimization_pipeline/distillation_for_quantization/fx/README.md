@@ -25,8 +25,6 @@ pip install -r requirements.txt
 Below are example NLP tasks of distillation for quantization to quantize the fine tuned BERT model on the specific tasks.
 <br>
 It requires the pre-trained task specific model such as `yoshitomo-matsubara/bert-base-uncased-sst2` from yoshitomo-matsubara Huggingface portal as the teacher model for distillation, as well as for quantization.
-<br>
-The distillation configuration is specified in yaml file i.e. distillation.yaml, the quantization aware training configuration is specified in yaml file i.e. qat.yaml.
 
 ## SST-2 task
 

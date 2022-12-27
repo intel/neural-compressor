@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse Pad into Conv Graph Rewriter."""
+
 import tensorflow as tf
 
 from tensorflow.python.framework import tensor_util
@@ -25,11 +27,10 @@ from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 
 class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
-    """Fuse Pad op into Conv2D
-    Pad + Conv2D --> Conv2D
-    """
+    """Fuse Pad op into Conv."""
 
     def __init__(self, model, excluded_op_names, inputs, cfg, new_api, itex_qdq_mode=False):
+        """Iinitilization."""
         super().__init__(model)
         self.excluded_conv = excluded_op_names
         self.inputs = inputs
@@ -38,6 +39,7 @@ class FusePadWithFP32Conv2DOptimizer(GraphRewriterBase):
         self.itex_qdq_mode = itex_qdq_mode
 
     def do_transformation(self):
+        """Fuse Pad op into Conv2D/DepthwiseConv2dNative/Conv3D."""
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 

@@ -113,7 +113,7 @@ def fit(model, config=None, b_dataloader=None, b_func=None):
                                   tuning space etc.
         b_dataloader:             The dataloader for frameworks.
         b_func:                   customized benchmark function. if user passes the dataloader,
-                                  than b_func is not needed.
+                                  then b_func is not needed.
     """
     if isinstance(config, BenchmarkConfig):
         config = Config(benchmark=config)
