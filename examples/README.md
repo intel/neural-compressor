@@ -511,19 +511,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>t5-small</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/eager">eager</a></td>
   </tr>
   <tr>
     <td>Helsinki-NLP/opus-mt-en-ro</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/eager">eager</a></td>
   </tr>
   <tr>
     <td>lvwerra/pegasus-samsum</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/summarization/quantization/ptq_dynamic/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/summarization/quantization/ptq_dynamic/eager">eager</a></td>
   </tr>
   <tr>
     <td>GPTJ</td>
