@@ -1,3 +1,4 @@
+
 #
 # -*- coding: utf-8 -*-
 #
@@ -25,7 +26,6 @@ from argparse import ArgumentParser
 from transformers import AutoTokenizer
 from datasets import load_from_disk
 from tensorflow.core.protobuf import saved_model_pb2
-from neural_compressor.experimental import Quantization, common
 from neural_compressor.utils.utility import dump_elapsed_time
 from neural_compressor.utils import logger
 
@@ -55,10 +55,20 @@ arg_parser.add_argument("-o", "--output-graph", type=str,
                         default="output_distilbert_base_int8.pb"
                         )
 arg_parser.add_argument("-m", "--mode", type=str,
-                        choices=["benchmark", "accuracy", "tune"],
-                        help="One of three options: 'benchmark'/'accuracy'/'tune'.",
+                        choices=['performance', 'accuracy'],
+                        help="One of two options: 'performance'/'accuracy'.",
                         dest="mode",
-                        default="tune"
+                        default="performance"
+                        )
+arg_parser.add_argument("--tune", type=bool,
+                        help="whether to apply quantization",
+                        dest="tune",
+                        default=False
+                        )
+arg_parser.add_argument("--benchmark", type=bool,
+                        help="whether to do benchmark",
+                        dest="benchmark",
+                        default=False
                         )
 arg_parser.add_argument('-e', "--num-inter-threads", type=int,
                         help="The number of inter-thread.",
@@ -181,9 +191,9 @@ class Distilbert_base(object):
             logger.warning("Warmup steps greater than max possible value of 22." + \
                            " Setting to max value of ", MAX_WARMUP_STEPS)
             ARGS.warmup_steps = MAX_WARMUP_STEPS
-        if ARGS.mode in ["tune", "accuracy"]:
+        if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
             ARGS.steps = MAX_STEPS
-        elif ARGS.mode == "benchmark":
+        elif ARGS.benchmark:
             if ARGS.steps > (MAX_STEPS - MAX_WARMUP_STEPS):
                 logger.warning("Steps greater than max possible value of {}.".format(MAX_STEPS - MAX_WARMUP_STEPS))
                 logger.warning("Setting to max value of {}".format(MAX_STEPS - MAX_WARMUP_STEPS))
@@ -244,11 +254,11 @@ class Distilbert_base(object):
                 start_time = time.time()
                 pred = sess.run(output, feed_dict=feed_dict)
                 run_time = time.time() - start_time
-                if ARGS.mode in ["tune", "accuracy"]:
+                if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
                     total_correct_predictions += self.get_correct_predictions(pred, labels)
                 total_time += run_time
         time_per_batch = total_time / float(ARGS.steps / ARGS.batch_size)
-        if ARGS.mode in ["tune", "accuracy"]:
+        if ARGS.tune or (ARGS.benchmark and ARGS.mode == "accuracy"):
             accuracy = total_correct_predictions / ARGS.steps
             logger.info("Accuracy: {:.4f}".format(accuracy))
         if self.dataloader.batch_size == 1:
@@ -258,18 +268,28 @@ class Distilbert_base(object):
 
     def run(self):
         graph = self.load_graph()
-        if ARGS.mode == "tune":
-            quantizer = Quantization(ARGS.config)
-            quantizer.calib_dataloader = self.dataloader
-            quantizer.model = common.Model(graph)
-            quantizer.eval_func = self.eval_func 
-            q_model = quantizer.fit()
+        if ARGS.tune:
+            from neural_compressor import quantization
+            from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
+            accuracy_criterion = AccuracyCriterion(tolerable_loss=0.02)
+            config = PostTrainingQuantConfig(calibration_sampling_size=[500],
+                                             accuracy_criterion=accuracy_criterion)
+            q_model = quantization.fit(model=graph, conf=config, calib_dataloader=self.dataloader,
+                            eval_func=self.eval_func)
             try:
                 q_model.save(ARGS.output_graph)
             except Exception as e:
                 tf.compat.v1.logging.error("Failed to save model due to {}".format(str(e)))
-        else:
-            self.eval_func(graph)
+        elif ARGS.benchmark:
+            assert ARGS.mode == 'performance' or ARGS.mode == 'accuracy', \
+            "Benchmark only supports performance or accuracy mode."
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            if ARGS.mode == 'performance':
+                conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
+                fit(graph, conf, b_func=self.eval_func)
+            elif ARGS.mode == 'accuracy':
+                self.eval_func(graph)
 
 
 if __name__ == "__main__":

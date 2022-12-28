@@ -15,9 +15,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
-      ;;
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
@@ -30,13 +27,6 @@ function init_params {
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)
       ;;
-      --iters=*)
-          iters=$(echo ${var} |cut -f2 -d=)
-      ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
-      ;;
     esac
   done
 
@@ -45,8 +35,8 @@ function init_params {
 function define_mode {
     if [[ ${mode} == "accuracy" ]]; then
       mode_cmd=" --benchmark --accuracy_only"
-    elif [[ ${mode} == "benchmark" ]]; then
-      mode_cmd=" --steps ${iters} --benchmark"
+    elif [[ ${mode} == "performance" ]]; then
+      mode_cmd=" --benchmark"
     else
       echo "Error: No such mode: ${mode}"
       exit 1

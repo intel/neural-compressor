@@ -19,9 +19,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
-      ;;
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
@@ -33,12 +30,6 @@ function init_params {
       ;;
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)
-      ;;
-      --iters=*)
-          iters=$(echo ${var} |cut -f2 -d=)
-      ;;
-      --bfloat16=*)
-          bfloat16=$(echo ${var} |cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -62,7 +53,6 @@ function run_benchmark {
       --input-model=${input_model} \
       --data-location=${dataset_location} \
       --calib-preprocess=${BUILD_DIR}/calib_preprocess \
-      --iters=${iters} \
       --batch-size=${batch_size} \
       --mode=${mode} \
       ${extra_cmd}

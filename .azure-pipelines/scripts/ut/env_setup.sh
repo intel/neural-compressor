@@ -20,7 +20,7 @@ echo "mxnet version is $mxnet_version"
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
 elif [[ "${tensorflow_version}" == "spr-base" ]]; then
-    pip install /tf_dataset/tf_binary/221204/tensorflow*.whl
+    pip install /tf_dataset/tf_binary/221212/tensorflow*.whl
     if [[ $? -ne 0 ]]; then
       exit 1
     fi
@@ -57,11 +57,11 @@ if [[ "${onnxruntime_version}" != "" ]]; then
     pip install onnxruntime-extensions
 fi
 
-if [ "${mxnet_version}" == '1.6.0' ]; then
-    pip install mxnet-mkl==${mxnet_version}
-elif [ "${mxnet_version}" == '1.7.0' ]; then
-    pip install mxnet==${mxnet_version}.post2
-elif [ "${mxnet_version}" != '' ]; then
+if [ "${mxnet_version}" != '' ]; then
+    pip install numpy==1.23.5
+    echo "re-install pycocotools resolve the issue with numpy..."
+    pip uninstall pycocotools -y
+    pip install --no-cache-dir pycocotools
     pip install mxnet==${mxnet_version}
 fi
 

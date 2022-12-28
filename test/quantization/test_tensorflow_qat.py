@@ -2,6 +2,7 @@ import unittest
 import os
 import yaml
 import shutil
+from pkg_resources import parse_version
 
 def train_func():
     import tensorflow as tf
@@ -72,7 +73,7 @@ class TestTensorflowQAT(unittest.TestCase):
         shutil.rmtree('baseline_model',ignore_errors=True)
         shutil.rmtree('trained_qat_model',ignore_errors=True)
         
-    @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
+    @unittest.skipIf(parse_version(tf.version.VERSION) < parse_version('2.3.0'), "version check")
     def test_qat(self):
         import tensorflow as tf
         from tensorflow import keras
@@ -88,6 +89,7 @@ class TestTensorflowQAT(unittest.TestCase):
         compression_manager = training.prepare_compression('./baseline_model', config)
         compression_manager.callbacks.on_train_begin()
 
+        q_aware_model = compression_manager.model.model
         # `quantize_model` requires a recompile.
         q_aware_model.compile(optimizer='adam',
                                 loss=tf.keras.losses.SparseCategoricalCrossentropy(

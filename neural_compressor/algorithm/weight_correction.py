@@ -14,29 +14,49 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from copy import deepcopy
+
+"""Build FastBiasCorrection algorithm class."""
 
 import numpy as np
 from .algorithm import Algorithm, algorithm_registry
 
 @algorithm_registry(algorithm_type='weight_correction')
 class WeightCorrection(Algorithm):
-    """
-    correct int8 weight distribution close to fp32 weight
-    r*(W_int8 + u) -> W_fp32, r is variance ratio between fp32 and int8
-    u is the difference between fp32 and int8 channel wise, it's equal to minimize:
+    """FastBiasCorrection algorithm class.
+
+    Correct INT8 weight distribution close to FP32 weight
+    r*(W_int8 + u) -> W_fp32, r is variance ratio between FP32 and INT8
+    u is the difference between FP32 and INT8 channel wise, it's equal to minimize:
     round(scale_c * (W_fp32 + shift))/scale - r*(round(scale * W_fp32) + scale*u)/scale
     notice we can only change the first round: round(scale_c * (W_fp32 + shift))
     an empirical solution is to make:
     scale_c = r * scale and shift = u
-    with this we don't change the min/max value, and correct the weight
+    with this we don't change the min/max value, and correct the weight.
     """
+
     def __init__(self, eps=1e-5, channel_axis=1):
+        """Initialize WeightCorrection class.
+
+        Args:
+            eps (float, optional): eps. Defaults to 1e-5.
+            channel_axis (int, optional): channel_axis. Defaults to 1.
+        """
         self.eps = eps
         self.channel_axis = channel_axis
 
     def __call__(self, origin_model, q_model, adaptor, dataloader, iterations):
+        """Return the processed model via WeightCorrection algorithm.
 
+        Args:
+            origin_model: origin_model
+            q_model: q_model
+            adaptor: adaptor
+            dataloader: dataloader
+            iterations: iterations
+
+        Returns:
+            model : The processed model
+        """
         # (TODO) assume int8 model also use fp32 op list
         # in adaptor fp32 op will be mapped to corresponding int8 op
         graph_info = origin_model.graph_info
@@ -99,7 +119,7 @@ class WeightCorrection(Algorithm):
             channel_variance = np.std(t_fp32_weight, axis=1) / \
               (np.std(t_q_weight, axis=1) + self.eps)          
 
-            broad_shape = np.ones(len(fp32_weight.shape), dtype=np.int)
+            broad_shape = np.ones(len(fp32_weight.shape), dtype=np.int32)
             broad_shape[self.channel_axis] = len(channel_variance)
             channel_variance = channel_variance.reshape(broad_shape)
             variance_q_weight = q_weight * channel_variance

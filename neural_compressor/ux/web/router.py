@@ -43,9 +43,11 @@ from neural_compressor.ux.components.manage_workspace import get_default_path
 from neural_compressor.ux.components.model_zoo.list_models import list_models
 from neural_compressor.ux.components.optimization.execute_optimization import execute_optimization
 from neural_compressor.ux.components.profiling.execute_profiling import execute_profiling
+from neural_compressor.ux.utils.consts import ExecutionStatus
 from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.hw_info import HWInfo
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
+from neural_compressor.ux.utils.status_updates import get_status_update_function
 from neural_compressor.ux.web.communication import Request, Response, create_simple_response
 from neural_compressor.ux.web.exceptions import ServiceNotFoundException
 from neural_compressor.ux.web.service.benchmark import BenchmarkService
@@ -107,6 +109,9 @@ class Router:
             "optimization": RealtimeRoutingDefinition(
                 OptimizationAPIInterface.get_optimization_details,
             ),
+            "optimization/pruning_details": RealtimeRoutingDefinition(
+                OptimizationAPIInterface.get_pruning_details,
+            ),
             "optimization/add": RealtimeRoutingDefinition(
                 OptimizationAPIInterface.add_optimization,
             ),
@@ -152,6 +157,9 @@ class Router:
             "model/graph": RealtimeRoutingDefinition(get_model_graph),
             "model/graph/highlight_pattern": RealtimeRoutingDefinition(find_pattern_in_graph),
             "model/download": RealtimeRoutingDefinition(ModelService.get_model),
+            "pruning/details_wizard": RealtimeRoutingDefinition(
+                OptimizationAPIInterface.load_pruning_details_config,
+            ),
             "dict/domains": RealtimeRoutingDefinition(DictionariesAPIInterface.list_domains),
             "dict/domain_flavours": RealtimeRoutingDefinition(
                 DictionariesAPIInterface.list_domain_flavours,
@@ -235,6 +243,14 @@ class Router:
                     field_name = key.split("_")[0]
                     job_id = parse_job_id(field_name, val)
             request_id = data["request_id"]
+
+            update_status = get_status_update_function(field_name)
+            update_status(
+                {
+                    "id": data[field_name + "_id"],
+                    "status": ExecutionStatus.WIP,
+                },
+            )
             jobs_control_queue.schedule_job(
                 target=target,
                 args=args,

@@ -132,7 +132,8 @@ model = distiller.fit()
 ```
 
 ## Examples
-
-[Distillation Examples](../examples/README.md#distillation)
+[Distillation PyTorch Examples](../../examples/README.md#distillation-1)
+<br>
+[Distillation TensorFlow Examples](../../examples/README.md#distillation)
 <br>
 [Distillation Examples Results](./validated_model_list.md#validated-knowledge-distillation-examples)

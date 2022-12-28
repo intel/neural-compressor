@@ -15,6 +15,7 @@
 """Config test."""
 import unittest
 from copy import deepcopy
+from typing import List
 from unittest.mock import MagicMock, mock_open, patch
 
 import schema
@@ -425,6 +426,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(len(config.pruning.approach.weight_compression.pruners), 1)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_config_constructor_with_empty_data(self) -> None:
@@ -459,6 +461,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.pruning)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         with self.assertRaises(schema.SchemaError):
             inc_config_schema.validate(serialized_config)
 
@@ -650,7 +653,17 @@ class TestConfig(unittest.TestCase):
                             "start_epoch": 13,
                             "end_epoch": 888,
                             "pruners": [
-                                pruner,
+                                {
+                                    "initial_sparsity": 0.0,
+                                    "target_sparsity": 0.97,
+                                    "start_epoch": 0,
+                                    "end_epoch": 2,
+                                    "prune_type": "basic_magnitude",
+                                    "update_frequency": 0.1,
+                                    "names": ["layer1.0.conv1.weight"],
+                                    "pattern": "tile_pattern_1x1",
+                                    "method": "per_tensor",
+                                },
                             ],
                         },
                     },
@@ -673,6 +686,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.quantization.calibration.dataloader)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_remove_dataloader_on_empty_config(self) -> None:
@@ -695,6 +709,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.evaluation.accuracy)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_remove_accuracy_metric_on_empty_config(self) -> None:
@@ -750,6 +765,7 @@ class TestConfig(unittest.TestCase):
         )
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_evaluation_dataset_path_skips_no_dataset_location(self) -> None:
@@ -772,6 +788,7 @@ class TestConfig(unittest.TestCase):
         )
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_evaluation_dataset_path_on_empty_config(self) -> None:
@@ -895,6 +912,7 @@ class TestConfig(unittest.TestCase):
         )
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_quantization_dataset_path_skips_no_dataset_location(self) -> None:
@@ -917,6 +935,7 @@ class TestConfig(unittest.TestCase):
         )
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_quantization_dataset_path_on_empty_config(self) -> None:
@@ -936,6 +955,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(31337, config.quantization.calibration.dataloader.batch_size)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_workspace(self) -> None:
@@ -947,6 +967,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual("new/workspace/path", config.tuning.workspace.path)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_accuracy_goal(self) -> None:
@@ -959,6 +980,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(config.tuning.accuracy_criterion.absolute)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_absolute_accuracy_goal(self) -> None:
@@ -974,6 +996,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0.1234, config.tuning.accuracy_criterion.absolute)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_accuracy_goal_to_negative_value(self) -> None:
@@ -987,6 +1010,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(original_accuracy_goal, config.tuning.accuracy_criterion.relative)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_accuracy_goal_on_empty_config(self) -> None:
@@ -1008,6 +1032,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(1, config.evaluation.accuracy.metric.param)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_accuracy_metric_on_empty_config(self) -> None:
@@ -1034,7 +1059,7 @@ class TestConfig(unittest.TestCase):
             {
                 "SquadV1": {"param1": True},
             },
-            config.evaluation.accuracy.postprocess.transform,
+            config.evaluation.accuracy.postprocess.transform.serialize(),
         )
 
         self.assertEqual(
@@ -1100,6 +1125,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual("quant_aware_training", config.quantization.approach)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_quantization_approach_on_empty_config(self) -> None:
@@ -1135,6 +1161,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual("new sampling size", config.quantization.calibration.sampling_size)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_quantization_sampling_size_on_empty_config(self) -> None:
@@ -1154,6 +1181,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(1234, config.evaluation.performance.warmup)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_performance_warmup_to_negative_value(self) -> None:
@@ -1167,6 +1195,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(original_performance_warmup, config.evaluation.performance.warmup)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_performance_warmup_on_empty_config(self) -> None:
@@ -1186,6 +1215,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(1234, config.evaluation.performance.iteration)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_performance_iterations_to_negative_value(self) -> None:
@@ -1199,6 +1229,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(original_performance_iterations, config.evaluation.performance.iteration)
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     def test_set_performance_iterations_on_empty_config(self) -> None:
@@ -1364,17 +1395,20 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(expected.serialize(), config.serialize())
 
         serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
         inc_config_schema.validate(serialized_config)
 
     @patch("os.makedirs")
     def test_dump(self, mocked_makedirs: MagicMock) -> None:
         """Test dump."""
         config = Config(self.predefined_config)
+        serialized_config = config.serialize()
+        serialized_config = replace_pruners(serialized_config, [pruner])
 
         yaml.add_representer(float, float_representer)  # type: ignore
         yaml.add_representer(Pruner, pruner_representer)  # type: ignore
         expected_yaml = yaml.dump(
-            config.serialize(),
+            serialized_config,
             indent=4,
             default_flow_style=None,
             sort_keys=False,
@@ -1386,6 +1420,23 @@ class TestConfig(unittest.TestCase):
             mocked_open.assert_called_once_with("path to yaml file", "w")
             mocked_open().write.assert_called_once_with(expected_yaml)
             mocked_makedirs.assert_called_once()
+
+
+def replace_pruners(serialized_config: dict, pruners_list: List[Pruner]) -> dict:
+    """Replace pruners in serialized list."""
+    try:
+        serialized_config["pruning"]["approach"]["weight_compression"][  # type: ignore
+            "pruners"
+        ] = pruners_list
+    except (KeyError, AttributeError):
+        pass
+    try:
+        serialized_config["pruning"]["approach"]["weight_compression_pytorch"][  # type: ignore
+            "pruners"
+        ] = pruners_list
+    except (KeyError, AttributeError):
+        pass
+    return serialized_config
 
 
 if __name__ == "__main__":

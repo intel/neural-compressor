@@ -18,6 +18,7 @@ import copy
 import re
 import numpy as np
 from collections import UserDict
+from packaging.version import Version
 from ...utils import logger
 from ...utils.utility import LazyImport, CpuInfo
 
@@ -609,7 +610,10 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
         from torch.quantization.quantize_fx import prepare_fx,convert_fx
         # do quantization
         if adaptor.sub_module_list is None:
-            tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
+            if adaptor.version.release >= Version("1.13.0").release:  # pragma: no cover
+                tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inp)
+            else:
+                tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
         else:
             PyTorch_FXAdaptor.prepare_sub_graph(adaptor.sub_module_list, fx_op_cfgs, \
                                                 tmp_model, prefix='')
@@ -658,7 +662,10 @@ def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
         from torch.quantization.quantize_fx import prepare_fx,convert_fx
         # do quantization
         if adaptor.sub_module_list is None:
-            tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
+            if adaptor.version.release >= Version("1.13.0").release:  # pragma: no cover
+                tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inp)
+            else:
+                tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
         else:
             PyTorch_FXAdaptor.prepare_sub_graph(adaptor.sub_module_list, fx_op_cfgs, \
                                                 tmp_model, prefix='')
@@ -722,7 +729,10 @@ def get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg):
             from torch.quantization.quantize_fx import prepare_fx,convert_fx
             # do quantization
             if adaptor.sub_module_list is None:
-                tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
+                if adaptor.version.release >= Version("1.13.0").release:  # pragma: no cover
+                    tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inp)
+                else:
+                    tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
             else:
                 PyTorch_FXAdaptor.prepare_sub_graph(adaptor.sub_module_list, fx_op_cfgs, \
                                                     tmp_model, prefix='')
@@ -750,3 +760,12 @@ def get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg):
     ordered_ops = sorted(fallback_order.keys(), key=lambda key: fallback_order[key], \
                                             reverse=False)
     return ordered_ops
+
+def get_torch_version():
+    from packaging.version import Version
+    try:
+        torch_version = torch.__version__.split('+')[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, 'Got an unknown version of torch: {}'.format(e)
+    version = Version(torch_version)
+    return version

@@ -96,6 +96,8 @@ class ModelConversion():
         cfg = self.conf.usr_cfg
         framework_specific_info.update(
             {'name': cfg.model.name,
+             'backend': 'default',
+             'format': 'default',
              'device': cfg.device,
              'fake_quant': True,
              'inputs': cfg.model.inputs,

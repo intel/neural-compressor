@@ -33,7 +33,7 @@ def register_pattern(name):
     Make sure that this Pattern class can be registered in PATTERNS.
 
     Args:
-        name: A string. Define the pattern type name which will be included in a pruning process.
+        name: A string defining the pattern type name to be used in a pruning process.
 
     Returns:
         cls: The class of register.
@@ -53,8 +53,8 @@ def get_pattern(config, modules):
     Get a Pattern object from PATTERNS.
 
     Args:
-        config: A config dict object. Contains the pattern information.
-        modules: torch neural network modules, which will be pruned with the pattern
+        config: A config dict object that contains the pattern information.
+        modules: Torch neural network modules to be pruned with the pattern.
 
     Returns:
         A Pattern object.
@@ -77,25 +77,25 @@ SparsityInfo = namedtuple("SparsityInfo", ['zero_cnt', 'total_cnt', 'sparsity_ra
 class BasePattern:
     """Pruning Pattern.
 
-    It defines the basic pruning unit and how this unit will be pruned during pruning, e.g. 4x1, 2:4
+    It defines the basic pruning unit and how this unit will be pruned during pruning, e.g. 4x1, 2:4.
     
     Args:
-        config: A config dict object. Contains the pattern information.
-        modules: torch neural network modules, which will be pruned with the pattern
+        config: A config dict object that contains the pattern information.
+        modules: Torch neural network modules to be pruned with the pattern.
 
     Attributes:
-        pattern: A config dict object. The pattern related part in args config.
-        is_global: A bool. Whether the pruning take global pruning option.
-                   Global pruning means that all pruning layers are gathered to calculate pruning criterion.
-                   Local pruning, on the contrast, means that pruning layers are to calculate criterion individually.
-        keep_mask_layers:A dict. the layers whose mask will not be updated
-        invalid_layers: the layers whose shape don't fit the patten
-        modules: torch neural network modules, which will be pruned with the pattern
-        config: A config dict object. Contains all the information including the pattern's.
-        max_sparsity_ratio_per_op: A float. The maximum sparsity that one layer could reach
-        min_sparsity_ratio_per_op: A float. The minimum sparsity that one layer could reach
-        target_sparsity: A float. The sparsity ratio of the modules will be reached after pruning.
-
+        pattern: A config dict object that includes information of the pattern.    
+        is_global:  A bool determining whether the pruning takes global pruning option.
+                    Global pruning means that pruning scores by a pruning criterion are evaluated in all layers.
+                    Local pruning, by contrast, means that pruning scores by the pruning criterion are evaluated 
+                        in every layer individually.
+        keep_mask_layers:A dict that includes the layers whose mask will not be updated.
+        invalid_layers: The layers whose shapes don't fit the pattern.
+        modules: Torch neural network modules to be pruned with the pattern.
+        config: A config dict object that contains all the information including the pattern's.
+        max_sparsity_ratio_per_op: A float representing the maximum sparsity that one layer could reach.
+        min_sparsity_ratio_per_op: A float representing the minimum sparsity that one layer could reach.
+        target_sparsity: A float representing the sparsity ratio of the modules after pruning.
     """
 
     def __init__(self, config, modules):
@@ -116,12 +116,11 @@ class BasePattern:
         """Reduce the data along the given dimension.
         
         Args:
-            data: The input data
-            dim: The reduced axis
+            data: The input data.
+            dim: The reduced axis.
 
         Returns:
-            The reduced tensor
-
+            The reduced tensor.
         """
         name = self.config['criterion_reduce_type']
         if name == "mean":
@@ -137,13 +136,13 @@ class BasePattern:
         """Generate the weight masks according to the weight score and the current target sparsity ratio.
 
         Args:
-           scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
-           target_sparsity_ratio: A float. After pruning, the sparsity of the modules will reach this value.
-           pre_masks: A dict{"layer_name": Tensor}. The previous masks generated after the last pruning step.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            target_sparsity_ratio: A float representing the sparsity of the modules after pruning.
+            pre_masks: A dict{"layer_name": Tensor} that stores the masks generated at last pruning step.
 
         Returns:
-           A dict with the identical size as pre_masks. Update the 0/1 values in it. 1 means keep, 0 means drop
-
+            A dict with the identical size as pre_masks and its 0/1 values are updated. 
+                1 means unpruned and 0 means pruned.
         """
         if self.is_global:
             return self.get_masks_global(scores, target_sparsity_ratio, pre_masks)
@@ -158,13 +157,13 @@ class BasePattern:
         """Generate the weight masks for local pruning.
         
         Args:
-           scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
-           target_sparsity_ratio: A float. After pruning, the sparsity of the modules will reach this value.
-           pre_masks: A dict{"layer_name": Tensor}. The previous masks generated after the last pruning step.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            target_sparsity_ratio: A float. After pruning, the sparsity of the modules will reach this value.
+            pre_masks: A dict{"layer_name": Tensor}. The previous masks generated at the last pruning step.
 
         Returns:
-           A dict with the identical size as pre_masks. Update the 0/1 values in it. 1 means keep, 0 means drop
-
+            A dict with the identical size as pre_masks and its 0/1 values are updated. 
+                1 means unpruned and 0 means pruned.
         """
         masks = {}
         if isinstance(self, PatternNxM) and not isinstance(self.block_size, dict):
@@ -180,8 +179,8 @@ class BasePattern:
         """Generate a mask for one layer with the exact_sparsity_ratio.
 
         Args:
-            score: A Tensor.  the pruning scores of each weight elements.
-            exact_sparsity_ratio: A float. After pruning, the layer's sparsity will reach this value.
+            score: A Tensor representing the pruning scores of each weight elements.
+            exact_sparsity_ratio: A float representing the layer's final sparsity ratio.
 
         Returns:
             A Tensor with the identical size as score. a new mask.
@@ -200,10 +199,10 @@ class BasePattern:
     def get_block_size_dict(self, data):
         """Get pattern size for each module.
         
-        this is mainly for per-channel pruning when each module has different pruning size
+        This is mainly for per-channel pruning when each module has different pruning size.
         
         Args:
-            data: the input data
+            data: the input data.
 
         Returns:
             To be implemented in subclasses.
@@ -212,17 +211,15 @@ class BasePattern:
 
     def get_sparsity_ratio(self, pre_masks, return_dict=False):
         """Calculate the zero elements' ratio in pre_masks.
-        
-        please be noted that the implementations in subclass are little tricky
-        TODO: need to refactor this function
 
         Args:
-            pre_masks: Dict{"layer_name": Tensor}. The masks generated after the last pruning step.
-            return_dict: Whether need to return more information like zero_cnt and total_cnt
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
+
         Returns:
-            A float. The zero elements' ratio in pre_masks.
+            A float representing the zero elements' ratio in pre_masks.
         """
-        zero_cnt = 0
+        zero_cnt = 0 # This function might need to refactor in subclass.
         total_cnt = 0
         for key in pre_masks.keys():
             pre_mask = pre_masks[key]
@@ -237,7 +234,7 @@ class BasePattern:
         """Obtain masks from original weight map according the pattern and weights' zero positions.
 
         Args:
-            modules: a dict{“layer_name”: Tensor}. Store weights.
+            modules: a dict {'layer_name': Tensor} that stores weights.
 
         Returns:
             A dict with the identical size as modules, containing pattern lock masks.
@@ -263,11 +260,11 @@ class BasePattern:
         """Update the number of parameters yet to be pruned.
         
         Args:
-            masks: the current pruning mask
-            target_sparsity_ratio: A float. After pruning, the sparsity of the modules will reach this value.
+            masks: the current pruning mask.
+            target_sparsity_ratio: A float representing the final sparsity of the modules.
 
         Returns:
-            An int. How many weights still need to be pruned to achieve the target sparsity ratio
+            An int representing the number of weights left to be pruned to reach the target sparsity ratio.
         """
         self.total_params_cnt = self.get_sparsity_ratio(masks, return_dict=True)["total_cnt"]
         to_prune_cnt = int(self.total_params_cnt * target_sparsity_ratio)
@@ -281,14 +278,12 @@ class BasePattern:
     def get_sparsity_ratio_each_layer(self, masks):
         """Calculate the sparsity ratio of each layer.
         
-        TODO: need to refactor this function
-        
         Args:
-            masks: The current weight masks
+            masks: The current weight masks.
 
         Returns:
-             infos: the sparsity information for each layer, sparsity_ratio, zero_point and total cnts
-             SparsityInfo: the sparsity information for the model
+            infos: the sparsity information for each layer including sparsity_ratio, zero_point and total cnts.
+            SparsityInfo: the sparsity information for the model.
         """
         infos = {}
         zero_cnts = 0
@@ -310,19 +305,19 @@ class BasePattern:
     def adjust_ratio(self, masks: dict, layer_name: str, key_new_sparsity: SparsityInfo,
                      max_sparsity_ratio: float, min_sparsity_ratio: float, \
                      final_target_sparsity_ratio: float):
-        """Limits the sparsity of a layer to the set threshold interval.
+        """Adjust the sparsity of a layer based on threshold.
         
         Args:
-            masks: the weight masks
-            layer_name: the to be examined layer name
-            key_new_sparsity: the proposal ratio for the layer
-            max_sparsity_ratio: A float. The maximum sparsity that one layer could reach
-            min_sparsity_ratio: A float. The minimum sparsity that one layer could reach
-            final_target_sparsity_ratio: the final target sparsity ratio
+            masks: The weight masks.
+            layer_name: The layer to be examined.
+            key_new_sparsity: The proposed ratio for the layer.
+            max_sparsity_ratio: A float representing the maximum sparsity that one layer could reach.
+            min_sparsity_ratio: A float representing the minimum sparsity that one layer could reach.
+            final_target_sparsity_ratio: The final target sparsity ratio.
 
         Returns:
-            A bool indicating if the ratio needs to be adjusted and the adjusted sparsity ratio.
-            adjust_sparsity_ratio: the ratio adjusted
+            A bool indicating if the ratio needs to be adjusted.
+            adjust_sparsity_ratio: The adjusted sparsity ratio.
         """
         need_adjust = False
         adjust_zero_cnt = key_new_sparsity.zero_cnt
@@ -385,12 +380,12 @@ class PatternNxM(BasePattern):
     during one pruning step.
     
     Args:
-        config: A config dict object. Contains the pattern information.
+        config: A config dict object that contains the pattern information.
         
     Attributes:
-            block_size: A list of two Integers. The height and width of the block.
-            Please be aware that the vertical direction of a Linear layer's weight in PyTorch refer to output channel.
-            Because PyTorch's tensor matmul has a hidden transpose operation.
+            block_size: A list of two integers representing the height and width of the block.
+            Please note that the vertical direction of a Linear layer's weight refers to the output channel.
+                because PyTorch's tensor matmul has a hidden transpose operation.
     """
 
     def __init__(self, config, modules):
@@ -414,12 +409,11 @@ class PatternNxM(BasePattern):
         """Calulate the zero elements' ration in pre_masks.
         
         Args:
-            data: Dict{"layer_name": Tensor}. Store weights or scores.
+            data: Dict{"layer_name": Tensor} that stores weights or scores.
             
         Returns:
-            A dict. Dict{"layer_name": [block_size_1, block_size_2]}.
-                Containing layers' corresponding pruning pattern's block shape.
-                Because in channel-wise pruning different layers can have different pruning patterns.
+            A dict. Dict{"layer_name": [block_size_1, block_size_2]} containing block shapes of each layer.
+                In channel-wise pruning different layers can have different pruning patterns.
         """
         data = self.modules
         block_sizes_dict = {}
@@ -452,7 +446,15 @@ class PatternNxM(BasePattern):
                 logger.warning(f"{key} shape {data.shape} cannot be divided by {self.pattern}")
 
     def get_reduced_masks_from_data(self, data, key):
-        """Obtain the unpruned weights and reshape according to the block_size."""
+        """Obtain the unpruned weights and reshape according to the block_size.
+        
+        Args:
+            data: Input.
+            key: The layer name.
+        
+        Returns:
+            The unpruned weights.
+        """
         assert key not in self.invalid_layers
         block_size = self.block_size[key]
         data = self._reshape_orig_to_2dims(data)
@@ -467,10 +469,11 @@ class PatternNxM(BasePattern):
         """Please note that the zero cnt and total cnt are all block_wise for supporting channel-wise pruning.
 
         Args:
-           pre_masks: Dict{"layer_name": Tensor}. The masks generated after the last pruning step.
+            pre_masks: Dict{"layer_name": Tensor} representing the masks generated after the last pruning step.
+            return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
 
         Returns:
-            A float. Calculate the zero elements' ratio in pre_masks.
+            A float representing the zero elements' ratio in pre_masks.
         """
         zero_cnt = 0
         total_cnt = 0
@@ -490,7 +493,15 @@ class PatternNxM(BasePattern):
             return sparsity_ratio
 
     def get_sparsity_ratio_progressive(self, pre_masks, return_dict=False):
-        """Calculate the sparsity ratio of each layer."""
+        """Calculate the sparsity ratio of each layer.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
+        
+        Returns:
+            A float representing the zero elements' ratio in pre_masks.
+        """
         zero_cnt = 0
         total_cnt = 0
         for key in pre_masks.keys():
@@ -502,13 +513,13 @@ class PatternNxM(BasePattern):
         return (zero_cnt / total_cnt)
 
     def _reshape_orig_to_2dims(self, data):
-        """Mainly for processing layer dims not equal to 2, for example conv layer.
+        """Process layers that are not two-dimensional(e.g conv layer).
 
         Args:
-            data: the input
+            data: Input.
             
         Returns:
-            a reshaped data
+            Reshaped data.
         """
         ##TODO need to verify whether it's ok for transposed conv
         if len(data.shape) == 4:
@@ -517,14 +528,14 @@ class PatternNxM(BasePattern):
         return data
 
     def _reshape_2dims_to_orig(self, data, orig_shape):
-        """Mainly for recover layer dims not equal to 2, for example conv layer.
+        """Recover layers that are not two-dimensional(e.g conv layer).
 
         Args:
-            data: input
-            orig_shape: target shape
+            data: Input.
+            orig_shape: Target shape.
             
         Returns:
-            a reshaped data
+            Reshaped data.
         """
         if len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3],
@@ -536,11 +547,11 @@ class PatternNxM(BasePattern):
         """Reshape the data(s1,s2) to [s1/N,N,s2,s2/M].
 
         Args:
-            data: the input
-            key: the layer name
+            data: The input.
+            key: The layer name.
             
         Returns:
-            The reshaped input tensor.
+            Reshaped input tensor.
         """
         block_size = self.block_size[key]
         data = self._reshape_orig_to_2dims(data)
@@ -554,12 +565,12 @@ class PatternNxM(BasePattern):
         """Reshape the data [s1/N,s2/M] to [s1,s2], also permute dims for conv layer.
 
         Args:
-            data:
-            key:
-            orig_shape:
+            data: Input.
+            key: The layer name.
+            orig_shape: The original shape of the layer.
             
         Returns:
-            Original shape data
+            Data of its original shape.
         """
         block_size = self.block_size[key]
         data = data.repeat_interleave(block_size[0], dim=0).repeat_interleave(block_size[1], dim=-1)
@@ -567,7 +578,14 @@ class PatternNxM(BasePattern):
         return data
 
     def reduce_scores(self, scores):
-        """Recalculate the pruning scores after reducing the data."""
+        """Recalculate the pruning scores after reducing the data.
+        
+        Args:
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+
+        Returns:
+            The reduced pruning scores.
+        """
         new_scores = {}
         for key in scores.keys():
             if key in self.invalid_layers:
@@ -595,17 +613,18 @@ class PatternNxM(BasePattern):
         """Generate masks for layers.
 
         Gather all layer's scores together and calculate a common threshold.
-        This threshold will be applied for all layers.
+        This threshold will be applied to all layers.
         
         Args:
-            scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
-            cur_target_sparsity_ratio: A float. After pruning, the model's sparsity will reach this value.
-            pre_masks: A dict{"layer_name": Tensor}. The masks generated after the last pruning step.
-            max_sparsity_ratio_per_op: A float. The maximum sparsity that one layer can reach.
-            keep_pre_masks: A bool. If True, keep the masks unchanged.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            cur_target_sparsity_ratio: A float representing the model's sparsity after pruning.
+            pre_masks: A dict{"layer_name": Tensor} that stores the masks generated at the last pruning step.
+            max_sparsity_ratio_per_op: A float representing the maximum sparsity that one layer can reach.
+            keep_pre_masks: A bool representing if the masks should remain unchanged.
             
         Returns:
-            A dict with the identical size as pre_masks. Update the 0/1 values in it.
+            A dict with the identical size as pre_masks and its 0/1 values are updated. 
+                1 means unpruned and 0 means pruned.
         """
         ##keep the masks if the layer exceed max sparsity ratio
 
@@ -667,10 +686,10 @@ class PatternNxM(BasePattern):
         return masks
 
     def get_pattern_lock_masks(self, modules):
-        """Obtain masks from original weight map, by masking where weights' are zero.
+        """Obtain masks from original weight map by masking the zero-valued weights.
         
         Args:
-            modules: A dict{“layer_name”: Tensor}. Store weights.
+            modules: A dict{"layer_name": Tensor} that stores weights.
             
         Returns:
             A dict with the identical size as modules, containing pattern lock masks.
@@ -690,7 +709,14 @@ class PatternNxM(BasePattern):
 
     # ---------------progressive related--------------------
     def count_new_masked_cnts(self, new_added_masks):
-        """Cound the number of elements to be masked."""
+        """Count the number of elements to be masked.
+        
+        Args:
+            new_added_masks: A dict {"layer_name": Tensor} that stores the added masks.
+
+        Returns:
+            The number of masked weights.
+        """
         # count how many elements are to masked,
         new_masked_cnts = 0
         for key in new_added_masks.keys():
@@ -698,9 +724,16 @@ class PatternNxM(BasePattern):
         return new_masked_cnts
 
     def update_new_added_masks(self, pre_masks, cur_masks):
-        """Obtain the new set-to-zero mask during a pruning procedure.
+        """Obtain the new set-to-zero masks during a pruning procedure.
 
-        Pre_masks, cur_masks should have identical keys bacause they stands for one model.
+        Pre_masks, cur_masks should have identical keys bacause they represent the same model.
+
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+        
+        Returns:
+            A dict {"layer_name": Tensor} that stores the added masks.
         """
         # obtain the new set-to-zero mask during a pruning procedure.
         # pre_masks, cur_masks should have identical keys bacause they stands for one model.
@@ -714,8 +747,18 @@ class PatternNxM(BasePattern):
         return new_added_masks
 
     def update_progressive_masks(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
-        """Generate the progressive masks."""
-        # Generate the progressive masks
+        """Generate the progressive masks.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
         use_global = progressive_configs["use_global"]
         if use_global:
             return self.update_progressive_masks_global(pre_masks, cur_masks, scores, \
@@ -725,7 +768,17 @@ class PatternNxM(BasePattern):
                                                        progressive_step, progressive_configs)
 
     def update_progressive_masks_linear(self, pre_masks, cur_masks, progressive_step, progressive_configs):
-        """Generate the progressive masks along the block's larger dimension."""
+        """Generate the progressive masks along the block's larger dimension.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
         progressive_steps = progressive_configs["progressive_steps"]
         progressive_masks = {}
         new_added_masks = self.update_new_added_masks(pre_masks, cur_masks)
@@ -754,7 +807,18 @@ class PatternNxM(BasePattern):
         return progressive_masks
 
     def update_progressive_masks_scores(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
-        """Generate the progressive masks based on scores."""
+        """Generate the progressive masks based on scores.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
         progressive_steps = progressive_configs["progressive_steps"]
         progressive_masks = {}
         new_added_masks = self.update_new_added_masks(pre_masks, cur_masks)
@@ -790,7 +854,18 @@ class PatternNxM(BasePattern):
         return progressive_masks
 
     def update_progressive_masks_local(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
-        """Generate progressive masks in a local pruning domain."""
+        """Generate progressive masks in a local pruning domain.
+        
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
+        """
         progressive_type = progressive_configs["progressive_type"]
         if progressive_type == "linear":
             progressive_masks = self.update_progressive_masks_linear(pre_masks, cur_masks, \
@@ -803,9 +878,17 @@ class PatternNxM(BasePattern):
         return progressive_masks
 
     def update_progressive_masks_global(self, pre_masks, cur_masks, scores, progressive_step, progressive_configs):
-        """Gather all layer's scores together and calculate a common threshold.
+        """Gather all layer's scores to obtain a threshold that would be applied to all layers.
         
-        This threshold will be applied for all layers.
+        Args:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            progressive_step: An integer representing the number of current step in progressive pruning.
+            progressive_configs: A dict that stores configurations of progressive pruning.
+        
+        Returns:
+            A dict{"layer_name": Tensor} that stores the masks generated in progressive pruning.
         """
         progressive_steps = progressive_configs["progressive_steps"]
         progressive_masks = {}
@@ -851,10 +934,10 @@ class PatternNInM(BasePattern):
     https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
     
     Args:
-        config: A config dict object. Contains the pattern information.
+        config: A config dict object that contains the pattern information.
         
     Attributes:
-        N: The number of elements to be prune in a weight sequence.
+        N: The number of elements to be pruned in a weight sequence.
         M: The size of the weight sequence.
     """
 
@@ -867,18 +950,31 @@ class PatternNInM(BasePattern):
         self.check_layer_validity(self.modules, (self.N, self.M))
 
     def check_layer_validity(self, datas: dict, block_size: tuple):
-        """Check if a layer is valid for this block_size."""
+        """Check if a layer is valid for this block_size.
+        
+        Args:
+            datas: A dict object containing the weights for all layers.
+            block_size: A tuple representing the size of the pattern block.
+        """
         self.invalid_layers = []
         for key in datas.keys():
             data = datas[key].weight
             data = self._reshape_orig_to_2dims(data)
-            data = data.shape
-            if data[1] % block_size[1] != 0:
+            shape = data.shape
+            if shape[1] % block_size[1] != 0:
                 self.invalid_layers.append(key)
-                logger.warning(f"{key} shape {data.shape} cannot be divided by {self.pattern}")
+                logger.warning(f"{key} shape {shape} cannot be divided by {self.pattern}")
 
     def get_reduced_masks_from_data(self, data, key):
-        """Obtain the unpruned weights and reshape according to the block_size."""
+        """Obtain the unpruned weights and reshape according to the block_size.
+        
+        Args:
+            data: Input.
+            key: The layer name.
+
+        Returns:
+            A tensor representing the unpruned weights.
+        """
         data = self._reshape_orig_to_2dims(data)
         shape = data.shape
         M = self.M
@@ -890,7 +986,15 @@ class PatternNInM(BasePattern):
         return reduced_mask
 
     def get_least_ninm_mask_from_data(self, score):
-        """Generate the least N scores in M."""
+        """Generate the least N scores in M.
+        
+        Args:
+            score: the pruning scores of weights.
+
+        Returns:
+            A dict with the identical size as pre_masks and its 0/1 values are updated. 
+                1 means unpruned and 0 means pruned.
+        """
         current_score = score
         M = self.M
         N = self.N
@@ -911,18 +1015,17 @@ class PatternNInM(BasePattern):
         return mask
 
     def get_sparsity_ratio(self, pre_masks, return_dict=False):
-        """Please noted that the zero cnt and total cnt are all block_wise for supporting channel-wise pruning.
+        """Please note that the zero cnt and total cnt are all block_wise for supporting channel-wise pruning.
 
-        The return sparsity ratio is elementwised(confused, TODO).
+        The return sparsity ratio is elementwised.
         
         Args:
-            pre_masks:
-            return_dict:
+            pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+            return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
             
         Returns:
             An elementwise sparisty ratio.
         """
-        ##simply use elemwise sparsity
         zero_cnt = 0
         total_cnt = 0
         for key in pre_masks.keys():
@@ -941,19 +1044,43 @@ class PatternNInM(BasePattern):
             return sparsity_ratio
 
     def _reshape_orig_to_2dims(self, data):
+        """Process layers that are not two-dimensional(e.g conv layer).
+
+        Args:
+            data: Input.
+            
+        Returns:
+            Reshaped data.
+        """
         if len(data.shape) == 4:  ##TODO need to verify whether it's ok for transposed conv
             data = data.permute(0, 2, 3, 1)  ##cout,k,k,cin
             data = data.reshape(data.shape[0], -1)
         return data
 
     def _reshape_2dims_to_orig(self, data, orig_shape):
+        """Recover layers that are not two-dimensional(e.g conv layer).
+
+        Args:
+            data: Input.
+            
+        Returns:
+            Reshaped data.
+        """
         if len(orig_shape) == 4:
             data = data.reshape(orig_shape[0], orig_shape[2], orig_shape[3], orig_shape[1])
             data = data.permute(0, 3, 1, 2)
         return data
 
     def reshape_orig_to_pattern(self, data, key):
-        """Reshape the data based on the pruning pattern."""
+        """Reshape the data based on the pruning pattern.
+        
+        Args:
+            data: Input.
+            key: layer name.
+        
+        Returns:
+            Reshaped data.
+        """
         data = self._reshape_orig_to_2dims(data)
         shape = data.shape
         new_shape = [shape[0], shape[1] // self.M, self.M]
@@ -961,12 +1088,28 @@ class PatternNInM(BasePattern):
         return data
 
     def reshape_reduced_to_orig(self, data, key, orig_shape):
-        """Reshape the reduced data to its original shape."""
+        """Reshape the reduced data to its original shape.
+        
+        Args:
+            data: Input.
+            key: The layer name.
+            orig_shape: The original shape of the layer.
+            
+        Returns:
+            Data of its original shape.
+        """
         data = data.repeat_interleave(self.M, dim=-1)
         return self._reshape_2dims_to_orig(data, orig_shape)
 
     def reduce_scores(self, scores):
-        """Calculate the pruning scores after reducing the data and obtain the least N scores in M."""
+        """Calculate the pruning scores after reducing the data and obtain the least N scores in M.
+        
+        Args:
+            scores: Pruning scores of weights.
+
+        Returns:
+            Updated pruning scores and the least N scores in M.
+        """
         ##to get the least N scores in M
         M = self.M
         N = self.N
@@ -994,13 +1137,13 @@ class PatternNInM(BasePattern):
         """Get the elementwise mask per threshold.
 
         Args:
-            score:
-            threshold:
-            block_size:
-            least_m_in_m_masks:
+            score: A tensor that stores the pruning scores of weights.
+            threshold: A float used to determine whether to prune a weight.
+            block_size: A list of two integers representing the height and width of the block.
+            least_m_in_m_masks: A tensor representing the least N scores in M.
             
         Returns:
-            mask:
+            mask: The elementwise pruning mask.
         """
         zero = torch.tensor([0.]).to(score.device)
         one = torch.tensor([1.]).to(score.device)
@@ -1019,13 +1162,14 @@ class PatternNInM(BasePattern):
         This threshold will be applied for all layers.
         
         Args:
-            scores: A dict{“layer_name”: Tensor}. Store the pruning scores of weights.
-            target_sparsity_ratio: A float. After pruning, the model's sparsity will reach this value.
-            pre_masks: A dict{"layer_name": Tensor}. The masks generated after the last pruning step.
-            max_sparsity_ratio_per_op: A float. The maximum sparsity that one layer can reach.
+            scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+            target_sparsity_ratio: A float representing the model's final sparsity.
+            pre_masks: A dict{"layer_name": Tensor} representing the masks generated after the last pruning step.
+            max_sparsity_ratio_per_op: A float representing the maximum sparsity that one layer can reach.
             
         Returns:
-            A dict with the identical size as pre_masks. Update the 0/1 values in it.
+            A dict with the identical size as pre_masks and its 0/1 values are updated. 
+                1 means unpruned and 0 means pruned.
         """
         masks = pre_masks
 
@@ -1091,7 +1235,7 @@ class PatternNInM(BasePattern):
         """Obtain masks from original weight map, by masking where weights' are zero.
         
         Args:
-            modules: A dict{“layer_name”: Tensor}. Store weights.
+            modules: A dict{"layer_name": Tensor} that stores weights.
             
         Returns:
             A dict with the identical size as modules, containing pattern lock masks.

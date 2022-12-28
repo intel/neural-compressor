@@ -67,6 +67,8 @@ def enable(
     cache_load_transformers=True,
     optimum_quant_config="", # only for HF optimum optimizations, yaml or hub path
     use_inc=False,
+    use_modular=False,
+    modular_item="",
 ):
     """enable a feature or a couple of features for the code
 
@@ -141,9 +143,11 @@ def enable(
         "tensorflow_amp",
         "keras_amp",
         "tensorflow_inc",
+        "keras_inc",
         "onnx_inc_static_quant_qlinear",
         "onnx_inc_static_quant_qdq",
         "onnx_inc_dynamic_quant",
+        "inc_auto",
     ]
     '''
 
@@ -179,6 +183,9 @@ def enable(
     globals.cache_load_transformers = cache_load_transformers
     globals.optimum_quant_config = optimum_quant_config
 
+    globals.use_modular = use_modular
+    globals.modular_item = modular_item
+    
     # move "pytorch_benchmark" to the last
     from .utils.common import move_element_to_last
     features = move_element_to_last(features, "pytorch_benchmark")
@@ -228,6 +235,19 @@ def enable(
 
     ## Feature Transformation
     for idx_feature, feature in enumerate(features):
+
+        # "inc_auto" auto selection of feature according to fwk
+        if feature == "inc_auto":
+            from .coders.autoinc import domain
+            code_domain = domain.determine_domain(globals.list_code_path[0])
+            if code_domain == "keras_script":
+                feature = "keras_inc"
+            elif code_domain == "tensorflow_keras_model":
+                feature = "tensorflow_inc"
+            elif code_domain == "onnx":
+                feature = "onnx_inc_dynamic_quant"
+            else:
+                feature = "pytorch_inc_dynamic_quant"
 
         # reset globals
         globals.reset_globals()
@@ -414,6 +434,8 @@ def enable(
         whole_patch_user_code = ""
         for path in globals.list_code_path[0:num_user_code_path]:
             path_transformed = path[:-3] + "_nc_enabled.py"
+            if path_transformed[-25:] == "_nc_enabled_nc_enabled.py":
+                continue
             cmd_gen_patch = "diff -up " + path + " " + path_transformed
             sp_gen_patch = subprocess.Popen(
                 cmd_gen_patch, env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec
@@ -433,7 +455,7 @@ def enable(
             sp_overwrite = subprocess.Popen(
                 "patch -d/ -p0 < " + abs_patch_path, env=os.environ, shell=True, stdout=subprocess.PIPE)  # nosec
             sp_overwrite.wait()
-            os.remove(abs_patch_path)  # remove patch after overwrite
+            # os.remove(abs_patch_path)  # remove patch after overwrite
 
         if patch_imports:
             whole_patch_import_modules = ""

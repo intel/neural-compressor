@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Fefine the tuning strategy that uses tpe search in tuning space."""
 import copy
 import os
 from pathlib import Path
@@ -83,9 +84,10 @@ class TpeTuneStrategy(TuneStrategy):
     """
     def __init__(self, model, conf, q_dataloader, q_func=None,
                  eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
+        """Initialize the tpe tuning strategy if the user specified to use it."""
         assert conf.usr_cfg.quantization.approach == 'post_training_static_quant', \
                "TPE strategy is only for post training static quantization!"
-        # Initialize the tpe tuning strategy if the user specified to use it. 
+        """Initialize the tpe tuning strategy if the user specified to use it."""
         strategy_name = conf.usr_cfg.tuning.strategy.name
         if strategy_name.lower() == "tpe":
             try:
@@ -153,6 +155,7 @@ class TpeTuneStrategy(TuneStrategy):
         return save_dict
 
     def _configure_hpopt_search_space_and_params(self, search_space):
+        """Set the configuration of hpopt searching strategy."""
         self.hpopt_search_space = {}
         for param, configs in search_space.items():
             self.hpopt_search_space[(param)] = hyperopt.hp.choice((param[0]), configs)
@@ -172,9 +175,7 @@ class TpeTuneStrategy(TuneStrategy):
         return True
 
     def traverse(self):
-        """Tpe traverse logic.
-
-        """
+        """Tpe traverse logic."""
         logger.info("Start to run tpe strategy.")
         # prepare log file
         trials_file = os.path.join(os.path.dirname(self.history_path), 'tpe_trials.csv')
@@ -298,6 +299,7 @@ class TpeTuneStrategy(TuneStrategy):
             logger.warn("Can't create search space for input model.")
 
     def _prepare_final_searchspace(self, first, second):
+        """Set the final search space."""
         for key, cfgs in second.items():
             new_cfg = []
             for cfg in cfgs:
@@ -307,6 +309,7 @@ class TpeTuneStrategy(TuneStrategy):
         return first
 
     def add_loss_to_tuned_history_and_find_best(self, tuning_history_list):
+        """Find the best tuned history."""
         logger.debug("Number of resumed configs is {}.".format(len(tuning_history_list)))
         best_loss = None
         first_run_cfg = None
@@ -331,7 +334,7 @@ class TpeTuneStrategy(TuneStrategy):
         return first_run_cfg
 
     def object_evaluation(self, tune_cfg, model):
-        # check if config was alredy evaluated
+        """Check if config was alredy evaluated."""
         op_cfgs = self._tune_cfg_converter(tune_cfg)
         self.last_qmodel = self.adaptor.quantize(op_cfgs, self.model, self.calib_dataloader)
         self.last_tune_result = self._evaluate(self.last_qmodel)
@@ -376,6 +379,7 @@ class TpeTuneStrategy(TuneStrategy):
         return acc_diff, lat_diff
 
     def calculate_loss(self, acc_diff, lat_diff, config):
+        """Calculate the accuracy loss."""
         gamma_penalty = 40  # penalty term
         acc_loss_component = self._calculate_acc_loss_component(acc_diff)
         lat_loss_component = self._calculate_lat_diff_component(lat_diff)
@@ -411,7 +415,7 @@ class TpeTuneStrategy(TuneStrategy):
         config['lat_scale'] = 10 / np.abs(lat_max - lat_min)
 
     def _save_trials(self, trials_log):
-        """ save trial result to log file"""
+        """Save the trial result to the log file."""
         tpe_trials_results = pd.DataFrame(self.hpopt_trials.results)
         csv_file = trials_log
         tpe_trials_results.to_csv(csv_file)
@@ -464,11 +468,10 @@ class TpeTuneStrategy(TuneStrategy):
                                                         self.best_result['quantization_ratio']))
 
     def stop(self, timeout, trials_count):
-        """Check if need to stop traversing the tuning space, either accuracy goal is met
-           or timeout is reach.
+        """Check if need to stop traversing the tuning space, either accuracy goal is met or timeout is reach.
 
         Returns:
-            bool: True if need stop, otherwise False
+            bool: True if need stop, otherwise False.
         """
         need_stop = False
         if not self.cfg_evaluated:

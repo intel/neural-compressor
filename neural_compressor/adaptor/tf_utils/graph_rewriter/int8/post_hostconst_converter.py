@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Post HostConst Graph Rewriter."""
 
 import os
 from tensorflow.core.framework import graph_pb2, node_def_pb2
@@ -21,11 +22,11 @@ from neural_compressor.utils.utility import dump_elapsed_time
 from ..graph_base import GraphRewriterBase
 
 class PostHostConstConverter(GraphRewriterBase):
-    """[summary]
-    Support HostConst as default for all devices
-    """
+    """Support HostConst as default for all devices, not just for GPU."""
+
     @dump_elapsed_time("Pass PostHostConstConverter")
     def do_transformation(self):
+        """Convert Const to HostConst as default."""
         if os.environ.get("DISABLE_HOSTCONST") == '1':
             return self.model
         output_graph_def = graph_pb2.GraphDef()

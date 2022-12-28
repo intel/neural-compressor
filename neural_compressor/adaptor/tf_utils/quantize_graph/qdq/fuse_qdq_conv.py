@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize Conv2D/Conv3D/DepthwiseConv2dNative."""
 
 import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
@@ -26,10 +27,11 @@ from ..quantize_graph_base import QuantizeNodeBase
 import numpy as np
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
-
+    """Quantize Conv2D/Conv3D/DepthwiseConv2dNative to int8 op."""
     exclude_conv_nodes = []
 
     def __init__(self, **kwargs):
+        """Initilization."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
@@ -127,6 +129,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
             }
 
     def _insert_dummy_biasadd(self, match_node_name, matched_node):
+        """Insert dummy biasadd for fusion."""
         target_node_name = matched_node.node.name
         op_a_node_name = helper.node_name_from_input(matched_node.node.input[0])
         op_a_node = self.node_name_mapping[op_a_node_name].node
@@ -179,7 +182,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         return new_match_node_name
 
     def apply_conv3d_add_addn_relu_fusion(self, match_node_name):
-        # Dequantize + Conv3D + AddV2+ AddV2 + Relu + QuantizeV2
+        """Apply Conv3D Add Addn Relu fusion.
+
+        Dequantize + Conv3D + AddV2+ AddV2 + Relu + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -357,9 +363,12 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_conv3d_add_addn_fusion(self, match_node_name):
-        # Dequantize + Conv3D + BiasAdd + Add + QuantizeV2
-        # Dequantize + Conv3D + BiasAdd + AddV2 + QuantizeV2
-        # Dequantize + Conv3D + AddV2 + AddV2 + QuantizeV2
+        """Apply Conv3D Add Addn fusion.
+
+        Dequantize + Conv3D + BiasAdd + Add + QuantizeV2
+        Dequantize + Conv3D + BiasAdd + AddV2 + QuantizeV2
+        Dequantize + Conv3D + AddV2 + AddV2 + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -490,8 +499,11 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_conv3d_add_relu_fusion(self, match_node_name):
-        # Dequantize + Conv3D + Add + Relu + QuantizeV2
-        # Dequantize + Conv3D + AddV2 + Relu + QuantizeV2
+        """Apply Conv3D Add Relu fusion.
+
+        Dequantize + Conv3D + Add + Relu + QuantizeV2
+        Dequantize + Conv3D + AddV2 + Relu + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -640,9 +652,12 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_conv3d_add_fusion(self, match_node_name):
-        # Dequantize + Conv3D + BiasAdd + QuantizeV2
-        # Dequantize + Conv3D + Add + QuantizeV2
-        # Dequantize + Conv3D + AddV2 + QuantizeV2
+        """Apply Conv3D Add fusion.
+
+        Dequantize + Conv3D + BiasAdd + QuantizeV2
+        Dequantize + Conv3D + Add + QuantizeV2
+        Dequantize + Conv3D + AddV2 + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -758,7 +773,10 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_conv3d_single_fusion(self, match_node_name):
-        # Dequantize + Conv3D + QuantizeV2
+        """Apply Conv3D single fusion.
+
+        Dequantize + Conv3D + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         _, normal_inputs = self._get_node_input(matched_node.node.name)
@@ -841,29 +859,32 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_newly_conv_biasadd_relu_fusion(self, match_node_name):
-        # Dequantize + Conv2D + AddN + Relu + QuantizeV2
-        # Dequantize + Conv2D + AddN + Relu6 + QuantizeV2
-        # Dequantize + Conv2D + AddV2 + Relu + QuantizeV2
-        # Dequantize + Conv2D + AddV2 + Relu6 + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + Relu6 + QuantizeV2
-        # Dequantize + Conv2D + Relu6 + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + Relu + QuantizeV2
-        # Dequantize + Conv2D + Relu + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + Elu + QuantizeV2
-        # Dequantize + Conv2D + Elu + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + LeakyRelu + QuantizeV2
-        # Dequantize + Conv2D + LeakyRelu + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + Sigmoid + QuantizeV2
-        # Dequantize + Conv2D + Sigmoid + QuantizeV2
-        # Dequantize + Conv2D + Add + Relu6 + QuantizeV2
-        # Dequantize + Conv2D + Add + Relu + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + BiasAdd + Relu + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + Relu + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + Relu6 + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + BiasAdd + LeakyRelu + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + LeakyRelu + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + BiasAdd + Relu6 + QuantizeV2
+        """Apply Conv2D BiasAdd Relu fusion.
+
+        Dequantize + Conv2D + AddN + Relu + QuantizeV2
+        Dequantize + Conv2D + AddN + Relu6 + QuantizeV2
+        Dequantize + Conv2D + AddV2 + Relu + QuantizeV2
+        Dequantize + Conv2D + AddV2 + Relu6 + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + Relu6 + QuantizeV2
+        Dequantize + Conv2D + Relu6 + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + Relu + QuantizeV2
+        Dequantize + Conv2D + Relu + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + Elu + QuantizeV2
+        Dequantize + Conv2D + Elu + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + LeakyRelu + QuantizeV2
+        Dequantize + Conv2D + LeakyRelu + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + Sigmoid + QuantizeV2
+        Dequantize + Conv2D + Sigmoid + QuantizeV2
+        Dequantize + Conv2D + Add + Relu6 + QuantizeV2
+        Dequantize + Conv2D + Add + Relu + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + BiasAdd + Relu + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + Relu + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + Relu6 + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + BiasAdd + LeakyRelu + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + LeakyRelu + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + BiasAdd + Relu6 + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -997,10 +1018,13 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_newly_conv_biasadd_fusion(self, match_node_name):
-        # Dequantize + Conv2D + Biasadd + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2
-        # Dequantize + Conv2D + Add + QuantizeV2
-        # Dequantize + Conv2D + AddV2 + QuantizeV2
+        """Apply Conv2D BiasAdd fusion.
+
+        Dequantize + Conv2D + Biasadd + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2
+        Dequantize + Conv2D + Add + QuantizeV2
+        Dequantize + Conv2D + AddV2 + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -1104,8 +1128,11 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_newly_conv_single_fusion(self, match_node_name):
-        # Dequantize + Conv2D + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + QuantizeV2
+        """Apply Conv2D single fusion.
+
+        Dequantize + Conv2D + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
@@ -1192,17 +1219,20 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_newly_conv_biasadd_addn_relu_fusion(self, match_node_name):
-        # Dequantize + Conv2D + BiasAdd + AddN + Relu + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + AddN + Relu6 + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + AddV2 + Relu + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + AddV2 + Relu6 + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + LeakyRelu + AddV2 + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + Relu + AddV2(Add) + QuantizeV2
-        # Dequantize + Conv2D + LeakyRelu + AddV2 + QuantizeV2
-        # Dequantize + Conv2D + Relu + AddV2(Add) + QuantizeV2
-        # Dequantize + Conv2D + Add + Add + Relu + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2
+        """Apply Conv2D BiasAdd AddN Relu fusion.
+
+        Dequantize + Conv2D + BiasAdd + AddN + Relu + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + AddN + Relu6 + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + AddV2 + Relu + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + AddV2 + Relu6 + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + LeakyRelu + AddV2 + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + Relu + AddV2(Add) + QuantizeV2
+        Dequantize + Conv2D + LeakyRelu + AddV2 + QuantizeV2
+        Dequantize + Conv2D + Relu + AddV2(Add) + QuantizeV2
+        Dequantize + Conv2D + Add + Add + Relu + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         second_node = self.node_name_mapping[match_node_name[2]].node
@@ -1380,10 +1410,13 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_conv_biasadd_hardswish_fusion(self, match_node_name):
-        # Dequantize + Conv2D + BiasAdd + Add + Relu6 + Mul + Mul + QuantizeV2
-        # Dequantize + Conv2D + Add + Relu6 + Mul + Mul + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + BiasAdd + Add + Relu6 + Mul + Mul + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + Add + Relu6 + Mul + Mul + QuantizeV2
+        """Apply Conv2D BiasAdd hardswish fusion.
+
+        Dequantize + Conv2D + BiasAdd + Add + Relu6 + Mul + Mul + QuantizeV2
+        Dequantize + Conv2D + Add + Relu6 + Mul + Mul + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + BiasAdd + Add + Relu6 + Mul + Mul + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + Add + Relu6 + Mul + Mul + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         second_node = self.node_name_mapping[match_node_name[2]].node
@@ -1506,14 +1539,17 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_newly_conv_biasadd_swishf32_fusion(self, match_node_name):
-        # Dequantize + Conv2D + BiasAdd + swish_f32 + QuantizeV2
-        # Dequantize + Conv2D + Add + swish_f32 + QuantizeV2
-        # Dequantize + Conv2D + AddV2 + swish_f32 + QuantizeV2
-        # Dequantize + Conv2D + swish_f32 + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + BiasAdd + swish_f32 + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + Add + swish_f32 + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + AddV2 + swish_f32 + QuantizeV2
-        # Dequantize + DepthwiseConv2dNative + swish_f32 + QuantizeV2
+        """Apply Conv2D BiasAdd swishf32 fusion.
+
+        Dequantize + Conv2D + BiasAdd + swish_f32 + QuantizeV2
+        Dequantize + Conv2D + Add + swish_f32 + QuantizeV2
+        Dequantize + Conv2D + AddV2 + swish_f32 + QuantizeV2
+        Dequantize + Conv2D + swish_f32 + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + BiasAdd + swish_f32 + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + Add + swish_f32 + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + AddV2 + swish_f32 + QuantizeV2
+        Dequantize + DepthwiseConv2dNative + swish_f32 + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         second_node = self.node_name_mapping[match_node_name[2]].node
@@ -1623,9 +1659,12 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_newly_conv_biasadd_addn_fusion(self, match_node_name):
-        # Dequantize + Conv2D + Add + Add + QuantizeV2
-        # Dequantize + Conv2D + AddV2 + Add + QuantizeV2
-        # Dequantize + Conv2D + BiasAdd + Add + QuantizeV2
+        """Apply Conv2D BiasAdd AddN fusion.
+
+        Dequantize + Conv2D + Add + Add + QuantizeV2
+        Dequantize + Conv2D + AddV2 + Add + QuantizeV2
+        Dequantize + Conv2D + BiasAdd + Add + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -1745,12 +1784,14 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def get_longest_fuse(self):
+        """Get the longest fusion patter."""
         self._get_op_list()
 
         matched_rule, matched_node_name = self._is_match_conv(self.sorted_patterns)
         return matched_rule, matched_node_name
 
     def apply_the_transform(self):
+        """Quantize Conv and apply the fusion."""
         self._get_op_list()
         matched_rule, matched_node_name = self._is_match_conv(self.sorted_patterns, True)
         if matched_node_name:

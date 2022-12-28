@@ -18,7 +18,7 @@
 import logging
 from .dotdict import DotDict
 from ..config import _BaseQuantizationConfig, accuracy_criterion, BenchmarkConfig, \
-                     check_value, DistillationConfig, options, PruningConfig
+                     check_value, DistillationConfig, options, WeightPruningConfig
 
 logger = logging.getLogger("neural_compressor")
 
@@ -41,7 +41,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
                  performance_only=False,
                  reduce_range=None,
                  use_bf16=True,
-                 optimization_level=1,
+                 quant_level=1,
                  accuracy_criterion=accuracy_criterion):
         excluded_precisions = ["bf16"] if not use_bf16 else []
         super().__init__(
@@ -61,7 +61,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
             reduce_range=reduce_range,
             excluded_precisions=excluded_precisions,
             accuracy_criterion=accuracy_criterion,
-            optimization_level=optimization_level
+            quant_level=quant_level
         )
         self._approach = approach
 
@@ -242,7 +242,7 @@ class NASConfig:
 
 quantization = QuantizationConfig()
 benchmark = BenchmarkConfig()
-pruning = PruningConfig()
+pruning = WeightPruningConfig()
 distillation = DistillationConfig(teacher_model=None)
 nas = NASConfig()
 onnxruntime_config = ONNX()

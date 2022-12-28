@@ -1,82 +1,33 @@
 Validated Models
-===
-## Validated MLPerf Models
-<table class="docutils">
-<thead>
-  <tr>
-    <th>Model</th>
-    <th>Framework</th>
-    <th>Support</th>
-    <th>Example</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td rowspan="2">ResNet50 V1.5</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex">Link</a></td>
-  </tr>
-  <tr>
-    <td>DLRM</td>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/recommendation/dlrm/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td rowspan="2">BERT large</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/nlp/bert_large_squad/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">Link</a></td>
-  </tr>
-  <tr>
-    <td rowspan="2">SSD ResNet34</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/object_detection/ssd_resnet34/quantization">Link</a></td>
-  </tr>
-  <tr>
-    <td>RNN-T</td>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/speech_recognition/rnnt/quantization">Link</a></td>    
-  </tr>
-  <tr>
-    <td rowspan="2">3D-UNet</td>
-    <td>TensorFlow</td>
-    <td>Yes</td>
-    <td><a href="../examples/tensorflow/semantic_image_segmentation/3dunet-mlperf/quantization">Link</a></td>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>Yes</td>
-    <td><a href="../examples/pytorch/image_recognition/3d-unet/quantization">Link</a></td>
-  </tr>
-</tbody>
-</table>
+======
+
+1. [Validated Quantization Examples](#Validated-Quantization-Examples)
+
+    1.1. [TensorFlow Models with TensorFlow 2.10.0](#tensorflow-models-with-tensorflow-2100)
+
+    1.2. [PyTorch Models with Torch 1.12.1+cpu in PTQ Mode](#pytorch-models-with-torch-1121cpu-in-qat-mode)
+
+    1.3. [PyTorch Models with Torch 1.12.1+cpu in QAT Mode](#pytorch-models-with-torch-1121cpu-in-qat-mode)
+
+    1.4. [PyTorch Models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu](#pytorch-models-with-torch-and-intel-extension-for-pytorch-1110cpu)
+    
+    1.5. [ONNX Models with ONNX Runtime 1.12.1](#onnx-models-with-onnx-runtime-1121)
+
+    1.6. [MXNet Models with MXNet 1.7.0](#mxnet-models-with-mxnet-170)
+
+2. [Validated Pruning Examples](#Validated-Pruning-Examples)
+
+3. [Validated Knowledge Distillation Examples](#Validated-Knowledge-Distillation-Examples)
+
+4. [Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime](#validated-onnx-qdq-int8-models-on-multiple-hardware-through-onnx-runtime)
 
 ## Validated Quantization Examples
 
-Performance results test on ​​09/24/2022 with Intel Xeon Platinum 8380 Scalable processor, using 1 socket, 4 cores/instance, 10 instances and batch size 1. 
+Performance results test on ​​09/24/2022 with Intel Xeon Platinum 8380 Scalable processor, using 1 socket, 4 cores/instance, 8 instances and batch size 1. 
 
 Performance varies by use, configuration and other factors. See [platform configuration](./platform_configuration.md) for configuration details. For more complete information about performance and benchmark results, visit www.intel.com/benchmarks
 
-### TensorFlow models with TensorFlow 2.10.0
+### TensorFlow Models with TensorFlow 2.10.0
 
 <table class="tg">
 <thead>
@@ -359,7 +310,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch 1.12.1+cpu in PTQ mode
+### PyTorch Models with Torch 1.12.1+cpu in PTQ Mode
 
 <table class="tg">
 <thead>
@@ -742,7 +693,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch 1.12.1+cpu in QAT mode
+### PyTorch Models with Torch 1.12.1+cpu in QAT Mode
 
 <table class="tg">
 <thead>
@@ -805,7 +756,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu
+### PyTorch Models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu
 
 <table class="tg">
 <thead>
@@ -1491,7 +1442,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### MXNet models with MXNet 1.7.0
+### MXNet Models with MXNet 1.7.0
 
 <table class="tg">
 <thead>
@@ -1666,7 +1617,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[m, mm] = [84.57, 84.79]</br>[m, mm] = [82.45, 83.27]</td>
     <td>[-2.51%, -1.80%]</td>
     <td>70%</br>unstructured</td>
-    <td>pattern lock</br>balanced</td>    
+    <td>Prune once for all</br>balanced</td>    
   </tr>
   <tr>
   </tr>
@@ -1676,7 +1627,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[m, mm] = [84.57, 84.79]</br>[m, mm] = [83.20, 84.11]</td>
     <td>[-1.62%, -0.80%]</td>
     <td>50%</br>structured 1:2</td>
-    <td>pattern lock</br>balanced</td>    
+    <td>Prune once for all</br>balanced</td>    
   </tr>
   <tr>
   </tr>  
@@ -1686,7 +1637,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>accuracy = 92.32</br>accuracy = 91.51</td>
     <td>-0.88%</td>
     <td>70%</br>unstructured</td>
-    <td>pattern lock</br>balanced</td>    
+    <td>Prune once for all</br>balanced</td>    
   </tr>
   <tr>
   <tr>
@@ -1695,7 +1646,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>accuracy = 92.32</br>accuracy = 92.20</td>
     <td>-0.13%</td>
     <td>50%</br>structured 1:2</td>
-    <td>pattern lock</br>balanced</td>       
+    <td>Prune once for all</br>balanced</td>       
   </tr>
   <tr>  
   </tr>
@@ -1715,7 +1666,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[accuracy, f1] = [91.10, 88.05]</br>[accuracy, f1] = [90.48, 87.06]</td>
     <td>[-0.68%, -1.12%]</td>
     <td>70%</br>unstructured</td>
-    <td>pattern lock</br>balanced</td>        
+    <td>Prune once for all</br>balanced</td>        
   </tr>
   <tr>
   </tr>
@@ -1725,7 +1676,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[accuracy, f1] = [91.10, 88.05]</br>[accuracy, f1] = [90.92, 87.78]</td>
     <td>[-0.20%, -0.31%]</td>
     <td>50%</br>structured 1:2</td>
-    <td>pattern lock</br>balanced</td>        
+    <td>Prune once for all</br>balanced</td>        
   </tr>
   <tr>
   </tr>   
@@ -1735,7 +1686,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>accuracy = 91.54</br>accuracy = 90.39</td>
     <td>-1.26%</td>
     <td>70%</br>unstructured</td>
-    <td>pattern lock</br>balanced</td>        
+    <td>Prune once for all</br>balanced</td>        
   </tr>
   <tr>
   </tr>
@@ -1745,7 +1696,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>accuracy = 91.54</br>accuracy = 90.87</td>
     <td>-0.73%</td>
     <td>50%</br>structured 1:2</td>
-    <td>pattern lock</br>balanced</td>      
+    <td>Prune once for all</br>balanced</td>      
   </tr>
   <tr>
   </tr>   
@@ -1755,7 +1706,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[em, f1] = [79.34, 87.10]</br>[em, f1] = [77.27, 85.75]</td>
     <td>[-2.61%, -1.54%]</td>
     <td>70%</br>unstructured</td>
-    <td>pattern lock</br>balanced</td>   
+    <td>Prune once for all</br>balanced</td>   
   </tr>  
   <tr>
   </tr>
@@ -1765,7 +1716,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>[em, f1] = [79.34, 87.10]</br>[em, f1] = [78.03, 86.50]</td>
     <td>[-1.65%, -0.69%]</td>
     <td>50%</br>structured 1:2</td>
-    <td>pattern lock</br>balanced</td>       
+    <td>Prune once for all</br>balanced</td>       
   </tr>  
   <tr>
   </tr>     
@@ -1862,7 +1813,6 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-
 ## Validated Knowledge Distillation Examples
 |  Example Name       | Dataset   | Student<br>(Metrics)                 | Teacher<br>(Metrics)               | Student With Distillation<br>(Metrics Improvement)  | Student With Distributed Distillation<br>(Metrics Improvement)  |
 |---------------------|-----------|--------------------------------------|------------------------------------|-----------------------------------------------------|-----------------------------------------------------|
@@ -1877,7 +1827,7 @@ Performance varies by use, configuration and other factors. See [platform config
 |BERT-3 example       |  QQP      | BERT-3<br>(0.8626/0.8213 EM/F1)      | BERT-Base<br>(0.9091/0.8782 EM/F1) |   0.8684/0.8259 EM/F1<br>(0.0058/0.0046 EM/F1)      |   WIP                        |
 |DistilRoBERTa example|  COLA     | DistilRoBERTa<br>(0.6057 ACC)        | RoBERTa-Large<br>(0.6455 ACC)      |   0.6187 ACC<br>(0.0130 ACC)                        |   WIP                        |
 
-## Validated ONNX QDQ INT8 models on multiple hardware through ONNX Runtime
+## Validated ONNX QDQ INT8 Models on Multiple Hardware through ONNX Runtime
 
 <table class="tg">
 <thead>
@@ -1895,21 +1845,21 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">74.76%</td>
     <td class="tg-pm1l">68.95%</td>
     <td class="tg-pm1l">74.76%</td>
-    <td class="tg-6q5x">74.41%*</td>
+    <td class="tg-6q5x">74.75%</td>
   </tr>
   <tr>
     <td class="tg-cwad">BERT-base</td>
     <td class="tg-pm1l">85.54%</td>
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">85.54%</td>
-    <td class="tg-6q5x">84.56%*</td>
+    <td class="tg-6q5x">84.31%</td>
   </tr>
   <tr>
     <td class="tg-cwad">ResNet50 V1.5</td>
     <td class="tg-pm1l">72.20%</td>
     <td class="tg-pm1l">67.70%</td>
     <td class="tg-pm1l">72.20%</td>
-    <td class="tg-6q5x">71.84%*</td>
+    <td class="tg-6q5x">72.29%</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V2</td>
@@ -1930,7 +1880,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">83.82%</td>
     <td class="tg-pm1l">84.56%</td>
-    <td class="tg-6q5x">84.56%*</td>
+    <td class="tg-6q5x">84.56%</td>
   </tr>
   <tr>
     <td class="tg-cwad">SqueezeNet</td>
@@ -1944,21 +1894,21 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">18.63%</td>
     <td class="tg-pm1l">18.54%</td>
     <td class="tg-pm1l">18.63%</td>
-    <td class="tg-6q5x">18.61%*</td>
+    <td class="tg-6q5x">18.61%</td>
   </tr>
   <tr>
     <td class="tg-cwad">AlexNet</td>
     <td class="tg-pm1l">54.71%</td>
     <td class="tg-pm1l">47.06%</td>
     <td class="tg-pm1l">54.71%</td>
-    <td class="tg-pm1l">54.74%*</td>
+    <td class="tg-pm1l">54.79%</td>
   </tr>
   <tr>
     <td class="tg-cwad">CaffeNet</td>
     <td class="tg-pm1l">56.25%</td>
     <td class="tg-pm1l">52.35%</td>
     <td class="tg-pm1l">56.27%</td>
-    <td class="tg-pm1l">56.12%*</td>
+    <td class="tg-pm1l">56.24%</td>
   </tr>
   <tr>
     <td class="tg-cwad">GoogleNet</td>
@@ -1972,7 +1922,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">55.86%</td>
     <td class="tg-pm1l">45.09%</td>
     <td class="tg-pm1l">55.86%</td>
-    <td class="tg-pm1l">55.75%*</td>
+    <td class="tg-pm1l">55.89%</td>
   </tr>
   <tr>
     <td class="tg-cwad">Inception V1</td>
@@ -1986,42 +1936,42 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">22.86%</td>
     <td class="tg-pm1l">16.94%</td>
     <td class="tg-pm1l">22.80%</td>
-    <td class="tg-pm1l">22.85%*</td>
+    <td class="tg-pm1l">22.87%</td>
   </tr>
   <tr>
     <td class="tg-cwad">Mobile bert MRPC</td>
     <td class="tg-pm1l">85.54%</td>
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">85.54%</td>
-    <td class="tg-pm1l">86.03%*</td>
+    <td class="tg-pm1l">85.54%</td>
   </tr>
   <tr>
     <td class="tg-cwad">Roberta base MRPC</td>
     <td class="tg-pm1l">89.46%</td>
     <td class="tg-pm1l">90.44%</td>
     <td class="tg-pm1l">89.71%</td>
-    <td class="tg-pm1l">89.71%*</td>
+    <td class="tg-pm1l">89.71%</td>
   </tr>
   <tr>
     <td class="tg-cwad">ResNet50 V1.5 MLPerf</td>
     <td class="tg-pm1l">76.14%</td>
     <td class="tg-pm1l">72.80%</td>
     <td class="tg-pm1l">76.14%</td>
-    <td class="tg-6q5x">75.98%*</td>
+    <td class="tg-6q5x">76.17%</td>
   </tr>
   <tr>
     <td class="tg-cwad">VGG16</td>
     <td class="tg-pm1l">66.69%</td>
     <td class="tg-pm1l">64.25%</td>
     <td class="tg-pm1l">66.69%</td>
-    <td class="tg-pm1l">66.52%*</td>
+    <td class="tg-pm1l">66.64%</td>
   </tr>
   <tr>
     <td class="tg-cwad">VGG16 (ONNX Model Zoo)</td>
     <td class="tg-pm1l">72.31%</td>
     <td class="tg-pm1l">69.35%</td>
     <td class="tg-pm1l">72.32%</td>
-    <td class="tg-pm1l">72.31%*</td>
+    <td class="tg-pm1l">72.34%</td>
   </tr>
   <tr>
     <td class="tg-cwad">MobileNet V3 MLPerf</td>
@@ -2053,5 +2003,3 @@ Performance varies by use, configuration and other factors. See [platform config
   </tr>
 </tbody>
 </table>
-
-> **Note:** The model weights are quantized by pre-channel except the models with '*' which are quantized by per-tensor. 

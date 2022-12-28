@@ -1,7 +1,23 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2022 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 import os
-import sys
 import numpy as np
-from google.protobuf import text_format
 from tensorflow.python.framework import graph_util
 from tensorflow.python.platform import gfile
 
@@ -25,7 +41,7 @@ def generate_data(input_shape, input_dtype="float32",
             return np.random.randn(batch_size).astype(input_dtype)
         dummy_input = np.random.randn(*input_shape).astype(input_dtype)
     # handle the case that the shape of the input is one-dimensional
-    if newaxis == False:
+    if newaxis is False:
         return np.repeat(dummy_input, batch_size, axis=0)
     return np.repeat(dummy_input[np.newaxis, :], batch_size, axis=0)
 
@@ -42,7 +58,7 @@ def freeze_graph(input_checkpoint, output_graph, output_node_names):
 
     with tf.compat.v1.Session() as sess:
         saver.restore(sess, input_checkpoint)
-        output_graph_def = graph_util.convert_variables_to_constants(  
+        output_graph_def = graph_util.convert_variables_to_constants(
             sess=sess,
             input_graph_def=sess.graph_def,
             output_node_names=output_node_names)
@@ -50,7 +66,7 @@ def freeze_graph(input_checkpoint, output_graph, output_node_names):
         with tf.io.gfile.GFile(output_graph, "wb") as f:
             f.write(output_graph_def.SerializeToString())
     print("convert done!!") 
-    print("%d ops in the final graph." % len(output_graph_def.node)) 
+    print("%d ops in the final graph." % len(output_graph_def.node))
 
     return output_graph_def
 
@@ -92,7 +108,7 @@ def write_graph(out_graph_def, out_graph_file):
     :return: None.
     """
     if not isinstance(out_graph_def, tf.compat.v1.GraphDef):
-	    raise ValueError(
+        raise ValueError(
             'out_graph_def is not instance of TensorFlow GraphDef.')
     if out_graph_file and not os.path.exists(os.path.dirname(out_graph_file)):
         raise ValueError('"output_graph" directory does not exists.')

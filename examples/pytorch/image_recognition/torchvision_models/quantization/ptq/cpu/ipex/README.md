@@ -66,8 +66,8 @@ python main.py -t -a resnet18 --ipex --pretrained /path/to/imagenet
 ```
 or
 ```shell
-bash run_tuning.sh --topology=resnet18_ipex --dataset_location=/path/to/imagenet
-bash run_benchmark.sh --topology=resnet18_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
+bash run_tuning.sh --topology=resnet18 --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --topology=resnet18 --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
 
 ### 2. ResNet50 With Intel PyTorch Extension
@@ -77,8 +77,8 @@ python main.py -t -a resnet50 --ipex --pretrained /path/to/imagenet
 ```
 or
 ```shell
-bash run_tuning.sh --topology=resnet50_ipex --dataset_location=/path/to/imagenet
-bash run_benchmark.sh --topology=resnet50_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
+bash run_tuning.sh --topology=resnet50 --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --topology=resnet50 --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
 
 ### 3. ResNext101_32x16d With Intel PyTorch Extension
@@ -88,8 +88,8 @@ python main.py -t -a resnext101_32x16d_wsl --hub --ipex --pretrained /path/to/im
 ```
 or
 ```shell
-bash run_tuning.sh --topology=resnext101_32x16d_wsl_ipex --dataset_location=/path/to/imagenet
-bash run_benchmark.sh --topology=resnext101_32x16d_wsl_ipex --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
+bash run_tuning.sh --topology=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --topology=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
 
 

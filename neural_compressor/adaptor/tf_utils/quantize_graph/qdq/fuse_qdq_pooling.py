@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize the AvgPool/MaxPool."""
+
 import tensorflow as tf
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
@@ -23,13 +25,17 @@ from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGra
 from neural_compressor.adaptor.tf_utils.util import version1_gt_version2, version1_lt_version2, version1_eq_version2
 
 class FuseNodeStartWithPooling(QuantizeNodeBase):
+    """Quantize the AvgPool and MaxPool."""
+
     def __init__(self, **kwargs):
+        """Initilization."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
                                       reverse=True)
 
     def _add_pool_function(self, original_node, quantized_op_node):
+        """Set quantized pooling node attributes."""
         pooling_type = dtypes.quint8 if version1_lt_version2(tf.version.VERSION, '2.6.0') or \
             self._find_relu_node(original_node) else dtypes.qint8
         helper.set_attr_dtype(quantized_op_node, "T", pooling_type)
@@ -38,9 +44,12 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
         helper.copy_attr(quantized_op_node, "padding", original_node.attr["padding"])
 
     def _apply_pool_quantization(self, match_node_name):
-        # Dequantize + MaxPool + QuantizeV2
-        # Dequantize + MaxPool3D + QuantizeV2
-        # Dequantize + AvgPool + QuantizeV2
+        """Quantize AvgPool/MaxPool.
+
+        Dequantize + MaxPool + QuantizeV2
+        Dequantize + MaxPool3D + QuantizeV2
+        Dequantize + AvgPool + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
@@ -72,9 +81,10 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def get_longest_fuse(self):
+        """Get the longest fusion pattern."""
         self._get_op_list()
         matched_node_name = []
-        
+
         for k, v in enumerate(self.op_list):
             if v in set(fusion[1] for fusion in self.sorted_patterns):
                 cur_node = self.node_name_mapping[list(
@@ -96,6 +106,7 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
         return None, None
 
     def apply_the_transform(self):
+        """Quantize AvgPool/MaxPool."""
         self._get_op_list()
         matched_rule, matched_node_name = self.get_longest_fuse()
         if matched_node_name:

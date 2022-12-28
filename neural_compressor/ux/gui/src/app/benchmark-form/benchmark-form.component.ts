@@ -11,9 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, Inject, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Inject, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { ShortcutInput } from 'ng-keyboard-shortcuts';
 import { ModelService } from '../services/model.service';
 
 @Component({
@@ -22,7 +23,9 @@ import { ModelService } from '../services/model.service';
   styleUrls: ['./benchmark-form.component.scss', './../error/error.component.scss', './../home/home.component.scss',
     './../datasets/datasets.component.scss']
 })
-export class BenchmarkFormComponent implements OnInit {
+export class BenchmarkFormComponent implements OnInit, AfterViewInit {
+
+  shortcuts: ShortcutInput[] = [];
 
   models = [];
   datasets = [];
@@ -55,6 +58,18 @@ export class BenchmarkFormComponent implements OnInit {
         });
 
     this.modelService.datasetCreated$.subscribe(response => this.getDatasetList());
+  }
+
+  ngAfterViewInit(): void {
+    this.shortcuts.push(
+      {
+        key: 'ctrl + right',
+        preventDefault: true,
+        command: e => {
+          document.getElementsByName('next')[0].click();
+        }
+      },
+    );
   }
 
   setFormValues() {

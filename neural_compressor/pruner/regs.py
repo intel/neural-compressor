@@ -18,13 +18,21 @@
 
 from .patterns import BasePattern
 from neural_compressor.utils.utility import LazyImport
+
 torch = LazyImport('torch')
 
 REGS = {}
 
 
 def register_reg(name):
-    """Register a regularizator to the registry."""
+    """Register a regularizator to the registry.
+    
+    Args:
+        name: A string that defines the scheduler type.
+
+    Returns:
+        cls: The class of register.
+    """
 
     def register(reg):
         REGS[name] = reg
@@ -34,7 +42,11 @@ def register_reg(name):
 
 
 def get_reg_type(config):
-    """Obtain the regularizer type."""
+    """Obtain the regularizer type.
+    
+    Args:
+        config: A config dict object that includes information of the regularizer.
+    """
     for key in REGS.keys():  ##assume there is only one reg
         if config.get(key, None) != None:
             return key
@@ -42,7 +54,13 @@ def get_reg_type(config):
 
 
 def get_reg(config, modules, pattern):
-    """Get registered regularizator class."""
+    """Get registered regularizator class.
+    
+    Args:
+        config: A config dict object that includes information of the regularizer.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        pattern: A config dict object that includes information of the pattern.  
+    """
     reg_type = config["reg_type"]
     if reg_type == None:
         return BaseReg(config, modules, pattern)
@@ -54,12 +72,12 @@ def get_reg(config, modules, pattern):
 class BaseReg:
     """Regularizer.
 
-    The class which performs regularization.
+    The class that performs regularization.
 
     Args:
-        modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
         config: A config dict object that includes information of the regularizer.
-        pattern: A config dict object. The pattern related part in args config.  
+        pattern: A config dict object that includes information of the pattern.  
     """
 
     def __init__(self, config: dict, modules: dict, pattern: BasePattern):
@@ -85,9 +103,9 @@ class GroupLasso(BaseReg):
     Group-lasso is a variable-selection and regularization method.
 
     Args:
-        modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
         config: A config dict object that includes information of the regularizer.
-        pattern: A config dict object. The pattern related part in args config.  
+        pattern: A config dict object that includes information of the pattern.    
 
     Attributes:
         reg_terms: A dict {"module_name": Tensor} of regularization terms.
@@ -124,5 +142,4 @@ class GroupLasso(BaseReg):
                     continue
                 reg_term = self.pattern.reshape_reduced_to_orig(self.reg_terms[key], key,
                                                                 self.modules[key].weight.shape)
-                self.modules[key].weight -= reg_term
-
+                self.modules[key].weight -= reg_term * self.modules[key].weight

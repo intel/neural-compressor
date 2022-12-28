@@ -317,7 +317,7 @@ class _BaseQuantizationConfig:
                  performance_only=False,
                  reduce_range=None,
                  excluded_precisions=[],
-                 optimization_level=1,
+                 quant_level=1,
                  accuracy_criterion=accuracy_criterion):
         self.inputs = inputs
         self.outputs = outputs
@@ -337,7 +337,7 @@ class _BaseQuantizationConfig:
         self.use_bf16 = "bf16" not in self.excluded_precisions
         self.accuracy_criterion = accuracy_criterion
         self.calibration_sampling_size = calibration_sampling_size
-        self.optimization_level = optimization_level
+        self.quant_level = quant_level
 
     @property
     def accuracy_criterion(self):
@@ -359,12 +359,12 @@ class _BaseQuantizationConfig:
             self._use_bf16 = "bf16" not in excluded_precisions
 
     @property
-    def optimization_level(self):
-        return self._optimization_level
+    def quant_level(self):
+        return self._quant_level
 
-    @optimization_level.setter
-    def optimization_level(self, optimization_level):
-        self._optimization_level = optimization_level
+    @quant_level.setter
+    def quant_level(self, quant_level):
+        self._quant_level = quant_level
 
     @property
     def reduce_range(self):
@@ -469,6 +469,8 @@ class _BaseQuantizationConfig:
     @calibration_sampling_size.setter
     def calibration_sampling_size(self, sampling_size):
         if check_value('calibration_sampling_size', sampling_size, int):
+            if isinstance(sampling_size, int):
+                sampling_size =[sampling_size]
             self._calibration_sampling_size = sampling_size
 
     @property
@@ -589,7 +591,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  excluded_precisions=[],
-                 optimization_level=1,
+                 quant_level=1,
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
     ):
@@ -609,7 +611,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          max_trials=tuning_criterion.max_trials,
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
-                         optimization_level=optimization_level,
+                         quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion)
         self.approach = approach
 
@@ -642,7 +644,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  excluded_precisions=[],
-                 optimization_level=1):
+                 quant_level=1):
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
@@ -651,7 +653,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                          op_name_list=op_name_list,
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
-                         optimization_level=optimization_level)
+                         quant_level=quant_level)
         self._approach = 'quant_aware_training'
 
     @property
@@ -662,33 +664,35 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
 pruners = [Pruner()]
 
 
-class PruningConfig:
-    def __init__(self, pruners=pruners, initial_sparsity=0.0, target_sparsity=0.97,
-                 max_sparsity_ratio_per_layer=0.98, prune_type="basic_magnitude",
-                 start_epoch=0, end_epoch=4, start_step=0, end_step=0, update_frequency=1.0,
-                 update_frequency_on_step=1, not_to_prune_names=[], prune_domain="global",
-                 names=[], exclude_names=[], prune_layer_type=[], sparsity_decay_type="exp",
-                 pattern="tile_pattern_1x1"):
-        self.weight_compression = DotDict({
-            'initial_sparsity': initial_sparsity,
+class WeightPruningConfig:
+    """
+    similiar to torch optimizer's interface
+    """
+
+    def __init__(self, pruning_configs=[{}],  ##empty dict will use global values
+                 target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
+                 excluded_op_names=[],
+                 start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
+                 min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
+                 sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
+                 **kwargs):
+        self.pruning_configs = pruning_configs
+        self._weight_compression = DotDict({
             'target_sparsity': target_sparsity,
-            'max_sparsity_ratio_per_layer': max_sparsity_ratio_per_layer,
-            'prune_type': prune_type,
-            'start_epoch': start_epoch,
-            'end_epoch': end_epoch,
+            'pruning_type': pruning_type,
+            'pattern': pattern,
+            'op_names': op_names,
+            'excluded_op_names': excluded_op_names,  ##global only
             'start_step': start_step,
             'end_step': end_step,
-            'update_frequency': update_frequency,
-            'update_frequency_on_step': update_frequency_on_step,
-            'not_to_prune_names': not_to_prune_names,
-            'prune_domain': prune_domain,
-            'names': names,
-            'exclude_names': exclude_names,
-            'prune_layer_type': prune_layer_type,
+            'pruning_scope': pruning_scope,
+            'pruning_frequency': pruning_frequency,
+            'min_sparsity_ratio_per_op': min_sparsity_ratio_per_op,
+            'max_sparsity_ratio_per_op': max_sparsity_ratio_per_op,
             'sparsity_decay_type': sparsity_decay_type,
-            'pattern': pattern,
-            'pruners': pruners
+            'pruning_op_types': pruning_op_types,
         })
+        self._weight_compression.update(kwargs)
 
     @property
     def weight_compression(self):

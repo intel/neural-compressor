@@ -1,68 +1,84 @@
-# SigOpt Strategy
+SigOpt Strategy
+============
 
-[SigOpt](https://app.sigopt.com/) is available via online platform and can be used for model development and performance. [Optimization Loop](https://app.sigopt.com/docs/overview/optimization) is the backbone of using SigOpt, we can set metrics and realize the interaction between online platform and tuning configures based on this mechanism.
+1. [Introduction](#introduction)
 
-## Preparation
+    1.1 [Preparation](#preparation)
+    
+    1.2 [SigOpt Platform](#sigopt-platform)
+    
+    1.3  [Neural Compressor Configuration](#neural-compressor-configuration)
 
-Before using `SigOpt` strategy, a SigOpt account is necessary.
-- Each account has its own api token. Find your api token and then fill in the configure item `sigopt_api_token`. 
-- Create a new project and write the corresponding name into the configure item `sigopt_project_id`.
-- Set the name for this experiment in configure item `sigopt_experiment_id`, the default is nc-tune.
+2. [Performance](#performance)
+    
+    2.1 [Benefit of SigOpt Strategy](#benefit-of-sigopt-strategy)
 
-### SigOpt introduction
+    2.2 [Performance Comparison of Different Strategies](#performance-comparison-of-different-strategies)
 
-If you are using SigOpt products for the first time, please [sign-up](https://app.sigopt.com/signup), if not, please [login](https://app.sigopt.com/login). It is free to apply for an account. Although there are certain restrictions on the model parameters and the number of experiments created, it is sufficient for ordinary customers. If you want higher capacity, please contact support@sigopt.com.
+## Introduction
 
-After logging in, you can use `the token api` to connect the local code and the online platform, corresponding to the configure item `sigopt_api_token`, it can be obtained [here](https://app.sigopt.com/tokens/info).
+[SigOpt](https://app.sigopt.com/) is an online model development platform that makes it easy to track runs, visualize training, and scale hyperparameter optimization for any type of model. [Optimization Loop](https://app.sigopt.com/docs/overview/optimization) is the backbone of using SigOpt. We can set metrics and realize the interaction between the online platform and tuning configurations based on this mechanism.
 
-SigOpt has two concepts: [project](https://app.sigopt.com/projects) and [experiment](https://app.sigopt.com/experiments). Create a project before experimenting, corresponding to `sigopt_project_id` and `sigopt_experiment_name`, Multiple experiments can be created in each project. After creating experiment, run through these three simple steps, in a loop:
+### Preparation
 
-- Receive a Suggestion from SigOpt
-- Evaluate your metric
-- Report an Observation to SigOpt
+Before using the `SigOpt` strategy, a SigOpt account is necessary.
+- Each account has its own API token. Find your API token and then fill it in the `sigopt_api_token` field. 
+- Create a new project and fill the corresponding name into the `sigopt_project_id` field.
+- Set the name of this experiment in `sigopt_experiment_id` field optionally. The default name is "nc-tune".
 
-In Neural Compressor sigopt strategy, the metrics add accuracy as constraint and optimize for latency.
+### SigOpt Platform 
 
-### Neural Compressor configuration
+If you are using the SigOpt products for the first time, please [sign-up](https://app.sigopt.com/signup), if not, please [login](https://app.sigopt.com/login). It is free to apply for an account. Although there are certain restrictions on the model parameters and the number of experiments created, it is sufficient for ordinary customers. If you want higher capacity, please contact support@sigopt.com.
 
-Compare to `Basic` strategy, `sigopt_api_token` is necessary for `SigOpt` strategy. Create the corresponding project name `sigopt_project_id` in the account before using the strategy.
+After logging in, you can use `the token api` to connect the local code to the online platform, corresponding to `sigopt_api_token`. It can be obtained [here](https://app.sigopt.com/tokens/info).
 
-```yaml
-tuning:
-  strategy:
-    name: sigopt
-    sigopt_api_token: YOUR-ACCOUNT-API-TOKEN
-    sigopt_project_id: PROJECT-ID
-    sigopt_experiment_name: nc-tune
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
+SigOpt has two concepts: [project](https://app.sigopt.com/projects) and [experiment](https://app.sigopt.com/experiments). Create a project before experimenting, corresponding to `sigopt_project_id` and `sigopt_experiment_name`. Multiple experiments can be created on each project. After creating the experiment, SigOpt will execute three simple steps below in a loop:
 
+- Receive a Suggestion from SigOpt;
+- Evaluate your metrics;
+- Report an Observation to SigOpt;
+
+In our build-in sigopt strategy, the metrics add accuracy as a constraint and optimize for latency.
+
+### Neural Compressor Configuration
+
+Compare to `Basic` strategy, `sigopt_api_token` and `sigopt_project_id` is necessary for `SigOpt` strategy. Before using the strategy, it is required to create the project corresponding to `sigopt_project_id` in your account.
+
+```python
+from neural_compressor import config
+
+conf = config.PostTrainingQuantConfig(
+    tuning_criterion=config.TuningCriterion(
+        strategy="sigopt",
+        strategy_kwargs={
+          "sigopt_api_token": "YOUR-ACCOUNT-API-TOKEN",
+          "sigopt_project_id": "PROJECT-ID",
+          "sigopt_experiment_name": "nc-tune",
+        },
+    ),
+)
 ```
-
 
 ## Performance
 
-### Benefit for Sigopt strategy
+### Benefit of SigOpt Strategy
 
-- Metric based the SigOpt is better than self-define and easy to use. you can read details from [here](https://app.sigopt.com/docs/overview/metric_constraints). 
-- Through the token api, the results of each experiment are recorded in your account. You can use the SigOpt data analysis function to analyze the results, such as drawing a chart, calculating F1 score, etc.
+- Metric based SigOpt is better than self-defining and easy to use. You can read the details [here](https://app.sigopt.com/docs/overview/metric_constraints). 
+- With the token api, results of each experiment are recorded in your account. You can use the SigOpt data analysis function to analyze the results, such as drawing a chart, calculating the F1 score, etc.
 
-### Performance comparison of different strategies
+### Performance Comparison of Different Strategies
 
-MobileNet_v1 tensorflow
+- MobileNet_v1(tensorflow)
 
-|strategy|FP32 baseline|int8 accuracy|int8 duration(s)|
-|--------|-------------|-------------|----------------|
-|  basic |  0.8266     | 0.8372      |  88.2132       |
-| sigopt |  0.8266     | 0.8372      |  83.7495       |
+    |strategy|FP32 baseline|int8 accuracy|int8 duration(s)|
+    |--------|-------------|-------------|----------------|
+    |  basic |  0.8266     | 0.8372      |  88.2132       |
+    | sigopt |  0.8266     | 0.8372      |  83.7495       |
 
-ResNet50_v1 tensorflow
+- ResNet50_v1(tensorflow)
 
-|strategy|FP32 baseline|int8 accuracy|int8 duration(s)|
-|--------|-------------|-------------|----------------|
-|  basic |  0.8299     | 0.8294      |  85.0837       |
-| sigopt |  0.8299     | 0.8291      |  83.4469       |
+    |strategy|FP32 baseline|int8 accuracy|int8 duration(s)|
+    |--------|-------------|-------------|----------------|
+    |  basic |  0.8299     | 0.8294      |  85.0837       |
+    | sigopt |  0.8299     | 0.8291      |  83.4469       |
 

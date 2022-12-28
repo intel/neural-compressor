@@ -14,7 +14,7 @@
 # limitations under the License.
 """Model type getter."""
 
-from neural_compressor.model.tensorflow_model import get_model_type as nc_get_model_type
+from neural_compressor.model.model import get_model_type as nc_get_model_type
 from neural_compressor.ux.utils.expiring_dict import ExpiringDict
 
 model_type_cache = ExpiringDict(ttl=600)

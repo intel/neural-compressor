@@ -5,7 +5,7 @@ pip install -r requirements.txt
 ```
 ### Run self distillation
 ```shell
-bash run_distillation.sh --topology=(resnet18|resnet34|resnet50|resnet101) --config=conf.yaml --output_model=path/to/output_model --dataset_location=path/to/dataset --use_cpu=(0|1)
+bash run_distillation.sh --topology=(resnet18|resnet34|resnet50|resnet101) --output_model=path/to/output_model --dataset_location=path/to/dataset --use_cpu=(0|1)
 ```
 ### CIFAR100 benchmark
 https://github.com/weiaicunzai/pytorch-cifar100

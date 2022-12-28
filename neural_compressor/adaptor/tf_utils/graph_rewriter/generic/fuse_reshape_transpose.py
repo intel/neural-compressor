@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Fuse Transpose and Reshape Graph Rewriter."""
 
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
@@ -26,8 +26,11 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 
 
 class FuseTransposeReshapeOptimizer(GraphRewriterBase):
+    """Fuse Transpose + Reshape + MatMul/Conv ==> MatMul/Conv."""
+
     @dump_elapsed_time("Pass FuseTransposeReshapeOptimizer")
     def do_transformation(self):
+        """Execute Transpose + Reshape + MatMul/Conv fusion."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()

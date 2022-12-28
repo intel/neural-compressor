@@ -57,7 +57,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         with g.as_default():
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             z = tf.matmul(x, y)
@@ -85,7 +85,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
     @disable_random()
     def test_first_matmul_biasadd_relu_fusion(self):
         x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-        y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+        y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
         x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
         y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
         z = tf.matmul(x, y)
@@ -119,7 +119,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         with g.as_default():
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             z = tf.matmul(x, y)
@@ -153,7 +153,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         with g.as_default():
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             z = tf.matmul(x, y)
@@ -186,7 +186,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         with g.as_default():
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             z = tf.matmul(x, y, name='no_quant_matmul')
@@ -217,7 +217,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         with g.as_default():
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             z = tf.matmul(x, y, name='no_quant_matmul', transpose_b=True)
@@ -249,7 +249,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         with g.as_default():
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             z = tf.matmul(x, y, name='no_quant_matmul')
@@ -312,7 +312,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         with g.as_default():
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             transpose = tf.transpose(y, perm=[1, 0])
@@ -344,7 +344,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         g = tf.Graph()
         with g.as_default():
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             transpose = tf.transpose(y, perm=[1, 0])
@@ -376,7 +376,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
         with g.as_default():
 
             x_data = np.array([[0.1, 0.2], [0.2, 0.3]])
-            y_data = np.array([[1, 2], [3, 4]], dtype=np.float)
+            y_data = np.array([[1, 2], [3, 4]], dtype=np.float32)
             x = tf.placeholder(tf.float32, shape=[2, 2], name='x')
             y = tf.constant(y_data, dtype=tf.float32, shape=[2, 2])
             z = tf.matmul(x, y)

@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Switch Graph Rewriter."""
 
 
 from ..graph_base import GraphRewriterBase
@@ -24,12 +24,11 @@ from tensorflow.python.framework import tensor_util
 
 
 class SwitchOptimizer(GraphRewriterBase):
-    """ Remove switch op if the input condition is true.
-    """
+    """Remove switch op if the input condition is true."""
 
     @dump_elapsed_time("Pass SwitchOptimizer")
     def do_transformation(self):
-        """ replace all enter ops whose output is matmul with const
+        """Replace all enter ops whose output is matmul with const.
 
         Args:
           input_graph_def (graphdef): graphdef object
@@ -37,8 +36,6 @@ class SwitchOptimizer(GraphRewriterBase):
         Returns:
            [graphdef]: optimized graph
         """
-
-
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 

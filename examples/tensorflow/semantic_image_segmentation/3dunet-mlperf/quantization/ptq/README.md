@@ -25,7 +25,9 @@ Intel Extension for Tensorflow is mandatory to be installed for quantizing the m
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+
+Please refer to the [Installation Guides](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html) for latest Intel GPU driver installation.
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers).
 
 #### Quantizing the model on Intel CPU(Experimental)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
@@ -49,13 +51,21 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 ### 6. Prepare Calibration set
    The calibration set is the forty images listed in brats_cal_images_list.txt. They are randomly selected from Fold 0, Fold 2, Fold 3, and Fold 4 of BraTS 2019 Training Dataset.
 
-### 7. Config the yaml file
-In examples directory, there is a 3dunet-mlperf.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The 3dunet-mlperf_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
+### 7. Quantization Config
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+   device="gpu",
+   backend="itex",
+   ...
+   )
+```
 
 ### 8. Test command
 * `export nnUNet_preprocessed=<path/to/build>/build/preprocessed_data`
 * `export nnUNet_raw_data_base=<path/to/build>/build/raw_data`
 * `export RESULTS_FOLDER=<path/to/build>/build/result`
-* `pip install requirements.txt`
+* `pip install -r requirements.txt`
 * `python run_accuracy.py --input-model=<path/to/model_file> --data-location=<path/to/dataset> --calib-preprocess=<path/to/calibrationset> --iters=100 --batch-size=1 --mode=benchmark --bfloat16 0`
 

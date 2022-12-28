@@ -119,27 +119,34 @@ class _JobsManager:
         # job has already been terminated or never created
         if job is None:
             # do nothing
-            return
+            pass
         # job already spawned subprocess
-        if job.is_alive() and job.subprocess_handle is not None:
+        elif job.is_alive() and job.subprocess_handle is not None:
             # if there is subprocess terminate it, it it has exited already,
             # it has no impact on handle
             job.subprocess_handle.terminate()
-            return
+
         # job is alive and has not spawned subprocess
-        if job.is_alive() and job.subprocess_handle is None:
+        elif job.is_alive() and job.subprocess_handle is None:
             # if job spawns subprocess it will be terminated
             job.to_be_aborted = True
-            return
+
         # job is in jobs queue and it is not alive and does not have subprocess
         # so it can be deleted from queue
-        if not job.is_alive() and job.subprocess_handle is None:
+        elif not job.is_alive() and job.subprocess_handle is None:
             del self._jobs[job.job_id]
-            return
+
+        # if request has event it means that it is synchronous request waiting for job to end
+        if request.event is not None:
+            if job is not None and job.is_alive():
+                job.join()
+            request.event.set()
+
         # in other case job is not alive but still exists on jobs queue,
         # so wait for proper job manager cleanup in _end_job,
         # it happens when end notifiacation of this job has not been processed yet,
-        # but abort was recived
+        # but abort was recived;
+        # one error indicating case is not checked when there is subprocess but job has finished
         return
 
     def _add_process_handle(self, request: _Request) -> None:

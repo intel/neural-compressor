@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""AveragePool Operator."""
 
 import onnx
 from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
@@ -22,21 +22,27 @@ from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domai
 
 @op_registry(op_types="AveragePool")
 class PoolOperator(Operator):
+    """AveragePool Operator."""
+    
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(PoolOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize_check(self):
+        """Check if quantizaion can be done."""
         node = self.node
         if not self.quantizer.is_valid_quantize_weight(node.input[0]):
             return False
         return True
 
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         super().quantize()
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['static'], \
             "convert format for {} should be in ['static']".format(node.op_type)
@@ -49,6 +55,7 @@ class PoolOperator(Operator):
         return True
 
     def convert(self, convert_format):
+        """Convert to QOperator format."""
         node = self.node
         
         parents = self.quantizer.model.get_parents(node)
@@ -83,10 +90,14 @@ class PoolOperator(Operator):
 
 @qop_registry(op_types="QLinearAveragePool")
 class QPoolOperator(QOperator):
+    """QLinearAveragePool Operator."""
+
     def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
         super().__init__(onnx_node, children, initializers)
 
     def convert(self):
+        """Convert to QDQ format."""
         node = self.node
         add_nodes = []
         inits = []

@@ -11,10 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import * as saveAs from 'file-saver';
+import { ShortcutInput } from 'ng-keyboard-shortcuts';
 import { environment } from 'src/environments/environment';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { ProfilingFormComponent } from '../profiling-form/profiling-form.component';
@@ -33,7 +34,9 @@ const shajs = require('sha.js');
     './../datasets/datasets.component.scss',
     './../optimizations/optimizations.component.scss']
 })
-export class ProfilingComponent implements OnInit {
+export class ProfilingComponent implements OnInit, AfterViewInit {
+
+  shortcuts: ShortcutInput[] = [];
 
   apiBaseUrl = environment.baseUrl;
   token = '';
@@ -72,7 +75,7 @@ export class ProfilingComponent implements OnInit {
   showYAxisLabel = true;
   showXAxisLabel = true;
   viewLine: any[] = [900, 300];
-  fontColor = '#000';
+  fontColor = localStorage.getItem('darkMode') === 'darkMode' ? '#fff' : '#000';
 
   customColor = {
     domain: [
@@ -118,6 +121,16 @@ export class ProfilingComponent implements OnInit {
       .subscribe(resp => {
         this.fontColor = resp === '' ? '#000' : '#fff';
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.shortcuts.push(
+      {
+        key: 'shift + alt + p',
+        preventDefault: true,
+        command: e => this.openProfilingForm()
+      }
+    );
   }
 
   openProfilingForm() {

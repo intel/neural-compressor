@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
@@ -21,6 +21,7 @@ import { GraphComponent } from '../graph/graph.component';
 import { FileBrowserFilter, ModelService, NewModel } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { ShortcutInput } from 'ng-keyboard-shortcuts';
 declare let require: any;
 const shajs = require('sha.js');
 
@@ -29,8 +30,9 @@ const shajs = require('sha.js');
   templateUrl: './project-form.component.html',
   styleUrls: ['./project-form.component.scss', './../error/error.component.scss',]
 })
-export class ProjectFormComponent implements OnInit {
+export class ProjectFormComponent implements OnInit, AfterViewInit {
 
+  shortcuts: ShortcutInput[] = [];
   showGraphSpinner = false;
   showSpinner = false;
   showGraphButton = false;
@@ -144,8 +146,10 @@ export class ProjectFormComponent implements OnInit {
             ['inputs', 'outputs'].forEach(param => {
               this[param] = result.data[param];
               if (Array.isArray(result.data[param])) {
-                this[param].splice(this[param].indexOf('custom'), 1);
-                this.isFieldRequired('projectFormGroup', param, true);
+                if (this[param].indexOf('custom') !== -1) {
+                  this[param].splice(this[param].indexOf('custom'), 1);
+                }
+                this.isFieldRequired(param, true);
                 if (result.data[param].length === 0) {
                   this.boundaryNodes[param] = 'custom';
                   this.customBoundaryNodes[param] = true;
@@ -155,7 +159,7 @@ export class ProjectFormComponent implements OnInit {
                   this.projectFormGroup.get(param).setValue(result.data[param]);
                 } else {
                   this.boundaryNodes[param] = 'select';
-                  this.isFieldRequired('projectFormGroup', param, false);
+                  this.isFieldRequired(param, false);
                   this.disableFinish = true;
                   if (result.data.domain === 'object_detection' && result.data.domain_flavour === 'ssd') {
                     if (['detection_bboxes', 'detection_scores', 'detection_classes'].every((val) => result.data.outputs.includes(val))) {
@@ -172,7 +176,7 @@ export class ProjectFormComponent implements OnInit {
                 }
               } else {
                 this.boundaryNodes[param] = 'none';
-                this.isFieldRequired('projectFormGroup', param, false);
+                this.isFieldRequired(param, false);
               }
             });
           }
@@ -180,6 +184,18 @@ export class ProjectFormComponent implements OnInit {
           this.modelService.openErrorDialog(result.data.message);
         }
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.shortcuts.push(
+      {
+        key: 'ctrl + right',
+        preventDefault: true,
+        command: e => {
+          document.getElementsByName('next')[0].click();
+        }
+      },
+    );
   }
 
   setDefaultBoundaryNode(nodeType: 'inputs' | 'outputs', values: string[]) {
@@ -234,8 +250,8 @@ export class ProjectFormComponent implements OnInit {
       model: {
         path: this.projectFormGroup.get('modelLocation').value,
         domain: this.projectFormGroup.get('modelDomain').value,
-        input_nodes: this.getBoundaryNodes('inputs'),
-        output_nodes: this.getBoundaryNodes('outputs'),
+        input_nodes: this.getBoundaryNodes('inputs') === '' ? null : this.getBoundaryNodes('inputs'),
+        output_nodes: this.getBoundaryNodes('outputs') === '' ? null : this.getBoundaryNodes('outputs'),
         shape: this.projectFormGroup.get('shape').value,
       }
     };
@@ -309,15 +325,15 @@ export class ProjectFormComponent implements OnInit {
     this.customBoundaryNodes[nodeType] = !this.customBoundaryNodes[nodeType];
     if (this.customBoundaryNodes[nodeType]) {
       this.boundaryNodes[nodeType] = 'custom';
-      this.isFieldRequired('projectFormGroup', nodeType, true);
+      this.isFieldRequired(nodeType, true);
       this.disableFinish = false;
     } else if (this[nodeType].length) {
       this.boundaryNodes[nodeType] = 'select';
-      this.isFieldRequired('projectFormGroup', nodeType, false);
+      this.isFieldRequired(nodeType, false);
       this.disableFinish = true;
     } else {
       this.boundaryNodes[nodeType] = 'none';
-      this.isFieldRequired('projectFormGroup', nodeType, false);
+      this.isFieldRequired(nodeType, false);
       this.disableFinish = false;
     }
   }
@@ -327,7 +343,7 @@ export class ProjectFormComponent implements OnInit {
       && this.projectFormGroup.get('modelLocation').value && !this.showSpinner;
   }
 
-  boundaryNodesChanged(value, type: 'inputs' | 'outputs') {
+  boundaryNodesChanged(value: string, type: 'inputs' | 'outputs') {
     if (value === 'custom') {
       if (!this.order[type].includes(value)) {
         this.projectFormGroup.get(type).setValue([value]);
@@ -358,7 +374,7 @@ export class ProjectFormComponent implements OnInit {
     return this.projectFormGroup.get(type).value;
   }
 
-  isFieldRequired(form: string, field: string, required: boolean) {
+  isFieldRequired(field: string, required: boolean) {
     if (required) {
       this.projectFormGroup.controls[field].setValidators([Validators.required]);
     } else {

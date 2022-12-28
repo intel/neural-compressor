@@ -35,7 +35,6 @@
    display: none;
 }
 
-
 .navbar-logo {
    background: #0068b5;
    line-height: 1;
@@ -47,6 +46,7 @@
    justify-content: center;
    align-items: center;
    height: 70px;
+   flex-direction: column;
 }
 
 @media screen and (min-width: 1600px) {
@@ -199,3 +199,16 @@ article.pytorch-article {
 #validated-mlperf-models table tr td {
    text-align: center;
 }
+
+.version {
+   margin-top: 0.7rem;
+}
+
+.version a {
+   color: #ffffff;
+}
+
+/* footer {
+   width: 74%;
+   float: right;
+} */

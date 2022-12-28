@@ -23,7 +23,6 @@ if PT_VERSION >= Version("1.8.0-rc1"):
 else:
     FX_MODE = False
 
-
 fake_yaml = """
 model:
   name: imagenet_prune
@@ -117,27 +116,33 @@ tuning:
   random_seed: 9527
 """
 
+
 def build_fake_yaml():
     with open('fake.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_yaml)
+
 
 def build_fake_yaml2():
     with open('fake2.yaml', 'w', encoding="utf-8") as f:
         f.write(fake2_yaml)
 
+
 def build_fake_yaml3():
     with open('fake3.yaml', 'w', encoding="utf-8") as f:
         f.write(fake3_yaml)
+
 
 def build_fx_fake_yaml():
     fx_fake_yaml = fake_yaml.replace('pytorch', 'pytorch_fx')
     with open('fx_fake.yaml', 'w', encoding="utf-8") as f:
         f.write(fx_fake_yaml)
 
+
 def build_fx_fake_yaml2():
     fx_fake2_yaml = fake2_yaml.replace('pytorch', 'pytorch_fx')
     with open('fx_fake2.yaml', 'w', encoding="utf-8") as f:
         f.write(fx_fake2_yaml)
+
 
 def build_fx_fake_yaml3():
     fx_fake3_yaml = fake3_yaml.replace('pytorch', 'pytorch_fx')
@@ -162,7 +167,6 @@ class DynamicControlModel(torch.nn.Module):
 
 
 class TestPruning(unittest.TestCase):
-
     model = torchvision.models.resnet18()
     q_model = torchvision.models.quantization.resnet18()
     q_model.fuse_model()
@@ -230,7 +234,7 @@ class TestPruning(unittest.TestCase):
         scheduler.append(combination)
         opt_model = scheduler()
         opt_model.save('./saved')
-        logger.info(20*'=' + 'test_prune_qat_oneshot' + 20*'=')
+        logger.info(20 * '=' + 'test_prune_qat_oneshot' + 20 * '=')
 
         try:
             conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
@@ -294,7 +298,7 @@ class TestPruning(unittest.TestCase):
         scheduler.append(combination)
         opt_model = scheduler()
         opt_model.save('./saved')
-        logger.info(20*'=' + 'test_distillation_qat_oneshot' + 20*'=')
+        logger.info(20 * '=' + 'test_distillation_qat_oneshot' + 20 * '=')
 
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
         # reloading int8 model
@@ -302,17 +306,18 @@ class TestPruning(unittest.TestCase):
 
     def test_distillation_prune_oneshot_with_new_API(self):
         from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
-        from neural_compressor.config import Pruner, PruningConfig
+        from neural_compressor.config import WeightPruningConfig
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
         model = copy.deepcopy(self.model)
         distillation_criterion = KnowledgeDistillationLossConfig(loss_types=['CE', 'KL'])
         d_conf = DistillationConfig(copy.deepcopy(self.model), distillation_criterion)
-        pruner1 = Pruner(start_epoch=1, end_epoch=3, names=['layer1.0.conv1.weight'])
-        pruner2 = Pruner(target_sparsity=0.6, update_frequency=2, names=['layer1.0.conv2.weight'])
-        p_conf = PruningConfig(pruners=[pruner1, pruner2], end_epoch=3)
-
+        # pruner1 = Pruner(start_epoch=1, end_epoch=3, names=['layer1.0.conv1.weight'])
+        # pruner2 = Pruner(target_sparsity=0.6, update_frequency=2, names=['layer1.0.conv2.weight'])
+        # p_conf = PruningConfig(pruners=[pruner1, pruner2], end_epoch=3)
+        p_conf = WeightPruningConfig(
+            [{'start_step': 0, 'end_step': 2}], target_sparsity=0.64, pruning_scope="local")
         compression_manager = prepare_compression(model=model, confs=[d_conf, p_conf])
 
         def train_func_for_nc(model):
@@ -340,6 +345,7 @@ class TestPruning(unittest.TestCase):
                     loss.backward()
                     compression_manager.callbacks.on_before_optimizer_step()
                     optimizer.step()
+                    compression_manager.callbacks.on_after_optimizer_step()
                     compression_manager.callbacks.on_step_end()
                     if cnt >= iters:
                         break
@@ -348,7 +354,7 @@ class TestPruning(unittest.TestCase):
             return model
 
         train_func_for_nc(model)
-        print(20*'=' + 'test_distillation_prune_oneshot' + 20*'=')
+        print(20 * '=' + 'test_distillation_prune_oneshot' + 20 * '=')
         try:
             conv_weight = model.layer1[0].conv1.weight().dequantize()
         except:
@@ -357,8 +363,8 @@ class TestPruning(unittest.TestCase):
                                0.64,
                                delta=0.05)
         self.assertEqual(
-          compression_manager.callbacks.callbacks.combination,
-          ['Distillation', 'Pruning']
+            compression_manager.callbacks.callbacks.combination,
+            ['Distillation', 'Pruning']
         )
 
     def test_prune_qat_distillation_oneshot(self):
@@ -408,7 +414,7 @@ class TestPruning(unittest.TestCase):
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
         opt_model = scheduler()
-        logger.info(20*'=' + 'test_prune_qat_distillation_oneshot' + 20*'=')
+        logger.info(20 * '=' + 'test_prune_qat_distillation_oneshot' + 20 * '=')
 
         try:
             conv_weight = opt_model.model.layer1[0].conv1.weight().dequantize()
@@ -464,7 +470,7 @@ class TestPruning(unittest.TestCase):
         scheduler.append(combination)
         opt_model = scheduler()
         opt_model.save('./saved')
-        logger.info(20*'=' + 'test_prune_qat_oneshot_fx' + 20*'=')
+        logger.info(20 * '=' + 'test_prune_qat_oneshot_fx' + 20 * '=')
         conv_weight = opt_model.model.state_dict()['layer1.0.conv1.weight']
         self.assertAlmostEqual((conv_weight == 0).sum().item() / conv_weight.numel(),
                                0.64,
@@ -476,7 +482,7 @@ class TestPruning(unittest.TestCase):
         self.assertTrue(torch.equal(reloaded_conv_weight, conv_weight))
 
     @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
-      "requires higher version of torch than 1.9.0")
+                     "requires higher version of torch than 1.9.0")
     def test_distillation_qat_oneshot_fx(self):
         from neural_compressor.experimental import Distillation, Quantization
         datasets = Datasets('pytorch_fx')
@@ -523,7 +529,7 @@ class TestPruning(unittest.TestCase):
         scheduler.append(combination)
         opt_model = scheduler()
         opt_model.save('./saved')
-        logger.info(20*'=' + 'test_distillation_qat_oneshot_fx' + 20*'=')
+        logger.info(20 * '=' + 'test_distillation_qat_oneshot_fx' + 20 * '=')
 
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
         # reloading int8 model
@@ -575,7 +581,7 @@ class TestPruning(unittest.TestCase):
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
         opt_model = scheduler()
-        logger.info(20*'=' + 'test_distillation_prune_oneshot_fx' + 20*'=')
+        logger.info(20 * '=' + 'test_distillation_prune_oneshot_fx' + 20 * '=')
 
         try:
             conv_weight = dict(opt_model.model.layer1.named_modules())['0'].conv1.weight().dequantize()
@@ -587,7 +593,7 @@ class TestPruning(unittest.TestCase):
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,pruning')
 
     @unittest.skipIf(PT_VERSION < Version("1.9.0-rc1"),
-      "requires higher version of torch than 1.9.0")
+                     "requires higher version of torch than 1.9.0")
     def test_prune_qat_distillation_oneshot_fx(self):
         from neural_compressor.experimental import Pruning, Quantization, Distillation
         datasets = Datasets('pytorch_fx')
@@ -634,7 +640,7 @@ class TestPruning(unittest.TestCase):
         combination.train_dataloader = dummy_dataloader
         scheduler.append(combination)
         opt_model = scheduler()
-        logger.info(20*'=' + 'test_prune_qat_distillation_oneshot_fx' + 20*'=')
+        logger.info(20 * '=' + 'test_prune_qat_distillation_oneshot_fx' + 20 * '=')
 
         try:
             conv_weight = \
@@ -645,7 +651,7 @@ class TestPruning(unittest.TestCase):
                                0.64,
                                delta=0.05)
         self.assertEqual(
-          combination.__repr__().lower(), 'combination of pruning,quantization,distillation'
+            combination.__repr__().lower(), 'combination of pruning,quantization,distillation'
         )
 
 

@@ -15,10 +15,12 @@ Supported Optimization Features
 | PyTorch Lightning | [Mixed Precision](https://pytorch-lightning.readthedocs.io/en/latest/guides/speed.html) | `pytorch_lightning_bf16_cpu` |
 | TensorFlow | [Mixed Precision](https://www.intel.com/content/www/us/en/developer/articles/guide/getting-started-with-automixedprecisionmkl.html) | `tensorflow_amp` |
 | Keras | [Mixed Precision](https://www.tensorflow.org/guide/mixed_precision) | `keras_amp` |
-| TensorFlow/Keras | [INC Quantization](https://github.com/intel/neural-compressor/blob/master/docs/source/PTQ.md) | `tensorflow_inc` |
+| TensorFlow/Keras Model | [INC Quantization](https://github.com/intel/neural-compressor/blob/master/docs/source/PTQ.md) | `tensorflow_inc` |
+| Keras Script | [INC Quantization](https://github.com/intel/neural-compressor/tree/master/examples/keras/mnist) | `keras_inc` |
 | ONNX Runtime | [INC Static Quantization (QLinear)](https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/README.md#operator-oriented-with-qlinearops) | `onnx_inc_static_quant_qlinear` |
 | ONNX Runtime | [INC Static Quantization (QDQ)](https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/README.md#tensor-oriented-qdq-format) | `onnx_inc_static_quant_qdq` |
 | ONNX Runtime | [INC Dynamic Quantization](https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/README.md#dynamic-quantization) | `onnx_inc_dynamic_quant` |
 | [HuggingFace Optimum-Intel](https://huggingface.co/docs/optimum/intel/index) | INC Quantization | `pytorch_inc_huggingface_optimum_static`, `pytorch_inc_huggingface_optimum_dynamic` |
 | [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers/) | INC Quantization | `intel_extension_for_transformers` |
 | [BigDL Nano](https://bigdl.readthedocs.io/en/latest/doc/PythonAPI/Nano/pytorch.html#bigdl-nano-pytorch-inferenceoptimizer) | [Optimization List](./BigDLNanoSupport.md) | `nano_` + [specific alias](./BigDLNanoSupport.md) |
+| Auto-Detect | [INC Quantization](https://github.com/intel/neural-compressor) | `inc_auto` |

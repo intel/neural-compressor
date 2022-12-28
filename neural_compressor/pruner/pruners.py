@@ -17,15 +17,15 @@
 # limitations under the License.
 import copy
 from neural_compressor.utils.utility import LazyImport
+
 torch = LazyImport('torch')
 from .patterns import get_pattern
 from .schedulers import get_scheduler
-from .criteria import get_criterion, CRITERIAS
+from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
 from .logger import logger
 
 PRUNERS = {}
-
 
 def register_pruner(name):
     """Class decorator to register a Pruner subclass to the registry.
@@ -47,6 +47,14 @@ def register_pruner(name):
 
     return register
 
+def parse_valid_pruner_types():
+    """Get all valid pruner names"""
+    valid_pruner_types = []
+    for x in CRITERIA.keys():
+        for p in ["", "_progressive"]:
+            valid_pruner_types.append(x + p)
+    valid_pruner_types.append("pattern_lock")
+    return valid_pruner_types
 
 def get_pruner(config, modules):
     """Get registered pruner class.
@@ -54,13 +62,13 @@ def get_pruner(config, modules):
     Get a Pruner object from PRUNERS.
 
     Args:
-        modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
-        config: A config dict object. Contains the pruner information.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        config: A config dict object that contains the pruner information.
 
     Returns:
         A Pruner object.
 
-    Raises: AssertionError: Cuurently only support pruners which have been registered in PRUNERS.
+    Raises: AssertionError: Cuurently only support pruners that have been registered in PRUNERS.
     """
     ## do the ugly work here
     if "progressive" not in config["pruning_type"]:
@@ -70,7 +78,7 @@ def get_pruner(config, modules):
         # if progressive, delete "progressive" words and reset config["progressive"]
         name = config["pruning_type"][0:-12]
         config["progressive"] = True
-    if name in CRITERIAS:
+    if name in CRITERIA:
         if config["progressive"] == False:
             config['criterion_type'] = name
             name = "basic"  ##return the basic pruner
@@ -79,7 +87,7 @@ def get_pruner(config, modules):
             name = "progressive"  ## return the progressive pruner
 
     if name not in PRUNERS.keys():
-        assert False, f"does not support {name}, currently only support {PRUNERS.keys()}"
+        assert False, f"does not support {name}, currently only support {parse_valid_pruner_types()}"
     return PRUNERS[name](config, modules)
 
 
@@ -89,25 +97,25 @@ class BasePruner:
     The class which executes pruning process.
 
     Args:
-        modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
-        config: A config dict object. Contains the pruner information.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        config: A config dict object that contains the pruner information.
 
     Attributes:
-        modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
-        config: A config dict object. Contains the pruner information.
-        masks: A dict {"module_name": Tensor}. Store the masks for modules' weights.
-        scores: A dict {"module_name": Tensor}. Store the score for modules' weights,
-            which are used to decide pruning parts with a criterion.
-        pattern: A Pattern object. Defined in ./patterns.py
-        scheduler: A scheduler object. Defined in ./scheduler.py
-        current_sparsity_ratio: A float. Current model's sparsity ratio, initialized as zero.
-        global_step: An integer. The total steps the model has run.
-        start_step: An integer. When to trigger pruning process.
-        end_step: An integer. When to end pruning process.
-        pruning_frequency: An integer. The pruning frequency, which's valid when iterative
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        config: A config dict object that contains the pruner information.
+        masks: A dict {"module_name": Tensor} that stores the masks for modules' weights.
+        scores: A dict {"module_name": Tensor} that stores the score for modules' weights,
+            which are used to determine what parts to be pruned by a criterion.
+        pattern: A Pattern object defined in ./patterns.py
+        scheduler: A scheduler object defined in ./scheduler.py
+        current_sparsity_ratio: A float representing the current model's sparsity ratio; it is initialized to be zero.
+        global_step: An integer representing the total steps the model has run.
+        start_step: An integer representing when to trigger pruning process.
+        end_step: An integer representing when to end pruning process.
+        pruning_frequency: An integer representing the pruning frequency; it is valid when iterative
             pruning is enabled.
-        target_sparsity_ratio: A float. The final sparsity after pruning.
-        max_sparsity_ratio_per_op: A float. Sparsity ratio maximum for every module.
+        target_sparsity_ratio: A float showing the final sparsity after pruning.
+        max_sparsity_ratio_per_op: A float showing the maximum sparsity ratio for every module.
     """
 
     def __init__(self, config, modules):
@@ -121,9 +129,14 @@ class BasePruner:
         self.end_step = self.config['end_step']
         self.pruning_frequency = self.config['pruning_frequency']
         ##this is different with original code
-        self.total_prune_cnt = (self.end_step - self.start_step + 1) \
+        self.total_prune_cnt = (self.end_step - self.start_step + self.pruning_frequency) \
                                // self.pruning_frequency
         self.completed_pruned_cnt = 0
+        self.total_prune_cnt -= 1  ## not pruning at step 0
+        if self.total_prune_cnt == 0:
+            self.total_prune_cnt = 1
+            self.completed_pruned_cnt = 1
+
         for key in self.modules.keys():
             module = self.modules[key]
             self.masks[key] = torch.ones(module.weight.shape).to(module.weight.device)  ##TODO support bias or others
@@ -157,7 +170,7 @@ class BasePruner:
         Weights are multipled with input_masks. 
 
         Args:
-            input_masks: A dict {"module_name": Tensor}. Store the masks for modules' weights.
+            input_masks: A dict {"module_name": Tensor} that stores the masks for modules' weights.
         """
         with torch.no_grad():
             for key in self.modules.keys():
@@ -236,14 +249,14 @@ class BasicPruner(BasePruner):
     2. Defines the pruning criterion.
 
     Args:
-        modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
-        config: A config dict object. Contains the pruner information.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        config: A config dict object that contains the pruner information.
 
     Attributes:
-        pattern: A Pattern object. Define pruning weights' arrangements within space.
-        criterion: A Criterion Object. Define which weights are to be pruned
-        scheduler: A Scheduler object. Define model's sparsity changing method as training/pruning executes.
-        reg: A Reg object. Define regulization terms.
+        pattern: A Pattern object that defines pruning weights' arrangements within space.
+        criterion: A Criterion Object that defines which weights are to be pruned
+        scheduler: A Scheduler object that defines how the model's sparsity changes as training/pruning proceeds.
+        reg: A Reg object that defines regulization terms.
     """
 
     def __init__(self, config, modules):
@@ -314,7 +327,8 @@ class BasicPruner(BasePruner):
     def on_after_optimizer_step(self):
         """Prune the model after optimization."""
         ##the order of the following three lines can't not be exchanged
-        self.reg.on_after_optimizer_step()
+        if self.global_step >= self.start_step and self.global_step <= self.end_step:
+            self.reg.on_after_optimizer_step()
         self.mask_weights()
         self.criterion.on_after_optimizer_step()
         self.global_step += 1
@@ -326,11 +340,11 @@ class PatternLockPruner(BasePruner):
 
     A Pruner class derived from BasePruner.
     In this pruner, original model's sparsity pattern will be fixed while training.
-    This pruner is useful when you want to train a sparse model without change its original structure.
+    This pruner is useful when a user trains a sparse model without changing its original structure.
 
     Args:
-        modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
-        config: A config dict object. Contains the pruner information.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        config: A config dict object that contains the pruner information.
 
     Attributes:
         Inherit from parent class Pruner.
@@ -362,12 +376,12 @@ class ProgressivePruner(BasicPruner):
     """Pruning Pruner.
 
     A Pruner class derived from BasePruner. In this pruner, mask interpolation will be applied.
-    Mask interpolation is a fine-grained improvement for NxM structured pruning, 
-    By adding interval masks between masks of two pruning steps
+    Mask interpolation is a fine-grained improvement for NxM structured pruning by adding interval 
+        masks between masks of two pruning steps.
 
     Args:
-        modules: A dict {"module_name": Tensor}. Store the pruning modules' weights.
-        config: A config dict object. Contains the pruner information.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        config: A config dict object that contains the pruner information.
 
     Attributes:
         Inherit from parent class Pruner.
@@ -422,7 +436,7 @@ class ProgressivePruner(BasicPruner):
             self.check_progressive_validity()
             self.pre_masks = copy.deepcopy(self.masks)
             self.progressive_masks = copy.deepcopy(self.masks)
-            if self.pruning_frequency < self.progressive_steps:##TODO trick
+            if self.pruning_frequency < self.progressive_steps:  ##TODO trick
                 self.progressive_steps = self.pruning_frequency
                 # if self.progressive_steps == 3:
                 #     self.progressive_steps = 2
@@ -531,8 +545,10 @@ class ProgressivePruner(BasicPruner):
         return
 
     def on_step_begin(self, local_step):
-        """Update the masks at a given local_step."""
-        """Implement at the start of each step."""
+        """Update the masks at a given local_step.
+        
+        Implement at the start of each step.
+        """
         if self.handled_global_step == self.global_step:
             return
 
@@ -551,7 +567,8 @@ class ProgressivePruner(BasicPruner):
     def on_after_optimizer_step(self):
         """Prune the model after optimization."""
         ##the order of the following three lines can't not be exchanged
-        self.reg.on_after_optimizer_step()
+        if self.global_step >= self.start_step and self.global_step <= self.end_step:
+            self.reg.on_after_optimizer_step()
         if not self.use_progressive:
             self.mask_weights()
         else:

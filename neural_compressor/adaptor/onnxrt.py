@@ -67,14 +67,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 "supported backends: {}".format(ONNXRT_BACKENDS[self.backend],
                 [ONNXRT_BACKENDS[i] for i in ort.get_all_providers()]))
 
-        if self.backend == 'TensorrtExecutionProvider':
-            from neural_compressor import options
-            options.onnxrt.qdq_setting.AddQDQPairToWeight = True
-            options.onnxrt.qdq_setting.DedicatedQDQPair = True
-            options.onnxrt.graph_optimization.level = 'DISABLE_ALL'
-            self.static = True
-            self.dynamic = False
-
         if (not self.dynamic and "format" in framework_specific_info and \
             framework_specific_info["format"].lower() == 'qdq') or \
             self.backend == 'TensorrtExecutionProvider':
@@ -114,6 +106,16 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 self.quantizable_op_types += \
                     self.query_handler.get_op_types_by_precision(precision=precision)
  
+        if self.backend == 'TensorrtExecutionProvider':
+            from neural_compressor import options
+            options.onnxrt.qdq_setting.AddQDQPairToWeight = True
+            options.onnxrt.qdq_setting.DedicatedQDQPair = True
+            options.onnxrt.graph_optimization.level = 'DISABLE_ALL'
+            options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin = \
+                ['Conv', 'Gemm', 'Add', 'MatMul']
+            self.static = True
+            self.dynamic = False
+
         self.evaluate_nums = 0
 
         self.fp32_results = []
@@ -517,9 +519,43 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             if self.graph_optimization.gemm2matmul else tmp_model
         model.model = self._rename_node(model.model)
         model = self._revert_fusedconv(model)
+        if self.backend == 'TensorrtExecutionProvider':
+            model = self._revert_conv_add_fusion(model)
         model = split_shared_bias(model)
         model.topological_sort()
         self.pre_optimized_model = copy.deepcopy(model)
+
+    def _revert_conv_add_fusion(self, model):
+        from onnx import numpy_helper
+        from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
+        add_nodes = []
+        remove_nodes = []
+        for node in model.model.graph.node:
+            if node.op_type == 'Conv' and len(node.input) == 3:
+                bias_tensor = model.get_initializer(node.input[2])
+                bias_array = numpy_helper.to_array(bias_tensor).reshape((-1, 1, 1))
+                model.remove_initializer(bias_tensor)
+                model.add_initializer(numpy_helper.from_array(bias_array, bias_tensor.name))
+                kwargs = {}
+                activation_params = None
+                for attr in node.attribute:
+                    kwargs.update(attribute_to_kwarg(attr))
+                conv = onnx.helper.make_node(
+                    'Conv',
+                    node.input[0:2],
+                    [node.name + '_revert'],
+                    node.name, **kwargs)
+                add = onnx.helper.make_node(
+                    'Add',
+                    [conv.output[0], node.input[2]],
+                    node.output,
+                    node.name + '_add')
+                add_nodes.extend([conv, add])
+
+        model.remove_nodes(remove_nodes)
+        model.add_nodes(add_nodes)
+        model.update()
+        return model
 
     def _revert_fusedconv(self, model):
         from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
@@ -684,6 +720,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 else:
                     continue
 
+                if self.backend == 'TensorrtExecutionProvider' and \
+                    precision not in query.get_fallback_list():
+                    optypes.append('Add')
+ 
                 for op in optypes:
                     if op not in quantizable_optype:
                         continue
@@ -736,6 +776,14 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     all_conv_matmul.append(node)
 
         for _, node in enumerate(self.pre_optimized_model.nodes()):
+            # for TRT EP, only insert Q/DQ to inputs of Add nodes followed by ReduceMean
+            if node.op_type == 'Add' and self.backend == 'TensorrtExecutionProvider':
+                children = self.pre_optimized_model.get_children(node)
+                if 'ReduceMean' not in [i.op_type for i in children]:
+                    op_wise.update({(node.name, node.op_type): 
+                        [{'weight': {'dtype': 'fp32'}, 'activation': {'dtype': 'fp32'}}]})
+                continue
+
             if node.op_type in optype_wise:
                 if (exclude_first_quantizable_op and node.name in first_quantizable_node) \
                      or (exclude_last_quantizable_op and node.name in last_quantizable_node):

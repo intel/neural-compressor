@@ -12,6 +12,7 @@ function main {
 function init_params {
   tuned_checkpoint=saved_results
   batch_size=16384
+  iters=100
   for var in "$@"
   do
     case $var in
@@ -68,10 +69,7 @@ function run_tuning {
     fi
 
     if [[ ${mode} == "accuracy" ]]; then
-        numa_cmd="numactl -C 0-$((CORES-1))  "
-        echo "will run on core 0-$((CORES-1)) on socket 0" 
-        export OMP_NUM_THREADS=$CORES
-        $numa_cmd python -u $MODEL_SCRIPT \
+        python -u $MODEL_SCRIPT \
         --raw-data-file=${dataset_location}/day --processed-data-file=${dataset_location}/terabyte_processed.npz \
         --data-set=terabyte \
         --memory-map --mlperf-bin-loader --round-targets=True --learning-rate=1.0 \
@@ -80,19 +78,17 @@ function run_tuning {
         --numpy-rand-seed=727  --inference-only --ipex-interaction \
         --print-freq=100 --print-time --mini-batch-size=2048 --test-mini-batch-size=16384 \
         --save-model ${tuned_checkpoint} --test-freq=2048 --print-auc $ARGS \
-        --load-model=${input_model}
-    elif [[ ${mode} == "benchmark" ]]; then
-        LOG_0="${LOG}/throughput.log"
-        export OMP_NUM_THREADS=1
-        python -m intel_extension_for_pytorch.cpu.launch --throughput_mode --enable_jemalloc $MODEL_SCRIPT \
+        --load-model=${input_model}  --accuracy_only
+    elif [[ ${mode} == "performance" ]]; then
+        python -u $MODEL_SCRIPT \
         --raw-data-file=${dataset_location}/day --processed-data-file=${dataset_location}/terabyte_processed.npz \
-        --data-set=terabyte \
+        --data-set=terabyte --benchmark \
         --memory-map --mlperf-bin-loader --round-targets=True --learning-rate=1.0 \
         --arch-mlp-bot=13-512-256-128 --arch-mlp-top=1024-1024-512-256-1 \
         --arch-sparse-feature-size=128 --max-ind-range=40000000 --ipex-interaction \
         --numpy-rand-seed=727  --inference-only --num-batches=1000 \
         --print-freq=10 --print-time --mini-batch-size=128 --test-mini-batch-size=${batch_size} \
-        --save-model ${tuned_checkpoint} --share-weight-instance=$CORES --num-cpu-cores=$CORES\
+        --save-model ${tuned_checkpoint} \
         $ARGS |tee $LOG_0
         wait
         set +x

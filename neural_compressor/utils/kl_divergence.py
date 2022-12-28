@@ -15,21 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""KL Divergence: measure probability distribution difference to determine the thresholds per quantized op."""
+
 import math
 
 
 class KL_Divergence(object):
-    '''The class of supporting KL divergence calibration algorithm.
-
-       Args:
-           TODO:
-    '''
-
+    """The class of supporting KL divergence calibration algorithm."""
     def __init__(self):
+        """Init a KL Divergence object."""
         pass
 
     def expand_quantized_bins(self, quantized_bins, reference_bins):
-        """expand quantized bins"""
+        """Expand quantized bins."""
         expanded_quantized_bins = [0] * len(reference_bins)
         num_merged_bins = int(len(reference_bins) / len(quantized_bins))
         j_start = 0
@@ -52,7 +50,7 @@ class KL_Divergence(object):
         return expanded_quantized_bins
 
     def safe_entropy(self, reference_distr_P, P_sum, candidate_distr_Q, Q_sum):
-        """ safe entropy """
+        """Safe entropy."""
         assert len(reference_distr_P) == len(candidate_distr_Q)
         tmp_sum1 = 0
         tmp_sum2 = 0
@@ -78,18 +76,7 @@ class KL_Divergence(object):
                       num_bins,
                       quantized_type,
                       num_quantized_bins=255):
-        '''The interface of getting threshold per KL divergency algorithm.
-
-           Args:
-               historgram (tensor list): The tensor numpy array list including all ops
-                                         in each iteration.
-               quantized_type (string): string being "int8" or "uint8".
-               number_bins (integer): number of bins used in KL.
-
-           Return:
-               threshold per quantized ops, it's scalar.
-        '''
-
+        """The interface of getting threshold per op using KL divergency algorithm."""
         if min_val >= 0:
             ending_iter = num_bins - 1
             starting_iter = int(ending_iter * 0.7)

@@ -15,45 +15,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The configuration of the training loop."""
+
 import copy
 from .conf.pythonic_config import Config
-from .config import DistillationConfig, PruningConfig, QuantizationAwareTrainingConfig
+from .config import DistillationConfig, QuantizationAwareTrainingConfig, WeightPruningConfig
 from .experimental.distillation import Distillation
-from .experimental.pruning import Pruning
 from .experimental.quantization import Quantization
 from .experimental.scheduler import Scheduler
 from .utils import logger
 from typing import Callable, List, Union
-
+from neural_compressor.experimental.pruning_v2 import Pruning
 
 class CompressionManager:
     """CompressionManager is uesd in train loop for what user want to deal with additional.
 
-    arguments:
+    Arguments:
         commponent: one instance of Distillation, Quantization, Pruning, Scheduler
 
-    examples:
+    Examples:
         import neural_compressor.training.prepare_compression
         compression_manager = prepare_compression(conf, model)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
         train_loop:
-            compression_manager.on_train_begin()
             for epoch in range(epochs):
-                compression_manager.on_epoch_begin(epoch)
+                compression_manager.callbacks.on_epoch_begin(epoch)
                 for i, batch in enumerate(dataloader):
-                    compression_manager.on_step_begin(i)
+                    compression_manager.callbacks.on_step_begin(i)
                     ......
-                    output = compression_manager.model(batch)
+                    output = model(batch)
                     loss = ......
-                    loss = compression_manager.on_after_compute_loss(batch, output, loss)
+                    loss = compression_manager.callbacks.on_after_compute_loss(batch, output, loss)
                     loss.backward()
-                    compression_manager.on_before_optimizer_step()
+                    compression_manager.callbacks.on_before_optimizer_step()
                     optimizer.step()
-                    compression_manager.on_step_end()
-                compression_manager.on_epoch_end()
-            compression_manager.on_train_end()
+                    compression_manager.callbacks.on_step_end()
+                compression_manager.callbacks.on_epoch_end()
+        compression_manager.callbacks.on_train_end()
         compression_manager.save("path_to_save")
     """
     def __init__(self, component):
+        """Training loop initialization."""
         self.callbacks = self.CallBacks(component)
         self.model = component.model
         try:
@@ -65,43 +68,49 @@ class CompressionManager:
             self.fp32_model = None
 
     class CallBacks:
+        """Define the basic command for the training loop."""
         def __init__(self, component):
+            """Callbacks are used for execute the training procedure."""
             self.callbacks = \
                 component.components[0] if isinstance(component, Scheduler) else component
 
         def on_train_begin(self, dataloader=None):
-            """ called before the beginning of epochs"""
+            """Called before the beginning of epochs."""
             self.callbacks.on_train_begin(dataloader)
 
         def on_train_end(self):
-            """ called after the end of epochs"""
+            """Called after the end of epochs."""
             self.callbacks.on_train_end()
+            logger.info("Training finished!")
 
         def on_epoch_begin(self, epoch):
-            """ called on the beginning of epochs"""
+            """Called on the beginning of epochs."""
             self.callbacks.on_epoch_begin(epoch)
 
         def on_step_begin(self, batch_id):
-            """ called on the beginning of batches"""
+            """Called on the beginning of batches."""
             self.callbacks.on_step_begin(batch_id)
 
         def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
-            """ called on the end of loss computation"""
+            """Called on the end of loss computation."""
             return self.callbacks.on_after_compute_loss(
                 input, student_output, student_loss, teacher_output=None
             )
 
         def on_before_optimizer_step(self):
-            """ called on the end of backward"""
+            """Called on the end of backward."""
             self.callbacks.on_before_optimizer_step()
 
+        def on_after_optimizer_step(self):
+            """Called on the end of backward."""
+            self.callbacks.on_after_optimizer_step()
 
         def on_step_end(self):
-            """ called on the end of batches"""
+            """Called on the end of batches."""
             return self.callbacks.on_step_end()
 
         def on_epoch_end(self):
-            """ called on the end of epochs"""
+            """Called on the end of epochs."""
             return self.callbacks.on_epoch_end()
 
     def save(self, root=None):
@@ -120,17 +129,18 @@ class CompressionManager:
         """Convert the model to another type model, like `onnx` model and so on.
 
         Args:
-
+            save_path (str): The path to save the model
+            conf (Union[Callable, List]) : The configure for onnx exportation.
         """
         self.model.export(save_path, conf)
 
 
 def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs):
-    """_summary_
+    """Summary.
 
     Args:
-        model (Callable, optional):    model to optimize.
-        confs (Union[Callable, List]): config of Distillation, Quantization, Pruning,
+        model (Callable, optional):    The model to optimize.
+        confs (Union[Callable, List]): Config of Distillation, Quantization, Pruning,
                                        or list of config for orchestration optimization
         options (Options, optional):   The configure for random_seed, workspace,
                                        resume path and tensorboard flag.
@@ -138,7 +148,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
     Returns:
         CompressionManager
 
-    examples:
+    Examples:
         import neural_compressor.training.prepare_compression
         compression_manager = prepare_compression(conf, model)
         train_loop:
@@ -158,8 +168,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                 compression_manager.on_epoch_end()
             compression_manager.on_train_end()
     """
-
-    if isinstance(confs, List):
+    if isinstance(confs, List) and len(confs) > 1:
         from .experimental.scheduler import Scheduler
         comps = []
         for conf in confs:
@@ -171,7 +180,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                                nas=None)
                 com = Quantization(conf_)
                 com.model = model
-            elif isinstance(conf, PruningConfig):
+            elif isinstance(conf, WeightPruningConfig):
                 conf_ = Config(pruning=conf,
                                benchmark=None,
                                quantization=None,
@@ -200,6 +209,8 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         scheduler.append(comp)
         component = scheduler
     else:
+        if isinstance(confs, List):
+            confs = confs[0]
         if isinstance(confs, QuantizationAwareTrainingConfig):
             conf = Config(quantization=confs,
                           benchmark=None,
@@ -207,7 +218,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                           distillation=None,
                           nas=None)
             component = Quantization(conf)
-        elif type(confs) == PruningConfig:
+        elif type(confs) == WeightPruningConfig:
             conf = Config(pruning=confs,
                           benchmark=None,
                           quantization=None,

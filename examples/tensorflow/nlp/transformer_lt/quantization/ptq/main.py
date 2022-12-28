@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,16 +49,19 @@ flags.DEFINE_string("reference_file", None,
 flags.DEFINE_string("vocab_file", None,
                     "Path to subtoken vocabulary file.")
 
-flags.DEFINE_string("config", None,
-                    "Config json file")
-
 flags.DEFINE_string("output_model", None,
                     "The output model of the quantized model.")
 
-flags.DEFINE_string("mode", "tune",
-                     "One of three options: 'benchmark'/'accuracy'/'tune'.")
+flags.DEFINE_bool('tune', False,
+                    'whether to tune the model')
 
-flags.DEFINE_integer("iters", -1,
+flags.DEFINE_bool('benchmark', False, 
+                    'whether to benchmark the model')
+
+flags.DEFINE_string("mode", 'performance',
+                     "One of three options: 'performance'/'accuracy'.")
+
+flags.DEFINE_integer("iters", 100,
                      "The iteration used for benchmark.")
 
 class UnicodeRegex(object):
@@ -145,13 +148,16 @@ def eval_func(infer_graph, iteration=-1):
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
     sess = tf.compat.v1.Session(graph=infer_graph, config=config)
+    iteration=-1
     time_list = []
     bleu_eval = bleu()
     predictions = []
     labels = []
     warmup = 10
-    if iteration != -1:
-        assert iteration >= warmup, 'iteration must be larger than warmup'
+    if FLAGS.benchmark and FLAGS.mode == 'performance':
+       iteration = FLAGS.iters
+       assert iteration >= warmup, 'iteration must be larger than warmup'
+
     for idx, (input_data, label) in enumerate(dataloader):
         if idx < iteration or iteration == -1:
             time_start = time.time()
@@ -162,10 +168,12 @@ def eval_func(infer_graph, iteration=-1):
             labels.extend(label)
         else:
             break
+
     latency = np.array(time_list[warmup: ]).mean() / FLAGS.batch_size
-    print('Batch size = {}'.format(FLAGS.batch_size))
-    print('Latency: {:.3f} ms'.format(latency * 1000))
-    print('Throughput: {:.3f} items/sec'.format(1./ latency))
+    if FLAGS.benchmark and FLAGS.mode == 'performance':
+        print('Batch size = {}'.format(FLAGS.batch_size))
+        print('Latency: {:.3f} ms'.format(latency * 1000))
+        print('Throughput: {:.3f} items/sec'.format(1./ latency))
     
     # only calculate accuracy when running out all predictions
     if iteration == -1:
@@ -224,23 +232,33 @@ class Dataset(object):
 
 def main(_):
     graph = load_graph(FLAGS.input_graph)
-    if FLAGS.mode == 'tune':
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization(FLAGS.config)
+    if FLAGS.tune:
+        from neural_compressor import quantization
+        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.config import PostTrainingQuantConfig
         ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-        quantizer.calib_dataloader = common.DataLoader(ds, collate_fn=collate_fn, \
-                                                 batch_size=FLAGS.batch_size)
-        quantizer.model = common.Model(graph)
-        quantizer.eval_func = eval_func
-        q_model = quantizer.fit()
+        calib_dataloader = DataLoader(dataset=ds, collate_fn=collate_fn, \
+                                      batch_size=FLAGS.batch_size, framework='tensorflow')										
+        conf = PostTrainingQuantConfig(inputs=['input_tensor'],
+                                        outputs=['model/Transformer/strided_slice_19'],
+                                        calibration_sampling_size=[500])       
+        q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
+                    eval_func=eval_func)
         try:
             q_model.save(FLAGS.output_model)
         except Exception as e:
             print("Failed to save model due to {}".format(str(e)))
-    elif FLAGS.mode == 'benchmark':
-        eval_func(graph, FLAGS.iters)
-    elif FLAGS.mode == 'accuracy':
-        eval_func(graph, -1)
+    
+    if FLAGS.benchmark:
+        assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
+        "Benchmark only supports performance or accuracy mode."
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
+        if FLAGS.mode == 'performance':
+            conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
+            fit(graph, conf, b_func=eval_func)
+        elif FLAGS.mode == 'accuracy':
+            eval_func(graph)
         
 if __name__ == "__main__":
     tf.compat.v1.app.run()

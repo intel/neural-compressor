@@ -18,64 +18,25 @@
 
 import re
 import yaml
+from .logger import logger
+from ..config import WeightPruningConfig
+from ..conf.config import PrunerV2
 
 try:
     from neural_compressor.conf.dotdict import DotDict
 except:
     from .dot_dict import DotDict  ##TODO
-from .logger import logger
-
-
-class WeightPruningConfig:
-    """
-    similiar to torch optimizer's interface
-    """
-
-    def __init__(self, pruning_configs=[{}],  ##empty dict will use global values
-                 target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
-                 excluded_op_names=[],
-                 start_step=0, end_step=0, pruning_scope="global", pruning_frequency=1,
-                 min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
-                 sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
-                 **kwargs):
-        self.pruning_configs = pruning_configs
-        self._weight_compression = DotDict({
-            'target_sparsity': target_sparsity,
-            'pruning_type': pruning_type,
-            'pattern': pattern,
-            'op_names': op_names,
-            'excluded_op_names': excluded_op_names,  ##global only
-            'start_step': start_step,
-            'end_step': end_step,
-            'pruning_scope': pruning_scope,
-            'pruning_frequency': pruning_frequency,
-            'min_sparsity_ratio_per_op': min_sparsity_ratio_per_op,
-            'max_sparsity_ratio_per_op': max_sparsity_ratio_per_op,
-            'sparsity_decay_type': sparsity_decay_type,
-            'pruning_op_types': pruning_op_types,
-            ##reg_type=None, reduce_type="mean", parameters={"reg_coeff": 0.0}
-            ##'resume_from_pruned_checkpoint': resume_from_pruned_checkpoint  ##resume_from_pruned_checkpoint
-        })
-        self._weight_compression.update(kwargs)
-
-    @property
-    def weight_compression(self):
-        return self._weight_compression
-
-    @weight_compression.setter
-    def weight_compression(self, weight_compression):
-        self._weight_compression = weight_compression
 
 
 def check_config(prune_config):
-    """Functions that check key-value is valid to run Pruning object.
-    
+    """Check if the configuration dict is valid for running Pruning object.
+
     Args:
-        prune_config: A config dict object. Contains Pruning parameters and configurations.
-        
+        prune_config: A config dict object that contains Pruning parameters and configurations.
+
     Returns:
         None if everything is correct.
-        
+
     Raises:
         AssertionError.
     """
@@ -128,15 +89,12 @@ def check_config(prune_config):
 
 
 def reset_none_to_default(obj, key, default):
-    """Functions that add up undefined configurations.
-
-    If some configurations are not defined in the configuration, set it to a default value.
+    """Set undefined configurations to default values.
 
     Args:
         obj: A dict{key: value}
-        key: A string. Key in obj.
-        default: When the key is not in obj, Add key: default item in original obj.
-
+        key: A string representing the key in obj.
+        default: When the key is not in obj, add key by the default item in original obj.
     """
     if obj == None:
         return None
@@ -151,22 +109,120 @@ def reset_none_to_default(obj, key, default):
         else:
             return getattr(obj, key)
 
-
 def update_params(info):
+    """Update parameters."""
     if "parameters" in info.keys():
         params = info["parameters"]
         for key in params:
             info[key] = params[key]
 
 
-def process_and_check_weight_config(val: WeightPruningConfig):
+def process_weight_config(global_config, local_configs, default_config):
+    """Process pruning configurations.
+
+    Args:
+        global_config: A config dict object that contains pruning parameters and configurations.
+        local_config: A config dict object that contains pruning parameters and configurations.
+        default_config: A config dict object that contains pruning parameters and configurations.
+
+    Returns:
+        pruners_info: A config dict object that contains pruning parameters and configurations.
+    """
+    pruners_info = []
+    default_all = global_config
+    for key in default_config.keys():
+        default_all[key] = reset_none_to_default(default_all, key, default_config[key])
+
+    if len(local_configs) == 0:  ##only one
+
+        update_params(default_all)
+        check_config(default_all)
+        pruner_info = DotDict(default_all)
+        pruners_info.append(pruner_info)
+    else:  ##TODO need update, in this mode, we ingore the global op names
+        for pruner_info in local_configs:
+            for key in default_config.keys():
+                ##pruner_info[key] = reset_none_to_default(pruner_info, key, global_config[key])
+                pruner_info[key] = reset_none_to_default(pruner_info, key, default_all[key])
+            update_params(pruner_info)
+            check_config(pruner_info)
+            pruner_info = DotDict(pruner_info)
+            pruners_info.append(pruner_info)
+
+    return pruners_info
+
+
+def process_yaml_config(global_config, local_configs, default_config):
+    """Process the yaml configuration file.
+
+    Args:
+        global_config: A config dict object that contains pruning parameters and configurations.
+        local_config: A config dict object that contains pruning parameters and configurations.
+        default_config: A config dict object that contains pruning parameters and configurations.
+
+    Returns:
+        pruners_info: A config dict object that contains pruning parameters and configurations.
+    """
+    pruners_info = []
+    default_all = global_config
+    for key in default_config.keys():
+        default_all[key] = reset_none_to_default(default_all, key, default_config[key])
+    if len(local_configs) == 0:
+        update_params(default_all)
+        check_config(default_all)
+        pruner_info = DotDict(default_all)
+        pruners_info.append(pruner_info)
+
+    else:  ##TODO need update, in this mode, we ingore the global op names
+        for pruner in local_configs:
+            for key in default_config.keys():
+                pruner_info = pruner.pruner_config
+                pruner_info[key] = reset_none_to_default(pruner_info, key, default_all[key])
+            update_params(pruner_info)
+            check_config(pruner_info)
+            pruner_info = DotDict(pruner_info)
+            pruners_info.append(pruner_info)
+
+    return pruners_info
+
+def check_key_validity(template_config, user_config):
+    def check_key_validity_dict(template_config, usr_cfg_dict):
+        for user_key, user_value in usr_cfg_dict.items():
+            if user_key not in template_config.keys():
+                logger.warning(f"{user_key} is not supported for config")
+
+    def check_key_validity_prunerv2(template_config, usr_cfg_dict):
+        for user_key, user_value in usr_cfg_dict.pruner_config.items():
+            if user_key not in template_config.keys():
+                logger.warning(f"{user_key} is not supported for config")
+    
+    # multi pruners
+    if isinstance(user_config, list):
+        for obj in user_config:
+            if isinstance(obj, dict):
+                check_key_validity_dict(template_config, obj)
+            elif isinstance(obj, PrunerV2):
+                check_key_validity_prunerv2(template_config, obj)
+                
+    # single pruner, weightconfig or yaml
+    elif isinstance(user_config, dict):
+        check_key_validity_dict(template_config, user_config)
+    elif isinstance(user_config, PrunerV2):
+        check_key_validity_prunerv2(template_config, user_config)
+    return
+
+def process_and_check_config(val):
+    """Process and check configurations.
+    
+    Args:  
+        val: A dict that contains the layer-specific pruning configurations.
+    """
     default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
                              'excluded_op_names': [],
                              'start_step': 0, 'end_step': 0, 'pruning_scope': 'global', 'pruning_frequency': 1,
                              'min_sparsity_ratio_per_op': 0.0, 'max_sparsity_ratio_per_op': 0.98,
                              'sparsity_decay_type': 'exp',
                              'pruning_op_types': ['Conv', 'Linear'],
-
                              }
     default_local_config = {'resume_from_pruned_checkpoint': False, 'reg_type': None,
                             'criterion_reduce_type': "mean", 'parameters': {"reg_coeff": 0.0}}
@@ -177,49 +233,60 @@ def process_and_check_weight_config(val: WeightPruningConfig):
     default_config.update(default_global_config)
     default_config.update(default_local_config)
     default_config.update(params_default_config)
-
-    pruning_configs = val.pruning_configs
-    pruners_info = []
-    global_info = val.weight_compression
-    if len(pruning_configs) == 0:  ##only one
-        pruner_info = global_info
-        for key in default_config.keys():
-            pruner_info[key] = reset_none_to_default(pruner_info, key, default_config[key])
-        update_params(pruner_info)
-        check_config(pruner_info)
-        pruner_info = DotDict(pruner_info)
-        pruners_info.append(pruner_info)
-
-    else:  ##TODO need update, in this mode, we ingore the global op names
-        for pruner_info in pruning_configs:
-            for key in default_config.keys():
-                pruner_info[key] = reset_none_to_default(pruner_info, key, global_info[key])
-                pruner_info[key] = reset_none_to_default(pruner_info, key, default_config[key])
-            update_params(pruner_info)
-            check_config(pruner_info)
-            pruner_info = DotDict(pruner_info)
-            pruners_info.append(pruner_info)
-
-    return pruners_info
-
+    if isinstance(val, WeightPruningConfig):
+        global_configs = val.weight_compression
+        pruning_configs = val.pruning_configs
+        check_key_validity(default_config, pruning_configs)
+        check_key_validity(default_config, global_configs)
+        return process_weight_config(global_configs, pruning_configs, default_config)
+    else:
+        val = val["pruning"]["approach"]["weight_compression_v2"]
+        global_configs = val
+        pruning_configs = val["pruners"]
+        check_key_validity(default_config, pruning_configs)
+        check_key_validity(default_config, global_configs)
+        return process_yaml_config(global_configs, pruning_configs, default_config)
 
 def process_config(config):
-    """Obtain a config dict object from a config file.
-    
+    """Obtain a config dict object from the config file.
+
     Args:
-        config: A string. The path to configuration file.
-        
+        config: A string representing the path to the configuration file.
+
     Returns:
         A config dict object.
     """
+    if isinstance(config, str):
+        try:
+            with open(config, 'r') as f:
+                content = f.read()
+                val = yaml.safe_load(content)
+                ##schema.validate(val)
+            return process_and_check_config(val)
+        except FileNotFoundError as f:
+            logger.error("{}.".format(f))
+            raise RuntimeError(
+                "The yaml file is not exist. Please check the file name or path."
+            )
+        except Exception as e:
+            logger.error("{}.".format(e))
+            raise RuntimeError(
+                "The yaml file format is not correct. Please refer to document."
+            )
+
     if isinstance(config, WeightPruningConfig):
-        return process_and_check_weight_config(config)
+        return process_and_check_config(config)
     else:
         assert False, f"not supported type {config}"
 
 
 def parse_to_prune(config, model):
-    """Keep target pruned layers."""
+    """Keep target pruned layers.
+    
+    Args:
+        config: A string representing the path to the configuration file.
+        model: The model to be pruned.
+    """
     modules = {}
     if config["op_names"] == None or config["op_names"] == []:
         config["op_names"] = [".*"]
@@ -230,7 +297,7 @@ def parse_to_prune(config, model):
             assert False, f"regular expression match does not support {raw}"
         for name, module in filter(lambda t: pattern.search(t[0]), model.named_modules()):
             for layer_type in config["pruning_op_types"]:
-                if layer_type in type(module).__name__:
+                if layer_type in type(module).__name__ and hasattr(module, "weight"):
                     modules[name] = module
                     break
     ##remove not to prune layers

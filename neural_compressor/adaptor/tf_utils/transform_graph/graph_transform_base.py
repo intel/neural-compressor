@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""GraphTransform Base Class."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -28,13 +29,14 @@ from tensorflow.python.platform import gfile
 logger = logging.getLogger("neural_compressor")
 
 class GraphTransformBase(object):
+    """GraphTransform Base Class."""
+
     def __init__(self, input_pb):
-        """
-        Basic class for graph transformation.
-        Parameters:
+        """Basic class for graph transformation.
+
+        Args:
              input_pb: the input graphdef or pb file.
         """
-
         if isinstance(input_pb, graph_pb2.GraphDef):
             self.input_graph = input_pb
         else:
@@ -51,8 +53,8 @@ class GraphTransformBase(object):
         self.generate_input_map()
 
     def parse_input_pb(self):
-        """
-        Parse the input pbdef to get the node name and node mapping.
+        """Parse the input pbdef to get the node name and node mapping.
+
         Returns:
             the dict that key is node name while the value is nodeDef.
         """
@@ -65,6 +67,7 @@ class GraphTransformBase(object):
                 logger.warning("Duplicated node name {}.".format(node.name))
 
     def generate_input_map(self):
+        """Generate the input map."""
         self.input_node_map = {}
         for node in self.input_graph.node:
             node_name = self.node_name_from_input(node.name)
@@ -76,8 +79,10 @@ class GraphTransformBase(object):
 
     def node_name_from_input(self, node_name):
         """Get the original node name from input string.
-        Parameters:
+
+        Args:
             node_name: input node's name in string
+
         Returns:
             node's name
         """
@@ -89,10 +94,11 @@ class GraphTransformBase(object):
         return node_name
 
     def get_node_name_from_input(self, node_name):
-        """
-        Get the original node name from input string.
-        Parameters:
+        """Get the original node name from input string.
+
+        Args:
             node_name: input node's name in string
+
         Returns:
             node's name
         """
@@ -100,7 +106,5 @@ class GraphTransformBase(object):
         return node_names[0]
 
     def do_transformation(self):
-        """
-        Virtual Interface. Each transformation should implement it.
-        """
+        """Virtual Interface. Each transformation should implement it."""
         pass

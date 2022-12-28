@@ -865,37 +865,89 @@ class TemplateAdaptor(Adaptor):
 
     def eval_func(self, model, dataloader, postprocess, metrics, measurer, iteration, conf=None):
         results = []
-        for idx, (input, label) in enumerate(dataloader):
-            if measurer is not None:
-                measurer.start()
+        try:
+            for idx, (input, label) in enumerate(dataloader):
+                if measurer is not None:
+                    measurer.start()
 
-            output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
-            if self.device != "cpu":  # pragma: no cover
-                output = output.to("cpu")
-                label = label.to("cpu")
-            if measurer is not None:
-                measurer.end()
-            if postprocess is not None:
-                output, label = postprocess((output, label))
-            if metrics:
-                for metric in metrics:
-                    if not hasattr(metric, "compare_label") or \
-                        (hasattr(metric, "compare_label") and metric.compare_label):
-                        metric.update(output, label)
-
-                # If distributed dataloader, gather all outputs to update metric
-                if getattr(dataloader, 'distributed', False) or \
-                  isinstance(dataloader.sampler, \
-                  torch.utils.data.distributed.DistributedSampler):
-                    hvd.init()
+                output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
+                if self.device != "cpu":  # pragma: no cover
+                    output = output.to("cpu")
+                    label = label.to("cpu")
+                if measurer is not None:
+                    measurer.end()
+                if postprocess is not None:
+                    output, label = postprocess((output, label))
+                if metrics:
                     for metric in metrics:
-                        metric.hvd = hvd
+                        if not hasattr(metric, "compare_label") or \
+                            (hasattr(metric, "compare_label") and metric.compare_label):
+                            metric.update(output, label)
 
-            if self.fp32_preds_as_label:
-                self.fp32_results.append(output) if self.is_baseline else \
-                    results.append(output)
-            if idx + 1 == iteration:
-                break
+                    # If distributed dataloader, gather all outputs to update metric
+                    if getattr(dataloader, 'distributed', False) or \
+                      isinstance(dataloader.sampler, \
+                      torch.utils.data.distributed.DistributedSampler):
+                        hvd.init()
+                        for metric in metrics:
+                            metric.hvd = hvd
+
+                if self.fp32_preds_as_label:
+                    self.fp32_results.append(output) if self.is_baseline else \
+                        results.append(output)
+                if idx + 1 == iteration:
+                    break
+        except Exception as e:
+            logger.warning("The dataloader didn't include label, will try input without label!")
+            for idx, input in enumerate(dataloader):
+                if (isinstance(input, dict) or isinstance(input, UserDict)):
+                    if not self.benchmark:
+                        assert "label" in input, \
+                            "The dataloader must include label to measure the metric!"
+                        label = input["label"].to("cpu")
+                elif not self.benchmark:
+                    assert False, "The dataloader must include label to measure the metric!"
+
+                if measurer is not None:
+                    measurer.start()
+
+                output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
+
+                if measurer is not None:
+                    measurer.end()
+
+                if self.device != "cpu" and not self.benchmark:  # pragma: no cover
+                    if isinstance(output, dict) or isinstance(input, UserDict):
+                        for key in output:
+                            output[key] = output[key].to("cpu")
+                    elif isinstance(output, list) or isinstance(output, tuple):
+                        for tensor in output:
+                            tensor = tensor.to("cpu")
+                    else:
+                        output = output.to("cpu")
+
+                if postprocess is not None and not self.benchmark:
+                    output, label = postprocess((output, label))
+
+                if metrics and not self.benchmark:
+                    for metric in metrics:
+                        if not hasattr(metric, "compare_label") or \
+                            (hasattr(metric, "compare_label") and metric.compare_label):
+                            metric.update(output, label)
+
+                    # If distributed dataloader, gather all outputs to update metric
+                    if getattr(dataloader, 'distributed', False) or \
+                      isinstance(dataloader.sampler, \
+                      torch.utils.data.distributed.DistributedSampler):
+                        hvd.init()
+                        for metric in metrics:
+                            metric.hvd = hvd
+
+                if self.fp32_preds_as_label:
+                    self.fp32_results.append(output) if self.is_baseline else \
+                        results.append(output)
+                if idx + 1 == iteration:
+                    break
         return results
 
     def model_eval(self,
@@ -1339,10 +1391,10 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.non_quant_dict = self.get_non_quant_modules(self.model.kwargs) 
         quantizable_ops = []
         self._get_quantizable_ops_recursively(self.model._model, '', quantizable_ops)
-        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
         bf16_ops = []
         if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             self._get_bf16_ops_recursively(self.model._model, '', bf16_ops)
         bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         self.model.model.training = True
@@ -2532,7 +2584,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
                             to config.yaml'                                           .format(batch_size))
-            del init_model
+            del(init_model)
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
             if self.version.release < Version("1.12.0").release:
@@ -2724,6 +2776,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
         try:
             q_model = copy.deepcopy(model)
+            q_model.fp32_model = model.fp32_model
         except Exception as e:  # pragma: no cover
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
                 repr(e)))
@@ -2897,10 +2950,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         quantizable_ops = []
         tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
-        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
         bf16_ops = []
         if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
         bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         quantized_ops = OrderedDict()
@@ -2930,6 +2983,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
         # so set it to None.
         example_inputs = None
+
+        # For export API, deepcopy fp32_model
+        try:
+            self.model.fp32_model = copy.deepcopy(self.model.fp32_model)
+        except Exception as e:  # pragma: no cover
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                repr(e)))
 
         if self.sub_module_list is None:
             if self.version.release >= Version("1.13.0").release:  # pragma: no cover

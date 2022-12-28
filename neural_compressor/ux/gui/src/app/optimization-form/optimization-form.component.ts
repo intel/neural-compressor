@@ -11,9 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, Inject, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { ShortcutInput } from 'ng-keyboard-shortcuts';
 import { ModelService } from '../services/model.service';
 
 @Component({
@@ -21,14 +22,16 @@ import { ModelService } from '../services/model.service';
   templateUrl: './optimization-form.component.html',
   styleUrls: ['./optimization-form.component.scss', './../error/error.component.scss', './../project-form/project-form.component.scss',]
 })
-export class OptimizationFormComponent implements OnInit {
+export class OptimizationFormComponent implements OnInit, AfterViewInit {
+
+  shortcuts: ShortcutInput[] = [];
 
   precisions = [];
   precisionsPyTorch = [];
   precisionsOther = [];
 
   optimizationTypes = [];
-  optimizationTypeId: number;
+  supportedTypes = [];
 
   datasets = [];
 
@@ -46,11 +49,24 @@ export class OptimizationFormComponent implements OnInit {
     this.modelService.datasetCreated$.subscribe(response => this.getDatasets());
   }
 
+  ngAfterViewInit(): void {
+    this.shortcuts.push(
+      {
+        key: 'ctrl + right',
+        preventDefault: true,
+        command: e => {
+          document.getElementsByName('next')[0].click();
+        }
+      },
+    );
+  }
+
   setFormValues() {
     this.optimizationFormGroup = new FormGroup({
       name: new FormControl('Optimization' + String(this.data.index + 1), Validators.required),
       precisionId: new FormControl('', Validators.required),
-      datasetId: new FormControl('', Validators.required)
+      datasetId: new FormControl('', Validators.required),
+      optimizationTypeId: new FormControl('', Validators.required)
     });
   }
 
@@ -82,16 +98,21 @@ export class OptimizationFormComponent implements OnInit {
   }
 
   getOptimizationTypes() {
+    this.supportedTypes = [];
     this.modelService.getDictionaryWithParam('optimization_types', 'precision',
       { precision: this.precisions.find(x => x.id === this.optimizationFormGroup.get('precisionId').value).name })
       .subscribe(
         (response: { optimization_types: any }) => {
           this.optimizationTypes = response.optimization_types;
-          const supportedTypes = this.optimizationTypes.filter(x => x.is_supported === true);
-          if (supportedTypes.length > 1) {
-            this.optimizationTypeId = this.optimizationTypes.find(x => x.name === 'Mixed precision').id;
+          this.supportedTypes = this.optimizationTypes.filter(x => x.is_supported === true);
+          if (this.optimizationFormGroup.get('precisionId').value === 2) {
+            this.optimizationFormGroup.get('optimizationTypeId').setValue(
+              this.optimizationTypes.find(x => x.name === 'Mixed precision').id
+            );
           } else {
-            this.optimizationTypeId = supportedTypes[0].id;
+            this.optimizationFormGroup.get('optimizationTypeId').setValue(
+              this.supportedTypes[0].id
+            );
           }
         },
         error => {
@@ -123,7 +144,7 @@ export class OptimizationFormComponent implements OnInit {
         project_id: this.data.projectId,
         name: this.optimizationFormGroup.get('name').value,
         precision_id: this.optimizationFormGroup.get('precisionId').value,
-        optimization_type_id: this.optimizationTypeId,
+        optimization_type_id: this.optimizationFormGroup.get('optimizationTypeId').value,
         dataset_id: this.optimizationFormGroup.get('datasetId').value
       })
         .subscribe(
@@ -135,6 +156,7 @@ export class OptimizationFormComponent implements OnInit {
       this.modelService.editOptimization({
         id: this.data.optimizationId,
         precision_id: this.optimizationFormGroup.get('precisionId').value,
+        optimization_type_id: this.optimizationFormGroup.get('optimizationTypeId').value,
         dataset_id: this.optimizationFormGroup.get('datasetId').value
       })
         .subscribe(

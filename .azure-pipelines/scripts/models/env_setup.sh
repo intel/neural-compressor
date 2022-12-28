@@ -37,6 +37,9 @@ for i in "$@"; do
     --new_benchmark=*)
         new_benchmark=$(echo $i | sed "s/${PATTERN}//")
         ;;
+    --inc_new_api=*)
+        inc_new_api=$(echo $i | sed "s/${PATTERN}//")
+        ;;
     *)
         echo "Parameter $i not recognized."
         exit 1
@@ -61,7 +64,19 @@ fi
 $BOLD_YELLOW && echo "====== install requirements ======" && $RESET
 /bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh
 
-cd ${WORK_SOURCE_DIR}/${model_src_dir}
+cd ${WORK_SOURCE_DIR}
+if [[ "${inc_new_api}" == "false" ]]; then
+    echo "copy old api examples to workspace..."
+    git clone -b old_api_examples https://github.com/intel/neural-compressor.git old-lpot-models
+    cd old-lpot-models
+    git branch
+    cd -
+    rm -rf ${model_src_dir}
+    mkdir -p ${model_src_dir}
+    cp -r old-lpot-models/examples/${framework}/${model_src_dir} ${WORK_SOURCE_DIR}/${model_src_dir}/../
+fi
+
+cd ${model_src_dir}
 pip install ruamel_yaml
 pip install psutil
 pip install protobuf==3.20.1
@@ -74,6 +89,10 @@ elif [[ "${framework}" == "onnxrt" ]]; then
     pip install onnx==1.12.0
     pip install onnxruntime==${fwk_ver}
 elif [[ "${framework}" == "mxnet" ]]; then
+    pip install numpy==1.23.5
+    echo "re-install pycocotools resolve the issue with numpy..."
+    pip uninstall pycocotools -y
+    pip install --no-cache-dir pycocotools
     if [[ "${fwk_ver}" == "1.7.0" ]]; then
         pip install mxnet==${fwk_ver}.post2
     elif [[ "${fwk_ver}" == "1.6.0" ]]; then
@@ -109,16 +128,18 @@ else
     $BOLD_RED && echo "Not found requirements.txt file." && $RESET
 fi
 
-$BOLD_YELLOW && echo "======== update yaml config ========" && $RESET
-$BOLD_YELLOW && echo -e "\nPrint origin yaml..." && $RESET
-cat ${yaml}
-python ${SCRIPTS_PATH}/update_yaml_config.py \
-    --yaml=${yaml} \
-    --framework=${framework} \
-    --dataset_location=${dataset_location} \
-    --batch_size=${batch_size} \
-    --strategy=${strategy} \
-    --new_benchmark=${new_benchmark} \
-    --multi_instance='true'
-$BOLD_YELLOW && echo -e "\nPrint updated yaml... " && $RESET
-cat ${yaml}
+if [[ "${inc_new_api}" == "false" ]]; then
+    $BOLD_YELLOW && echo "======== update yaml config ========" && $RESET
+    $BOLD_YELLOW && echo -e "\nPrint origin yaml..." && $RESET
+    cat ${yaml}
+    python ${SCRIPTS_PATH}/update_yaml_config.py \
+        --yaml=${yaml} \
+        --framework=${framework} \
+        --dataset_location=${dataset_location} \
+        --batch_size=${batch_size} \
+        --strategy=${strategy} \
+        --new_benchmark=${new_benchmark} \
+        --multi_instance='true'
+    $BOLD_YELLOW && echo -e "\nPrint updated yaml... " && $RESET
+    cat ${yaml}
+fi

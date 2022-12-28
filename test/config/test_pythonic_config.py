@@ -20,7 +20,8 @@ from torch import nn
 
 from neural_compressor.conf.pythonic_config import OpQuantConf, ActivationConf, WeightConf
 from neural_compressor.data import Datasets
-from neural_compressor.experimental import Quantization, Distillation, Pruning, NAS, common
+from neural_compressor.experimental import Quantization, Distillation, NAS, common
+from neural_compressor.experimental.pruning_v2 import Pruning
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper

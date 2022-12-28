@@ -180,7 +180,7 @@ class ProblemMultiObjective(Problem):
             n_constr=0,
             xl=0,
             xu=param_upperbound,
-            type_var=np.int,
+            type_var=np.int32,
         )
 
         self.evaluation_interface = evaluation_interface

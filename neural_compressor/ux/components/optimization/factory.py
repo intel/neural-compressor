@@ -22,6 +22,7 @@ from neural_compressor.ux.components.optimization.mixed_precision.mixed_precisio
     MixedPrecision,
 )
 from neural_compressor.ux.components.optimization.optimization import Optimization
+from neural_compressor.ux.components.optimization.pruning.pruning import Pruning
 from neural_compressor.ux.components.optimization.tune.tuning import Tuning
 from neural_compressor.ux.utils.consts import OptimizationTypes
 from neural_compressor.ux.utils.exceptions import InternalException
@@ -46,6 +47,7 @@ class OptimizationFactory:
             OptimizationTypes.QUANTIZATION.value: Tuning,
             OptimizationTypes.GRAPH_OPTIMIZATION.value: GraphOptimization,
             OptimizationTypes.MIXED_PRECISION.value: MixedPrecision,
+            OptimizationTypes.PRUNING.value: Pruning,
         }
         optimization = optimization_map.get(optimization_type, None)
         if optimization is None:

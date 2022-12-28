@@ -17,7 +17,7 @@ import os.path
 from typing import Any, List, Optional
 
 from neural_compressor.experimental.common.model import Model as NCModel
-from neural_compressor.model.tensorflow_model import TensorflowBaseModel
+from neural_compressor.model.model import TensorflowBaseModel
 from neural_compressor.utils.logger import Logger
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.graph.reader.tensorflow_reader import TensorflowReader
@@ -108,6 +108,15 @@ class TensorflowModel(Model):
     def get_framework_name() -> str:
         """Get the name of framework."""
         return Frameworks.TF.value
+
+    @property
+    def supports_pruning(self) -> bool:
+        """Check if pruning is supported for the model."""
+        try:
+            self.nc_model_instance.get_all_weight_names()
+            return True
+        except AttributeError:
+            return False
 
     def guard_requirements_installed(self) -> None:
         """Ensure all requirements are installed."""

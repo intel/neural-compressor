@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize Conv2D/DepthwiseConv2dNative."""
 
 import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
@@ -27,8 +28,10 @@ from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
 import numpy as np
 
 class FuseNodeStartWithConv2d(QuantizeNodeBase):
+    """Quantize Conv2D/DepthwiseConv2dNative to int8 op."""
 
     def __init__(self, **kwargs):
+        """Initilization."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
@@ -60,6 +63,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         }
 
     def apply_conv_single_fusion(self, match_node_name):
+        """Apply Conv2D single fusion."""
         skip_node_name = match_node_name[1:]
         matched_node = self.node_name_mapping[match_node_name[0]]
         _, normal_inputs = self._get_node_input(matched_node.node.name)
@@ -129,12 +133,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_conv_biasadd_relu_fusion(self, match_node_name):
-        """Fuse the conv/biasadd/relu pattern.
-
-        Arguments:
-            match_node_name {[type]} -- [description]
-        """
-
+        """Fuse the conv/biasadd/relu pattern."""
         skip_node_name = match_node_name[1:]
         matched_node = self.node_name_mapping[match_node_name[0]]
         control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
@@ -201,6 +200,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_conv_biasadd_fusion(self, match_node_name):
+        """Apply Conv BiasAdd fusion."""
         skip_node_name = match_node_name[1:]
         matched_node = self.node_name_mapping[match_node_name[0]]
         control_inputs, normal_inputs = self._get_node_input(
@@ -263,6 +263,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_conv_biasadd_addn_relu_fusion(self, match_node_name):
+        """Apply Conv BiasAdd AddN Relu fusion."""
         skip_node_name = match_node_name[1:]
         matched_node = self.node_name_mapping[match_node_name[0]]
         control_inputs, normal_inputs = self._get_node_input(
@@ -353,12 +354,14 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def get_longest_fuse(self):
+        """Get the longest fusion pattern."""
         self._get_op_list()
 
         matched_rule, matched_node_name = self._is_match(self.sorted_patterns)
         return matched_rule, matched_node_name
 
     def apply_the_transform(self):
+        """Quantize Conv2D/DepthwiseConv2dNative and apply the fusion pattern."""
         self._get_op_list()
         matched_rule, matched_node_name = self._is_match(self.sorted_patterns)
         if matched_node_name:

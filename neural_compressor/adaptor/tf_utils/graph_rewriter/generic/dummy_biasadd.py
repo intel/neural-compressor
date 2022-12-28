@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Inject dummy BiasAdd Graph Rewriter."""
 
 import tensorflow as tf
 from tensorflow.python.framework import dtypes
@@ -26,12 +27,15 @@ from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 
 class InjectDummyBiasAddOptimizer(GraphRewriterBase):
+    """Inject dummy BiasAdd for MatMul, Conv2D for pattern fusion."""
     def __init__(self, model, outputs):
+        """Initilization."""
         super().__init__(model)
         self.outputs = outputs
 
     @dump_elapsed_time("Pass InjectDummyBiasAddOptimizer")
     def do_transformation(self):
+        """Inject dummy BiasAdd if MatMul, Conv2D missing the valid add ops behind them."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()

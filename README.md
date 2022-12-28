@@ -29,9 +29,9 @@ Python version: 3.7, 3.8, 3.9, 3.10
 ### Install on Linux
 - Release binary install 
   ```Shell
-  # install stable basic version from pip
+  # install stable basic version from pypi
   pip install neural-compressor
-  # Or install stable full version from pip (including GUI)
+  # or install stable full version from pypi (including GUI)
   pip install neural-compressor-full
   ```
 - Nightly binary install
@@ -39,9 +39,9 @@ Python version: 3.7, 3.8, 3.9, 3.10
   git clone https://github.com/intel/neural-compressor.git
   cd neural-compressor
   pip install -r requirements.txt
-  # install nightly basic version from pip
+  # install nightly basic version from pypi
   pip install -i https://test.pypi.org/simple/ neural-compressor
-  # Or install nightly full version from pip (including GUI)
+  # or install nightly full version from pypi (including GUI)
   pip install -i https://test.pypi.org/simple/ neural-compressor-full
   ```
 More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
@@ -56,13 +56,18 @@ pip install tensorflow
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
 ```python
-import tensorflow as tf
-from neural_compressor.experimental import Quantization, common
-quantizer = Quantization()
-quantizer.model = './mobilenet_v1_1.0_224_frozen.pb'
-dataset = quantizer.dataset('dummy', shape=(1, 224, 224, 3))
-quantizer.calib_dataloader = common.DataLoader(dataset)
-quantizer.fit()
+from neural_compressor.config import PostTrainingQuantConfig
+from neural_compressor.data.dataloaders.dataloader import DataLoader
+from neural_compressor.data import Datasets
+
+dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
+from neural_compressor.quantization import fit
+config = PostTrainingQuantConfig()
+fit(
+  model="./mobilenet_v1_1.0_224_frozen.pb",
+  conf=config,
+  calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset),
+  eval_dataloader=DataLoader(framework='tensorflow', dataset=dataset))
 ```
 ### Quantization with [JupyterLab Extension](./neural_coder/extensions/neural_compressor_ext_lab/README.md)
 Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install with one click:
@@ -150,7 +155,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 
 <div style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="./docs/source/_static/imgs/release_data.png">
-    <img src="./docs/source/_static/imgs/release_data.png" alt="Architecture" width=800 height=500>
+    <img src="./docs/source/_static/imgs/release_data.png" alt="Architecture" width=750 height=470>
   </a>
 </div>
 
@@ -203,8 +208,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
     <tr>
         <td colspan="2" align="center"><a href="./docs/source/benchmark.md">Benchmarking</a></td>
         <td colspan="3" align="center"><a href="./docs/source/distributed.md">Distributed Training</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/model_conversion.md">Model Conversion</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/tensorboard.md">TensorBoard</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/tensorboard.md">TensorBoard</a></td>
     </tr>
     <tr>
         <td colspan="4" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
@@ -226,22 +230,19 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 </table>
 
 ## Selected Publications/Events
+* [#MLefficiency — Optimizing transformer models for efficiency](https://medium.com/@kawapanion/mlefficiency-optimizing-transformer-models-for-efficiency-a9e230cff051)(Dec 2022)
+* [One-Click Acceleration of Hugging Face Transformers with Intel’s Neural Coder](https://medium.com/intel-analytics-software/one-click-acceleration-of-huggingface-transformers-with-optimum-intel-by-neural-coder-f35ca3b1a82f)(Dec 2022)
+* [One-Click Quantization of Deep Learning Models with the Neural Coder Extension](https://medium.com/intel-analytics-software/one-click-quantize-your-deep-learning-code-in-visual-studio-code-with-neural-coder-extension-8be1a0022c29)(Dec 2022)
+* [Accelerate Stable Diffusion with Intel Neural Compressor](https://medium.com/intel-analytics-software/accelerating-stable-diffusion-inference-through-8-bit-post-training-quantization-with-intel-neural-e28f3615f77c)(Dec 2022)
 * [Intel together with Tencent deepens the cooperation to build a cloud foundation for digital and intelligent industry](https://mp.weixin.qq.com/s/CPz9-5Nsh-5N9Q8-UmK--w) (Dec 2022)
 * [Running Fast Transformers on CPUs: Intel Approach Achieves Significant Speed Ups and SOTA Performance](https://medium.com/syncedreview/running-fast-transformers-on-cpus-intel-approach-achieves-significant-speed-ups-and-sota-448521704c5e) (Nov 2022)
-* [Intel Neural Compressor for TF Virtual Appliance packaged by Bitnami](https://marketplace.cloud.vmware.com/services/details/e9c3d891-ca51-4f07-a5aa-3fe6394f15ae) (Nov 2022)
-* [Neural Compressor: an open-source Python library for network compression](https://cloud.tencent.com/developer/article/2165895) (Nov 2022)
-* [Running Fast Transformers on CPUs: Intel Approach Achieves Significant Speed Ups and SOTA Performance](https://medium.com/syncedreview/running-fast-transformers-on-cpus-intel-approach-achieves-significant-speed-ups-and-sota-448521704c5e) (Nov 2022)
-* [Personalized Stable Diffusion with Few-Shot Fine-Tuning](https://medium.com/intel-analytics-software/personalized-stable-diffusion-with-few-shot-fine-tuning-on-a-single-cpu-f01a3316b13) (Nov 2022)
-* [Fast DistilBERT on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
-* [Meet the Innovation of Intel AI Software: Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/articles/technical/innovation-of-ai-software-extension-tensorflow.html) (Oct 2022)
-* [PyTorch* Inference Acceleration with Intel® Neural Compressor](https://www.intel.com/content/www/us/en/developer/articles/technical/pytorch-inference-with-intel-neural-compressor.html#gs.gnq0cj) (Oct 2022)
 
 > View our [full publication list](./docs/source/publication_list.md).
 
 ## Additional Content
 
 * [Release Information](./docs/source/releases_info.md)
-* [Contribution Guidelines](./docs/source/contributions.md)
+* [Contribution Guidelines](./docs/source/CONTRIBUTING.md)
 * [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
 * [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)

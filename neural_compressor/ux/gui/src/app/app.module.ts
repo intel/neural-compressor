@@ -78,14 +78,19 @@ import { ModelWiseComponent } from './model-wise/model-wise.component';
 import * as PlotlyJS from 'plotly.js-dist-min';
 import { PlotlyModule } from 'angular-plotly.js';
 import { HistogramComponent } from './histogram/histogram.component';
-
-PlotlyModule.plotlyjs = PlotlyJS;
 import { ConfigPreviewComponent } from './config-preview/config-preview.component';
 import { PrintJsonPipe } from './pipes/print-json.pipe';
 import { GenerateConfigDialogComponent } from './generate-config-dialog/generate-config-dialog.component';
 import { WarningComponent } from './warning/warning.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { KeyboardShortcutsModule } from 'ng-keyboard-shortcuts';
+import { PruningComponent } from './pruning/pruning.component';
+import { MatTreeModule } from '@angular/material/tree';
+import { MatIconModule } from '@angular/material/icon';
+import { DynamicFormFieldComponent } from './dynamic-form-field/dynamic-form-field.component';
+import { CapitalLetterPipe } from './pipes/capitalLetter.pipe';
 
+PlotlyModule.plotlyjs = PlotlyJS;
 const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefix }}'
   ? '' : document.getElementById('url_prefix').innerText;
 
@@ -99,6 +104,7 @@ const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefi
     UnderscorePipe,
     LongNamePipe,
     PrintJsonPipe,
+    CapitalLetterPipe,
     FileBrowserComponent,
     GraphComponent,
     HomeComponent,
@@ -121,7 +127,9 @@ const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefi
     ModelWiseComponent,
     HistogramComponent,
     ConfigPreviewComponent,
-    GenerateConfigDialogComponent
+    GenerateConfigDialogComponent,
+    PruningComponent,
+    DynamicFormFieldComponent,
   ],
   imports: [
     DragDropModule,
@@ -141,6 +149,7 @@ const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefi
     MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     MatMenuModule,
     MatRadioModule,
@@ -155,11 +164,13 @@ const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefi
     MatSlideToggleModule,
     MatToolbarModule,
     MatTooltipModule,
+    MatTreeModule,
     NgDatePipesModule,
     NgxChartsModule,
     NgxGraphModule,
     PlotlyModule,
     ReactiveFormsModule,
+    KeyboardShortcutsModule.forRoot()
   ],
   providers: [
     ModelService,
@@ -176,7 +187,8 @@ const prefix = document.getElementById('url_prefix').innerText === '{{ url_prefi
     {
       provide: APP_BASE_HREF,
       useValue: prefix.slice(-1) === '/' ? prefix : prefix + '/'
-    }
+    },
+    HomeComponent
   ],
   entryComponents: [
     ErrorComponent,

@@ -1,5 +1,3 @@
-import os
-import shutil
 import unittest
 
 import torch
@@ -7,7 +5,8 @@ import torchvision
 import torch.nn as nn
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.pruning import Pruning, WeightPruningConfig
+from neural_compressor.config import WeightPruningConfig
+from neural_compressor.pruner.pruning import Pruning
 
 
 class TestPruning(unittest.TestCase):
@@ -19,7 +18,8 @@ class TestPruning(unittest.TestCase):
                 "op_names": ['layer1.*'],
                 'target_sparsity': 0.5,
                 "pattern": '8x2',
-                "pruning_type": "magnitude_progressive"
+                "pruning_type": "magnitude_progressive",
+                "false_key": "this is to test unsupport keys"
             },
             {
                 "op_names": ['layer2.*'],

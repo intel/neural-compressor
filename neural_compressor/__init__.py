@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .pruning import Pruning
 from .benchmark import Benchmark
 from .version import __version__
 from .contrib import *
@@ -25,4 +24,4 @@ from .utils import options
 from .conf.config import conf
 from .conf.pythonic_config import config
 from .config import DistillationConfig, PostTrainingQuantConfig, \
-                    PruningConfig, QuantizationAwareTrainingConfig
+                    WeightPruningConfig, QuantizationAwareTrainingConfig

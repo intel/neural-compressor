@@ -37,9 +37,6 @@ function init_params {
       --int8=*)
           int8=$(echo ${var} |cut -f2 -d=)
       ;;
-      --config=*)
-          tuned_checkpoint=$(echo $var |cut -f2 -d=)
-      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -53,9 +50,9 @@ function init_params {
 # run_benchmark
 function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --benchmark"
-    elif [[ ${mode} == "benchmark" ]]; then
-        mode_cmd=" --iter ${iters} --benchmark "
+        mode_cmd=" --accuracy"
+    elif [[ ${mode} == "performance" ]]; then
+        mode_cmd=" --iter ${iters} --performance "
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -71,7 +68,7 @@ function run_benchmark {
             --pretrained \
             --tuned_checkpoint ${tuned_checkpoint} \
             -b ${batch_size} \
-            -a $topology \
+            -a ${input_model} \
             ${mode_cmd} \
             ${extra_cmd}
 }
