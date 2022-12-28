@@ -54,13 +54,15 @@ SRC_FOLDER=build/html
 rm -rf ${DST_FOLDER}/*
 mkdir -p ${DST_FOLDER}
 cp -r ${SRC_FOLDER}/* ${DST_FOLDER}
-
 python update_html.py ${DST_FOLDER} ${VERSION}
+cp -r ./docs/source/imgs ${DST_FOLDER}/docs/source
+
 
 rm -rf ${LATEST_FOLDER}/*
 mkdir -p ${LATEST_FOLDER}
 cp -r ${SRC_FOLDER}/* ${LATEST_FOLDER}
 python update_html.py ${LATEST_FOLDER} ${VERSION}
+cp -r ./docs/source/imgs ${LATEST_FOLDER}/docs/source
 
 echo "Create document is done"
 
