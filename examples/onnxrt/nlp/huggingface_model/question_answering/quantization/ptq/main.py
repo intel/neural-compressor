@@ -264,7 +264,6 @@ class SquadDataset(Dataset):
     
     def __getitem__(self, index):
         return (self.input_ids[index:index + self.bs][0][0], self.token_type_ids[index:index + self.bs][0][0], self.attention_mask[index:index + self.bs][0][0]), 0
-        # return (self.input_ids[index:index + self.bs][0], self.attention_mask[index:index + self.bs][0], self.token_type_ids[index:index + self.bs][0]), 0
 
     def __len__(self):
         assert len(self.input_ids) == len(self.attention_mask)
@@ -549,7 +548,7 @@ def main():
 
     eval_dataloader = trainer.get_dataloader(eval_dataset)
 
-    def eval_func(model, *args):
+    def eval_func(model):
         logger.info("*** Evaluate ***")
         metrics = trainer.evaluate(onnx_model=model)
         print('eval_func', metrics)
@@ -559,6 +558,9 @@ def main():
 
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
+        if model_args.benchmark:
+            print("Batch size = %d" % training_args.per_device_eval_batch_size)
+            print("Accuracy: %.5f" % metrics['eval_f1'])
         return metrics['eval_f1']
     
     if model_args.tune:
@@ -589,14 +591,13 @@ def main():
         from neural_compressor.experimental import Benchmark, common
         model = onnx.load(model_args.model_path)
         if model_args.mode == 'performance':
-            from neural_compressor.data import DATALOADERS, DATASETS
+            from neural_compressor.data.datasets.dummy_dataset import DummyDataset
             session = ort.InferenceSession(model_args.model_path, None)
             input_tensors = session.get_inputs()
             shape = []
             for i in range(len(input_tensors)):
                 shape.append((1, 512))
-            onnx_datasets = DATASETS('onnxrt_integerops')
-            dummy_dataset = onnx_datasets['dummy'](shape=shape, low=1, high=1, dtype='int64', label=True)
+            dummy_dataset = DummyDataset(shape=shape, low=1, high=1, dtype='int64', label=True)
             evaluator = Benchmark(model_args.config)
             evaluator.model = common.Model(model)
             evaluator.b_dataloader = common.DataLoader(dummy_dataset)

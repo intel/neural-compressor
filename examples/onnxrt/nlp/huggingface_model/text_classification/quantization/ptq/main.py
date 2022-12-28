@@ -27,7 +27,8 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Union
 import sys
-from neural_compressor.data import DATALOADERS, DATASETS
+from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
+from neural_compressor.data.datasets.dummy_dataset import DummyDataset
 
 
 class ONNXRTBertDataset:
@@ -355,10 +356,10 @@ if __name__ == "__main__":
     dataset = ONNXRTBertDataset(data_dir=args.data_path,
                                 model_name_or_path=args.model_name_or_path,
                                 task=args.task)
-    dataloader = DATALOADERS['onnxrt_integerops'](dataset, batch_size=args.batch_size)
+    dataloader = DefaultDataLoader(dataset, args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
-    def eval_func(model, *args):
+    def eval_func(model):
         metric.reset()
         import tqdm
         session = ort.InferenceSession(model.SerializeToString(), None)
@@ -373,6 +374,9 @@ if __name__ == "__main__":
                 ort_inputs.update({inputs_names[i]: inputs[i]})
             predictions = session.run(None, ort_inputs)
             metric.update(predictions[0], labels)
+        if args.benchmark:
+            print("Batch size = %d" % args.batch_size)
+            print("Accuracy: %.5f" %  metric.result())
         return metric.result()
 
     if args.benchmark:
@@ -384,8 +388,7 @@ if __name__ == "__main__":
             shape = []
             for i in range(len(input_tensors)):
                 shape.append((1, 128))
-            datasets = DATASETS('onnxrt_integerops')
-            dummy_dataset = datasets['dummy'](shape=shape, low=1, high=1, dtype='int64', label=True)
+            dummy_dataset = DummyDataset(shape=shape, low=1, high=1, dtype='int64', label=True)
             evaluator = Benchmark(args.config)
             evaluator.model = common.Model(model)
             evaluator.b_dataloader = common.DataLoader(dummy_dataset)
