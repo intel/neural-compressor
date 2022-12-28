@@ -3,7 +3,7 @@ Mixed Precision
 
 1. [Introduction](#introduction)
 2. [Mixed Precision Support Matrix](#mixed-precision-support-matrix)
-3. [Get start with Mixed Precision API](#get-start-with-mixed-precision-api)
+3. [Get Started with Mixed Precision API](#get-start-with-mixed-precision-api)
 4. [Examples](#examples)
 
 ## Introduction
@@ -29,7 +29,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
 
 > **During quantization, BF16 conversion can be executed if force enabled. Please refer to this [document](./quantization_mixed_precision.md) for its workflow.**
 
-## Get start with Mixed Precision API
+## Get Started with Mixed Precision API
 
 To get a bf16 model, users can use the Mixed Precision API as follows.
 

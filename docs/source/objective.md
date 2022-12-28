@@ -9,7 +9,7 @@ Objective
 
 2. [Objective Support Matrix](#objective-support-matrix)
 
-3. [Get Start with Objective API](#get-start-with-objective-api)
+3. [Get Started with Objective API](#get-start-with-objective-api)
 
     3.1. [Config Single Objective](#config-single-objective)
 
@@ -45,7 +45,7 @@ Built-in objectives support list:
 | footprint    | Evaluate the peak size of memory blocks during inference |
 | modelsize    | Evaluate the model size                                  |
 
-## Get Start with Objective API
+## Get Started with Objective API
 
 ### Config Single Objective
 
