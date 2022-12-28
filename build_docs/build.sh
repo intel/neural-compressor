@@ -20,6 +20,8 @@ cp ../neural_coder/extensions/screenshots/* ./source/docs/source/imgs
 
 sed -i 's/.\/neural_coder\/extensions\/screenshots/imgs/g' ./source/docs/source/Welcome.md
 
+sed -i 's/.\/docs\/source\/_static/./g' ./source/docs/source/Welcome.md
+
 sed -i 's/.md/.html/g; s/.\/docs\/source\//.\//g' ./source/docs/source/Welcome.md
 
 #sed 's/.md/.html/g; s/.\/docs\/source\//.\//g; s/.\/neural_coder\/extensions\/screenshots/imgs/g; s/.\/docs\/source\/_static/..\/\/_static/g; ' "./source/docs/source/Welcome.md.tmp" > "./source/docs/source/Welcome.md"
