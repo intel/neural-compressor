@@ -29,6 +29,7 @@ requirements:
     - requests
     - prettytable
     - packaging
+    - deprecated
 test:
   imports:
     - neural_compressor
