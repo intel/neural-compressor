@@ -109,6 +109,7 @@ class DyNAS(NASBase):
         self.macs_predictor = None
         self.latency_predictor = None
         self.results_csv_path = None
+        self.num_workers = None
         self.init_cfg(conf_fname_or_obj)
 
     def estimate(self, individual):
@@ -133,6 +134,7 @@ class DyNAS(NASBase):
             latency_predictor=None,
             datasetpath=self.dataset_path,
             batch_size=self.batch_size,
+            num_workers=self.num_workers,
             checkpoint_path=self.supernet_ckpt_path,
         )
 
@@ -188,6 +190,7 @@ class DyNAS(NASBase):
                 latency_predictor=self.latency_predictor,
                 datasetpath=self.dataset_path,
                 batch_size=self.batch_size,
+                num_workers=self.num_workers,
                 checkpoint_path=self.supernet_ckpt_path
             )
 
@@ -302,6 +305,7 @@ class DyNAS(NASBase):
         self.dataset_path = dynas_config.dataset_path
         self.supernet_ckpt_path = dynas_config.supernet_ckpt_path
         self.batch_size = dynas_config.batch_size
+        self.num_workers = dynas_config.num_workers
         if dynas_config.population < 10:  # pragma: no cover
             raise NotImplementedError(
                 "Please specify a population size >= 10"
