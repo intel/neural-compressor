@@ -559,7 +559,7 @@ def main():
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
         if model_args.benchmark:
-            print("Batch size = %d" % model_args.batch_size)
+            print("Batch size = %d" % training_args.per_device_eval_batch_size)
             print("Accuracy: %.5f" % metrics['eval_f1'])
         return metrics['eval_f1']
     
