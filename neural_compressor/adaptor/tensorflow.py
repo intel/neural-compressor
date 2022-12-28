@@ -535,10 +535,10 @@ class TensorFlowAdaptor(Adaptor):
             assert q_func is not None, "quantization aware training mode \
                 is not configured correctly"
 
-            from neural_compressor.experimental import common
+            from neural_compressor.model.model import Model
             qat_model = q_func(model)
 
-            return self.convert(common.Model(qat_model), 'QAT', 'default')
+            return self.convert(Model(qat_model), 'QAT', 'default')
 
         assert q_func is None, \
             "post-training quantization mode is not support calibration function for Tensorflow!"

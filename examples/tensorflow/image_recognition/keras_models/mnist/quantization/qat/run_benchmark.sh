@@ -34,7 +34,7 @@ function run_benchmark {
             --input_model ${input_model} \
             --benchmark \
             --mode ${mode} \
-            --batch_size ${batch_size} \
+            --batch_size ${batch_size}
 }
 
 main "$@"

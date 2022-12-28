@@ -15,9 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
 import logging
 import numpy as np
 import tensorflow as tf
+
+from neural_compressor.metric.metric import TensorflowTopK
+from neural_compressor.data.transforms.imagenet_transform import LabelShift
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
@@ -64,14 +68,14 @@ def prepare_data():
 
 (train_images, train_labels), (test_images, test_labels) = prepare_data()
 
-class dataloader(object):
+class Dataloader(object):
     def __init__(self, batch_size=100):
         mnist = tf.keras.datasets.mnist
         (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
-        
+
         # Normalize the input image so that each pixel value is between 0 to 1.
         self.train_images = train_images / 255.0
-        self.test_images = test_images / 255.0 
+        self.test_images = test_images / 255.0
         self.train_labels = train_labels
         self.test_labels = test_labels
 
@@ -92,8 +96,8 @@ def evaluate(model):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
-    from neural_compressor.experimental import common
-    model = common.Model(model)
+    from neural_compressor.model.model import Model
+    model = Model(model)
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
@@ -123,14 +127,14 @@ def evaluate(model):
         latency = np.array(latency_list).mean() / FLAGS.batch_size
         return latency
 
-    dataloader = dataloader(batch_size=FLAGS.batch_size)
+    dataloader = Dataloader(batch_size=FLAGS.batch_size)
     latency = eval_func(dataloader)
     if FLAGS.benchmark and FLAGS.mode == 'performance':
         print("Batch size = {}".format(FLAGS.batch_size))
         print("Latency: {:.3f} ms".format(latency * 1000))
         print("Throughput: {:.3f} images/sec".format(1. / latency))
     acc = metric.result()
-    return acc 
+    return acc
 
 
 def main():
@@ -161,12 +165,12 @@ def main():
 
     if FLAGS.benchmark:
         from neural_compressor.benchmark import fit
-        from neural_compressor.experimental import common
+        from neural_compressor.model.model import Model
         from neural_compressor.config import BenchmarkConfig
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
         "Benchmark only supports performance or accuracy mode."
 
-        model = common.Model(FLAGS.input_model).graph_def
+        model = Model(FLAGS.input_model).graph_def
         if FLAGS.mode == 'performance':
             conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
             fit(model, conf, b_func=evaluate)

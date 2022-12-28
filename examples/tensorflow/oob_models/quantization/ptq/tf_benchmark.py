@@ -58,8 +58,8 @@ def initialize_graph(model_details, args, od_graph_def):
                 od_graph_def = delete_assign(od_graph_def)
 
         elif args.use_nc and not od_graph_def.node:
-            from neural_compressor.experimental import common
-            model = common.Model(os.path.join(os.getcwd(), model_details['model_dir']))
+            from neural_compressor.model.model import Model
+            model = Model(os.path.join(os.getcwd(), model_details['model_dir']))
             od_graph_def = model.graph_def
 
         # optimize for inference
