@@ -820,8 +820,8 @@ criterion = KnowledgeDistillationLossConfig()
 
 class DistillationConfig:
     """Config of distillation.
+    
     Args:
-
         teacher_model (Callable): Teacher model for distillation. Defaults to None.
         features (optional): Teacher features for distillation, features and teacher_model are alternative.
                              Defaults to None.
