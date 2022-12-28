@@ -158,7 +158,7 @@ def main():
 
         q_aware_model.summary()
         x_train, y_train = prepare_data(FLAGS.dataset_location)
-        q_aware_model.fit(x_train, y_train, batch_size=64, epochs=1)
+        q_aware_model.fit(x_train, y_train, batch_size=64, epochs=2)
 
         compression_manager.callbacks.on_train_end()
         compression_manager.save(FLAGS.output_model)
