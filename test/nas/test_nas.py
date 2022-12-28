@@ -233,6 +233,11 @@ class TestNAS(unittest.TestCase):
                 ],
                 'onehot_vector_expected': [0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0]
             },
+            {
+                'supernet': 'transformer_lt_wmt_en_de',
+                'pymoo_vector': [0, 0, 2, 1, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1],
+                'onehot_vector_expected': [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0]
+            },
         ]
         for test_config in test_configs:
             nas_agent = NAS('dynas_fake.yaml')
@@ -246,27 +251,38 @@ class TestNAS(unittest.TestCase):
             self.assertListEqual(list(onehot_vector), test_config['onehot_vector_expected'])
 
     def test_parameter_manager_translate2param(self):
-        nas_agent = NAS('dynas_fake.yaml')
-        search_algorithm, supernet = 'nsga2', 'ofa_mbv3_d234_e346_k357_w1.2'
-        config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
-        config.dynas.supernet = supernet
-        nas_agent = NAS(config)
-        nas_agent.init_for_search()
-
-        pymoo_vector = [
-            1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
-            1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
-            0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
+        test_configs = [
+            {
+                'supernet': 'ofa_mbv3_d234_e346_k357_w1.2',
+                'pymoo_vector': [
+                    1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
+                    1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
+                    0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
+                ],
+                'param_dict_expected': {
+                    'd': [4, 2, 4, 2, 2],
+                    'e': [4, 4, 6, 4, 3, 4, 3, 6, 6, 6, 3, 3, 6, 6, 6, 6, 4, 4, 6, 4],
+                    'ks': [5, 7, 7, 7, 7, 7, 5, 7, 3, 7, 5, 5, 3, 3, 5, 5, 7, 7, 5, 3],
+                },
+            },
+            {
+                'supernet': 'transformer_lt_wmt_en_de',
+                'pymoo_vector': [0, 0, 2, 1, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1],
+                'param_dict_expected': {'encoder_embed_dim': [640], 'decoder_embed_dim': [640], 'encoder_ffn_embed_dim': [1024, 2048, 3072, 3072, 3072, 1024], 'decoder_ffn_embed_dim': [3072, 1024, 1024, 1024, 3072, 1024], 'decoder_layer_num': [3], 'encoder_self_attention_heads': [8, 8, 8, 8, 8, 8], 'decoder_self_attention_heads': [8, 4, 8, 4, 4, 8], 'decoder_ende_attention_heads': [8, 4, 4, 4, 8, 8], 'decoder_arbitrary_ende_attn': [1, -1, -1, 1, -1, 1]},
+            }
         ]
 
-        param_dict = nas_agent.supernet_manager.translate2param(pymoo_vector)
-        param_dict_expected = {
-            'd': [4, 2, 4, 2, 2],
-            'e': [4, 4, 6, 4, 3, 4, 3, 6, 6, 6, 3, 3, 6, 6, 6, 6, 4, 4, 6, 4],
-            'ks': [5, 7, 7, 7, 7, 7, 5, 7, 3, 7, 5, 5, 3, 3, 5, 5, 7, 7, 5, 3],
-        }
+        for test_config in test_configs:
+            nas_agent = NAS('dynas_fake.yaml')
+            search_algorithm, supernet = 'nsga2', test_config['supernet']
+            config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
+            config.dynas.supernet = supernet
+            nas_agent = NAS(config)
+            nas_agent.init_for_search()
 
-        self.assertDictEqual(param_dict, param_dict_expected)
+            param_dict = nas_agent.supernet_manager.translate2param(test_config['pymoo_vector'])
+
+            self.assertDictEqual(param_dict, test_config['param_dict_expected'])
 
 
     def test_parameter_manager_translate2pymoo(self):
@@ -282,7 +298,7 @@ class TestNAS(unittest.TestCase):
                     1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
                     1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
                     0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
-                ]
+                ],
             },
             {
                 'supernet': 'transformer_lt_wmt_en_de',
