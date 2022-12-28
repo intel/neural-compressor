@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Neural Compressor Quantization API."""
 
 from .experimental import Quantization as ExpQuantization
 from neural_compressor.conf.pythonic_config import Config
@@ -29,6 +30,7 @@ def fit(model,
         eval_metric=None,
         **kwargs):
     """Quantize the model with a given configure.
+
     Args:
         model (torch.nn.Module):              For Tensorflow model, it could be a path
                                               to frozen pb,loaded graph_def object or
@@ -80,8 +82,9 @@ def fit(model,
                                                    output = model(input)
                                                    accuracy = metric(output, label)
                                                    return accuracy
+        eval_metric (str or obj):             Set metric class and neural_compressor will initialize 
+                                              this class when evaluation.
     """
-
     if isinstance(conf, PostTrainingQuantConfig):
         if eval_func is None and eval_dataloader is None:
             conf.performance_only = True
