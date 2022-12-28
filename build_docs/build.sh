@@ -18,7 +18,7 @@ cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
 #cp -f "./source/docs/source/Welcome.md" "./source/docs/source/Welcome.md.tmp"
 cp ../neural_coder/extensions/screenshots/* ./source/docs/source/imgs
 
-sed -i 's.\/neural_coder\/extensions\/screenshots/imgs/g' ./source/docs/source/Welcome.md
+sed -i 's/.\/neural_coder\/extensions\/screenshots/imgs/g' ./source/docs/source/Welcome.md
 
 sed -i 's/.md/.html/g; s/.\/docs\/source\//.\//g' ./source/docs/source/Welcome.md
 
