@@ -362,7 +362,9 @@ class GraphConverter:
         if self.new_api:
             if self.performance_only:
                 model.graph_def = FuseConvRedundantDequantizeTransformer(model.graph_def).do_transformation()
-            model.graph_def = FuseMatMulRedundantDequantizeTransformer(model.graph_def).do_transformation()
+            post_optimize_graph_def = FuseMatMulRedundantDequantizeTransformer(model.graph_def).do_transformation()
+            post_optimize_graph_def.library.CopyFrom(self.model.graph_def.library)
+            model.graph_def = post_optimize_graph_def
         post_cse_graph_def = PostCseOptimizer(model.graph_def).do_transformation()
         post_hostconst_graph_def = PostHostConstConverter(post_cse_graph_def).do_transformation()
         post_hostconst_graph_def.library.CopyFrom(self.model.graph_def.library)
