@@ -1,5 +1,5 @@
 CHECKOUT_GH_PAGES=1
-PUSH_GH_PAGES=0
+PUSH_GH_PAGES=1
 WORK_DIR=../build_tmp
 rm -rf ${WORK_DIR}
 mkdir -p ${WORK_DIR}
@@ -15,7 +15,6 @@ cp -rf ../docs/ ./source
 
 cp -f "../README.md" "./source/docs/source/Welcome.md"
 cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
-#cp -f "./source/docs/source/Welcome.md" "./source/docs/source/Welcome.md.tmp"
 cp ../neural_coder/extensions/screenshots/* ./source/docs/source/imgs
 
 sed -i 's/.\/neural_coder\/extensions\/screenshots/imgs/g' ./source/docs/source/Welcome.md
@@ -24,8 +23,6 @@ sed -i 's/.\/docs\/source\/_static/./g' ./source/docs/source/Welcome.md
 
 sed -i 's/.md/.html/g; s/.\/docs\/source\//.\//g' ./source/docs/source/Welcome.md
 
-#sed 's/.md/.html/g; s/.\/docs\/source\//.\//g; s/.\/neural_coder\/extensions\/screenshots/imgs/g; s/.\/docs\/source\/_static/..\/\/_static/g; ' "./source/docs/source/Welcome.md.tmp" > "./source/docs/source/Welcome.md"
-#rm -f "./source/docs/source/Welcome.md.tmp"
 
 make clean
 make html
