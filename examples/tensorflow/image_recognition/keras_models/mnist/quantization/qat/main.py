@@ -21,7 +21,6 @@ import numpy as np
 import tensorflow as tf
 
 from neural_compressor.metric.metric import TensorflowTopK
-from neural_compressor.data.transforms.imagenet_transform import LabelShift
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
@@ -104,12 +103,12 @@ def evaluate(model):
     iteration = -1
     if FLAGS.benchmark and FLAGS.mode == 'performance':
         iteration = 100
-    postprocess = LabelShift(label_shift=1)
     metric = TensorflowTopK(k=1)
 
     def eval_func(dataloader):
         latency_list = []
         for idx, (inputs, labels) in enumerate(dataloader):
+            inputs = np.array([inputs])
             # dataloader should keep the order and len of inputs same with input_tensor
             assert len(input_tensor) == len(inputs), \
                 'inputs len must equal with input_tensor'
@@ -119,7 +118,6 @@ def evaluate(model):
             predictions = model.sess.run(output_tensor, feed_dict)
             end = time.time()
 
-            predictions, labels = postprocess((predictions, labels))
             metric.update(predictions, labels)
             latency_list.append(end-start)
             if idx + 1 == iteration:
