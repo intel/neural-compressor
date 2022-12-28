@@ -198,6 +198,12 @@ class ModelArguments:
     onnx: bool = field(
         default=False, metadata={"help": "convert PyTorch model to ONNX"}
     )
+    iters: int = field(
+        default=100,
+        metadata={
+            "help": "The inference iterations to run for benchmark."
+        },
+    )
 
 
 def main():
@@ -548,7 +554,16 @@ def main():
         return
 
     if model_args.benchmark or model_args.accuracy_only:
-        eval_func(model)
+        if model_args.benchmark:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(warmup=5,
+                                     iteration=model_args.iters,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
+        else:
+            eval_func(model)
         return
 
     # Training
