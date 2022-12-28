@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Rename FusedBatchNorm op to FusedBatchNormV2 Graph Rewriter."""
 
 import math
 import numpy as np
@@ -28,6 +29,8 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class RenameBatchNormOptimizer(GraphRewriterBase):
+    """Rename FusedBatchNorm op to FusedBatchNormV2."""
+
     @dump_elapsed_time("Pass RenameBatchNormOptimizer")
     def do_transformation(self):
         """Rename FusedBatchNorm op to FusedBatchNormV2.

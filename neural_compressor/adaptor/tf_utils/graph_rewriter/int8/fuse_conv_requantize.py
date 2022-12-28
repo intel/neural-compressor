@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse QuantizedConv Requantize/Dequantize Graph Rewriter."""
+
 import tensorflow as tf
 from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
@@ -25,8 +27,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class FuseConvRequantizeTransformer(GraphRewriterBase):
-    """Fuse Quantized Conv Op with the successor Requantize Op.
-    """
+    """Fuse Quantized Conv Op with the successor Requantize Op."""
     fuse_patterns = [[
         "QuantizedConv2DWithBiasAndRelu",
         "QuantizedDepthwiseConv2DWithBiasAndRelu",
@@ -52,6 +53,7 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
                      ['RequantizePerChannel', 'Requantize']]
 
     def __init__(self, model, device='cpu', new_api=False):
+        """Initilization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -63,8 +65,10 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
 
     def do_transformation(self):
         """Fuse the quantized op with the following requantize op.
-            The transformation has two stages, the first step is to fuse the patterns
-            defined in self.fuse_patterns and the last step is to fuse the self.sum_patterns.
+
+        The transformation has two stages, the first step is to fuse the patterns
+        defined in self.fuse_patterns and the last step is to fuse the self.sum_patterns.
+
         Returns:
             [graphdef]: the optimized graphdef object
         """
@@ -176,9 +180,10 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
             new_node.input.append(requested_output_min_name)
             new_node.input.append(requested_output_max_name)
 
-            if last_node.op.find('Requantize') != -1 or ((last_node.op.find('QuantizeV2') != -1 or \
-                                                            last_node.op.find('QuantizedConv2D') != -1) \
-                                                                and len(quantized_node.attr['fused_ops'].list.s) > 0):
+            if (last_node.op.find('Requantize') != -1 or \
+                ((last_node.op.find('QuantizeV2') != -1 or \
+                  last_node.op.find('QuantizedConv2D') != -1))) and \
+                  len(quantized_node.attr['fused_ops'].list.s) > 0:
                 bias_node = self.graph_info[new_node.input[2]].node
                 max_input_node = self.graph_info[last_node.input[-1]].node
                 min_input_node = self.graph_info[last_node.input[-2]].node

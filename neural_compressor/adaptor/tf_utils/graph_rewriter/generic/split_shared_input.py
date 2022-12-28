@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Split shared input Graph Rewriter."""
 
 from tensorflow.core.framework import node_def_pb2
 from neural_compressor.utils.utility import dump_elapsed_time
@@ -25,9 +25,10 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 
 
 class SplitSharedInputOptimizer(GraphRewriterBase):
-
+    """Split the shared input if the input node is shared and const."""
     @dump_elapsed_time("Pass SplitSharedInputOptimizer")
     def do_transformation(self):
+        """Execute splitting the shared input."""
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 

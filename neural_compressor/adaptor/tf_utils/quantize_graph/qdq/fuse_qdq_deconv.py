@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize Conv2DBackpropInput and Conv3DBackpropInputV2."""
 
 import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
@@ -26,10 +27,11 @@ from ..quantize_graph_base import QuantizeNodeBase
 import numpy as np
 
 class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
-
+    """Quantize Conv2DBackpropInput and Conv3DBackpropInputV2 and apply the fusion."""
     exclude_deconv_nodes = []
 
     def __init__(self, **kwargs):
+        """Initilization."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
@@ -43,7 +45,10 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
             }
 
     def apply_single_deconv2d_fusion(self, match_node_name):
-        # Dequantize + Conv2DBackpropInput + QuantizeV2
+        """Apply single Conv2DBackpropInput fusion.
+
+        Dequantize + Conv2DBackpropInput + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -126,7 +131,10 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_deconv2d_biasadd_fusion(self, match_node_name):
-        # Dequantize + Conv2DBackpropInput + Biasadd + QuantizeV2
+        """Apply Conv2DBackpropInput BiasAdd fusion.
+
+        Dequantize + Conv2DBackpropInput + Biasadd + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -228,7 +236,10 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_single_deconv3d_fusion(self, match_node_name):
-        # Dequantize + Conv3DBackpropInputV2 + QuantizeV2
+        """Apply single Conv3DBackpropInputV2 fusion.
+
+        Dequantize + Conv3DBackpropInputV2 + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -311,7 +322,10 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_deconv3d_biasadd_fusion(self, match_node_name):
-        # Dequantize + Conv3DBackpropInputV2 + Biasadd + QuantizeV2
+        """Apply the Conv3DBackpropInputV2 BiasAdd fusion.
+
+        Dequantize + Conv3DBackpropInputV2 + Biasadd + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
 
@@ -399,12 +413,14 @@ class FuseNodeStartWithDeconv2d(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def get_longest_fuse(self):
+        """Get the longest fusion pattern."""
         self._get_op_list()
 
         matched_rule, matched_node_name = self._is_match_deconv(self.sorted_patterns)
         return matched_rule, matched_node_name
 
     def apply_the_transform(self):
+        """Quantize Conv2DBackpropInput and Conv3DBackpropInputV2 and apply the fusion."""
         self._get_op_list()
         matched_rule, matched_node_name = self._is_match_deconv(self.sorted_patterns, True)
         if matched_node_name:

@@ -109,5 +109,5 @@ config = PostTrainingQuantConfig(
 ## run benchmarking
 
 ```bash
-./run_benchmark.sh --topology=${model_topology} --dataset_location= --input_model=${model_path} --mode=benchmark --batch_size=1
+./run_benchmark.sh --topology=${model_topology} --dataset_location= --input_model=${model_path} --mode=performance --batch_size=1
 ```

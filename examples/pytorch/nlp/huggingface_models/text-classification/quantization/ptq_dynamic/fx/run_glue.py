@@ -195,6 +195,12 @@ class ModelArguments:
     accuracy_only: bool = field(
         default=False, metadata={"help": "get accuracy"}
     )
+    iters: int = field(
+        default=100,
+        metadata={
+            "help": "The inference iterations to run for benchmark."
+        },
+    )
 
 
 def main():
@@ -501,14 +507,23 @@ def main():
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=600)
-        conf = PostTrainingQuantConfig(approach="dynamic", backend="pytorch", tuning_criterion=tuning_criterion)
+        conf = PostTrainingQuantConfig(approach="dynamic", tuning_criterion=tuning_criterion)
         q_model = fit(model, conf=conf, eval_func=eval_func)
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
         save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
         return
 
     if model_args.benchmark or model_args.accuracy_only:
-        eval_func(model)
+        if model_args.benchmark:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(warmup=5,
+                                     iteration=model_args.iters,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
+        else:
+            eval_func(model)
         return
 
     # Training

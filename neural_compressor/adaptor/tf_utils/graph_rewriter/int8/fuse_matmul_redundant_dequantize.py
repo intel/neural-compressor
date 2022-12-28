@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse QuantizedMatMul with redundant Dequantize Graph Rewriter."""
+
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
@@ -23,13 +25,13 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
-    """Fuse _QuantizedMatMul with the successor Dequantize Op.
-    """
+    """Fuse _QuantizedMatMul with the successor Dequantize Op."""
     fuse_patterns = [[
         "_QuantizedMatMul"
     ], ['Dequantize', 'Cast']]
 
     def __init__(self, model, device='cpu'):
+        """Initilization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -38,7 +40,9 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
 
     def do_transformation(self):
         """Fuse the _QuantizedMatMul with the following Dequantize op.
-            The output of _QuantizedMatMul or is fp32 or bf16.
+
+        The output of _QuantizedMatMul or is fp32 or bf16.
+
         Returns:
             [graphdef]: the optimized graphdef object
         """

@@ -1656,6 +1656,7 @@ sess
 setuptools
 sexualized
 SGD
+sgd
 sgmoid
 SHA
 sharded
@@ -2485,6 +2486,10 @@ SSDSCKKB
 aarch
 Hanwen
 Suyue
+MLefficiency
+cff
+kawapanion
+mlefficiency
 DistillationConfig
 SelfKnowledgeDistillationLossConfig
 DistillationConfig

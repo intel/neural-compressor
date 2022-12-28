@@ -25,8 +25,6 @@ pip install -r requirements.txt
 Below are example NLP tasks for Prune Once For All to fine tune the sparse BERT model on the specific task.
 <br>
 It requires the pre-trained task specific model such as `textattack/roberta-base-SST-2` from textattack Huggingface portal as the teacher model for distillation, also the pre-trained sparse BERT model such as `Intel/bert-base-uncased-sparse-90-unstructured-pruneofa` from Intel Huggingface portal as the model for fine tuning.
-<br>
-The pattern lock pruning configuration is specified in yaml file i.e. prune.yaml, the quantization aware training configuration is specified in yaml file i.e. qat.yaml.
 
 ## SST-2 task
 
