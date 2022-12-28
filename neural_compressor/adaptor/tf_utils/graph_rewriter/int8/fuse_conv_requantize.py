@@ -180,9 +180,10 @@ class FuseConvRequantizeTransformer(GraphRewriterBase):
             new_node.input.append(requested_output_min_name)
             new_node.input.append(requested_output_max_name)
 
-            if last_node.op.find('Requantize') != -1 or ((last_node.op.find('QuantizeV2') != -1 or \
-                                                            last_node.op.find('QuantizedConv2D') != -1) \
-                                                                and len(quantized_node.attr['fused_ops'].list.s) > 0):
+            if (last_node.op.find('Requantize') != -1 or \
+                ((last_node.op.find('QuantizeV2') != -1 or \
+                  last_node.op.find('QuantizedConv2D') != -1))) and \
+                  len(quantized_node.attr['fused_ops'].list.s) > 0:
                 bias_node = self.graph_info[new_node.input[2]].node
                 max_input_node = self.graph_info[last_node.input[-1]].node
                 min_input_node = self.graph_info[last_node.input[-2]].node
