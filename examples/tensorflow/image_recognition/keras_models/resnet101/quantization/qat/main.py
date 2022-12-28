@@ -73,7 +73,7 @@ def prepare_data(root):
         root=root,
         transform=ComposeTransform(transform_list=[
             TensorflowResizeCropImagenetTransform(
-                height=224, width=224)
+                height=224, width=224, mean_value=[123.68, 116.78, 103.94])
         ]))
 
     data = np.array(list(dataset.map(lambda x, y: x)))
@@ -130,7 +130,7 @@ def evaluate(model):
 
     from neural_compressor.experimental.data.dataloaders.default_dataloader import DefaultDataLoader
     dataset = TensorflowImageRecord(root=FLAGS.dataset_location, transform=ComposeTransform(transform_list=[
-            TensorflowResizeCropImagenetTransform(height=224, width=224)]))
+            TensorflowResizeCropImagenetTransform(height=224, width=224, mean_value=[123.68, 116.78, 103.94])]))
     dataloader = DefaultDataLoader(dataset, batch_size=FLAGS.batch_size)
     latency = eval_func(dataloader)
     if FLAGS.benchmark and FLAGS.mode == 'performance':
