@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.experimental.pytorch_pruner.patterns &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+              <div class="version">
+                1.14.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pytorch_pruner.patterns</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/experimental/pytorch_pruner/patterns/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.experimental.pytorch_pruner.patterns">
+<span id="neural-compressor-experimental-pytorch-pruner-patterns"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.pytorch_pruner.patterns" title="neural_compressor.experimental.pytorch_pruner.patterns"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pytorch_pruner.patterns</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.pytorch_pruner.patterns" title="Permalink to this heading"></a></h1>
+<p>pattern module.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern" title="neural_compressor.experimental.pytorch_pruner.patterns.Pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Pattern</span></code></a></p></td>
+<td><p>Pruning Pattern.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM" title="neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PatternNxM</span></code></a></p></td>
+<td><p>Pruning Pattern.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM" title="neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PatternNInM</span></code></a></p></td>
+<td><p>Pruning Pattern.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.patterns.register_pattern" title="neural_compressor.experimental.pytorch_pruner.patterns.register_pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_pattern</span></code></a>(name)</p></td>
+<td><p>Class decorator used to register a Pattern subclass to the registry.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.patterns.get_pattern" title="neural_compressor.experimental.pytorch_pruner.patterns.get_pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_pattern</span></code></a>(config)</p></td>
+<td><p>Get registered pattern class.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.register_pattern">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.patterns.</span></span><span class="sig-name descname"><span class="pre">register_pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.register_pattern" title="Permalink to this definition"></a></dt>
+<dd><p>Class decorator used to register a Pattern subclass to the registry.</p>
+<p>Decorator function used before a Pattern subclasses.
+Make sure that this Pattern class can be registered in PATTERNS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cls</strong> (<em>class</em>) – The class of register.</p></li>
+<li><p><strong>name</strong> – A string. Define the pattern type which will be included in a pruning process.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The class of register.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>cls</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.get_pattern">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.patterns.</span></span><span class="sig-name descname"><span class="pre">get_pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.get_pattern" title="Permalink to this definition"></a></dt>
+<dd><p>Get registered pattern class.</p>
+<p>Get a Pattern object from PATTERNS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> – A config dict object. Contains the pattern information.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A Pattern object.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>AssertionError</strong> – Currently only support patterns which have been registered in PATTERNS.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.Pattern">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.patterns.</span></span><span class="sig-name descname"><span class="pre">Pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern" title="Permalink to this definition"></a></dt>
+<dd><p>Pruning Pattern.</p>
+<p>Every Pruner object will contain a Pattern object.
+It defines the basic pruning unit and how this unit will be pruned during pruning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> – A config dict object. Contains the pattern information.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.Pattern.pattern">
+<span class="sig-name descname"><span class="pre">pattern</span></span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern.pattern" title="Permalink to this definition"></a></dt>
+<dd><p>A config dict object. The pattern related part in args config.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.Pattern.is_global">
+<span class="sig-name descname"><span class="pre">is_global</span></span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern.is_global" title="Permalink to this definition"></a></dt>
+<dd><p>A bool. Whether the pruning take global pruning option.
+Global pruning means that all pruning layers are gathered to calculate pruning criteria.
+Local pruning, on the contrast, means that pruning layers are to calculate criteria individually.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_masks">
+<span class="sig-name descname"><span class="pre">get_masks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_masks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_layer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_masks" title="Permalink to this definition"></a></dt>
+<dd><p>Call when new masks for pruning are to be calculated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scores</strong> – A dict{“layer_name”: Tensor}. Store the pruning scores of weights.</p></li>
+<li><p><strong>target_sparsity_ratio</strong> – A float. After pruning, the model’s sparsity will reach this value.</p></li>
+<li><p><strong>pre_masks</strong> – A dict{“layer_name”: Tensor}. The masks generated after the last pruning step.</p></li>
+<li><p><strong>max_sparsity_ratio_per_layer</strong> – A float. The maximum sparsity that one layer can reach.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict with the identical size as pre_masks. Update the 0/1 values in it.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_masks_global">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_masks_global</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_masks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_layer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_masks_global" title="Permalink to this definition"></a></dt>
+<dd><p>To be implemented in subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_mask_single">
+<span class="sig-name descname"><span class="pre">get_mask_single</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exact_sparsity_ratio</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_mask_single" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain a mask for one layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>score</strong> – A Tensor. Store the pruning scores of one layer.</p></li>
+<li><p><strong>exact_sparsity_ratio</strong> – A float. After pruning, the layer’s sparsity will reach this value.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A Tensor with the identical size as score. a new mask.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_block_size_dict">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_block_size_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_block_size_dict" title="Permalink to this definition"></a></dt>
+<dd><p>To be implemented in subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_masks_local">
+<span class="sig-name descname"><span class="pre">get_masks_local</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_masks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_layer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_masks_local" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain layers’ local masks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scores</strong> – A dict{“layer_name”: Tensor}. Store the pruning scores of weights.</p></li>
+<li><p><strong>target_sparsity_ratio</strong> – A float. After pruning, the model’s sparsity will reach this value.</p></li>
+<li><p><strong>pre_masks</strong> – A dict{“layer_name”: Tensor}. The masks generated after the last pruning step.</p></li>
+<li><p><strong>max_sparsity_ratio_per_layer</strong> – A float. The maximum sparsity that one layer can reach.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict with the identical size as pre_masks. Update the 0/1 values in it.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_sparsity_ratio">
+<span class="sig-name descname"><span class="pre">get_sparsity_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pre_masks</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_sparsity_ratio" title="Permalink to this definition"></a></dt>
+<dd><p>Calulate the zero elements’ ration in pre_masks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>pre_masks</strong> – Dict{“layer_name”: Tensor}. The masks generated after the last pruning step.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A float. The zero elements’ ratio in pre_masks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_pattern_lock_masks">
+<span class="sig-name descname"><span class="pre">get_pattern_lock_masks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern.get_pattern_lock_masks" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain masks from original weight map, by masking where weights’ are zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>modules</strong> – A dict{“layer_name”: Tensor}. Store weights.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict with the identical size as modules, containing pattern lock masks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.patterns.</span></span><span class="sig-name descname"><span class="pre">PatternNxM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern" title="neural_compressor.experimental.pytorch_pruner.patterns.Pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Pattern</span></code></a></p>
+<p>Pruning Pattern.</p>
+<p>A Pattern class derived from Pattern. In this pattern, the weights in a NxM block will be pruned or kept
+during one pruning step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> – A config dict object. Contains the pattern information.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM.block_size">
+<span class="sig-name descname"><span class="pre">block_size</span></span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM.block_size" title="Permalink to this definition"></a></dt>
+<dd><p>A list of two Integers. The height and width of the block.
+Please be aware that the vertical direction of a Linear layer’s weight in PyTorch refer to output channel.
+Because PyTorch’s tensor matmul has a hidden transpose operation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM.get_block_size_dict">
+<span class="sig-name descname"><span class="pre">get_block_size_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM.get_block_size_dict" title="Permalink to this definition"></a></dt>
+<dd><p>Calulate the zero elements’ ration in pre_masks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> – Dict{“layer_name”: Tensor}. Store weights or scores.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>[block_size_1, block_size_2]}.</dt><dd><p>Containing layers’ corresponding pruning pattern’s block shape.
+Please be aware that because in channel-wise pruning,
+different layers can have different pruning patterns.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A dict. Dict{“layer_name”</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM.get_sparsity_ratio">
+<span class="sig-name descname"><span class="pre">get_sparsity_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pre_masks</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM.get_sparsity_ratio" title="Permalink to this definition"></a></dt>
+<dd><p>Calulate the zero elements’ ration in pre_masks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>pre_masks</strong> – Dict{“layer_name”: Tensor}. The masks generated after the last pruning step.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A float. Calculate the zero elements’ ratio in pre_masks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM.get_masks_global">
+<span class="sig-name descname"><span class="pre">get_masks_global</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_masks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_pre_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM.get_masks_global" title="Permalink to this definition"></a></dt>
+<dd><p>Generate masks for layers.</p>
+<p>Gather all layer’s scores together and calculate a common threshold.
+This threshold will be applied for all layers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scores</strong> – A dict{“layer_name”: Tensor}. Store the pruning scores of weights.</p></li>
+<li><p><strong>target_sparsity_ratio</strong> – A float. After pruning, the model’s sparsity will reach this value.</p></li>
+<li><p><strong>pre_masks</strong> – A dict{“layer_name”: Tensor}. The masks generated after the last pruning step.</p></li>
+<li><p><strong>max_sparsity_ratio_per_layer</strong> – A float. The maximum sparsity that one layer can reach.</p></li>
+<li><p><strong>keep_pre_masks</strong> – A bool. If True, keep the masks unchanged.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict with the identical size as pre_masks. Update the 0/1 values in it.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM.get_pattern_lock_masks">
+<span class="sig-name descname"><span class="pre">get_pattern_lock_masks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNxM.get_pattern_lock_masks" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain masks from original weight map, by masking where weights’ are zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>modules</strong> – A dict{“layer_name”: Tensor}. Store weights.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict with the identical size as modules, containing pattern lock masks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.patterns.</span></span><span class="sig-name descname"><span class="pre">PatternNInM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.patterns.Pattern" title="neural_compressor.experimental.pytorch_pruner.patterns.Pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Pattern</span></code></a></p>
+<p>Pruning Pattern.</p>
+<p>A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
+For more info of this pattern, please refer to
+<a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/pruning.md">https://github.com/intel/neural-compressor/blob/master/docs/pruning.md</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> – A config dict object. Contains the pattern information.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM.N">
+<span class="sig-name descname"><span class="pre">N</span></span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM.N" title="Permalink to this definition"></a></dt>
+<dd><p>The number of elements to be prune in a weight sequence.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM.M">
+<span class="sig-name descname"><span class="pre">M</span></span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM.M" title="Permalink to this definition"></a></dt>
+<dd><p>The size of the weight sequence.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM.get_sparsity_ratio">
+<span class="sig-name descname"><span class="pre">get_sparsity_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pre_masks</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM.get_sparsity_ratio" title="Permalink to this definition"></a></dt>
+<dd><p>Calulate the zero elements’ ration in pre_masks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>pre_masks</strong> – Dict{“layer_name”: Tensor}. The masks generated after the last pruning step.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A float. Calculate the zero elements’ ratio in pre_masks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM.get_masks_global">
+<span class="sig-name descname"><span class="pre">get_masks_global</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_masks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_layer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM.get_masks_global" title="Permalink to this definition"></a></dt>
+<dd><p>Generate masks for layers.</p>
+<p>Gather all layer’s scores together and calculate a common threshold.
+This threshold will be applied for all layers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scores</strong> – A dict{“layer_name”: Tensor}. Store the pruning scores of weights.</p></li>
+<li><p><strong>target_sparsity_ratio</strong> – A float. After pruning, the model’s sparsity will reach this value.</p></li>
+<li><p><strong>pre_masks</strong> – A dict{“layer_name”: Tensor}. The masks generated after the last pruning step.</p></li>
+<li><p><strong>max_sparsity_ratio_per_layer</strong> – A float. The maximum sparsity that one layer can reach.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict with the identical size as pre_masks. Update the 0/1 values in it.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM.get_pattern_lock_masks">
+<span class="sig-name descname"><span class="pre">get_pattern_lock_masks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM.get_pattern_lock_masks" title="Permalink to this definition"></a></dt>
+<dd><p>Obtain masks from original weight map, by masking where weights’ are zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>modules</strong> – A dict{“layer_name”: Tensor}. Store weights.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict with the identical size as modules, containing pattern lock masks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

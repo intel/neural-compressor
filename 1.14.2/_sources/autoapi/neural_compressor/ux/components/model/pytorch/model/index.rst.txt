@@ -1,0 +1,48 @@
+:py:mod:`neural_compressor.ux.components.model.pytorch.model`
+=============================================================
+
+.. py:module:: neural_compressor.ux.components.model.pytorch.model
+
+.. autoapi-nested-parse::
+
+   PyTorch model class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.pytorch.model.PyTorchScriptModel
+
+
+
+
+.. py:class:: PyTorchScriptModel(path: str)
+
+   Bases: :py:obj:`neural_compressor.ux.components.model.model.Model`
+
+   PyTorch Script Model class.
+
+   .. py:method:: get_framework_name() -> str
+      :staticmethod:
+
+      Get the name of framework.
+
+
+   .. py:method:: supports_path(path: str) -> bool
+      :staticmethod:
+
+      Check if given path is of supported model.
+
+
+   .. py:method:: guard_requirements_installed() -> None
+
+      Ensure all requirements are installed.
+
+
+

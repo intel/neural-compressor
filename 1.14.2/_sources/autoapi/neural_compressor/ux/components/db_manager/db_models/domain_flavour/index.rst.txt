@@ -1,0 +1,56 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.domain_flavour`
+=============================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.domain_flavour
+
+.. autoapi-nested-parse::
+
+   DomainFlavour package contains DomainFlavour class representing domain_flavour table in db.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.domain_flavour.DomainFlavour
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.domain_flavour.fill_dictionary
+
+
+
+.. py:class:: DomainFlavour
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench DomainFlavour table class.
+
+   .. py:method:: get_domain_flavour_id(db_session: sqlalchemy.orm.session.Session, domain_flavour_name: str) -> int
+      :staticmethod:
+
+      Get domain_flavour id from name.
+
+
+   .. py:method:: list(db_session: sqlalchemy.orm.session.Session) -> dict
+      :staticmethod:
+
+      List available domain flavours.
+
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

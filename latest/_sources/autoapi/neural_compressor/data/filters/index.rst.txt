@@ -1,0 +1,81 @@
+:py:mod:`neural_compressor.data.filters`
+========================================
+
+.. py:module:: neural_compressor.data.filters
+
+.. autoapi-nested-parse::
+
+   Built-in filter.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   coco_filter/index.rst
+   filter/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.filters.FILTERS
+   neural_compressor.data.filters.Filter
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.filters.filter_registry
+
+
+
+.. py:class:: FILTERS(framework)
+
+   Bases: :py:obj:`object`
+
+   The filter register for all frameworks.
+
+   :param framework: frameworks in ["tensorflow", "tensorflow_itex", "mxnet",
+                     "onnxrt_qdq", "pytorch", "pytorch_ipex",
+                     "pytorch_fx", "onnxrt_integerops",
+                     "onnxrt_qlinearops", "onnxrt_qoperator"].
+   :type framework: str
+
+
+.. py:class:: Filter
+
+   Bases: :py:obj:`object`
+
+   The base class for transform.
+
+   __call__ method is needed when write user specific transform.
+
+
+
+.. py:function:: filter_registry(filter_type, framework)
+
+   Register all transform subclasses.
+
+   :param filter_type: fILTER registration name.
+   :type filter_type: str
+   :param framework: support 4 framework including 'tensorflow', 'pytorch', 'mxnet', 'onnxrt'.
+   :type framework: str
+   :param cls: The class of register.
+   :type cls: class
+
+   :returns: The class of register.
+   :rtype: cls
+
+

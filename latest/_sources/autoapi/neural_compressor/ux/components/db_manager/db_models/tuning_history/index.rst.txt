@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.tuning_history`
+=============================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.tuning_history
+
+.. autoapi-nested-parse::
+
+   The TuningHistory class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.tuning_history.TuningHistory
+
+
+
+
+.. py:class:: TuningHistory
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench tuning history' table representation.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, minimal_accuracy: Optional[float], baseline_accuracy: Optional[List[float]], baseline_performance: Optional[List[float]], last_tune_accuracy: Optional[List[float]], last_tune_performance: Optional[List[float]], best_tune_accuracy: Optional[List[float]], best_tune_performance: Optional[List[float]], history: List[dict]) -> int
+      :staticmethod:
+
+      Add tuning history to database.
+
+      returns id of added tuning history
+
+
+   .. py:method:: build_info(tuning_history: Any) -> dict
+      :staticmethod:
+
+      Build tuning history info.
+
+
+

@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.ux.components.optimization.tune.tune_model`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.tune.tune_model
+
+.. autoapi-nested-parse::
+
+   Generic tuning script.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.tune.tune_model.parse_args
+   neural_compressor.ux.components.optimization.tune.tune_model.tune_model
+   neural_compressor.ux.components.optimization.tune.tune_model.set_eager_execution
+
+
+
+.. py:function:: parse_args() -> Any
+
+   Parse input arguments.
+
+
+.. py:function:: tune_model(input_graph: str, output_graph: str, config: str, framework: str) -> None
+
+   Execute tuning.
+
+
+.. py:function:: set_eager_execution(input_graph: str) -> None
+
+   Set eager execution as required by model.
+
+

@@ -1,0 +1,98 @@
+:py:mod:`neural_compressor.data.datasets`
+=========================================
+
+.. py:module:: neural_compressor.data.datasets
+
+.. autoapi-nested-parse::
+
+   Built-in datasets class for multiple framework backends.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   bert_dataset/index.rst
+   coco_dataset/index.rst
+   dataset/index.rst
+   dummy_dataset/index.rst
+   dummy_dataset_v2/index.rst
+   imagenet_dataset/index.rst
+   style_transfer_dataset/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.datasets.Datasets
+   neural_compressor.data.datasets.Dataset
+   neural_compressor.data.datasets.IterableDataset
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.datasets.dataset_registry
+
+
+
+.. py:class:: Datasets(framework)
+
+   Bases: :py:obj:`object`
+
+   A base class for all framework datasets.
+
+   :param framework: framework name, like:"tensorflow", "tensorflow_itex",
+                     "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
+                     "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qoperator".
+   :type framework: str
+
+
+.. py:class:: Dataset
+
+   Bases: :py:obj:`object`
+
+   The base class of dataset.
+
+   Subclass datasets should overwrite two methods:
+   `__getitem__` for indexing to data sample and `__len__`for the size of the dataset
+
+
+.. py:class:: IterableDataset
+
+   Bases: :py:obj:`object`
+
+   An iterable Dataset.
+
+   Subclass iterable dataset should also implement a method:
+   `__iter__` for interating over the samples of the dataset.
+
+
+.. py:function:: dataset_registry(dataset_type, framework, dataset_format='')
+
+   Register dataset subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+   :param dataset_type: The dataset registration name
+   :type dataset_type: str
+   :param framework: support 3 framework including 'tensorflow', 'pytorch', 'mxnet'
+   :type framework: str
+   :param data_format: The format dataset saved, eg 'raw_image', 'tfrecord'
+   :type data_format: str
+
+   :returns: The class of register.
+   :rtype: cls
+
+

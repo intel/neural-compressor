@@ -1,0 +1,168 @@
+:py:mod:`neural_compressor.experimental.pruning_v2`
+===================================================
+
+.. py:module:: neural_compressor.experimental.pruning_v2
+
+.. autoapi-nested-parse::
+
+   pruning module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pruning_v2.Pruning
+   neural_compressor.experimental.pruning_v2.TfPruningCallback
+
+
+
+
+.. py:class:: Pruning(conf_fname_or_obj=None)
+
+   Bases: :py:obj:`neural_compressor.experimental.component.Component`
+
+   This is base class of pruning object.
+
+      Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
+      (<1% or <0.1% etc.) and pruning objectives (performance, memory footprint etc.).
+      Pruning class provides a flexible configuration interface via YAML for users to specify
+      these parameters.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             PruningConf class containing accuracy goal, pruning objective and related
+                             dataloaders etc.
+   :type conf_fname_or_obj: string or obj
+
+   .. attribute:: conf
+
+      A config dict object. Contains pruning setting parameters.
+
+   .. attribute:: pruners
+
+      A list of Pruner object.
+
+   .. py:property:: pruning_func
+
+      Not support get pruning_func.
+
+   .. py:property:: evaluation_distributed
+
+      Getter to know whether need distributed evaluation dataloader.
+
+   .. py:property:: train_distributed
+
+      Getter to know whether need distributed training dataloader.
+
+   .. py:method:: update_config(*args, **kwargs)
+
+      Add user-defined arguments to the original configurations.
+
+      The original config of pruning is read from a file.
+      However, users can still modify configurations by passing key-value arguments in this function.
+      Please note that the key-value arguments' keys are analysable in current configuration.
+
+
+   .. py:method:: get_sparsity_ratio()
+
+      Calculate sparsity ratio of a module/layer.
+
+      :returns: Three floats.
+                elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+                elementwise_over_all refers to zero elements' ratio in all layers in the model.
+                blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
+
+
+   .. py:method:: prepare()
+
+      Functions prepare for generate_hooks, generate_pruners.
+
+
+   .. py:method:: pre_process()
+
+      Functions called before pruning begins, usually set up pruners.
+
+
+   .. py:method:: execute()
+
+      Functions that execute the pruning process.
+
+      Follow the working flow: evaluate the dense model -> train/prune the model, evaluate the sparse model.
+
+
+   .. py:method:: generate_hooks()
+
+      Register hooks for pruning.
+
+
+
+.. py:class:: TfPruningCallback(nc_model, input_model, hooks)
+
+   Bases: :py:obj:`object`
+
+   Class that contains callback functions.
+
+   :param nc_model: A neural compression model object.
+   :param hooks: A dict. Contains pure-defined hooks.
+
+   .. py:method:: on_train_begin(logs=None, dataloader=None)
+
+      Call the same-name function from hooks.
+
+
+   .. py:method:: on_train_end(logs=None)
+
+      Call the same-name function from hooks.
+
+
+   .. py:method:: pre_epoch_begin(logs=None, dataloader=None)
+
+      Call the same-name function from hooks.
+
+
+   .. py:method:: post_epoch_end(logs=None)
+
+      Call the same-name function from hooks.
+
+
+   .. py:method:: on_epoch_begin(epoch, logs=None)
+
+      Call the same-name function from hooks.
+
+
+   .. py:method:: on_epoch_end(logs=None)
+
+      Call the same-name function from hooks.
+
+
+   .. py:method:: on_step_begin(batch, logs=None)
+
+      Call the same-name function from hooks.
+
+
+   .. py:method:: on_batch_begin(batch, logs=None)
+
+      Call the same-name function from hooks.
+
+
+   .. py:method:: on_after_compute_loss(input, s_outputs, s_loss, t_outputs=None)
+
+      Call the same-name function from hooks.
+
+
+   .. py:method:: on_step_end(logs=None)
+
+      Call the same-name function from hooks.
+
+
+   .. py:method:: on_batch_end(logs=None)
+
+      Call the same-name function from hooks.
+
+
+

@@ -1,0 +1,79 @@
+:py:mod:`neural_compressor.ux.utils.consts`
+===========================================
+
+.. py:module:: neural_compressor.ux.utils.consts
+
+.. autoapi-nested-parse::
+
+   Constant values.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.consts.Domains
+   neural_compressor.ux.utils.consts.DomainFlavours
+   neural_compressor.ux.utils.consts.Frameworks
+   neural_compressor.ux.utils.consts.OptimizationTypes
+   neural_compressor.ux.utils.consts.ExecutionStatus
+   neural_compressor.ux.utils.consts.Precisions
+   neural_compressor.ux.utils.consts.Strategies
+
+
+
+
+.. py:class:: Domains
+
+   Bases: :py:obj:`enum.Enum`
+
+   Model domains enumeration.
+
+
+.. py:class:: DomainFlavours
+
+   Bases: :py:obj:`enum.Enum`
+
+   Domain flavours enumeration.
+
+
+.. py:class:: Frameworks
+
+   Bases: :py:obj:`enum.Enum`
+
+   Supported frameworks enumeration.
+
+
+.. py:class:: OptimizationTypes
+
+   Bases: :py:obj:`enum.Enum`
+
+   OptimizationTypes enumeration.
+
+
+.. py:class:: ExecutionStatus
+
+   Bases: :py:obj:`enum.Enum`
+
+   Executions statuses for optimizations, benchmarks and profilings.
+
+
+.. py:class:: Precisions
+
+   Bases: :py:obj:`enum.Enum`
+
+   Precisions enumeration.
+
+
+.. py:class:: Strategies
+
+   Bases: :py:obj:`enum.Enum`
+
+   Strategies enumeration.
+
+

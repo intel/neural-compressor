@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.conf.pythonic_config`
+================================================
+
+.. py:module:: neural_compressor.conf.pythonic_config
+
+

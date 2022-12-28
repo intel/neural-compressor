@@ -1,0 +1,63 @@
+:py:mod:`neural_compressor.pruner.pruner_legacy.magnitude`
+==========================================================
+
+.. py:module:: neural_compressor.pruner.pruner_legacy.magnitude
+
+.. autoapi-nested-parse::
+
+   Magnitude pruner.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.pruner.pruner_legacy.magnitude.BasicMagnitudePruner
+
+
+
+
+.. py:class:: BasicMagnitudePruner(model, local_config, global_config)
+
+   Bases: :py:obj:`neural_compressor.pruner.pruner_legacy.pruner.Pruner`
+
+   Magnitude pruner class.
+
+   :param model: The original model (currently PyTorchModel instance).
+   :type model: object
+   :param local_config: configs specific for this pruning instance.
+   :type local_config: Conf
+   :param global_config: global configs which may be overwritten by local_config.
+   :type global_config: Conf
+
+   .. py:method:: on_epoch_begin(epoch)
+
+      Update target sparsity according to the schedule and compute mask accordingly.
+
+
+   .. py:method:: on_step_begin(batch_id)
+
+      Apply mask to the weight.
+
+
+   .. py:method:: compute_mask()
+
+      Compute masks according to absolute values.
+
+
+   .. py:method:: on_epoch_end()
+
+      Sparsity ratio summary and apply mask to the weight.
+
+
+   .. py:method:: on_step_end()
+
+      Apply mask to the weight.
+
+
+

@@ -1,0 +1,92 @@
+:py:mod:`neural_compressor.model`
+=================================
+
+.. py:module:: neural_compressor.model
+
+.. autoapi-nested-parse::
+
+   Built-in model for multiple framework backends.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   base_model/index.rst
+   keras_model/index.rst
+   model/index.rst
+   mxnet_model/index.rst
+   nets_factory/index.rst
+   onnx_model/index.rst
+   tensorflow_model/index.rst
+   torch_model/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.model.Model
+   neural_compressor.model.BaseModel
+
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.model.MODELS
+
+
+
+.. py:class:: Model
+
+   Bases: :py:obj:`object`
+
+   A wrapper to construct a Neural Compressor Model.
+
+
+.. py:class:: BaseModel(model, **kwargs)
+
+   Base class of all neural_compressor.model, will play graph role.
+
+   .. py:property:: model
+      :abstractmethod:
+
+      Return model itself.
+
+   .. py:property:: graph_info
+      :abstractmethod:
+
+      Node_type'.
+
+      :type: Return a dict with content 'Node
+
+   .. py:method:: save(root, *args, **kwargs)
+      :abstractmethod:
+
+      Abstract method of model saving.
+
+
+   .. py:method:: export(save_path: str, conf)
+      :abstractmethod:
+
+      Abstract method of model convertion to ONNX.
+
+
+   .. py:method:: framework()
+      :abstractmethod:
+
+      Abstract method of model framework.
+
+
+

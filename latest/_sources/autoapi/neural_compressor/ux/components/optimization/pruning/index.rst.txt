@@ -1,0 +1,21 @@
+:py:mod:`neural_compressor.ux.components.optimization.pruning`
+==============================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.pruning
+
+.. autoapi-nested-parse::
+
+   Package pruning contains all packages required to execute pruning optimization.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   optimize_model/index.rst
+   pruning/index.rst
+
+

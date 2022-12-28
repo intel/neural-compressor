@@ -1,0 +1,46 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.lstm`
+===========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.lstm
+
+.. autoapi-nested-parse::
+
+   LSTM Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.lstm.LSTMOperator
+
+
+
+
+.. py:class:: LSTMOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   LSTM Operator.
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+

@@ -1,0 +1,95 @@
+:py:mod:`neural_compressor.ux.utils.templates.metric`
+=====================================================
+
+.. py:module:: neural_compressor.ux.utils.templates.metric
+
+.. autoapi-nested-parse::
+
+   Metric class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.templates.metric.Metric
+
+
+
+
+.. py:class:: Metric
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Metric represents data which is sent from Optimization and Benchmark.
+
+   .. py:property:: accuracy
+      :type: Optional[float]
+
+      Accuracy for model.
+
+   .. py:property:: latency
+      :type: Optional[float]
+
+      Latency for model.
+
+   .. py:property:: throughput
+      :type: Optional[float]
+
+      Throughput for model.
+
+   .. py:property:: acc_input_model
+      :type: Optional[float]
+
+      Accuracy for input model.
+
+   .. py:property:: acc_optimized_model
+      :type: Optional[float]
+
+      Accuracy for input model.
+
+   .. py:property:: size_input_model
+      :type: Optional[float]
+
+      Model size for float32.
+
+   .. py:property:: size_optimized_model
+      :type: Optional[float]
+
+      Get optimized model size.
+
+   .. py:property:: path_optimized_model
+      :type: Optional[str]
+
+      Get optimized model path.
+
+   .. py:property:: optimization_time
+      :type: Optional[float]
+
+      Optimization time.
+
+   .. py:property:: profiling_data
+      :type: Optional[List[dict]]
+
+      Get profiling data.
+
+   .. py:method:: insert_data(attribute: str, value: str) -> None
+
+      Set attribute value.
+
+
+   .. py:method:: calculate_throughput(value: float) -> float
+      :staticmethod:
+
+      Calculate throughput based on latency.
+
+      Right now 1000 represents number of images in dataset.
+      TODO: change 1000 to the batch size when Benchmark is ready
+
+
+

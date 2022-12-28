@@ -1,0 +1,198 @@
+:py:mod:`neural_compressor.strategy.bayesian`
+=============================================
+
+.. py:module:: neural_compressor.strategy.bayesian
+
+.. autoapi-nested-parse::
+
+   The Bayesian tuning strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.bayesian.BayesianTuneStrategy
+   neural_compressor.strategy.bayesian.TargetSpace
+   neural_compressor.strategy.bayesian.BayesianOptimization
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.bayesian.acq_max
+
+
+
+.. py:class:: BayesianTuneStrategy(model, conf, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None)
+
+   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
+   The Bayesian tuning strategy.
+
+   .. py:method:: next_tune_cfg()
+
+      Generate the next tuning config according to bayesian search algorithm.
+
+      This strategy comes from the Bayesian optimization package and changed it to a discrete version.
+      It uses Gaussian processes to define the prior/posterior distribution over the black-box
+      function with the tuning history and then finds the tuning configuration that maximizes
+      the expected improvement.
+
+      :Yields: *tune_config (dict)* -- A dict containing the tuning configuration for quantization.
+
+
+
+.. py:function:: acq_max(ac, gp, y_max, bounds, random_seed, n_warmup=10000, n_iter=10)
+
+   Find the maximum of the acquisition function parameters.
+
+   :param ac: The acquisition function object that return its point-wise value.
+   :param gp: A gaussian process fitted to the relevant data.
+   :param y_max: The current maximum known value of the target function.
+   :param bounds: The variables bounds to limit the search of the acq max.
+   :param random_seed: instance of np.RandomState random number generator
+   :param n_warmup: number of times to randomly sample the acquisition function
+   :param n_iter: number of times to run scipy.minimize
+
+   :returns: The arg max of the acquisition function.
+   :rtype: x_max
+
+
+.. py:class:: TargetSpace(pbounds, random_seed=9527)
+
+   Bases: :py:obj:`object`
+
+   Holds the param-space coordinates (X) and target values (Y).
+
+   Allows for constant-time appends while ensuring no duplicates are added.
+
+   .. py:property:: empty
+
+      Check if the space is empty.
+
+   .. py:property:: params
+
+      Get all params stored in this space.
+
+   .. py:property:: target
+
+      Get all target values in this space.
+
+   .. py:property:: dim
+
+      Get the dimension of this space.
+
+   .. py:property:: keys
+
+      Get all keys of this space.
+
+   .. py:property:: bounds
+
+      Get the bounds of this space.
+
+   .. py:method:: params_to_array(params)
+
+      Generate an array from params.
+
+      :param params: The dict contains keys in `self.keys`, and
+                     corresponding param.
+      :type params: Dict
+
+      :returns: An array contains all params.
+      :rtype: np.array
+
+
+   .. py:method:: array_to_params(x)
+
+      Generate an params' dict from array.
+
+      :param x: The array contains all params.
+      :type x: np.array
+
+      :returns: the dict contains keys and the params corresponding to it.
+      :rtype: dict
+
+
+   .. py:method:: register(params, target)
+
+      Append a point and its target value to the known data.
+
+      Runs in amortized constant time.
+
+      :param params: a single point, with len(params) == self.dim
+      :type params: ndarray
+      :param target: target function value
+      :type target: float
+
+      :raises KeyError: if the point is not unique
+
+
+   .. py:method:: get_target(params)
+
+      Get the target value of params.
+
+      :param params: a single point, with len(params) == self.dim
+      :type params: ndarray
+
+      :returns: target function value.
+      :rtype: target (float)
+
+
+   .. py:method:: random_sample()
+
+      Create random points within the bounds of the space.
+
+      :returns: [num x dim] array points with dimensions corresponding to `self._keys`
+      :rtype: data (ndarray)
+
+
+   .. py:method:: max()
+
+      Get maximum target value found and corresponding parametes.
+
+
+   .. py:method:: res()
+
+      Get all target values found and corresponding parametes.
+
+
+
+.. py:class:: BayesianOptimization(pbounds, random_seed=9527, verbose=2)
+
+   The class for bayesian optimization.
+
+   This class takes the parameters bounds in order to find which values for
+   the parameters yield the maximum value using bayesian optimization.
+
+   .. py:property:: space
+
+      Get the target space.
+
+   .. py:property:: max
+
+      Get the maximum value of target space.
+
+   .. py:property:: res
+
+      Get the minimum value of target space.
+
+   .. py:method:: suggest()
+
+      Suggest the most promising points.
+
+
+   .. py:method:: gen_next_params()
+
+      Get the next parameter.
+
+
+

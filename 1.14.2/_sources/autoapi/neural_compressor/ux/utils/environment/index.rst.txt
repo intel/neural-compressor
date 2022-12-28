@@ -1,0 +1,47 @@
+:py:mod:`neural_compressor.ux.utils.environment`
+================================================
+
+.. py:module:: neural_compressor.ux.utils.environment
+
+.. autoapi-nested-parse::
+
+   Environment manager class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.environment.Environment
+
+
+
+
+.. py:class:: Environment
+
+   Environment manager class.
+
+   .. py:method:: ensure_workdir_exists_and_writeable() -> None
+      :staticmethod:
+
+      Ensure that configured directory exists and can be used.
+
+
+   .. py:method:: clean_workloads_wip_status() -> None
+      :staticmethod:
+
+      Clean WIP status for workloads in workloads_list.json.
+
+
+   .. py:method:: migrate_database() -> None
+      :staticmethod:
+
+      Perform database migration to latest version using alembic.
+
+
+

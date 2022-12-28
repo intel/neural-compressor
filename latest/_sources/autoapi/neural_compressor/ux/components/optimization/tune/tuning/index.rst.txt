@@ -1,0 +1,72 @@
+:py:mod:`neural_compressor.ux.components.optimization.tune.tuning`
+==================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.tune.tuning
+
+.. autoapi-nested-parse::
+
+   Tuning class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.tune.tuning.Tuning
+   neural_compressor.ux.components.optimization.tune.tuning.AccuracyCriterion
+   neural_compressor.ux.components.optimization.tune.tuning.TuningDetails
+
+
+
+
+.. py:class:: Tuning(optimization_data: dict, project_data: dict, dataset_data: dict)
+
+   Bases: :py:obj:`neural_compressor.ux.components.optimization.optimization.Optimization`
+
+   Tuning class.
+
+   .. py:property:: optimization_script
+      :type: str
+
+      Get optimization script path.
+
+   .. py:property:: configuration_data
+      :type: dict
+
+      Get configuration data for tuning config generator.
+
+   .. py:property:: parameters
+      :type: List[str]
+
+      Get optimization parameters.
+
+   .. py:method:: execute() -> None
+
+      Execute tuning.
+
+
+   .. py:method:: generate_config() -> None
+
+      Generate yaml config.
+
+
+
+.. py:class:: AccuracyCriterion
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Interface for accuracy criterion.
+
+
+.. py:class:: TuningDetails(data: Optional[dict] = None)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Interface for tuning details.
+
+

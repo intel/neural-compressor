@@ -1,0 +1,54 @@
+:py:mod:`neural_compressor.ux.utils.processes`
+==============================================
+
+.. py:module:: neural_compressor.ux.utils.processes
+
+.. autoapi-nested-parse::
+
+   Execution common process module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.processes.NCProcesses
+
+
+
+
+.. py:class:: NCProcesses
+
+   Bases: :py:obj:`list`
+
+   Processes class aggregates Process list.
+
+   Provide helper methods to retrieve information about all executed processes.
+
+   .. py:property:: is_ok
+      :type: bool
+
+      Property provide information if all executed process during one call executed properly.
+
+      :rtype : bool
+      :return: return False if at least one of processes failed, in other case return True
+
+   .. py:method:: return_code_all() -> None
+
+      Provide list of return codes of all Process.
+
+      :rtype : list
+      :return: List of int with process return codes.
+
+
+   .. py:method:: remove_successful_logs() -> None
+
+      Remove call logs if all statuses are successful.
+
+
+

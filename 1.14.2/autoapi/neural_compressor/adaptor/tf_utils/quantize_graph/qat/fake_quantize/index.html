@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+      <link rel="stylesheet" href="../../../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../../../" id="documentation_options" src="../../../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../../../_static/jquery.js"></script>
+        <script src="../../../../../../../_static/underscore.js"></script>
+        <script src="../../../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../../../../_static/doctools.js"></script>
+        <script src="../../../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+              <div class="version">
+                1.14.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../_sources/autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qat/fake_quantize/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize">
+<span id="neural-compressor-adaptor-tf-utils-quantize-graph-qat-fake-quantize"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize" title="neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize" title="Permalink to this heading"></a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase" title="neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FakeQuantizeBase</span></code></a></p></td>
+<td><p>ABC interface class for applying fake quantization by insert qdq.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize" title="neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FakeQuantize</span></code></a></p></td>
+<td><p>The class that applies fake quantization.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.</span></span><span class="sig-name descname"><span class="pre">FakeQuantizeBase</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>ABC interface class for applying fake quantization by insert qdq.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase.get_config">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase.get_config" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the config used to serialize the ‘FakeQuantize’.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase.from_config">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase.from_config" title="Permalink to this definition"></a></dt>
+<dd><p>Instantiates a ‘FakeQuantize’ from its config.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>dict</em>) – A dict containing required information.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A ‘FakeQuantize’ instance.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>output (<a class="reference internal" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize" title="neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize">FakeQuantize</a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.</span></span><span class="sig-name descname"><span class="pre">FakeQuantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">per_channel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">narrow_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase" title="neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FakeQuantizeBase</span></code></a></p>
+<p>The class that applies fake quantization.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize.get_config">
+<span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize.get_config" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the config used to serialize the ‘FakeQuantize’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A dict containing required information.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>config (dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

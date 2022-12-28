@@ -1,0 +1,123 @@
+:py:mod:`neural_compressor.algorithm`
+=====================================
+
+.. py:module:: neural_compressor.algorithm
+
+.. autoapi-nested-parse::
+
+   Fetch all files and init all algorithms.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   algorithm/index.rst
+   fast_bias_correction/index.rst
+   weight_correction/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.algorithm.ALGORITHMS
+   neural_compressor.algorithm.Algorithm
+   neural_compressor.algorithm.AlgorithmScheduler
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.algorithm.algorithm_registry
+
+
+
+.. py:class:: ALGORITHMS
+
+   Bases: :py:obj:`object`
+
+   Build a dict for registered algorithms.
+
+   .. py:method:: support_algorithms()
+      :classmethod:
+
+      Get all algorithms.
+
+      :returns: A set of all algorithms.
+      :rtype: Set
+
+
+
+.. py:class:: Algorithm
+
+   Bases: :py:obj:`object`
+
+   The base class of algorithm.
+
+
+.. py:class:: AlgorithmScheduler(conf)
+
+   Bases: :py:obj:`object`
+
+   control the Algorithm in different phase.
+
+   .. py:property:: origin_model
+
+      Return the origin model.
+
+      :returns: The origin model.
+      :rtype: model
+
+   .. py:property:: q_model
+
+      Return the quantized model.
+
+      :returns: The quantized model.
+      :rtype: model
+
+   .. py:property:: dataloader
+
+      Return the dataloader.
+
+      :returns: The dataloader.
+      :rtype: dataloader
+
+   .. py:property:: adaptor
+
+      Return the adaptor.
+
+      :returns: The adaptor.
+      :rtype: adaptor
+
+   .. py:property:: calib_iter
+
+      Return the calibration iter number.
+
+      :returns: The calibration iter number.
+      :rtype: calib_iter
+
+
+.. py:function:: algorithm_registry(algorithm_type)
+
+   Decorate and register all Algorithm subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+   :param algorithm_type: The algorithm registration name
+   :type algorithm_type: str
+
+   :returns: The class of register.
+   :rtype: cls
+
+

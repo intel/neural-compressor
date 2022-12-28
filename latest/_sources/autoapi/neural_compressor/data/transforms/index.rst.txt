@@ -1,0 +1,97 @@
+:py:mod:`neural_compressor.data.transforms`
+===========================================
+
+.. py:module:: neural_compressor.data.transforms
+
+.. autoapi-nested-parse::
+
+   Neural Compressor Built-in transforms for multiple framework backends.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   imagenet_transform/index.rst
+   postprocess/index.rst
+   tokenization/index.rst
+   transform/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.transforms.TRANSFORMS
+   neural_compressor.data.transforms.BaseTransform
+   neural_compressor.data.transforms.Postprocess
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.transforms.transform_registry
+
+
+
+.. py:class:: TRANSFORMS(framework, process)
+
+   Bases: :py:obj:`object`
+
+   Transforms collection class.
+
+   Provide register method to register new Transforms
+   and provide __getitem__ method to get Transforms according to Transforms type.
+
+   .. py:method:: register(name, transform_cls)
+
+      Register new Transform according to Transforms type.
+
+      :param name: process name
+      :type name: str
+      :param transform_cls: process function wrapper class
+      :type transform_cls: class
+
+
+
+.. py:class:: BaseTransform
+
+   Bases: :py:obj:`object`
+
+   The base class for transform.
+
+
+.. py:function:: transform_registry(transform_type, process, framework)
+
+   Class decorator used to register all transform subclasses.
+
+   :param transform_type: Transform registration name
+   :type transform_type: str
+   :param process: support 3 process including 'preprocess', 'postprocess', 'general'
+   :type process: str
+   :param framework: support 4 framework including 'tensorflow', 'pytorch', 'mxnet', 'onnxrt'
+   :type framework: str
+   :param cls: The class of register.
+   :type cls: class
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: Postprocess(postprocess_cls, name='user_postprocess', **kwargs)
+
+   Bases: :py:obj:`object`
+
+   Just collect the infos to construct a Postprocess.
+
+

@@ -1,0 +1,109 @@
+:py:mod:`neural_compressor.experimental.export`
+===============================================
+
+.. py:module:: neural_compressor.experimental.export
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Export.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   qlinear2qdq/index.rst
+   torch2onnx/index.rst
+   utils/index.rst
+
+
+Package Contents
+----------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.export.torch_to_fp32_onnx
+   neural_compressor.experimental.export.torch_to_int8_onnx
+   neural_compressor.experimental.export.onnx_qlinear_to_qdq
+
+
+
+.. py:function:: torch_to_fp32_onnx(fp32_model, save_path, example_inputs, opset_version=14, dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}, input_names=None, output_names=None, do_constant_folding=True, verbose=True)
+
+   Export FP32 PyTorch model into FP32 ONNX model.
+
+   :param fp32_model: fp32 model.
+   :type fp32_model: torch.nn.module
+   :param int8_model: int8 model.
+   :type int8_model: torch.nn.module
+   :param save_path: save path of ONNX model.
+   :type save_path: str
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+   :param opset_version: opset version. Defaults to 14.
+   :type opset_version: int, optional
+   :param dynamic_axes: dynamic axes. Defaults to {"input": {0: "batch_size"},
+                        "output": {0: "batch_size"}}.
+   :type dynamic_axes: dict, optional
+   :param input_names: input names. Defaults to None.
+   :type input_names: list, optional
+   :param output_names: output names. Defaults to None.
+   :type output_names: list, optional
+   :param do_constant_folding: do constant folding or not. Defaults to True.
+   :type do_constant_folding: bool, optional
+   :param verbose: dump verbose or not. Defaults to True.
+   :type verbose: bool, optional
+
+
+.. py:function:: torch_to_int8_onnx(fp32_model, int8_model, q_config, save_path, example_inputs, opset_version: int = 14, dynamic_axes: dict = {'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}, input_names=None, output_names=None, quant_format: str = 'QDQ', dtype: str = 'U8S8', recipe: str = 'QDQ_OP_FP32_BIAS')
+
+   Export INT8 PyTorch model into INT8 ONNX model.
+
+   :param fp32_model: fp32 model.
+   :type fp32_model: torch.nn.module
+   :param int8_model: int8 model.
+   :type int8_model: torch.nn.module
+   :param q_config: containing quantization configuration.
+   :type q_config: dict
+   :param save_path: save path of ONNX model.
+   :type save_path: str
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+   :param opset_version: opset version. Defaults to 14.
+   :type opset_version: int, optional
+   :param dynamic_axes: dynamic axes. Defaults to {"input": {0: "batch_size"},
+                        "output": {0: "batch_size"}}.
+   :type dynamic_axes: dict, optional
+   :param input_names: input names. Defaults to None.
+   :type input_names: list, optional
+   :param output_names: output names. Defaults to None.
+   :type output_names: list, optional
+   :param quant_format: quantization format of ONNX model. Defaults to 'QDQ'.
+   :type quant_format: str, optional
+   :param dtype: data types of activation and weight of ONNX model. Defaults to 'U8S8'.
+   :type dtype: str, optional
+   :param recipe: Recipe for processing nn.quantized.Linear module.
+                  'QDQ_OP_FP32_BIAS': inserting QDQ before quantizable op and using fp32 bias.
+                  'QDQ_OP_INT32_BIAS': inserting QDQ before quantizable op and using int32 bias.
+                  'QDQ_OP_FP32_BIAS_QDQ': inserting QDQ before and after quantizable op and using fp32 bias.
+                  Defaults to 'QDQ_OP_FP32_BIAS'.
+   :type recipe: str, optionl
+
+
+.. py:function:: onnx_qlinear_to_qdq(model, input_name_to_nodes)
+
+   Export ONNX QLinearops model into QDQ model.
+
+   :param model: int8 onnx model.
+   :type model: ModelProto
+   :param input_name_to_nodes: the mapping of tensor name and its destination nodes.
+   :type input_name_to_nodes: dict
+
+

@@ -1,0 +1,134 @@
+:py:mod:`neural_compressor.experimental.scheduler`
+==================================================
+
+.. py:module:: neural_compressor.experimental.scheduler
+
+.. autoapi-nested-parse::
+
+   Scheduler class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.scheduler.Scheduler
+
+
+
+
+.. py:class:: Scheduler
+
+   Bases: :py:obj:`object`
+
+   Scheduler for neural_compressor component pipeline execution.
+
+   Neural Compressor supports serveral seperate components: Quantization, Pruning, Benchmarking.
+   This scheduler will sequentially execute specified components by the order of
+   appending. This interface provids an unique entry to pipeline execute all supported
+   components.
+
+   There are two typical usages:
+   1) if all informations are set in user configuration yaml files by using neural_compressor built-in
+      dataloaders/datasets/metrics, the code usage is like below:
+
+      prune = Pruning('/path/to/pruning.yaml')
+      quantizer = Quantization('/path/to/quantization.yaml')
+      scheduler = Scheduler()
+      scheduler.model('/path/to/model')
+      scheduler.append(prune)
+      scheduler.append(quantizer)
+      opt_model = scheduler()
+      opt_model.save()
+
+
+   2) if neural_compressor built-in dataloaders/datasets/metrics could not fully meet user requirements,
+      customized dataloaders/datasets/metrics are needed, the code usage is like below:
+
+      prune = Pruning('/path/to/pruning.yaml')
+      prune.train_func = ...                   # optional if it is configured in user yaml.
+      prune.eval_dataloader = ...                # optional if it is configured in user yaml.
+      prune.eval_func = ...                      # optional if it is configured in user yaml.
+
+      quantizer = Quantization('/path/to/quantization.yaml')
+      quantizer.metric = ...                     # optional if it is configured in user yaml.
+      quantizer.calib_dataloader = ...           # optional if it is configured in user yaml.
+      quantizer.eval_dataloader = ...            # optional if it is configured in user yaml.
+
+      scheduler = Scheduler()
+      scheduler.model('/path/to/model')
+      scheduler.append(prune)
+      scheduler.append(quantizer)
+      opt_model = scheduler()
+      opt_model.save()
+
+
+   .. py:property:: model
+
+      Getter of model.
+
+      :returns: The model used in the Scheduler process.
+
+   .. py:property:: train_func
+
+      Do not support get train_func.
+
+   .. py:property:: eval_func
+
+      Do not support get eval_func.
+
+   .. py:method:: append(*args)
+
+      Add neural_compressor component into pipeline for sequential execution.
+
+      :param conf_fname_or_obj: The path to user configuration yaml file or
+                                conf class.
+      :type conf_fname_or_obj: string or obj
+      :param calib_dataloader: Optional. Data loader for calibration of Post-
+                               Training Static Quantization,
+                               or None for Post-Training Dynamic Quantization,
+                               or Data loader for training phase of Quantization-
+                               aware Training,
+                               or Data loader for training phase of Pruning,
+                               if its corresponding field is not configured in yaml.
+      :type calib_dataloader: generator
+      :param eval_dataloader: Optional. Data loader for evaluation phase of all
+                              neural_compressor components, if its corresponding field is not
+                              configured in yaml and eval_func is not specified.
+      :type eval_dataloader: generator
+      :param postprocess: Optional. Object initialized from common.Postprocess.
+      :type postprocess: Postprocess
+      :param metric: Optional. Object initialized from common.Metric.
+      :type metric: Metric
+      :param q_func: Optional. Training function for Quantization-Aware
+                     Training and Pruning cases if user doesn't provide
+                     training info in user configuration yaml file.
+      :type q_func: func
+      :param eval_func: Optional. Evaluation function for Quantization-Aware
+                        Training and Pruning, being None for other cases.
+      :type eval_func: func
+      :param kwargs: Reserved for interface extension.
+      :type kwargs: named arguments
+
+
+   .. py:method:: combine(*args)
+
+      Combine neural_compressor components into a new component.
+
+      :param args: Components to be combined together. Input Component should be
+      :type args: Component
+      :param supported in Neural Compressor and pass the sanity check during combine. The illegal combination:
+      :param (e.g. Components uses different frameworks) returns an error.:
+
+      :returns: The return component is created as base Component class.
+                It syncs input components configuration and creates dataloaders/functions
+                accordingly.
+      :rtype: Combined Component
+
+
+

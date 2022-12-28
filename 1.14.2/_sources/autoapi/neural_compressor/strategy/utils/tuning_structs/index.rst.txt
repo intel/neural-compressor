@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.strategy.utils.tuning_structs`
+=========================================================
+
+.. py:module:: neural_compressor.strategy.utils.tuning_structs
+
+.. autoapi-nested-parse::
+
+   Tuning structure.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.utils.tuning_structs.OpTuningConfig
+
+
+
+
+.. py:class:: OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs={})
+
+   Op tuning config.
+
+   .. py:method:: get_state()
+
+      Return the op tuning configuration.
+
+      :returns: The op tuning state.
+      :rtype: Dict
+
+
+   .. py:method:: from_state(config: Dict)
+      :classmethod:
+
+      Create the tuning config from dict.
+
+      :param config: A dict includes the tuning config.
+
+
+

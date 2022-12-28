@@ -1,0 +1,598 @@
+:py:mod:`neural_compressor.pruner.patterns`
+===========================================
+
+.. py:module:: neural_compressor.pruner.patterns
+
+.. autoapi-nested-parse::
+
+   pruning patterns.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.pruner.patterns.BasePattern
+   neural_compressor.pruner.patterns.PatternNxM
+   neural_compressor.pruner.patterns.PatternNInM
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.pruner.patterns.register_pattern
+   neural_compressor.pruner.patterns.get_pattern
+
+
+
+.. py:function:: register_pattern(name)
+
+   Class decorator used to register a Pattern subclass to the registry.
+
+   Decorator function used before a Pattern subclasses.
+   Make sure that this Pattern class can be registered in PATTERNS.
+
+   :param name: A string defining the pattern type name to be used in a pruning process.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:function:: get_pattern(config, modules)
+
+   Get registered pattern class.
+
+   Get a Pattern object from PATTERNS.
+
+   :param config: A config dict object that contains the pattern information.
+   :param modules: Torch neural network modules to be pruned with the pattern.
+
+   :returns: A Pattern object.
+
+   :raises AssertionError: Currently only support patterns which have been registered in PATTERNS.
+
+
+.. py:class:: BasePattern(config, modules)
+
+   Pruning Pattern.
+
+   It defines the basic pruning unit and how this unit will be pruned during pruning, e.g. 4x1, 2:4.
+
+   :param config: A config dict object that contains the pattern information.
+   :param modules: Torch neural network modules to be pruned with the pattern.
+
+   .. attribute:: pattern
+
+      A config dict object that includes information of the pattern.
+
+   .. attribute:: is_global
+
+      A bool determining whether the pruning takes global pruning option.
+      Global pruning means that pruning scores by a pruning criterion are evaluated in all layers.
+      Local pruning, by contrast, means that pruning scores by the pruning criterion are evaluated
+          in every layer individually.
+
+   .. attribute:: keep_mask_layers
+
+      A dict that includes the layers whose mask will not be updated.
+
+   .. attribute:: invalid_layers
+
+      The layers whose shapes don't fit the pattern.
+
+   .. attribute:: modules
+
+      Torch neural network modules to be pruned with the pattern.
+
+   .. attribute:: config
+
+      A config dict object that contains all the information including the pattern's.
+
+   .. attribute:: max_sparsity_ratio_per_op
+
+      A float representing the maximum sparsity that one layer could reach.
+
+   .. attribute:: min_sparsity_ratio_per_op
+
+      A float representing the minimum sparsity that one layer could reach.
+
+   .. attribute:: target_sparsity
+
+      A float representing the sparsity ratio of the modules after pruning.
+
+   .. py:method:: reduce_tensor(data, dim)
+
+      Reduce the data along the given dimension.
+
+      :param data: The input data.
+      :param dim: The reduced axis.
+
+      :returns: The reduced tensor.
+
+
+   .. py:method:: get_masks(scores, target_sparsity_ratio, pre_masks)
+
+      Generate the weight masks according to the weight score and the current target sparsity ratio.
+
+      :param scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+      :param target_sparsity_ratio: A float representing the sparsity of the modules after pruning.
+      :param pre_masks: A dict{"layer_name": Tensor} that stores the masks generated at last pruning step.
+
+      :returns:
+
+                A dict with the identical size as pre_masks and its 0/1 values are updated.
+                    1 means unpruned and 0 means pruned.
+
+
+   .. py:method:: get_masks_global(scores, target_sparsity_ratio, pre_masks)
+      :abstractmethod:
+
+      Generate the weight masks for global pruning, please refer to function get_masks for more information.
+
+
+   .. py:method:: get_masks_local(scores, target_sparsity_ratio, pre_masks)
+
+      Generate the weight masks for local pruning.
+
+      :param scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+      :param target_sparsity_ratio: A float. After pruning, the sparsity of the modules will reach this value.
+      :param pre_masks: A dict{"layer_name": Tensor}. The previous masks generated at the last pruning step.
+
+      :returns:
+
+                A dict with the identical size as pre_masks and its 0/1 values are updated.
+                    1 means unpruned and 0 means pruned.
+
+
+   .. py:method:: get_single_mask_per_target_ratio(score, exact_sparsity_ratio)
+
+      Generate a mask for one layer with the exact_sparsity_ratio.
+
+      :param score: A Tensor representing the pruning scores of each weight elements.
+      :param exact_sparsity_ratio: A float representing the layer's final sparsity ratio.
+
+      :returns: A Tensor with the identical size as score. a new mask.
+
+
+   .. py:method:: get_block_size_dict(data)
+      :abstractmethod:
+
+      Get pattern size for each module.
+
+      This is mainly for per-channel pruning when each module has different pruning size.
+
+      :param data: the input data.
+
+      :returns: To be implemented in subclasses.
+
+
+   .. py:method:: get_sparsity_ratio(pre_masks, return_dict=False)
+
+      Calculate the zero elements' ratio in pre_masks.
+
+      :param pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+      :param return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
+
+      :returns: A float representing the zero elements' ratio in pre_masks.
+
+
+   .. py:method:: get_pattern_lock_masks(modules)
+
+      Obtain masks from original weight map according the pattern and weights' zero positions.
+
+      :param modules: a dict {'layer_name': Tensor} that stores weights.
+
+      :returns: A dict with the identical size as modules, containing pattern lock masks.
+
+
+   .. py:method:: check_layer_validity()
+
+      Check if a layer is valid for this block_size.
+
+
+   .. py:method:: get_reduced_masks_from_data(data, key)
+      :abstractmethod:
+
+      Obtain the unpruned weights and reshape according to the block_size.
+
+
+   .. py:method:: update_residual_cnt(masks, target_sparsity_ratio)
+
+      Update the number of parameters yet to be pruned.
+
+      :param masks: the current pruning mask.
+      :param target_sparsity_ratio: A float representing the final sparsity of the modules.
+
+      :returns: An int representing the number of weights left to be pruned to reach the target sparsity ratio.
+
+
+   .. py:method:: get_sparsity_ratio_each_layer(masks)
+
+      Calculate the sparsity ratio of each layer.
+
+      :param masks: The current weight masks.
+
+      :returns: the sparsity information for each layer including sparsity_ratio, zero_point and total cnts.
+                SparsityInfo: the sparsity information for the model.
+      :rtype: infos
+
+
+   .. py:method:: adjust_ratio(masks: dict, layer_name: str, key_new_sparsity: SparsityInfo, max_sparsity_ratio: float, min_sparsity_ratio: float, final_target_sparsity_ratio: float)
+
+      Adjust the sparsity of a layer based on threshold.
+
+      :param masks: The weight masks.
+      :param layer_name: The layer to be examined.
+      :param key_new_sparsity: The proposed ratio for the layer.
+      :param max_sparsity_ratio: A float representing the maximum sparsity that one layer could reach.
+      :param min_sparsity_ratio: A float representing the minimum sparsity that one layer could reach.
+      :param final_target_sparsity_ratio: The final target sparsity ratio.
+
+      :returns: A bool indicating if the ratio needs to be adjusted.
+                adjust_sparsity_ratio: The adjusted sparsity ratio.
+
+
+
+.. py:class:: PatternNxM(config, modules)
+
+   Bases: :py:obj:`BasePattern`
+
+   Pruning Pattern.
+
+   A Pattern class derived from BasePattern. In this pattern, the weights in a NxM block will be pruned or kept
+   during one pruning step.
+
+   :param config: A config dict object that contains the pattern information.
+
+   .. attribute:: block_size
+
+      A list of two integers representing the height and width of the block.
+
+   .. attribute:: Please note that the vertical direction of a Linear layer's weight refers to the output channel.
+
+      because PyTorch's tensor matmul has a hidden transpose operation.
+
+   .. py:method:: get_block_size_dict()
+
+      Calulate the zero elements' ration in pre_masks.
+
+      :param data: Dict{"layer_name": Tensor} that stores weights or scores.
+
+      :returns:
+
+                [block_size_1, block_size_2]} containing block shapes of each layer.
+                    In channel-wise pruning different layers can have different pruning patterns.
+      :rtype: A dict. Dict{"layer_name"
+
+
+   .. py:method:: check_layer_validity()
+
+      Check if a layer is valid for this block_size.
+
+
+   .. py:method:: get_reduced_masks_from_data(data, key)
+
+      Obtain the unpruned weights and reshape according to the block_size.
+
+      :param data: Input.
+      :param key: The layer name.
+
+      :returns: The unpruned weights.
+
+
+   .. py:method:: get_sparsity_ratio(pre_masks, return_dict=False)
+
+      Please note that the zero cnt and total cnt are all block_wise for supporting channel-wise pruning.
+
+      :param pre_masks: Dict{"layer_name": Tensor} representing the masks generated after the last pruning step.
+      :param return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
+
+      :returns: A float representing the zero elements' ratio in pre_masks.
+
+
+   .. py:method:: get_sparsity_ratio_progressive(pre_masks, return_dict=False)
+
+      Calculate the sparsity ratio of each layer.
+
+      :param pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+      :param return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
+
+      :returns: A float representing the zero elements' ratio in pre_masks.
+
+
+   .. py:method:: reshape_orig_to_pattern(data, key)
+
+      Reshape the data(s1,s2) to [s1/N,N,s2,s2/M].
+
+      :param data: The input.
+      :param key: The layer name.
+
+      :returns: Reshaped input tensor.
+
+
+   .. py:method:: reshape_reduced_to_orig(data, key, orig_shape)
+
+      Reshape the data [s1/N,s2/M] to [s1,s2], also permute dims for conv layer.
+
+      :param data: Input.
+      :param key: The layer name.
+      :param orig_shape: The original shape of the layer.
+
+      :returns: Data of its original shape.
+
+
+   .. py:method:: reduce_scores(scores)
+
+      Recalculate the pruning scores after reducing the data.
+
+      :param scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+
+      :returns: The reduced pruning scores.
+
+
+   .. py:method:: get_mask_per_threshold(score, threshold, block_size)
+
+      Get the mask per threshold.
+
+
+   .. py:method:: get_masks_global(scores, cur_target_sparsity_ratio, pre_masks, keep_exact_sparsity_ratio=True)
+
+      Generate masks for layers.
+
+      Gather all layer's scores together and calculate a common threshold.
+      This threshold will be applied to all layers.
+
+      :param scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+      :param cur_target_sparsity_ratio: A float representing the model's sparsity after pruning.
+      :param pre_masks: A dict{"layer_name": Tensor} that stores the masks generated at the last pruning step.
+      :param max_sparsity_ratio_per_op: A float representing the maximum sparsity that one layer can reach.
+      :param keep_pre_masks: A bool representing if the masks should remain unchanged.
+
+      :returns:
+
+                A dict with the identical size as pre_masks and its 0/1 values are updated.
+                    1 means unpruned and 0 means pruned.
+
+
+   .. py:method:: get_pattern_lock_masks(modules)
+
+      Obtain masks from original weight map by masking the zero-valued weights.
+
+      :param modules: A dict{"layer_name": Tensor} that stores weights.
+
+      :returns: A dict with the identical size as modules, containing pattern lock masks.
+
+
+   .. py:method:: count_new_masked_cnts(new_added_masks)
+
+      Count the number of elements to be masked.
+
+      :param new_added_masks: A dict {"layer_name": Tensor} that stores the added masks.
+
+      :returns: The number of masked weights.
+
+
+   .. py:method:: update_new_added_masks(pre_masks, cur_masks)
+
+      Obtain the new set-to-zero masks during a pruning procedure.
+
+      Pre_masks, cur_masks should have identical keys bacause they represent the same model.
+
+      :param pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+      :param cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+
+      :returns: Tensor} that stores the added masks.
+      :rtype: A dict {"layer_name"
+
+
+   .. py:method:: update_progressive_masks(pre_masks, cur_masks, scores, progressive_step, progressive_configs)
+
+      Generate the progressive masks.
+
+      :param pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+      :param cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+      :param scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+      :param progressive_step: An integer representing the number of current step in progressive pruning.
+      :param progressive_configs: A dict that stores configurations of progressive pruning.
+
+      :returns: Tensor} that stores the masks generated in progressive pruning.
+      :rtype: A dict{"layer_name"
+
+
+   .. py:method:: update_progressive_masks_linear(pre_masks, cur_masks, progressive_step, progressive_configs)
+
+      Generate the progressive masks along the block's larger dimension.
+
+      :param pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+      :param cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+      :param progressive_step: An integer representing the number of current step in progressive pruning.
+      :param progressive_configs: A dict that stores configurations of progressive pruning.
+
+      :returns: Tensor} that stores the masks generated in progressive pruning.
+      :rtype: A dict{"layer_name"
+
+
+   .. py:method:: update_progressive_masks_scores(pre_masks, cur_masks, scores, progressive_step, progressive_configs)
+
+      Generate the progressive masks based on scores.
+
+      :param pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+      :param cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+      :param scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+      :param progressive_step: An integer representing the number of current step in progressive pruning.
+      :param progressive_configs: A dict that stores configurations of progressive pruning.
+
+      :returns: Tensor} that stores the masks generated in progressive pruning.
+      :rtype: A dict{"layer_name"
+
+
+   .. py:method:: update_progressive_masks_local(pre_masks, cur_masks, scores, progressive_step, progressive_configs)
+
+      Generate progressive masks in a local pruning domain.
+
+      :param pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+      :param cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+      :param scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+      :param progressive_step: An integer representing the number of current step in progressive pruning.
+      :param progressive_configs: A dict that stores configurations of progressive pruning.
+
+      :returns: Tensor} that stores the masks generated in progressive pruning.
+      :rtype: A dict{"layer_name"
+
+
+   .. py:method:: update_progressive_masks_global(pre_masks, cur_masks, scores, progressive_step, progressive_configs)
+
+      Gather all layer's scores to obtain a threshold that would be applied to all layers.
+
+      :param pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+      :param cur_masks: Dict{"layer_name": Tensor} that stores the current masks.
+      :param scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+      :param progressive_step: An integer representing the number of current step in progressive pruning.
+      :param progressive_configs: A dict that stores configurations of progressive pruning.
+
+      :returns: Tensor} that stores the masks generated in progressive pruning.
+      :rtype: A dict{"layer_name"
+
+
+
+.. py:class:: PatternNInM(config, modules)
+
+   Bases: :py:obj:`BasePattern`
+
+   Pruning Pattern.
+
+   A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
+   For more info of this pattern, please refer to :
+   https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
+
+   :param config: A config dict object that contains the pattern information.
+
+   .. attribute:: N
+
+      The number of elements to be pruned in a weight sequence.
+
+   .. attribute:: M
+
+      The size of the weight sequence.
+
+   .. py:method:: check_layer_validity(datas: dict, block_size: tuple)
+
+      Check if a layer is valid for this block_size.
+
+      :param datas: A dict object containing the weights for all layers.
+      :param block_size: A tuple representing the size of the pattern block.
+
+
+   .. py:method:: get_reduced_masks_from_data(data, key)
+
+      Obtain the unpruned weights and reshape according to the block_size.
+
+      :param data: Input.
+      :param key: The layer name.
+
+      :returns: A tensor representing the unpruned weights.
+
+
+   .. py:method:: get_least_ninm_mask_from_data(score)
+
+      Generate the least N scores in M.
+
+      :param score: the pruning scores of weights.
+
+      :returns:
+
+                A dict with the identical size as pre_masks and its 0/1 values are updated.
+                    1 means unpruned and 0 means pruned.
+
+
+   .. py:method:: get_sparsity_ratio(pre_masks, return_dict=False)
+
+      Please note that the zero cnt and total cnt are all block_wise for supporting channel-wise pruning.
+
+      The return sparsity ratio is elementwised.
+
+      :param pre_masks: Dict{"layer_name": Tensor} that stores the masks generated after the last pruning step.
+      :param return_dict: A bool determining whether to return more information like zero_cnt and total_cnt.
+
+      :returns: An elementwise sparisty ratio.
+
+
+   .. py:method:: reshape_orig_to_pattern(data, key)
+
+      Reshape the data based on the pruning pattern.
+
+      :param data: Input.
+      :param key: layer name.
+
+      :returns: Reshaped data.
+
+
+   .. py:method:: reshape_reduced_to_orig(data, key, orig_shape)
+
+      Reshape the reduced data to its original shape.
+
+      :param data: Input.
+      :param key: The layer name.
+      :param orig_shape: The original shape of the layer.
+
+      :returns: Data of its original shape.
+
+
+   .. py:method:: reduce_scores(scores)
+
+      Calculate the pruning scores after reducing the data and obtain the least N scores in M.
+
+      :param scores: Pruning scores of weights.
+
+      :returns: Updated pruning scores and the least N scores in M.
+
+
+   .. py:method:: get_ele_mask_per_threshold(score, threshold, block_size, least_ninm_mask)
+
+      Get the elementwise mask per threshold.
+
+      :param score: A tensor that stores the pruning scores of weights.
+      :param threshold: A float used to determine whether to prune a weight.
+      :param block_size: A list of two integers representing the height and width of the block.
+      :param least_m_in_m_masks: A tensor representing the least N scores in M.
+
+      :returns: The elementwise pruning mask.
+      :rtype: mask
+
+
+   .. py:method:: get_masks_global(scores, cur_target_sparsity_ratio, pre_masks, keep_exact_sparsity_ratio=True)
+
+      Generate masks for layers.
+
+      Gather all layer's scores together and calculate a common threshold.
+      This threshold will be applied for all layers.
+
+      :param scores: A dict{"layer_name": Tensor} that stores the pruning scores of weights.
+      :param target_sparsity_ratio: A float representing the model's final sparsity.
+      :param pre_masks: A dict{"layer_name": Tensor} representing the masks generated after the last pruning step.
+      :param max_sparsity_ratio_per_op: A float representing the maximum sparsity that one layer can reach.
+
+      :returns:
+
+                A dict with the identical size as pre_masks and its 0/1 values are updated.
+                    1 means unpruned and 0 means pruned.
+
+
+   .. py:method:: get_pattern_lock_masks(modules)
+
+      Obtain masks from original weight map, by masking where weights' are zero.
+
+      :param modules: A dict{"layer_name": Tensor} that stores weights.
+
+      :returns: A dict with the identical size as modules, containing pattern lock masks.
+
+
+

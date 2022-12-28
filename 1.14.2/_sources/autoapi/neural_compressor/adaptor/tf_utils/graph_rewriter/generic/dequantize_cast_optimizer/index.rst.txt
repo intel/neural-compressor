@@ -1,0 +1,41 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer`
+=============================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer.DequantizeCastOptimizer
+
+
+
+
+.. py:class:: DequantizeCastOptimizer(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Graph Rewrite Base class.
+   We abstract this base class and define the interface only.
+
+   :param object: the input model to be converted.
+   :type object: model
+
+   .. py:method:: do_transformation()
+
+      :param input_graph_def: graphdef object
+      :type input_graph_def: graphdef
+
+      :returns: optimized graph
+      :rtype: [graphdef]
+
+
+

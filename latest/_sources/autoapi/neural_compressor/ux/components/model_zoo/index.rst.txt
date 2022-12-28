@@ -1,0 +1,23 @@
+:py:mod:`neural_compressor.ux.components.model_zoo`
+===================================================
+
+.. py:module:: neural_compressor.ux.components.model_zoo
+
+.. autoapi-nested-parse::
+
+   Package model_zoo contains all packages required to run examples.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   download_config/index.rst
+   download_model/index.rst
+   downloader/index.rst
+   list_models/index.rst
+
+

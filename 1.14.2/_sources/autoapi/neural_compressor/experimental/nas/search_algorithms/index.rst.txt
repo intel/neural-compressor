@@ -1,0 +1,124 @@
+:py:mod:`neural_compressor.experimental.nas.search_algorithms`
+==============================================================
+
+.. py:module:: neural_compressor.experimental.nas.search_algorithms
+
+.. autoapi-nested-parse::
+
+   Search algorithms for NAS.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.search_algorithms.Searcher
+   neural_compressor.experimental.nas.search_algorithms.GridSearcher
+   neural_compressor.experimental.nas.search_algorithms.RandomSearcher
+   neural_compressor.experimental.nas.search_algorithms.BayesianOptimizationSearcher
+
+
+
+
+.. py:class:: Searcher(search_space)
+
+   Bases: :py:obj:`object`
+
+   Base class for defining the common methods of different search algorithms.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+   .. py:method:: suggest()
+      :abstractmethod:
+
+      Suggest the model architecture.
+
+
+   .. py:method:: get_feedback(metric)
+
+      Get metric feedback for the search algorithm.
+
+
+   .. py:method:: params_vec2params_dict(para_vec)
+
+      Convert the parameters vector to parameters dictionary.
+
+      Where parameters vector and parameters dictionary both define the model architecture.
+
+      :returns: Parameters dictionary defining the model architecture.
+
+
+
+.. py:class:: GridSearcher(search_space)
+
+   Bases: :py:obj:`Searcher`
+
+   Grid search.
+
+   Search the whole search space exhaustively.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+   .. py:method:: suggest()
+
+      Suggest the model architecture.
+
+      :returns: The model architecture.
+
+
+
+.. py:class:: RandomSearcher(search_space, seed=42)
+
+   Bases: :py:obj:`Searcher`
+
+   Random search.
+
+   Search the whole search space randomly.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+   .. py:method:: suggest()
+
+      Suggest the model architecture.
+
+      :returns: The model architecture.
+
+
+
+.. py:class:: BayesianOptimizationSearcher(search_space, seed=42)
+
+   Bases: :py:obj:`Searcher`
+
+   Bayesian Optimization.
+
+   Search the search space with Bayesian Optimization.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+
+   .. py:method:: suggest()
+
+      Suggest the model architecture.
+
+      :returns: The model architecture.
+
+
+   .. py:method:: get_feedback(metric)
+
+      Get metric feedback and register this metric.
+
+
+   .. py:method:: indices2params_vec(indices)
+
+      Convert indices to parameters vector.
+
+
+

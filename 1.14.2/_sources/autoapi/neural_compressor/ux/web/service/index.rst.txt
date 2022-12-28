@@ -1,0 +1,27 @@
+:py:mod:`neural_compressor.ux.web.service`
+==========================================
+
+.. py:module:: neural_compressor.ux.web.service
+
+.. autoapi-nested-parse::
+
+   Web services.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   benchmark/index.rst
+   history_snapshot_parser/index.rst
+   model/index.rst
+   optimization/index.rst
+   profiling/index.rst
+   request_data_processor/index.rst
+   response_generator/index.rst
+   workload/index.rst
+
+

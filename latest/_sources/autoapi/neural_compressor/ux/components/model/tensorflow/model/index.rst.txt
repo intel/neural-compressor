@@ -1,0 +1,77 @@
+:py:mod:`neural_compressor.ux.components.model.tensorflow.model`
+================================================================
+
+.. py:module:: neural_compressor.ux.components.model.tensorflow.model
+
+.. autoapi-nested-parse::
+
+   Abstract Tensorflow model class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.tensorflow.model.TensorflowModel
+
+
+
+
+.. py:class:: TensorflowModel(path: str)
+
+   Bases: :py:obj:`neural_compressor.ux.components.model.model.Model`
+
+   Abstract TensorFlow Model class.
+
+   .. py:property:: nc_model_instance
+      :type: neural_compressor.model.model.TensorflowBaseModel
+
+      Get Neural Compressor Model instance.
+
+   .. py:property:: input_shape
+      :type: neural_compressor.ux.components.model.shape.Shape
+
+      Try to detect data shape.
+
+   .. py:property:: shape_elements_order
+      :type: List[str]
+
+      Get order of input shape channels.
+
+   .. py:property:: supports_pruning
+      :type: bool
+
+      Check if pruning is supported for the model.
+
+   .. py:method:: get_input_nodes() -> Optional[List[Any]]
+
+      Get model input nodes.
+
+
+   .. py:method:: get_output_nodes() -> Optional[List[Any]]
+
+      Get model output nodes.
+
+
+   .. py:method:: get_model_graph() -> neural_compressor.ux.components.graph.graph.Graph
+
+      Get model Graph.
+
+
+   .. py:method:: get_framework_name() -> str
+      :staticmethod:
+
+      Get the name of framework.
+
+
+   .. py:method:: guard_requirements_installed() -> None
+
+      Ensure all requirements are installed.
+
+
+

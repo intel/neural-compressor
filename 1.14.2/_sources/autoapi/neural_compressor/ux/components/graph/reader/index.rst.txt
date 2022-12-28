@@ -1,0 +1,21 @@
+:py:mod:`neural_compressor.ux.components.graph.reader`
+======================================================
+
+.. py:module:: neural_compressor.ux.components.graph.reader
+
+.. autoapi-nested-parse::
+
+   Package with all graph readers.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   onnxrt_reader/index.rst
+   tensorflow_reader/index.rst
+
+

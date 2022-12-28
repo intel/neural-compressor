@@ -1,0 +1,65 @@
+:py:mod:`neural_compressor.ux.components.benchmark.execute_benchmark`
+=====================================================================
+
+.. py:module:: neural_compressor.ux.components.benchmark.execute_benchmark
+
+.. autoapi-nested-parse::
+
+   Execute benchmark.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.benchmark.execute_benchmark.execute_benchmark
+   neural_compressor.ux.components.benchmark.execute_benchmark.benchmark_result_update
+   neural_compressor.ux.components.benchmark.execute_benchmark.benchmark_result_update_pytorch_script
+   neural_compressor.ux.components.benchmark.execute_benchmark.pytorch_script_bench_optimizations
+   neural_compressor.ux.components.benchmark.execute_benchmark.pytorch_script_bench_original_model
+   neural_compressor.ux.components.benchmark.execute_benchmark.execute_real_benchmark
+
+
+
+.. py:function:: execute_benchmark(data: Dict[str, Any]) -> None
+
+   Execute benchmark.
+
+   Expected data:
+   {
+       "request_id": "asd",
+       "benchmark_id": "1"
+   }
+
+
+.. py:function:: benchmark_result_update(benchmark: Any, logs: Any, executor: Any, request_id: Any) -> dict
+
+   Update benchmark result. (TF, ONNX models).
+
+
+.. py:function:: benchmark_result_update_pytorch_script(benchmark: Any, request_id: Any, neural_coder_performance: Any, neural_coder_time: float) -> dict
+
+   Update benchmark result. (PyTorch scripted models).
+
+
+.. py:function:: pytorch_script_bench_optimizations(benchmark: Any, command_line_of_script: str, logs: Any) -> float
+
+   Benchmark for PyTorch scripted models (on the optimizations).
+
+
+.. py:function:: pytorch_script_bench_original_model(benchmark: Any, command_line_of_script: str, logs: Any) -> float
+
+   Benchmark for PyTorch scripted models (on the original model).
+
+
+.. py:function:: execute_real_benchmark(request_id: str, project_details: dict, benchmark_details: dict) -> dict
+
+   Execute benchmark.
+
+

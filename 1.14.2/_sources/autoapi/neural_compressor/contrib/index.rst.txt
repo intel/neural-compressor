@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.contrib`
+===================================
+
+.. py:module:: neural_compressor.contrib
+
+

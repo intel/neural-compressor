@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.conv`
+===========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.conv
+
+.. autoapi-nested-parse::
+
+   Conv Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.conv.ConvOperator
+   neural_compressor.adaptor.ox_utils.operators.conv.QConvOperator
+
+
+
+
+.. py:class:: ConvOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   Conv Operator.
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+
+.. py:class:: QConvOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.QOperator`
+
+   QLinearConv Operator.
+
+   .. py:method:: convert()
+
+      Convert to QDQ format.
+
+
+

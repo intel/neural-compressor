@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.model.base_model`
+============================================
+
+.. py:module:: neural_compressor.model.base_model
+
+.. autoapi-nested-parse::
+
+   Base model for multiple framework backends.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.model.base_model.BaseModel
+
+
+
+
+.. py:class:: BaseModel(model, **kwargs)
+
+   Base class of all neural_compressor.model, will play graph role.
+
+   .. py:property:: model
+      :abstractmethod:
+
+      Return model itself.
+
+   .. py:property:: graph_info
+      :abstractmethod:
+
+      Node_type'.
+
+      :type: Return a dict with content 'Node
+
+   .. py:method:: save(root, *args, **kwargs)
+      :abstractmethod:
+
+      Abstract method of model saving.
+
+
+   .. py:method:: export(save_path: str, conf)
+      :abstractmethod:
+
+      Abstract method of model convertion to ONNX.
+
+
+   .. py:method:: framework()
+      :abstractmethod:
+
+      Abstract method of model framework.
+
+
+

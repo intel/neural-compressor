@@ -1,0 +1,145 @@
+:py:mod:`neural_compressor.strategy.strategy`
+=============================================
+
+.. py:module:: neural_compressor.strategy.strategy
+
+.. autoapi-nested-parse::
+
+   The base class for tuning strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.strategy.TuneStrategy
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.strategy.strategy_registry
+
+
+
+.. py:function:: strategy_registry(cls)
+
+   Class decorator used to register all TuneStrategy subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: TuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
+
+   Bases: :py:obj:`object`
+
+   Basic class for tuning strategy.
+
+   .. py:property:: evaluation_result
+
+      Evaluate the given model.
+
+      :returns: The objective value evaluated.
+
+   .. py:method:: next_tune_cfg()
+      :abstractmethod:
+
+      Interface for generate the next tuning config.
+
+      The generator of yielding next tuning config to traverse by concrete strategies or quantization level
+      according to last tuning result and traverse logic.
+
+      It should be implemented by the sub-class.
+
+      :Yields: *tune_config (dict)* -- It's a dict containing the tuning configuration to traverse.
+
+
+   .. py:method:: traverse()
+
+      Traverse the tuning space.
+
+      The main traverse logic which could be override by some concrete strategy which needs more hooks.
+
+
+   .. py:method:: initial_tuning_cfg()
+
+      Init the tuning config.
+
+      Initialize the tuning config according to the quantization approach.
+
+      :returns: key is (op_name, op_type); value is quantization mode.
+                quant_mode_wise_items (OrderedDict): key is quant_mode/precision; value is item list.
+                initial_op_tuning_cfg (OrderedDict): key is (op_name, op_type); value is the initialized tuning config.
+      :rtype: op_item_dtype_dict (OrderedDict)
+
+
+   .. py:method:: show_baseline_info()
+
+      Display the accuracy and duration of the the baseline model.
+
+
+   .. py:method:: initial_best_acc()
+
+      Init the best accuracy.
+
+      :returns: The initial value of best accuracy.
+
+
+   .. py:method:: set_tuning_space(conf)
+
+      Create the tuning space.
+
+      Create the tuning space based on the framework capability and user configuration.
+
+      :param conf: The Conf class instance includes all user configurations.
+
+
+   .. py:method:: setup_resume(resume)
+
+      Resume the best quantized model from tuning history.
+
+      :param resume: The dict containing resume information.
+
+
+   .. py:method:: set_q_func()
+
+      Set the training function for quantization aware training.
+
+
+   .. py:method:: update_best_op_tuning_cfg(op_tuning_cfg)
+
+      Track and update the best tuning config with correspondence accuracy result.
+
+      :param op_tuning_cfg: The tuning config.
+
+      :returns: The current best tuning results and corresponding configurations.
+
+
+   .. py:method:: deploy_config()
+
+      Save the configuration locally for deployment.
+
+
+   .. py:method:: stop(timeout, trials_count)
+
+      Check if need to stop traverse.
+
+      Check if need to stop traversing the tuning space, either accuracy goal is met or timeout is reach.
+
+      :returns: True if need stop, otherwise False
+      :rtype: bool
+
+
+

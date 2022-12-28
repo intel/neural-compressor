@@ -1,0 +1,704 @@
+:py:mod:`neural_compressor.experimental`
+========================================
+
+.. py:module:: neural_compressor.experimental
+
+.. autoapi-nested-parse::
+
+   Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   common/index.rst
+   data/index.rst
+   export/index.rst
+   metric/index.rst
+   nas/index.rst
+   pruning_recipes/index.rst
+   pytorch_pruner/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   benchmark/index.rst
+   component/index.rst
+   distillation/index.rst
+   graph_optimization/index.rst
+   mixed_precision/index.rst
+   model_conversion/index.rst
+   pruning/index.rst
+   pruning_v2/index.rst
+   quantization/index.rst
+   scheduler/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.Component
+   neural_compressor.experimental.Quantization
+   neural_compressor.experimental.Pruning
+   neural_compressor.experimental.Benchmark
+   neural_compressor.experimental.Graph_Optimization
+   neural_compressor.experimental.MixedPrecision
+   neural_compressor.experimental.ModelConversion
+   neural_compressor.experimental.Distillation
+   neural_compressor.experimental.NAS
+
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.GraphOptimization
+
+
+.. py:class:: Component(conf_fname_or_obj=None, combination=None)
+
+   Bases: :py:obj:`object`
+
+   This is base class of Neural Compressor Component.
+
+   This class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
+   This design is mainly for one-shot optimization for pruning/distillation/quantization-aware training.
+   In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
+
+   .. py:property:: train_func
+
+      Not support get train_func.
+
+   .. py:property:: eval_func
+
+      Not support get eval_func.
+
+   .. py:property:: train_dataloader
+
+      Getter to train dataloader.
+
+   .. py:property:: eval_dataloader
+
+      Getter to eval dataloader.
+
+   .. py:property:: model
+
+      Getter of model in neural_compressor.model.
+
+   .. py:method:: prepare()
+
+      Register Quantization Aware Training hooks.
+
+
+   .. py:method:: prepare_qat()
+
+      Register Quantization Aware Training hooks.
+
+
+   .. py:method:: pre_process()
+
+      Initialize some attributes, such as the adaptor, the dataloader and train/eval functions from yaml config.
+
+      Component base class provides default function to initialize dataloaders and functions
+      from user config. And for derived classes(Pruning, Quantization, etc.), an override
+      function is required.
+
+
+   .. py:method:: execute()
+
+      Execute the processing of this compressor.
+
+      Component base class provides compressing processing. And for derived classes(Pruning, Quantization, etc.),
+      an override function is required.
+
+
+   .. py:method:: post_process()
+
+      Post process after execution.
+
+      For derived classes(Pruning, Quantization, etc.), an override function is required.
+
+
+   .. py:method:: on_train_begin(dataloader=None)
+
+      Be called before the beginning of epochs.
+
+
+   .. py:method:: on_train_end()
+
+      Be called after the end of epochs.
+
+
+   .. py:method:: pre_epoch_begin(dataloader=None)
+
+      Be called before the beginning of epochs.
+
+
+   .. py:method:: post_epoch_end()
+
+      Be called after the end of epochs.
+
+
+   .. py:method:: on_epoch_begin(epoch)
+
+      Be called on the beginning of epochs.
+
+
+   .. py:method:: on_step_begin(batch_id)
+
+      Be called on the beginning of batches.
+
+
+   .. py:method:: on_batch_begin(batch_id)
+
+      Be called on the beginning of batches.
+
+
+   .. py:method:: on_after_compute_loss(input, student_output, student_loss, teacher_output=None)
+
+      Be called on the end of loss computation.
+
+
+   .. py:method:: on_before_optimizer_step()
+
+      Be called before optimizer step.
+
+
+   .. py:method:: on_after_optimizer_step()
+
+      Be called after optimizer step.
+
+
+   .. py:method:: on_before_eval()
+
+      Be called before evaluation.
+
+
+   .. py:method:: on_after_eval()
+
+      Be called after evaluation.
+
+
+   .. py:method:: on_post_grad()
+
+      Be called before optimizer step.
+
+
+   .. py:method:: on_step_end()
+
+      Be called on the end of batches.
+
+
+   .. py:method:: on_batch_end()
+
+      Be called on the end of batches.
+
+
+   .. py:method:: on_epoch_end()
+
+      Be called on the end of epochs.
+
+
+   .. py:method:: register_hook(scope, hook, input_args=None, input_kwargs=None)
+
+      Register hook for component.
+
+      Input_args and input_kwargs are reserved for user registered hooks.
+
+
+
+.. py:class:: Quantization(conf_fname_or_obj=None)
+
+   Bases: :py:obj:`neural_compressor.experimental.component.Component`
+
+   This class provides easy use API for quantization.
+
+      It automatically searches for optimal quantization recipes for low precision model inference,
+      achieving best tuning objectives like inference performance within accuracy loss constraints.
+      Tuner abstracts out the differences of quantization APIs across various DL frameworks
+      and brings a unified API for automatic quantization that works on frameworks including
+      tensorflow, pytorch and mxnet.
+      Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
+      (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
+      Tuner class provides a flexible configuration interface via YAML for users to specify
+      these parameters.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             QuantConf class containing accuracy goal, tuning objective and preferred
+                             calibration & quantization tuning space etc.
+   :type conf_fname_or_obj: string or obj
+
+   .. py:property:: calib_dataloader
+
+      Get `calib_dataloader` attribute.
+
+   .. py:property:: metric
+
+      Get `metric` attribute.
+
+   .. py:property:: objective
+
+      Get `objective` attribute.
+
+   .. py:property:: postprocess
+
+      Get `postprocess` attribute.
+
+   .. py:property:: q_func
+
+      Get `q_func` attribute.
+
+   .. py:property:: model
+
+      Override model getter method to handle quantization aware training case.
+
+   .. py:method:: pre_process()
+
+      Prepare dataloaders, qfuncs for Component.
+
+
+   .. py:method:: execute()
+
+      Quantization execute routinue based on strategy design.
+
+
+   .. py:method:: dataset(dataset_type, *args, **kwargs)
+
+      Get dataset according to dataset_type.
+
+
+
+.. py:class:: Pruning(conf_fname_or_obj=None)
+
+   Bases: :py:obj:`neural_compressor.experimental.component.Component`
+
+   This is base class of pruning object.
+
+      Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
+      (<1% or <0.1% etc.) and pruning objectives (performance, memory footprint etc.).
+      Pruning class provides a flexible configuration interface via YAML for users to specify
+      these parameters.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             PruningConf class containing accuracy goal, pruning objective and related
+                             dataloaders etc.
+   :type conf_fname_or_obj: string or obj
+
+   .. attribute:: conf
+
+      A config dict object. Contains pruning setting parameters.
+
+   .. attribute:: pruners
+
+      A list of Pruner object.
+
+   .. py:property:: pruning_func
+
+      Not support get pruning_func.
+
+   .. py:property:: evaluation_distributed
+
+      Getter to know whether need distributed evaluation dataloader.
+
+   .. py:property:: train_distributed
+
+      Getter to know whether need distributed training dataloader.
+
+   .. py:method:: update_items_for_all_pruners(**kwargs)
+
+      Functions which add User-defined arguments to the original configurations.
+
+      The original config of pruning is read from a file.
+      However, users can still modify configurations by passing key-value arguments in this function.
+      Please note that the key-value arguments' keys are analysable in current configuration.
+
+
+   .. py:method:: prepare()
+
+      Functions prepare for generate_hooks, generate_pruners.
+
+
+   .. py:method:: pre_process()
+
+      Functions called before pruning begins, usually set up pruners.
+
+
+   .. py:method:: execute()
+
+      Functions that execute the pruning process.
+
+      Follow the working flow: evaluate the dense model -> train/prune the model, evaluate the sparse model.
+
+
+   .. py:method:: generate_hooks()
+
+      Register hooks for pruning.
+
+
+   .. py:method:: generate_pruners()
+
+      Functions that generate pruners and set up self.pruners.
+
+
+   .. py:method:: get_sparsity_ratio()
+
+      Functions that calculate a modules/layers sparsity.
+
+      :returns: Three floats.
+                elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+                elementwise_over_all refers to zero elements' ratio in all layers in the model.
+                blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
+
+
+
+.. py:class:: Benchmark(conf_fname_or_obj=None)
+
+   Bases: :py:obj:`object`
+
+   Benchmark class is used to evaluate the model performance with the objective settings.
+
+   Users can use the data that they configured in YAML
+   NOTICE: neural_compressor Benchmark will use the original command to run sub-process, which
+   depends on the user's code and has the possibility to run unnecessary code
+
+   .. py:property:: results
+
+      Get the results of benchmarking.
+
+   .. py:property:: b_dataloader
+
+      Get the dataloader for the benchmarking.
+
+   .. py:property:: b_func
+
+      Not support getting b_func.
+
+   .. py:property:: model
+
+      Get the model.
+
+   .. py:property:: metric
+
+      Not support getting metric.
+
+   .. py:property:: postprocess
+
+      Not support getting postprocess.
+
+   .. py:method:: summary_benchmark()
+
+      Get the summary of the benchmark.
+
+
+   .. py:method:: config_instance()
+
+      Configure the multi-instance commands and trigger benchmark with sub process.
+
+
+   .. py:method:: generate_prefix(core_list)
+
+      Generate the command prefix with numactl.
+
+      :param core_list: a list of core indexes bound with specific instances
+
+
+   .. py:method:: run_instance(mode)
+
+      Run the instance with the configuration.
+
+      :param mode: 'performance' or 'accuracy'
+      :param 'performance' mode runs benchmarking with numactl on specific cores and instances set: by user config and returns model performance
+      :param 'accuracy' mode runs benchmarking with full cores and returns model accuracy:
+
+
+
+.. py:class:: Graph_Optimization(conf_fname_or_obj=None)
+
+   Graph_Optimization class.
+
+   automatically searches for optimal quantization recipes for low
+   precision model inference, achieving best tuning objectives like inference performance
+   within accuracy loss constraints.
+   Tuner abstracts out the differences of quantization APIs across various DL frameworks
+   and brings a unified API for automatic quantization that works on frameworks including
+   tensorflow, pytorch and mxnet.
+   Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
+   (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
+   Tuner class provides a flexible configuration interface via YAML for users to specify
+   these parameters.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             Graph_Optimization_Conf class containing accuracy goal, tuning objective and
+                             preferred calibration & quantization tuning space etc.
+   :type conf_fname_or_obj: string or obj
+
+   .. py:property:: precisions
+
+      Get precision.
+
+   .. py:property:: input
+
+      Get input.
+
+   .. py:property:: output
+
+      Get output.
+
+   .. py:property:: eval_dataloader
+
+      Get eval_dataloader.
+
+   .. py:property:: model
+
+      Get model.
+
+   .. py:property:: metric
+
+      Get metric.
+
+   .. py:property:: postprocess
+
+      Get postprocess.
+
+   .. py:property:: eval_func
+
+      Get evaluation function.
+
+   .. py:method:: dataset(dataset_type, *args, **kwargs)
+
+      Get dataset.
+
+
+   .. py:method:: set_config_by_model(model_obj)
+
+      Set model config.
+
+
+
+
+.. py:class:: MixedPrecision(conf_fname_or_obj=None)
+
+   Bases: :py:obj:`neural_compressor.experimental.graph_optimization.GraphOptimization`
+
+   Class used for generating low precision model.
+
+   MixedPrecision class automatically generates low precision model across various DL
+   frameworks including tensorflow, pytorch and onnxruntime.
+
+   .. py:property:: precisions
+
+      Get private member variable `precisions` of `MixedPrecision` class.
+
+   .. py:method:: set_config_by_model(model_obj)
+
+      Set member variable `conf` by a input model object.
+
+
+
+.. py:class:: ModelConversion(conf_fname_or_obj=None)
+
+   ModelConversion class is used to convert one model format to another.
+
+      Currently Neural Compressor only supports Quantization-aware training TensorFlow model to Default
+      quantized model.
+
+      The typical usage is:
+        from neural_compressor.experimental import ModelConversion, common
+        conversion = ModelConversion()
+        conversion.source = 'QAT'
+        conversion.destination = 'default'
+        conversion.model = '/path/to/saved_model'
+        q_model = conversion()
+
+   :param conf_fname_or_obj: Optional. The path to the YAML configuration file or
+                             Conf class containing model conversion and evaluation setting if not specifed by code.
+   :type conf_fname_or_obj: string or obj
+
+   .. py:property:: source
+
+      Return source.
+
+   .. py:property:: destination
+
+      Return destination.
+
+   .. py:property:: eval_dataloader
+
+      Return eval dataloader.
+
+   .. py:property:: model
+
+      Return model.
+
+   .. py:property:: metric
+
+      Return metric.
+
+   .. py:property:: postprocess
+
+      Check postprocess.
+
+   .. py:property:: eval_func
+
+      Return eval_func.
+
+   .. py:method:: dataset(dataset_type, *args, **kwargs)
+
+      Return dataset.
+
+      :param dataset_type: dataset type
+
+      :returns: dataset class
+      :rtype: class
+
+
+
+.. py:class:: Distillation(conf_fname_or_obj=None)
+
+   Bases: :py:obj:`neural_compressor.experimental.component.Component`
+
+   Distillation class derived from Component class.
+
+   Distillation class abstracted the pipeline of knowledge distillation,
+   transfer the knowledge of the teacher model to the student model.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             Distillation_Conf containing accuracy goal, distillation objective and related
+                             dataloaders etc.
+   :type conf_fname_or_obj: string or obj
+
+   .. attribute:: _epoch_ran
+
+      A integer indicating how much epochs ran.
+
+   .. attribute:: eval_frequency
+
+      The frequency for doing evaluation of the student model
+      in terms of epoch.
+
+   .. attribute:: best_score
+
+      The best metric of the student model in the training.
+
+   .. attribute:: best_model
+
+      The best student model found in the training.
+
+   .. py:property:: criterion
+
+      Getter of criterion.
+
+      :returns: The criterion used in the distillation process.
+
+   .. py:property:: optimizer
+
+      Getter of optimizer.
+
+      :returns: The optimizer used in the distillation process.
+
+   .. py:property:: teacher_model
+
+      Getter of the teacher model.
+
+      :returns: The teacher model used in the distillation process.
+
+   .. py:property:: student_model
+
+      Getter of the student model.
+
+      :returns: The student model used in the distillation process.
+
+   .. py:property:: train_cfg
+
+      Getter of the train configuration.
+
+      :returns: The train configuration used in the distillation process.
+
+   .. py:property:: evaluation_distributed
+
+      Getter to know whether need distributed evaluation dataloader.
+
+   .. py:property:: train_distributed
+
+      Getter to know whether need distributed training dataloader.
+
+   .. py:method:: on_post_forward(input, teacher_output=None)
+
+      Set or compute output of teacher model.
+
+      Deprecated.
+
+
+   .. py:method:: init_train_cfg()
+
+      Initialize the training configuration.
+
+
+   .. py:method:: create_criterion()
+
+      Create the criterion for training.
+
+
+   .. py:method:: create_optimizer()
+
+      Create the optimizer for training.
+
+
+   .. py:method:: prepare()
+
+      Prepare hooks.
+
+
+   .. py:method:: pre_process()
+
+      Preprocessing before the disillation pipeline.
+
+      Initialize necessary parts for distillation pipeline.
+
+
+   .. py:method:: execute()
+
+      Do distillation pipeline.
+
+      First train the student model with the teacher model, after training,
+      evaluating the best student model if any.
+
+      :returns: Best distilled model found.
+
+
+   .. py:method:: generate_hooks()
+
+      Register hooks for distillation.
+
+      Register necessary hooks for distillation pipeline.
+
+
+
+.. py:class:: NAS
+
+   Bases: :py:obj:`object`
+
+   Create object of different NAS approaches.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or the object of NASConfig.
+   :type conf_fname_or_obj: string or obj
+
+   :returns: An object of specified NAS approach.
+
+

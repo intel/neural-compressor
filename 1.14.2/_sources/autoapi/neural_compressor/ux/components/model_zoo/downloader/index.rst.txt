@@ -1,0 +1,64 @@
+:py:mod:`neural_compressor.ux.components.model_zoo.downloader`
+==============================================================
+
+.. py:module:: neural_compressor.ux.components.model_zoo.downloader
+
+.. autoapi-nested-parse::
+
+   Download model from Examples.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model_zoo.downloader.Downloader
+
+
+
+
+.. py:class:: Downloader(data: Dict[str, Any])
+
+   UX model downloader class.
+
+   .. py:method:: download_config() -> str
+
+      Find yaml config resource and initialize downloading.
+
+
+   .. py:method:: download_yaml_config(model_info: Dict[str, Any]) -> str
+
+      Download config from GitHub for specified model.
+
+
+   .. py:method:: download_model() -> str
+
+      Find model resource and initialize downloading.
+
+
+   .. py:method:: download(model_info: Dict[str, Any]) -> str
+
+      Download specified model.
+
+
+   .. py:method:: download_file(url: str, download_path: str, headers: Optional[dict] = {}, report_progress: Optional[bool] = True) -> None
+
+      Download specified file.
+
+
+   .. py:method:: unpack_archive(archive_path: str, filename: str) -> str
+
+      Unpack archive and return path to unpacked model.
+
+
+   .. py:method:: get_yaml_url(model_src_dir: str, yaml_relative_location: str) -> Tuple[str, dict]
+
+      Get url for yaml config download.
+
+
+

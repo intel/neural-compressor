@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.ux.components.names_mapper`
+======================================================
+
+.. py:module:: neural_compressor.ux.components.names_mapper
+
+.. autoapi-nested-parse::
+
+   Names mapper package.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   names_mapper/index.rst
+
+

@@ -1,0 +1,64 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.binary_op`
+================================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.binary_op
+
+.. autoapi-nested-parse::
+
+   Binary operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.binary_op.BinaryOperator
+   neural_compressor.adaptor.ox_utils.operators.binary_op.QBinaryOperator
+
+
+
+
+.. py:class:: BinaryOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   Binary operator.
+
+   .. py:method:: quantize_check()
+
+      Check if quantizaion can be done.
+
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+
+.. py:class:: QBinaryOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.QOperator`
+
+   QBinary Operator.
+
+   .. py:method:: convert()
+
+      Convert to QDQ format.
+
+
+

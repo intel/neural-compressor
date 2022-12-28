@@ -1,0 +1,50 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.framework`
+========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.framework
+
+.. autoapi-nested-parse::
+
+   Framework package contains framework class representing framework table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.framework.Framework
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.framework.fill_dictionary
+
+
+
+.. py:class:: Framework
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench Framework table class.
+
+   .. py:method:: get_framework_id(db_session: sqlalchemy.orm.session.Session, framework_name: str) -> int
+      :staticmethod:
+
+      Get framework id from name.
+
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

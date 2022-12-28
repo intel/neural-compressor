@@ -1,0 +1,64 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.gemm`
+===========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.gemm
+
+.. autoapi-nested-parse::
+
+   Gemm Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.gemm.GemmOperator
+   neural_compressor.adaptor.ox_utils.operators.gemm.QGemmOperator
+
+
+
+
+.. py:class:: GemmOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   Gemm Operator.
+
+   .. py:method:: quantize_check()
+
+      Check if quantizaion can be done.
+
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+
+.. py:class:: QGemmOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.QOperator`
+
+   QGemm Operator.
+
+   .. py:method:: convert()
+
+      Convert to QDQ format.
+
+
+

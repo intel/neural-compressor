@@ -1,0 +1,47 @@
+:py:mod:`neural_compressor.ux.components.optimization.graph_optimizer.optimize_model`
+=====================================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.graph_optimizer.optimize_model
+
+.. autoapi-nested-parse::
+
+   Graph optimization script.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.graph_optimizer.optimize_model.parse_args
+   neural_compressor.ux.components.optimization.graph_optimizer.optimize_model.optimize_graph
+   neural_compressor.ux.components.optimization.graph_optimizer.optimize_model.optimize_graph_config
+   neural_compressor.ux.components.optimization.graph_optimizer.optimize_model.set_eager_execution
+
+
+
+.. py:function:: parse_args() -> Any
+
+   Parse input arguments.
+
+
+.. py:function:: optimize_graph(input_graph: str, output_graph: str, framework: str, precisions: str, input: Optional[List[str]] = None, output: Optional[List[str]] = None) -> None
+
+   Execute graph optimization.
+
+
+.. py:function:: optimize_graph_config(input_graph: str, output_graph: str, framework: str, config: str) -> None
+
+   Execute graph optimization using config file.
+
+
+.. py:function:: set_eager_execution(input_graph: str) -> None
+
+   Set eager execution as required by model.
+
+

@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.ux.components.model.shape`
+=====================================================
+
+.. py:module:: neural_compressor.ux.components.model.shape
+
+.. autoapi-nested-parse::
+
+   Data shape class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.shape.Shape
+
+
+
+
+.. py:class:: Shape(shape: Optional[str] = '', trusted: bool = False)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Data shape definition.
+
+   .. py:method:: serialize(serialization_type: str = 'default') -> Union[Dict[str, Any], List[Dict[str, Any]]]
+
+      Serialize Shape class to dict.
+
+
+

@@ -1,0 +1,46 @@
+:py:mod:`neural_compressor.ux.utils.workload.model`
+===================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.model
+
+.. autoapi-nested-parse::
+
+   Configuration model module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.model.Model
+
+
+
+
+.. py:class:: Model(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Model class.
+
+   .. py:property:: inputs
+      :type: List[str]
+
+      Get inputs.
+
+   .. py:property:: outputs
+      :type: List[str]
+
+      Get outputs.
+
+   .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
+
+      Serialize configuration Model class.
+
+
+

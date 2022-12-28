@@ -1,0 +1,31 @@
+:py:mod:`neural_compressor.adaptor.ox_utils`
+============================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils
+
+.. autoapi-nested-parse::
+
+   Init for ox_utils.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   operators/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   calibration/index.rst
+   quantizer/index.rst
+   util/index.rst
+
+

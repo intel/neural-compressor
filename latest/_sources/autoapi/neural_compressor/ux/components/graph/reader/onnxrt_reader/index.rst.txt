@@ -1,0 +1,34 @@
+:py:mod:`neural_compressor.ux.components.graph.reader.onnxrt_reader`
+====================================================================
+
+.. py:module:: neural_compressor.ux.components.graph.reader.onnxrt_reader
+
+.. autoapi-nested-parse::
+
+   Onnxrt Graph reader.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.graph.reader.onnxrt_reader.OnnxrtReader
+
+
+
+
+.. py:class:: OnnxrtReader(model: neural_compressor.ux.components.model.model.Model)
+
+   Graph Reader for Onnxrt.
+
+   .. py:method:: read() -> neural_compressor.ux.components.graph.graph.Graph
+
+      Read a graph.
+
+
+

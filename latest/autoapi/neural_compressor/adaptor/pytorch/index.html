@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.pytorch &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+              <div class="version">
+                1.14.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.pytorch</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/neural_compressor/adaptor/pytorch/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.pytorch">
+<span id="neural-compressor-adaptor-pytorch"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.pytorch" title="neural_compressor.adaptor.pytorch"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.pytorch</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.pytorch" title="Permalink to this heading"></a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.TemplateAdaptor" title="neural_compressor.adaptor.pytorch.TemplateAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TemplateAdaptor</span></code></a></p></td>
+<td><p>Tample adaptor of PyTorch framework.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor" title="neural_compressor.adaptor.pytorch.PyTorchAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchAdaptor</span></code></a></p></td>
+<td><p>Adaptor of PyTorch framework, all PyTorch API is in this class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor" title="neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorch_IPEXAdaptor</span></code></a></p></td>
+<td><p>Adaptor of PyTorch framework with Intel PyTorch Extension,</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor" title="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorch_FXAdaptor</span></code></a></p></td>
+<td><p>Adaptor of PyTorch framework with FX graph mode, all PyTorch API is in this class.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.get_ops_recursively" title="neural_compressor.adaptor.pytorch.get_ops_recursively"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ops_recursively</span></code></a>(model, prefix[, ops])</p></td>
+<td><p>This is a helper function for <cite>graph_info</cite>,</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.get_ops_recursively">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.pytorch.</span></span><span class="sig-name descname"><span class="pre">get_ops_recursively</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.get_ops_recursively" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>This is a helper function for <cite>graph_info</cite>,</dt><dd><p>and it will get all ops from model.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – input model</p></li>
+<li><p><strong>prefix</strong> (<em>string</em>) – prefix of op name</p></li>
+<li><p><strong>ops</strong> (<em>dict</em>) – dict of ops from model {op name: type}.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.TemplateAdaptor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.pytorch.</span></span><span class="sig-name descname"><span class="pre">TemplateAdaptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework_specific_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.TemplateAdaptor" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../adaptor/index.html#neural_compressor.adaptor.adaptor.Adaptor" title="neural_compressor.adaptor.adaptor.Adaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.adaptor.Adaptor</span></code></a></p>
+<p>Tample adaptor of PyTorch framework.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>framework_specific_info</strong> (<em>dict</em>) – dictionary of tuning configure from yaml file.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.TemplateAdaptor.is_fused_module">
+<span class="sig-name descname"><span class="pre">is_fused_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.TemplateAdaptor.is_fused_module" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>This is a helper function for <cite>_propagate_qconfig_helper</cite> to detecte</dt><dd><p>if this module is fused.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>module</strong> (<em>object</em>) – input module</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>is fused or not</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(bool)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.TemplateAdaptor.calculate_hessian_trace">
+<span class="sig-name descname"><span class="pre">calculate_hessian_trace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_act</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.TemplateAdaptor.calculate_hessian_trace" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate hessian trace.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fp32_model</strong> – The original fp32 model.</p></li>
+<li><p><strong>criterion</strong> – The loss function for calculate the hessian trace. # loss = criterion(output, target)</p></li>
+<li><p><strong>dataloader</strong> – The dataloader for calculate the gradient.</p></li>
+<li><p><strong>q_model</strong> – The INT8 AMAP model.</p></li>
+<li><p><strong>enable_act</strong> – Enabling quantization error or not.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(op_name, op_type); value: hessian trace.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>hessian_trace(Dict[Tuple, float]), key</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.pytorch.</span></span><span class="sig-name descname"><span class="pre">PyTorchAdaptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework_specific_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.pytorch.TemplateAdaptor" title="neural_compressor.adaptor.pytorch.TemplateAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TemplateAdaptor</span></code></a></p>
+<p>Adaptor of PyTorch framework, all PyTorch API is in this class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>framework_specific_info</strong> (<em>dict</em>) – dictionary of tuning configure from yaml file.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.quantize">
+<span class="sig-name descname"><span class="pre">quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.quantize" title="Permalink to this definition"></a></dt>
+<dd><p>Execute the quantize process on the specified model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tune_cfg</strong> (<em>dict</em>) – quantization config.</p></li>
+<li><p><strong>model</strong> (<em>object</em>) – model need to do quantization.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – calibration dataset.</p></li>
+<li><p><strong>q_func</strong> (<em>objext</em><em>, </em><em>optional</em>) – training function for quantization aware training mode.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>quantized model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(object)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measurer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.evaluate" title="Permalink to this definition"></a></dt>
+<dd><p>Execute the evaluate process on the specified model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – model to run evaluation.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – evaluation dataset.</p></li>
+<li><p><strong>postprocess</strong> (<em>object</em><em>, </em><em>optional</em>) – process function after evaluation.</p></li>
+<li><p><strong>metrics</strong> (<em>list</em><em>, </em><em>optional</em>) – list of metric function.</p></li>
+<li><p><strong>measurer</strong> (<em>object</em><em>, </em><em>optional</em>) – measurer function.</p></li>
+<li><p><strong>iteration</strong> (<em>int</em><em>, </em><em>optional</em>) – number of iterations to evaluate.</p></li>
+<li><p><strong>tensorboard</strong> (<em>bool</em><em>, </em><em>optional</em>) – dump output tensor to tensorboard summary files.</p></li>
+<li><p><strong>fp32_baseline</strong> (<em>boolen</em><em>, </em><em>optional</em>) – only for compare_label=False pipeline</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>accuracy</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(object)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion_tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.train" title="Permalink to this definition"></a></dt>
+<dd><p>Execute the train process on the specified model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – model to run evaluation.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – training dataset.</p></li>
+<li><p><strong>optimizer</strong> (<em>tuple</em>) – It is a tuple of (cls, parameters) for optimizer.</p></li>
+<li><p><strong>criterion</strong> (<em>tuple</em>) – It is a tuple of (cls, parameters) for criterion.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – other parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.is_fused_child">
+<span class="sig-name descname"><span class="pre">is_fused_child</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.is_fused_child" title="Permalink to this definition"></a></dt>
+<dd><p>This is a helper function for <cite>_post_eval_hook</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>op_name</strong> (<em>string</em>) – op name</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>if this op is fused</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(bool)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.is_fused_op">
+<span class="sig-name descname"><span class="pre">is_fused_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.is_fused_op" title="Permalink to this definition"></a></dt>
+<dd><p>This is a helper function for <cite>_post_eval_hook</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>op_name</strong> (<em>string</em>) – op name</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>if this op is fused</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(bool)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.is_last_fused_child">
+<span class="sig-name descname"><span class="pre">is_last_fused_child</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.is_last_fused_child" title="Permalink to this definition"></a></dt>
+<dd><p>This is a helper function for <cite>_post_eval_hook</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>op_name</strong> (<em>string</em>) – op name</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>if this op is last fused op</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(bool)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.query_fw_capability">
+<span class="sig-name descname"><span class="pre">query_fw_capability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.query_fw_capability" title="Permalink to this definition"></a></dt>
+<dd><p>This is a helper function to get all quantizable ops from model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>object</em>) – input model which is Neural Compressor model</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>tuning capability for each op from model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>q_capability (dictionary)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.get_non_quant_modules">
+<span class="sig-name descname"><span class="pre">get_non_quant_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.get_non_quant_modules" title="Permalink to this definition"></a></dt>
+<dd><p>This is a helper function to get all non_quant_modules from customer and default.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model_kwargs</strong> (<em>dictionary</em>) – keyword args from Neural Compressor model</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>non_quant_modules for model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>custom_non_quant_dict (dictionary)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.pytorch.</span></span><span class="sig-name descname"><span class="pre">PyTorch_IPEXAdaptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework_specific_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.pytorch.TemplateAdaptor" title="neural_compressor.adaptor.pytorch.TemplateAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TemplateAdaptor</span></code></a></p>
+<dl class="simple">
+<dt>Adaptor of PyTorch framework with Intel PyTorch Extension,</dt><dd><p>all PyTorch IPEX API is in this class.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>framework_specific_info</strong> (<em>dict</em>) – dictionary of tuning configure from yaml file.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor.quantize">
+<span class="sig-name descname"><span class="pre">quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor.quantize" title="Permalink to this definition"></a></dt>
+<dd><p>Execute the quantize process on the specified model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tune_cfg</strong> (<em>dict</em>) – quantization config.</p></li>
+<li><p><strong>model</strong> (<em>object</em>) – model need to do quantization, it is Neural Compressor model.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – calibration dataset.</p></li>
+<li><p><strong>q_func</strong> (<em>objext</em><em>, </em><em>optional</em>) – training function for quantization aware training mode.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>quantized model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measurer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor.evaluate" title="Permalink to this definition"></a></dt>
+<dd><p>Execute the evaluate process on the specified model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – Neural Compressor model to run evaluation.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – evaluation dataset.</p></li>
+<li><p><strong>postprocess</strong> (<em>object</em><em>, </em><em>optional</em>) – process function after evaluation.</p></li>
+<li><p><strong>metrics</strong> (<em>list</em><em>, </em><em>optional</em>) – list of metric function.</p></li>
+<li><p><strong>measurer</strong> (<em>object</em><em>, </em><em>optional</em>) – measurer function.</p></li>
+<li><p><strong>iteration</strong> (<em>int</em><em>, </em><em>optional</em>) – number of iterations to evaluate.</p></li>
+<li><p><strong>tensorboard</strong> (<em>bool</em><em>, </em><em>optional</em>) – dump output tensor to tensorboard summary
+files(IPEX unspport).</p></li>
+<li><p><strong>fp32_baseline</strong> (<em>boolen</em><em>, </em><em>optional</em>) – only for compare_label=False pipeline</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>quantized model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor.query_fw_capability">
+<span class="sig-name descname"><span class="pre">query_fw_capability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor.query_fw_capability" title="Permalink to this definition"></a></dt>
+<dd><p>This is a helper function to get all quantizable ops from model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>object</em>) – input model which is Neural Compressor model</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>tuning capability for each op from model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>q_capability (dictionary)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor.save" title="Permalink to this definition"></a></dt>
+<dd><p>The function is used by tune strategy class for set best configure in Neural Compressor model.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>model (object): The Neural Compressor model which is best results.
+path (string): No used.</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.pytorch.</span></span><span class="sig-name descname"><span class="pre">PyTorch_FXAdaptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework_specific_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.pytorch.TemplateAdaptor" title="neural_compressor.adaptor.pytorch.TemplateAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TemplateAdaptor</span></code></a></p>
+<p>Adaptor of PyTorch framework with FX graph mode, all PyTorch API is in this class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>framework_specific_info</strong> (<em>dict</em>) – dictionary of tuning configure from yaml file.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.quantize">
+<span class="sig-name descname"><span class="pre">quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.quantize" title="Permalink to this definition"></a></dt>
+<dd><p>Execute the quantize process on the specified model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tune_cfg</strong> (<em>dict</em>) – quantization config.</p></li>
+<li><p><strong>model</strong> (<em>object</em>) – model need to do quantization.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – calibration dataset.</p></li>
+<li><p><strong>q_func</strong> (<em>objext</em><em>, </em><em>optional</em>) – training function for quantization aware training mode.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>quantized model</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(object)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measurer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.evaluate" title="Permalink to this definition"></a></dt>
+<dd><p>Execute the evaluate process on the specified model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – model to run evaluation.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – evaluation dataset.</p></li>
+<li><p><strong>postprocess</strong> (<em>object</em><em>, </em><em>optional</em>) – process function after evaluation.</p></li>
+<li><p><strong>metric</strong> (<em>object</em><em>, </em><em>optional</em>) – metric function.</p></li>
+<li><p><strong>measurer</strong> (<em>object</em><em>, </em><em>optional</em>) – measurer function.</p></li>
+<li><p><strong>iteration</strong> (<em>int</em><em>, </em><em>optional</em>) – number of iterations to evaluate.</p></li>
+<li><p><strong>tensorboard</strong> (<em>bool</em><em>, </em><em>optional</em>) – dump output tensor to tensorboard summary files.</p></li>
+<li><p><strong>fp32_baseline</strong> (<em>boolen</em><em>, </em><em>optional</em>) – only for compare_label=False pipeline</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>accuracy</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>(object)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion_tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.train" title="Permalink to this definition"></a></dt>
+<dd><p>Execute the train process on the specified model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – model to run evaluation.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – training dataset.</p></li>
+<li><p><strong>optimizer</strong> (<em>tuple</em>) – It is a tuple of (cls, parameters) for optimizer.</p></li>
+<li><p><strong>criterion</strong> (<em>tuple</em>) – It is a tuple of (cls, parameters) for criterion.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – other parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.prepare_sub_graph">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prepare_sub_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub_module_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fx_op_cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_qat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.prepare_sub_graph" title="Permalink to this definition"></a></dt>
+<dd><p>Static method to prepare sub modules recursively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sub_module_list</strong> (<em>list</em>) – contains the name of traceable sub modules</p></li>
+<li><p><strong>fx_op_cfgs</strong> (<em>dict</em><em>, </em><em>QConfigMapping</em>) – the configuration for prepare_fx quantization.</p></li>
+<li><p><strong>model</strong> (<em>dir</em>) – input model which is PyTorch model.</p></li>
+<li><p><strong>prefix</strong> (<em>string</em>) – prefix of op name</p></li>
+<li><p><strong>is_qat</strong> (<em>bool</em>) – whether it is a qat quantization</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>output model which is a prepared PyTorch model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>model (dir)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.convert_sub_graph">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">convert_sub_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub_module_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.convert_sub_graph" title="Permalink to this definition"></a></dt>
+<dd><p>Static method to convert sub modules recursively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sub_module_list</strong> (<em>list</em>) – contains the name of traceable sub modules</p></li>
+<li><p><strong>model</strong> (<em>dir</em>) – input model which is prepared PyTorch model.</p></li>
+<li><p><strong>prefix</strong> (<em>string</em>) – prefix of op name</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>output model which is a converted PyTorch int8 model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>model (dir)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.query_fw_capability">
+<span class="sig-name descname"><span class="pre">query_fw_capability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.query_fw_capability" title="Permalink to this definition"></a></dt>
+<dd><p>This is a helper function to get all quantizable ops from model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>object</em>) – input model which is Neural Compressor model</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>tuning capability for each op from model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>q_capability (dictionary)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.fuse_fx_model">
+<span class="sig-name descname"><span class="pre">fuse_fx_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_qat</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.fuse_fx_model" title="Permalink to this definition"></a></dt>
+<dd><p>This is a helper function to get fused fx model for PyTorch_FXAdaptor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – input model which is Neural Compressor model.</p></li>
+<li><p><strong>is_qat</strong> (<em>bool</em>) – check quantization approach is qat or not.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>fused GraphModule model from torch.fx.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>fused_model (GraphModule)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.calculate_op_sensitivity">
+<span class="sig-name descname"><span class="pre">calculate_op_sensitivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_op_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_batches</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requantize_cfgs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.calculate_op_sensitivity" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>This is a helper function for <cite>query_fw_capability</cite>,</dt><dd><p>and it will get all quantizable ops from model.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – INC model containing fp32 model</p></li>
+<li><p><strong>dataloader</strong> (<em>string</em>) – dataloader contains real data.</p></li>
+<li><p><strong>tune_cfg</strong> (<em>dict</em>) – dictionary of tune configure for each op.</p></li>
+<li><p><strong>fallback</strong> (<em>bool</em>) – switch method in fallback stage and re-quantize stage</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>sorted op list by sensitivity</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ops_lst (list)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.ux.components.model_zoo.list_models`
+===============================================================
+
+.. py:module:: neural_compressor.ux.components.model_zoo.list_models
+
+.. autoapi-nested-parse::
+
+   Get available models from Examples.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model_zoo.list_models.list_models
+   neural_compressor.ux.components.model_zoo.list_models.get_available_models
+   neural_compressor.ux.components.model_zoo.list_models.check_version
+   neural_compressor.ux.components.model_zoo.list_models.validate_model_list
+   neural_compressor.ux.components.model_zoo.list_models.get_framework_module_name
+   neural_compressor.ux.components.model_zoo.list_models.get_installed_frameworks
+
+
+
+.. py:function:: list_models(data: dict) -> List[Dict[str, Any]]
+
+   Process download model request.
+
+
+.. py:function:: get_available_models() -> List[Dict[str, Any]]
+
+   Get available models from Examples.
+
+
+.. py:function:: check_version(framework_version: str, supported_versions: List[str]) -> bool
+
+   Check if framework version is in supported versions list.
+
+
+.. py:function:: validate_model_list(model_list: List[dict]) -> None
+
+   Check if model list is valid.
+
+
+.. py:function:: get_framework_module_name(framework_name: str) -> str
+
+   Get name of python module.
+
+
+.. py:function:: get_installed_frameworks() -> dict
+
+   Check environment for installed frameworks.
+
+

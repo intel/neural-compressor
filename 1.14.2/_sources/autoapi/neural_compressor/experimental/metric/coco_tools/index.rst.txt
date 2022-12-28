@@ -1,0 +1,270 @@
+:py:mod:`neural_compressor.experimental.metric.coco_tools`
+==========================================================
+
+.. py:module:: neural_compressor.experimental.metric.coco_tools
+
+.. autoapi-nested-parse::
+
+   Wrappers for third party pycocotools to be used within object_detection.
+
+   Note that nothing in this file is tensorflow related and thus cannot
+   be called directly as a slim metric, for example.
+
+   TODO(jonathanhuang): wrap as a slim metric in metrics.py
+
+
+   Usage example: given a set of images with ids in the list image_ids
+   and corresponding lists of numpy arrays encoding groundtruth (boxes and classes)
+   and detections (boxes, scores and classes), where elements of each list
+   correspond to detections/annotations of a single image,
+   then evaluation (in multi-class mode) can be invoked as follows:
+
+     groundtruth_dict = coco_tools.ExportGroundtruthToCOCO(
+         image_ids, groundtruth_boxes_list, groundtruth_classes_list,
+         max_num_classes, output_path=None)
+     detections_list = coco_tools.ExportDetectionsToCOCO(
+         image_ids, detection_boxes_list, detection_scores_list,
+         detection_classes_list, output_path=None)
+     groundtruth = coco_tools.COCOWrapper(groundtruth_dict)
+     detections = groundtruth.LoadAnnotations(detections_list)
+     evaluator = coco_tools.COCOEvalWrapper(groundtruth, detections,
+                                            agnostic_mode=False)
+     metrics = evaluator.ComputeMetrics()
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.metric.coco_tools.COCOWrapper
+   neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.metric.coco_tools.ExportSingleImageGroundtruthToCoco
+   neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco
+   neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionMasksToCoco
+
+
+
+.. py:class:: COCOWrapper(dataset: Dict[str, Any], detection_type: str = 'bbox')
+
+   Bases: :py:obj:`pycocotools.coco.COCO`
+
+   Wrapper for the pycocotools COCO class.
+
+   .. attribute:: dataset
+
+      a dictionary holding bounding box annotations in the COCO format.
+
+   .. attribute:: detection_type
+
+      type of detections being wrapped. Can be one of ['bbox',
+      'segmentation']
+
+   .. py:method:: LoadAnnotations(annotations: list) -> pycocotools.coco.COCO
+
+      Load annotations dictionary into COCO datastructure.
+
+      See http://mscoco.org/dataset/#format for a description of the annotations
+      format.  As above, this function replicates the default behavior of the API
+      but does not require writing to external storage.
+
+      :param annotations: python list holding object detection results where each
+                          detection is encoded as a dict with required keys ['image_id',
+                          'category_id', 'score'] and one of ['bbox', 'segmentation'] based on
+                          `detection_type`.
+
+      :returns: a coco.COCO datastructure holding object detection annotations results
+
+      :raises ValueError: if (1) annotations is not a list or annotations do not
+          correspond to the images contained in self.
+
+
+
+.. py:class:: COCOEvalWrapper(groundtruth: pycocotools.coco.COCO = None, detections: pycocotools.coco.COCO = None, agnostic_mode=False, iou_type: str = 'bbox', iou_thrs: Union[str, float] = None, map_points=None)
+
+   Bases: :py:obj:`pycocotools.cocoeval.COCOeval`
+
+   Wrapper for the pycocotools COCOeval class.
+
+   To evaluate, create two objects (groundtruth_dict and detections_list)
+   using the conventions listed at http://mscoco.org/dataset/#format.
+   Then call evaluation as follows:
+
+     groundtruth = coco_tools.COCOWrapper(groundtruth_dict)
+     detections = groundtruth.LoadAnnotations(detections_list)
+     evaluator = coco_tools.COCOEvalWrapper(groundtruth, detections,
+                                            agnostic_mode=False)
+     metrics = evaluator.ComputeMetrics()
+
+   .. py:method:: GetCategory(category_id: int) -> dict
+
+      Fetch dictionary holding category information given category id.
+
+      :param category_id: integer id
+
+      :returns: dictionary holding 'id', 'name'.
+
+
+   .. py:method:: GetAgnosticMode() -> bool
+
+      Return whether COCO Eval is configured to evaluate in agnostic mode.
+
+
+   .. py:method:: GetCategoryIdList() -> List[int]
+
+      Return the list of IDs of all valid categories.
+
+
+   .. py:method:: accumulate(p: pycocotools.cocoeval.Params = None)
+
+      Accumulate evaluation results per image and store it to self.eval.
+
+      :param p: input params for evaluation
+
+
+   .. py:method:: ComputeMetrics(include_metrics_per_category: bool = False, all_metrics_per_category: bool = False)
+
+      Compute detection metrics.
+
+      :param include_metrics_per_category: Whether include metrics per category.
+      :param all_metrics_per_category: Whether include all the summery metrics for
+                                       each category in per_category_ap. Be careful with setting it to true if
+                                       you have more than handful of categories, because it will pollute
+                                       your mldash.
+
+      :returns:
+
+                A tuple of (summary_metrics, per_category_ap), in which
+                  (1) summary_metrics is a dictionary holding:
+                    'Precision/mAP': mean average precision over classes averaged over IOU
+                      thresholds ranging from .5 to .95 with .05 increments;
+                    'Precision/mAP@.50IOU': mean average precision at 50% IOU;
+                    'Precision/mAP@.75IOU': mean average precision at 75% IOU;
+                    'Precision/mAP (small)': mean average precision for small objects
+                      (area < 32^2 pixels);
+                    'Precision/mAP (medium)': mean average precision for medium sized
+                      objects (32^2 pixels < area < 96^2 pixels);
+                    'Precision/mAP (large)': mean average precision for large objects
+                      (96^2 pixels < area < 10000^2 pixels);
+                    'Recall/AR@1': average recall with 1 detection;
+                    'Recall/AR@10': average recall with 10 detections;
+                    'Recall/AR@100': average recall with 100 detections;
+                    'Recall/AR@100 (small)': average recall for small objects with 100
+                      detections;
+                    'Recall/AR@100 (medium)': average recall for medium objects with 100
+                      detections;
+                    'Recall/AR@100 (large)': average recall for large objects with 100
+                      detections;
+                  and (2) per_category_ap is a dictionary holding category specific results with
+                    keys of the form: 'Precision mAP ByCategory/category'
+                    (without the supercategory part if no supercategories exist).
+
+                For backward compatibility 'PerformanceByCategory' is included in the
+                  output regardless of all_metrics_per_category. If evaluating class-agnostic
+                  mode, per_category_ap is an empty dictionary.
+
+      :raises ValueError: If category_stats does not exist.
+
+
+
+.. py:function:: ExportSingleImageGroundtruthToCoco(image_id: Union[int, str], next_annotation_id: int, category_id_set: Set[str], groundtruth_boxes: numpy.array, groundtruth_classes: numpy.array, groundtruth_masks: Union[numpy.array, None] = None, groundtruth_is_crowd: Union[numpy.array, None] = None) -> list
+
+   Export groundtruth of a single image to COCO format.
+
+   This function converts groundtruth detection annotations represented as numpy
+   arrays to dictionaries that can be ingested by the COCO evaluation API. Note
+   that the image_ids provided here must match the ones given to
+   ExportSingleImageDetectionsToCoco. We assume that boxes and classes are in
+   correspondence - that is: groundtruth_boxes[i, :], and
+   groundtruth_classes[i] are associated with the same groundtruth annotation.
+
+   In the exported result, "area" fields are always set to the area of the
+   groundtruth bounding box.
+
+   :param image_id: a unique image identifier either of type integer or string.
+   :param next_annotation_id: integer specifying the first id to use for the
+                              groundtruth annotations. All annotations are assigned a continuous integer
+                              id starting from this value.
+   :param category_id_set: A set of valid class ids. Groundtruth with classes not in
+                           category_id_set are dropped.
+   :param groundtruth_boxes: numpy array (float32) with shape [num_gt_boxes, 4]
+   :param groundtruth_classes: numpy array (int) with shape [num_gt_boxes]
+   :param groundtruth_masks: optional uint8 numpy array of shape [num_detections,
+                             image_height, image_width] containing detection_masks.
+   :param groundtruth_is_crowd: optional numpy array (int) with shape [num_gt_boxes]
+                                indicating whether groundtruth boxes are crowd.
+
+   :returns: A list of groundtruth annotations for a single image in the COCO format.
+
+   :raises ValueError: if (1) groundtruth_boxes and groundtruth_classes do not have the
+       right lengths or (2) if each of the elements inside these lists do not
+       have the correct shapes or (3) if image_ids are not integers
+
+
+.. py:function:: ExportSingleImageDetectionBoxesToCoco(image_id: Union[int, str], category_id_set: Set[int], detection_boxes: numpy.array, detection_scores: numpy.array, detection_classes: numpy.array) -> list
+
+   Export detections of a single image to COCO format.
+
+   This function converts detections represented as numpy arrays to dictionaries
+   that can be ingested by the COCO evaluation API. Note that the image_ids
+   provided here must match the ones given to the
+   ExporSingleImageDetectionBoxesToCoco. We assume that boxes, and classes are in
+   correspondence - that is: boxes[i, :], and classes[i]
+   are associated with the same groundtruth annotation.
+
+   :param image_id: unique image identifier either of type integer or string.
+   :param category_id_set: A set of valid class ids. Detections with classes not in
+                           category_id_set are dropped.
+   :param detection_boxes: float numpy array of shape [num_detections, 4] containing
+                           detection boxes.
+   :param detection_scores: float numpy array of shape [num_detections] containing
+                            scored for the detection boxes.
+   :param detection_classes: integer numpy array of shape [num_detections] containing
+                             the classes for detection boxes.
+
+   :returns: A list of detection annotations for a single image in the COCO format.
+
+   :raises ValueError: if (1) detection_boxes, detection_scores and detection_classes
+   :raises do not have the right lengths or (2) if each of the elements inside these:
+   :raises lists do not have the correct shapes or (3) if image_ids are not integers.:
+
+
+.. py:function:: ExportSingleImageDetectionMasksToCoco(image_id: Union[str, int], category_id_set: Set[int], detection_masks: numpy.array, detection_scores: numpy.array, detection_classes: numpy.array) -> list
+
+   Export detection masks of a single image to COCO format.
+
+   This function converts detections represented as numpy arrays to dictionaries
+   that can be ingested by the COCO evaluation API. We assume that
+   detection_masks, detection_scores, and detection_classes are in correspondence
+   - that is: detection_masks[i, :], detection_classes[i] and detection_scores[i]
+       are associated with the same annotation.
+
+   :param image_id: unique image identifier either of type integer or string.
+   :param category_id_set: A set of valid class ids. Detections with classes not in
+   :param category_id_set are dropped.:
+   :param detection_masks: uint8 numpy array of shape [num_detections, image_height,
+   :param image_width] containing detection_masks.:
+   :param detection_scores: float numpy array of shape [num_detections] containing
+   :param scores for detection masks.:
+   :param detection_classes: integer numpy array of shape [num_detections] containing
+   :param the classes for detection masks.:
+
+   :returns: A list of detection mask annotations for a single image in the COCO format.
+
+   :raises ValueError: if (1) detection_masks, detection_scores and detection_classes
+   :raises do not have the right lengths or (2) if each of the elements inside these:
+   :raises lists do not have the correct shapes or (3) if image_ids are not integers.:
+
+

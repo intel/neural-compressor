@@ -1,0 +1,127 @@
+:py:mod:`neural_compressor.experimental.pytorch_pruner.pruning`
+===============================================================
+
+.. py:module:: neural_compressor.experimental.pytorch_pruner.pruning
+
+.. autoapi-nested-parse::
+
+   pruning module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pytorch_pruner.pruning.Pruning
+
+
+
+
+.. py:class:: Pruning(config)
+
+   Pruning.
+
+   The main class that users will used in codes to do pruning.
+   Contain at least one Pruner object.
+
+   :param config: a string. The path to a config file. For config file template, please refer to
+                  https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
+
+   .. attribute:: model
+
+      The model object to prune.
+
+   .. attribute:: config_file_path
+
+      A string. The path to a config file.
+
+   .. attribute:: pruners
+
+      A list. A list of Pruner objects.
+
+   .. attribute:: pruner_info
+
+      A config dict object. Contains pruners' information.
+
+   .. py:method:: update_items_for_all_pruners(**kwargs)
+
+      Functions which add User-defined arguments to the original configurations.
+
+      The original config of pruning is read from a file.
+      However, users can still modify configurations by passing key-value arguments in this function.
+      Please note that the key-value arguments' keys are analysable in current configuration.
+
+
+   .. py:method:: prepare()
+
+      Align with old API's calling pipeline.
+
+
+   .. py:method:: get_sparsity_ratio()
+
+      Functions that calculate a modules/layers sparsity.
+
+      :returns: Three floats.
+                elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+                elementwise_over_all refers to zero elements' ratio in all layers in the model.
+                blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
+
+
+   .. py:method:: on_train_begin()
+
+      Functions called in the beginning of training process.
+
+      Before training, ensure that pruners are generated.
+
+
+   .. py:method:: on_epoch_begin(epoch)
+
+      Functions called in the beginning of every epoch.
+
+
+   .. py:method:: on_step_begin(local_step)
+
+      Functions called in the beginning of every step.
+
+
+   .. py:method:: on_before_optimizer_step()
+
+      Functions called before optimizer.step().
+
+
+   .. py:method:: on_step_end()
+
+      Functions called in the end of every step.
+
+
+   .. py:method:: on_epoch_end()
+
+      Functions called in the end of every epoch.
+
+
+   .. py:method:: on_train_end()
+
+      Functions called in the end of training.
+
+
+   .. py:method:: on_before_eval()
+
+      Functions called in the beginning of evaluation.
+
+
+   .. py:method:: on_after_eval()
+
+      Functions called in the end of evaluation.
+
+
+   .. py:method:: on_after_optimizer_step()
+
+      Functions called after optimizer.step().
+
+
+

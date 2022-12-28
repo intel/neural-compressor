@@ -1,0 +1,62 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.metric`
+=====================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.metric
+
+.. autoapi-nested-parse::
+
+   Metric package contains metric class representing metric table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.metric.Metric
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.metric.fill_dictionary
+
+
+
+.. py:class:: Metric
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench Metric table class.
+
+   .. py:method:: list(db_session: sqlalchemy.orm.session.Session) -> dict
+      :staticmethod:
+
+      List available metrics.
+
+
+   .. py:method:: list_by_framework(db_session: sqlalchemy.orm.session.Session, framework_id: int) -> dict
+      :staticmethod:
+
+      List available metrics.
+
+
+   .. py:method:: query_to_list(metrics_query: sqlalchemy.orm.Query) -> List[dict]
+      :staticmethod:
+
+      Convert query to list.
+
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

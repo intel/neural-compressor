@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.ux.components.diagnosis.onnx_diagnosis`
+==================================================================
+
+.. py:module:: neural_compressor.ux.components.diagnosis.onnx_diagnosis
+
+.. autoapi-nested-parse::
+
+   The onnxrt_diagnosis package contains all components used for onnxrt optimizations debug.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   onnxrt_diagnosis/index.rst
+
+

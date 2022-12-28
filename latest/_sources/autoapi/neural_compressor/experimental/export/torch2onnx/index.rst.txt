@@ -1,0 +1,276 @@
+:py:mod:`neural_compressor.experimental.export.torch2onnx`
+==========================================================
+
+.. py:module:: neural_compressor.experimental.export.torch2onnx
+
+.. autoapi-nested-parse::
+
+   Helper functions to export model from PyTorch/TensorFlow to ONNX.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.export.torch2onnx.update_weight_bias
+   neural_compressor.experimental.export.torch2onnx.set_data_type
+   neural_compressor.experimental.export.torch2onnx.get_node_mapping
+   neural_compressor.experimental.export.torch2onnx.get_quantizable_onnx_ops
+   neural_compressor.experimental.export.torch2onnx.build_scale_mapping
+   neural_compressor.experimental.export.torch2onnx.set_scale_info
+   neural_compressor.experimental.export.torch2onnx.recalculate_bias
+   neural_compressor.experimental.export.torch2onnx.remove_nodes_by_name
+   neural_compressor.experimental.export.torch2onnx.sub_graph_with_int32_bias
+   neural_compressor.experimental.export.torch2onnx.qdq_fp32_bias
+   neural_compressor.experimental.export.torch2onnx.qdq_int32_bias
+   neural_compressor.experimental.export.torch2onnx.qdq_fp32_bias_qdq
+   neural_compressor.experimental.export.torch2onnx.torch_to_fp32_onnx
+   neural_compressor.experimental.export.torch2onnx.torch_to_int8_onnx
+
+
+
+.. py:function:: update_weight_bias(int8_model, fp32_onnx_path)
+
+   Update wegiht and bias of FP32 ONNX model with QAT INT8 PyTorch model .
+
+   :param int8_model: int8 model.
+   :type int8_model: torch.nn.module
+   :param fp32_onnx_path: path to fp32 onnx model.
+   :type fp32_onnx_path: str
+
+
+.. py:function:: set_data_type(dtype)
+
+   Set data type of activation and weight with string dtype.
+
+   :param dtype: data type description.
+   :type dtype: str
+
+   :returns: activation type.
+             weight_type: weight type.
+   :rtype: activation_type
+
+
+.. py:function:: get_node_mapping(fp32_model, fp32_onnx_path)
+
+   Get PyTorch module and ONNX node mapping.
+
+   :param fp32_model: quantization configuration from PyTorch.
+   :type fp32_model: torch.nn.Module
+   :param fp32_onnx_path: path to fp32 onnx model.
+   :type fp32_onnx_path: str
+
+   :returns: op mapping from PyTorch to ONNX.
+   :rtype: module_node_mapping
+
+
+.. py:function:: get_quantizable_onnx_ops(int8_model, module_node_mapping)
+
+   Get quantizable onnx ops.
+
+   :param int8_model: PyTorch int8 model.
+   :type int8_model: torch.nn.Module
+   :param module_node_mapping: op mapping from PyTorch to ONNX.
+   :type module_node_mapping: dict
+
+   :returns: all onnx node that should be quantized.
+   :rtype: quantize_nodes
+
+
+.. py:function:: build_scale_mapping(fp32_onnx_path, module_node_mapping, int8_scale_info)
+
+   Build scale mapping.
+
+   :param fp32_onnx_path: path to fp32 onnx model.
+   :type fp32_onnx_path: str
+   :param module_node_mapping: op mapping from PyTorch to ONNX.
+   :type module_node_mapping: dict
+   :param int8_scale_info: int8 scale infomation.
+   :type int8_scale_info: dict
+
+   :returns: scale and zero_point dict.
+   :rtype: scale_zp_dict
+
+
+.. py:function:: set_scale_info(int8_onnx_model, scale_zp_dict, activation_type)
+
+   Set scale to ONNX model.
+
+   :param int8_onnx_path: path to onnx file.
+   :type int8_onnx_path: str
+   :param scale_zp_dict: scale zero_point dict.
+   :type scale_zp_dict: dict
+   :param activation_type: activation type.
+
+   :returns: int8 onnx model object.
+   :rtype: int8_onnx_model
+
+
+.. py:function:: recalculate_bias(int8_onnx_path, scale_zp_dict, quantize_nodes, quant_format)
+
+   Recalculate bias.
+
+   :param int8_onnx_model: onnx int8 model to process.
+   :type int8_onnx_model: ModelProto
+   :param scale_zp_dict: scale zero_point dict.
+   :type scale_zp_dict: dict
+   :param quantize_nodes: quantize nodes list.
+   :type quantize_nodes: list
+   :param quant_format: quantization format.
+   :type quant_format: QuantFormat
+
+   :returns: processed onnx int8 model.
+   :rtype: int8_onnx_model
+
+
+.. py:function:: remove_nodes_by_name(int8_onnx_model, node_names)
+
+   Remove nodes from model by names.
+
+   :param int8_onnx_model: onnx int8 model to process.
+   :type int8_onnx_model: ModelProto
+   :param node_names: names of nodes to remove.
+   :type node_names: list
+
+   :returns: processed onnx int8 model.
+   :rtype: int8_onnx_model
+
+
+.. py:function:: sub_graph_with_int32_bias(int8_onnx_model, node, a_info, b_info, bias_name, output_name)
+
+   Generate a sub graph with int32 bias.
+
+   :param int8_onnx_model: onnx int8 model to process.
+   :type int8_onnx_model: ModelProto
+   :param node: MatMul node belonging to nn.quantized.Linear module.
+   :type node: NodeProto
+   :param a_info: info of input a for nn.quantized.Linear module.
+   :type a_info: list
+   :param b_info: info of input b for nn.quantized.Linear module.
+   :type b_info: list
+   :param bias_name: name of bias.
+   :type bias_name: str
+   :param output_name: output name of the sub graph.
+   :type output_name: _type_
+
+   :returns: processed onnx int8 model.
+   :rtype: int8_onnx_model
+
+
+.. py:function:: qdq_fp32_bias(int8_onnx_model, quant_format)
+
+   Excute post-process on int8 onnx model with recipe 'QDQ_OP_FP32_BIAS'.
+
+   Insert QDQ before quantizable op and using fp32 bias.
+
+   :param int8_onnx_model: onnx int8 model to process.
+   :type int8_onnx_model: ModelProto
+   :param quant_format: quantization format.
+   :type quant_format: QuantFormat
+
+   :returns: processed onnx int8 model.
+   :rtype: int8_onnx_model
+
+
+.. py:function:: qdq_int32_bias(int8_onnx_model, quantize_nodes, quant_format)
+
+   Excute post-process on int8 onnx model with recipe 'QDQ_OP_INT32_BIAS'.
+
+   Insert QDQ before quantizable op and using int32 bias.
+
+   :param int8_onnx_model: onnx int8 model to process.
+   :type int8_onnx_model: ModelProto
+   :param quantize_nodes: quantize nodes list.
+   :type quantize_nodes: list
+   :param quant_format: quantization format.
+   :type quant_format: QuantFormat
+
+   :returns: processed onnx int8 model.
+   :rtype: int8_onnx_model
+
+
+.. py:function:: qdq_fp32_bias_qdq(int8_onnx_model, quantize_nodes, quant_format)
+
+   Excute post-process on onnx int8 model with recipe 'QDQ_OP_FP32_BIAS_QDQ'.
+
+   Insert QDQ before and after quantizable op and using fp32 bias.
+
+   :param int8_onnx_model: onnx int8 model to process.
+   :type int8_onnx_model: ModelProto
+   :param quantize_nodes: quantize nodes list.
+   :type quantize_nodes: list
+   :param quant_format: quantization format.
+   :type quant_format: QuantFormat
+
+   :returns: processed onnx int8 model.
+   :rtype: int8_onnx_model
+
+
+.. py:function:: torch_to_fp32_onnx(fp32_model, save_path, example_inputs, opset_version=14, dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}, input_names=None, output_names=None, do_constant_folding=True, verbose=True)
+
+   Export FP32 PyTorch model into FP32 ONNX model.
+
+   :param fp32_model: fp32 model.
+   :type fp32_model: torch.nn.module
+   :param int8_model: int8 model.
+   :type int8_model: torch.nn.module
+   :param save_path: save path of ONNX model.
+   :type save_path: str
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+   :param opset_version: opset version. Defaults to 14.
+   :type opset_version: int, optional
+   :param dynamic_axes: dynamic axes. Defaults to {"input": {0: "batch_size"},
+                        "output": {0: "batch_size"}}.
+   :type dynamic_axes: dict, optional
+   :param input_names: input names. Defaults to None.
+   :type input_names: list, optional
+   :param output_names: output names. Defaults to None.
+   :type output_names: list, optional
+   :param do_constant_folding: do constant folding or not. Defaults to True.
+   :type do_constant_folding: bool, optional
+   :param verbose: dump verbose or not. Defaults to True.
+   :type verbose: bool, optional
+
+
+.. py:function:: torch_to_int8_onnx(fp32_model, int8_model, q_config, save_path, example_inputs, opset_version: int = 14, dynamic_axes: dict = {'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}, input_names=None, output_names=None, quant_format: str = 'QDQ', dtype: str = 'U8S8', recipe: str = 'QDQ_OP_FP32_BIAS')
+
+   Export INT8 PyTorch model into INT8 ONNX model.
+
+   :param fp32_model: fp32 model.
+   :type fp32_model: torch.nn.module
+   :param int8_model: int8 model.
+   :type int8_model: torch.nn.module
+   :param q_config: containing quantization configuration.
+   :type q_config: dict
+   :param save_path: save path of ONNX model.
+   :type save_path: str
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+   :param opset_version: opset version. Defaults to 14.
+   :type opset_version: int, optional
+   :param dynamic_axes: dynamic axes. Defaults to {"input": {0: "batch_size"},
+                        "output": {0: "batch_size"}}.
+   :type dynamic_axes: dict, optional
+   :param input_names: input names. Defaults to None.
+   :type input_names: list, optional
+   :param output_names: output names. Defaults to None.
+   :type output_names: list, optional
+   :param quant_format: quantization format of ONNX model. Defaults to 'QDQ'.
+   :type quant_format: str, optional
+   :param dtype: data types of activation and weight of ONNX model. Defaults to 'U8S8'.
+   :type dtype: str, optional
+   :param recipe: Recipe for processing nn.quantized.Linear module.
+                  'QDQ_OP_FP32_BIAS': inserting QDQ before quantizable op and using fp32 bias.
+                  'QDQ_OP_INT32_BIAS': inserting QDQ before quantizable op and using int32 bias.
+                  'QDQ_OP_FP32_BIAS_QDQ': inserting QDQ before and after quantizable op and using fp32 bias.
+                  Defaults to 'QDQ_OP_FP32_BIAS'.
+   :type recipe: str, optionl
+
+

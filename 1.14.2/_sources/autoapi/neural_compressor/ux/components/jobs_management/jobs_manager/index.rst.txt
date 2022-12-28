@@ -1,0 +1,11 @@
+:py:mod:`neural_compressor.ux.components.jobs_management.jobs_manager`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.jobs_management.jobs_manager
+
+.. autoapi-nested-parse::
+
+   Defines _JobsmManager and _Job classes.
+
+
+

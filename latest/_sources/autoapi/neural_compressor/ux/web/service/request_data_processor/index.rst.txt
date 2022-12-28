@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.web.service.request_data_processor`
+=================================================================
+
+.. py:module:: neural_compressor.ux.web.service.request_data_processor
+
+.. autoapi-nested-parse::
+
+   Request data processor.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.request_data_processor.RequestDataProcessor
+
+
+
+
+.. py:class:: RequestDataProcessor
+
+   Request data processor.
+
+   .. py:method:: get_string_value(data: Dict[str, Any], name: str) -> str
+      :staticmethod:
+
+      Get string value from request.
+
+
+

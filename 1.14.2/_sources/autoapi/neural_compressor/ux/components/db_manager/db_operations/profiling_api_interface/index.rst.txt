@@ -1,0 +1,119 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface`
+==========================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Profiling API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface
+
+
+
+
+.. py:class:: ProfilingAPIInterface
+
+   Interface for queries connected with profiling.
+
+   .. py:method:: get_profiling_details(data: dict) -> dict
+      :staticmethod:
+
+      Parse input data and get profiling details.
+
+
+   .. py:method:: delete_profiling(data: dict) -> dict
+      :staticmethod:
+
+      Delete profiling from database and clean workspace.
+
+
+   .. py:method:: list_profilings(data: dict) -> dict
+      :staticmethod:
+
+      List profilings assigned to project.
+
+
+   .. py:method:: update_profiling_status(data: dict) -> dict
+      :staticmethod:
+
+      Update profiling status.
+
+
+   .. py:method:: update_profiling_duration(data: dict) -> dict
+      :staticmethod:
+
+      Update duration of profiling.
+
+
+   .. py:method:: update_log_path(data: dict) -> dict
+      :staticmethod:
+
+      Update config path and output log path.
+
+
+   .. py:method:: update_execution_command(data: dict) -> dict
+      :staticmethod:
+
+      Update profiling execution command.
+
+
+   .. py:method:: add_profiling(data: dict) -> dict
+      :staticmethod:
+
+      Add profiling to database.
+
+
+   .. py:method:: edit_profiling(data: dict) -> dict
+      :staticmethod:
+
+      Edit existing profiling.
+
+
+   .. py:method:: add_result(profiling_id: int, data: dict) -> None
+      :staticmethod:
+
+      Add profiling result to database.
+
+
+   .. py:method:: bulk_add_results(profiling_id: int, results: List[dict]) -> None
+      :staticmethod:
+
+      Bulk add profiling results to database.
+
+
+   .. py:method:: parse_profiling_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.ProfilingAddParamsInterface
+      :staticmethod:
+
+      Parse input data for profiling.
+
+
+   .. py:method:: parse_profiling_result_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.ProfilingResultAddParamsInterface
+      :staticmethod:
+
+      Parse input data for profiling result.
+
+
+   .. py:method:: parse_profiling_edit_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.ProfilingEditParamsInterface
+      :staticmethod:
+
+      Parse data for editing profiling.
+
+
+   .. py:method:: clean_status(status_to_clean: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Clean specified optimization status.
+
+
+

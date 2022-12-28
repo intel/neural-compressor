@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.components.profiling.tensorflow_profiler.factory`
+===============================================================================
+
+.. py:module:: neural_compressor.ux.components.profiling.tensorflow_profiler.factory
+
+.. autoapi-nested-parse::
+
+   Profiling class factory.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.profiling.tensorflow_profiler.factory.ProfilerFactory
+
+
+
+
+.. py:class:: ProfilerFactory
+
+   Profiler factory.
+
+   .. py:method:: get_profiler(profiling_data: dict) -> Optional[neural_compressor.ux.components.profiling.tensorflow_profiler.profiler.Profiler]
+      :staticmethod:
+
+      Get profiling for specified workload.
+
+
+

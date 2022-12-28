@@ -1,0 +1,43 @@
+:py:mod:`neural_compressor.pruner.pruner_legacy.group_lasso`
+============================================================
+
+.. py:module:: neural_compressor.pruner.pruner_legacy.group_lasso
+
+.. autoapi-nested-parse::
+
+   Group Lasso pruner.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.pruner.pruner_legacy.group_lasso.GroupLassoPruner
+
+
+
+
+.. py:class:: GroupLassoPruner(model, local_config, global_config)
+
+   Bases: :py:obj:`neural_compressor.pruner.pruner_legacy.magnitude.BasicMagnitudePruner`
+
+   Group Lasso pruner class.
+
+   :param model: The original model (currently PyTorchModel instance).
+   :type model: object
+   :param local_config: configs specific for this pruning instance.
+   :type local_config: Conf
+   :param global_config: global configs which may be overwritten by local_config.
+   :type global_config: Conf
+
+   .. py:method:: on_before_optimizer_step()
+
+      Update gradient to prune the weights by back propagation.
+
+
+

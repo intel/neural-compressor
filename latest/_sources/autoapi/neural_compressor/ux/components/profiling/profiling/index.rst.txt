@@ -1,0 +1,65 @@
+:py:mod:`neural_compressor.ux.components.profiling.profiling`
+=============================================================
+
+.. py:module:: neural_compressor.ux.components.profiling.profiling
+
+.. autoapi-nested-parse::
+
+   Profiling class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.profiling.profiling.Profiling
+   neural_compressor.ux.components.profiling.profiling.DataloaderInterface
+
+
+
+
+.. py:class:: Profiling(project_data: dict, profiling_data: dict)
+
+   Profiling class.
+
+   .. py:property:: workdir
+      :type: str
+
+      Get path to optimization workdir.
+
+   .. py:property:: config_filename
+      :type: str
+
+      Get profiling config filename.
+
+   .. py:property:: config_path
+      :type: str
+
+      Get profiling config path.
+
+   .. py:property:: profiling_data
+      :type: dict
+
+      Collect profiling data for profiling config generator.
+
+   .. py:method:: execute() -> None
+
+      Execute profiling and collect results.
+
+
+   .. py:method:: generate_config() -> None
+
+      Generate json config for profiling.
+
+
+
+.. py:class:: DataloaderInterface(dataloader_data: dict)
+
+   Interface for dataloader.
+
+

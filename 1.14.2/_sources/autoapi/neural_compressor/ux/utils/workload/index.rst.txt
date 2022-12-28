@@ -1,0 +1,28 @@
+:py:mod:`neural_compressor.ux.utils.workload`
+=============================================
+
+.. py:module:: neural_compressor.ux.utils.workload
+
+.. autoapi-nested-parse::
+
+   Workload module.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   config/index.rst
+   dataloader/index.rst
+   evaluation/index.rst
+   graph_optimization/index.rst
+   mixed_precision/index.rst
+   model/index.rst
+   pruning/index.rst
+   quantization/index.rst
+   tuning/index.rst
+
+

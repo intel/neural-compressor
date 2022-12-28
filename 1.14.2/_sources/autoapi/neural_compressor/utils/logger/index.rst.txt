@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.utils.logger`
+========================================
+
+.. py:module:: neural_compressor.utils.logger
+
+

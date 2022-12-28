@@ -1,0 +1,57 @@
+:py:mod:`neural_compressor.ux.utils.json_serializer`
+====================================================
+
+.. py:module:: neural_compressor.ux.utils.json_serializer
+
+.. autoapi-nested-parse::
+
+   JsonSerializer module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.json_serializer.JsonSerializer
+
+
+
+
+.. py:class:: JsonSerializer
+
+   Dict serializable class.
+
+   .. py:method:: serialize(serialization_type: str = 'default') -> Union[Dict[str, Any], List[Dict[str, Any]]]
+
+      Serialize class to dict.
+
+      :param serialization_type: serialization type, defaults to "default"
+      :type serialization_type: str, optional
+      :return: serialized class
+      :rtype: Union[dict, List[dict]]
+
+
+   .. py:method:: serialize_item(value: Any, serialization_type: str = 'default') -> Any
+      :staticmethod:
+
+      Serialize objects that don't support json dump.
+
+      i.e datetime object can't be serialized to JSON format and throw an TypeError exception
+      TypeError: datetime.datetime(2016, 4, 8, 11, 22, 3, 84913) is not JSON serializable
+      To handle that override method serialize_item to convert object
+          >>> serialize_item(datetime)
+          "2016-04-08T11:22:03.084913"
+
+      For all other cases it should return serializable object i.e. str, int float
+
+      :param value: Any type
+      :param serialization_type: serialization type
+      :return: Value that can be handled by json.dump
+
+
+

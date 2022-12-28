@@ -1,0 +1,180 @@
+:orphan:
+
+:py:mod:`neural_compressor.objective`
+=====================================
+
+.. py:module:: neural_compressor.objective
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.objective.Objective
+   neural_compressor.objective.Accuracy
+   neural_compressor.objective.Performance
+   neural_compressor.objective.Footprint
+   neural_compressor.objective.ModelSize
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.objective.objective_registry
+
+
+
+.. py:function:: objective_registry(cls)
+
+   The class decorator used to register all Objective subclasses.
+
+   :param cls: The class of register.
+   :type cls: object
+
+   :returns: The class of register.
+   :rtype: cls (object)
+
+
+.. py:class:: Objective
+
+   Bases: :py:obj:`object`
+
+   The base class for precise benchmark supported by neural_compressor.
+
+
+
+   .. py:method:: reset()
+      :abstractmethod:
+
+      The interface reset benchmark measuring
+      Args:
+
+
+   .. py:method:: start()
+      :abstractmethod:
+
+      The interface start benchmark measuring
+
+
+
+   .. py:method:: end()
+      :abstractmethod:
+
+      The interface end benchmark measuring
+
+
+
+   .. py:method:: result(start=None, end=None)
+
+      The interface to get benchmark measuring result
+         measurer may sart and end many times, result will
+         return the total mean of the result, can set the start
+         and end index of the result list to calculate
+
+      :param start: start point to calculate result from result list
+                    used to skip steps for warm up
+      :type start: int
+      :param end: end point to calculate result from result list
+      :type end: int
+
+
+   .. py:method:: result_list()
+
+      The interface to get benchmark measuring result list
+         this interface will return a list of each start-end loop
+         measure value
+      Args:
+
+
+
+.. py:class:: Accuracy
+
+   Bases: :py:obj:`Objective`
+
+   The base class for precise benchmark supported by neural_compressor.
+
+
+
+   .. py:method:: start()
+
+      The interface start benchmark measuring
+
+
+
+   .. py:method:: end(acc)
+
+      The interface end benchmark measuring
+
+
+
+
+.. py:class:: Performance
+
+   Bases: :py:obj:`Objective`
+
+   The base class for precise benchmark supported by neural_compressor.
+
+
+
+   .. py:method:: start()
+
+      The interface start benchmark measuring
+
+
+
+   .. py:method:: end()
+
+      The interface end benchmark measuring
+
+
+
+
+.. py:class:: Footprint
+
+   Bases: :py:obj:`Objective`
+
+   The base class for precise benchmark supported by neural_compressor.
+
+
+
+   .. py:method:: start()
+
+      The interface start benchmark measuring
+
+
+
+   .. py:method:: end()
+
+      The interface end benchmark measuring
+
+
+
+
+.. py:class:: ModelSize
+
+   Bases: :py:obj:`Objective`
+
+   The base class for precise benchmark supported by neural_compressor.
+
+
+
+   .. py:method:: start()
+
+      The interface start benchmark measuring
+
+
+
+   .. py:method:: end()
+
+      The interface end benchmark measuring
+
+
+
+

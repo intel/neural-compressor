@@ -1,0 +1,42 @@
+:py:mod:`neural_compressor.strategy`
+====================================
+
+.. py:module:: neural_compressor.strategy
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Strategy.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   utils/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   auto_mixed_precision/index.rst
+   basic/index.rst
+   bayesian/index.rst
+   conservative/index.rst
+   exhaustive/index.rst
+   hawq_v2/index.rst
+   mse/index.rst
+   mse_v2/index.rst
+   random/index.rst
+   strategy/index.rst
+
+
+Package Contents
+----------------
+
+

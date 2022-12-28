@@ -1,0 +1,208 @@
+:py:mod:`neural_compressor.data`
+================================
+
+.. py:module:: neural_compressor.data
+
+.. autoapi-nested-parse::
+
+   Built-in dataloaders, datasets, transforms, filters for multiple framework backends.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   datasets/index.rst
+   filters/index.rst
+   transforms/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.Datasets
+   neural_compressor.data.Dataset
+   neural_compressor.data.IterableDataset
+   neural_compressor.data.DataLoader
+   neural_compressor.data.TRANSFORMS
+   neural_compressor.data.BaseTransform
+   neural_compressor.data.Postprocess
+   neural_compressor.data.FILTERS
+   neural_compressor.data.Filter
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.dataset_registry
+   neural_compressor.data.transform_registry
+   neural_compressor.data.filter_registry
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.DATALOADERS
+
+
+.. py:class:: Datasets(framework)
+
+   Bases: :py:obj:`object`
+
+   A base class for all framework datasets.
+
+   :param framework: framework name, like:"tensorflow", "tensorflow_itex",
+                     "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
+                     "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qoperator".
+   :type framework: str
+
+
+.. py:class:: Dataset
+
+   Bases: :py:obj:`object`
+
+   The base class of dataset.
+
+   Subclass datasets should overwrite two methods:
+   `__getitem__` for indexing to data sample and `__len__`for the size of the dataset
+
+
+.. py:class:: IterableDataset
+
+   Bases: :py:obj:`object`
+
+   An iterable Dataset.
+
+   Subclass iterable dataset should also implement a method:
+   `__iter__` for interating over the samples of the dataset.
+
+
+.. py:function:: dataset_registry(dataset_type, framework, dataset_format='')
+
+   Register dataset subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+   :param dataset_type: The dataset registration name
+   :type dataset_type: str
+   :param framework: support 3 framework including 'tensorflow', 'pytorch', 'mxnet'
+   :type framework: str
+   :param data_format: The format dataset saved, eg 'raw_image', 'tfrecord'
+   :type data_format: str
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+
+.. py:class:: DataLoader
+
+   Bases: :py:obj:`object`
+
+   Entrance of all configured DataLoaders. Will dispatch the DataLoaders to framework
+   specific one. Users will be not aware of the dispatching, and the Interface is unified.
+
+
+.. py:class:: TRANSFORMS(framework, process)
+
+   Bases: :py:obj:`object`
+
+   Transforms collection class.
+
+   Provide register method to register new Transforms
+   and provide __getitem__ method to get Transforms according to Transforms type.
+
+   .. py:method:: register(name, transform_cls)
+
+      Register new Transform according to Transforms type.
+
+      :param name: process name
+      :type name: str
+      :param transform_cls: process function wrapper class
+      :type transform_cls: class
+
+
+
+.. py:class:: BaseTransform
+
+   Bases: :py:obj:`object`
+
+   The base class for transform.
+
+
+.. py:function:: transform_registry(transform_type, process, framework)
+
+   Class decorator used to register all transform subclasses.
+
+   :param transform_type: Transform registration name
+   :type transform_type: str
+   :param process: support 3 process including 'preprocess', 'postprocess', 'general'
+   :type process: str
+   :param framework: support 4 framework including 'tensorflow', 'pytorch', 'mxnet', 'onnxrt'
+   :type framework: str
+   :param cls: The class of register.
+   :type cls: class
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: Postprocess(postprocess_cls, name='user_postprocess', **kwargs)
+
+   Bases: :py:obj:`object`
+
+   Just collect the infos to construct a Postprocess.
+
+
+.. py:class:: FILTERS(framework)
+
+   Bases: :py:obj:`object`
+
+   The filter register for all frameworks.
+
+   :param framework: frameworks in ["tensorflow", "tensorflow_itex", "mxnet",
+                     "onnxrt_qdq", "pytorch", "pytorch_ipex",
+                     "pytorch_fx", "onnxrt_integerops",
+                     "onnxrt_qlinearops", "onnxrt_qoperator"].
+   :type framework: str
+
+
+.. py:class:: Filter
+
+   Bases: :py:obj:`object`
+
+   The base class for transform.
+
+   __call__ method is needed when write user specific transform.
+
+
+
+.. py:function:: filter_registry(filter_type, framework)
+
+   Register all transform subclasses.
+
+   :param filter_type: fILTER registration name.
+   :type filter_type: str
+   :param framework: support 4 framework including 'tensorflow', 'pytorch', 'mxnet', 'onnxrt'.
+   :type framework: str
+   :param cls: The class of register.
+   :type cls: class
+
+   :returns: The class of register.
+   :rtype: cls
+
+

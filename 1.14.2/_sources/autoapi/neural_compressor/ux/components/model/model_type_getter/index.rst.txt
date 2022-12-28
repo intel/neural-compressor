@@ -1,0 +1,29 @@
+:py:mod:`neural_compressor.ux.components.model.model_type_getter`
+=================================================================
+
+.. py:module:: neural_compressor.ux.components.model.model_type_getter
+
+.. autoapi-nested-parse::
+
+   Model type getter.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.model_type_getter.get_model_type
+
+
+
+.. py:function:: get_model_type(model_path: str) -> str
+
+   Get model_type using local cache.
+
+

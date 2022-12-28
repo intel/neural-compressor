@@ -1,0 +1,89 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.diagnosis_api_interface`
+==========================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.diagnosis_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Diagnosis API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.diagnosis_api_interface.DiagnosisAPIInterface
+
+
+
+
+.. py:class:: DiagnosisAPIInterface
+
+   Interface for queries connected with diagnosis of models.
+
+   .. py:method:: get_op_list(data: dict) -> List[dict]
+      :staticmethod:
+
+      Get OP list for model.
+
+
+   .. py:method:: get_op_details(data: dict) -> dict
+      :staticmethod:
+
+      Get OP details for specific OP in model.
+
+
+   .. py:method:: histogram(data: dict) -> list
+      :staticmethod:
+
+      Get histogram of specific tensor in model.
+
+
+   .. py:method:: generate_optimization(data: dict) -> int
+      :staticmethod:
+
+      Parse input data and get optimization details.
+
+
+   .. py:method:: model_wise_params(data: dict) -> dict
+      :staticmethod:
+
+      Get model wise parameters for specified optimization.
+
+
+   .. py:method:: parse_optimization_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.DiagnosisOptimizationParamsInterface
+      :staticmethod:
+
+      Parse optimization parameters from diagnosis tab.
+
+
+   .. py:method:: parse_op_wise_config(op_wise_params: dict) -> dict
+      :staticmethod:
+
+      Parse OP wise configuration.
+
+
+   .. py:method:: parse_wise_parameters(params_per_type: dict) -> dict
+      :staticmethod:
+
+      Parse model or OP wise parameters.
+
+
+   .. py:method:: set_op_wise_pattern_precision(op_wise_params: dict, precision: str) -> dict
+      :staticmethod:
+
+      Set precision from op wise pattern setting.
+
+
+   .. py:method:: parse_model_wise_config(data: dict) -> dict
+      :staticmethod:
+
+      Parse Model wise configuration.
+
+
+

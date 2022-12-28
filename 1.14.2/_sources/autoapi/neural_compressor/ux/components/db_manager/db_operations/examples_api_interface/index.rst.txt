@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.examples_api_interface`
+=========================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.examples_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Examples API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.examples_api_interface.ExamplesAPIInterface
+
+
+
+
+.. py:class:: ExamplesAPIInterface
+
+   Interface for queries connected with predefined models.
+
+   .. py:method:: create_project(data: dict) -> None
+      :staticmethod:
+
+      Create new project for predefined model.
+
+
+   .. py:method:: get_optimization_data(db_session: sqlalchemy.orm.session.Session, project_id: int, dataset_id: int, optimization_name: str, precision: str, optimization: str) -> neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface
+      :staticmethod:
+
+      Get data to add optimization.
+
+
+

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.strategy.utils &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+              <div class="version">
+                1.14.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/neural_compressor/strategy/utils/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.strategy.utils">
+<span id="neural-compressor-strategy-utils"></span><h1><a class="reference internal" href="#module-neural_compressor.strategy.utils" title="neural_compressor.strategy.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils</span></code></a><a class="headerlink" href="#module-neural_compressor.strategy.utils" title="Permalink to this heading"></a></h1>
+<p>Intel Neural Compressor Strategy Utils.</p>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tuning_sampler/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.tuning_sampler</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="tuning_space/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.tuning_space</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="tuning_structs/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.tuning_structs</span></code></a></li>
+</ul>
+</div>
+</section>
+<section id="package-contents">
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.TuningSampler" title="neural_compressor.strategy.utils.TuningSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningSampler</span></code></a></p></td>
+<td><p>Not displayed in API Docs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.OpWiseTuningSampler" title="neural_compressor.strategy.utils.OpWiseTuningSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OpWiseTuningSampler</span></code></a></p></td>
+<td><p>Not displayed in API Docs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.OpTypeWiseTuningSampler" title="neural_compressor.strategy.utils.OpTypeWiseTuningSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OpTypeWiseTuningSampler</span></code></a></p></td>
+<td><p>Not displayed in API Docs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.FallbackTuningSampler" title="neural_compressor.strategy.utils.FallbackTuningSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FallbackTuningSampler</span></code></a></p></td>
+<td><p>Not displayed in API Docs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.OpTuningConfig" title="neural_compressor.strategy.utils.OpTuningConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OpTuningConfig</span></code></a></p></td>
+<td><p>Op tuning config.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.TuningItem" title="neural_compressor.strategy.utils.TuningItem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningItem</span></code></a></p></td>
+<td><p>Not displayed in API Docs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.utils.TuningSpace" title="neural_compressor.strategy.utils.TuningSpace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningSpace</span></code></a></p></td>
+<td><p>Not displayed in API Docs.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.utils.</span></span><span class="sig-name descname"><span class="pre">TuningSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tuning_space</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="tuning_space/index.html#neural_compressor.strategy.utils.tuning_space.TuningSpace" title="neural_compressor.strategy.utils.tuning_space.TuningSpace"><span class="pre">neural_compressor.strategy.utils.tuning_space.TuningSpace</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_order_lst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="tuning_sampler/index.html#neural_compressor.strategy.utils.tuning_sampler.TuningOrder" title="neural_compressor.strategy.utils.tuning_sampler.TuningOrder"><span class="pre">TuningOrder</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_op_tuning_cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSampler" title="Permalink to this definition"></a></dt>
+<dd><p>Not displayed in API Docs.</p>
+<p>Basic class of tuning sampler.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.OpWiseTuningSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.utils.</span></span><span class="sig-name descname"><span class="pre">OpWiseTuningSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tuning_space</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="tuning_space/index.html#neural_compressor.strategy.utils.tuning_space.TuningSpace" title="neural_compressor.strategy.utils.tuning_space.TuningSpace"><span class="pre">neural_compressor.strategy.utils.tuning_space.TuningSpace</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_items_priority</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_order_lst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="tuning_sampler/index.html#neural_compressor.strategy.utils.tuning_sampler.TuningOrder" title="neural_compressor.strategy.utils.tuning_sampler.TuningOrder"><span class="pre">TuningOrder</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_dtype_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_op_tuning_cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.OpWiseTuningSampler" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.strategy.utils.TuningSampler" title="neural_compressor.strategy.utils.TuningSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningSampler</span></code></a></p>
+<p>Not displayed in API Docs.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.OpWiseTuningSampler.get_opwise_candidate">
+<span class="sig-name descname"><span class="pre">get_opwise_candidate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.OpWiseTuningSampler.get_opwise_candidate" title="Permalink to this definition"></a></dt>
+<dd><p>Collect all op-wise setting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>all op-wise setting.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>op_wise_configs</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.OpTypeWiseTuningSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.utils.</span></span><span class="sig-name descname"><span class="pre">OpTypeWiseTuningSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tuning_space</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="tuning_space/index.html#neural_compressor.strategy.utils.tuning_space.TuningSpace" title="neural_compressor.strategy.utils.tuning_space.TuningSpace"><span class="pre">neural_compressor.strategy.utils.tuning_space.TuningSpace</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_items_priority</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_order_lst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="tuning_sampler/index.html#neural_compressor.strategy.utils.tuning_sampler.TuningOrder" title="neural_compressor.strategy.utils.tuning_sampler.TuningOrder"><span class="pre">TuningOrder</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_dtype_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_op_tuning_cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="tuning_structs/index.html#neural_compressor.strategy.utils.tuning_structs.OpTuningConfig" title="neural_compressor.strategy.utils.tuning_structs.OpTuningConfig"><span class="pre">neural_compressor.strategy.utils.tuning_structs.OpTuningConfig</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.OpTypeWiseTuningSampler" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.strategy.utils.TuningSampler" title="neural_compressor.strategy.utils.TuningSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningSampler</span></code></a></p>
+<p>Not displayed in API Docs.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.FallbackTuningSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.utils.</span></span><span class="sig-name descname"><span class="pre">FallbackTuningSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tuning_space</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="tuning_space/index.html#neural_compressor.strategy.utils.tuning_space.TuningSpace" title="neural_compressor.strategy.utils.tuning_space.TuningSpace"><span class="pre">neural_compressor.strategy.utils.tuning_space.TuningSpace</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_order_lst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="tuning_sampler/index.html#neural_compressor.strategy.utils.tuning_sampler.TuningOrder" title="neural_compressor.strategy.utils.tuning_sampler.TuningOrder"><span class="pre">TuningOrder</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_op_tuning_cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_dtypes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accumulate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_first</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.FallbackTuningSampler" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.strategy.utils.TuningSampler" title="neural_compressor.strategy.utils.TuningSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningSampler</span></code></a></p>
+<p>Not displayed in API Docs.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.OpTuningConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.utils.</span></span><span class="sig-name descname"><span class="pre">OpTuningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_quant_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.OpTuningConfig" title="Permalink to this definition"></a></dt>
+<dd><p>Op tuning config.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.OpTuningConfig.get_state">
+<span class="sig-name descname"><span class="pre">get_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.OpTuningConfig.get_state" title="Permalink to this definition"></a></dt>
+<dd><p>Return the op tuning configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The op tuning state.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.OpTuningConfig.from_state">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.OpTuningConfig.from_state" title="Permalink to this definition"></a></dt>
+<dd><p>Create the tuning config from dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> – A dict includes the tuning config.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningItem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.utils.</span></span><span class="sig-name descname"><span class="pre">TuningItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningItem" title="Permalink to this definition"></a></dt>
+<dd><p>Not displayed in API Docs.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningItem.options">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">options</span></span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningItem.options" title="Permalink to this definition"></a></dt>
+<dd><p>Return all options.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>All options.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningItem.append">
+<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">option</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningItem.append" title="Permalink to this definition"></a></dt>
+<dd><p>Append option.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>option</strong> – The option to add.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningItem.remove">
+<span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">option</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningItem.remove" title="Permalink to this definition"></a></dt>
+<dd><p>Remove option.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>option</strong> – The option to remove.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningItem.get_option_by_name">
+<span class="sig-name descname"><span class="pre">get_option_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">option_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningItem.get_option_by_name" title="Permalink to this definition"></a></dt>
+<dd><p>Get the option item by name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>option_name</strong> – option name.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the queried option.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>option</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningItem.get_details">
+<span class="sig-name descname"><span class="pre">get_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningItem.get_details" title="Permalink to this definition"></a></dt>
+<dd><p>Get the tuning item and its options recursively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>depth</strong> – recursion depth. Defaults to 0.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The tuning item and its options as a string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.utils.</span></span><span class="sig-name descname"><span class="pre">TuningSpace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capability</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace" title="Permalink to this definition"></a></dt>
+<dd><p>Not displayed in API Docs.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.query_items_by_quant_mode">
+<span class="sig-name descname"><span class="pre">query_items_by_quant_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.query_items_by_quant_mode" title="Permalink to this definition"></a></dt>
+<dd><p>Collect all op items that support the specific quantization/precision mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>quant_mode</strong> (<em>str</em>) – fp32/bf16/dynamic/static</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the list of op items</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.query_quant_mode_item">
+<span class="sig-name descname"><span class="pre">query_quant_mode_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.query_quant_mode_item" title="Permalink to this definition"></a></dt>
+<dd><p>Interface for query the quantization item.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op_name_type</strong> – (op_name, op_type)</p></li>
+<li><p><strong>quant_mode</strong> – The quantization mode.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Return queried quantization item.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.query_item_option">
+<span class="sig-name descname"><span class="pre">query_item_option</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.query_item_option" title="Permalink to this definition"></a></dt>
+<dd><p>Check if the option exit in the tuning item.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op_name_type</strong> – (op_name, op_type)</p></li>
+<li><p><strong>quant_mode</strong> – The quantization mode.</p></li>
+<li><p><strong>key</strong> – tuning item name.</p></li>
+<li><p><strong>val</strong> – option of tuning item .</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Return True if the option exit in the tuning item else False.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.set_deafult_config">
+<span class="sig-name descname"><span class="pre">set_deafult_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.set_deafult_config" title="Permalink to this definition"></a></dt>
+<dd><p>Get the default tuning config.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op_name_type</strong> – (op_name, op_type)</p></li>
+<li><p><strong>quant_mode</strong> – quantization mode.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the default config according to the specified quantization mode.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>op_tuning_config</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

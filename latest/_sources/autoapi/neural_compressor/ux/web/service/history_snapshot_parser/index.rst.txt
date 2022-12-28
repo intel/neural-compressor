@@ -1,0 +1,49 @@
+:py:mod:`neural_compressor.ux.web.service.history_snapshot_parser`
+==================================================================
+
+.. py:module:: neural_compressor.ux.web.service.history_snapshot_parser
+
+.. autoapi-nested-parse::
+
+   History Snapshot Parser Service.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser
+
+
+
+
+.. py:class:: HistorySnapshotParser(history_snapshot: list, provide_performance: bool = False)
+
+   History Snapshot Parser.
+
+   .. py:method:: parse_history_snapshot() -> neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface
+
+      Parse provided history snapshot.
+
+
+   .. py:method:: parse_history_item(history_item: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryItemInterface
+
+      Parse single item from history.
+
+
+   .. py:method:: extract_accuracy(measurements: Optional[tuple]) -> Optional[List[float]]
+
+      Extract accuracy metric from result.
+
+
+   .. py:method:: extract_performance(measurements: Optional[tuple]) -> Optional[List[float]]
+
+      Extract performance metric from result if needed.
+
+
+

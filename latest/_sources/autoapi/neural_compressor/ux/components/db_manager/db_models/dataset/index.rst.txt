@@ -1,0 +1,69 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.dataset`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.dataset
+
+.. autoapi-nested-parse::
+
+   The Dataset class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.dataset.Dataset
+
+
+
+
+.. py:class:: Dataset
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench datasets' table representation.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, project_id: int, dataset_name: str, dataset_type: str, parameters: Optional[dict] = None, transforms: Optional[dict] = None, filter: Optional[dict] = None, metric: Optional[dict] = None, template_path: Optional[str] = None) -> int
+      :staticmethod:
+
+      Add dataset to database.
+
+      Returns id of added dataset.
+
+
+   .. py:method:: delete_dataset(db_session: sqlalchemy.orm.session.Session, dataset_id: int, dataset_name: str) -> Optional[int]
+      :staticmethod:
+
+      Remove dataset from database.
+
+
+   .. py:method:: details(db_session: sqlalchemy.orm.Session, dataset_id: int) -> dict
+      :staticmethod:
+
+      Get dataset details.
+
+
+   .. py:method:: list(db_session: sqlalchemy.orm.Session, project_id: int) -> dict
+      :staticmethod:
+
+      Get dataset list for specified project from database.
+
+
+   .. py:method:: update_template_path(db_session: sqlalchemy.orm.session.Session, dataset_id: int, template_path: str) -> dict
+      :staticmethod:
+
+      Update template path for dataset.
+
+
+   .. py:method:: build_info(dataset: Any) -> dict
+      :staticmethod:
+
+      Build dataset info.
+
+
+

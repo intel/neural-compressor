@@ -1,0 +1,63 @@
+:py:mod:`neural_compressor.ux.utils.workload.quantization`
+==========================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.quantization
+
+.. autoapi-nested-parse::
+
+   Configuration quantization module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.quantization.Calibration
+   neural_compressor.ux.utils.workload.quantization.WiseConfigDetails
+   neural_compressor.ux.utils.workload.quantization.WiseConfig
+   neural_compressor.ux.utils.workload.quantization.Advance
+   neural_compressor.ux.utils.workload.quantization.Quantization
+
+
+
+
+.. py:class:: Calibration(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Calibration class.
+
+
+.. py:class:: WiseConfigDetails(data: Optional[Dict[str, Any]] = None)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration WiseConfigDetails class.
+
+
+.. py:class:: WiseConfig(data: Optional[Dict[str, Any]] = None)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration WiseConfig class.
+
+
+.. py:class:: Advance(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Advance class.
+
+
+.. py:class:: Quantization(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Quantization class.
+
+

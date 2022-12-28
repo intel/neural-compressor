@@ -1,0 +1,79 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.query`
+=========================================
+
+.. py:module:: neural_compressor.adaptor.query
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.query.QueryBackendCapability
+
+
+
+
+.. py:class:: QueryBackendCapability
+
+   Base class that defines Query Interface.
+   Each adaption layer should implement the inherited class for specific backend on their own.
+
+   .. py:method:: get_version()
+      :abstractmethod:
+
+      Get the current backend's version string.
+
+
+
+   .. py:method:: get_precisions()
+      :abstractmethod:
+
+      Get the supported low precisions, e.g ['int8', 'bf16']
+
+
+
+   .. py:method:: get_op_types()
+      :abstractmethod:
+
+      Get the op types for specific backend per low precision.
+      e.g {'2.3.0': {'int8': ['Conv2D', 'MatMuL']}}
+
+
+   .. py:method:: get_fuse_patterns()
+      :abstractmethod:
+
+      Get the fusion patterns for specified op type for every specific precision
+
+
+
+
+   .. py:method:: set_quantization_config(q_config)
+      :abstractmethod:
+
+      Set the quantization config to backend.
+      :param q_config: set the organized quantization configuration to backend.
+      :type q_config: yaml content?
+
+
+   .. py:method:: get_quantization_capability()
+      :abstractmethod:
+
+      Get the quantization capability of low precision op types.
+      e.g, granularity, scheme and etc.
+
+
+
+   .. py:method:: get_mixed_precision_combination(unsupported_precisions)
+      :abstractmethod:
+
+      Get the valid precision combination base on hardware and user' config.
+      e.g['fp32', 'bf16', 'int8']
+
+
+

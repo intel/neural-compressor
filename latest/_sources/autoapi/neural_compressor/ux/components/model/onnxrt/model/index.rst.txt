@@ -1,0 +1,91 @@
+:py:mod:`neural_compressor.ux.components.model.onnxrt.model`
+============================================================
+
+.. py:module:: neural_compressor.ux.components.model.onnxrt.model
+
+.. autoapi-nested-parse::
+
+   Onnxrt model class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.onnxrt.model.OnnxrtModel
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.onnxrt.model.remove_number_of_samples_from_shape
+
+
+
+.. py:class:: OnnxrtModel(path: str)
+
+   Bases: :py:obj:`neural_compressor.ux.components.model.model.Model`
+
+   Onnxrt Model class.
+
+   .. py:property:: domain
+      :type: neural_compressor.ux.components.model.domain.Domain
+
+      Get model domain.
+
+   .. py:property:: input_shape
+      :type: neural_compressor.ux.components.model.shape.Shape
+
+      Try to detect data shape.
+
+   .. py:property:: shape_elements_order
+      :type: List[str]
+
+      Get order of input shape channels.
+
+   .. py:property:: nc_model_instance
+      :type: neural_compressor.model.onnx_model.ONNXModel
+
+      Get Neural Compressor Model instance.
+
+   .. py:property:: filtered_input_nodes
+      :type: List[Any]
+
+      Get filtered input nodes.
+
+   .. py:method:: get_framework_name() -> str
+      :staticmethod:
+
+      Get the name of framework.
+
+
+   .. py:method:: get_model_graph() -> neural_compressor.ux.components.graph.graph.Graph
+
+      Get model Graph.
+
+
+   .. py:method:: supports_path(path: str) -> bool
+      :staticmethod:
+
+      Check if given path is of supported model.
+
+
+   .. py:method:: guard_requirements_installed() -> None
+
+      Ensure all requirements are installed.
+
+
+
+.. py:function:: remove_number_of_samples_from_shape(shape: str) -> str
+
+   Remove number of samples from shape if exists.
+
+

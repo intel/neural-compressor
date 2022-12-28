@@ -1,0 +1,70 @@
+:py:mod:`neural_compressor.ux.components.diagnosis.diagnosis`
+=============================================================
+
+.. py:module:: neural_compressor.ux.components.diagnosis.diagnosis
+
+.. autoapi-nested-parse::
+
+   The diagnosis class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.diagnosis.diagnosis.Diagnosis
+
+
+
+
+.. py:class:: Diagnosis(optimization: neural_compressor.ux.components.optimization.optimization.Optimization)
+
+   Diagnosis class.
+
+   .. py:method:: get_tensors_info(model_type: str = 'optimized') -> dict
+
+      Get information about tensors.
+
+
+   .. py:method:: load_quantization_config() -> dict
+
+      Get config quantization data.
+
+
+   .. py:method:: get_op_list() -> List[dict]
+
+      Get OP list for model.
+
+
+   .. py:method:: calculate_mse(op_name: str, input_model_tensors: dict, optimized_model_tensors: dict) -> Optional[float]
+
+      Calculate MSE for specified OP.
+
+
+   .. py:method:: get_op_details(name: str) -> Optional[neural_compressor.ux.components.diagnosis.op_details.OpDetails]
+
+      Get details of specific OP.
+
+
+   .. py:method:: get_histogram_data(op_name: str, inspect_type: str) -> list
+
+      Get data to draw histogram.
+
+
+   .. py:method:: mse_metric_gap(fp32_tensor: Any, dequantize_tensor: Any) -> float
+      :staticmethod:
+
+      Calculate the euclidean distance between fp32 tensor and int8 dequantize tensor.
+
+      :param fp32_tensor: The FP32 tensor.
+      :type fp32_tensor: tensor
+      :param dequantize_tensor: The INT8 dequantize tensor.
+      :type dequantize_tensor: tensor
+
+
+

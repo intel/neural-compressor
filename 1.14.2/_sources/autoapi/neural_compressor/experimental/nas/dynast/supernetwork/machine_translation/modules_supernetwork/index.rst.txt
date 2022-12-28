@@ -1,0 +1,64 @@
+:orphan:
+
+:py:mod:`neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.modules_supernetwork`
+=========================================================================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.modules_supernetwork
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.modules_supernetwork.MultiheadAttentionSuper
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.modules_supernetwork.get_incremental_state
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.modules_supernetwork.set_incremental_state
+
+
+
+.. py:function:: get_incremental_state(module, incremental_state, key)
+
+   Helper for getting incremental state for an nn.Module.
+
+
+.. py:function:: set_incremental_state(module, incremental_state, key, value)
+
+   Helper for setting incremental state for an nn.Module.
+
+
+.. py:class:: MultiheadAttentionSuper(super_embed_dim, num_heads, is_encoder, super_kdim=None, super_vdim=None, dropout=0.0, bias=True, add_bias_kv=False, add_zero_attn=False, self_attention=False, encoder_decoder_attention=False, out_dim=None, qkv_dim=None)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   Multi-headed attention.
+
+   See "Attention Is All You Need" for more details.
+
+   .. py:method:: forward(query, key, value, key_padding_mask=None, incremental_state=None, need_weights=True, static_kv=False, attn_mask=None)
+
+      Input shape: Time x Batch x Channel.
+
+      Timesteps can be masked by supplying a T x T mask in the
+      `attn_mask` argument. Padding elements can be excluded from
+      the key by passing a binary ByteTensor (`key_padding_mask`) with shape:
+      batch x src_len, where padding elements are indicated by 1s.
+
+
+   .. py:method:: reorder_incremental_state(incremental_state, new_order)
+
+      Reorder buffered internal state (for incremental generation).
+
+
+

@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface`
+==========================================================================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface
+
+.. autoapi-nested-parse::
+
+   Translate pre-processed data with a trained model.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface.compute_bleu
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface.compute_latency
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface.compute_macs
+
+
+
+.. py:function:: compute_bleu(config, dataset_path, checkpoint_path)
+
+   Measure BLEU score of the Transformer-based model.
+
+
+.. py:function:: compute_latency(config, dataset_path, batch_size, get_model_parameters=False)
+
+   Measure latency of the Transformer-based model.
+
+
+.. py:function:: compute_macs(config, dataset_path)
+
+   Calculate MACs for Transformer-based models.
+
+

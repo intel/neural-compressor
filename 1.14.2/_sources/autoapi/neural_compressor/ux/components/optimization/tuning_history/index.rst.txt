@@ -1,0 +1,75 @@
+:py:mod:`neural_compressor.ux.components.optimization.tuning_history`
+=====================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.tuning_history
+
+.. autoapi-nested-parse::
+
+   Tuning history.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.tuning_history.Watcher
+   neural_compressor.ux.components.optimization.tuning_history.TuningHistory
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.tuning_history.tuning_history
+   neural_compressor.ux.components.optimization.tuning_history.tuning_history_path
+
+
+
+.. py:function:: tuning_history(optimization: neural_compressor.ux.components.optimization.optimization.Optimization) -> dict
+
+   Get tuning history for requested Tuning.
+
+
+.. py:function:: tuning_history_path(optimization_workdir: str) -> str
+
+   Build path to tuning history filename.
+
+
+.. py:class:: Watcher(request_id: str, optimization: neural_compressor.ux.components.optimization.optimization.Optimization)
+
+   Tuning history watcher that sends update on file change.
+
+   .. py:method:: stop(process_succeeded: bool) -> None
+
+      Signal watcher to stop and dump tuning history to database.
+
+
+   .. py:method:: was_history_file_changed() -> bool
+
+      Check if history file was changed since last check.
+
+
+   .. py:method:: history_file_modification_time() -> Optional[float]
+
+      Get modification date of history file.
+
+
+
+.. py:class:: TuningHistory
+
+   Tuning history class.
+
+   .. py:method:: send_history_snapshot(request_id: str, optimization: neural_compressor.ux.components.optimization.optimization.Optimization) -> None
+      :staticmethod:
+
+      Get tuning history for requested Workload.
+
+
+

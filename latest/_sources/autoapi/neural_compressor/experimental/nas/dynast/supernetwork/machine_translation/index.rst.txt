@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.experimental.nas.dynast.supernetwork.machine_translation`
+====================================================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynast.supernetwork.machine_translation
+
+.. autoapi-nested-parse::
+
+   This module contains all code related to the machine translation (Transformer LT) supernet.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   transformer_interface/index.rst
+
+

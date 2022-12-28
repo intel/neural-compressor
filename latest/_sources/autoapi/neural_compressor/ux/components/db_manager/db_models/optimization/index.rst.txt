@@ -1,0 +1,171 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.optimization`
+===========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.optimization
+
+.. autoapi-nested-parse::
+
+   The Optimization class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.optimization.Optimization
+
+
+
+
+.. py:class:: Optimization
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench optimizations' table representation.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str, project_id: int, precision_id: int, optimization_type_id: int, dataset_id: int, batch_size: int, sampling_size: int, tuning_details_id: Optional[int] = None, pruning_details_id: Optional[int] = None, diagnosis_config: Optional[dict] = None) -> int
+      :staticmethod:
+
+      Add optimization to database.
+
+      returns id of added optimization
+
+
+   .. py:method:: delete_optimization(db_session: sqlalchemy.orm.session.Session, optimization_id: int, optimization_name: str) -> Optional[int]
+      :staticmethod:
+
+      Remove optimization from database.
+
+
+   .. py:method:: update_status(db_session: sqlalchemy.orm.session.Session, optimization_id: int, execution_status: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Update status of optimization.
+
+
+   .. py:method:: update_optimized_model(db_session: sqlalchemy.orm.session.Session, optimization_id: int, optimized_model_id: int) -> dict
+      :staticmethod:
+
+      Update status of optimization.
+
+
+   .. py:method:: update_duration(db_session: sqlalchemy.orm.session.Session, optimization_id: int, duration: int) -> dict
+      :staticmethod:
+
+      Update duration of optimization.
+
+
+   .. py:method:: update_execution_command(db_session: sqlalchemy.orm.session.Session, optimization_id: int, execution_command: Optional[str]) -> dict
+      :staticmethod:
+
+      Update optimization execution command.
+
+
+   .. py:method:: update_log_path(db_session: sqlalchemy.orm.session.Session, optimization_id: int, path: Optional[str]) -> dict
+      :staticmethod:
+
+      Update optimization output log path.
+
+
+   .. py:method:: update_config_path(db_session: sqlalchemy.orm.session.Session, optimization_id: int, path: Optional[str]) -> dict
+      :staticmethod:
+
+      Update optimization configuration path.
+
+
+   .. py:method:: update_batch_size(db_session: sqlalchemy.orm.session.Session, optimization_id: int, batch_size: int) -> dict
+      :staticmethod:
+
+      Update batch size of optimization.
+
+
+   .. py:method:: update_sampling_size(db_session: sqlalchemy.orm.session.Session, optimization_id: int, sampling_size: int) -> dict
+      :staticmethod:
+
+      Update sampling size of optimization.
+
+
+   .. py:method:: update_precision(db_session: sqlalchemy.orm.session.Session, optimization_id: int, precision_id: int, optimization_type_id: int) -> dict
+      :staticmethod:
+
+      Update precision of optimization.
+
+
+   .. py:method:: update_dataset(db_session: sqlalchemy.orm.session.Session, optimization_id: int, dataset_id: int) -> dict
+      :staticmethod:
+
+      Update dataset of optimization.
+
+
+   .. py:method:: update_tuning_details(db_session: sqlalchemy.orm.session.Session, optimization_id: int, tuning_details_id: Optional[int]) -> dict
+      :staticmethod:
+
+      Update tuning details of optimization.
+
+
+   .. py:method:: update_pruning_details(db_session: sqlalchemy.orm.session.Session, optimization_id: int, pruning_details_id: Optional[int]) -> dict
+      :staticmethod:
+
+      Update details of pruning optimization.
+
+
+   .. py:method:: clean_status(db_session: sqlalchemy.orm.session.Session, status_to_clean: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Clean specified optimization status from optimization table.
+
+
+   .. py:method:: pin_accuracy_benchmark(db_session: sqlalchemy.orm.session.Session, optimization_id: int, benchmark_id: int) -> dict
+      :staticmethod:
+
+      Pin accuracy benchmark to optimization.
+
+
+   .. py:method:: pin_performance_benchmark(db_session: sqlalchemy.orm.session.Session, optimization_id: int, benchmark_id: int) -> dict
+      :staticmethod:
+
+      Pin performance benchmark to optimization.
+
+
+   .. py:method:: get_optimization_by_project_and_model(db_session: sqlalchemy.orm.session.Session, project_id: int, model_id: int) -> dict
+      :staticmethod:
+
+      Get optimization details for specific model.
+
+
+   .. py:method:: details(db_session: sqlalchemy.orm.session.Session, optimization_id: int) -> dict
+      :staticmethod:
+
+      Get optimization details.
+
+
+   .. py:method:: list(db_session: sqlalchemy.orm.session.Session, project_id: int) -> dict
+      :staticmethod:
+
+      Get optimizations list for specified project from database.
+
+
+   .. py:method:: unpin_benchmark(db_connection: Union[sqlalchemy.orm.session.Session, sqlalchemy.engine.Connection], benchmark_id: int) -> None
+      :staticmethod:
+
+      Unpin benchmark from optimization.
+
+
+   .. py:method:: build_info(optimization: Any, precision: neural_compressor.ux.components.db_manager.db_models.precision.Precision, optimization_type: neural_compressor.ux.components.db_manager.db_models.optimization_type.OptimizationType, dataset: neural_compressor.ux.components.db_manager.db_models.dataset.Dataset, tuning_details: Optional[neural_compressor.ux.components.db_manager.db_models.tuning_details.TuningDetails] = None, tuning_history: Optional[neural_compressor.ux.components.db_manager.db_models.tuning_history.TuningHistory] = None, pruning_details: Optional[neural_compressor.ux.components.db_manager.db_models.pruning_details.PruningDetails] = None, optimized_model: Optional[neural_compressor.ux.components.db_manager.db_models.model.Model] = None) -> dict
+      :staticmethod:
+
+      Get optimization info.
+
+
+   .. py:method:: get_pinned_benchmarks(db_session: sqlalchemy.orm.session.Session, optimization: Any) -> Dict[str, Optional[dict]]
+      :staticmethod:
+
+      Get pinned benchmarks for optimization.
+
+
+

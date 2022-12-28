@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.ux.components.profiling.execute_profiling`
+=====================================================================
+
+.. py:module:: neural_compressor.ux.components.profiling.execute_profiling
+
+.. autoapi-nested-parse::
+
+   Execute profiling.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.profiling.execute_profiling.execute_profiling
+   neural_compressor.ux.components.profiling.execute_profiling.execute_real_profiling
+
+
+
+.. py:function:: execute_profiling(data: Dict[str, Any]) -> None
+
+   Execute profiling.
+
+   Expected data:
+   {
+       "request_id": "asd",
+       "profiling_id": "1"
+   }
+
+
+.. py:function:: execute_real_profiling(request_id: str, project_details: dict, profiling_details: dict) -> dict
+
+   Execute profiling.
+
+

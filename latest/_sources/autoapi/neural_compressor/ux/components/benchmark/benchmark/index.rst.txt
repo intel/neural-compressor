@@ -1,0 +1,60 @@
+:py:mod:`neural_compressor.ux.components.benchmark.benchmark`
+=============================================================
+
+.. py:module:: neural_compressor.ux.components.benchmark.benchmark
+
+.. autoapi-nested-parse::
+
+   Benchmark class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.benchmark.benchmark.Benchmark
+   neural_compressor.ux.components.benchmark.benchmark.DataloaderInterface
+
+
+
+
+.. py:class:: Benchmark(project_data: dict, benchmark_data: dict)
+
+   Benchmark class.
+
+   .. py:property:: workdir
+      :type: str
+
+      Get path to optimization workdir.
+
+   .. py:property:: config_filename
+      :type: str
+
+      Get filename for configuration.
+
+   .. py:property:: configuration_data
+      :type: dict
+
+      Get configuration data for config generator.
+
+   .. py:method:: execute() -> None
+
+      Execute benchmark and collect results.
+
+
+   .. py:method:: generate_config() -> None
+
+      Generate yaml config for benchmark.
+
+
+
+.. py:class:: DataloaderInterface(dataloader_data: dict)
+
+   Interface for dataloader.
+
+

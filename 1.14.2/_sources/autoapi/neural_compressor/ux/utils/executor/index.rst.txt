@@ -1,0 +1,113 @@
+:py:mod:`neural_compressor.ux.utils.executor`
+=============================================
+
+.. py:module:: neural_compressor.ux.utils.executor
+
+.. autoapi-nested-parse::
+
+   Definition of executor.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.executor.Executor
+
+
+
+
+.. py:class:: Executor(workspace_path: str, subject: str, data: Optional[dict] = None, send_response: bool = True, log_name: Optional[str] = None, additional_log_names: List[str] = [])
+
+   Executor class provide execute shell command.
+
+   .. py:property:: process_duration
+      :type: Optional[float]
+
+      Return duration of the process in [s].
+
+   .. py:property:: workdir
+      :type: str
+
+      Property concat workdir path.
+
+      :return: workdir path
+
+   .. py:property:: request_id
+      :type: Optional[str]
+
+      Property contain info about request.
+
+      :return: request id
+
+   .. py:property:: log_name
+      :type: Optional[str]
+
+      Property contain info about output file name.
+
+      :return: requested log filename
+
+   .. py:property:: additional_log_names
+      :type: List[str]
+
+      Property contain info about additional output file names.
+
+      :return: list of additional log filenames
+
+   .. py:method:: call_one(args: List[Any], logger: Optional[Any] = None, executable: Optional[Any] = None, shell: bool = False, cwd: Optional[str] = None, env: Optional[dict] = None, universal_newlines: bool = False, startupinfo: Optional[Any] = None, creationflags: int = 0, processes: Optional[Any] = None, ignore_exit_codes: Union[list, Any] = None, pid: Optional[str] = None) -> None
+
+      Execute single call for process.
+
+      :param args:
+      :param logger:
+      :param executable:
+      :param shell:
+      :param cwd:
+      :param env:
+      :param universal_newlines:
+      :param startupinfo:
+      :param creationflags:
+      :param processes:
+      :param ignore_exit_codes:
+      :param pid:
+
+
+   .. py:method:: call(args: List[Any], logger: Optional[Any] = None, executable: Optional[Any] = None, shell: bool = False, cwd: Optional[str] = None, env: Optional[dict] = None, universal_newlines: bool = False, startupinfo: Optional[Any] = None, creationflags: int = 0, env_args: Optional[dict] = None, ignore_exit_codes: Union[list, Any] = None, pid: Optional[str] = None) -> neural_compressor.ux.utils.processes.NCProcesses
+
+      Execute multiple calls for process.
+
+      :param args:
+      :param logger:
+      :param executable:
+      :param shell:
+      :param cwd:
+      :param env:
+      :param universal_newlines:
+      :param startupinfo:
+      :param creationflags:
+      :param ignore_exit_codes:
+      :param pid:
+
+
+   .. py:method:: refresh_workdir() -> str
+
+      Property returns workdir method.
+
+      :return: workdir path
+
+
+   .. py:method:: is_multi_commands(args: list) -> bool
+      :staticmethod:
+
+      Check type of execution.
+
+      :param args: arguments for parser execution
+      :return: bool value True if args are in list else False
+
+
+

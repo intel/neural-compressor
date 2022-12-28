@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.ux.components.graph.edge`
+====================================================
+
+.. py:module:: neural_compressor.ux.components.graph.edge
+
+.. autoapi-nested-parse::
+
+   Edge class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.graph.edge.Edge
+
+
+
+
+.. py:class:: Edge(source: neural_compressor.ux.components.graph.node.Node, target: neural_compressor.ux.components.graph.node.Node)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Edge in graph.
+
+   .. py:property:: source
+      :type: str
+
+      Return source Node id.
+
+   .. py:property:: target
+      :type: str
+
+      Return target Node id.
+
+

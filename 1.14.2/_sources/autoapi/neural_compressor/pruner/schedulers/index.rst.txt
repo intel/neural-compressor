@@ -1,0 +1,141 @@
+:py:mod:`neural_compressor.pruner.schedulers`
+=============================================
+
+.. py:module:: neural_compressor.pruner.schedulers
+
+.. autoapi-nested-parse::
+
+   scheduler module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.pruner.schedulers.PruningScheduler
+   neural_compressor.pruner.schedulers.OneshotScheduler
+   neural_compressor.pruner.schedulers.IterativeScheduler
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.pruner.schedulers.register_scheduler
+   neural_compressor.pruner.schedulers.get_scheduler
+
+
+
+.. py:function:: register_scheduler(name)
+
+   Class decorator used to register a Scheduler subclass to the registry.
+
+   Decorator function used before a Scheduler subclass.
+   Make sure that the Scheduler class decorated by this function can be registered in SCHEDULERS.
+
+   :param cls: The class of register.
+   :type cls: class
+   :param name: A string that defines the scheduler type.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:function:: get_scheduler(config)
+
+   Get registered scheduler class.
+
+   Get a scheduler object from SCHEDULERS.
+
+   :param config: A config dict object that contains the scheduler information.
+
+   :returns: A Scheduler object.
+
+
+.. py:class:: PruningScheduler(config)
+
+   Pruning Scheduler.
+
+   The class which defines a sparsity changing process during pruning.
+   Mainly contains two types:
+       1. iterative scheduler. Prune the model from dense to target sparsity gradually.
+       2. one-shot scheduler. Prune the model in a single step and reach the target sparsity.
+
+   :param config: A config dict object that contains the scheduler information.
+
+   .. attribute:: config
+
+      A config dict object that contains the scheduler information.
+
+   .. py:method:: update_sparsity_ratio(target_ratio, current_prune_step, total_prune_steps, masks, init_ratio=0.0)
+      :abstractmethod:
+
+      To be implemented in subclasses.
+
+
+
+.. py:class:: OneshotScheduler(config)
+
+   Bases: :py:obj:`PruningScheduler`
+
+   Pruning Scheduler.
+
+   A Scheduler class derived from Scheduler.
+   Prune the model to target sparsity once.
+
+   :param config: A config dict object that contains the scheduler information.
+
+   .. attribute:: Inherit from parent class Scheduler.
+
+      
+
+   .. py:method:: update_sparsity_ratio(target_ratio, current_prune_step, total_prune_steps, masks, init_ratio=0.0)
+
+      Update sparsity ratio.
+
+      :param target_ratio: A float representing the sparsity ratio after pruning.
+      :param current_prune_step: An integer representing the current pruning step.
+      :param total_prune_steps: An integer representing the total number of steps of the pruning process.
+      :param masks: A dict {"module_name": Tensor} that stores the masks for modules' weights.
+      :param init_ratio: A float representing the sparsity ratio before pruning.
+
+      :returns: A float representing the sparsity ratio that the model will reach after the next pruning step.
+
+
+
+.. py:class:: IterativeScheduler(config)
+
+   Bases: :py:obj:`PruningScheduler`
+
+   Pruning Scheduler.
+
+   A Scheduler class derived from Scheduler.
+   Prune the model from dense to target sparsity in several steps.
+
+   :param config: A config dict object that contains the scheduler information.
+
+   .. attribute:: Inherit from parent class Scheduler.
+
+      
+
+   .. py:method:: update_sparsity_ratio(target_ratio, current_prune_step, total_prune_steps, masks, init_sparsity_ratio=0.0)
+
+      Obtain new target sparsity ratio according to the step.
+
+      :param target_ratio: A float. The target sparsity ratio.
+      :param current_prune_step: A integer. The current pruning step.
+      :param total_prune_steps: A integer. The total steps included in the pruning progress.
+      :param masks: A dict{"module_name": Tensor}. The masks for modules' weights.
+      :param init_sparsity_ratio:
+
+      :returns: A float representing the target sparsity ratio the model will reach after the next pruning step.
+
+
+

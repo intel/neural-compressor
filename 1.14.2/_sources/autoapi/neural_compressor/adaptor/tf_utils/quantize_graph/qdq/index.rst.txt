@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq`
+===============================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq
+
+

@@ -1,0 +1,34 @@
+:py:mod:`neural_compressor.ux.components.graph`
+===============================================
+
+.. py:module:: neural_compressor.ux.components.graph
+
+.. autoapi-nested-parse::
+
+   Package graph contains all packages required to display model graph.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   reader/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   attribute/index.rst
+   collapser/index.rst
+   edge/index.rst
+   graph/index.rst
+   graph_reader/index.rst
+   node/index.rst
+
+

@@ -1,0 +1,114 @@
+:py:mod:`neural_compressor.ux.utils.workload.tuning`
+====================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.tuning
+
+.. autoapi-nested-parse::
+
+   Configuration tuning module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.tuning.Strategy
+   neural_compressor.ux.utils.workload.tuning.MultiObjectives
+   neural_compressor.ux.utils.workload.tuning.AccCriterion
+   neural_compressor.ux.utils.workload.tuning.ExitPolicy
+   neural_compressor.ux.utils.workload.tuning.Workspace
+   neural_compressor.ux.utils.workload.tuning.Diagnosis
+   neural_compressor.ux.utils.workload.tuning.Tuning
+
+
+
+
+.. py:class:: Strategy(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Strategy class.
+
+
+.. py:class:: MultiObjectives(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration MultiObjectives class.
+
+   .. py:property:: objective
+      :type: List[str]
+
+      Get objectives.
+
+   .. py:property:: weight
+      :type: List[float]
+
+      Get weights.
+
+
+.. py:class:: AccCriterion(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration AccCriterion class.
+
+
+.. py:class:: ExitPolicy(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration ExitPolicy class.
+
+
+.. py:class:: Workspace(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Workspace class.
+
+
+.. py:class:: Diagnosis(data: Optional[Dict[str, Any]] = None)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Diagnosis class.
+
+
+.. py:class:: Tuning(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Tuning class.
+
+   .. py:method:: set_timeout(timeout: int) -> None
+
+      Update tuning timeout in config.
+
+
+   .. py:method:: set_max_trials(max_trials: int) -> None
+
+      Update max tuning trials in config.
+
+
+   .. py:method:: set_performance_only(performance_only: Any) -> None
+
+      Update performance only flag in config.
+
+
+   .. py:method:: set_random_seed(random_seed: int) -> None
+
+      Update random seed value in config.
+
+
+   .. py:method:: set_workspace(path: str) -> None
+
+      Update tuning workspace path in config.
+
+
+

@@ -1,0 +1,159 @@
+:py:mod:`neural_compressor.experimental.nas`
+============================================
+
+.. py:module:: neural_compressor.experimental.nas
+
+.. autoapi-nested-parse::
+
+   NAS module.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   dynast/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   basic_nas/index.rst
+   dynas/index.rst
+   nas/index.rst
+   nas_utils/index.rst
+   search_algorithms/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.BasicNAS
+   neural_compressor.experimental.nas.DyNAS
+   neural_compressor.experimental.nas.NAS
+
+
+
+
+.. py:class:: BasicNAS(conf_fname_or_obj, search_space=None, model_builder=None)
+
+   Bases: :py:obj:`neural_compressor.experimental.nas.nas.NASBase`, :py:obj:`neural_compressor.experimental.component.Component`
+
+   Basic NAS approach.
+
+   Defining the pipeline for basic NAS approach.
+
+   :param conf_fname: The path to the YAML configuration file.
+   :type conf_fname: string
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+   :param model_builder: A function to build model instance with the specified
+                         model architecture parameters.
+   :type model_builder: function obj
+
+   .. py:method:: execute()
+
+      Execute the search process.
+
+      :returns: Best model architectures found in the search process.
+
+
+   .. py:method:: estimate(model)
+
+      Estimate performance of the model.
+
+      Depends on specific NAS algorithm. Here we use train and evaluate.
+
+      :returns: Evaluated metrics of the model.
+
+
+   .. py:method:: init_by_cfg(conf_fname_or_obj)
+
+      Initialize the configuration.
+
+
+   .. py:method:: pre_process()
+
+      Initialize the train and evaluation settings.
+
+
+
+.. py:class:: DyNAS(conf_fname_or_obj)
+
+   Bases: :py:obj:`neural_compressor.experimental.nas.nas.NASBase`
+
+   DyNAS approach.
+
+   Defining the pipeline for DyNAS approach.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or the object of NASConfig.
+   :type conf_fname_or_obj: string or obj
+
+   .. py:method:: estimate(individual)
+
+      Estimate performance of the model.
+
+      :returns: Evaluated metrics of the model.
+
+
+   .. py:method:: init_for_search()
+
+      Initialize the search configuration.
+
+
+   .. py:method:: search()
+
+      Execute the search process.
+
+      :returns: Best model architectures found in the search process.
+
+
+   .. py:method:: select_model_arch()
+
+      Select the model architecture.
+
+
+   .. py:method:: create_acc_predictor()
+
+      Create the accuracy predictor.
+
+
+   .. py:method:: create_macs_predictor()
+
+      Create the MACs predictor.
+
+
+   .. py:method:: create_latency_predictor()
+
+      Create the latency predictor.
+
+
+   .. py:method:: init_cfg(conf_fname_or_obj)
+
+      Initialize the configuration.
+
+
+
+.. py:class:: NAS
+
+   Bases: :py:obj:`object`
+
+   Create object of different NAS approaches.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or the object of NASConfig.
+   :type conf_fname_or_obj: string or obj
+
+   :returns: An object of specified NAS approach.
+
+

@@ -1,0 +1,68 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.dataloader`
+=========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.dataloader
+
+.. autoapi-nested-parse::
+
+   Dataloader package contains dataloader class representing dataloader table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.dataloader.Dataloader
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.dataloader.fill_dictionary
+
+
+
+.. py:class:: Dataloader
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench Dataloader table class.
+
+   .. py:method:: list(db_session: sqlalchemy.orm.session.Session) -> dict
+      :staticmethod:
+
+      List available dataloaders.
+
+
+   .. py:method:: list_by_framework(db_session: sqlalchemy.orm.session.Session, framework_id: int) -> dict
+      :staticmethod:
+
+      List available dataloaders.
+
+
+   .. py:method:: query_to_list(dataloaders_query: sqlalchemy.orm.Query) -> List[dict]
+      :staticmethod:
+
+      Convert query to list.
+
+
+   .. py:method:: update_params(db_session: sqlalchemy.orm.session.Session, dataloader_id: int, params: List[dict]) -> dict
+      :staticmethod:
+
+      Update dataloader default parameters.
+
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

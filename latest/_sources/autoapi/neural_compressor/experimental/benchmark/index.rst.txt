@@ -1,0 +1,146 @@
+:py:mod:`neural_compressor.experimental.benchmark`
+==================================================
+
+.. py:module:: neural_compressor.experimental.benchmark
+
+.. autoapi-nested-parse::
+
+   Benchmarking: measure the model performance with the objective settings.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.benchmark.Benchmark
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.benchmark.set_env_var
+   neural_compressor.experimental.benchmark.set_all_env_var
+   neural_compressor.experimental.benchmark.get_architecture
+   neural_compressor.experimental.benchmark.get_threads_per_core
+   neural_compressor.experimental.benchmark.get_threads
+   neural_compressor.experimental.benchmark.get_physical_ids
+   neural_compressor.experimental.benchmark.get_core_ids
+   neural_compressor.experimental.benchmark.get_bounded_threads
+
+
+
+.. py:function:: set_env_var(env_var, value, overwrite_existing=False)
+
+   Set the specified environment variable.
+
+   Only set new env in two cases:
+   1. env not exists
+   2. env already exists but overwrite_existing params set True
+
+
+.. py:function:: set_all_env_var(conf, overwrite_existing=False)
+
+   Set all the environment variables with the configuration dict.
+
+   Neural Compressor only uses physical cores
+
+
+.. py:function:: get_architecture()
+
+   Get the architecture name of the system.
+
+
+.. py:function:: get_threads_per_core()
+
+   Get the threads per core.
+
+
+.. py:function:: get_threads()
+
+   Get the list of threads.
+
+
+.. py:function:: get_physical_ids()
+
+   Get the list of sockets.
+
+
+.. py:function:: get_core_ids()
+
+   Get the ids list of the cores.
+
+
+.. py:function:: get_bounded_threads(core_ids, threads, sockets)
+
+   Return the threads id list that we will bind instances to.
+
+
+.. py:class:: Benchmark(conf_fname_or_obj=None)
+
+   Bases: :py:obj:`object`
+
+   Benchmark class is used to evaluate the model performance with the objective settings.
+
+   Users can use the data that they configured in YAML
+   NOTICE: neural_compressor Benchmark will use the original command to run sub-process, which
+   depends on the user's code and has the possibility to run unnecessary code
+
+   .. py:property:: results
+
+      Get the results of benchmarking.
+
+   .. py:property:: b_dataloader
+
+      Get the dataloader for the benchmarking.
+
+   .. py:property:: b_func
+
+      Not support getting b_func.
+
+   .. py:property:: model
+
+      Get the model.
+
+   .. py:property:: metric
+
+      Not support getting metric.
+
+   .. py:property:: postprocess
+
+      Not support getting postprocess.
+
+   .. py:method:: summary_benchmark()
+
+      Get the summary of the benchmark.
+
+
+   .. py:method:: config_instance()
+
+      Configure the multi-instance commands and trigger benchmark with sub process.
+
+
+   .. py:method:: generate_prefix(core_list)
+
+      Generate the command prefix with numactl.
+
+      :param core_list: a list of core indexes bound with specific instances
+
+
+   .. py:method:: run_instance(mode)
+
+      Run the instance with the configuration.
+
+      :param mode: 'performance' or 'accuracy'
+      :param 'performance' mode runs benchmarking with numactl on specific cores and instances set: by user config and returns model performance
+      :param 'accuracy' mode runs benchmarking with full cores and returns model accuracy:
+
+
+

@@ -1,0 +1,66 @@
+:py:mod:`neural_compressor.ux.components.graph.graph`
+=====================================================
+
+.. py:module:: neural_compressor.ux.components.graph.graph
+
+.. autoapi-nested-parse::
+
+   Graph class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.graph.graph.Graph
+
+
+
+
+.. py:class:: Graph
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Model graph definition.
+
+   .. py:property:: nodes
+      :type: List[neural_compressor.ux.components.graph.node.Node]
+
+      Return nodes as a list.
+
+   .. py:property:: edges
+      :type: List[neural_compressor.ux.components.graph.edge.Edge]
+
+      Return edges as a list.
+
+   .. py:method:: add_node(node: neural_compressor.ux.components.graph.node.Node) -> None
+
+      Add a Node to graph.
+
+
+   .. py:method:: add_edge(source_id: str, target_id: str) -> bool
+
+      Add an Edge to graph.
+
+
+   .. py:method:: get_node(id: str) -> neural_compressor.ux.components.graph.node.Node
+
+      Get a node by id.
+
+
+   .. py:method:: highlight_pattern(op_name: str, pattern: List[str]) -> None
+
+      Highlight pattern in graph.
+
+
+   .. py:method:: get_target_nodes(op_name: str) -> List[neural_compressor.ux.components.graph.node.Node]
+
+      Get target nodes from specified op.
+
+
+

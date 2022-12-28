@@ -1,0 +1,52 @@
+:py:mod:`neural_compressor.ux.components.config_generator.config_generator`
+===========================================================================
+
+.. py:module:: neural_compressor.ux.components.config_generator.config_generator
+
+.. autoapi-nested-parse::
+
+   Configuration generator class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.config_generator.config_generator.ConfigGenerator
+
+
+
+
+.. py:class:: ConfigGenerator(workload_directory: str, configuration_path: str, data: dict)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration generator class.
+
+   .. py:method:: get_predefined_config_path() -> str
+
+      Get path to predefined config.
+
+
+   .. py:method:: generate() -> None
+      :abstractmethod:
+
+      Generate yaml config file.
+
+
+   .. py:method:: generate_model_config() -> neural_compressor.ux.utils.workload.model.Model
+
+      Generate model configuration.
+
+
+   .. py:method:: generate_dataloader_config(batch_size: Optional[int] = None) -> neural_compressor.ux.utils.workload.dataloader.Dataloader
+
+      Generate dataloader configuration.
+
+
+

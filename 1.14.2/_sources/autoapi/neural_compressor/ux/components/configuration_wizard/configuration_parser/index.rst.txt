@@ -1,0 +1,90 @@
+:py:mod:`neural_compressor.ux.components.configuration_wizard.configuration_parser`
+===================================================================================
+
+.. py:module:: neural_compressor.ux.components.configuration_wizard.configuration_parser
+
+.. autoapi-nested-parse::
+
+   Configuration type parser.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.configuration_wizard.configuration_parser.ConfigurationParser
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.configuration_wizard.configuration_parser.parse_list_value
+   neural_compressor.ux.components.configuration_wizard.configuration_parser.parse_multidim_list
+   neural_compressor.ux.components.configuration_wizard.configuration_parser.normalize_string_list
+
+
+
+.. py:class:: ConfigurationParser
+
+   Configuration type parser class.
+
+   .. py:method:: parse(input_data: dict) -> dict
+
+      Parse configuration.
+
+
+   .. py:method:: parse_evaluation_data(evaluation_data: dict) -> None
+
+      Parse input evaluation data.
+
+
+   .. py:method:: parse_transforms(transforms_data: List[dict]) -> List[dict]
+
+      Parse transforms list.
+
+
+   .. py:method:: parse_dataloader(dataloader_data: dict) -> dict
+
+      Parse dataloader dict.
+
+
+   .. py:method:: parse_metric(metric_data: dict) -> dict
+
+      Parse metric data.
+
+
+   .. py:method:: get_param_type(param_group: str, param_name: str) -> Union[Type, List[Type]]
+
+      Get parameter type.
+
+
+   .. py:method:: parse_value(value: Any, required_type: Union[Type, List[Type], List[List[Type]]]) -> Any
+      :staticmethod:
+
+      Parse value to required type.
+
+
+
+.. py:function:: parse_list_value(value: Any, required_type: Union[Type, List[Type], List[List[Type]]]) -> List[Any]
+
+   Parse value to list.
+
+
+.. py:function:: parse_multidim_list(value: Any, required_type: List[Type]) -> List[Union[Any, List[Any]]]
+
+   Parse multi dimensional list.
+
+
+.. py:function:: normalize_string_list(string_list: str, required_type: Union[Type, List[Type]]) -> str
+
+   Add wrap string list into brackets if missing.
+
+

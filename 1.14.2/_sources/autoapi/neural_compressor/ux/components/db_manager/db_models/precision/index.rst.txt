@@ -1,0 +1,76 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.precision`
+========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.precision
+
+.. autoapi-nested-parse::
+
+   Precision package contains precision class representing precision table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.precision.Precision
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.precision.fill_dictionary
+
+
+
+.. py:class:: Precision
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench Precision table class.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str) -> int
+      :staticmethod:
+
+      Add precision to DB.
+
+      returns id of added precision
+
+
+   .. py:method:: list(db_session: sqlalchemy.orm.session.Session) -> dict
+      :staticmethod:
+
+      List available types of optimization.
+
+
+   .. py:method:: get_precision_id(db_session: sqlalchemy.orm.session.Session, precision_name: str) -> int
+      :staticmethod:
+
+      Get precision id from name.
+
+
+   .. py:method:: get_precision_by_name(db_session: sqlalchemy.orm.session.Session, precision_name: str) -> Any
+      :staticmethod:
+
+      Get precision object from name.
+
+
+   .. py:method:: get_precision_by_id(db_session: sqlalchemy.orm.session.Session, precision_id: str) -> Any
+      :staticmethod:
+
+      Get precision object from id.
+
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantization Support Matrix &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+              <div class="version">
+                1.14.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Quantization Support Matrix</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/backend_quant.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quantization-support-matrix">
+<h1>Quantization Support Matrix<a class="headerlink" href="#quantization-support-matrix" title="Permalink to this heading"></a></h1>
+<p>This document provides a quantization support matrix for the following frameworks listed below:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Framework</th>
+<th style="text-align: center;">Backend Library</th>
+<th style="text-align: right;">Symmetric Quantization</th>
+<th style="text-align: right;">Asymmetric Quantization</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">TensorFlow</td>
+<td style="text-align: center;"><a href="https://github.com/oneapi-src/oneDNN">oneDNN</a></td>
+<td style="text-align: right;">Activation (int8/uint8), Weight (int8)</td>
+<td style="text-align: right;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">PyTorch</td>
+<td style="text-align: center;"><a href="https://github.com/pytorch/FBGEMM">FBGEMM</a></td>
+<td style="text-align: right;">Activation (uint8), Weight (int8)</td>
+<td style="text-align: right;">Activation (uint8)</td>
+</tr>
+<tr>
+<td style="text-align: left;">PyTorch IPEX</td>
+<td style="text-align: center;"><a href="https://github.com/oneapi-src/oneDNN">oneDNN</a></td>
+<td style="text-align: right;">Activation (int8/uint8), Weight (int8)</td>
+<td style="text-align: right;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">MXNet</td>
+<td style="text-align: center;"><a href="https://github.com/oneapi-src/oneDNN">oneDNN</a></td>
+<td style="text-align: right;">Activation (int8/uint8), Weight (int8)</td>
+<td style="text-align: right;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">ONNX Runtime</td>
+<td style="text-align: center;"><a href="https://github.com/microsoft/onnxruntime/tree/master/onnxruntime/core/mlas">MLAS</a></td>
+<td style="text-align: right;">Weight (int8)</td>
+<td style="text-align: right;">Activation (uint8)</td>
+</tr>
+</tbody>
+</table><section id="tensorflow">
+<h2>TensorFlow<a class="headerlink" href="#tensorflow" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Symmetric Quantization</p>
+<ul>
+<li><p>int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)</p></li>
+<li><p>uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="pytorch">
+<h2>PyTorch<a class="headerlink" href="#pytorch" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Symmetric Quantization</p>
+<ul>
+<li><p>int8: scale = max(abs(rmin), abs(rmax)) / (float(max(int8) - min(int8)) / 2)</p></li>
+<li><p>uint8: scale = max(abs(rmin), abs(rmax)) / (float(max(int8) - min(int8)) / 2)</p></li>
+</ul>
+</li>
+<li><p>Asymmetric Quantization</p>
+<ul>
+<li><p>uint8: scale = (rmax - rmin) / (max(uint8) - min(uint8)); zero_point = min(uint8)  - round(rmin / scale)</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="pytorch-ipex">
+<h2>PyTorch IPEX<a class="headerlink" href="#pytorch-ipex" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Symmetric Quantization</p>
+<ul>
+<li><p>int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)</p></li>
+<li><p>uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="mxnet">
+<h2>MXNet<a class="headerlink" href="#mxnet" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Symmetric Quantization</p>
+<ul>
+<li><p>int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)</p></li>
+<li><p>uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="onnx-runtime">
+<h2>ONNX Runtime<a class="headerlink" href="#onnx-runtime" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Symmetric Quantization</p>
+<ul>
+<li><p>int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)</p></li>
+</ul>
+</li>
+<li><p>Asymmetric Quantization</p>
+<ul>
+<li><p>uint8: scale = (rmax - rmin) / (max(uint8) - min(uint8)); zero_point = min(uint8)  - round(rmin / scale)</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>oneDNN: <a class="reference external" href="https://software.intel.com/content/www/us/en/develop/articles/lower-numerical-precision-deep-learning-inference-and-training.html">Lower Numerical Precision Deep Learning Inference and Training</a></p></li>
+<li><p>FBGEMM: <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/torch/quantization/observer.py">FBGEMM Quantization</a></p></li>
+<li><p>MLAS:  <a class="reference external" href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/onnx_quantizer.py">MLAS Quantization</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,42 @@
+:py:mod:`neural_compressor.ux.utils.expiring_dict`
+==================================================
+
+.. py:module:: neural_compressor.ux.utils.expiring_dict
+
+.. autoapi-nested-parse::
+
+   Dict with items expiring after given time.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.expiring_dict.ExpiringDictItem
+   neural_compressor.ux.utils.expiring_dict.ExpiringDict
+
+
+
+
+.. py:class:: ExpiringDictItem(value: Any, expires_at: float)
+
+   Item that knows it it's already expired.
+
+   .. py:method:: is_expired() -> bool
+
+      Check if item is already expired.
+
+
+
+.. py:class:: ExpiringDict(initial_value: Optional[dict] = None, ttl: int = 120)
+
+   Bases: :py:obj:`collections.UserDict`
+
+   Dict with items expiring after given time.
+
+

@@ -1,0 +1,93 @@
+:py:mod:`neural_compressor.ux.utils.workload.dataloader`
+========================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.dataloader
+
+.. autoapi-nested-parse::
+
+   Configuration dataloader module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.dataloader.Dataset
+   neural_compressor.ux.utils.workload.dataloader.LabelBalance
+   neural_compressor.ux.utils.workload.dataloader.Filter
+   neural_compressor.ux.utils.workload.dataloader.Transform
+   neural_compressor.ux.utils.workload.dataloader.Dataloader
+
+
+
+
+.. py:class:: Dataset(name: str, data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Dataset class.
+
+   .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
+
+      Serialize Dataset class.
+
+
+   .. py:method:: is_dummy() -> bool
+
+      Check if dummy dataloader is used.
+
+
+
+.. py:class:: LabelBalance(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration LabelBalance class.
+
+
+.. py:class:: Filter(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Filter class.
+
+
+.. py:class:: Transform(name: str, parameters: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Transform class.
+
+   .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
+
+      Serialize Transform class.
+
+
+
+.. py:class:: Dataloader(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Dataloader class.
+
+   .. py:method:: set_transforms_from_list(transforms_list: List[dict]) -> None
+
+      Set transformations ordered dict from list.
+
+
+   .. py:method:: set_dataset(dataset_data: Dict[str, Any]) -> None
+
+      Set dataset for dataloader.
+
+
+   .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
+
+      Serialize Dataloader class.
+
+
+

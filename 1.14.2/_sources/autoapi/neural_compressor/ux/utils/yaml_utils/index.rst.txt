@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.utils.yaml_utils`
+===============================================
+
+.. py:module:: neural_compressor.ux.utils.yaml_utils
+
+.. autoapi-nested-parse::
+
+   UX server utils module.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.yaml_utils.float_representer
+   neural_compressor.ux.utils.yaml_utils.pruner_representer
+
+
+
+.. py:function:: float_representer(dumper: Any, value: float) -> Any
+
+   Float representer for yaml dumper.
+
+
+.. py:function:: pruner_representer(dumper: Any, pruner: neural_compressor.conf.config.Pruner) -> Any
+
+   Pruner representer for yaml dumper.
+
+

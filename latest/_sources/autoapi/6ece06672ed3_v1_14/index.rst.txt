@@ -1,0 +1,39 @@
+:py:mod:`6ece06672ed3_v1_14`
+============================
+
+.. py:module:: 6ece06672ed3_v1_14
+
+.. autoapi-nested-parse::
+
+   v1.14
+
+   Revision ID: 6ece06672ed3
+   Revises: 6f0d0f71d92e
+   Create Date: 2022-08-31 07:16:24.229939
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   6ece06672ed3_v1_14.update_dataloaders
+   6ece06672ed3_v1_14.update_transformations
+
+
+
+.. py:function:: update_dataloaders(db_session: sqlalchemy.orm.session.Session)
+
+   Update dataloaders in existing database.
+
+
+.. py:function:: update_transformations(db_session: sqlalchemy.orm.session.Session)
+
+   Update transformations in existing database.
+
+

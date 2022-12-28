@@ -1,0 +1,129 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.benchmark`
+========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.benchmark
+
+.. autoapi-nested-parse::
+
+   The Benchmark class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.benchmark.Benchmark
+
+
+
+
+.. py:class:: Benchmark
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench benchmarks' table representation.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str, project_id: int, model_id: int, dataset_id: int, mode: str, batch_size: int, iterations: int, warmup_iterations: int, number_of_instance: int, cores_per_instance: int, execution_command: str) -> int
+      :staticmethod:
+
+      Add benchark to database.
+
+      returns id of added benchmark
+
+
+   .. py:method:: delete_benchmark(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, benchmark_name: str) -> Optional[int]
+      :staticmethod:
+
+      Remove benchmark from database.
+
+
+   .. py:method:: update_status(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, execution_status: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Update benchmark status.
+
+
+   .. py:method:: update_duration(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, duration: int) -> dict
+      :staticmethod:
+
+      Update duration of benchmark.
+
+
+   .. py:method:: update_execution_command(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, execution_command: Optional[str]) -> dict
+      :staticmethod:
+
+      Update benchmark execution command.
+
+
+   .. py:method:: update_log_path(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, path: Optional[str]) -> dict
+      :staticmethod:
+
+      Update benchmark output log path.
+
+
+   .. py:method:: update_config_path(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, path: Optional[str]) -> dict
+      :staticmethod:
+
+      Update benchmark configuration path.
+
+
+   .. py:method:: update_dataset(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, dataset_id: int) -> dict
+      :staticmethod:
+
+      Update benchmark dataset.
+
+
+   .. py:method:: update_batch_size(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, batch_size: int) -> dict
+      :staticmethod:
+
+      Update benchmark batch size.
+
+
+   .. py:method:: update_mode(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, mode: str) -> dict
+      :staticmethod:
+
+      Update benchmark mode.
+
+
+   .. py:method:: update_cores_per_instance(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, cores_per_instance: int) -> dict
+      :staticmethod:
+
+      Update benchmark cores per instance.
+
+
+   .. py:method:: update_number_of_instance(db_session: sqlalchemy.orm.session.Session, benchmark_id: int, number_of_instance: int) -> dict
+      :staticmethod:
+
+      Update benchmark dataset.
+
+
+   .. py:method:: clean_status(db_session: sqlalchemy.orm.session.Session, status_to_clean: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Clean specified benchmark status from benchmark table.
+
+
+   .. py:method:: details(db_session: sqlalchemy.orm.session.Session, benchmark_id: int) -> dict
+      :staticmethod:
+
+      Get benchmark details.
+
+
+   .. py:method:: list(db_session: sqlalchemy.orm.session.Session, project_id: int) -> dict
+      :staticmethod:
+
+      Get benchmarks list for specified project from database.
+
+
+   .. py:method:: build_info(benchmark: Any, result: Optional[neural_compressor.ux.components.db_manager.db_models.benchmark_result.BenchmarkResult], model: neural_compressor.ux.components.db_manager.db_models.model.Model, dataset: neural_compressor.ux.components.db_manager.db_models.dataset.Dataset) -> dict
+      :staticmethod:
+
+      Build benchmark info.
+
+
+

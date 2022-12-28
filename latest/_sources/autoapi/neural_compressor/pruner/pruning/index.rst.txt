@@ -1,0 +1,125 @@
+:py:mod:`neural_compressor.pruner.pruning`
+==========================================
+
+.. py:module:: neural_compressor.pruner.pruning
+
+.. autoapi-nested-parse::
+
+   Pruning.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.pruner.pruning.Pruning
+
+
+
+
+.. py:class:: Pruning(config)
+
+   Pruning.
+
+   The main class to do pruning; it contains at least one Pruner object.
+
+   :param config: a string representing the path to a config file. For config file template, please refer to
+                  https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
+
+   .. attribute:: model
+
+      The model object to prune.
+
+   .. attribute:: config_file_path
+
+      A string representing the path to a config file.
+
+   .. attribute:: pruners
+
+      A list. A list of Pruner objects.
+
+   .. attribute:: pruner_info
+
+      A config dict object that contains pruners' information.
+
+   .. py:property:: model
+
+      Obtain model in neural_compressor.model.
+
+   .. py:method:: update_config(*args, **kwargs)
+
+      Add user-defined arguments to the original configurations.
+
+      The original config of pruning is read from a file.
+      However, users can still modify configurations by passing key-value arguments in this function.
+      Please note that the key-value arguments' keys could be processed in current configuration.
+
+
+   .. py:method:: get_sparsity_ratio()
+
+      Calculate sparsity ratio of a module/layer.
+
+      :returns: Three floats.
+                elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+                elementwise_over_all refers to zero elements' ratio in all layers in the model.
+                blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
+
+
+   .. py:method:: on_train_begin()
+
+      Implement at the beginning of training process.
+
+      Before training, ensure that pruners are generated.
+
+
+   .. py:method:: on_epoch_begin(epoch)
+
+      Implement at the beginning of every epoch.
+
+
+   .. py:method:: on_step_begin(local_step)
+
+      Implement at the beginning of every step.
+
+
+   .. py:method:: on_before_optimizer_step()
+
+      Implement before optimizer.step().
+
+
+   .. py:method:: on_step_end()
+
+      Implement at the end of every step.
+
+
+   .. py:method:: on_epoch_end()
+
+      Implement the end of every epoch.
+
+
+   .. py:method:: on_train_end()
+
+      Implement the end of training phase.
+
+
+   .. py:method:: on_before_eval()
+
+      Implement at the beginning of evaluation phase.
+
+
+   .. py:method:: on_after_eval()
+
+      Implement at the end of evaluation phase.
+
+
+   .. py:method:: on_after_optimizer_step()
+
+      Implement after optimizer.step().
+
+
+

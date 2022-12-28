@@ -1,0 +1,128 @@
+:py:mod:`neural_compressor.experimental.metric`
+===============================================
+
+.. py:module:: neural_compressor.experimental.metric
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Metric.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   bleu/index.rst
+   bleu_util/index.rst
+   coco_label_map/index.rst
+   coco_tools/index.rst
+   evaluate_squad/index.rst
+   f1/index.rst
+   metric/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.metric.METRICS
+   neural_compressor.experimental.metric.BaseMetric
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.metric.metric_registry
+
+
+
+.. py:class:: METRICS(framework: str)
+
+   Bases: :py:obj:`object`
+
+   Intel Neural Compressor Metrics.
+
+   .. attribute:: metrics
+
+      The collection of registered metrics for the specified framework.
+
+   .. py:method:: register(name, metric_cls) -> None
+
+      Register a metric.
+
+      :param name: The name of metric.
+      :param metric_cls: The metric class.
+
+
+
+.. py:class:: BaseMetric(metric, single_output=False, hvd=None)
+
+   Bases: :py:obj:`object`
+
+   The base class of Metric.
+
+   .. py:property:: metric
+
+      Return its metric class.
+
+      :returns: The metric class.
+
+   .. py:property:: hvd
+
+      Return its hvd class.
+
+      :returns: The hvd class.
+
+   .. py:method:: update(preds, labels=None, sample_weight=None)
+      :abstractmethod:
+
+      Update the state that need to be evaluated.
+
+      :param preds: The prediction result.
+      :param labels: The reference. Defaults to None.
+      :param sample_weight: The sampling weight. Defaults to None.
+
+      :raises NotImplementedError: The method should be implemented by subclass.
+
+
+   .. py:method:: reset()
+      :abstractmethod:
+
+      Clear the predictions and labels.
+
+      :raises NotImplementedError: The method should be implemented by subclass.
+
+
+   .. py:method:: result()
+      :abstractmethod:
+
+      Evaluate the difference between predictions and labels.
+
+      :raises NotImplementedError: The method should be implemented by subclass.
+
+
+
+.. py:function:: metric_registry(metric_type: str, framework: str)
+
+   Decorate for registering all Metric subclasses.
+
+   The cross-framework metric is supported by specifying the framework param
+   as one of tensorflow, pytorch, mxnet, onnxrt.
+
+   :param metric_type: The metric type.
+   :param framework: The framework name.
+
+   :returns: The function to register metric class.
+   :rtype: decorator_metric
+
+

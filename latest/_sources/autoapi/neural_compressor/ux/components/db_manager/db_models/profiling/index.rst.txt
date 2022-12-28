@@ -1,0 +1,105 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.profiling`
+========================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.profiling
+
+.. autoapi-nested-parse::
+
+   The Profiling class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.profiling.Profiling
+
+
+
+
+.. py:class:: Profiling
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench profilings' table representation.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str, project_id: int, model_id: int, dataset_id: int, num_threads: int) -> int
+      :staticmethod:
+
+      Add profiling to database.
+
+      returns id of added profiling
+
+
+   .. py:method:: delete_profiling(db_session: sqlalchemy.orm.session.Session, profiling_id: int, profiling_name: str) -> Optional[int]
+      :staticmethod:
+
+      Remove profiling from database.
+
+
+   .. py:method:: update_status(db_session: sqlalchemy.orm.session.Session, profiling_id: int, execution_status: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Update profiling status.
+
+
+   .. py:method:: update_duration(db_session: sqlalchemy.orm.session.Session, profiling_id: int, duration: int) -> dict
+      :staticmethod:
+
+      Update duration of profiling.
+
+
+   .. py:method:: update_execution_command(db_session: sqlalchemy.orm.session.Session, profiling_id: int, execution_command: Optional[str]) -> dict
+      :staticmethod:
+
+      Update profiling execution command.
+
+
+   .. py:method:: update_log_path(db_session: sqlalchemy.orm.session.Session, profiling_id: int, path: Optional[str]) -> dict
+      :staticmethod:
+
+      Update profiling output log path.
+
+
+   .. py:method:: update_dataset(db_session: sqlalchemy.orm.session.Session, profiling_id: int, dataset_id: int) -> dict
+      :staticmethod:
+
+      Update profiling dataset.
+
+
+   .. py:method:: update_num_threads(db_session: sqlalchemy.orm.session.Session, profiling_id: int, num_threads: int) -> dict
+      :staticmethod:
+
+      Update profiling num_threads.
+
+
+   .. py:method:: clean_status(db_session: sqlalchemy.orm.session.Session, status_to_clean: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Clean specified profiling status from profiling table.
+
+
+   .. py:method:: details(db_session: sqlalchemy.orm.session.Session, profiling_id: int) -> dict
+      :staticmethod:
+
+      Get profiling details.
+
+
+   .. py:method:: list(db_session: sqlalchemy.orm.session.Session, project_id: int) -> dict
+      :staticmethod:
+
+      Get profilings list for specified project from database.
+
+
+   .. py:method:: build_info(profiling: Any, results: Optional[List[neural_compressor.ux.components.db_manager.db_models.profiling_result.ProfilingResult]], model: neural_compressor.ux.components.db_manager.db_models.model.Model, dataset: neural_compressor.ux.components.db_manager.db_models.dataset.Dataset) -> dict
+      :staticmethod:
+
+      Build profiling info.
+
+
+

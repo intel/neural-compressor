@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.inc_bench`
+========================================
+
+.. py:module:: neural_compressor.ux.inc_bench
+
+.. autoapi-nested-parse::
+
+   WSGI Web Server.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.inc_bench.main
+   neural_compressor.ux.inc_bench.prepare_environment
+
+
+
+.. py:function:: main() -> None
+
+   Get parameters and initialize server.
+
+
+.. py:function:: prepare_environment() -> None
+
+   Prepare environment for Intel® Neural Compressor Bench.
+
+

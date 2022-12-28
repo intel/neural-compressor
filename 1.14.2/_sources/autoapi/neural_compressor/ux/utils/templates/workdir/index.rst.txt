@@ -1,0 +1,46 @@
+:py:mod:`neural_compressor.ux.utils.templates.workdir`
+======================================================
+
+.. py:module:: neural_compressor.ux.utils.templates.workdir
+
+.. autoapi-nested-parse::
+
+   Workdir class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.templates.workdir.Workdir
+
+
+
+
+.. py:class:: Workdir
+
+   Class responsible for workspace management.
+
+   .. py:method:: ensure_working_path_exists() -> None
+
+      Set workdir if doesn't exist create.
+
+
+   .. py:method:: clean_logs(workdir_path: str) -> None
+      :staticmethod:
+
+      Clean log files.
+
+
+   .. py:method:: clean_status(status_to_clean: neural_compressor.ux.utils.consts.ExecutionStatus) -> None
+      :staticmethod:
+
+      Clean statuses in database for workloads according to passed parameters.
+
+
+

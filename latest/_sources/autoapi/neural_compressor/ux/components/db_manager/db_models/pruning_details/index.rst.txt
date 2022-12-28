@@ -1,0 +1,57 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.pruning_details`
+==============================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.pruning_details
+
+.. autoapi-nested-parse::
+
+   The PruningDetails class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.pruning_details.PruningDetails
+
+
+
+
+.. py:class:: PruningDetails
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench pruning details' table representation.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, pruning_details: neural_compressor.ux.utils.workload.pruning.Pruning) -> int
+      :staticmethod:
+
+      Add pruning details to database.
+
+      returns id of added pruning details
+
+
+   .. py:method:: update(db_session: sqlalchemy.orm.session.Session, pruning_details_id: int, pruning_details_data: neural_compressor.ux.utils.workload.pruning.Pruning) -> dict
+      :staticmethod:
+
+      Update pruning details.
+
+
+   .. py:method:: delete_pruning_details(db_session: sqlalchemy.orm.session.Session, pruning_details_id: int) -> Optional[int]
+      :staticmethod:
+
+      Remove pruning_details from database.
+
+
+   .. py:method:: build_info(pruning_details: Any) -> dict
+      :staticmethod:
+
+      Build profiling result info.
+
+
+

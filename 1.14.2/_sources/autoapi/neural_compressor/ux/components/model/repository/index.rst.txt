@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.ux.components.model.repository`
+==========================================================
+
+.. py:module:: neural_compressor.ux.components.model.repository
+
+.. autoapi-nested-parse::
+
+   Model repository.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.repository.ModelRepository
+
+
+
+
+.. py:class:: ModelRepository
+
+   Model repository.
+
+   .. py:method:: get_model(path: str) -> neural_compressor.ux.components.model.model.Model
+
+      Get Model for given path.
+
+
+   .. py:method:: get_frameworks() -> List[str]
+
+      Get list of supported frameworks.
+
+
+   .. py:method:: get_framework_from_path(model_path: str) -> str
+      :staticmethod:
+
+      Get framework name from model extension.
+
+      :param model_path: Path to model.
+
+
+   .. py:method:: get_supported_frameworks() -> List[str]
+      :staticmethod:
+
+      Get list of supported frameworks.
+
+
+   .. py:method:: is_model_path(path: str) -> bool
+      :staticmethod:
+
+      Check if provided path is for model.
+
+
+

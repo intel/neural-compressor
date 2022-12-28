@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.components.optimization.pruning.optimize_model`
+=============================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.pruning.optimize_model
+
+.. autoapi-nested-parse::
+
+   Pruning optimization script.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.pruning.optimize_model.parse_args
+   neural_compressor.ux.components.optimization.pruning.optimize_model.optimize_model
+
+
+
+.. py:function:: parse_args() -> Any
+
+   Parse input arguments.
+
+
+.. py:function:: optimize_model(input_graph: str, output_graph: str, framework: str, config: str) -> None
+
+   Execute pruning optimization.
+
+

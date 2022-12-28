@@ -1,0 +1,138 @@
+:py:mod:`neural_compressor.experimental.nas.nas`
+================================================
+
+.. py:module:: neural_compressor.experimental.nas.nas
+
+.. autoapi-nested-parse::
+
+   Common classes for different NAS approaches.
+
+   NAS class for creating object of different NAS approaches.
+   NASBase class defines the common methods of different NAS approaches.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.nas.NAS
+   neural_compressor.experimental.nas.nas.NASBase
+
+
+
+
+.. py:class:: NAS
+
+   Bases: :py:obj:`object`
+
+   Create object of different NAS approaches.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or the object of NASConfig.
+   :type conf_fname_or_obj: string or obj
+
+   :returns: An object of specified NAS approach.
+
+
+.. py:class:: NASBase(search_space=None, model_builder=None)
+
+   Bases: :py:obj:`object`
+
+   Base class for defining the common methods of different NAS approaches.
+
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+   :param model_builder: A function to build model instance with the specified
+                         model architecture parameters.
+   :type model_builder: function obj
+
+   .. py:property:: search_space
+
+      Getter of the search space.
+
+      :returns: The search space.
+
+   .. py:property:: search_algorithm
+
+      Getter of the search algorithm.
+
+      :returns: The search algorithm.
+
+   .. py:property:: model_builder
+
+      Getter of the model builder.
+
+      :returns: The model builder.
+
+   .. py:method:: select_model_arch()
+
+      Propose architecture of the model based on search algorithm for next search iteration.
+
+      :returns: Model architecture description.
+
+
+   .. py:method:: search(res_save_path=None)
+
+      NAS search process.
+
+      :returns: Best model architecture found in search process.
+
+
+   .. py:method:: estimate(model)
+      :abstractmethod:
+
+      Estimate performance of the model. Depends on specific NAS algorithm.
+
+      :returns: Evaluated metrics of the model.
+
+
+   .. py:method:: count_model_parameters(model)
+
+      Count number of model parameters.
+
+      :returns: Number of model parameters.
+
+
+   .. py:method:: load_search_results(path)
+
+      Load previous search results if exist.
+
+
+   .. py:method:: dump_search_results(path)
+
+      Save search results.
+
+
+   .. py:method:: params_vec2params_dict(paras_vec)
+
+      Convert the parameters vector to parameters dictionary.
+
+      Where parameters vector and parameters dictionary both define the model architecture.
+
+      :returns: Parameters dictionary defining the model architecture.
+
+
+   .. py:method:: find_best_model_archs()
+
+      Find the best model architectures.
+
+      Find the best model architectures which lie on the pareto front.
+
+
+   .. py:method:: metrics_conversion(metrics)
+
+      Convert the metrics to specific format.
+
+      :returns: Converted metrics.
+
+
+   .. py:method:: init_search_cfg(config)
+
+      Initialize the search configuration.
+
+
+

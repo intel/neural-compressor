@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.pruner`
+==================================
+
+.. py:module:: neural_compressor.pruner
+
+.. autoapi-nested-parse::
+
+   prune init.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   pruner_legacy/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   criteria/index.rst
+   logger/index.rst
+   patterns/index.rst
+   pruners/index.rst
+   pruning/index.rst
+   regs/index.rst
+   schedulers/index.rst
+   utils/index.rst
+
+

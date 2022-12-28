@@ -1,0 +1,25 @@
+:py:mod:`neural_compressor.ux.components.model.tensorflow`
+==========================================================
+
+.. py:module:: neural_compressor.ux.components.model.tensorflow
+
+.. autoapi-nested-parse::
+
+   Tensorflow related models.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   frozen_pb/index.rst
+   keras/index.rst
+   meta_graph/index.rst
+   model/index.rst
+   saved_model/index.rst
+   utils/index.rst
+
+

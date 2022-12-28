@@ -1,0 +1,82 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.activation`
+=================================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.activation
+
+.. autoapi-nested-parse::
+
+   Activation operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.activation.ActivationOperator
+   neural_compressor.adaptor.ox_utils.operators.activation.RemovableActivationOperator
+   neural_compressor.adaptor.ox_utils.operators.activation.QActivationOperator
+
+
+
+
+.. py:class:: ActivationOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   Activation operator.
+
+   .. py:method:: quantize_check()
+
+      Check if quantizaion can be done.
+
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+
+.. py:class:: RemovableActivationOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   Removable activation operator.
+
+   .. py:method:: quantize_check()
+
+      Check if quantizaion can be done.
+
+
+   .. py:method:: quantize()
+
+      Do quantization.
+
+
+
+.. py:class:: QActivationOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.QOperator`
+
+   INT8 activation operator in QOperator format.
+
+   .. py:method:: convert()
+
+      Convert to QDQ format.
+
+
+

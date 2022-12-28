@@ -1,0 +1,29 @@
+:py:mod:`neural_compressor.ux.components.configuration_wizard.get_boundary_nodes`
+=================================================================================
+
+.. py:module:: neural_compressor.ux.components.configuration_wizard.get_boundary_nodes
+
+.. autoapi-nested-parse::
+
+   Configuration to yaml.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.configuration_wizard.get_boundary_nodes.get_boundary_nodes
+
+
+
+.. py:function:: get_boundary_nodes(data: Dict[str, Any]) -> None
+
+   Get configuration.
+
+

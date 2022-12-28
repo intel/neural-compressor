@@ -1,0 +1,29 @@
+:py:mod:`neural_compressor.ux.components.profiling.tensorflow_profiler.utils`
+=============================================================================
+
+.. py:module:: neural_compressor.ux.components.profiling.tensorflow_profiler.utils
+
+.. autoapi-nested-parse::
+
+   Tensorflow profiler utils.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.profiling.tensorflow_profiler.utils.delete_assign
+
+
+
+.. py:function:: delete_assign(graph_def: Any) -> Any
+
+   Modify graph nodes.
+
+

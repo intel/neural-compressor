@@ -1,0 +1,182 @@
+:py:mod:`neural_compressor.experimental.data.datasets.bert_dataset`
+===================================================================
+
+.. py:module:: neural_compressor.experimental.data.datasets.bert_dataset
+
+.. autoapi-nested-parse::
+
+   Built-in BERT datasets class for multiple framework backends.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.datasets.bert_dataset.PytorchBertDataset
+   neural_compressor.experimental.data.datasets.bert_dataset.ONNXRTBertDataset
+   neural_compressor.experimental.data.datasets.bert_dataset.InputFeatures
+   neural_compressor.experimental.data.datasets.bert_dataset.TensorflowBertDataset
+   neural_compressor.experimental.data.datasets.bert_dataset.ParseDecodeBert
+   neural_compressor.experimental.data.datasets.bert_dataset.TensorflowModelZooBertDataset
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.datasets.bert_dataset.load_and_cache_examples
+   neural_compressor.experimental.data.datasets.bert_dataset.convert_examples_to_features
+
+
+
+.. py:class:: PytorchBertDataset(dataset, task, model_type='bert', transform=None, filter=None)
+
+   Bases: :py:obj:`neural_compressor.experimental.data.datasets.dataset.Dataset`
+
+   PyTorch dataset used for model Bert.
+
+      This Dataset is to construct from the Bert TensorDataset and not a full implementation
+      from yaml config. The original repo link is: https://github.com/huggingface/transformers.
+      When you want use this Dataset, you should add it before you initialize your DataLoader.
+      (TODO) add end to end support for easy config by yaml by adding the method of
+      load examples and process method.
+
+   Args: dataset (list): list of data.
+         task (str): the task of the model, support "classifier", "squad".
+         model_type (str, default='bert'): model type, support 'distilbert', 'bert',
+                                           'xlnet', 'xlm'.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
+
+   .. rubric:: Examples
+
+   dataset = [[
+      [101,2043,2001],
+      [1,1,1],
+      [[0,0,0,0,0,0,0],
+       [0,0,0,0,0,0,0],
+       [0,0,0,0,0,0,0]],
+      [1,1,1],
+      [1,1,1],
+      [[0,0,0,0,0,0,0],
+       [0,0,0,0,0,0,0],
+       [0,0,0,0,0,0,0]]
+   ]]
+   dataset = PytorchBertDataset(dataset=dataset, task='classifier', model_type='bert',
+                                transform=preprocess, filter=filter)
+
+
+.. py:class:: ONNXRTBertDataset(data_dir, model_name_or_path, max_seq_length=128, do_lower_case=True, task='mrpc', model_type='bert', dynamic_length=False, evaluate=True, transform=None, filter=None)
+
+   Bases: :py:obj:`neural_compressor.experimental.data.datasets.dataset.Dataset`
+
+   ONNXRT dataset used for model Bert.
+
+   Args: data_dir (str): The input data dir.
+         model_name_or_path (str): Path to pre-trained student model or shortcut name,
+                                   selected in the list:
+         max_seq_length (int, default=128): The maximum length after tokenization.
+                               Sequences longer than this will be truncated,
+                               sequences shorter will be padded.
+         do_lower_case (bool, default=True): Whether to lowercase the input when tokenizing.
+         task (str, default=mrpc): The name of the task to fine-tune.
+                                   Choices include mrpc, qqp, qnli, rte,
+                                   sts-b, cola, mnli, wnli.
+         model_type (str, default='bert'): model type, support 'distilbert', 'bert',
+                                           'mobilebert', 'roberta'.
+         dynamic_length (bool, default=False): Whether to use fixed sequence length.
+         evaluate (bool, default=True): Whether do evaluation or training.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
+
+   .. rubric:: Examples
+
+   dataset = ONNXRTBertDataset(data_dir=data_dir, model_name_or_path='bert-base-uncase',
+                                transform=preprocess, filter=filter)
+
+
+.. py:function:: load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, model_type, tokenizer, evaluate)
+
+   Load and cache the examples.
+
+   Helper Function for ONNXRTBertDataset.
+
+
+.. py:function:: convert_examples_to_features(examples, tokenizer, max_length=128, task=None, label_list=None, output_mode='classification', pad_token=0, pad_token_segment_id=0, mask_padding_with_zero=True)
+
+   Convert examples to features.
+
+   Helper function for load_and_cache_examples.
+
+
+.. py:class:: InputFeatures
+
+   Single set of features of data.
+
+   Property names are the same names as the corresponding inputs to a model.
+
+   :param input_ids: Indices of input sequence tokens in the vocabulary.
+   :param attention_mask: Mask to avoid performing attention on padding token indices.
+                          Mask values selected in ``[0, 1]``: Usually ``1`` for tokens that are NOT MASKED,
+                          ``0`` for MASKED (padded) tokens.
+   :param token_type_ids: (Optional) Segment token indices to indicate first and second
+                          portions of the inputs. Only some models use them.
+   :param label: (Optional) Label corresponding to the input. Int for classification problems,
+                 float for regression problems.
+   :param seq_length: (Optional) The length of input sequence before padding.
+
+   .. py:method:: to_json_string()
+
+      Serialize this instance to a JSON string.
+
+
+
+.. py:class:: TensorflowBertDataset(root, label_file, task='squad', model_type='bert', transform=None, filter=None)
+
+   Bases: :py:obj:`neural_compressor.experimental.data.datasets.dataset.Dataset`
+
+   Tensorflow dataset used for model Bert.
+
+   This dataset supports tfrecord data, please refer to Guide to create tfrecord file first.
+
+   Args: root (str): path of dataset.
+         label_file (str): path of label file.
+         task (str, default='squad'): task type of model.
+         model_type (str, default='bert'): model type, support 'bert'.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions
+
+
+.. py:class:: ParseDecodeBert
+
+   Helper function for TensorflowModelZooBertDataset.
+
+   Parse the features from sample.
+
+
+.. py:class:: TensorflowModelZooBertDataset(root, label_file, task='squad', model_type='bert', transform=None, filter=None, num_cores=28)
+
+   Bases: :py:obj:`neural_compressor.experimental.data.datasets.dataset.Dataset`
+
+   Tensorflow dataset for three-input Bert in tf record format.
+
+   Root is a full path to tfrecord file, which contains the file name.
+   Please use Resize transform when batch_size > 1
+   Args: root (str): path of dataset.
+         label_file (str): path of label file.
+         task (str, default='squad'): task type of model.
+         model_type (str, default='bert'): model type, support 'bert'.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according.
+
+

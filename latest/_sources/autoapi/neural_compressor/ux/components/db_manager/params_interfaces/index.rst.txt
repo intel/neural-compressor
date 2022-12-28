@@ -1,0 +1,111 @@
+:py:mod:`neural_compressor.ux.components.db_manager.params_interfaces`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.params_interfaces
+
+.. autoapi-nested-parse::
+
+   Parameters interfaces for DB.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.params_interfaces.ModelAddParamsInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.DatasetAddParamsInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.BenchmarkAddParamsInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.BenchmarkEditParamsInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.ProfilingAddParamsInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.ProfilingEditParamsInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.ProfilingResultAddParamsInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryItemInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface
+   neural_compressor.ux.components.db_manager.params_interfaces.DiagnosisOptimizationParamsInterface
+
+
+
+
+.. py:class:: ModelAddParamsInterface
+
+   Interface for parameters to add model.
+
+   .. py:method:: parse_nodes(nodes: Union[None, str, List[str]]) -> List[str]
+      :staticmethod:
+
+      Parse model's boundary nodes.
+
+
+
+.. py:class:: DatasetAddParamsInterface
+
+   Interface for parameters to add dataset.
+
+
+.. py:class:: OptimizationAddParamsInterface
+
+   Interface for parameters to add optimization.
+
+
+.. py:class:: OptimizationEditParamsInterface
+
+   Interface for parameters to edit optimization.
+
+
+.. py:class:: BenchmarkAddParamsInterface
+
+   Interface for parameters to add benchmark.
+
+
+.. py:class:: BenchmarkEditParamsInterface
+
+   Interface for parameters to edit benchmark.
+
+
+.. py:class:: ProfilingAddParamsInterface
+
+   Interface for parameters to add profiling.
+
+
+.. py:class:: ProfilingEditParamsInterface
+
+   Interface for parameters to edit profiling.
+
+
+.. py:class:: ProfilingResultAddParamsInterface
+
+   Interface for parameters to add profiling result.
+
+
+.. py:class:: TuningHistoryItemInterface
+
+   Interface for single tuning history item.
+
+   .. py:method:: serialize() -> Dict[str, Any]
+
+      Serialize tuning history item.
+
+
+
+.. py:class:: TuningHistoryInterface
+
+   Interface for tuning history data.
+
+   .. py:method:: serialize() -> Dict[str, Any]
+
+      Serialize history snapshot to dict.
+
+
+
+.. py:class:: DiagnosisOptimizationParamsInterface
+
+   Interface for parameters for generating optimization from diagnosis tab.
+
+

@@ -1,0 +1,35 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter`
+=========================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter.PostHostConstConverter
+
+
+
+
+.. py:class:: PostHostConstConverter(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   [summary]
+   Support HostConst as default for all devices
+
+   .. py:method:: do_transformation()
+
+      Base Interface that need to be implemented by each sub class.
+
+
+
+

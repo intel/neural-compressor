@@ -1,0 +1,47 @@
+:py:mod:`neural_compressor.ux.web.service.workload`
+===================================================
+
+.. py:module:: neural_compressor.ux.web.service.workload
+
+.. autoapi-nested-parse::
+
+   Workload service.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.workload.WorkloadService
+
+
+
+
+.. py:class:: WorkloadService
+
+   Workload related services.
+
+   .. py:method:: get_config(data: dict) -> neural_compressor.ux.web.service.response_generator.Response
+      :classmethod:
+
+      Get config file for requested Workload.
+
+
+   .. py:method:: get_code_template(data: dict) -> neural_compressor.ux.web.service.response_generator.Response
+      :classmethod:
+
+      Get code template file for requested Workload.
+
+
+   .. py:method:: get_output(data: dict) -> neural_compressor.ux.web.service.response_generator.Response
+      :classmethod:
+
+      Get config file for requested Workload.
+
+
+

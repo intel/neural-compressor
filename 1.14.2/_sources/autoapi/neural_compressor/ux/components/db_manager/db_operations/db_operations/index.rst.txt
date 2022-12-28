@@ -1,0 +1,53 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.db_operations`
+================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.db_operations
+
+.. autoapi-nested-parse::
+
+   INC Bench API interfaces.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.db_operations.set_database_version
+   neural_compressor.ux.components.db_manager.db_operations.db_operations.initialize_associations
+   neural_compressor.ux.components.db_manager.db_operations.db_operations.initialize_precision_optimization_types_association
+   neural_compressor.ux.components.db_manager.db_operations.db_operations.search_in_list_of_dict_for_unique_value
+   neural_compressor.ux.components.db_manager.db_operations.db_operations.search_in_list_of_dict
+
+
+
+.. py:function:: set_database_version() -> None
+
+   Set version_num in alembic_version table.
+
+
+.. py:function:: initialize_associations() -> None
+
+   Initialize association tables in database.
+
+
+.. py:function:: initialize_precision_optimization_types_association() -> None
+
+   Initialize precision and optimization types association table.
+
+
+.. py:function:: search_in_list_of_dict_for_unique_value(list_of_dicts: List[Dict[str, Any]], parameter: str, value: Any) -> Dict[str, Any]
+
+   Search for dictionaries with specific unique parameter value.
+
+
+.. py:function:: search_in_list_of_dict(list_of_dicts: List[Dict[str, Any]], parameter: str, value: Any) -> List[Dict[str, Any]]
+
+   Search for dictionaries with specific parameter value.
+
+

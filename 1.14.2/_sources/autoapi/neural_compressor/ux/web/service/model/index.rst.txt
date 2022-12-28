@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.web.service.model`
+================================================
+
+.. py:module:: neural_compressor.ux.web.service.model
+
+.. autoapi-nested-parse::
+
+   Workload service.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.model.ModelService
+
+
+
+
+.. py:class:: ModelService
+
+   Workload related services.
+
+   .. py:method:: get_model(data: dict) -> neural_compressor.ux.web.service.response_generator.Response
+      :classmethod:
+
+      Get config file for requested Workload.
+
+
+

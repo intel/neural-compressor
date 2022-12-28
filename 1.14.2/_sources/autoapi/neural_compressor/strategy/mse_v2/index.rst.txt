@@ -1,0 +1,48 @@
+:py:mod:`neural_compressor.strategy.mse_v2`
+===========================================
+
+.. py:module:: neural_compressor.strategy.mse_v2
+
+.. autoapi-nested-parse::
+
+   The MSE_V2 tuning strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.mse_v2.MSE_V2TuneStrategy
+
+
+
+
+.. py:class:: MSE_V2TuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
+
+   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
+   The `mse_v2` tuning strategy.
+
+   Note that, only tensorflow framework and pytorch FX backend is currently supported for mse_v2
+   tuning strategy.
+
+   .. py:method:: next_tune_cfg()
+
+      Generate and yield the next tuning config with below order.
+
+         1. In the fallback stage, it uses multi-batch data to score the op impact
+         and then fallback the op with the highest score util found the quantized
+         model meets accuracy criteria.
+         2. In the revert fallback stage, it also scores the impact of fallback OPs
+         in the previous stage and selects the op with the lowest score to revert
+         the fallback until the quantized model not meets accuracy criteria.
+
+      :Yields: *tune_config (dict)* -- A dict containing the tuning configuration for quantization.
+
+
+

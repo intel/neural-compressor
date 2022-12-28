@@ -1,0 +1,113 @@
+:py:mod:`neural_compressor.data.transforms.tokenization`
+========================================================
+
+.. py:module:: neural_compressor.data.transforms.tokenization
+
+.. autoapi-nested-parse::
+
+   Tokenization helper classes.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.transforms.tokenization.FullTokenizer
+   neural_compressor.data.transforms.tokenization.BasicTokenizer
+   neural_compressor.data.transforms.tokenization.WordpieceTokenizer
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.transforms.tokenization.convert_to_unicode
+   neural_compressor.data.transforms.tokenization.load_vocab
+   neural_compressor.data.transforms.tokenization.convert_by_vocab
+   neural_compressor.data.transforms.tokenization.whitespace_tokenize
+
+
+
+.. py:function:: convert_to_unicode(text)
+
+   Convert `text` to Unicode (if it's not already), assuming utf-8 input.
+
+
+.. py:function:: load_vocab(vocab_file)
+
+   Load a vocabulary file into a dictionary.
+
+
+.. py:function:: convert_by_vocab(vocab, items)
+
+   Convert a sequence of [tokens|ids] using the vocab.
+
+
+.. py:function:: whitespace_tokenize(text)
+
+   Run basic whitespace cleaning and splitting on a piece of text.
+
+
+.. py:class:: FullTokenizer(vocab_file, do_lower_case=True)
+
+   Bases: :py:obj:`object`
+
+   Run end-to-end tokenziation.
+
+   .. py:method:: tokenize(text)
+
+      Tokenize text.
+
+
+   .. py:method:: convert_tokens_to_ids(tokens)
+
+      Convert tokens to ids.
+
+
+   .. py:method:: convert_ids_to_tokens(ids)
+
+      Convert ids to tokens.
+
+
+
+.. py:class:: BasicTokenizer(do_lower_case=True)
+
+   Bases: :py:obj:`object`
+
+   Run basic tokenization (punctuation splitting, lower casing, etc.).
+
+   .. py:method:: tokenize(text)
+
+      Tokenizes a piece of text.
+
+
+
+.. py:class:: WordpieceTokenizer(vocab, unk_token='[UNK]', max_input_chars_per_word=200)
+
+   Bases: :py:obj:`object`
+
+   Run WordPiece tokenziation.
+
+   .. py:method:: tokenize(text)
+
+      Tokenize a piece of text into its word pieces.
+
+      This uses a greedy longest-match-first algorithm to perform tokenization
+      using the given vocabulary.
+      For example:
+        input = "unaffable"
+        output = ["un", "##aff", "##able"]
+      :param text: A single token or whitespace separated tokens. This should have
+                   already been passed through `BasicTokenizer.
+
+      :returns: A list of wordpiece tokens.
+
+
+

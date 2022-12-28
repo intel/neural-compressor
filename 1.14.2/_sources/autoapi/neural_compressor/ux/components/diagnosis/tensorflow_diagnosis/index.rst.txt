@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.ux.components.diagnosis.tensorflow_diagnosis`
+========================================================================
+
+.. py:module:: neural_compressor.ux.components.diagnosis.tensorflow_diagnosis
+
+.. autoapi-nested-parse::
+
+   The tensorflow_diagnosis package contains components used for tensorflow optimizations debug.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   tensorflow_diagnosis/index.rst
+
+

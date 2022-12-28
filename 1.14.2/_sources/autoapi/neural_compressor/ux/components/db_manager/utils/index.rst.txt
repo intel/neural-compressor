@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.ux.components.db_manager.utils`
+==========================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.utils
+
+.. autoapi-nested-parse::
+
+   DB Manager utils module.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.utils.update_dataloaders_params
+   neural_compressor.ux.components.db_manager.utils.get_framework_dataloaders_config
+   neural_compressor.ux.components.db_manager.utils.get_framework_transforms_config
+
+
+
+.. py:function:: update_dataloaders_params(db_session: sqlalchemy.orm.session.Session, framework_id: int, dataloaders_to_update: List[str], framework_dataloaders_config: List[dict]) -> None
+
+   Update dataloaders' params.
+
+
+.. py:function:: get_framework_dataloaders_config(framework: neural_compressor.ux.utils.consts.Frameworks) -> List[dict]
+
+   Get dataloaders config for specified framework.
+
+
+.. py:function:: get_framework_transforms_config(framework: neural_compressor.ux.utils.consts.Frameworks) -> List[dict]
+
+   Get transformations config for specified framework.
+
+

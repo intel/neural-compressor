@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pruning &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+              <div class="version">
+                1.14.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Pruning</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/pruning.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pruning">
+<h1>Pruning<a class="headerlink" href="#pruning" title="Permalink to this heading"></a></h1>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p>
+<p>1.1. <a class="reference external" href="#neural-network-pruning">Neural Network Pruning</a></p>
+<p>1.2. <a class="reference external" href="#pruning-patterns">Pruning Patterns</a></p>
+<p>1.3. <a class="reference external" href="#pruning-criteria">Pruning Criteria</a></p>
+<p>1.4. <a class="reference external" href="#pruning-schedule">Pruning Schedule</a></p>
+</li>
+<li><p><a class="reference external" href="#pruning-support-matrix">Pruning Support Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-pruning-api">Get Started With Pruning API</a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<section id="neural-network-pruning">
+<h3>Neural Network Pruning<a class="headerlink" href="#neural-network-pruning" title="Permalink to this heading"></a></h3>
+<p>Neural network pruning (briefly known as pruning or sparsity) is one of the most promising model compression techniques. It removes the least important parameters in the network and achieves compact architectures with minimal accuracy drop and maximal inference acceleration. As current state-of-the-art models have increasingly more parameters, pruning plays a crucial role in enabling them to run on devices whose memory footprints and computing resources are limited.</p>
+<a target="_blank" href="./imgs/pruning/pruning_intro.png">
+    <img src="./imgs/pruning/pruning_intro.png" width=400 height=250 alt="pruning intro">
+</a></section>
+<section id="pruning-patterns">
+<h3>Pruning Patterns<a class="headerlink" href="#pruning-patterns" title="Permalink to this heading"></a></h3>
+<p>Pruning patterns defines the rules of pruned weights’ arrangements in space.</p>
+<a target="_blank" href="./imgs/pruning/pruning_pattern.png">
+    <img src="imgs/pruning/pruning_patterns.png" width=600 height=150 alt="Sparsity Pattern">
+</a><ul class="simple">
+<li><p>Unstructured Pruning</p></li>
+</ul>
+<p>Unstructured pruning means finding and removing the less salient connection in the model where the nonzero patterns are irregular and could be anywhere in the matrix.</p>
+<ul class="simple">
+<li><p>2in4 Pruning</p></li>
+</ul>
+<p>NVIDIA proposed <a class="reference external" href="https://developer.nvidia.com/blog/accelerating-inference-with-sparsity-using-ampere-and-tensorrt/">2:4 sparsity</a> (or known as “2in4 sparsity”) in Ampere architecture, for every 4 continuous elements in a matrix, two of them are zero and others are non-zero.</p>
+<ul class="simple">
+<li><p>Structured Pruning</p></li>
+</ul>
+<p>Structured pruning means finding parameters in groups, deleting entire blocks, filters, or channels according to some pruning criterions. In general, structured pruning leads to lower accuracy due to restrictive structure than unstructured pruning; However, it can accelerate the model execution significantly because it can fit hardware design better.</p>
+<p>Different from 2:4 sparsity above, we propose the block-wise structured sparsity patterns that we are able to demonstrate the performance benefits on existing Intel hardwares even without the support of hardware sparsity. A block-wise sparsity pattern with block size <code class="docutils literal notranslate"><span class="pre">S</span></code> means the contiguous <code class="docutils literal notranslate"><span class="pre">S</span></code> elements in this block are all zero values.</p>
+<p>For a typical GEMM, the weight dimension is <code class="docutils literal notranslate"><span class="pre">IC</span></code> x <code class="docutils literal notranslate"><span class="pre">OC</span></code>, where <code class="docutils literal notranslate"><span class="pre">IC</span></code> is the number of input channels and <code class="docutils literal notranslate"><span class="pre">OC</span></code> is the number of output channels. Note that sometimes <code class="docutils literal notranslate"><span class="pre">IC</span></code> is also called dimension <code class="docutils literal notranslate"><span class="pre">K</span></code>, and <code class="docutils literal notranslate"><span class="pre">OC</span></code> is called dimension <code class="docutils literal notranslate"><span class="pre">N</span></code>. The sparsity dimension is on <code class="docutils literal notranslate"><span class="pre">OC</span></code> (or <code class="docutils literal notranslate"><span class="pre">N</span></code>).</p>
+<p>For a typical Convolution, the weight dimension is <code class="docutils literal notranslate"><span class="pre">OC</span> <span class="pre">x</span> <span class="pre">IC</span> <span class="pre">x</span> <span class="pre">KH</span> <span class="pre">x</span> <span class="pre">KW</span></code>, where <code class="docutils literal notranslate"><span class="pre">OC</span></code> is the number of output channels, <code class="docutils literal notranslate"><span class="pre">IC</span></code> is the number of input channels, and <code class="docutils literal notranslate"><span class="pre">KH</span></code> and <code class="docutils literal notranslate"><span class="pre">KW</span></code> is the kernel height and weight. The sparsity dimension is also on <code class="docutils literal notranslate"><span class="pre">OC</span></code>.</p>
+<p>Here is a figure showing a matrix with <code class="docutils literal notranslate"><span class="pre">IC</span></code> = 32 and <code class="docutils literal notranslate"><span class="pre">OC</span></code> = 16 dimension, and a block-wise sparsity pattern with block size 4 on <code class="docutils literal notranslate"><span class="pre">OC</span></code> dimension.</p>
+<a target="_blank" href="./imgs/pruning/sparse_dim.png">
+    <img src="./imgs/pruning/sparse_dim.png" width=600 height=320 alt="block sparsity Pattern">
+</a></section>
+<section id="pruning-criteria">
+<h3>Pruning Criteria<a class="headerlink" href="#pruning-criteria" title="Permalink to this heading"></a></h3>
+<p>Pruning criteria defines the rules of which weights are least important to be pruned, in order to maintain the model’s original accuracy. Most popular criteria examine weights’ absolute value and their corresponding gradients.</p>
+<ul>
+<li><p>Magnitude</p>
+<p>The algorithm prunes the weight by the lowest absolute value at each layer with given sparsity target.</p>
+</li>
+<li><p>Gradient sensitivity</p>
+<p>The algorithm prunes the head, intermediate layers, and hidden states in NLP model according to importance score calculated by following the paper <a class="reference external" href="https://arxiv.org/abs/2010.13382">FastFormers</a>.</p>
+</li>
+<li><p>Group Lasso</p>
+<p>The algorithm uses Group lasso regularization to prune entire rows, columns or blocks of parameters that result in a smaller dense network.</p>
+</li>
+<li><p>Pattern Lock</p>
+<p>The algorithm locks the sparsity pattern in finetuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied in the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to <a class="reference external" href="https://arxiv.org/pdf/2111.05754.pdf">Prune once for all</a> for more information.</p>
+</li>
+<li><p>SNIP</p>
+<p>The algorithm prunes the dense model at its initialization, by analyzing the weights’ effect to the loss function when they are masked. Please refer to the original <a class="reference external" href="https://arxiv.org/abs/1810.02340">paper</a> for details</p>
+</li>
+<li><p>SNIP with momentum</p>
+<p>The algorithm improves original SNIP algorithms and introduces weights’ score maps which updates in a momentum way.<br />In the following formula, $n$ is the pruning step and $W$ and $G$ are model’s weights and gradients respectively.
+$$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$</p>
+</li>
+</ul>
+</section>
+<section id="pruning-schedule">
+<h3>Pruning Schedule<a class="headerlink" href="#pruning-schedule" title="Permalink to this heading"></a></h3>
+<p>Pruning schedule defines the way the model reach the target sparsity (the ratio of pruned weights).</p>
+<ul>
+<li><p>One-shot Pruning</p>
+<p>One-shot pruning means the model is pruned to its target sparsity with one single step. This pruning method often works at model’s initialization step. It can easily cause accuracy drop, but save much training time.</p>
+</li>
+<li><p>Iterative Pruning</p>
+<p>Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model’s sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.</p>
+</li>
+</ul>
+</section>
+</section>
+<section id="pruning-support-matrix">
+<h2>Pruning Support Matrix<a class="headerlink" href="#pruning-support-matrix" title="Permalink to this heading"></a></h2>
+<table>
+<thead>
+  <tr>
+    <th>Pruning Type</th>
+    <th>Pruning Granularity</th>
+    <th>Pruning Algorithm</th>
+    <th>Framework</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="3">Unstructured Pruning</td>
+    <td rowspan="3">Element-wise</td>
+    <td>Magnitude</td>
+    <td>PyTorch, TensorFlow</td>
+  </tr>
+  <tr>
+    <td>Pattern Lock</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>SNIP with momentum</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td rowspan="6">Structured Pruning</td>
+    <td rowspan="2">Filter/Channel-wise</td>
+    <td>Gradient Sensitivity</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>SNIP with momentum</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td rowspan="2">Block-wise</td>
+    <td>Group Lasso</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>SNIP with momentum</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td rowspan="2">Element-wise</td>
+    <td>Pattern Lock</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>SNIP with momentum</td>
+    <td>PyTorch</td>
+  </tr>
+</tbody>
+</table></section>
+<section id="get-started-with-pruning-api">
+<h2>Get Started with Pruning API<a class="headerlink" href="#get-started-with-pruning-api" title="Permalink to this heading"></a></h2>
+<p>Neural Compressor <code class="docutils literal notranslate"><span class="pre">Pruning</span></code> API is defined under <code class="docutils literal notranslate"><span class="pre">neural_compressor.experimental.Pruning</span></code>, which takes a user defined yaml file as input. Below is the launcher code of applying the API to execute a pruning process.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Pruning</span>
+<span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="s1">&#39;/path/to/user/pruning/yaml&#39;</span><span class="p">)</span>
+<span class="n">prune</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prune</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Users can pass the customized training/evaluation functions to <code class="docutils literal notranslate"><span class="pre">Pruning</span></code> for flexible scenarios. In this case, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to put those hooks inside the training function.</p>
+<p>Neural Compressor defines several hooks for users to use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">epoch</span> <span class="n">beginning</span>
+<span class="n">on_step_begin</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">batch</span> <span class="n">beginning</span>
+<span class="n">on_step_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">batch</span> <span class="n">end</span>
+<span class="n">on_epoch_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">epoch</span> <span class="n">end</span>
+<span class="n">on_before_optimizer_step</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">after</span> <span class="n">gradients</span> <span class="n">calculated</span> <span class="ow">and</span> <span class="n">before</span> <span class="n">backward</span>
+</pre></div>
+</div>
+<p>Following section shows how to use hooks in user pass-in training function which is part of example from BERT training:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">pruning_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">num_train_epochs</span><span class="p">)):</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">ProgressBar</span><span class="p">(</span><span class="n">n_total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Training&#39;</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">prune</span><span class="o">.</span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
+            <span class="n">prune</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">)</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;input_ids&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                      <span class="s1">&#39;attention_mask&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                      <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="mi">3</span><span class="p">]}</span>
+            <span class="c1">#inputs[&#39;token_type_ids&#39;] = batch[2]</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># model outputs are always tuple in transformers (see doc)</span>
+
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>  <span class="c1"># mean() to average on multi-gpu parallel training</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">gradient_accumulation_steps</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">/</span> <span class="n">args</span><span class="o">.</span><span class="n">gradient_accumulation_steps</span>
+
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">args</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">gradient_accumulation_steps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">prune</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
+                <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+                <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>  <span class="c1"># Update learning rate schedule</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    
+            <span class="n">prune</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">()</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>In this case, the launcher code is like the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Pruning</span><span class="p">,</span> <span class="n">common</span>
+<span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+<span class="n">prune</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">prune</span><span class="o">.</span><span class="n">train_func</span> <span class="o">=</span> <span class="n">pruning_func</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prune</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<p>We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). <a class="reference external" href="./validated_model_list.md#validated-pruning-examples">Validated pruning examples</a> shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model.</p>
+<p>Please refer to pruning examples(<a class="reference external" href="../../examples/README.md#Pruning">TensorFlow</a>, <a class="reference external" href="../../examples/README.md#Pruning-1">PyTorch</a>) for more information.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

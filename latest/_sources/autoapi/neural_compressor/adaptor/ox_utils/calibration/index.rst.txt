@@ -1,0 +1,89 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.calibration`
+========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.calibration
+
+.. autoapi-nested-parse::
+
+   Calibration for onnx models.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.calibration.ONNXRTAugment
+
+
+
+
+.. py:class:: ONNXRTAugment(model_wrapper, dataloader, dump_op_types, black_nodes=[], white_nodes=[], iterations=[], backend=['CPUExecutionProvider'], reduce_range=False)
+
+   augment input model to dump tensor or for calibration.
+
+   .. py:method:: augment_graph(activation_only=False, weight_only=False)
+
+      Augment_graph.
+
+      Adds nodes to all quantization_candidates op type nodes in model and
+      ensures their outputs are stored as part of the graph output.
+
+      :param activation_only: whether to dump activation tensor only. Defaults to False.
+      :type activation_only: bool, optional
+      :param weight_only: whether to dump weight_only. Defaults to False.
+      :type weight_only: bool, optional
+
+
+   .. py:method:: get_intermediate_outputs(calib_mode=None)
+
+      Gather intermediate model outputs after running inference.
+
+
+   .. py:method:: dump_minmax(calib_mode='naive')
+
+      Get min/max values of tensors.
+
+
+   .. py:method:: dump_calibration(q_config, calib_mode='naive')
+
+      Gather calibration params for quantization.
+
+      :param q_config: op-wise quantization config
+      :type q_config: dict
+      :param calib_mode: type 'naive' gives (Min, Max) pairs
+                         for each intermediate model output across
+                         test data sets, where the first element is
+                         a minimum of all values and the second element
+                         is a maximum of all values. Defaults to 'naive'.
+      :type calib_mode: str, optional
+
+
+   .. py:method:: calculate_quantization_params(q_config, quantization_thresholds)
+
+      Given quantization thresholds, calculate the quantization params.
+
+      :param q_config: op-wise quantization config
+      :type q_config: dict
+      :param quantization_thresholds: Dictionary specifying the min and max values
+                                      or outputs of conv and matmul nodes, should be
+                                      specified in the following format:
+                                      {"param_name": [min, max]}
+      :type quantization_thresholds: dict
+
+
+   .. py:method:: dump_tensor(activation=True, weight=False)
+
+      Dump activation or weight or both from the model.
+
+
+   .. py:method:: calculate_scale_zeropoint(last_node, next_node, rmin, rmax, scheme, qType, quantize_range)
+
+      Given the source and destination node of tensor, return calculated zero point and scales.
+
+
+

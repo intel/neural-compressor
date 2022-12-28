@@ -1,0 +1,26 @@
+:py:mod:`neural_compressor.ux.components.config_generator`
+==========================================================
+
+.. py:module:: neural_compressor.ux.components.config_generator
+
+.. autoapi-nested-parse::
+
+   Package contains components to generate yaml configuration files dynamically.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   benchmark_config_generator/index.rst
+   config_generator/index.rst
+   graph_optimization_config_generator/index.rst
+   mixed_precision_config_generator/index.rst
+   profiling_config_generator/index.rst
+   pruning_config_generator/index.rst
+   quantization_config_generator/index.rst
+
+

@@ -1,0 +1,155 @@
+:py:mod:`neural_compressor.ux.utils.parser`
+===========================================
+
+.. py:module:: neural_compressor.ux.utils.parser
+
+.. autoapi-nested-parse::
+
+   Parsers for log files.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.parser.Parser
+   neural_compressor.ux.utils.parser.OptimizationParser
+   neural_compressor.ux.utils.parser.PerformanceParser
+   neural_compressor.ux.utils.parser.AccuracyParser
+   neural_compressor.ux.utils.parser.BenchmarkParserFactory
+   neural_compressor.ux.utils.parser.ProfilingParser
+
+
+
+
+.. py:class:: Parser(logs: list)
+
+   Bases: :py:obj:`abc.ABC`
+
+   Parser abstract class.
+
+   .. py:property:: patterns
+      :type: dict
+      :abstractmethod:
+
+      Set patterns to get metrics from lines.
+
+   .. py:method:: process() -> Dict[str, Any]
+      :abstractmethod:
+
+      Process log files.
+
+
+
+.. py:class:: OptimizationParser(logs: list)
+
+   Bases: :py:obj:`Parser`
+
+   Parser class is responsible for parsing optimization log files.
+
+   .. py:property:: patterns
+      :type: dict
+
+      Set patterns to get metrics from lines.
+
+   .. py:method:: process() -> Dict[str, Any]
+
+      Process files.
+
+
+
+.. py:class:: PerformanceParser(logs: list)
+
+   Bases: :py:obj:`Parser`
+
+   Parser class is responsible for parsing performance benchmark log files.
+
+   .. py:property:: patterns
+      :type: dict
+
+      Set patterns to get metrics from lines.
+
+   .. py:method:: process() -> Dict[str, Any]
+
+      Process files.
+
+
+   .. py:method:: update_partial(partial: Dict[str, List], parsed_result: Dict[str, Union[float, int]]) -> Dict[str, List]
+      :staticmethod:
+
+      Update partial entries.
+
+
+   .. py:method:: summarize_partial(partial: dict) -> dict
+
+      Calculate final values.
+
+
+   .. py:method:: summarize_value(key: str, value: list) -> Union[float, int]
+      :staticmethod:
+
+      Calculate final value.
+
+
+
+.. py:class:: AccuracyParser(logs: list)
+
+   Bases: :py:obj:`Parser`
+
+   Parser class is responsible for parsing accuracy benchmark log files.
+
+   .. py:property:: patterns
+      :type: dict
+
+      Set patterns to get metrics from lines.
+
+   .. py:method:: process() -> Dict[str, Any]
+
+      Process accuracy logs.
+
+
+
+.. py:class:: BenchmarkParserFactory
+
+   Benchmark parser factory.
+
+   .. py:method:: get_parser(benchmark_mode: str, logs: List[str]) -> Parser
+      :staticmethod:
+
+      Get benchmark parser for specified mode.
+
+
+
+.. py:class:: ProfilingParser(logs: list)
+
+   Bases: :py:obj:`Parser`
+
+   Parser class is responsible for parsing profiling log files.
+
+   .. py:property:: patterns
+      :type: dict
+
+      Set patterns to get metrics from lines.
+
+   .. py:method:: unify_time(string_value: str) -> float
+      :staticmethod:
+
+      Unify time with unit to micro seconds float value.
+
+      :param string_value: time value with unit, e.g. 125.6ms
+      :type string_value: str
+      :return: time value in microseconds
+      :rtype: float
+
+
+   .. py:method:: process() -> Dict[str, Any]
+
+      Process profiling logs.
+
+
+

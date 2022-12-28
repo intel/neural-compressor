@@ -1,0 +1,55 @@
+:py:mod:`neural_compressor.experimental.export.utils`
+=====================================================
+
+.. py:module:: neural_compressor.experimental.export.utils
+
+.. autoapi-nested-parse::
+
+   Utility functions to export model from PyTorch/TensorFlow to ONNX.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.export.utils.DummyDataReader
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.export.utils.ONNX2Numpy_dtype
+
+
+
+.. py:function:: ONNX2Numpy_dtype(onnx_node_type)
+
+   Get Numpy data type from onnx data type.
+
+   :param onnx_node_type: data type description.
+   :type onnx_node_type: str
+
+   :returns: numpy data type
+   :rtype: dtype
+
+
+.. py:class:: DummyDataReader(fp32_onnx_path)
+
+   Bases: :py:obj:`ortq`
+
+   Build dummy datareader for onnx static quantization.
+
+   .. py:method:: get_next()
+
+      Generate next data.
+
+
+

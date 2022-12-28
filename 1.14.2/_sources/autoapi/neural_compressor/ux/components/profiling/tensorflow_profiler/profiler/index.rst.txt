@@ -1,0 +1,63 @@
+:py:mod:`neural_compressor.ux.components.profiling.tensorflow_profiler.profiler`
+================================================================================
+
+.. py:module:: neural_compressor.ux.components.profiling.tensorflow_profiler.profiler
+
+.. autoapi-nested-parse::
+
+   Tensorflow profiler.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.profiling.tensorflow_profiler.profiler.Profiler
+
+
+
+
+.. py:class:: Profiler(profiling_data: dict)
+
+   Bases: :py:obj:`neural_compressor.ux.components.profiling.profiler.Profiler`
+
+   Tensorflow profiler class.
+
+   .. py:method:: initialize_graph(tf_module: Any) -> Any
+
+      Initialize tensorflow model graph.
+
+
+   .. py:method:: create_tf_config(tf_module: Any) -> Any
+
+      Create tensorflow config.
+
+
+   .. py:method:: profile_model(num_warmup: int = 10, batch_size: int = 1) -> None
+
+      Execute model profiling.
+
+
+   .. py:method:: get_node_by_name(graph_def: Any, node_name: str) -> Any
+      :staticmethod:
+
+      Get NodeDef from GraphDef by name.
+
+
+   .. py:method:: convert_nodes_to_list(nodes: str) -> List[str]
+      :staticmethod:
+
+      Convert string node into list of nodes.
+
+
+   .. py:method:: build_dataloader() -> neural_compressor.experimental.data.dataloaders.tensorflow_dataloader.TensorflowDataLoader
+
+      Build dataloader based on config.
+
+
+

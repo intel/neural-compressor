@@ -1,0 +1,178 @@
+:py:mod:`neural_compressor.experimental.component`
+==================================================
+
+.. py:module:: neural_compressor.experimental.component
+
+.. autoapi-nested-parse::
+
+   This is a module for Component class.
+
+   The Component class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.component.Component
+
+
+
+
+.. py:class:: Component(conf_fname_or_obj=None, combination=None)
+
+   Bases: :py:obj:`object`
+
+   This is base class of Neural Compressor Component.
+
+   This class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
+   This design is mainly for one-shot optimization for pruning/distillation/quantization-aware training.
+   In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
+
+   .. py:property:: train_func
+
+      Not support get train_func.
+
+   .. py:property:: eval_func
+
+      Not support get eval_func.
+
+   .. py:property:: train_dataloader
+
+      Getter to train dataloader.
+
+   .. py:property:: eval_dataloader
+
+      Getter to eval dataloader.
+
+   .. py:property:: model
+
+      Getter of model in neural_compressor.model.
+
+   .. py:method:: prepare()
+
+      Register Quantization Aware Training hooks.
+
+
+   .. py:method:: prepare_qat()
+
+      Register Quantization Aware Training hooks.
+
+
+   .. py:method:: pre_process()
+
+      Initialize some attributes, such as the adaptor, the dataloader and train/eval functions from yaml config.
+
+      Component base class provides default function to initialize dataloaders and functions
+      from user config. And for derived classes(Pruning, Quantization, etc.), an override
+      function is required.
+
+
+   .. py:method:: execute()
+
+      Execute the processing of this compressor.
+
+      Component base class provides compressing processing. And for derived classes(Pruning, Quantization, etc.),
+      an override function is required.
+
+
+   .. py:method:: post_process()
+
+      Post process after execution.
+
+      For derived classes(Pruning, Quantization, etc.), an override function is required.
+
+
+   .. py:method:: on_train_begin(dataloader=None)
+
+      Be called before the beginning of epochs.
+
+
+   .. py:method:: on_train_end()
+
+      Be called after the end of epochs.
+
+
+   .. py:method:: pre_epoch_begin(dataloader=None)
+
+      Be called before the beginning of epochs.
+
+
+   .. py:method:: post_epoch_end()
+
+      Be called after the end of epochs.
+
+
+   .. py:method:: on_epoch_begin(epoch)
+
+      Be called on the beginning of epochs.
+
+
+   .. py:method:: on_step_begin(batch_id)
+
+      Be called on the beginning of batches.
+
+
+   .. py:method:: on_batch_begin(batch_id)
+
+      Be called on the beginning of batches.
+
+
+   .. py:method:: on_after_compute_loss(input, student_output, student_loss, teacher_output=None)
+
+      Be called on the end of loss computation.
+
+
+   .. py:method:: on_before_optimizer_step()
+
+      Be called before optimizer step.
+
+
+   .. py:method:: on_after_optimizer_step()
+
+      Be called after optimizer step.
+
+
+   .. py:method:: on_before_eval()
+
+      Be called before evaluation.
+
+
+   .. py:method:: on_after_eval()
+
+      Be called after evaluation.
+
+
+   .. py:method:: on_post_grad()
+
+      Be called before optimizer step.
+
+
+   .. py:method:: on_step_end()
+
+      Be called on the end of batches.
+
+
+   .. py:method:: on_batch_end()
+
+      Be called on the end of batches.
+
+
+   .. py:method:: on_epoch_end()
+
+      Be called on the end of epochs.
+
+
+   .. py:method:: register_hook(scope, hook, input_args=None, input_kwargs=None)
+
+      Register hook for component.
+
+      Input_args and input_kwargs are reserved for user registered hooks.
+
+
+

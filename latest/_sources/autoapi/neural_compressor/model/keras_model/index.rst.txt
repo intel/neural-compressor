@@ -1,0 +1,55 @@
+:py:mod:`neural_compressor.model.keras_model`
+=============================================
+
+.. py:module:: neural_compressor.model.keras_model
+
+.. autoapi-nested-parse::
+
+   Class for Keras model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.model.keras_model.KerasModel
+
+
+
+
+.. py:class:: KerasModel(model, **kwargs)
+
+   Bases: :py:obj:`neural_compressor.model.base_model.BaseModel`
+
+   Build Keras model.
+
+   .. py:property:: q_config
+
+      Return q_config.
+
+   .. py:property:: model
+
+      Return model itself.
+
+   .. py:property:: graph_info
+
+      Return graph info.
+
+   .. py:method:: save(root, *args, **kwargs)
+      :abstractmethod:
+
+      Save Keras model.
+
+
+   .. py:method:: framework()
+      :abstractmethod:
+
+      Return framework.
+
+
+

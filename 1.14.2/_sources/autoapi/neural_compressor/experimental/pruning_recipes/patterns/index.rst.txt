@@ -1,0 +1,51 @@
+:py:mod:`neural_compressor.experimental.pruning_recipes.patterns`
+=================================================================
+
+.. py:module:: neural_compressor.experimental.pruning_recipes.patterns
+
+.. autoapi-nested-parse::
+
+   different patterns.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   pattern/index.rst
+   tile_pattern/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pruning_recipes.patterns.PATTERNS
+
+
+
+
+.. py:class:: PATTERNS
+
+   Bases: :py:obj:`object`
+
+   Class that contain all registered pattern types.
+
+   .. attribute:: patterns
+
+      A dict which stores registered Pruning Pattern subclasses.
+
+   .. py:method:: support_pattern()
+      :classmethod:
+
+      Support patterns.
+
+
+

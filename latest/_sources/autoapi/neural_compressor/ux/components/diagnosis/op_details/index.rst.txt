@@ -1,0 +1,60 @@
+:py:mod:`neural_compressor.ux.components.diagnosis.op_details`
+==============================================================
+
+.. py:module:: neural_compressor.ux.components.diagnosis.op_details
+
+.. autoapi-nested-parse::
+
+   The OpDetails class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.diagnosis.op_details.OpDetails
+   neural_compressor.ux.components.diagnosis.op_details.OpPattern
+   neural_compressor.ux.components.diagnosis.op_details.OpWeights
+   neural_compressor.ux.components.diagnosis.op_details.OpActivation
+
+
+
+
+.. py:class:: OpDetails(op_name: str, op_details: dict)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   OP details class.
+
+   .. py:method:: serialize(serialization_type: str = 'default') -> Dict[str, Any]
+
+      Serialize OpDetails.
+
+
+
+.. py:class:: OpPattern(pattern_data: dict)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   OP pattern class.
+
+
+.. py:class:: OpWeights(weights_data: dict)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   OP weights class.
+
+
+.. py:class:: OpActivation(op_activation: dict)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   OP activation class.
+
+

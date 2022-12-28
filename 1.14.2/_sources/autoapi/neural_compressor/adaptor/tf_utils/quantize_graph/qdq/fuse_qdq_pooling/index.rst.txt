@@ -1,0 +1,43 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_pooling`
+================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_pooling
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_pooling.FuseNodeStartWithPooling
+
+
+
+
+.. py:class:: FuseNodeStartWithPooling(**kwargs)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
+
+   This is the base class for nodes fusion
+
+
+   :param object {[type]} -- [description]:
+
+   .. py:method:: get_longest_fuse()
+
+      This is the virtual interface to be implemented by derived class
+
+
+
+   .. py:method:: apply_the_transform()
+
+      This is the virtual interface to be implemented by derived class
+      :return: transformed graphdef
+
+
+

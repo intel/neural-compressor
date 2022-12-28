@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.attention`
+================================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.attention
+
+.. autoapi-nested-parse::
+
+   Attention operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.attention.AttentionOperator
+   neural_compressor.adaptor.ox_utils.operators.attention.QAttentionOperator
+
+
+
+
+.. py:class:: AttentionOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   Attention operator.
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert QDQ mode to QOperator format.
+
+
+
+.. py:class:: QAttentionOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.QOperator`
+
+   QAttention operator.
+
+   .. py:method:: convert()
+
+      Convert to QDQ format.
+
+
+

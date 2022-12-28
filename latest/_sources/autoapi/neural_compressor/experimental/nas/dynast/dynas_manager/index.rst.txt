@@ -1,0 +1,144 @@
+:py:mod:`neural_compressor.experimental.nas.dynast.dynas_manager`
+=================================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynast.dynas_manager
+
+.. autoapi-nested-parse::
+
+   DyNAS Manager class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.dynast.dynas_manager.ParameterManager
+   neural_compressor.experimental.nas.dynast.dynas_manager.TransformerLTEncoding
+
+
+
+
+.. py:class:: ParameterManager(param_dict: dict, verbose: bool = False, seed: int = 0)
+
+   The ParameterManager class.
+
+   It handles the super-network encoding representation and translates between
+   the 1-hot predictor, pymoo, and super-network dictionary formats during search.
+
+   :param param_dict: the search space dictionary.
+   :type param_dict: dict
+
+   .. py:method:: process_param_dict() -> Tuple[list, list, int]
+
+      Build a parameter mapping arrays and an upper-bound vector for pymoo.
+
+
+   .. py:method:: onehot_generic(in_array: list) -> numpy.ndarray
+
+      Generate onehot vector.
+
+      This is a generic approach to one-hot vectorization for predictor training
+      and testing. It does not account for unused parameter mapping (e.g. block depth).
+      For unused parameter mapping, the end user will need to provide a custom solution.
+
+      :param input_array: the pymoo individual 1-D vector
+      :type input_array: list
+
+      :returns: the map for elastic parameters of the supernetwork
+      :rtype: mapper (numpy array)
+
+
+   .. py:method:: random_sample() -> list
+
+      Generate a random subnetwork from the possible elastic parameter range.
+
+
+   .. py:method:: random_samples(size: int = 100, trial_limit: int = 100000) -> List[list]
+
+      Generate a list of random subnetworks from the possible elastic parameter range.
+
+
+   .. py:method:: translate2param(pymoo_vector: list) -> dict
+
+      Translate a PyMoo 1-D parameter vector back to the elastic parameter dictionary format.
+
+
+   .. py:method:: translate2pymoo(parameters: dict) -> list
+
+      Translate a single parameter dict to pymoo vector.
+
+
+   .. py:method:: import_csv(filepath: str, config: str, objective: str, column_names: List[str] = None, drop_duplicates: bool = True) -> pandas.DataFrame
+
+      Import a csv file.
+
+      Import a csv file generated from a supernetwork search for the purpose
+      of training a predictor.
+
+      :param filepath: path of the csv to be imported.
+      :type filepath: str
+      :param config: the subnetwork configuration.
+      :type config: str
+      :param objective: target/label for the subnet configuration (e.g. accuracy, latency).
+      :type objective: str
+      :param column_names: a list of column names for the dataframe.
+
+      :returns:
+
+                the output dataframe that contains the original config dict, pymoo, and 1-hot
+                    equivalent vector for training.
+      :rtype: df
+
+
+   .. py:method:: set_seed(seed) -> None
+
+      Set the random seed for randomized subnet generation and test/train split.
+
+
+   .. py:method:: create_training_set(dataframe: pandas.DataFrame, train_with_all: bool = True, split: float = 0.33, seed: bool = None) -> Tuple[list, list, list, list]
+      :staticmethod:
+
+      Create the training set.
+
+      Create a sklearn compatible test/train set from an imported results csv
+      after "import_csv" method is run.
+
+
+
+.. py:class:: TransformerLTEncoding(param_dict: dict, verbose: bool = False, seed: int = 0)
+
+   Bases: :py:obj:`ParameterManager`
+
+   The ParameterManager class.
+
+   It handles the super-network encoding representation and translates between
+   the 1-hot predictor, pymoo, and super-network dictionary formats during search.
+
+   :param param_dict: the search space dictionary.
+   :type param_dict: dict
+
+   .. py:method:: import_csv(filepath: str, config: str, objective: str, column_names: List[str] = None, drop_duplicates: bool = True) -> pandas.DataFrame
+
+      Import a csv file generated from a supernetwork search for the purpose of training a predictor.
+
+      filepath - path of the csv to be imported.
+      config - the subnetwork configuration
+      objective - target/label for the subnet configuration (e.g. accuracy, latency)
+      column_names - a list of column names for the dataframe
+      df - the output dataframe that contains the original config dict, pymoo, and 1-hot
+           equivalent vector for training.
+
+
+   .. py:method:: create_training_set(dataframe: pandas.DataFrame, train_with_all: bool = True, split: float = 0.33, seed: bool = None) -> Tuple[list, list, list, list]
+
+      Create a sklearn compatible test/train.
+
+      The set is created from an imported results csv after "import_csv" method is run.
+
+
+

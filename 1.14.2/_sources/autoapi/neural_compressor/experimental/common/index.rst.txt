@@ -1,0 +1,89 @@
+:py:mod:`neural_compressor.experimental.common`
+===============================================
+
+.. py:module:: neural_compressor.experimental.common
+
+.. autoapi-nested-parse::
+
+   Intel® Neural Compressor: An open-source Python library supporting common model.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   criterion/index.rst
+   dataloader/index.rst
+   metric/index.rst
+   model/index.rst
+   optimizer/index.rst
+   postprocess/index.rst
+   torch_utils/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.common.Model
+   neural_compressor.experimental.common.DataLoader
+   neural_compressor.experimental.common.Postprocess
+   neural_compressor.experimental.common.Metric
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.common._generate_common_dataloader
+
+
+
+.. py:class:: Model
+
+   Bases: :py:obj:`object`
+
+   A wrapper of the information needed to construct a Model.
+
+
+.. py:class:: DataLoader(dataset, batch_size=1, collate_fn=None, last_batch='rollover', sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+
+   Bases: :py:obj:`object`
+
+   A wrapper of the information needed to construct a dataloader.
+
+   This class can't yield batched data and only in this Quantization/Benchmark
+   object's setter method a 'real' calib_dataloader will be created, the reason
+   is we have to know the framework info and only after the Quantization/Benchmark
+   object created then framework infomation can be known. Future we will support
+   creating iterable dataloader from neural_compressor.experimental.common.DataLoader
+
+
+
+.. py:class:: Postprocess(postprocess_cls, name='user_postprocess', **kwargs)
+
+   Bases: :py:obj:`object`
+
+   Just collect the infos to construct a Postprocess.
+
+
+.. py:class:: Metric(metric_cls, name='user_metric', **kwargs)
+
+   Bases: :py:obj:`object`
+
+   A wrapper of the information needed to construct a Metric.
+
+   The metric class should take the outputs of the model as the metric's inputs,
+   neural_compressor built-in metric always take (predictions, labels) as inputs, it's
+   recommended to design metric_cls to take (predictions, labels) as inputs.
+
+

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+      <link rel="stylesheet" href="../../../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../../../" id="documentation_options" src="../../../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../../../_static/jquery.js"></script>
+        <script src="../../../../../../../_static/underscore.js"></script>
+        <script src="../../../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../../../../_static/doctools.js"></script>
+        <script src="../../../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+              <div class="version">
+                1.14.2
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../_sources/autoapi/neural_compressor/ux/components/db_manager/db_operations/profiling_api_interface/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface">
+<span id="neural-compressor-ux-components-db-manager-db-operations-profiling-api-interface"></span><h1><a class="reference internal" href="#module-neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface" title="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface</span></code></a><a class="headerlink" href="#module-neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface" title="Permalink to this heading"></a></h1>
+<p>INC Bench Profiling API interface.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface" title="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProfilingAPIInterface</span></code></a></p></td>
+<td><p>Interface for queries connected with profiling.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.</span></span><span class="sig-name descname"><span class="pre">ProfilingAPIInterface</span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface" title="Permalink to this definition"></a></dt>
+<dd><p>Interface for queries connected with profiling.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.get_profiling_details">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_profiling_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.get_profiling_details" title="Permalink to this definition"></a></dt>
+<dd><p>Parse input data and get profiling details.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.delete_profiling">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">delete_profiling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.delete_profiling" title="Permalink to this definition"></a></dt>
+<dd><p>Delete profiling from database and clean workspace.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.list_profilings">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">list_profilings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.list_profilings" title="Permalink to this definition"></a></dt>
+<dd><p>List profilings assigned to project.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.update_profiling_status">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_profiling_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.update_profiling_status" title="Permalink to this definition"></a></dt>
+<dd><p>Update profiling status.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.update_profiling_duration">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_profiling_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.update_profiling_duration" title="Permalink to this definition"></a></dt>
+<dd><p>Update duration of profiling.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.update_log_path">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_log_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.update_log_path" title="Permalink to this definition"></a></dt>
+<dd><p>Update config path and output log path.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.update_execution_command">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_execution_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.update_execution_command" title="Permalink to this definition"></a></dt>
+<dd><p>Update profiling execution command.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.add_profiling">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_profiling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.add_profiling" title="Permalink to this definition"></a></dt>
+<dd><p>Add profiling to database.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.edit_profiling">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">edit_profiling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.edit_profiling" title="Permalink to this definition"></a></dt>
+<dd><p>Edit existing profiling.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.add_result">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profiling_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.add_result" title="Permalink to this definition"></a></dt>
+<dd><p>Add profiling result to database.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.bulk_add_results">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bulk_add_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profiling_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.bulk_add_results" title="Permalink to this definition"></a></dt>
+<dd><p>Bulk add profiling results to database.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.parse_profiling_data">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_profiling_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.ProfilingAddParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.ProfilingAddParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.ProfilingAddParamsInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.parse_profiling_data" title="Permalink to this definition"></a></dt>
+<dd><p>Parse input data for profiling.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.parse_profiling_result_data">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_profiling_result_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.ProfilingResultAddParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.ProfilingResultAddParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.ProfilingResultAddParamsInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.parse_profiling_result_data" title="Permalink to this definition"></a></dt>
+<dd><p>Parse input data for profiling result.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.parse_profiling_edit_data">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_profiling_edit_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.ProfilingEditParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.ProfilingEditParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.ProfilingEditParamsInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.parse_profiling_edit_data" title="Permalink to this definition"></a></dt>
+<dd><p>Parse data for editing profiling.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.clean_status">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clean_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status_to_clean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../../../utils/consts/index.html#neural_compressor.ux.utils.consts.ExecutionStatus" title="neural_compressor.ux.utils.consts.ExecutionStatus"><span class="pre">neural_compressor.ux.utils.consts.ExecutionStatus</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.profiling_api_interface.ProfilingAPIInterface.clean_status" title="Permalink to this definition"></a></dt>
+<dd><p>Clean specified optimization status.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

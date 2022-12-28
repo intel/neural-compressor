@@ -1,0 +1,87 @@
+:py:mod:`neural_compressor.experimental.graph_optimization`
+===========================================================
+
+.. py:module:: neural_compressor.experimental.graph_optimization
+
+.. autoapi-nested-parse::
+
+   Graph Optimization Entry.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.graph_optimization.Graph_Optimization
+
+
+
+
+.. py:class:: Graph_Optimization(conf_fname_or_obj=None)
+
+   Graph_Optimization class.
+
+   automatically searches for optimal quantization recipes for low
+   precision model inference, achieving best tuning objectives like inference performance
+   within accuracy loss constraints.
+   Tuner abstracts out the differences of quantization APIs across various DL frameworks
+   and brings a unified API for automatic quantization that works on frameworks including
+   tensorflow, pytorch and mxnet.
+   Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
+   (<1% or <0.1% etc.) and tuning objectives (performance, memory footprint etc.).
+   Tuner class provides a flexible configuration interface via YAML for users to specify
+   these parameters.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             Graph_Optimization_Conf class containing accuracy goal, tuning objective and
+                             preferred calibration & quantization tuning space etc.
+   :type conf_fname_or_obj: string or obj
+
+   .. py:property:: precisions
+
+      Get precision.
+
+   .. py:property:: input
+
+      Get input.
+
+   .. py:property:: output
+
+      Get output.
+
+   .. py:property:: eval_dataloader
+
+      Get eval_dataloader.
+
+   .. py:property:: model
+
+      Get model.
+
+   .. py:property:: metric
+
+      Get metric.
+
+   .. py:property:: postprocess
+
+      Get postprocess.
+
+   .. py:property:: eval_func
+
+      Get evaluation function.
+
+   .. py:method:: dataset(dataset_type, *args, **kwargs)
+
+      Get dataset.
+
+
+   .. py:method:: set_config_by_model(model_obj)
+
+      Set model config.
+
+
+

@@ -1,0 +1,63 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_matmul`
+===============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_matmul
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_matmul.FuseNodeStartWithMatmul
+
+
+
+
+.. py:class:: FuseNodeStartWithMatmul(**kwargs)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
+
+   This is the base class for nodes fusion
+
+
+   :param object {[type]} -- [description]:
+
+   .. py:method:: apply_matmul_biasadd_relu_fusion(match_node_name)
+
+      apply dequantize + matmul + biasadd + activation + quantizev2 fusion
+
+
+   .. py:method:: apply_matmul_biasadd_fusion(match_node_name)
+
+      apply dequantize + matmul + biasadd + quantizev2 fusion
+
+
+   .. py:method:: apply_batchmatmulv2_fusion(match_node_name)
+
+      apply dequantize + batchmatmul/batchmatmulv2 + quantizev2 fusion
+
+
+   .. py:method:: apply_batchmatmulv2_mul_add_fusion(match_node_name)
+
+      apply dequantize + batchmatmul/batchmatmulv2 + mul + add + quantizev2 fusion
+
+
+   .. py:method:: get_longest_fuse()
+
+      This is the virtual interface to be implemented by derived class
+
+
+
+   .. py:method:: apply_the_transform()
+
+      This is the virtual interface to be implemented by derived class
+      :return: transformed graphdef
+
+
+

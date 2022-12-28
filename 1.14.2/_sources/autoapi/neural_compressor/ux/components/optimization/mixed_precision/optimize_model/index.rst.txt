@@ -1,0 +1,47 @@
+:py:mod:`neural_compressor.ux.components.optimization.mixed_precision.optimize_model`
+=====================================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.mixed_precision.optimize_model
+
+.. autoapi-nested-parse::
+
+   Mixed precision optimization script.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.mixed_precision.optimize_model.parse_args
+   neural_compressor.ux.components.optimization.mixed_precision.optimize_model.optimize_graph
+   neural_compressor.ux.components.optimization.mixed_precision.optimize_model.optimize_graph_config
+   neural_compressor.ux.components.optimization.mixed_precision.optimize_model.set_eager_execution
+
+
+
+.. py:function:: parse_args() -> Any
+
+   Parse input arguments.
+
+
+.. py:function:: optimize_graph(input_graph: str, output_graph: str, framework: str, precisions: str, input: Optional[List[str]] = None, output: Optional[List[str]] = None) -> None
+
+   Execute mixed precision optimization.
+
+
+.. py:function:: optimize_graph_config(input_graph: str, output_graph: str, framework: str, config: str) -> None
+
+   Execute mixed precision optimization using config file.
+
+
+.. py:function:: set_eager_execution(input_graph: str) -> None
+
+   Set eager execution as required by model.
+
+

@@ -1,0 +1,40 @@
+:py:mod:`neural_compressor.strategy.random`
+===========================================
+
+.. py:module:: neural_compressor.strategy.random
+
+.. autoapi-nested-parse::
+
+   The random tuning strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.random.RandomTuneStrategy
+
+
+
+
+.. py:class:: RandomTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
+
+   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
+   The random tuning strategy.
+
+   .. py:method:: next_tune_cfg()
+
+      Generate and yield the next tuning config by random searching in tuning space.
+
+      Random strategy is used to randomly choose quantization tuning configurations from the tuning space.
+
+      :Yields: *tune_config (dict)* -- A dict containing the tuning configuration for quantization.
+
+
+

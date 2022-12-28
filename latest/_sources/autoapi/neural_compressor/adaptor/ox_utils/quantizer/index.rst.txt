@@ -1,0 +1,141 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.quantizer`
+======================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.quantizer
+
+.. autoapi-nested-parse::
+
+   Quantizer for onnx models.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.quantizer.Quantizer
+
+
+
+
+.. py:class:: Quantizer(model, q_config, mode, static, quantization_params, op_types_to_quantize, fallback_list=['fp32'], reduce_range=None)
+
+   Quantizer class.
+
+   .. py:method:: check_opset_version()
+
+      Check opset version.
+
+
+   .. py:method:: should_quantize(node)
+
+      Check if node should be quantized.
+
+
+   .. py:method:: quantize_model()
+
+      Quantize onnx model.
+
+
+   .. py:method:: merge_dedicated_qdq_pair()
+
+      Merge dedicated Q/DQ pairs.
+
+
+   .. py:method:: should_cast(node)
+
+      Check if node should be casted.
+
+
+   .. py:method:: insert_qdq()
+
+      Insert Q/DQ pairs.
+
+
+   .. py:method:: should_convert(node)
+
+      Check if node should be converted.
+
+
+   .. py:method:: convert_qdq_to_operator_oriented()
+
+      Convert QDQ to QOperator format.
+
+
+   .. py:method:: remove_redundant_pairs()
+
+      Remove redudant Q/DQ, Cast/Cast pairs.
+
+
+   .. py:method:: dtype_cast(node, cfg, keep_io_types=True)
+
+      Cast node dtype.
+
+
+   .. py:method:: quantize_outputs(node, initializer_use_weight_qType=True, direct_int8=False)
+
+      Quantize node outputs.
+
+
+   .. py:method:: quantize_inputs(node, indices=None, initializer_use_weight_qType=True, direct_int8=False)
+
+      Quantize node inputs.
+
+
+   .. py:method:: quantize_bias_tensor(node)
+
+      Quantize bias.
+
+
+   .. py:method:: quantize_bias(bias_name, input_name, weight_name, beta=1.0)
+
+      Quantized the bias.
+
+      Zero Point == 0 and Scale == Input_Scale * Weight_Scale
+
+
+   .. py:method:: quantize_weights_per_channel(node, indices, weight_qType, scheme, axis)
+
+      Quantize weights per-channel.
+
+
+   .. py:method:: quantize_weight_per_channel(weight_name, weight_qType, scheme, channel_axis)
+
+      Quantize weight per-channel.
+
+
+   .. py:method:: tensor_proto_to_array(initializer)
+      :staticmethod:
+
+      Convert TensorProto to array.
+
+
+   .. py:method:: get_bias_add_nodes(node, weight_name, last_output, quantized_bias_name)
+
+      Given a node, this function handles bias add by adding a "reshape" node on bias and an "add" node.
+
+      :param node: current node (Conv)
+      :type node: NodeProto
+      :param weight_name: weight name
+      :type weight_name: string
+      :param last_output: output of previous node (input to bias add)
+      :type last_output: _type_
+      :param quantized_bias_name: bias name
+      :type quantized_bias_name: string
+
+
+   .. py:method:: is_valid_quantize_weight(weight_name)
+
+      Check weight can be quantized.
+
+
+   .. py:method:: dequantize_tensor(node, value_name)
+
+      Dequantize tensor.
+
+
+

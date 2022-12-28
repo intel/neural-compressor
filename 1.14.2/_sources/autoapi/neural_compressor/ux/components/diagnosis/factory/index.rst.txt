@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.components.diagnosis.factory`
+===========================================================
+
+.. py:module:: neural_compressor.ux.components.diagnosis.factory
+
+.. autoapi-nested-parse::
+
+   Diagnosis class factory.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.diagnosis.factory.DiagnosisFactory
+
+
+
+
+.. py:class:: DiagnosisFactory
+
+   Optimization factory.
+
+   .. py:method:: get_diagnosis(optimization: neural_compressor.ux.components.optimization.optimization.Optimization) -> neural_compressor.ux.components.diagnosis.diagnosis.Diagnosis
+      :staticmethod:
+
+      Get diagnosis for specified framework.
+
+
+
