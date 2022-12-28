@@ -184,7 +184,6 @@ class TestNAS(unittest.TestCase):
             best_model_archs = nas_agent()
             self.assertTrue(len(best_model_archs) > 0)
 
-
     def test_dynas(self):
         nas_agent = NAS('dynas_fake.yaml')
         for search_algorithm, supernet in [('nsga2','ofa_mbv3_d234_e346_k357_w1.2'), ('age', 'ofa_mbv3_d234_e346_k357_w1.2')]:
