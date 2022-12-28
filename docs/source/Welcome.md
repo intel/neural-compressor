@@ -80,8 +80,8 @@ wget https://github.com/onnx/models/raw/main/vision/classification/resnet/model/
 # Start GUI
 inc_bench
 ```
-<a target="_blank" href="./_static/imgs/INC_GUI.gif">
-  <img src="./_static/imgs/INC_GUI.gif" alt="Architecture">
+<a target="_blank" href="./imgs/INC_GUI.gif">
+  <img src="./imgs/INC_GUI.gif" alt="Architecture">
 </a>
 
 ## System Requirements
@@ -149,8 +149,8 @@ inc_bench
 Intel® Neural Compressor validated 420+ [examples](./examples) for quantization with a performance speedup geomean of 2.2x and up to 4.2x on VNNI while minimizing accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated models are available [here](./validated_model_list.html).
 
 <div style = "width: 77%; margin-bottom: 2%;">
-  <a target="_blank" href="./_static/imgs/release_data.png">
-    <img src="./_static/imgs/release_data.png" alt="Architecture" width=800 height=500>
+  <a target="_blank" href="./imgs/release_data.png">
+    <img src="./imgs/release_data.png" alt="Architecture" width=800 height=500>
   </a>
 </div>
 

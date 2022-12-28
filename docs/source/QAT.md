@@ -4,7 +4,7 @@
 
 Quantization-aware training (QAT) simulates low-precision inference-time computation in the forward pass of the training process. With QAT, all weights and activations are "fake quantized" during both the forward and backward passes of training: that is, float values are rounded to mimic int8 values, but all computations are still done with floating point numbers. Thus, all the weight adjustments during training are made while "aware" of the fact that the model will ultimately be quantized; after quantizing, therefore, this method will usually yield higher accuracy than either dynamic quantization or post-training static quantization.
 
-<img src="./_static/imgs/fake_quant.png" width=700 height=433 alt="fake quantize">
+<img src="./imgs/fake_quant.png" width=700 height=433 alt="fake quantize">
 
 ## Usage
 

@@ -18,9 +18,9 @@ Here we briefly introduce our export API for PyTorch FP32/INT8 models. First, th
  - Scale info: Scale information is collected from the quantization process of PyTorch.
  - Weights of quantization aware training(QAT): For quantization aware training, the updated weights are passed to the ONNX model.
 
-<a target="_blank" href="./_static/imgs/export.png" text-align:center>
+<a target="_blank" href="./imgs/export.png" text-align:center>
     <center> 
-        <img src="./_static/imgs/export.png" alt="Architecture" width=650 height=200> 
+        <img src="./imgs/export.png" alt="Architecture" width=650 height=200> 
     </center>
 </a>
 

@@ -12,9 +12,9 @@ The recent growth of Deep Learning has driven the development of more complex mo
 
 The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Cooper Lake), featuring Intel® Deep Learning Boost, is the first general-purpose x86 CPU to support the bfloat16 format. Specifically, three new bfloat16 instructions are added as a part of the AVX512_BF16 extension within Intel Deep Learning Boost: VCVTNE2PS2BF16, VCVTNEPS2BF16, and VDPBF16PS. The first two instructions allow converting to and from bfloat16 data type, while the last one performs a dot product of bfloat16 pairs. Further details can be found in the [hardware numerics document](https://software.intel.com/content/www/us/en/develop/download/bfloat16-hardware-numerics-definition.html) published by Intel.
 
-<a target="_blank" href="./_static/imgs/data_format.png" text-align:center>
+<a target="_blank" href="./imgs/data_format.png" text-align:center>
     <center> 
-        <img src="./_static/imgs/data_format.png" alt="Architecture" height=200> 
+        <img src="./imgs/data_format.png" alt="Architecture" height=200> 
     </center>
 </a>
 

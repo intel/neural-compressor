@@ -254,8 +254,8 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
   Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
   typical implementations of mask interpolation:
   <div style = "width: 77%; margin-bottom: 2%;">
-    <a target="_blank" href="../../docs/source/_static/imgs/pruning/progressive_pruning.png">
-      <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=500>
+    <a target="_blank" href="./imgs/pruning/progressive_pruning.png">
+      <img src="./imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=500>
     </a>
   </div>
 
