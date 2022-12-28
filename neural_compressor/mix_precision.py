@@ -14,8 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
+"""Mix Precision for Neural Compressor."""
 from .experimental.mixed_precision import MixedPrecision
 from neural_compressor.conf.pythonic_config import Config
 from neural_compressor.config import MixedPrecisionConfig
