@@ -144,85 +144,69 @@ class TestNAS(unittest.TestCase):
         best_model_archs = nas_agent()
         self.assertTrue(len(best_model_archs) > 0)
 
-        # Customized train, evaluation
-        datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(32, 3, 64, 64), low=0., high=1., label=True)
-        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        def train_func(model):
-            epochs = 2
-            iters = 10
-            criterion = torch.nn.CrossEntropyLoss()
-            optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-            for nepoch in range(epochs):
-                model.train()
-                cnt = 0
-                for image, target in dummy_dataloader:
-                    print('.', end='')
-                    cnt += 1
-                    output = model(image).unsqueeze(dim=0)
-                    loss = criterion(output, target)
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-                    if cnt >= iters:
-                        break
-        def eval_func(model):
-            model.eval()
-            acc = 0
-            for image, target in dummy_dataloader:
-                output = model(image).cpu().detach().numpy()
-                acc += np.sum(output==target)
-            return {'acc': acc / len(dummy_dataset)}
-
-        for approach, search_algorithm in [(None, None), ('basic', 'grid'), ('basic', 'random'), ('basic', 'bo')]:
-            print('{fix}Search algorithm: {msg}{fix}'.format(msg=search_algorithm, fix='='*30))
-            search_space = {'channels': [16, 32], 'dimensions': [32]}
-            nas_config = NASConfig(approach=approach, search_space=search_space, search_algorithm=search_algorithm)
-            nas_config.usr_cfg.model.framework = 'pytorch'
-            nas_agent = NAS(nas_config)
-            nas_agent.model_builder = model_builder
-            nas_agent.train_func = train_func
-            nas_agent.eval_func = eval_func
-            best_model_archs = nas_agent()
-            self.assertTrue(len(best_model_archs) > 0)
-
-    def test_dynas(self):
+    def test_parameter_manager_onehot_generic(self):
         nas_agent = NAS('dynas_fake.yaml')
-        for search_algorithm, supernet in [('nsga2','ofa_mbv3_d234_e346_k357_w1.2'), ('age', 'ofa_mbv3_d234_e346_k357_w1.2')]:
-            config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
-            config.dynas.supernet = supernet
-            config.seed = 42
-            config.dynas.metrics = ['acc', 'macs', 'lat']
-            config.dynas.population = 10
-            config.dynas.num_evals = 10
-            config.dynas.results_csv_path = 'search_results.csv'
-            config.dynas.batch_size = 64
-            nas_agent = NAS(config)
-            best_model_archs = nas_agent.search()
-            self.assertTrue(len(best_model_archs) > 0)
+        search_algorithm, supernet = 'nsga2', 'ofa_mbv3_d234_e346_k357_w1.2'
+        config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
+        config.dynas.supernet = supernet
+        nas_agent = NAS(config)
+        nas_agent.init_for_search()
 
-        nas_agent.acc_predictor.get_parameters()
-        nas_agent.acc_predictor.save('tmp.pickle')
-        nas_agent.acc_predictor.load('tmp.pickle')
-        samples = nas_agent.supernet_manager.random_samples(10)
-        subnet_cfg = nas_agent.supernet_manager.translate2param(samples[0])
-        nas_agent.runner_validate.validate_macs(subnet_cfg)
-        nas_agent.runner_validate.measure_latency(subnet_cfg)
-        nas_agent.validation_interface.clear_csv()
-        os.remove('tmp.pickle')
+        pymoo_vector = [
+            1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
+            1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
+            0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
+        ]
+        onehot_vector_expected = [0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0]
 
-    def test_vision_reference(self):
-        from neural_compressor.experimental.nas.dynast.dynas_utils import \
-            TorchVisionReference
-        reference = TorchVisionReference('ofa_mbv3', dataset_path=None, batch_size=1)
-        macs = reference.validate_macs()
+        onehot_vector = nas_agent.supernet_manager.onehot_generic(in_array=pymoo_vector)
+        self.assertListEqual(list(onehot_vector), onehot_vector_expected)
 
-        self.assertEqual(macs, 217234208)
+    def test_parameter_manager_translate2param(self):
+        nas_agent = NAS('dynas_fake.yaml')
+        search_algorithm, supernet = 'nsga2', 'ofa_mbv3_d234_e346_k357_w1.2'
+        config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
+        config.dynas.supernet = supernet
+        nas_agent = NAS(config)
+        nas_agent.init_for_search()
 
-        reference.measure_latency(
-            warmup_steps=1,
-            measure_steps=1,
-        )
+        pymoo_vector = [
+            1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
+            1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
+            0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
+        ]
+
+        param_dict = nas_agent.supernet_manager.translate2param(pymoo_vector)
+        param_dict_expected = {
+            'd': [4, 2, 4, 2, 2],
+            'e': [4, 4, 6, 4, 3, 4, 3, 6, 6, 6, 3, 3, 6, 6, 6, 6, 4, 4, 6, 4],
+            'ks': [5, 7, 7, 7, 7, 7, 5, 7, 3, 7, 5, 5, 3, 3, 5, 5, 7, 7, 5, 3],
+        }
+
+        self.assertDictEqual(param_dict, param_dict_expected)
+
+
+    def test_parameter_manager_translate2pymoo(self):
+        nas_agent = NAS('dynas_fake.yaml')
+        search_algorithm, supernet = 'nsga2', 'ofa_mbv3_d234_e346_k357_w1.2'
+        config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
+        config.dynas.supernet = supernet
+        nas_agent = NAS(config)
+        nas_agent.init_for_search()
+
+        param_dict = {
+            'd': [4, 2, 4, 2, 2],
+            'e': [4, 4, 6, 4, 3, 4, 3, 6, 6, 6, 3, 3, 6, 6, 6, 6, 4, 4, 6, 4],
+            'ks': [5, 7, 7, 7, 7, 7, 5, 7, 3, 7, 5, 5, 3, 3, 5, 5, 7, 7, 5, 3],
+        }
+        pymoo_vector_expected = [
+            1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
+            1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
+            0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
+        ]
+
+        pymoo_vector = nas_agent.supernet_manager.translate2pymoo(param_dict)
+        self.assertListEqual(pymoo_vector, pymoo_vector_expected)
 
 
 if __name__ == "__main__":
