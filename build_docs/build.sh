@@ -66,9 +66,11 @@ cp -r ./source/docs/source/imgs ${LATEST_FOLDER}/docs/source
 echo "Create document is done"
 
 if [[ ${PUSH_GH_PAGES} -eq 1 ]]; then
+  echo "git add ${LATEST_FOLDER} ${DST_FOLDER} ../versions.html"
   git add ${LATEST_FOLDER} ${DST_FOLDER} ../versions.html
   git commit -m "update for ${VERSION}"
   git push origin gh-pages
+  echo "git push origin gh-pages is done!"
 else
   echo "Skip push"	
 fi
