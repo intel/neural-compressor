@@ -51,7 +51,7 @@ function run_benchmark {
 
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd="--accuracy "
-        mode_cmd="--batch_size ${batch_size} "
+        mode_cmd="--val-batch-size ${batch_size} "
     elif [[ ${mode} == "performance" ]]; then
         mode_cmd="--benchmark --val-batch-size 1 "
     else
