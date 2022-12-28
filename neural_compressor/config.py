@@ -336,6 +336,7 @@ class AccuracyCriterion:
             self._tolerable_loss = tolerable_loss
 
     def __str__(self):
+        """Get criterion."""
         return self.criterion
 
 
@@ -729,9 +730,7 @@ pruners = [Pruner()]
 
 
 class WeightPruningConfig:
-    """
-    Similiar to torch optimizer's interface.
-    """
+    """Similiar to torch optimizer's interface."""
     def __init__(self, pruning_configs=[{}],  ##empty dict will use global values
                  target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
                  excluded_op_names=[],
@@ -739,6 +738,7 @@ class WeightPruningConfig:
                  min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
                  sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
                  **kwargs):
+        """Init a WeightPruningConfig object."""
         self.pruning_configs = pruning_configs
         self._weight_compression = DotDict({
             'target_sparsity': target_sparsity,
@@ -771,6 +771,7 @@ class WeightPruningConfig:
 class KnowledgeDistillationLossConfig:
     """Config Class for Knowledge Distillation Loss."""
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5]):
+        """Init a KnowledgeDistillationLossConfig object."""
         self.config = DotDict({
             'KnowledgeDistillationLoss': {
                 'temperature': temperature,
@@ -783,6 +784,7 @@ class KnowledgeDistillationLossConfig:
 class IntermediateLayersKnowledgeDistillationLossConfig:
     """Config Class for Intermediate Layers Knowledge Distillation Loss."""
     def __init__(self, layer_mappings=[], loss_types=[], loss_weights=[], add_origin_loss=False):
+        """Init an IntermediateLayersKnowledgeDistillationLossConfig object."""
         self.config = DotDict({
             'IntermediateLayersKnowledgeDistillationLoss': {
                 'layer_mappings': layer_mappings,
@@ -801,6 +803,7 @@ class SelfKnowledgeDistillationLossConfig:
                  loss_types=[],
                  loss_weights=[],
                  add_origin_loss=False):
+        """Init a SelfKnowledgeDistillationLossConfig object."""
         self.config = DotDict({
             'SelfKnowledgeDistillationLoss': {
                 'layer_mappings': layer_mappings,
@@ -817,7 +820,6 @@ criterion = KnowledgeDistillationLossConfig()
 
 class DistillationConfig:
     """Config of distillation.
-
     Args:
 
         teacher_model (Callable): Teacher model for distillation. Defaults to None.
@@ -832,6 +834,7 @@ class DistillationConfig:
                  optimizer={'SGD': {
                      'learning_rate': 0.0001
                  }}):
+        """Init a DistillationConfig object."""
         self.criterion = criterion.config
         self.optimizer = optimizer
         self.teacher_model = teacher_model
@@ -877,6 +880,7 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
                  excluded_precisions=[]):
+        """Init a MixedPrecisionConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
@@ -899,6 +903,7 @@ class ExportConfig:
         output_names=None,
         dynamic_axes=None,
     ):
+        """Init an ExportConfig object."""
         self.dtype = dtype
         self.opset_version = opset_version
         self.quant_format = quant_format
@@ -980,6 +985,7 @@ class ExportConfig:
 class ONNXQlinear2QDQConfig:
     """Config Class for ONNXQlinear2QDQ."""
     def __init__(self):
+        """Init an ONNXQlinear2QDQConfig object."""
         pass
 
 class Torch2ONNXConfig(ExportConfig):
