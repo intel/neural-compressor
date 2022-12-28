@@ -223,22 +223,27 @@ class TestNAS(unittest.TestCase):
         )
 
     def test_parameter_manager_onehot_generic(self):
-        nas_agent = NAS('dynas_fake.yaml')
-        search_algorithm, supernet = 'nsga2', 'ofa_mbv3_d234_e346_k357_w1.2'
-        config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
-        config.dynas.supernet = supernet
-        nas_agent = NAS(config)
-        nas_agent.init_for_search()
-
-        pymoo_vector = [
-            1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
-            1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
-            0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
+        test_configs = [
+            {
+                'supernet': 'ofa_mbv3_d234_e346_k357_w1.2',
+                'pymoo_vector': [
+                    1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
+                    1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
+                    0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
+                ],
+                'onehot_vector_expected': [0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0]
+            },
         ]
-        onehot_vector_expected = [0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0]
+        for test_config in test_configs:
+            nas_agent = NAS('dynas_fake.yaml')
+            search_algorithm, supernet = 'nsga2', test_config['supernet']
+            config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
+            config.dynas.supernet = supernet
+            nas_agent = NAS(config)
+            nas_agent.init_for_search()
 
-        onehot_vector = nas_agent.supernet_manager.onehot_generic(in_array=pymoo_vector)
-        self.assertListEqual(list(onehot_vector), onehot_vector_expected)
+            onehot_vector = nas_agent.supernet_manager.onehot_generic(in_array=test_config['pymoo_vector'])
+            self.assertListEqual(list(onehot_vector), test_config['onehot_vector_expected'])
 
     def test_parameter_manager_translate2param(self):
         nas_agent = NAS('dynas_fake.yaml')
