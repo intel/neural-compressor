@@ -125,22 +125,28 @@ inc_bench
 <tbody>
   <tr align="center">
     <th>Version</th>
-    <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
+    <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.8.2>2.8.2</a><br>
-    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
+    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
     <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br>
     <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.8.0>2.8.0</a><br>
-    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>1.12.1+cpu</a><br>
+    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>1.13.1+cpu</a><br>
+    <a href=https://download.pytorch.org/whl/torch_stable.html>1.12.1+cpu</a><br>
     <a href=https://download.pytorch.org/whl/torch_stable.html>1.11.0+cpu</a><br>
     <a href=https://download.pytorch.org/whl/torch_stable.html>1.10.0+cpu</a></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.12.0>1.12.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/1.11.0>1.11.0</a><br>
+    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.13.0+cpu>1.13.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.12.0>1.12.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.11.0>1.11.0</a><br>
     <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.10.0>1.10.0</a></td>
-    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.12.1>1.12.1</a><br>
+    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.13.1>1.13.1</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.12.1>1.12.1</a><br>
     <a href=https://github.com/microsoft/onnxruntime/tree/v1.11.0>1.11.0</a><br>
     <a href=https://github.com/microsoft/onnxruntime/tree/v1.10.0>1.10.0</a></td>
-    <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.8.0>1.8.0</a><br>
+    <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.9.1>1.9.1</a><br>
+    <a href=https://github.com/apache/incubator-mxnet/tree/1.8.0>1.8.0</a><br>
     <a href=https://github.com/apache/incubator-mxnet/tree/1.7.0>1.7.0</a><br>
     <a href=https://github.com/apache/incubator-mxnet/tree/1.6.0>1.6.0</a></td>
   </tr>
