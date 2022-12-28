@@ -130,19 +130,20 @@ class Dataloader:
                 src = os.path.join(dataset_location, image_name)
                 if not os.path.exists(src):
                     continue
-                with Image.open(src) as image:
-                    image = np.array(image.convert('RGB').resize((224, 224))).astype(np.float32)
-                    image[:, :, 0] -= 123.68
-                    image[:, :, 1] -= 116.779
-                    image[:, :, 2] -= 103.939
-                    image[:,:,[0,1,2]] = image[:,:,[2,1,0]]
-                    image = image.transpose((2, 0, 1))
-                    image = np.expand_dims(image, axis=0)
-                self.image_list.append(image)
+
+                self.image_list.append(src)
                 self.label_list.append(int(label))
 
     def __iter__(self):
-        for image, label in zip(self.image_list, self.label_list):
+        for src, label in zip(self.image_list, self.label_list):
+            with Image.open(src) as image:
+                image = np.array(image.convert('RGB').resize((224, 224))).astype(np.float32)
+                image[:, :, 0] -= 123.68
+                image[:, :, 1] -= 116.779
+                image[:, :, 2] -= 103.939
+                image[:,:,[0,1,2]] = image[:,:,[2,1,0]]
+                image = image.transpose((2, 0, 1))
+                image = np.expand_dims(image, axis=0)            
             yield image, label
 
 def eval_func(model, dataloader, metric):

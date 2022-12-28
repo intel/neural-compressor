@@ -130,30 +130,31 @@ class Dataloader:
                 src = os.path.join(dataset_location, image_name)
                 if not os.path.exists(src):
                     continue
-                with Image.open(src) as image:
-                    image = np.array(image.convert('RGB')).astype(np.float32)
-                    image = image / 255.
-                    image = cv2.resize(image, (256,256))
-                    h, w = image.shape[0], image.shape[1]
-                    if h + 1 < 224 or w + 1 < 224:
-                        raise ValueError(
-                            "Required crop size {} is larger then input image size {}".format(
-                                (224, 224), (h, w)))
 
-                    if 224 != h or 224 != w:
-                        y0 = (h - 224) // 2
-                        x0 = (w - 224) // 2
-                        image = image[y0:y0 + 224, x0:x0 + 224, :]
-                    
-                    image = (image - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225] 
-                    image = image.transpose((2, 0, 1))
-                    image = np.expand_dims(image, axis=0)
-                self.image_list.append(image.astype(np.float32))
+                self.image_list.append(src)
                 self.label_list.append(int(label))
 
     def __iter__(self):
-        for image, label in zip(self.image_list, self.label_list):
-            yield image, label
+        for src, label in zip(self.image_list, self.label_list):
+            with Image.open(src) as image:
+                image = np.array(image.convert('RGB')).astype(np.float32)
+                image = image / 255.
+                image = cv2.resize(image, (256,256))
+                h, w = image.shape[0], image.shape[1]
+                if h + 1 < 224 or w + 1 < 224:
+                    raise ValueError(
+                        "Required crop size {} is larger then input image size {}".format(
+                            (224, 224), (h, w)))
+
+                if 224 != h or 224 != w:
+                    y0 = (h - 224) // 2
+                    x0 = (w - 224) // 2
+                    image = image[y0:y0 + 224, x0:x0 + 224, :]
+                
+                image = (image - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225] 
+                image = image.transpose((2, 0, 1))
+                image = np.expand_dims(image, axis=0)            
+            yield image.astype(np.float32), label
 
 def eval_func(model, dataloader, metric, postprocess):
     metric.reset()
@@ -235,7 +236,8 @@ if __name__ == "__main__":
         accuracy_criterion.relative = 0.02
         config = PostTrainingQuantConfig(
             accuracy_criterion=accuracy_criterion,
-            op_name_list={'Conv_nc_rename_431': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}}})
+            op_name_list={'Conv_nc_rename_0': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+                          'Relu_nc_rename_1': {'activation': {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}}})
  
         q_model = quantization.fit(model, config, calib_dataloader=dataloader,
 			     eval_func=eval)
