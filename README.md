@@ -155,7 +155,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 
 <div style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="./docs/source/_static/imgs/release_data.png">
-    <img src="./docs/source/_static/imgs/release_data.png" alt="Architecture" width=800 height=500>
+    <img src="./docs/source/_static/imgs/release_data.png" alt="Architecture" width=750 height=470>
   </a>
 </div>
 
