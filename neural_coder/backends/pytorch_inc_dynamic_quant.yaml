@@ -29,6 +29,7 @@ transformation:
       [+]     quant_config = QuantConf()
       [+]     quant_config.usr_cfg.quantization.approach = "post_training_dynamic_quant"
       [+]     quant_config.usr_cfg.model.framework = "pytorch"
+      [+]     quant_config.usr_cfg.tuning.exit_policy.max_trails = 1
       [+]     quantizer = Quantization(quant_config)
       [+]     quantizer.model = common.Model(MODEL_NAME)
       [+]     quantizer.eval_func = eval_func
