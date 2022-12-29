@@ -96,7 +96,7 @@ class GraphConverter:
         """Convert graph.
 
         :param model: input tensorflow model.
-        :param qt_config: quantization configs, including interation and op-wise quant config
+        :param qt_config: quantization configs, including iteration and op-wise quant config
         :param fp32_ops: fall back to fp32 dtype op list
         :param bf16_ops: fall back to bf16 dtype op list
         :param data_loader: for calibration phase used dataloader

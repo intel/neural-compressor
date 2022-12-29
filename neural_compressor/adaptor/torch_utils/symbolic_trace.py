@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Symbolic Trace for Torch Utils."""
 import torch
 from neural_compressor.adaptor.pytorch import (
     PyTorch_FXAdaptor,
@@ -26,6 +26,16 @@ version = get_torch_version()
 
 
 def trace_and_fuse_sub_graph(model, prefix, is_qat):
+    """Trace and fuse subgraph of the model.
+
+    Args:
+        model (object): the input model.
+        prefix (str): prefix of op name.
+        is_qat (bool): if is qat.
+
+    Returns:
+        model (object).
+    """
     from torch.quantization.quantize_fx import _fuse_fx
     import torch.quantization.quantization_mappings as tqqm
     fx_white_list = tqqm.get_default_qconfig_propagation_list()
@@ -52,6 +62,15 @@ def trace_and_fuse_sub_graph(model, prefix, is_qat):
 
 
 def symbolic_trace(model, is_qat=False):
+    """Trace the model.
+
+    Args:
+        model (object): the input model.
+        is_qat (bool): if is qat.
+
+    Returns:
+        traced_model (object).
+    """
     try:
         traced_model = torch.fx.symbolic_trace(model)
     except:
