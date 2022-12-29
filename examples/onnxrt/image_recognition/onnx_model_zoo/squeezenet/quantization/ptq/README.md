@@ -4,8 +4,9 @@
 This example load an image classification model from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads). You need to download this dataset yourself.
 
 ### Environment
-onnx: 1.9.0
-onnxruntime: 1.10.0
+onnx: 1.12.0  
+onnxruntime: 1.13.1
+> Validated framework versions can be found in main readme.
 
 ### Prepare model
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)

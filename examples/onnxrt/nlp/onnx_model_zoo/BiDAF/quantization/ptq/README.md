@@ -1,10 +1,11 @@
 # Evaluate performance of ONNX Runtime(BiDAF) 
 
-This example load a a neural network for answering a query about a given context paragraph. It is converted from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [SQuAD v1.1](https://rajpurkar.github.io/SQuAD-explorer/explore/1.1/dev/).
+This example load a neural network for answering a query about a given context paragraph. It is converted from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [SQuAD v1.1](https://rajpurkar.github.io/SQuAD-explorer/explore/1.1/dev/).
 
 ### Environment
-onnx: 1.11.0
-onnxruntime: 1.10.0
+onnx: 1.12.0  
+onnxruntime: 1.13.1
+> Validated framework versions can be found in main readme. 
 
 ### Prepare model
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)
