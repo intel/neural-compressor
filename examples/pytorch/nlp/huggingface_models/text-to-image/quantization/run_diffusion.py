@@ -174,8 +174,7 @@ def benchmark(pipe, generator):
             end2 = time.time()
             if i >= warmup:
                 total_time += end2 - start2
-            print("Total inference latency: ", str(end2 - start2) + "s")
-    print("Average latency: ", (total_time) / (total - warmup), "s")
+    print("Average Latency: ", (total_time) / (total - warmup), "s")
     print("Average Throughput: {:.5f} samples/sec".format((total - warmup) / (total_time)))
 
 
