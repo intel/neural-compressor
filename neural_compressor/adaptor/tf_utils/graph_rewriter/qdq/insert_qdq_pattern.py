@@ -45,11 +45,11 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.itex_mode = itex_mode
         self.node_details = namedtuple('node_details', ['node', 'output'])
         self.node_name_mapping = {}
-        self.check_op_list = ["ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
+        self.check_op_list = {"ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
             "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
             "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul", "BatchMatMulV2",
             "FakeQuantWithMinMaxVars", "_MklFusedInstanceNorm",
-            "Conv2DBackpropInput", "Conv3DBackpropInputV2", "Sigmoid"]
+            "Conv2DBackpropInput", "Conv3DBackpropInputV2", "Sigmoid"}
 
         for node in self.model.node:
             if node.name in self.node_name_mapping:
@@ -183,10 +183,10 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         return any([node_type.find(i) != -1 for i in self.check_op_list])
 
     def _find_relu_node(self, node):
-        if node.op == 'MaxPool':
-            self.check_op_list.append("BiasAdd")
-
         """Find Relu node algorithm to identify the positive input."""
+        if node.op == 'MaxPool':
+            self.check_op_list.add("BiasAdd")
+
         if (node.op in ("Relu", "Relu6", "Elu") or \
             (node.op.find("AndRelu") != -1 and \
             ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0)))) \
