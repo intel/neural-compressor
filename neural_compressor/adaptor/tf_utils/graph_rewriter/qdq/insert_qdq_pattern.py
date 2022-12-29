@@ -45,6 +45,12 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.itex_mode = itex_mode
         self.node_details = namedtuple('node_details', ['node', 'output'])
         self.node_name_mapping = {}
+        self.check_op_list = ["ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
+            "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
+            "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul", "BatchMatMulV2",
+            "FakeQuantWithMinMaxVars", "_MklFusedInstanceNorm",
+            "Conv2DBackpropInput", "Conv3DBackpropInputV2", "Sigmoid"]
+
         for node in self.model.node:
             if node.name in self.node_name_mapping:
                 raise ValueError("Duplicate Node Found when _parse_graph, the node name is {}" \
@@ -174,14 +180,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
     def _check_op_list(self, node_type):
         """Check if the node_type in the allowed op list."""
-        op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
-                   "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
-                   "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul", "BatchMatMulV2",
-                   "FakeQuantWithMinMaxVars", "_MklFusedInstanceNorm",
-                   "Conv2DBackpropInput", "Conv3DBackpropInputV2", "Sigmoid")
-        return any([node_type.find(i) != -1 for i in op_list])
+
+        return any([node_type.find(i) != -1 for i in self.check_op_list])
 
     def _find_relu_node(self, node):
+        if node.op == 'MaxPool':
+            self.check_op_list.append("BiasAdd")
+
         """Find Relu node algorithm to identify the positive input."""
         if (node.op in ("Relu", "Relu6", "Elu") or \
             (node.op.find("AndRelu") != -1 and \
