@@ -94,12 +94,13 @@ inc_bench
 ### Validated Hardware Environment
 #### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
 
-* Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, and Icelake)
-* Intel® Max Series CPUs
+* Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, Ice Lake, and Sapphire Rapids)
+* Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM)
 
 #### Intel® Neural Compressor supports GPUs built on Intel's Xe architecture:
 
-* Intel® Max Series GPUs
+* Intel Data Center GPU Flex Series (formerly Arctic Sound-M)
+* Intel Data Center GPU Max Series (formerly Ponte Vecchio)
 
 #### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
 
