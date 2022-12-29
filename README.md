@@ -161,7 +161,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
 
 <div style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="./docs/source/_static/imgs/release_data.png">
-    <img src="./docs/source/_static/imgs/release_data.png" alt="Architecture" width=800 height=500>
+    <img src="./docs/source/_static/imgs/release_data.png" alt="Architecture" width=750 height=470>
   </a>
 </div>
 
@@ -214,7 +214,7 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
     <tr>
         <td colspan="2" align="center"><a href="./docs/source/benchmark.md">Benchmarking</a></td>
         <td colspan="3" align="center"><a href="./docs/source/distributed.md">Distributed Training</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/tensorboard.md">TensorBoard</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/tensorboard.md">TensorBoard</a></td>
     </tr>
     <tr>
         <td colspan="4" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
