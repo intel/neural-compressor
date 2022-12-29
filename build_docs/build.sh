@@ -1,5 +1,5 @@
 CHECKOUT_GH_PAGES=1
-PUSH_GH_PAGES=0
+PUSH_GH_PAGES=1
 WORK_DIR=../build_tmp
 rm -rf ${WORK_DIR}
 mkdir -p ${WORK_DIR}
