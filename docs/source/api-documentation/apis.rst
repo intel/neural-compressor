@@ -6,11 +6,7 @@ The following API information is available:
 .. toctree::
    :maxdepth: 1
 
-   newAPI
-   algorithm
-   strategy
+   new_api
    adaptor
-   pythonic
-   contrib
+   strategy
    model
-   utils
