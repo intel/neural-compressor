@@ -274,7 +274,7 @@ The following section exemplifies how to use hooks in user pass-in training func
 
 
 
-We validate the pruning technique on typical models across various domains (including CV and NLP) and the examples are listed in [Pruning Examples](../../examples/README.md#PyTorch-Examples#Pruning). A complete overview of validated examples including quantization, pruning and distillation results could be found in  [Intel Neural Compressor Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
+We validate the pruning technique on typical models across various domains (including CV and NLP) and the examples are listed in [Pruning Examples](../../examples/README.md#Pruning-1). A complete overview of validated examples including quantization, pruning and distillation results could be found in  [Intel Neural Compressor Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG">
@@ -292,3 +292,4 @@ Please refer to pruning examples([PyTorch](../../examples/README.md#Pruning-1)) 
 
 
 [1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.
+
