@@ -11,3 +11,8 @@
 /neural-compressor/neural_compressor/algorithm
 /neural-compressor/neural_compressor/model
 /neural-compressor/neural_compressor/utils
+/neural-compressor/neural_compressor/config.py
+/neural-compressor/neural_compressor/version.py
+/neural-compressor/neural_compressor/__init__.py
+/neural-compressor/neural_compressor/mix_precision.py
+/neural-compressor/neural_compressor/adaptor/torch_utils
