@@ -1,3 +1,4 @@
+"""mxnet util module."""
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -39,8 +40,7 @@ NULL_OP_NAMES = ['null']
 
 
 class OpType(Enum):
-    """Enum op types.
-    """
+    """Enum op types."""
     NORMAL = 0
     QUANTIZE = 1
     QUANTIZED = 2
@@ -91,7 +91,7 @@ def check_mx_version(version):
 
 
 def combine_capabilities(current, new):
-    """combine capabilities.
+    """Combine capabilities.
 
     Args:
         current (dict): current capabilities.
@@ -153,7 +153,7 @@ def fuse(sym_model, ctx):
 
 
 def get_framework_name(ctx):
-    """get the framework name by version.
+    """Get the framework name by version.
 
     Args:
         ctx (object): mxnet context object.
@@ -195,7 +195,6 @@ def prepare_model(nc_model, ctx, input_desc):
     Returns:
         object: mxnet model (symnet, args, auxs).
     """
-
     assert isinstance(nc_model, NCModel)
 
     model_x = nc_model.model
@@ -423,7 +422,6 @@ def quantize_sym_model(sym_model, ctx, qconfig):
     Returns:
         tuple: Symbol model (symnet, args, auxs) and list of tensors for calibration.
     """
-
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
     symnet, args, auxs = sym_model
@@ -442,10 +440,11 @@ def quantize_sym_model(sym_model, ctx, qconfig):
 
 
 def _tensor_to_node(tensor, nodes):
-    """Map tensor to one of the nodes. This function assumes, that node tensors 
-    (weights, outputs, etc) contain node name in their names.
+    """Map tensor to one of the nodes. 
+
+    This function assumes, that node tensors (weights, outputs, etc) contain node name in their names.
     """
-    assert len(nodes) > 0, '`nodes` cannot be empty'
+    assert len(nodes) > 0, "`nodes` cannot be empty"
 
     PATTERNS = {'',
                 '_output[0-9]*$',
@@ -461,11 +460,13 @@ def _tensor_to_node(tensor, nodes):
 
 
 def _qtensor_to_tensor(qtensor, tensors):
-    """Map quantized tensor to its fp32 equivalent. New ops may require updating the patterns.
+    """Map quantized tensor to its fp32 equivalent.
+
+    New ops may require updating the patterns.
     Tensors of quantize nodes (which are not present in fp32 models) will be mapped to their input
     nodes.
     """
-    assert len(tensors) > 0, '`tensors` cannot be empty'
+    assert len(tensors) > 0, "`tensors` cannot be empty"
 
     PATTERNS = {'quantize': '',
                 '_quantize_output0': '',
@@ -528,7 +529,6 @@ def make_symbol_block(sym_model, ctx, input_desc):
     Returns:
         mx.gluon.SymbolBlock: SymbolBlock model.
     """
-
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
     symnet, args, auxs = sym_model
@@ -547,8 +547,7 @@ def make_symbol_block(sym_model, ctx, input_desc):
 
 
 def _gluon_forward(net, ctx, dataloader, b_filter, pre_batch=None, post_batch=None):
-    """gluon forward func.
-    """
+    """Gluon forward func."""
     batch_num = 0
     for run, batch in zip(b_filter, dataloader):
         if not run:
@@ -579,7 +578,6 @@ def make_module(sym_model, ctx, input_desc):
     Returns:
         mx.module.Module: Module model.
     """
-
     assert isinstance(sym_model, tuple) and isinstance(sym_model[0], mx.symbol.Symbol)
 
     symnet, args, auxs = sym_model
@@ -593,8 +591,7 @@ def make_module(sym_model, ctx, input_desc):
 
 
 def _module_forward(module, dataloader, b_filter, pre_batch=None, post_batch=None):
-    """module forward func.
-    """
+    """Module forward func."""
     batch_num = 0
     for run, batch in zip(b_filter, dataloader):
         if not run:
@@ -664,8 +661,7 @@ def parse_tune_config(tune_cfg, quantizable_nodes):
 
 
 def distribute_calib_tensors(calib_tensors, calib_cfg, tensor_to_node):
-    """Distributes the tensors for calibration, depending on the
-       algorithm set in the configuration of their nodes.
+    """Distributes the tensors for calibration, depending on the algorithm set in the configuration of their nodes.
 
     Args:
         calib_tensors: tensors to distribute.
@@ -703,8 +699,7 @@ def distribute_calib_tensors(calib_tensors, calib_cfg, tensor_to_node):
 
 
 def calib_model(qsym_model, calib_data, calib_cfg):
-    """Calibrate the quantized symbol model using data gathered by
-       the collector.
+    """Calibrate the quantized symbol model using data gathered by the collector.
 
     Args:
         qsym_model (tuple): quantized symbol model (symnet, args, auxs).
@@ -714,7 +709,6 @@ def calib_model(qsym_model, calib_data, calib_cfg):
     Returns:
         tuple: quantized calibrated symbol model (symnet, args, auxs).
     """
-
     assert isinstance(qsym_model, tuple) and isinstance(qsym_model[0], mx.symbol.Symbol)
 
     qsymnet, qargs, auxs = qsym_model
@@ -728,9 +722,7 @@ def calib_model(qsym_model, calib_data, calib_cfg):
 
 
 def amp_convert(sym_model, input_desc, amp_cfg):
-    """convert model to support amp.
-    """
-
+    """Convert model to support amp."""
     assert check_mx_version('2.0.0'), 'AMP is supported since MXNet 2.0. This error is due to ' \
         'an error in the configuration file.'
     from mxnet import amp
@@ -740,67 +732,66 @@ def amp_convert(sym_model, input_desc, amp_cfg):
 
 
 class DataLoaderWrap:
-    """DataLoader Wrap.
-    """
+    """DataLoader Wrap."""
     def __init__(self, dataloader, input_desc):
+        """Initialize."""
         self.dataloader = dataloader
         self.input_desc = input_desc
         self._iter = None
 
     def __iter__(self):
+        """Iter."""
         self._iter = iter(self.dataloader)
         return self
 
     def __next__(self):
+        """Next."""
         return next(self._iter)
 
 
 class DataIterLoader:
-    """DataIterLoader.
-    """
+    """DataIterLoader."""
     def __init__(self, data_iter):
+        """Initialize."""
         self.data_iter = data_iter
 
     def __iter__(self):
+        """Iter."""
         self.data_iter.reset()
         return self
 
     def __next__(self):
+        """Next."""
         batch = self.data_iter.__next__()
         return batch.data + (batch.label if batch.label is not None else [])
 
 
 class CollectorBase:
-    """Collector Base class.
-    """
+    """Collector Base class."""
     def collect_gluon(self, name, _, arr):
-        """collect by gluon api.
-        """
+        """Collect by gluon api."""
         raise NotImplementedError()
 
     def collect_module(self, name, arr):
-        """collect by module name.
-        """
+        """Collect by module name."""
         name = mx.base.py_str(name)
         handle = ctypes.cast(arr, mx.base.NDArrayHandle)
         arr = mx.nd.NDArray(handle, writable=False)
         self.collect_gluon(name, '', arr)
 
     def pre_batch(self, m, b):
-        """function to call prior to batch inference.
-        """
+        """Function to call prior to batch inference."""
         pass
 
     def post_batch(self, m, b, o):
-        """function to call after batch inference.
-        """
+        """Function to call after batch inference."""
         pass
 
 
 class CalibCollector(CollectorBase):
-    """ Collects the calibration thresholds depending on the algorithm set """
-
+    """Collect the calibration thresholds depending on the algorithm set."""
     def __init__(self, include_tensors_kl, include_tensors_minmax, num_bins=8001):
+        """Initialize."""
         self.min_max_dict = {}
         self.hist_dict = {}
         self.num_bins = num_bins
@@ -808,8 +799,7 @@ class CalibCollector(CollectorBase):
         self.include_tensors_kl = include_tensors_kl
 
     def collect_gluon(self, name, _, arr):
-        """collect by gluon api.
-        """
+        """Collect by gluon api."""
         if name in self.include_tensors_kl:
             alg = 'kl'
         elif name in self.include_tensors_minmax:
@@ -839,8 +829,7 @@ class CalibCollector(CollectorBase):
 
     @staticmethod
     def _combine_histogram(old_hist, arr, new_min, new_max, new_th):
-        """combine histogram.
-        """
+        """Combine histogram."""
         if check_mx_version('2.0.0'):
             return mx.contrib.quantization._LayerHistogramCollector.combine_histogram(
                 old_hist, arr, new_min, new_max, new_th)
@@ -849,8 +838,7 @@ class CalibCollector(CollectorBase):
                                                              new_max, new_th)
 
     def calc_kl_th_dict(self, quantized_dtype):
-        """calculation kl thresholds.
-        """
+        """calculation kl thresholds."""
         if len(self.hist_dict) > 0:
             if check_mx_version('2.0.0'):
                 return mx.contrib.quantization._LayerHistogramCollector.get_optimal_thresholds(
@@ -862,9 +850,9 @@ class CalibCollector(CollectorBase):
 
 
 class TensorCollector(CollectorBase):
-    """ Tensors collector. Builds up qtensor_to_tensor mapping """
-
+    """Tensors collector. Builds up qtensor_to_tensor mapping."""
     def __init__(self, include_nodes, qtensor_to_tensor, tensor_to_node):
+        """Initialize."""
         self.tensors_dicts = []
         self.include_nodes = include_nodes
         self.qtensor_to_tensor = qtensor_to_tensor
@@ -874,8 +862,7 @@ class TensorCollector(CollectorBase):
         assert len(rest) == 0, 'Unexpected tensors set to be collected: {}'.format(rest)
 
     def collect_gluon(self, name, _, arr):
-        """collect by gluon api.
-        """
+        """Collect by gluon api."""
         is_quantized = False
         if name not in self.tensor_to_node:
             if name in self.qtensor_to_tensor:
@@ -892,23 +879,25 @@ class TensorCollector(CollectorBase):
             self.tensors_dicts[-1].setdefault(node, {})[name] = (is_quantized, arr.copy())
 
     def pre_batch(self, m, b):
-        """preprocess.
-        """
+        """Preprocess."""
         self.tensors_dicts.append({})
 
 
 class NameCollector(CollectorBase):
+    """Name collector."""
     def __init__(self):
+        """Initialize."""
         self.names = []
 
     def collect_gluon(self, name, _, arr):
-        """collect by gluon api.
+        """Collect by gluon api.
         """
         self.names.append(name)
 
 
 class CalibData:
     def __init__(self, cache_kl={}, cache_minmax={}, tensors_kl=[], tensors_minmax=[]):
+        """Initialize."""
         self.th_dict = {}
         self.th_dict.update({t: cache_kl[t] for t in tensors_kl})
         self.th_dict.update({t: cache_minmax[t] for t in tensors_minmax})
@@ -916,12 +905,10 @@ class CalibData:
     # `min_max_dict` is used as a thresholds dictionary when `calib_mode` == 'naive'
     @property
     def min_max_dict(self):
-        """return mix-max dict.
-        """
+        """Return mix-max dict."""
         return self.th_dict
 
     # for mxnet version >= 2.0.0
     def post_collect(self):
-        """return mix-max dict for mxnet version >= 2.0.0.
-        """
+        """Return mix-max dict for mxnet version >= 2.0.0."""
         return self.th_dict
