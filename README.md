@@ -94,12 +94,13 @@ inc_bench
 ### Validated Hardware Environment
 #### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
 
-* Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, and Icelake)
-* Future Intel Xeon Scalable processor (code name Sapphire Rapids)
+* Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, Ice Lake, and Sapphire Rapids)
+* Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM)
 
 #### Intel® Neural Compressor supports GPUs built on Intel's Xe architecture:
 
-* [Intel® Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/docs/discrete-gpus/data-center-gpu/flex-series/overview.html)
+* Intel Data Center GPU Flex Series (formerly Arctic Sound-M)
+* Intel Data Center GPU Max Series (formerly Ponte Vecchio)
 
 #### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
 
@@ -116,6 +117,7 @@ inc_bench
     <th>Framework</th>
     <th>TensorFlow</th>
     <th>Intel TensorFlow</th>
+    <th>Intel® Extension for TensorFlow*</th>
     <th>PyTorch</th>
     <th>Intel® Extension for PyTorch*</th>
     <th>ONNX Runtime</th>
@@ -125,24 +127,25 @@ inc_bench
 <tbody>
   <tr align="center">
     <th>Version</th>
-    <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.8.2>2.8.2</a><br>
-    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.8.0>2.8.0</a><br>
-    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>1.12.1+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.11.0+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.10.0+cpu</a></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.12.0>1.12.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/1.11.0>1.11.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.10.0>1.10.0</a></td>
-    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.12.1>1.12.1</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.11.0>1.11.0</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.10.0>1.10.0</a></td>
-    <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.8.0>1.8.0</a><br>
-    <a href=https://github.com/apache/incubator-mxnet/tree/1.7.0>1.7.0</a><br>
-    <a href=https://github.com/apache/incubator-mxnet/tree/1.6.0>1.6.0</a></td>
+    <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.10.1>2.10.1</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.9.3>2.9.3</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.0.0>1.0.0</a></td>
+    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>1.13.1+cpu</a><br>
+    <a href=https://download.pytorch.org/whl/torch_stable.html>1.12.1+cpu</a><br>
+    <a href=https://download.pytorch.org/whl/torch_stable.html>1.11.0+cpu</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.13.0+cpu>1.13.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.12.100>1.12.1</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.11.0>1.11.0</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.13.1>1.13.1</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.12.1>1.12.1</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.11.0>1.11.0</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.9.1>1.9.1</a><br>
+    <a href=https://github.com/apache/incubator-mxnet/tree/1.8.0>1.8.0</a><br>
+    <a href=https://github.com/apache/incubator-mxnet/tree/1.7.0>1.7.0</a><br></td>
   </tr>
 </tbody>
 </table>
@@ -151,13 +154,7 @@ inc_bench
 > Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow v2.6 to v2.8. oneDNN is the default for TensorFlow v2.9.
 
 ### Validated Models
-Intel® Neural Compressor validated 420+ [examples](./examples) for quantization with a performance speedup geomean of 2.2x and up to 4.2x on VNNI while minimizing accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated models are available [here](./docs/source/validated_model_list.md).
-
-<div style = "width: 77%; margin-bottom: 2%;">
-  <a target="_blank" href="./docs/source/_static/imgs/release_data.png">
-    <img src="./docs/source/_static/imgs/release_data.png" alt="Architecture" width=750 height=470>
-  </a>
-</div>
+Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo) with the performance speedup up to 4.2x on VNNI while minimizing the accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated typical models are available [here](./docs/source/validated_model_list.md).
 
 ## Documentation
 
@@ -169,52 +166,49 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   </thead>
   <tbody>
     <tr>
-      <td colspan="3" align="center"><a href="./docs/source/design.md">Architecture</a></td>
-      <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/tree/master/examples">Examples</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/bench.md">GUI</a></td>
-      <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/api-documentation/apis.html">APIs</a></td>
+      <td colspan="4" align="center"><a href="./docs/source/design.md#architecture">Architecture</a></td>
+      <td colspan="3" align="center"><a href="./docs/source/design.md#workflow">Workflow</a></td>
+      <td colspan="1" align="center"><a href="https://intel.github.io/neural-compressor/api-documentation/apis.html">APIs</a></td>
+      <td colspan="1" align="center"><a href="./docs/source/bench.md">GUI</a></td>
     </tr>
     <tr>
+      <td colspan="2" align="center"><a href="./examples#notebook-examples">Notebook</a></td>
+      <td colspan="1" align="center"><a href="./examples">Examples</a></td>
+      <td colspan="1" align="center"><a href="./docs/source/validated_model_list.md">Results</a></td>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
-      <td colspan="4" align="center"><a href="https://github.com/oneapi-src/oneAPI-samples/tree/master/AI-and-Analytics">AI and Analytics Samples</a></td>
-    </tr>
-  </tbody>
-  <thead>
-  <tr>
-    <th colspan="9">Basic API</th>
-  </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td colspan="2" align="center"><a href="./docs/source/transform.md">Transform</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/dataset.md">Dataset</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/metric.md">Metric</a></td>
-      <td colspan="3" align="center"><a href="./docs/source/objective.md">Objective</a></td>
     </tr>
   </tbody>
   <thead>
     <tr>
-      <th colspan="9">Deep Dive</th>
+      <th colspan="9">Python-based APIs</th>
     </tr>
   </thead>
   <tbody>
     <tr>
         <td colspan="2" align="center"><a href="./docs/source/quantization.md">Quantization</a></td>
-        <td colspan="1" align="center"><a href="./docs/source/pruning.md">Pruning(Sparsity)</a></td> 
-        <td colspan="2" align="center"><a href="./docs/source/distillation.md">Knowledge Distillation</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/mixed_precision.md">Mixed Precision</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/orchestration.md">Orchestration</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/mixed_precision.md">Advanced Mixed Precision</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/pruning.md">Pruning(Sparsity)</a></td> 
+        <td colspan="2" align="center"><a href="./docs/source/distillation.md">Distillation</a></td>
     </tr>
     <tr>
+        <td colspan="2" align="center"><a href="./docs/source/orchestration.md">Orchestration</a></td>        
         <td colspan="2" align="center"><a href="./docs/source/benchmark.md">Benchmarking</a></td>
-        <td colspan="3" align="center"><a href="./docs/source/distributed.md">Distributed Training</a></td>
-        <td colspan="3" align="center"><a href="./docs/source/tensorboard.md">TensorBoard</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/distributed.md">Distributed Compression</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/export.md">Model Export</a></td>
     </tr>
+  </tbody>
+  <thead>
     <tr>
-        <td colspan="4" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
-        <td colspan="5" align="center"><a href="https://github.com/intel/neural-compressor/tree/master/neural_coder">Neural Coder</a></td>
+      <th colspan="9">Neural Coder (Zero-code Optimization)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td colspan="1" align="center"><a href="./neural_coder/docs/PythonLauncher.md">Launcher</a></td>
+        <td colspan="2" align="center"><a href="./neural_coder/extensions/neural_compressor_ext_lab/README.md">JupyterLab Extension</a></td>
+        <td colspan="3" align="center"><a href="./neural_coder/extensions/neural_compressor_ext_vscode/README.md">Visual Studio Code Extension</a></td>
+        <td colspan="3" align="center"><a href="./neural_coder/docs/SupportMatrix.md">Supported Matrix</a></td>
     </tr>    
-    
   </tbody>
   <thead>
       <tr>
@@ -223,19 +217,20 @@ Intel® Neural Compressor validated 420+ [examples](./examples) for quantization
   </thead>
   <tbody>
       <tr>
-          <td colspan="6" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
-          <td colspan="6" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
+          <td colspan="1" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
+          <td colspan="2" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
+          <td colspan="3" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
+          <td colspan="3" align="center">SmoothQuant (Coming Soon)</td>
       </tr>
   </tbody>
 </table>
 
 ## Selected Publications/Events
-* [#MLefficiency — Optimizing transformer models for efficiency](https://medium.com/@kawapanion/mlefficiency-optimizing-transformer-models-for-efficiency-a9e230cff051)(Dec 2022)
-* [One-Click Acceleration of Hugging Face Transformers with Intel’s Neural Coder](https://medium.com/intel-analytics-software/one-click-acceleration-of-huggingface-transformers-with-optimum-intel-by-neural-coder-f35ca3b1a82f)(Dec 2022)
-* [One-Click Quantization of Deep Learning Models with the Neural Coder Extension](https://medium.com/intel-analytics-software/one-click-quantize-your-deep-learning-code-in-visual-studio-code-with-neural-coder-extension-8be1a0022c29)(Dec 2022)
-* [Accelerate Stable Diffusion with Intel Neural Compressor](https://medium.com/intel-analytics-software/accelerating-stable-diffusion-inference-through-8-bit-post-training-quantization-with-intel-neural-e28f3615f77c)(Dec 2022)
-* [Intel together with Tencent deepens the cooperation to build a cloud foundation for digital and intelligent industry](https://mp.weixin.qq.com/s/CPz9-5Nsh-5N9Q8-UmK--w) (Dec 2022)
-* [Running Fast Transformers on CPUs: Intel Approach Achieves Significant Speed Ups and SOTA Performance](https://medium.com/syncedreview/running-fast-transformers-on-cpus-intel-approach-achieves-significant-speed-ups-and-sota-448521704c5e) (Nov 2022)
+* Blog on Medium: [MLefficiency — Optimizing transformer models for efficiency](https://medium.com/@kawapanion/mlefficiency-optimizing-transformer-models-for-efficiency-a9e230cff051)(Dec 2022)
+* Blog on Medium: [One-Click Acceleration of Hugging Face Transformers with Intel’s Neural Coder](https://medium.com/intel-analytics-software/one-click-acceleration-of-huggingface-transformers-with-optimum-intel-by-neural-coder-f35ca3b1a82f)(Dec 2022)
+* Blog on Medium: [One-Click Quantization of Deep Learning Models with the Neural Coder Extension](https://medium.com/intel-analytics-software/one-click-quantize-your-deep-learning-code-in-visual-studio-code-with-neural-coder-extension-8be1a0022c29)(Dec 2022)
+* Blog on Medium: [Accelerate Stable Diffusion with Intel Neural Compressor](https://medium.com/intel-analytics-software/accelerating-stable-diffusion-inference-through-8-bit-post-training-quantization-with-intel-neural-e28f3615f77c)(Dec 2022)
+* Blog on WeChat: [Intel together with Tencent deepens the cooperation to build a cloud foundation for digital and intelligent industry](https://mp.weixin.qq.com/s/CPz9-5Nsh-5N9Q8-UmK--w) (Dec 2022)
 
 > View our [full publication list](./docs/source/publication_list.md).
 

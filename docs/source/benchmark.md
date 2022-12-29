@@ -1,4 +1,4 @@
-Benchmark
+Benchmarking
 ============
 1. [Introduction](#Introduction)
 2. [Benchmark Support Matrix](#Benchmark-Support-Matrix)

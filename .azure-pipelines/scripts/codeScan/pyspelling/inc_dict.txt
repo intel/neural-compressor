@@ -2496,3 +2496,8 @@ SelfKnowledgeDistillationLossConfig
 DistillationConfig
 KnowledgeDistillationLossConfig
 confs
+HBM
+Ponte
+SmoothQuant
+Vecchio
+WeChat
