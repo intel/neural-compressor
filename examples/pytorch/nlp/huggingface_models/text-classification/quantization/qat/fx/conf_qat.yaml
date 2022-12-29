@@ -1,4 +1,4 @@
-version: 1.0
+
 
 model:                                               # mandatory. used to specify model specific information.
   name: bert

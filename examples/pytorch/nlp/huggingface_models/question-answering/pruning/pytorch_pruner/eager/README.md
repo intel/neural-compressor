@@ -9,7 +9,7 @@
 ### Write a config yaml file
 Pytorch pruner is developed based on [pruning](https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/pruning.py), therefore most usages are identical. Our API reads in a yaml configuration file to define a Pruning object. Here is an bert-mini example of it:
 ```yaml
-version: 1.0
+
 
 model:
   name: "bert-mini"

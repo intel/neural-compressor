@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version: 1.0
+
 
 device: gpu                                          # optional. set cpu if installed intel-extension-for-tensorflow[cpu], set gpu if installed intel-extension-for-tensorflow[gpu].
 

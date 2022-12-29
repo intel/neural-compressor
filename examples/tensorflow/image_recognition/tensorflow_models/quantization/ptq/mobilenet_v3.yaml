@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-version: 1.0
+
 
 model:                                               # mandatory. used to specify model specific information.
   name: mobilenet_v3

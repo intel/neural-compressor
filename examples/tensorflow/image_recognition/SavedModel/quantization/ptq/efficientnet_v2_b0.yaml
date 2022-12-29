@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version: 1.0
+
 
 model:                                               # mandatory. neural_compressor uses this model name and framework name to decide where to save tuning history and deploy yaml.
   name: efficientnet_v2_b0

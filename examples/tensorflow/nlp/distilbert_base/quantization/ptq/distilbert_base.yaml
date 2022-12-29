@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-version: 1.0
+
 
 model:
   name: distilbert_base
