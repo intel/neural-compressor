@@ -565,7 +565,7 @@
       "new_benchmark": true
     },
     "arcface": {
-      "model_src_dir": "image_recognition/onnx_model_zoo/arcface/quantization/ptq",
+      "model_src_dir": "body_analysis/onnx_model_zoo/arcface/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/faces_ms1m_112x112/lfw.bin",
       "input_model": "/tf_dataset2/models/onnx/arcface/arcfaceresnet100-11.onnx",
       "main_script": "main.py",
