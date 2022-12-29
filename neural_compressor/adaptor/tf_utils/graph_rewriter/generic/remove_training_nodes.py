@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Remove training nodes Graph Rewriter."""
 
 from neural_compressor.utils.utility import dump_elapsed_time
 
@@ -22,14 +23,18 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 
 
 class RemoveTrainingNodesOptimizer(GraphRewriterBase):
+    """Remove training nodes optimizer."""
+
     def __init__(self, model, protected_nodes=[], types_to_splice=
                  ['Identity', 'CheckNumerics', 'StopGradient']):
+        """Initilizaiton."""
         super().__init__(model)
         self.protected_nodes = protected_nodes
         self.types_to_splice = types_to_splice
 
     @dump_elapsed_time("Pass RemoveTrainingNodesOptimizer")
     def do_transformation(self):
+        """Remove tranining nodes which has no control edge inputs."""
         graph_handle = GraphAnalyzer()
         graph_handle.graph = self.model
 

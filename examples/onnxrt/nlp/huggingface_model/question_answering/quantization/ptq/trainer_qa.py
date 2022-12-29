@@ -477,8 +477,8 @@ class QuestionAnsweringTrainer(Trainer):
                     loss = None
                     with self.compute_loss_context_manager():
                         data = {"input_ids": np.array(inputs['input_ids'], dtype=np.int64),
-                                "attention_mask": np.array(inputs['token_type_ids'], dtype=np.int64),
-                                "token_type_ids": np.array(inputs['attention_mask'], dtype=np.int64)}
+                                "attention_mask": np.array(inputs['attention_mask'], dtype=np.int64),
+                                "token_type_ids": np.array(inputs['token_type_ids'], dtype=np.int64)}
                         outputs2 = onnx_session.run(None, data)
                     logits2 = tuple((torch.from_numpy(outputs2[0]), torch.from_numpy(outputs2[1])))
                     # TODO: this needs to be fixed and made cleaner later.

@@ -15,17 +15,15 @@ wget https://github.com/onnx/models/raw/main/text/machine_comprehension/bidirect
 ### Quantization
 
 ```bash
-bash run_tuning.sh --config=bidaf.yaml \ 
-                   --input_model=path/to/model \ # model path as *.onnx
-                   --data_path=path/to/squad_v1/dev-v1.1.json
+bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
+                   --dataset_location=path/to/squad_v1/dev-v1.1.json
                    --output_model=path/to/model_tune
 ```
 
 ### Benchmark
 
 ```bash
-bash run_benchmark.sh --config=bidaf.yaml \ 
-                      --input_model=path/to/model \ # model path as *.onnx
-                      --data_path=path/to/squad_v1/dev-v1.1.json
+bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
+                      --dataset_location=path/to/squad_v1/dev-v1.1.json
                       --mode=performance # or accuracy
 ```

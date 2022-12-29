@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Folding Const Graph Rewriter."""
 
 
 import numpy as np
@@ -26,9 +27,11 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer, GraphRe
 
 
 class GraphFoldConstantOptimizer(GraphRewriterBase):
+    """Folding all the sequences only consist of const and self.supported_op_type."""
     supported_op_type = ["Add", "AddV2", "Const", "Mul", "Rsqrt", "Sub"]
 
     def __init__(self, model=None):
+        """Initilization."""
         super().__init__(model)
         self.graph_analyzer = GraphAnalyzer()
         self.graph_analyzer.graph = self.model
@@ -36,7 +39,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
         self.graph_info = self.graph_analyzer.parse_graph()
 
     def _fold_value(self, end_node_name):
-        """calculate values of end node of constant node sequence
+        """Calculate values of end node of constant node sequence.
 
         there may be layers whose inputs are all constant in the graph, like:
           const
@@ -53,7 +56,6 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
         Raises:
           ValueError: If the graph contains tensors which can't be broadcast.
         """
-
         end_node = self.graph_info[end_node_name].node
 
         def can_broadcast(s1, s2):
@@ -130,7 +132,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
         return True
 
     def check_const_inputs(self, node_name):
-        """Check the node has the const input
+        """Check the node has the const input.
 
         Args:
             node_name (string): node name
@@ -154,7 +156,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
 
     @dump_elapsed_time("Pass GraphFoldConstantOptimizer")
     def do_transformation(self):
-        """fold all the sequences only consist of const and self.supported_op_type
+        """Fold all the sequences only consist of const and self.supported_op_type.
 
         Args:
           input_graph_def (graphdef): graphdef object
@@ -162,7 +164,6 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
         Returns:
            [graphdef]: optimized graph
         """
-
         while not self.check_all_folded():
             for node_name, _ in self.graph_info.copy().items():
                 if self.check_const_inputs(node_name):

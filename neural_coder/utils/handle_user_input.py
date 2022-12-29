@@ -97,12 +97,14 @@ def get_imports_path(user_code_path: List) -> List:
     pip_name_exceptions = [
         "argparse",
         "ast",
+        "classy_vision",
         "collections",
         "contextlib",
         "datasets",
         "dataclasses",
         "einops",
         "enum",
+        "evaluate",
         "fx",
         "glob",
         "h5py",
@@ -140,7 +142,10 @@ def get_imports_path(user_code_path: List) -> List:
         "tqdm",
         "traceback",
         "unittest",
+        "vissl",
         "warnings",
+        "packaging",
+        "pytorch_lightning",
     ]
 
     if globals.cache_load_transformers:

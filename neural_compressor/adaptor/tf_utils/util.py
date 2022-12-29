@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""Tensorflow Utils Helper functions."""
 
 from collections import OrderedDict, UserDict
 import os
@@ -33,23 +34,27 @@ from pkg_resources import parse_version
 TF_SPR_BASE_VERSIONS = ('2.11.0202242', '2.11.0202250')
 
 def version1_lt_version2(version1, version2):
+    """Check if version1 is less than version2."""
     return parse_version(version1) < parse_version(version2)
-    
+
 def version1_gt_version2(version1, version2):
+    """Check if version1 is greater than version2."""
     return parse_version(version1) > parse_version(version2)
 
 def version1_eq_version2(version1, version2):
+    """Check if version1 is equal to version2."""
     return parse_version(version1) == parse_version(version2)
 
 def version1_gte_version2(version1, version2):
+    """Check if version1 is greater than or equal to version2."""
     return parse_version(version1) > parse_version(version2) or parse_version(version1) == parse_version(version2)
 
 def version1_lte_version2(version1, version2):
+    """Check if version1 is less than or equal to version2."""
     return parse_version(version1) < parse_version(version2) or parse_version(version1) == parse_version(version2)
-    
+
 def disable_random(seed=1):
-    """A Decorator to disable tf random seed.
-    """
+    """A Decorator to disable tf random seed."""
     def decorator(func):
         def wrapper(*args, **kw):
             tf.compat.v1.disable_eager_execution()
@@ -98,7 +103,7 @@ def write_graph(out_graph_def, out_graph_file):
 
 
 def is_ckpt_format(model_path):
-    """check the model_path format is ckpt or not.
+    """Check the model_path format is ckpt or not.
 
     Args:
         model_path (string): the model folder path
@@ -112,7 +117,8 @@ def is_ckpt_format(model_path):
     return False
 
 def _parse_ckpt_bn_input(graph_def):
-    """parse ckpt batch norm inputs to match correct moving mean and variance
+    """Parse ckpt batch norm inputs to match correct moving mean and variance.
+
     Args:
         graph_def (graph_def): original graph_def
     Returns:
@@ -142,7 +148,8 @@ def _parse_ckpt_bn_input(graph_def):
     return graph_def
 
 def _get_nodes_from_name(node_name, graph_def):
-    """get nodes from graph_def using node name
+    """Get nodes from graph_def using node name.
+
     Args:
         graph_def (graph_def): graph_def
         node_name (str): node name
@@ -153,7 +160,7 @@ def _get_nodes_from_name(node_name, graph_def):
     return [node for node in graph_def.node if node.name == node_name]
 
 def is_saved_model_format(model_path):
-    """check the model_path format is saved_model or not
+    """Check the model_path format is saved_model or not.
 
     Args:
         model_path (string): the model folder path
@@ -166,6 +173,15 @@ def is_saved_model_format(model_path):
     return bool(file_list.count('.pb') in [1, 2, 3] and ('variables') in os.listdir(model_path))
 
 def get_estimator_graph(estimator, input_fn):
+    """Get the graph of the estimator.
+
+    Args:
+        estimator: tf estimator model
+        input_fn: input function
+
+    Returns:
+        graph
+    """
     with tf.Graph().as_default() as g:
         features, input_hooks = estimator._get_features_from_input_fn(
             input_fn, tf.estimator.ModeKeys.PREDICT)
@@ -196,8 +212,10 @@ def get_estimator_graph(estimator, input_fn):
         return graph
 
 def get_tensor_by_name(graph, name, try_cnt=3):
-    """Get the tensor by name considering the 'import' scope when model
-       may be imported more then once, handle naming format like both name:0 and name
+    """Get the tensor by name.
+
+    Considering the 'import' scope when model may be imported more then once,
+    handle naming format like both name:0 and name.
 
     Args:
         graph (tf.compat.v1.GraphDef): the model to get name from
@@ -217,7 +235,7 @@ def get_tensor_by_name(graph, name, try_cnt=3):
     raise ValueError('can not find tensor by name')
 
 def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1, measurer=None):
-    """Run the graph that have iterator integrated in the graph
+    """Run the graph that have iterator integrated in the graph.
 
     Args:
         sess (tf.compat.v1.Session): the model sess to run the graph
@@ -249,6 +267,7 @@ def iterator_sess_run(sess, iter_op, feed_dict, output_tensor, iteration=-1, mea
     return preds
 
 def collate_tf_preds(results):
+    """Collate tbe prediction results."""
     batch = results[0]
     if isinstance(batch, list):
         results = zip(*results)
@@ -264,12 +283,14 @@ def collate_tf_preds(results):
     return collate_results
 
 def get_input_output_node_names(graph_def):
+    """Get the input node name and output node name of the graph_def."""
     g = GraphAnalyzer()
     g.graph = graph_def
     g.parse_graph()
     return g.get_graph_input_output()
 
 def fix_ref_type_of_graph_def(graph_def):
+    """Fix ref type of the graph_def."""
     # according to https://github.com/onnx/tensorflow-onnx/issues/77
     for node in graph_def.node:
         if node.op == 'RefSwitch':
@@ -299,8 +320,9 @@ def fix_ref_type_of_graph_def(graph_def):
     return graph_def
 
 def strip_unused_nodes(graph_def, input_node_names, output_node_names):
-    """
-    The strip_unused_nodes pass is from tensorflow/python/tools/strip_unused_lib.py 
+    """Strip unused nodes of the graph_def.
+
+    The strip_unused_nodes pass is from tensorflow/python/tools/strip_unused_lib.py
     of official tensorflow r1.15 branch
     """
     cur_graph = GraphAnalyzer()
@@ -345,9 +367,7 @@ def strip_unused_nodes(graph_def, input_node_names, output_node_names):
                                                      output_node_names)
 
 def strip_equivalent_nodes(graph_def, output_node_names):
-    """
-    Strip nodes with the same input and attr
-    """
+    """Strip nodes with the same input and attr."""
     stripped_graph = GraphAnalyzer()
     stripped_graph.graph = graph_def
     stripped_graph_info = stripped_graph.parse_graph()
@@ -410,6 +430,7 @@ def strip_equivalent_nodes(graph_def, output_node_names):
 
 # THIS API IS TO BE DEPRECATED!
 def get_graph_def(model, outputs=[], auto_input_output=False):
+    """Get the model's graph_def."""
     from neural_compressor.experimental.common import Model as NCModel
     if not isinstance(model, NCModel):
         model = NCModel(model)
@@ -417,6 +438,7 @@ def get_graph_def(model, outputs=[], auto_input_output=False):
     return model.graph_def
 
 def get_model_input_shape(model):
+    """Get the inout shape of the input model."""
     for node in model.graph_def.node:
         if node.op == 'Placeholder':
             _shape = list(tf.compat.v1.TensorShape(node.attr['shape'].shape))
@@ -425,10 +447,10 @@ def get_model_input_shape(model):
             if len(_shape) > 1 and isinstance(_shape[0], int):
                 return _shape[0]
     return 1
-    
+
 def get_tensor_val_from_graph_node(graph_node_name_mapping, node_name):
-    """
-    Get the tensor value for given node name
+    """Get the tensor value for given node name.
+
     Args:
         graph_node_name_mapping: key: node name, val: node
         node_name: query node
@@ -444,6 +466,7 @@ def get_tensor_val_from_graph_node(graph_node_name_mapping, node_name):
     return tensor_val
 
 def int8_node_name_reverse(node):
+    """Reverse int8 node name."""
     int8_postfix = '_eightbit'
     node_name = node.name
     if 'Quantized' in node.op:
@@ -453,6 +476,7 @@ def int8_node_name_reverse(node):
     return node_name
 
 def tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path):
+    """Tensorflow diagnosis helper function."""
     from ...utils.utility import dump_data_to_local
     import tensorflow as tf
     fp32_node_mapping = {}
@@ -485,8 +509,9 @@ def tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path):
     return inspect_node_lst, updated_cfg
 
 def _parse_config(q_config, cfg, op_list):
+    """Parse q_config and get dequantize min max value."""
     dequan_min_max = {}
-    if '__requant_min_max' in q_config:     
+    if '__requant_min_max' in q_config:
         for node_name, val in q_config['__requant_min_max'].items():
             node_name = node_name.split('_eightbit_requant_range')[0]
             if node_name in op_list:
@@ -498,6 +523,7 @@ def _parse_config(q_config, cfg, op_list):
     return dequan_min_max, updated_cfg
 
 def generate_feed_dict(input_tensor, inputs):
+    """Generate feed dict helper function."""
     if len(input_tensor) == 1:
         feed_dict = {}
         if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) \

@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Fuse Columnwise Mul Graph Rewriter."""
 
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import tensor_util
@@ -26,11 +26,11 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class FuseColumnWiseMulOptimizer(GraphRewriterBase):
-    """Fuse Mul op into Conv2D/DepthwiseConv2dNative/MatMul
-    Mul + Conv2D/DepthwiseConv2dNative/MatMul --> Conv2D/DepthwiseConv2dNative/MatMul
-    """
+    """Fuse Mul op into Conv2D/DepthwiseConv2dNative/MatMul."""
+
     @dump_elapsed_time("Pass FuseColumnWiseMulOptimizer")
     def do_transformation(self):
+        """Fuse Mul + Conv2D/DepthwiseConv2dNative/MatMul --> Conv2D/DepthwiseConv2dNative/MatMul."""
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 

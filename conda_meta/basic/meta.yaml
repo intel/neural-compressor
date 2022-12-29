@@ -16,7 +16,7 @@ requirements:
   run:
     - python
     - pip
-    - numpy
+    - numpy<=1.22.3
     - pyyaml
     - scikit-learn
     - schema
@@ -29,6 +29,7 @@ requirements:
     - requests
     - prettytable
     - packaging
+    - deprecated
 test:
   imports:
     - neural_compressor

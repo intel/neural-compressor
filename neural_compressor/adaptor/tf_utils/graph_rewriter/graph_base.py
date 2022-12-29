@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Graph Rewrite Base Class."""
 
 from abc import abstractmethod
 import logging
@@ -22,17 +22,18 @@ import logging
 
 class GraphRewriterBase():
     """Graph Rewrite Base class.
+
     We abstract this base class and define the interface only.
 
     Args:
         object (model): the input model to be converted.
     """
     def __init__(self, model):
+        """Initilization."""
         self.model = model
         self.logger = logging.getLogger("neural_compressor")
 
     @abstractmethod
     def do_transformation(self):
-        """Base Interface that need to be implemented by each sub class.
-        """
+        """Base Interface that need to be implemented by each sub class."""
         raise NotImplementedError

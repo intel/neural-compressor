@@ -1,110 +1,104 @@
 DataLoader
 ==========
 
+1. [Introduction](#introduction)
+
+2. [Supported Framework Dataloader Matrix](#supported-framework-dataloader-matrix)
+
+3. [Get Start with Dataloader API](#get-start-with-dataloader-api)
+
+4. [Examples](#examples)
+
+## Introduction
+
 Deep Learning often encounters large datasets that are memory-consuming. Previously, working with large datasets required loading them into memory all at once. The constant lack of memory resulted in the need for an efficient data generation scheme. This is not only about handling the lack of memory in large datasets, but also about making the process of loading data faster using a multi-processing thread. We call the data generation object a DataLoader.
 
-With the importance of a dataloader, different frameworks can have their own DataLoadermodule. As for Neural Compressor, it needs to calibrate the inputs/outputs of each layer of the model; the framework-specific dataloader has different features and APIs that will make it hard to use them same way in the tool. Another request is that the tool also treat batch size as a tuning parameter  which means the tool can dynamically change the batch size to get the accuracy target. The third reason is for ease of use; a unified DataLoader API can make it easy to config dataloader in a yaml file without any code modification. Considering about all these advantages, the tool has implemented an internal dataloader.
+With the importance of a dataloader, different frameworks can have their own DataLoader module. As for Intel® Neural Compressor, it has implemented an internal dataloader and provides a unified DataLoader API for the following three reasons:
 
-The dataloader takes a dataset as the input parameter and loads data from the dataset when needed.
+- The framework-specific dataloader has different features and APIs that will make it hard to use them same way in Neural Compressor.
 
-A dataset is a container which holds all data that can be used by the dataloader, and have the ability to be fetched by index or created as an iterator. One can implement a specific dataset by inheriting from the Dataset class by implementing `__iter__` method or `__getitem__` method, while implementing `__getitem__` method, `__len__` method is recommended.
+- Neural Compressor treats batch size as a tuning parameter which means it can dynamically change the batch size to reach the accuracy goal.
 
-A dataset uses transform as its data process component. Transform contains three parts, aiming at different parts of the life cycle of data processing:
+- Internal dataloader makes it easy to config dataloaders in a yaml file without any code modification.
 
-* preprocessing
+The internal dataloader takes a [dataset](./dataset.md) as the input parameter and loads data from the dataset when needed. In special cases, users can also define their own dataloader classes, which must have `batch_size` attribute and `__iter__` function.
 
-* postprocessing
+## Supported Framework Dataloader Matrix
 
-* general
+| Framework     | Status     |
+|---------------|:----------:|
+| TensorFlow    |  &#10004;  |
+| PyTorch       |  &#10004;  |
+| ONNX Runtime   |  &#10004;  |
+| MXNet         |  &#10004;  |
 
-A general transform can be used in both preprocessing and postprocessing; one can also implement a specific transform by inheriting from the Transform class by implementing the `__call__` method. Usually, a dataloader will use the transform for preprocessing and the postprocessing transform is used to give the right processed data to the metric to update. Transforms also compose together to be one and serially implement the transforms.
+## Get Start with Dataloader API
 
-Transform for preprocessing will be launched in the dataset `__getitem__` or `__next__` method; that means the transform will be used after the dataloader has loaded batched data and before the data given to the model for inference. That helps reduce the memory compared with load and process all data at once. Transform for postprocessing is used in evaluation function of the internal Neural Compressor to process the inference data and the processed data used by metric. 
+### Config Dataloader in a Yaml File
 
-# How to use it
-
-## Config dataloader in a yaml file
-
-In this case, the dataloader is created after the Quantization object is initialized. As calibrations and evaluations may have different transforms and datasets, you can config different dataloaders in a yaml file.
+Users can use internal dataloader in the following manners. In this case, the dataloader is created after the Quantization object is initialized. As calibration and evaluation may have different transforms and datasets, users can config different dataloaders in a yaml file.
 
 ```yaml
-quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+quantization:
+  approach: post_training_static_quant
   calibration:
-    sampling_size: 300                               # optional. default value is 100 samples. used to set how many samples in calibration dataset are used.
     dataloader:
       dataset:
-        ImageFolder:
+        COCORaw:
           root: /path/to/calibration/dataset
+      filter:
+        LabelBalance:
+          size: 1
       transform:
-        RandomResizedCrop:
-          size: 224
-        RandomHorizontalFlip: {}
-        ToTensor: {}
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
-          std: [0.229, 0.224, 0.225]
+        Resize:
+          size: 300
 
-evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
-    metric:
-      topk: 1 
+evaluation:
+  accuracy:
+    metric: 
+      ...
     dataloader:
-      batch_size: 30
+      batch_size: 16
       dataset:
-        ImageFolder:
+        COCORaw:
           root: /path/to/evaluation/dataset
       transform:
         Resize:
-          size: 256
-        CenterCrop:
-          size: 224
-        ToTensor: {}
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
-          std: [0.229, 0.224, 0.225]
-  performance:                                       # optional. used to benchmark performance of passing model.
-    configs:
-      cores_per_instance: 4
-      num_of_instance: 7
+          size: 300
+  performance:
     dataloader:
-      batch_size: 1
+      batch_size: 16
       dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset
-      transform:
-        Resize:
-          size: 256
-        CenterCrop:
-          size: 224
-        ToTensor: {}
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
-          std: [0.229, 0.224, 0.225]
+        dummy_v2:
+          input_shape: [224, 224, 3] 
 ```
 
-## Create a user-specific dataloader
+### Create a User-specific Dataloader
+
+Users can define their own dataloaders as shown as below:
 
 ```python
-calib_data = mx.io.ImageRecordIter(path_imgrec=dataset,
-                                   label_width=1,
-                                   preprocess_threads=data_nthreads,
-                                   batch_size=batch_size,
-                                   data_shape=data_shape,
-                                   label_name=label_name,
-                                   rand_crop=False,
-                                   rand_mirror=False,
-                                   shuffle=args.shuffle_dataset,
-                                   shuffle_chunk_seed=args.shuffle_chunk_seed,
-                                   seed=args.shuffle_seed,
-                                   dtype=data_layer_type,
-                                   ctx=args.ctx,
-                                   **combine_mean_std)
 
-from neural_compressor.experimental import Quantization, common
-quantizer = Quantization('conf.yaml')
-quantizer.model = fp32_model
-quantizer.calib_dataloader = calib_data
-quantizer.eval_dataloader = calib_data
-q_model = quantizer.fit()
+class Dataloader:
+    def __init__(self, batch_size, **kwargs):
+        self.batch_size = batch_size
+        self.dataset = []
+        # operations to add (input_data, label) pairs into self.dataset
+
+    def __iter__(self):
+        for input_data, label in self.dataset:
+            yield input_data, label
+
+from neural_compressor import quantization, PostTrainingQuantConfig
+config = PostTrainingQuantConfig()
+dataloader = Dataloader(batch_size, **kwargs)
+q_model = quantization.fit(model, config, calib_dataloader=dataloader,
+    eval_func=eval)
+q_model.save(args.output_model)
 ```
 
+## Examples
+
+- Refer to this [example](https://github.com/intel/neural-compressor/tree/master/examples/onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq) for how to define a customised dataloader.
+
+- Refer to this [example](https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/image_recognition/resnet50/quantization/ptq) for how to use internal dataloader.
