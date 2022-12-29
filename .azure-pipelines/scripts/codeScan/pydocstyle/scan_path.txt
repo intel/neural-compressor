@@ -12,3 +12,4 @@
 /neural-compressor/neural_compressor/model
 /neural-compressor/neural_compressor/utils
 /neural-compressor/neural_compressor/adaptor/mxnet_utils
+/neural-compressor/neural_compressor/pruner

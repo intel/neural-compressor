@@ -186,12 +186,30 @@ def process_yaml_config(global_config, local_configs, default_config):
     return pruners_info
 
 def check_key_validity(template_config, user_config):
+    """Check the validity of keys.
+
+    Args:
+        template_config: A default config dict object that contains pruning parameters and configurations.
+        user_config: A user config dict object that contains pruning parameters and configurations.
+    """
     def check_key_validity_dict(template_config, usr_cfg_dict):
+        """Check the validity of keys in the dict..
+
+        Args:
+            template_config: A default config dict object that contains pruning parameters and configurations.
+            usr_cfg_dict: A user config dict object that contains pruning parameters and configurations.
+        """
         for user_key, user_value in usr_cfg_dict.items():
             if user_key not in template_config.keys():
                 logger.warning(f"{user_key} is not supported for config")
 
     def check_key_validity_prunerv2(template_config, usr_cfg_dict):
+        """Check the validity of keys in the prunerv2.
+
+        Args:
+            template_config: A default config dict object that contains pruning parameters and configurations.
+            usr_cfg_dict: A user config dict object that contains pruning parameters and configurations.
+        """
         for user_key, user_value in usr_cfg_dict.pruner_config.items():
             if user_key not in template_config.keys():
                 logger.warning(f"{user_key} is not supported for config")
