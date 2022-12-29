@@ -6,7 +6,7 @@ The following API information is available:
 .. toctree::
    :maxdepth: 1
 
-   new_api
+   basic_api
    adaptor
    strategy
    model
