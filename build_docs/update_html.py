@@ -1,10 +1,9 @@
 import os, sys
+import glob
 
 
-def main(folder, version):
-    index_file = "{}/index.html".format(folder)
+def oupdate_version_link(version, folder_name, index_file):
     index_buf = ""
-    folder_name=os.path.basename(folder)
     with open(index_file, "r") as f:
         index_buf = f.read()
         key_str='  <div class="version">\n                {}\n              </div>'.format(version)
@@ -18,6 +17,12 @@ def main(folder, version):
 
     with open(index_file, "w") as f:
         f.write(index_buf)
+
+
+def main(folder, version):
+    folder_name=os.path.basename(folder)
+    for index_file in glob.glob('{}/**/*.html'.format(folder),recursive = True):
+        update_version_link(version, folder_name, index_file)
 
     version_file = "{}/versions.html".format(os.path.dirname(folder))
     #print(version_file)
