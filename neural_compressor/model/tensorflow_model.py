@@ -1017,7 +1017,7 @@ class TensorflowQATModel(TensorflowSavedModelModel):
         self.keras_model = q_model
 
     @property
-    def freezed_graph_def(self):
+    def frozen_graph_def(self):
         graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(
             self.sess, self.sess.graph_def, self.output_node_names) 
         return graph_def
@@ -1030,7 +1030,7 @@ class TensorflowQATModel(TensorflowSavedModelModel):
         os.makedirs(os.path.dirname(root), exist_ok=True)
         if root.endswith('.pb'):
             saved_format = 'pb file'
-            graph_def = self.freezed_graph_def
+            graph_def = self.frozen_graph_def
             f=tf.io.gfile.GFile(root,'wb')
             f.write(graph_def.SerializeToString()) 
         else:

@@ -2496,3 +2496,4 @@ SelfKnowledgeDistillationLossConfig
 DistillationConfig
 KnowledgeDistillationLossConfig
 confs
+TensorflowQATModel

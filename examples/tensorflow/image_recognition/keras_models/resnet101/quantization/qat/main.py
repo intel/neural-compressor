@@ -170,7 +170,7 @@ def main():
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
         "Benchmark only supports performance or accuracy mode."
 
-        model = TensorflowQATModel(FLAGS.input_model).freezed_graph_def
+        model = TensorflowQATModel(FLAGS.input_model).frozen_graph_def
         if FLAGS.mode == 'performance':
             conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
             fit(model, conf, b_func=evaluate)
