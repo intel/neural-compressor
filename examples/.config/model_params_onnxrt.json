@@ -164,10 +164,12 @@
     },
     "googlenet-12": {
       "model_src_dir": "image_recognition/onnx_model_zoo/googlenet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/googlenet-12/googlenet-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "googlenet.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "shufflenet-v2-12": {
       "model_src_dir": "image_recognition/onnx_model_zoo/shufflenet/quantization/ptq",
@@ -187,17 +189,21 @@
     },
     "caffenet": {
       "model_src_dir": "image_recognition/onnx_model_zoo/caffenet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/caffenet/caffenet-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "caffenet.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "alexnet": {
       "model_src_dir": "image_recognition/onnx_model_zoo/alexnet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/alexnet/bvlcalexnet-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "alexnet.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "efficientnet": {
       "model_src_dir": "image_recognition/onnx_model_zoo/efficientnet/quantization/ptq",
@@ -210,17 +216,21 @@
     },
     "zfnet": {
       "model_src_dir": "image_recognition/onnx_model_zoo/zfnet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/zfnet/zfnet512-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "zfnet512.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "inception_v1": {
       "model_src_dir": "image_recognition/onnx_model_zoo/inception/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/inception_v1/inception-v1-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "inception_v1.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "ssd-12": {
       "model_src_dir": "object_detection/onnx_model_zoo/ssd/quantization/ptq",
@@ -267,10 +277,12 @@
     },
     "densenet": {
       "model_src_dir": "image_recognition/onnx_model_zoo/densenet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/densenet/densenet-12.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "densenet.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "mnist": {
       "model_src_dir": "image_recognition/onnx_model_zoo/mnist/quantization/ptq",
@@ -436,10 +448,12 @@
     },
     "googlenet-12_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/googlenet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/googlenet-12/googlenet-13.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "googlenet_qdq.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "shufflenet-v2-12_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/shufflenet/quantization/ptq",
@@ -452,24 +466,30 @@
     },
     "squeezenet_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/squeezenet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/squeezenet/squeezenet1.0-13.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "squeezenet_qdq.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "caffenet_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/caffenet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/caffenet/caffenet-13.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "caffenet_qdq.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "alexnet_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/alexnet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/alexnet/bvlcalexnet-13.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "alexnet_qdq.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "efficientnet_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/efficientnet/quantization/ptq",
@@ -482,17 +502,21 @@
     },
     "zfnet_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/zfnet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/zfnet/zfnet512-13.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "zfnet512_qdq.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "inception_v1_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/inception/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset2/models/onnx/inception_v1/inception-v1-13.onnx",
-      "main_script": "main.py",
-      "batch_size": 1
+      "yaml": "inception_v1_qdq.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": true
     },
     "ssd-12_qdq": {
       "model_src_dir": "object_detection/onnx_model_zoo/ssd/quantization/ptq",
