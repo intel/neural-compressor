@@ -52,6 +52,7 @@ fi
     --new_benchmark=${new_benchmark} \
     --tuning_cmd="${tuning_cmd}" \
     --benchmark_cmd="${benchmark_cmd}" \
+    --inc_new_api="${inc_new_api}" \
     --mode=${mode} \
     --USE_TUNE_ACC=${USE_TUNE_ACC} \
     --PERF_STABLE_CHECK=${PERF_STABLE_CHECK} \
