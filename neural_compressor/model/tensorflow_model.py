@@ -1018,6 +1018,7 @@ class TensorflowQATModel(TensorflowSavedModelModel):
 
     @property
     def frozen_graph_def(self):
+        """Get frozen graph_def."""
         graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(
             self.sess, self.sess.graph_def, self.output_node_names) 
         return graph_def
