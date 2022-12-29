@@ -180,7 +180,6 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
     def _check_op_list(self, node_type):
         """Check if the node_type in the allowed op list."""
-
         return any([node_type.find(i) != -1 for i in self.check_op_list])
 
     def _find_relu_node(self, node):
