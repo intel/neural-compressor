@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize FusedBatchNormV3 to int8 op."""
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
@@ -23,8 +24,10 @@ from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGra
 from ..quantize_graph_base import QuantizeNodeBase
 
 class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
+    """Quantize FusedBatchNormV3 to int8 op _QuantizedFusedBatchNorm."""
 
     def __init__(self, **kwargs):
+        """Initilization."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
@@ -40,6 +43,7 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
         self.exclude_bn_nodes = []
 
     def apply_newly_bn_relu_fusion(self, match_node_name):
+        """Apply the BN + Relu fusion."""
         matched_node = self.node_name_mapping[match_node_name[0]]
         skip_node_name = match_node_name[1:]
         control_inputs, normal_inputs = self._get_node_input(
@@ -142,6 +146,7 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def apply_newly_bn_leakyrelu_fusion(self, match_node_name):
+        """Apply BN + LeakyRelu fusion."""
         matched_node = self.node_name_mapping[match_node_name[0]]
         skip_node_name = match_node_name[1:]
         control_inputs, normal_inputs = self._get_node_input(
@@ -244,6 +249,7 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def get_longest_fuse(self):
+        """Get the longest fusion pattern."""
         self._get_op_list()
         real_patterns = [pattern[1 :-1] for pattern in self.sorted_patterns]
         # Cannot match if: self._is_match([['Q','BN','Relu','DQ']],['Q','BN','DQ']])
@@ -251,6 +257,7 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase):
         return matched_rule, matched_node_name
 
     def apply_the_transform(self):
+        """Apply the BN int8 fusion."""
         self._get_op_list()
         real_patterns = [pattern[1 :-1] for pattern in self.sorted_patterns]
         # Cannot match if: self._is_match([['Q','BN','Relu','DQ']],['Q','BN','DQ']])

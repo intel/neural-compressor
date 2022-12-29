@@ -18,7 +18,8 @@ class TestPruning(unittest.TestCase):
                 "op_names": ['layer1.*'],
                 'target_sparsity': 0.5,
                 "pattern": '8x2',
-                "pruning_type": "magnitude_progressive"
+                "pruning_type": "magnitude_progressive",
+                "false_key": "this is to test unsupport keys"
             },
             {
                 "op_names": ['layer2.*'],

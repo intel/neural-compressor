@@ -300,7 +300,7 @@ def train300_mlperf_coco(args):
         return current_accuracy
 
     if args.tune:
-        def training_func_for_nc(model):
+        def training_func_for_nc(model, dataloader=None):
             current_lr = args.lr * (global_batch_size / 32)
             current_momentum = 0.9
             optim = torch.optim.SGD(model.parameters(), lr=current_lr,
@@ -394,25 +394,37 @@ def train300_mlperf_coco(args):
                     iter_num += 1
             return model
 
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(ssd300)
-        quantizer.eval_func = eval_func
-        quantizer.q_func = training_func_for_nc
-        quantizer.calib_dataloader = val_dataloader
-        q_model = quantizer.fit()
+        from neural_compressor import quantization
+        from neural_compressor.config import QuantizationAwareTrainingConfig
+        import copy
+
+        conf = QuantizationAwareTrainingConfig(backend="default")
+        from neural_compressor.training import prepare_compression
+        compression_manager = prepare_compression(copy.deepcopy(ssd300), conf)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
+        q_model = training_func_for_nc(model, val_dataloader)
+        compression_manager.callbacks.on_train_end()
+
         q_model.save(args.tuned_checkpoint)
 
     if args.benchmark or args.accuracy:
         ssd300.eval()
+
         if args.int8:
             from neural_compressor.utils.pytorch import load
             new_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
                              ssd300,
-                             dataloader=train_dataloader)
+                             dataloader=None)
         else:
             new_model = ssd300
-        eval_func(new_model)
+        if args.accuracy:
+            eval_func(new_model)
+        else:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
+            benchmark.fit(new_model, config=b_conf, b_func=eval_func)
         return
 
     return False

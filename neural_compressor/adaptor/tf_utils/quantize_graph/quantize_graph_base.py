@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""QuantizeGraph Base Class."""
 
 import logging
 from collections import namedtuple
@@ -28,23 +28,23 @@ from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 from neural_compressor.adaptor.tf_utils.util import version1_eq_version2
 
 class QuantizeGraphBase():
-    """
-    This is the base class for quantize graph.
-    """
+    """This is the base class for quantize graph."""
 
     def __init__(self, output_node_names):
+        """Initilizaiton."""
         self.output_node_names = output_node_names
         self.transformers = {}
 
     def register_transformer(self, node_name, entry):
+        """Register transformers API."""
         if node_name not in self.transformers:
             self.transformers[node_name] = {}
 
         self.transformers[node_name] = entry
 
     def do_transform(self):
-        """
-        This is the virtual interface need to be implemented by derived class
+        """This is the virtual interface need to be implemented by derived class.
+
         :return:
         """
         pass
@@ -55,8 +55,7 @@ class QuantizeGraphBase():
             input_graph, output_names)
 
 class QuantizeNodeBase():
-    """This is the base class for nodes fusion
-
+    """This is the base class for nodes fusion.
 
     Arguments:
         object {[type]} -- [description]
@@ -64,7 +63,7 @@ class QuantizeNodeBase():
     node_details = namedtuple('node_details', ['node', 'output'])
 
     def __init__(self, **kwargs):
-
+        """Initilizaiton."""
         self.logger = logging.getLogger("neural_compressor")
         input_graph = kwargs['input_graph']
 
@@ -93,64 +92,64 @@ class QuantizeNodeBase():
             tf.version.VERSION.find('1.15.0-up') != -1)
 
     def apply_the_transform(self):
-        """
-        This is the virtual interface to be implemented by derived class
+        """This is the virtual interface to be implemented by derived class.
+
         :return: transformed graphdef
         """
         pass
 
     def get_longest_fuse(self):
-        """This is the virtual interface to be implemented by derived class
-        """
+        """This is the virtual interface to be implemented by derived class."""
         pass
 
     def _insert_dummy_biasadd(self, match_node_name, matched_node): # pragma: no cover
-         target_node_name = matched_node.node.name
-         matmul_a_node_name = helper.node_name_from_input(matched_node.node.input[0])
-         matmul_a_node = self.node_name_mapping[matmul_a_node_name].node
-         matmul_b_node_name = helper.node_name_from_input(matched_node.node.input[1])
-         matmul_b_node = self.node_name_mapping[matmul_b_node_name].node
+        """Insert dummy BiasAdd op."""
+        target_node_name = matched_node.node.name
+        matmul_a_node_name = helper.node_name_from_input(matched_node.node.input[0])
+        matmul_a_node = self.node_name_mapping[matmul_a_node_name].node
+        matmul_b_node_name = helper.node_name_from_input(matched_node.node.input[1])
+        matmul_b_node = self.node_name_mapping[matmul_b_node_name].node
 
-         if matmul_a_node.op == 'Const' and matmul_b_node.op != 'Const':
-             pass
-         else:
-             from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-             g = GraphAnalyzer()
-             g.graph = self.input_graph
-             graph_info = g.parse_graph()
-             next_node_names = graph_info[matched_node.node.name].outputs
-             bias_node_name = target_node_name + '_dummy_biasadd'
-             bias_const_node_name = target_node_name + '_fake_const'
+        if matmul_a_node.op == 'Const' and matmul_b_node.op != 'Const':
+            pass
+        else:
+            from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
+            g = GraphAnalyzer()
+            g.graph = self.input_graph
+            graph_info = g.parse_graph()
+            next_node_names = graph_info[matched_node.node.name].outputs
+            bias_node_name = target_node_name + '_dummy_biasadd'
+            bias_const_node_name = target_node_name + '_fake_const'
 
-             if matched_node.node.op == 'MatMul':
-                 t_b_index = 0 if matched_node.node.attr['transpose_b'].b else 1
-             if matched_node.node.op in ('Conv2D' or 'DepthwiseConv2dNative') and \
-                matched_node.node.attr['data_format'].s == b'NHWC':
-                 t_b_index = 3
-             elif matched_node.node.op in ('Conv2D' or 'DepthwiseConv2dNative')  and \
-                matched_node.node.op.attr['data_format'].s == b'NCHW':
-                 t_b_index = 1
-             elif matched_node.node.op == 'Conv3D' and matched_node.node.attr['data_format'].s == b'NDHWC':
-                 t_b_index = 4
-             elif matched_node.node.op == 'Conv3D' and matched_node.node.attr['data_format'].s == b'NCDHW':
-                 t_b_index = 1
-             bias_add_length = matmul_b_node.attr['value'].tensor.tensor_shape.dim[t_b_index].size
+            if matched_node.node.op == 'MatMul':
+                t_b_index = 0 if matched_node.node.attr['transpose_b'].b else 1
+            if matched_node.node.op in ('Conv2D' or 'DepthwiseConv2dNative') and \
+            matched_node.node.attr['data_format'].s == b'NHWC':
+                t_b_index = 3
+            elif matched_node.node.op in ('Conv2D' or 'DepthwiseConv2dNative')  and \
+            matched_node.node.op.attr['data_format'].s == b'NCHW':
+                t_b_index = 1
+            elif matched_node.node.op == 'Conv3D' and matched_node.node.attr['data_format'].s == b'NDHWC':
+                t_b_index = 4
+            elif matched_node.node.op == 'Conv3D' and matched_node.node.attr['data_format'].s == b'NCDHW':
+                t_b_index = 1
+            bias_add_length = matmul_b_node.attr['value'].tensor.tensor_shape.dim[t_b_index].size
 
-             bias_add_content = [0.] * bias_add_length
+            bias_add_content = [0.] * bias_add_length
 
-             bias_const_node = helper.create_constant_node(
-                 bias_const_node_name, bias_add_content, dtypes.float32, shape=[bias_add_length])
-             bias_node = helper.create_node('BiasAdd', bias_node_name, [target_node_name, bias_const_node_name])
-             helper.set_attr_dtype(bias_node, "T", dtypes.float32)
+            bias_const_node = helper.create_constant_node(
+                bias_const_node_name, bias_add_content, dtypes.float32, shape=[bias_add_length])
+            bias_node = helper.create_node('BiasAdd', bias_node_name, [target_node_name, bias_const_node_name])
+            helper.set_attr_dtype(bias_node, "T", dtypes.float32)
 
-             g.add_node(bias_node, target_node_name, next_node_names)
-             g.add_node(bias_const_node, None, [bias_node_name])
-             self.input_graph = g.dump_graph()
-             self._parse_graph(self.input_graph)
-             new_match_node_name=match_node_name[:1]+[bias_node_name]+match_node_name[1:]
-             new_match_node_name=match_node_name[:1]+[bias_node_name]+match_node_name[1:]
+            g.add_node(bias_node, target_node_name, next_node_names)
+            g.add_node(bias_const_node, None, [bias_node_name])
+            self.input_graph = g.dump_graph()
+            self._parse_graph(self.input_graph)
+            new_match_node_name=match_node_name[:1]+[bias_node_name]+match_node_name[1:]
+            new_match_node_name=match_node_name[:1]+[bias_node_name]+match_node_name[1:]
 
-             return new_match_node_name
+            return new_match_node_name
 
 
     def _is_match(self, patterns):
@@ -263,6 +262,7 @@ class QuantizeNodeBase():
         return None, None
 
     def _need_to_check(self, node_type):
+        """Check op list."""
         op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
                    "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
                    "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMulV2", "FakeQuantWithMinMaxVars",
@@ -270,6 +270,7 @@ class QuantizeNodeBase():
         return any([node_type.find(i) != -1 for i in op_list])
 
     def _find_relu_node(self, node):
+        """Find relu node algorithm to identify the poistive input."""
         #if node.op.find("HardSwish") != -1:
         #    return False
         if (node.op in ("Relu", "Relu6") or \
@@ -301,18 +302,17 @@ class QuantizeNodeBase():
             return False
 
     def _reset_output_node_maps(self):
+        """Reset output node maps."""
         self.output_node_maps = {}
 
     def _get_op_list(self):
+        """Get the op list."""
         self.op_list = []
         for _, v in enumerate(self.node_name_mapping):
             self.op_list.append(self.node_name_mapping[v].node.op)
 
     def _get_node_input(self, node_name):
-        """
-        Return control_input name, non-control_input node name
-        """
-
+        """Return control_input name, non-control_input node name."""
         return [
             i for i in self.node_name_mapping[node_name].node.input
             if i[0] == '^'
@@ -327,6 +327,7 @@ class QuantizeNodeBase():
                                               dtype=dtypes.quint8,
                                               min_tensor_index=1,
                                               performance_only=False):
+        """Add Dequantize node after the quantized node."""
         min_max_inputs = [
             "%s:%s" % (quantized_output_name, min_tensor_index),
             "%s:%s" % (quantized_output_name, min_tensor_index + 1)
@@ -346,6 +347,7 @@ class QuantizeNodeBase():
 
     def eightbitize_single_input_tensor_node(self, original_node,
                                              add_op_function):
+        """Quantize the single input tensor node."""
         quantized_op_name = original_node.name + "_eightbit_quantized"
         quantized_op_type = "Quantized" + original_node.op
         if version1_gt_version2(tf.version.VERSION, '2.7.0') and original_node.op == "MaxPool3D":
@@ -362,6 +364,7 @@ class QuantizeNodeBase():
                                                    dtype=deq_type)
 
     def _add_eightbit_prologue_nodes(self, original_node):
+        """Add quantized prologue nodes."""
         namespace_prefix = original_node + "_eightbit"
         reshape_dims_name, reduction_dims_name = self._add_common_quantization_nodes(
             namespace_prefix, helper.node_name_from_input(
@@ -413,6 +416,7 @@ class QuantizeNodeBase():
         return all_input_names
 
     def _add_eightbit_prologue_nodes_for_enter(self, original_node, enter_node=None):
+        """Add quantized prologue nodes for control edge case."""
         namespace_prefix = original_node + "_eightbit"
         reshape_dims_name, reduction_dims_name = self._add_common_quantization_nodes(
             namespace_prefix, helper.node_name_from_input(
@@ -510,9 +514,7 @@ class QuantizeNodeBase():
         self.output_graph.node.extend([output_node])
 
     def _parse_graph(self, input_graph=None):
-        """
-        Parse the graph and get the input node and output node name details.
-        """
+        """Parse the graph and get the input node and output node name details."""
         self.logger.debug("Start to parse graph.")
 
         graph = self.input_graph if input_graph is None else input_graph
@@ -531,6 +533,7 @@ class QuantizeNodeBase():
                     append(node_name)
 
     def remove_redundant_quantization(self, old_graph):
+        """Remove the redundant Quantize/QuantizeV2 nodes."""
         old_nodes_map = self.create_nodes_map(old_graph)
         self.output_graph = graph_pb2.GraphDef()
         inputs_to_rename = {}
@@ -627,6 +630,7 @@ class QuantizeNodeBase():
                                  quantized_output_name,
                                  requantize_type=dtypes.quint8,
                                  is_relu6=False):
+        """Add quantize down nodes."""
         quantized_outputs = [
             quantized_output_name, quantized_output_name + ":1",
             quantized_output_name + ":2"
@@ -761,6 +765,7 @@ class QuantizeNodeBase():
                                             input_node,
                                             per_channel,
                                             enter_node=None):
+        """Quantize weight node."""
         qint8_const_node, min_node, max_node, qint8_const_enter_node, min_enter_node, max_enter_node = \
             helper.generate_quantized_weight_node(parent, input_node, per_channel,
                                                   self.weight_bit, self.device, enter_node)

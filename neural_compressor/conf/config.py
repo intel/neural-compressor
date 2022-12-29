@@ -90,7 +90,7 @@ class PrunerV2:
                  start_step=None, end_step=None, pruning_scope=None, pruning_frequency=None,
                  min_sparsity_ratio_per_op=None, max_sparsity_ratio_per_op=None,
                  sparsity_decay_type=None, pruning_op_types=None, reg_type=None,
-                 reduce_type=None, parameters=None, resume_from_pruned_checkpoint=None):
+                 criterion_reduce_type=None, parameters=None, resume_from_pruned_checkpoint=None):
         self.pruner_config = DotDict({
             'target_sparsity': target_sparsity,
             'pruning_type': pruning_type,
@@ -106,7 +106,7 @@ class PrunerV2:
             'sparsity_decay_type': sparsity_decay_type,
             'pruning_op_types': pruning_op_types,
             'reg_type': reg_type,
-            'reduce_type': reduce_type,
+            'criterion_reduce_type': criterion_reduce_type,
             'parameters': parameters,
             'resume_from_pruned_checkpoint': resume_from_pruned_checkpoint
         })
@@ -755,7 +755,7 @@ weight_compression_v2_schema = Schema({
     Optional('sparsity_decay_type', default="exp"): str,
     Optional('pruning_op_types', default=['Conv', 'Linear']): list,
     Optional('reg_type', default=None): str,
-    Optional('reduce_type', default="mean"): str,
+    Optional('criterion_reduce_type', default="mean"): str,
     Optional('parameters', default={"reg_coeff": 0.0}): dict,
     Optional('resume_from_pruned_checkpoint', default=False): str,
     Optional('pruners'): And(list, \
@@ -1152,6 +1152,7 @@ schema = Schema({
             Optional("dataset_path", default=None): str,
             Optional("supernet_ckpt_path", default=None): str,
             Optional("batch_size", default=64): int,
+            Optional("num_workers", default=20): int,
             },
     },
 

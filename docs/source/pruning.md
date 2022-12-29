@@ -38,27 +38,27 @@ Pruning patterns defines the rules of pruned weights' arrangements in space.
 
 - Unstructured Pruning
 
-Unstructured pruning means finding and removing the less salient connection in the model where the nonzero patterns are irregular and could be anywhere in the matrix.
+  Unstructured pruning means finding and removing the less salient connection in the model where the nonzero patterns are irregular and could be anywhere in the matrix.
 
 - 2in4 Pruning
 
-NVIDIA proposed [2:4 sparsity](https://developer.nvidia.com/blog/accelerating-inference-with-sparsity-using-ampere-and-tensorrt/) (or known as "2in4 sparsity") in Ampere architecture, for every 4 continuous elements in a matrix, two of them are zero and others are non-zero.
+  NVIDIA proposed [2:4 sparsity](https://developer.nvidia.com/blog/accelerating-inference-with-sparsity-using-ampere-and-tensorrt/) (or known as "2in4 sparsity") in Ampere architecture, for every 4 continuous elements in a matrix, two of them are zero and others are non-zero.
 
 - Structured Pruning
 
-Structured pruning means finding parameters in groups, deleting entire blocks, filters, or channels according to some pruning criterions. In general, structured pruning leads to lower accuracy due to restrictive structure than unstructured pruning; However, it can accelerate the model execution significantly because it can fit hardware design better.
+  Structured pruning means finding parameters in groups, deleting entire blocks, filters, or channels according to some pruning criterions. In general, structured pruning leads to lower accuracy due to restrictive structure than unstructured pruning; However, it can accelerate the model execution significantly because it can fit hardware design better.
 
-Different from 2:4 sparsity above, we propose the block-wise structured sparsity patterns that we are able to demonstrate the performance benefits on existing Intel hardwares even without the support of hardware sparsity. A block-wise sparsity pattern with block size ```S``` means the contiguous ```S``` elements in this block are all zero values.
+  Different from 2:4 sparsity above, we propose the block-wise structured sparsity patterns that we are able to demonstrate the performance benefits on existing Intel hardwares even without the support of hardware sparsity. A block-wise sparsity pattern with block size ```S``` means the contiguous ```S``` elements in this block are all zero values.
 
-For a typical GEMM, the weight dimension is ```IC``` x ```OC```, where ```IC``` is the number of input channels and ```OC``` is the number of output channels. Note that sometimes ```IC``` is also called dimension ```K```, and ```OC``` is called dimension ```N```. The sparsity dimension is on ```OC``` (or ```N```).
+  For a typical GEMM, the weight dimension is ```IC``` x ```OC```, where ```IC``` is the number of input channels and ```OC``` is the number of output channels. Note that sometimes ```IC``` is also called dimension ```K```, and ```OC``` is called dimension ```N```. The sparsity dimension is on ```OC``` (or ```N```).
 
-For a typical Convolution, the weight dimension is ```OC x IC x KH x KW```, where ```OC``` is the number of output channels, ```IC``` is the number of input channels, and ```KH``` and ```KW``` is the kernel height and weight. The sparsity dimension is also on ```OC```.
+  For a typical Convolution, the weight dimension is ```OC x IC x KH x KW```, where ```OC``` is the number of output channels, ```IC``` is the number of input channels, and ```KH``` and ```KW``` is the kernel height and weight. The sparsity dimension is also on ```OC```.
 
-Here is a figure showing a matrix with ```IC``` = 32 and ```OC``` = 16 dimension, and a block-wise sparsity pattern with block size 4 on ```OC``` dimension.
+  Here is a figure showing a matrix with ```IC``` = 32 and ```OC``` = 16 dimension, and a block-wise sparsity pattern with block size 4 on ```OC``` dimension.
 
-<a target="_blank" href="./_static/imgs/pruning/sparse_dim.png">
-    <img src="./_static/imgs/pruning/sparse_dim.png" width=600 height=320 alt="block sparsity Pattern">
-</a>
+  <a target="_blank" href="./_static/imgs/pruning/sparse_dim.png">
+      <img src="./_static/imgs/pruning/sparse_dim.png" width=600 height=320 alt="block sparsity Pattern">
+  </a>
 
 ### Pruning Criteria
 
@@ -78,7 +78,7 @@ Pruning criteria defines the rules of which weights are least important to be pr
 
 - Pattern Lock
 
-  The algorithm locks the sparsity pattern in fine tune phase by freezing those zero values of weight tensor during weight update of training. 
+  The algorithm locks the sparsity pattern in finetuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied in the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
 
 - SNIP
 
@@ -161,70 +161,87 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 
 ## Get Started with Pruning API
 
-Neural Compressor `Pruning` API is defined under `neural_compressor.experimental.Pruning`, which takes a user defined yaml file as input. Below is the launcher code of applying the API to execute a pruning process.
-
-```python
-from neural_compressor.experimental import Pruning
-prune = Pruning('/path/to/user/pruning/yaml')
-prune.model = model
-model = prune.fit()
-```
+Neural Compressor `Pruning` API is defined under `neural_compressor.training`, which takes a user defined yaml file as input. Below is the launcher code of applying the API to execute a pruning process.
 
 Users can pass the customized training/evaluation functions to `Pruning` for flexible scenarios. In this case, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to put those hooks inside the training function.
 
-Neural Compressor defines several hooks for users to use:
+The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default setting is used as a complement.
 
-```
-on_epoch_begin(epoch) : Hook executed at each epoch beginning
-on_step_begin(batch) : Hook executed at each batch beginning
-on_step_end() : Hook executed at each batch end
-on_epoch_end() : Hook executed at each epoch end
-on_before_optimizer_step() : Hook executed after gradients calculated and before backward
-```
+- Step 1: Define a dict-like configuration in your training codes. We provide you a template of configuration below.
+  ```python
+      configs = [
+              { ## pruner1
+                  'target_sparsity': 0.9,   # Target sparsity ratio of modules.
+                  'pruning_type': "snip_momentum", # Default pruning type.
+                  'pattern': "4x1", # Default pruning pattern.
+                  'op_names': ['layer1.*'],  # A list of modules that would be pruned.
+                  'excluded_op_names': ['layer3.*'],  # A list of modules that would not be pruned.
+                  'start_step': 0,  # Step at which to begin pruning.
+                  'end_step': 10,   # Step at which to end pruning.
+                  'pruning_scope': "global", # Default pruning scope.
+                  'pruning_frequency': 1, # Frequency of applying pruning.
+                  'min_sparsity_ratio_per_op': 0.0,  # Minimum sparsity ratio of each module.
+                  'max_sparsity_ratio_per_op': 0.98, # Maximum sparsity ratio of each module.
+                  'sparsity_decay_type': "exp", # Function applied to control pruning rate.
+                  'pruning_op_types': ['Conv', 'Linear'], # Types of op that would be pruned.
+              },
+              { ## pruner2
+                  "op_names": ['layer3.*'], # A list of modules that would be pruned.
+                  "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
+                  # 'target_sparsity'
+              } # For layer3, the missing target_sparsity would be complemented by default setting (i.e. 0.8)
+          ]
+  ```
+  
+- Step 2: Insert API functions in your codes. Only 5 lines of codes are required.
+  ```python
+      """ All you need is to insert following API functions to your codes:
+      on_train_begin() # Setup pruner
+      on_step_begin() # Prune weights
+      on_before_optimizer_step() # Do weight regularization
+      on_after_optimizer_step() # Update weights' criteria, mask weights
+      on_train_end() # end of pruner, Print sparse information
+      """
+      from neural_compressor.training import prepare_compression, WeightPruningConfig
+      ##setting configs
+      pruning_configs=[
+      {"op_names": ['layer1.*']，"pattern":'4x1'},
+      {"op_names": ['layer2.*']，"pattern":'1x1', 'target_sparsity':0.5}
+      ]
+      config = WeightPruningConfig(pruning_configs,
+                                   target_sparsity=0.8,
+                                   excluded_op_names=['classifier'])  ##default setting
+      config = WeightPruningConfig(configs)
+      compression_manager = prepare_compression(model, config)
+      compression_manager.callbacks.on_train_begin()  ## insert hook
+      for epoch in range(num_train_epochs):
+          model.train()
+          for step, batch in enumerate(train_dataloader):
+              compression_manager.callbacks.on_step_begin(step) ## insert hook
+              outputs = model(**batch)
+              loss = outputs.loss
+              loss.backward()
+              compression_manager.callbacks.on_before_optimizer_step()  ## insert hook
+              optimizer.step()
+              compression_manager.callbacks.on_after_optimizer_step() ## insert hook
+              lr_scheduler.step()
+              model.zero_grad()
+      ...
+      compression_manager.callbacks.on_train_end()
+      ...
+  ```
 
-Following section shows how to use hooks in user pass-in training function which is part of example from BERT training:
+ In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function. The pre-defined Neural Compressor hooks are listed below.
 
 ```python
-def pruning_func(model):
-    for epoch in range(int(args.num_train_epochs)):
-        pbar = ProgressBar(n_total=len(train_dataloader), desc='Training')
-        model.train()
-        prune.on_epoch_begin(epoch)
-        for step, batch in enumerate(train_dataloader):
-            prune.on_step_begin(step)
-            batch = tuple(t.to(args.device) for t in batch)
-            inputs = {'input_ids': batch[0],
-                      'attention_mask': batch[1],
-                      'labels': batch[3]}
-            #inputs['token_type_ids'] = batch[2]
-            outputs = model(**inputs)
-            loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
-
-            if args.n_gpu > 1:
-                loss = loss.mean()  # mean() to average on multi-gpu parallel training
-            if args.gradient_accumulation_steps > 1:
-                loss = loss / args.gradient_accumulation_steps
-
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
-
-            if (step + 1) % args.gradient_accumulation_steps == 0:
-                prune.on_before_optimizer_step()
-                optimizer.step()
-                scheduler.step()  # Update learning rate schedule
-                model.zero_grad()
-    
-            prune.on_step_end()
-...
-```
-In this case, the launcher code is like the following:
-
-```python
-from neural_compressor.experimental import Pruning, common
-prune = Pruning(args.config)
-prune.model = model
-prune.train_func = pruning_func
-model = prune.fit()
+    on_train_begin() : Execute at the beginning of training phase.
+    on_epoch_begin(epoch) : Execute at the beginning of each epoch.
+    on_step_begin(batch) : Execute at the beginning of each batch.
+    on_step_end() : Execute at the end of each batch.
+    on_epoch_end() : Execute at the end of each epoch.
+    on_before_optimizer_step() : Execute before optimization step.
+    on_after_optimizer_step() : Execute after optimization step.
+    on_train_end() : Execute at the ending of training phase.
 ```
 
 ## Examples
@@ -232,3 +249,4 @@ model = prune.fit()
 We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). [Validated pruning examples](../../docs/source/validated_model_list.md#validated-pruning-examples) shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. 
 
 Please refer to pruning examples([TensorFlow](../../examples/README.md#Pruning), [PyTorch](../../examples/README.md#Pruning-1)) for more information.
+

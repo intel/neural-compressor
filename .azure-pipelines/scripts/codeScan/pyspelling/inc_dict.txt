@@ -35,6 +35,7 @@ aea
 af
 AGS
 ai
+aia
 ailab
 al
 albert
@@ -236,6 +237,7 @@ cfg
 CFLAGS
 ChamNet
 Chaumond
+channelx
 checkbox
 checkboxes
 Cheng
@@ -365,6 +367,7 @@ cudnn
 CUHK
 curr
 Curran
+customised
 custormer
 cv
 CvAClvFfyA
@@ -859,6 +862,7 @@ Jie
 jim
 Jingfei
 Jiong
+JIRA
 jit
 jitter
 Joshi
@@ -892,6 +896,7 @@ KnowledgeDistillationLoss
 kriz
 kwargs
 Kyunghyun
+LabelBalance
 LabelShift
 labelsTr
 Lample
@@ -1322,6 +1327,7 @@ panoptic
 Panoptic
 paperswithcode
 param
+parametrization
 params
 Parinov
 ParseDecodeImagenet
@@ -1651,6 +1657,7 @@ sess
 setuptools
 sexualized
 SGD
+sgd
 sgmoid
 SHA
 sharded
@@ -1992,6 +1999,7 @@ www
 xad
 xception
 Xception
+xchannel
 xcode
 xeon
 Xeon
@@ -2460,7 +2468,31 @@ WeightPruningConfig
 Namhoon
 Thalaiyasingam
 Torr
+QOperator
 MixedPrecisionConfig
+contrib
+ONNXConfig
+Arial
+MatMulInteger
+MatMulIntegerToFloat
+QuantizeLinear
+css
+subgraph
 AccuracyCriterion
 AccuracyLoss
 TuningCriterion
+CHZ
+IRQ
+SSDSCKKB
+aarch
+Hanwen
+Suyue
+MLefficiency
+cff
+kawapanion
+mlefficiency
+DistillationConfig
+SelfKnowledgeDistillationLossConfig
+DistillationConfig
+KnowledgeDistillationLossConfig
+confs

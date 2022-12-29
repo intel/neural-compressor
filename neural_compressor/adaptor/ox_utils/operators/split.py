@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""Split Operator."""
 
 import onnx
 from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
@@ -23,10 +23,14 @@ from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
 
 @op_registry(op_types="Split")
 class SplitOperator(Operator):
+    """Split Operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(SplitOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         self.quantizer.quantize_inputs(node, [0])
         if not self.disable_qdq_for_node_output or self.quantizer != 'qdq':
@@ -34,6 +38,7 @@ class SplitOperator(Operator):
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['static'], \
             "convert format for {} should be in ['static']".format(node.op_type)
@@ -46,6 +51,7 @@ class SplitOperator(Operator):
         return True
 
     def convert(self, convert_format):
+        """Convert to QOperator format."""
         node = self.node
 
         parent = self.quantizer.model.get_parents(node)[0]
@@ -77,6 +83,7 @@ class SplitOperator(Operator):
         self.quantizer.remove_nodes.extend([parent, node])
 
     def cast(self): # pragma: no cover
+        """Cast node."""
         node = self.node
         if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
             return
@@ -84,10 +91,14 @@ class SplitOperator(Operator):
 
 @qop_registry(op_types="Split")
 class QSplitOperator(QOperator):
+    """QSplit Operator."""
+
     def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
         super().__init__(onnx_node, children, initializers)
 
     def convert(self):
+        """Convert to QDQ format."""
         node = self.node
         add_nodes = []
         inputs = []

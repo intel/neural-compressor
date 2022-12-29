@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize the AvgPool/MaxPool."""
+
 import tensorflow as tf
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
@@ -25,7 +27,10 @@ from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 from neural_compressor.adaptor.tf_utils.util import version1_eq_version2
 
 class FuseNodeStartWithPooling(QuantizeNodeBase):
+    """Quantize the AvgPool and MaxPool."""
+
     def _add_pool_function(self, original_node, quantized_op_node):
+        """Set quantized pooling node attributes."""
         pooling_type = dtypes.quint8 if version1_lt_version2(tf.version.VERSION, '2.6.0') or \
             self._find_relu_node(original_node) else dtypes.qint8
         helper.set_attr_dtype(quantized_op_node, "T", pooling_type)
@@ -34,6 +39,7 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
         helper.copy_attr(quantized_op_node, "padding", original_node.attr["padding"])
 
     def _apply_pool_quantization(self):
+        """Quantize AvgPool/MaxPool."""
         for _, v in self.node_name_mapping.items():
             # Tensorflow 2.5.0 enabled the s8 input for pooling op.
             # If the tf version is lower than 2.5.0, we need to confirm the input
@@ -50,9 +56,11 @@ class FuseNodeStartWithPooling(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def get_longest_fuse(self):
+        """Only pooling op itself, no fusion pattern."""
         return 1
 
     def apply_the_transform(self):
+        """Quantize AvgPool/MaxPool."""
         self.quantizable_node_names = []
         self._apply_pool_quantization()
         self._reset_output_node_maps()

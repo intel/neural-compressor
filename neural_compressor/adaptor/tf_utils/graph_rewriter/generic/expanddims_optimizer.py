@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""ExpandDims Graph Rewriter."""
 
 
 from ..graph_base import GraphRewriterBase
@@ -25,9 +25,10 @@ from tensorflow.python.framework import dtypes
 import numpy as np
 
 class ExpandDimsOptimizer(GraphRewriterBase):
+    """Calculate ExpandDims and remove it if its input is weight and next node is Conv2D."""
     @dump_elapsed_time("Pass ExpandDimsOptimizer")
     def do_transformation(self):
-        """ handle all ExpandDims ops whose input is weight and output is Conv2D
+        """Handle all ExpandDims ops whose input is weight and output is Conv2D.
 
         Args:
           input_graph_def (graphdef): graphdef object
@@ -35,8 +36,6 @@ class ExpandDimsOptimizer(GraphRewriterBase):
         Returns:
            [graphdef]: optimized graph
         """
-
-
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 
@@ -52,7 +51,7 @@ class ExpandDimsOptimizer(GraphRewriterBase):
                 weight_node =  graph_info[expanddims_node.input[0]].node
             else:
                 continue
-            
+
             if weight_node.op == 'Const' and next_node.op == 'Conv2D':
                 dims = Helper.values_from_const(dims_node)
                 weight_value = np.array(Helper.values_from_const(weight_node))
@@ -72,7 +71,6 @@ class ExpandDimsOptimizer(GraphRewriterBase):
                     successor_node.input[replace_index] = new_weight_node.name 
                 # remove ExpandDims and weight_node
                 cur_graph.remove_node(expanddims_node.name)
-                
             else:
                 continue
 

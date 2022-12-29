@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Freeze Value without calibration Graph Rewriter."""
 
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.core.framework import attr_value_pb2
@@ -26,6 +26,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class FreezeValueWithoutCalibTransformer(GraphRewriterBase):
+    """Freeze value without calibration."""
     def __init__(self, model, max_min_data, postfix, th=0.95, device='gpu'):
         """Free Max/Min value into QuantizeV2 op.
 
@@ -52,8 +53,8 @@ class FreezeValueWithoutCalibTransformer(GraphRewriterBase):
         self.graph_info = self.cur_graph.parse_graph()
 
     def generate_output_graph(self, max_name_value):
-        """
-        Generate transformed graph for freeze_max/freeze_min transformation.
+        """Generate transformed graph for freeze_max/freeze_min transformation.
+
         :param max_name_value: target values
         :return: transformed graph
         """
@@ -81,8 +82,8 @@ class FreezeValueWithoutCalibTransformer(GraphRewriterBase):
         return GraphAnalyzer().dump_graph()
 
     def generate_output_graph_ranges(self, max_name_value):
-        """
-        Generate transformed graph for freeze_max/freeze_min transformation.
+        """Generate transformed graph for freeze_max/freeze_min transformation.
+
         :param max_name_value: target values
         :return: transformed graph
         """
@@ -123,6 +124,7 @@ class FreezeValueWithoutCalibTransformer(GraphRewriterBase):
         return GraphAnalyzer().dump_graph()
 
     def do_transformation_without_calib(self):
+        """Apply transformation without calibration."""
         if self.postfix == '__requant_min_max':
             range_data = self.data[self.postfix]
             return self.generate_output_graph_ranges(range_data)

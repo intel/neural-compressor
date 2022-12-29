@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Move Squeeze after Relu Graph Rewriter."""
 
 import copy
 from neural_compressor.utils.utility import dump_elapsed_time
@@ -23,12 +24,16 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 
 
 class MoveSqueezeAfterReluOptimizer(GraphRewriterBase):
+    """Move Squeeze op after Relu op for match fusion pattern."""
+
     def __init__(self, model):
+        """Initilization."""
         super().__init__(model)
         self.op_list = ['Relu', 'Sigmoid', 'Relu6', 'LeakyRelu', 'Elu']
 
     @dump_elapsed_time("Pass MoveSqueezeAfterReluOptimizer")
     def do_transformation(self):
+        """Move Squeeze/Reshape after Relu."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()

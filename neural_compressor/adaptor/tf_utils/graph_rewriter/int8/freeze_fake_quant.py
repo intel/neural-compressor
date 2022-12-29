@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Freeze FakeQuant op Graph Rewriter."""
 
 from neural_compressor.utils.utility import dump_elapsed_time
 
@@ -24,9 +24,10 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper
 from tensorflow.python.framework import dtypes
 
 class FreezeFakeQuantOpOptimizer(GraphRewriterBase):
-    """Freeze fake_quant op to the following Quantize op and prioring Dequantize op.
-    """
+    """Freeze fake_quant op to the following Quantize op and prioring Dequantize op."""
+
     def __init__(self, model):
+        """Initilization."""
         super().__init__(model)
 
         self.graph_analyzer = GraphAnalyzer()
@@ -36,16 +37,17 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase):
 
         self.freeze_patterns = {
           str([['Requantize', 'RequantizePerChannel'], ["Dequantize"], \
-                  ['FakeQuantWithMinMaxVars']]):  
+                  ['FakeQuantWithMinMaxVars']]):
             self._freeze_requant_dequant_fakequant,
-          str([['FakeQuantWithMinMaxVars'], ["QuantizeV2"]]):  
+          str([['FakeQuantWithMinMaxVars'], ["QuantizeV2"]]):
             self._freeze_fakequant_quant,
           str([['FakeQuantWithMinMaxVars'], ['Shape'], ['StridedSlice'], \
-                  ['Pack'], ['Reshape'], ["QuantizeV2"]]):  
+                  ['Pack'], ['Reshape'], ["QuantizeV2"]]):
             self._freeze_fakequant_metaop_quant
         }
 
     def _freeze_requant_dequant_fakequant(self, pattern_nodes):
+        """Freeze Requantize Dequantize FakeQuant fusion."""
         requant_node_name = pattern_nodes[0]
         requant_node = self.graph_info[requant_node_name].node
         fake_quant_node_name = pattern_nodes[2]
@@ -67,6 +69,7 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase):
                                             dtypes.float32)
 
     def _freeze_fakequant_quant(self, pattern_nodes):
+        """Freeze FakeQuant QuantizeV2 fusion."""
         fake_quant_node_name = pattern_nodes[0]
         fake_quant_node = self.graph_info[fake_quant_node_name].node
         quant_node_name = pattern_nodes[1]
@@ -88,6 +91,7 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase):
                                             dtypes.float32)
 
     def _freeze_fakequant_metaop_quant(self, pattern_nodes):
+        """Freeze FakeQuant Meta ops QuantizeV2 fusion."""
         fake_quant_node_name = pattern_nodes[0]
         fake_quant_node = self.graph_info[fake_quant_node_name].node
         quant_node_name = pattern_nodes[5]
@@ -109,6 +113,7 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase):
                                             dtypes.float32)
 
     def _remove_all_fake_quants(self):
+        """Remove all the fake quants."""
         _const_node = []
 
         for node_name in list(self.graph_info.keys()):
@@ -141,6 +146,7 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase):
 
     @dump_elapsed_time("Pass FreezeFakeQuantOpOptimizer")
     def do_transformation(self):
+        """Execute freeze FakeQuant optimization."""
         for _pattern, _handler in self.freeze_patterns.items():
             _match_pattern_nodes = self.graph_analyzer.query_fusion_pattern_nodes(eval(_pattern))
             if len(_match_pattern_nodes) == 0:

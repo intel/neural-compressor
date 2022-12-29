@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""Graph rewriter BF16 Converter Class."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -38,13 +39,18 @@ DT_FLOAT32  = attr_value_pb2.AttrValue(type=dtypes.float32.as_datatype_enum)
 DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
 
 class BF16Convert(GraphRewriterBase):
-    """
-    BF16 node convert transformation.
-    """
+    """BF16 node convert transformation."""
+
     def __init__(self,
                  model,
                  fp32_ops=[],
                  bf16_ops=[]):
+        """Initilization.
+
+        Args: model: the model to be converted to BF16.
+              fp32_ops: keep with fp32 op list
+              bf16_ops: convert to bf16 op list
+        """
         super().__init__(model)
 
         self.cur_graph = GraphAnalyzer()
@@ -55,6 +61,7 @@ class BF16Convert(GraphRewriterBase):
         self.device = ["CPU", "DEFAULT"]  #TODO support differnt device types, such as GPU
 
     def _dtype(self, node):
+        """Get the dtype of the node."""
         op_def = op_def_registry.get(node.op)
         inputs_dt = []
         outputs_dt = []
@@ -75,6 +82,7 @@ class BF16Convert(GraphRewriterBase):
         return inputs_dt, outputs_dt
 
     def _dtype_val(self, node):
+        """Get the dtype value of the node."""
         op_def = op_def_registry.get(node.op)
         inputs_dt_val = []
         outputs_dt_val = []
@@ -95,6 +103,7 @@ class BF16Convert(GraphRewriterBase):
         return inputs_dt_val, outputs_dt_val
 
     def _allowed_dtype_val(self, node):
+        """Get the allowed dtype value of the node."""
         op_def = op_def_registry.get(node.op)
         allowed_dt_val = {}
         for attr_def in op_def.attr:
@@ -120,6 +129,10 @@ class BF16Convert(GraphRewriterBase):
         return allowed_dt_val
 
     def _bf16_convert(self, bf16_node_name):
+        """BF16 convertion for the model.
+
+        Args: bf16_node_name: nodes converted to BF16 op list
+        """
         bf16_node_detail = self.cur_graph.node_name_details[bf16_node_name]
         bf16_node = bf16_node_detail.node
         bf16_node_outputs = copy.deepcopy(bf16_node_detail.outputs)
@@ -238,6 +251,7 @@ class BF16Convert(GraphRewriterBase):
                     self.cur_graph.add_node(output_cast_node, bf16_node_name, [output_name])
 
     def _model_bf16_convert(self):
+        """Convert model to BF16."""
         logging.debug("start convert bf16 graph")
         self.cur_graph.parse_graph()
         for bf16_node_name in set(self.bf16_ops):
@@ -248,9 +262,9 @@ class BF16Convert(GraphRewriterBase):
         return self.cur_graph.dump_graph()
 
     def do_transformation(self):
-        """
-        Execute BF16 convert.
-        :return: Transformed graph
+        """Execute BF16 convert.
+
+        Returns: Transformed graph
         """
         converted_graph_def = self._model_bf16_convert()
         # remove those ops which could be shared by Graph Cse optimizer

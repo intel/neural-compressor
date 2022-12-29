@@ -534,36 +534,38 @@ def main():
     )
 
     # Tune
+    def eval_func_for_nc(model_tuned):
+        trainer.model = model_tuned
+        eval_output = trainer.evaluate(eval_dataset=eval_dataset)
+        perplexity = math.exp(eval_output["eval_loss"])
+        results = {"perplexity":perplexity,"eval_loss":eval_output["eval_loss"],\
+                    "eval_samples_per_second":eval_output['eval_samples_per_second']}
+        clm_task_metrics_keys = ["perplexity","eval_loss"]
+        for key in clm_task_metrics_keys:
+            if key in results.keys():
+                logger.info("Finally Eval {}:{}".format(key, results[key]))
+                if key=="eval_loss":
+                    eval_loss = results[key]
+                    break
+        print("Accuracy: %.5f" % eval_loss)
+        print('Throughput: %.3f samples/sec' % (results["eval_samples_per_second"]))
+        print('Latency: %.3f ms' % (1 * 1000 / results["eval_samples_per_second"]))
+        print('Batch size = %d' % training_args.per_device_eval_batch_size)
+
+        return eval_loss
+
     if model_args.tune:
-        def eval_func_for_nc(model_tuned):
-            trainer.model = model_tuned
-            eval_output = trainer.evaluate(eval_dataset=eval_dataset)
-            perplexity = math.exp(eval_output["eval_loss"])
-            results = {"perplexity":perplexity,"eval_loss":eval_output["eval_loss"],\
-                        "eval_samples_per_second":eval_output['eval_samples_per_second']}
-            clm_task_metrics_keys = ["perplexity","eval_loss"]
-            for key in clm_task_metrics_keys:
-                if key in results.keys():
-                    logger.info("Finally Eval {}:{}".format(key, results[key]))
-                    if key=="eval_loss":
-                        eval_loss = results[key]
-                        break
-            print("Accuracy: %.5f" % eval_loss)
-            print('Throughput: %.3f samples/sec' % (results["eval_samples_per_second"]))
-            print('Latency: %.3f ms' % (1 * 1000 / results["eval_samples_per_second"]))
-            print('Batch size = %d' % training_args.per_device_eval_batch_size)
-
-            return eval_loss
-
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization("./conf.yaml")
-        quantizer.model = common.Model(model)
-        quantizer.calib_dataloader = trainer.get_eval_dataloader()
-        quantizer.eval_func = eval_func_for_nc
-        q_model = quantizer.fit()
+        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
+        from neural_compressor import quantization
+        accuracy_criterion = AccuracyCriterion(higher_is_better=False, tolerable_loss=0.5)
+        conf = PostTrainingQuantConfig(accuracy_criterion=accuracy_criterion)
+        q_model = quantization.fit(model,
+                                   conf,
+                                   calib_dataloader=trainer.get_eval_dataloader(),
+                                   eval_func=eval_func_for_nc)
         q_model.save(training_args.output_dir)
         exit(0)
-    
+
     # Benchmark or accuracy
     if model_args.benchmark or model_args.accuracy_only:
         if model_args.int8:
@@ -572,20 +574,15 @@ def main():
                     os.path.abspath(os.path.expanduser(training_args.output_dir)), model)
         else:
             new_model = model
-        trainer.model = new_model
-        eval_output = trainer.evaluate(eval_dataset=eval_dataset)
-        perplexity = math.exp(eval_output["eval_loss"])
-        results = {"perplexity":perplexity,"eval_loss":eval_output["eval_loss"],\
-                    "eval_samples_per_second":eval_output['eval_samples_per_second']}
-        clm_task_metrics_keys = ["eval_loss"]
-        for key in clm_task_metrics_keys:
-            if key in results.keys():
-                acc = results[key]
-                break
-        print("Accuracy: %.5f" % acc)
-        print('Throughput: %.3f samples/sec' % (results["eval_samples_per_second"]))
-        print('Latency: %.3f ms' % (1 * 1000 / results["eval_samples_per_second"]))
-        print('Batch size = %d' % training_args.per_device_eval_batch_size)
+
+        if model_args.benchmark:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(warmup=5, iteration=100, cores_per_instance=4, num_of_instance=1)
+            benchmark.fit(new_model, b_conf, b_dataloader=trainer.get_eval_dataloader())
+        else:
+            eval_func_for_nc(new_model)
+
         exit(0)
  
     # Training

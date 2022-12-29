@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Dilated Contraction Graph Rewriter."""
 
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import tensor_util
@@ -27,9 +27,10 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 
 
 class DilatedContraction(GraphRewriterBase):
-
+    """Fuse the SpaceToBatchND + Conv + BatchToSpaceND pattern."""
     @dump_elapsed_time("Pass DilatedContraction")
     def do_transformation(self):
+        """Dilated Contraction fusion."""
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 

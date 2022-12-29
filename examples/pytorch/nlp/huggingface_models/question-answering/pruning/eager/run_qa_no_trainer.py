@@ -534,7 +534,7 @@ def main():
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
-        
+
     if args.distill_loss_weight > 0:
         teacher_path = args.teacher_model_name_or_path 
         if teacher_path is None:
@@ -980,7 +980,7 @@ def main():
             "max_sparsity_ratio_per_op": 0.98
         }
     ]
-    config = WeightPruningConfig(
+    configs = WeightPruningConfig(
         pruning_configs,
         target_sparsity=args.target_sparsity,
         pattern=args.pruning_pattern,
@@ -988,11 +988,9 @@ def main():
         start_step=pruning_start,
         end_step=pruning_end
     )
-    # pruner = Pruning(config)
-    # pruner.model = model
-    # pruner.on_train_begin()
-    compression_manager = prepare_compression(model=model, confs=config)
+    compression_manager = prepare_compression(model=model, confs=configs)
     compression_manager.callbacks.on_train_begin()
+    model = compression_manager.model
 
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
@@ -1019,10 +1017,8 @@ def main():
                 loss = loss / args.gradient_accumulation_steps
                 accelerator.backward(loss)
                 if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                    # pruner.on_before_optimizer_step()
                     compression_manager.callbacks.on_before_optimizer_step()
                     optimizer.step()
-                    # pruner.on_after_optimizer_step()
                     compression_manager.callbacks.on_after_optimizer_step()
                     lr_scheduler.step()
                     optimizer.zero_grad()
@@ -1062,12 +1058,14 @@ def main():
 
         if args.push_to_hub and epoch < args.num_train_epochs - 1:
             accelerator.wait_for_everyone()
-            unwrapped_model = accelerator.unwrap_model(model)
-            unwrapped_model.save_pretrained(
-                args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
-            )
+            # unwrapped_model = accelerator.unwrap_model(model)
+            # unwrapped_model.save_pretrained(
+            #     args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
+            # )
+            accelerator.save_state(args.output_dir)
             if accelerator.is_main_process:
                 tokenizer.save_pretrained(args.output_dir)
+                config.save_pretrained(args.output_dir)
                 repo.push_to_hub(
                     commit_message=f"Training in progress epoch {epoch}", blocking=False, auto_lfs_prune=True
                 )
@@ -1106,6 +1104,7 @@ def main():
         eval_metric = metric.compute(predictions=prediction.predictions, references=prediction.label_ids)
         logger.info(f"Evaluation metrics of epoch{epoch}: {eval_metric}")
 
+    compression_manager.callbacks.on_train_end()
     # Prediction
     if args.do_predict:
         logger.info("***** Running Prediction *****")
@@ -1158,13 +1157,14 @@ def main():
 
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
-        unwrapped_model = accelerator.unwrap_model(model)
-        unwrapped_model.save_pretrained(
-            args.output_dir + f"eph{args.num_train_epochs}_lr{args.learning_rate}_bs{total_batch_size}",
-            is_main_process=accelerator.is_main_process, save_function=accelerator.save
-        )
+        # unwrapped_model = accelerator.unwrap_model(model)
+        # unwrapped_model.save_pretrained(
+        #     args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
+        # )
+        accelerator.save_state(args.output_dir)
         if accelerator.is_main_process:
             tokenizer.save_pretrained(args.output_dir)
+            config.save_pretrained(args.output_dir)
             if args.push_to_hub:
                 repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
@@ -1174,5 +1174,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 

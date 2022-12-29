@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Convert placeholder to const Graph Rewriter."""
 
 from neural_compressor.utils.utility import dump_elapsed_time
 from ..graph_base import GraphRewriterBase
@@ -25,9 +26,11 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
 
 class ConvertPlaceholderToConst(GraphRewriterBase):
+    """Convert placeholder to const for removing training nodes."""
     @dump_elapsed_time("Pass ConvertPlaceholderToConst")
     def do_transformation(self):
-        """Rename the PlaceHolderWithDefault node to constant
+        """Rename the PlaceHolderWithDefault node to constant.
+
         In a frozen graph, PlaceholderWithDefault nodes can be converted to
         Constant op nodes with same value. This will help simplify the graph.
 
@@ -35,6 +38,7 @@ class ConvertPlaceholderToConst(GraphRewriterBase):
             input_graph_def: A GraphDef containing a model.
             nodes_to_convert: A list of PlaceholderWithDefault or Placeholder
             nodes to be converted to Constants with their new value.
+
         Returns:
             modified graph with PlaceholderWithDefault node converted to Constant node
         """
@@ -82,9 +86,7 @@ class ConvertPlaceholderToConst(GraphRewriterBase):
         return cur_graph.dump_graph()
 
     def strtobool(self, val_str):
-        """
-        Return boolean value of it's equivalent string representation
-        """
+        """Return boolean value of it's equivalent string representation."""
         if val_str == [True]:
             return True
         if val_str == [False]:
