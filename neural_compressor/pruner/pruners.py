@@ -48,7 +48,7 @@ def register_pruner(name):
     return register
 
 def parse_valid_pruner_types():
-    """Get all valid pruner names"""
+    """Get all valid pruner names."""
     valid_pruner_types = []
     for x in CRITERIA.keys():
         for p in ["", "_progressive"]:

@@ -46,8 +46,8 @@ class TestTensorflowPruning(unittest.TestCase):
         shutil.rmtree('baseline_model',ignore_errors=True)
     
     def test_pruning_utility(self):
-        from neural_compressor.experimental import common
-        pruning_model = common.Model("baseline_model")
+        from neural_compressor.model.model import Model
+        pruning_model = Model("baseline_model")
         all_weights_name = pruning_model.get_all_weight_names()
         df, sparsity = pruning_model.report_sparsity()
         self.assertEqual(all_weights_name, [1, 4])

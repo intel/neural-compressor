@@ -106,31 +106,30 @@ def main():
     val_dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     decoder = GreedyCTCDecoder(labels=bundle.get_labels())
 
-    #tune
-    if args.tune:
-        def eval_func(model):
-            predict = []
-            text = []
-            with torch.inference_mode():
-                for index, wave in enumerate(val_dataloader):
-                    emission, _ = model(wave[0][0])
-                    transcript = decoder(emission[0])
-                    predict.append(transcript)
-                    text.append(wave[2][0])
+    def eval_func(model):
+        predict = []
+        text = []
+        with torch.inference_mode():
+            for index, wave in enumerate(val_dataloader):
+                emission, _ = model(wave[0][0])
+                transcript = decoder(emission[0])
+                predict.append(transcript)
+                text.append(wave[2][0])
                 prediction = [pre.replace("|", " ")for pre in predict]
                 WER = wer(text, prediction)
             print("Accuracy: %.5f" % (1-WER))
-            return 1-WER
+        return 1-WER
+    
+    #tune
+    if args.tune:
         def calib_func(model):
             for index, wave in enumerate(val_dataloader):
                 model(wave[0][0])
-                if index == 50:
+                if index == 100:
                     break
 
         from neural_compressor import PostTrainingQuantConfig, quantization
-        from neural_compressor.config import TuningCriterion
-        tuning_criterion = TuningCriterion(strategy="mse_v2")
-        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion)
+        conf = PostTrainingQuantConfig(approach="static")
         q_model = quantization.fit(model,
                                    conf=conf,
                                    eval_func=eval_func,

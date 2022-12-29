@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize Graph Common Utils Herlper Class."""
 
 import re
 import numpy as np
@@ -25,16 +26,16 @@ from tensorflow.python.framework import tensor_util
 from tensorflow.python.framework import dtypes
 
 class QuantizeGraphHelper():
-    """
-    This class contains several staticmethod functions.
-    """
+    """This class contains several staticmethod functions."""
     node_name_cache = {}
     node_name_port_cache = {}
 
     def __init__(self):
+        """Intialization."""
         pass
 
     def _recursive_graph_sorting(self, node_name):
+        """Recursive sort the graph."""
         if node_name in self.op_list or not self.node_name_mapping[
                 node_name].input:
             return
@@ -51,12 +52,16 @@ class QuantizeGraphHelper():
         return
 
     def _get_op_list(self, output_node_names):
+        """Get op list by recursive sorting the graph."""
         for output_name in output_node_names:
             self._recursive_graph_sorting(output_name)
 
     def get_sorted_graph(self, input_graph, input_node_names, output_node_names):
-        """Return a sorted graphdef object.Sometimes the input graphdef was composed of
-        the randome nodedef objects, we reorder the graph to make the parsing more easier.
+        """Return a sorted graphdef object.
+
+        Sometimes the input graphdef was composed of the randome nodedef objects,
+        we reorder the graph to make the parsing more easier.
+
         Args:
             input_graph (graphdef]): the input graphdef object
             input_node_names (string list): the input node names
@@ -84,12 +89,11 @@ class QuantizeGraphHelper():
 
     @staticmethod
     def split_shared_inputs(input_graph_def):
-        """
-        Split shared inputs(like weights and bias) of the graph.
+        """Split shared inputs(like weights and bias) of the graph.
+
         :param in_graph: input graph file.
         :return: path to ouput graph file.
         """
-
         node_map = {}
         for node in input_graph_def.node:
             if node.name not in node_map:
@@ -125,6 +129,7 @@ class QuantizeGraphHelper():
     def remove_training_nodes(input_graph, protected_nodes=[],
                               types_to_splice=['Identity', 'CheckNumerics']):
         """Prunes out nodes that aren't needed for inference.
+
         Args:
             input_graph: Model to analyze and prune.
             types_to_splice: An optional list of types of nodes to be removed
@@ -187,7 +192,7 @@ class QuantizeGraphHelper():
 
     @staticmethod
     def create_node(op, name, inputs):
-        """Create a nodedef object
+        """Create a nodedef object.
 
         Args:
             op (string): op type
@@ -206,7 +211,7 @@ class QuantizeGraphHelper():
 
     @staticmethod
     def create_constant_node(name, value, dtype, shape=None, device='cpu'):
-        """create constant node.
+        """Create constant node.
 
         Args:
             name (string): op name
@@ -238,8 +243,7 @@ class QuantizeGraphHelper():
 
     @staticmethod
     def set_attr_dtype(node, key, value):
-        """Set the attribute data type
-        """
+        """Set the attribute data type."""
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(type=value.as_datatype_enum))
 
     @staticmethod
@@ -259,40 +263,34 @@ class QuantizeGraphHelper():
 
     @staticmethod
     def set_attr_string_list(node, key, value):
-        """Set the node's attr which data type is int list.
-        """
+        """Set the node's attr which data type is int list."""
         list_value = attr_value_pb2.AttrValue.ListValue(s=value)
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
 
     @staticmethod
     def set_attr_type_list(node, key, value):
-        """Set the node's attr which data type is int list.
-        """
+        """Set the node's attr which data type is int list."""
         list_value = attr_value_pb2.AttrValue.ListValue(type=value)
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
 
     @staticmethod
     def set_attr_string(node, key, value):
-        """Set the node's attr which data type is string.
-        """
+        """Set the node's attr which data type is string."""
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(s=value))
 
     @staticmethod
     def set_attr_bool(node, key, value):
-        """Set the node's attr which data type is bool.
-        """
+        """Set the node's attr which data type is bool."""
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(b=value))
 
     @staticmethod
     def set_attr_int(node, key, value):
-        """Set the node's attr which data type is int.
-        """
+        """Set the node's attr which data type is int."""
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(i=value))
 
     @staticmethod
     def set_attr_float(node, key, value):
-        """Set the node's attr which data type is float.
-        """
+        """Set the node's attr which data type is float."""
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(f=value))
 
     @staticmethod
@@ -319,8 +317,7 @@ class QuantizeGraphHelper():
 
     @staticmethod
     def unique_node_name_from_input(node_name):
-        """Get the node name from other node name's input field.
-        """
+        """Get the node name from other node name's input field."""
         return node_name.replace(":", "__port__").replace("^", "__hat__")
 
     @staticmethod
@@ -343,6 +340,7 @@ class QuantizeGraphHelper():
                                        weight_bit=7.0,
                                        device='cpu',
                                        enter_node=None):
+        """Generated the quantized weight node."""
         base_name = input_node.name + "_"
         qint8_const_name = base_name + "qint8_const"
         min_name = base_name + "min"

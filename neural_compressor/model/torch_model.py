@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Class for PyTorch model."""
+
 import copy
 import os
 import inspect
@@ -36,7 +38,14 @@ ortq = LazyImport('onnxruntime.quantization')
 
 
 class PyTorchBaseModel(torch.nn.Module, BaseModel):
+    """Build PyTorch base model."""
+
     def __init__(self, model, **kwargs):
+        """Initialize a PyTorch model.
+
+        Args:
+            model (torch.nn.model): torch.nn.model instance.
+        """
         torch.nn.Module.__init__(self)
         self._model = model
         assert isinstance(model, torch.nn.Module), "model should be pytorch nn.Module."
@@ -49,6 +58,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         self.kwargs = kwargs if kwargs else None
 
     def __repr__(self):
+        """Describe a PyTorchBaseModel as a string."""
         # rewirte this func to avoid printing fp32_model
         from torch.nn.modules.module import _addindent
         # We treat the extra repr like the sub-module, one item per line
@@ -76,37 +86,41 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         return main_str
 
     def forward(self, *args, **kwargs):
+        """Pytorch model forward func."""
         return self._model(*args, **kwargs)
 
     @property
     def model(self):
-        """ Getter to model """
+        """Getter to model."""
         return self._model
 
     @model.setter
     def model(self, model):
-        """ Setter to model """
+        """Setter to model."""
         self._model = model
 
     @property
     def fp32_model(self):
-        """ Getter to model """
+        """Getter to model."""
         return self._fp32_model
 
     @fp32_model.setter
     def fp32_model(self, fp32_model):
-        """ Setter to model """
+        """Setter to model."""
         self._fp32_model = fp32_model
 
     def register_forward_pre_hook(self):
+        """Register forward pre hook."""
         self.handles.append(
                 self._model.register_forward_pre_hook(self.generate_forward_pre_hook()))
 
     def remove_hooks(self):
+        """Remove hooks."""
         for handle in self.handles:
             handle.remove()
 
     def generate_forward_pre_hook(self):
+        """Generate forward pre hook."""
         # skip input argument 'self' in forward
         self.input_args = OrderedDict().fromkeys(
                 inspect.getfullargspec(self._model.forward).args[1:], None)
@@ -122,46 +136,29 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         return actual_forward_pre_hook
 
     def framework(self):
+        """Return framework."""
         return 'pytorch'
 
     def get_all_weight_names(self):
-        """Get weight names
-
-        Args:
-
-        Returns:
-            names (list): list of weight names
-
-        """
+        """Get weight names."""
         names = []
         for name, param in self._model.named_parameters():
             names.append(name)
         return names
 
     def get_weight(self, tensor_name):
-        """ Get weight value
-
-        Args:
-            tensor_name (string): weight name
-
-        Returns:
-            (tensor): weight tensor
-
-        """
+        """Get weight value."""
         state_dict = self._model.state_dict()
         for name, tensor in state_dict.items():
             if tensor_name == name:
                 return tensor.cpu()
 
     def update_weights(self, tensor_name, new_tensor):
-        """ Update weight value
+        """Update weight value.
 
         Args:
-            tensor_name (string): weight name
-            new_tensor (ndarray): weight value
-
-        Returns:
-
+            tensor_name (string): weight name.
+            new_tensor (ndarray): weight value.
         """
         # TODO: copy tensor option to new tensor is better
         device = next(self._model.parameters()).device 
@@ -171,14 +168,11 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         setattr(module, tensor_name.split('.')[-1], torch.nn.Parameter(new_tensor.to(device)))
 
     def update_gradient(self, grad_name, new_grad):
-        """ Update grad value
+        """Update grad value.
 
         Args:
-            grad_name (string): grad name
-            new_grad (ndarray): grad value
-
-        Returns:
-
+            grad_name (str): grad name.
+            new_grad (ndarray): grad value.
         """
         device = next(self._model.parameters()).device
         new_grad = torch.tensor(new_grad).float().to(device)
@@ -188,14 +182,11 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         param.grad.copy_(new_grad)
 
     def prune_weights_(self, tensor_name, mask):
-        """ Prune weight in place according to tensor_name with mask
+        """Prune weight in place according to tensor_name with mask.
 
         Args:
-            tensor_name (string): weight name
-            mask (tensor): pruning mask
-
-        Returns:
-
+            tensor_name (str): weight name.
+            mask (tensor): pruning mask.
         """
         state_dict = self._model.state_dict()
         for name in state_dict:
@@ -203,10 +194,10 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
                 state_dict[name].masked_fill_(mask.to(state_dict[name].device), 0.)
 
     def get_inputs(self, input_name=None):
-        """Get inputs of model
+        """Get inputs of model.
 
         Args:
-            input_name: name of input tensor
+            input_name (str, optional): name of input tensor. Defaults to None.
 
         Returns:
             tensor: input tensor
@@ -214,13 +205,13 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         return self.input_args[input_name].cpu()
 
     def get_gradient(self, input_tensor):
-        """ Get gradients of specific tensor
+        """Get gradients of specific tensor.
 
         Args:
-            input_tensor (string or tensor): weight name or a tensor
+            input_tensor (string or tensor): weight name or a tensor.
 
         Returns:
-            (ndarray): gradient tensor array
+            ndarray: gradient tensor array
         """
         if isinstance(input_tensor, str):
             for name, tensor in self._model.named_parameters():
@@ -235,16 +226,12 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
                          "but get {}.".format(type(input_tensor)))
 
     def report_sparsity(self):
-        """ Get sparsity of the model
-
-        Args:
+        """Get sparsity of the model.
 
         Returns:
-            df (DataFrame): DataFrame of sparsity of each weight
-            total_sparsity (float): total sparsity of model
-
+            df (DataFrame): DataFrame of sparsity of each weight.
+            total_sparsity (float): total sparsity of model.
         """
-
         if isinstance(self._model, torch.jit._script.RecursiveScriptModule):
             logger.info("INC IPEX don't support compute sparsity for model in TorchScript format now.")
             return [0.0]
@@ -293,21 +280,20 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         return df, total_sparsity
 
 class PyTorchModel(PyTorchBaseModel):
-    """Build PyTorchModel object
-
-    Args:
-        model (pytorch model): model path
-    """
+    """Build PyTorchModel object."""
 
     def __init__(self, model, **kwargs):
+        """Initialize PyTorchModel object."""
         super(PyTorchModel, self).__init__(model, **kwargs)
 
     @property
     def workspace_path(self):
+        """Return workspace path."""
         return self._workspace_path
 
     @workspace_path.setter
     def workspace_path(self, path):
+        """Set workspace path."""
         from neural_compressor.utils.pytorch import load
         workspace_path = path
         weights_file = os.path.join(os.path.abspath(os.path.expanduser(workspace_path)),
@@ -317,6 +303,7 @@ class PyTorchModel(PyTorchBaseModel):
         self._model = load(weights_file, self._model)
 
     def save(self, root=None):
+        """Save configure file and weights."""
         if not root:
             root = cfg.default_workspace
         root = os.path.abspath(os.path.expanduser(root))
@@ -331,6 +318,7 @@ class PyTorchModel(PyTorchBaseModel):
             logger.error("Fail to save configure file and weights due to {}.".format(e))
 
     def quantized_state_dict(self):
+        """Load quantized state dict."""
         try:
             stat_dict = self._model.state_dict()
             stat_dict['best_configure'] = self.q_config
@@ -339,18 +327,21 @@ class PyTorchModel(PyTorchBaseModel):
         return stat_dict
 
     def load_quantized_state_dict(self, stat_dict):
+        """Load quantized state with given dict."""
         from ..utils.pytorch import load
         self.q_config = stat_dict['best_configure']
         self._model = load(stat_dict, self._model)
 
     @property
     def graph_info(self):
+        """Return graph info."""
         from ..adaptor.pytorch import get_ops_recursively
         op_map = {}
         get_ops_recursively(self._model, '', op_map)
         return op_map
 
     def export_to_jit(self, example_inputs=None):
+        """Export JIT model."""
         if example_inputs is not None:
             if isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict):
                 example_inputs = tuple(example_inputs.values())
@@ -386,6 +377,25 @@ class PyTorchModel(PyTorchBaseModel):
         verbose=True,
         fp32_model=None,
     ):
+        """Export PyTorch FP32 model to ONNX FP32 model.
+
+        Args:
+            save_path (str, optional): ONNX model path to save. Defaults to 'fp32-model.onnx'.
+            example_inputs (torch.Tensor, optional): example inputs for export. 
+                Defaults to torch.rand([1, 1, 1, 1]).
+            opset_version (int, optional): opset version for exported ONNX model. Defaults to 14.
+            dynamic_axes (dict, optional): specify axes of tensors as dynamic.  
+                Defaults to {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+            input_names (list or str, optional): names to assign to the input nodes of the graph, in order. 
+                Defaults to None.
+            output_names (list or str, optional): names to assign to the output nodes of the graph, in order.
+                Defaults to None.
+            do_constant_folding (bool, optional): Apply the constant-folding optimization. 
+                Defaults to True.
+            verbose (bool, optional): if True, prints a description of the model being exported to stdout. 
+                Defaults to True.
+            fp32_model (torch.nn.model, optional): FP32 PyTorch model. Defaults to None.
+        """
         if input_names:
             example_input_names = input_names
         else:
@@ -422,6 +432,24 @@ class PyTorchModel(PyTorchBaseModel):
         do_constant_folding=True,
         verbose=True,
     ):
+        """Export PyTorch bf16 model to ONNX bf16 model.
+
+        Args:
+            save_path (str, optional): ONNX model path to save. Defaults to 'bf16-model.onnx'.
+            example_inputs (torch.Tensor, optional): example inputs for export. 
+                Defaults to torch.rand([1, 1, 1, 1]).
+            opset_version (int, optional): opset version for exported ONNX model. Defaults to 14.
+            dynamic_axes (dict, optional): specify axes of tensors as dynamic. 
+                Defaults to {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+            input_names (list or str, optional): names to assign to the input nodes of the graph, in order. 
+                Defaults to None.
+            output_names (list or str, optional): names to assign to the output nodes of the graph, in order.
+                Defaults to None.
+            do_constant_folding (bool, optional): Apply the constant-folding optimization. 
+                Defaults to True.
+            verbose (bool, optional): if True, prints a description of the model being exported to stdout. 
+                Defaults to True.
+        """
         fp32_path = save_path + '.tmp' if save_path else 'bf16-model.onnx.tmp'
         self.export_to_fp32_onnx(
             save_path=fp32_path,
@@ -480,6 +508,26 @@ class PyTorchModel(PyTorchBaseModel):
         fp32_model=None,
         calib_dataloader=None,
     ): 
+        """Export PyTorch int8 model to ONNX int8 model.
+
+        Args:
+            save_path (str, optional): ONNX model path to save. Defaults to 'int8-model.onnx'.
+            example_inputs (torch.Tensor, optional): example inputs for export. 
+                Defaults to torch.rand([1, 1, 1, 1]).
+            opset_version (int, optional): opset version for exported ONNX model. Defaults to 14.
+            dynamic_axes (dict, optional): specify axes of tensors as dynamic. 
+                Defaults to {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+            input_names (list or str, optional): names to assign to the input nodes of the graph, in order. 
+                Defaults to None.
+            output_names (list or str, optional): names to assign to the output nodes of the graph, in order.
+                Defaults to None.
+            do_constant_folding (bool, optional): Apply the constant-folding optimization. 
+                Defaults to True.
+            quant_format (str, optional): format of quantized ONNX model. Defaults to 'QDQ'.
+            dtype (str, optional): type for quantized activation and weight. Defaults to 'S8S8'.
+            fp32_model (torch.nn.model, optional): FP32 PyTorch model. Defaults to None.
+            calib_dataloader (object, optional): calibration dataloader. Defaults to None.
+        """
         if 'U8U8' in dtype:   # pragma: no cover
             activation_type = ortq.QuantType.QUInt8
             weight_type = ortq.QuantType.QUInt8
@@ -654,6 +702,7 @@ class PyTorchModel(PyTorchBaseModel):
         save_path: str,
         conf,
     ):
+        """Export PyTorch model to ONNX model."""
         from neural_compressor.experimental.export import (
             torch_to_fp32_onnx, 
             torch_to_int8_onnx
@@ -690,38 +739,33 @@ class PyTorchModel(PyTorchBaseModel):
 
 
 class PyTorchFXModel(PyTorchModel):
-    """Build PyTorchFXModel object
-
-    Args:
-        model (onnx model): model path
-    """
+    """Build PyTorchFXModel object."""
 
     def __init__(self, model, **kwargs):
+        """Initialize PyTorchFXModel object."""
         super(PyTorchFXModel, self).__init__(model, **kwargs)
 
 
 class IPEXModel(PyTorchBaseModel):   # pragma: no cover
-    """Build IPEXModel object
-
-    Args:
-        model (onnx model): model path
-    """
+    """Build IPEXModel object."""
 
     def __init__(self, model, **kwargs):
+        """Initialize IPEXModel object."""
         super(IPEXModel, self).__init__(model, **kwargs)
         self.ipex_config_path = None
 
     @property
-    def graph_info(self):
-        ''' return {Node: Node_type} like {'conv0': 'conv2d'} '''
+    def _graph_info(self):
         pass
 
     @property
     def workspace_path(self):
+        """Return workspace path."""
         return self._workspace_path
 
     @workspace_path.setter
     def workspace_path(self, path):
+        """Set workspace path."""
         self._workspace_path = path
         tune_cfg_file = os.path.join(os.path.abspath(os.path.expanduser(path)),
                                      'best_configure.json')
@@ -732,6 +776,7 @@ class IPEXModel(PyTorchBaseModel):   # pragma: no cover
             self.tune_cfg = json.load(f)
 
     def save(self, root=None):
+        """Save PyTorch IPEX model."""
         if not root:
             root = cfg.default_workspace
         root = os.path.abspath(os.path.expanduser(root))

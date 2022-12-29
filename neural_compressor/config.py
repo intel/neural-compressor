@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Configs for Neural Compressor."""
 import datetime
 import logging
 from schema import Schema, And, Optional
@@ -63,6 +63,7 @@ ops_schema = Schema({
 
 
 def check_value(name, src, supported_type, supported_value=[]):
+    """Check if the given object is the given supported type and in the given supported value."""
     if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
         assert False, ("Type of {} items should be {} but not {}".format(
             name, str(supported_type), [type(i) for i in src]))
@@ -83,8 +84,10 @@ def check_value(name, src, supported_type, supported_value=[]):
 
 
 class Options:
+    """Option Class for configs."""
     def __init__(self, random_seed=1978, workspace=default_workspace,
                  resume_from=None, tensorboard=False):
+        """Init an Option object."""
         self.random_seed = random_seed
         self.workspace = workspace
         self.resume_from = resume_from
@@ -92,37 +95,45 @@ class Options:
 
     @property
     def random_seed(self):
+        """Get random seed."""
         return self._random_seed
 
     @random_seed.setter
     def random_seed(self, random_seed):
+        """Set random seed."""
         if check_value('random_seed', random_seed, int):
             self._random_seed = random_seed
 
     @property
     def workspace(self):
+        """Get workspace."""
         return self._workspace
 
     @workspace.setter
     def workspace(self, workspace):
+        """Set workspace."""
         if check_value('workspace', workspace, str):
             self._workspace = workspace
 
     @property
     def resume_from(self):
+        """Get resume_from."""
         return self._resume_from
 
     @resume_from.setter
     def resume_from(self, resume_from):
+        """Set resume_from."""
         if resume_from is None or check_value('resume_from', resume_from, str):
             self._resume_from = resume_from
 
     @property
     def tensorboard(self):
+        """Get tensorboard."""
         return self._tensorboard
 
     @tensorboard.setter
     def tensorboard(self, tensorboard):
+        """Set tensorboard."""
         if check_value('tensorboard', tensorboard, bool):
             self._tensorboard = tensorboard
 
@@ -131,6 +142,7 @@ options = Options()
 
 
 class BenchmarkConfig:
+    """Config Class for Benchmark."""
     def __init__(self,
                  inputs=[],
                  outputs=[],
@@ -141,6 +153,7 @@ class BenchmarkConfig:
                  num_of_instance=None,
                  inter_num_of_threads=None,
                  intra_num_of_threads=None):
+        """Init a BenchmarkConfig object."""
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
@@ -153,146 +166,177 @@ class BenchmarkConfig:
 
     @property
     def backend(self):
+        """Get backend."""
         return self._backend
 
     @backend.setter
     def backend(self, backend):
+        """Set backend."""
         if check_value('backend', backend, str, [
                 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep']):
             self._backend = backend
 
     @property
     def outputs(self):
+        """Get outputs."""
         return self._outputs
 
     @outputs.setter
     def outputs(self, outputs):
+        """Set outputs."""
         if check_value('outputs', outputs, str):
             self._outputs = outputs
 
     @property
     def inputs(self):
+        """Get inputs."""
         return self._inputs
 
     @inputs.setter
     def inputs(self, inputs):
+        """Set inputs."""
         if check_value('inputs', inputs, str):
             self._inputs = inputs
 
     @property
     def warmup(self):
+        """Get warmup."""
         return self._warmup
 
     @warmup.setter
     def warmup(self, warmup):
+        """Set warmup."""
         if check_value('warmup', warmup, int):
             self._warmup = warmup
 
     @property
     def iteration(self):
+        """Get iteration."""
         return self._iteration
 
     @iteration.setter
     def iteration(self, iteration):
+        """Set iteration."""
         if check_value('iteration', iteration, int):
             self._iteration = iteration
 
     @property
     def cores_per_instance(self):
+        """Get cores_per_instance."""
         return self._cores_per_instance
 
     @cores_per_instance.setter
     def cores_per_instance(self, cores_per_instance):
+        """Set cores_per_instance."""
         if cores_per_instance is None or check_value('cores_per_instance', cores_per_instance,
                                                      int):
             self._cores_per_instance = cores_per_instance
 
     @property
     def num_of_instance(self):
+        """Get num_of_instance."""
         return self._num_of_instance
 
     @num_of_instance.setter
     def num_of_instance(self, num_of_instance):
+        """Set num_of_instance."""
         if num_of_instance is None or check_value('num_of_instance', num_of_instance, int):
             self._num_of_instance = num_of_instance
 
     @property
     def inter_num_of_threads(self):
+        """Get inter_num_of_threads."""
         return self._inter_num_of_threads
 
     @inter_num_of_threads.setter
     def inter_num_of_threads(self, inter_num_of_threads):
+        """Set inter_num_of_threads."""
         if inter_num_of_threads is None or check_value('inter_num_of_threads',
                                                        inter_num_of_threads, int):
             self._inter_num_of_threads = inter_num_of_threads
 
     @property
     def intra_num_of_threads(self):
+        """Get intra_num_of_threads."""
         return self._intra_num_of_threads
 
     @intra_num_of_threads.setter
     def intra_num_of_threads(self, intra_num_of_threads):
+        """Get intra_num_of_threads."""
         if intra_num_of_threads is None or check_value('intra_num_of_threads',
                                                        intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
 
 
 class AccuracyCriterion:
+    """Class of Accuracy Criterion."""
     def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=0.01):
+        """Init an AccuracyCriterion object."""
         self.higher_is_better = higher_is_better
         self.criterion = criterion
         self.tolerable_loss = tolerable_loss
 
     @property
     def higher_is_better(self):
+        """Get higher_is_better."""
         return self._higher_is_better
 
     @higher_is_better.setter
     def higher_is_better(self, higher_is_better):
+        """Set higher_is_better."""
         if check_value('higher_is_better', higher_is_better, bool):
             self._higher_is_better = higher_is_better
 
     @property
     def relative(self):
+        """Get tolerable_loss when criterion is relative."""
         if self.criterion != 'relative':
             return None
         return self.tolerable_loss
 
     @relative.setter
     def relative(self, relative):
+        """Set tolerable_loss and criterion to relative."""
         self.criterion = 'relative'
         self.tolerable_loss = relative
 
     @property
     def absolute(self):
+        """Get tolerable_loss when criterion is absolute."""
         if self.criterion != 'absolute':
             return None
         return self.tolerable_loss
 
     @absolute.setter
     def absolute(self, absolute):
+        """Set tolerable_loss and criterion to absolute."""
         self.criterion = 'absolute'
         self.tolerable_loss = absolute
 
     @property
     def criterion(self):
+        """Get criterion."""
         return self._criterion
 
     @criterion.setter
     def criterion(self, criterion):
+        """Set criterion."""
         if check_value('criterion', criterion, str, ['relative', 'absolute']):
             self._criterion = criterion
 
     @property
     def tolerable_loss(self):
+        """Get tolerable_loss."""
         return self._tolerable_loss
 
     @tolerable_loss.setter
     def tolerable_loss(self, tolerable_loss):
+        """Set tolerable_loss."""
         if check_value('tolerable_loss', tolerable_loss, float):
             self._tolerable_loss = tolerable_loss
 
     def __str__(self):
+        """Get criterion."""
         return self.criterion
 
 
@@ -522,7 +566,9 @@ class _BaseQuantizationConfig:
 
 
 class TuningCriterion:
+    """Class for Tuning Criterion."""
     def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, max_trials=100, objective="performance"):
+        """Init a TuningCriterion object."""
         self.strategy = strategy
         self.timeout = timeout
         self.max_trials = max_trials
@@ -531,54 +577,65 @@ class TuningCriterion:
 
     @property
     def max_trials(self):
+        """Get max_trials."""
         return self._max_trials
 
     @max_trials.setter
     def max_trials(self, max_trials):
+        """Set max_trials."""
         if check_value('max_trials', max_trials, int):
             self._max_trials = max_trials
 
     @property
     def timeout(self):
+        """Get timeout."""
         return self._timeout
 
     @timeout.setter
     def timeout(self, timeout):
+        """Set timeout."""
         if check_value('timeout', timeout, int):
             self._timeout = timeout
 
     @property
     def objective(self):
+        """Get objective."""
         return self._objective
 
     @objective.setter
     def objective(self, objective):
+        """Set objective."""
         if check_value('objective', objective, str,
             ['performance', 'accuracy', 'modelsize', 'footprint']):
             self._objective = objective
 
     @property
     def strategy(self):
+        """Get strategy."""
         return self._strategy
 
     @strategy.setter
     def strategy(self, strategy):
+        """Set strategy."""
         if check_value('strategy', strategy, str,
             ['basic', 'mse', 'bayesian', 'random', 'exhaustive', 'sigopt', 'tpe', 'mse_v2', 'hawq_v2']):
             self._strategy = strategy
 
     @property
     def strategy_kwargs(self):
+        """Get strategy_kwargs."""
         return self._strategy_kwargs
 
     @strategy_kwargs.setter
     def strategy_kwargs(self, strategy_kwargs):
+        """Set strategy_kwargs."""
         self._strategy_kwargs = strategy_kwargs
 
 tuning_criterion = TuningCriterion()
 
 
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
+    """Config Class for Post Training Quantization."""
     def __init__(self,
                  device="cpu",
                  backend="default",
@@ -595,6 +652,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
     ):
+        """Init a PostTrainingQuantConfig object."""
         self.tuning_criterion = tuning_criterion
         super().__init__(inputs=inputs,
                          outputs=outputs,
@@ -617,24 +675,29 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
 
     @property
     def approach(self):
+        """Get approach."""
         return self._approach
 
     @approach.setter
     def approach(self, approach):
+        """Set approach."""
         if check_value("approach", approach, str, ["static", "dynamic", "auto"]):
             self._approach = QUANTMAPPING[approach]
 
     @property
     def tuning_criterion(self):
+        """Get tuning_criterion."""
         return self._tuning_criterion
 
     @tuning_criterion.setter
     def tuning_criterion(self, tuning_criterion):
+        """Set tuning_criterion."""
         if check_value("tuning_criterion", tuning_criterion, TuningCriterion):
             self._tuning_criterion = tuning_criterion
 
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
+    """Config Class for Quantization Aware Training."""
     def __init__(self,
                  device="cpu",
                  backend="default",
@@ -645,6 +708,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  reduce_range=None,
                  excluded_precisions=[],
                  quant_level=1):
+        """Init a QuantizationAwareTrainingConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
@@ -658,6 +722,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
 
     @property
     def approach(self):
+        """Get approach."""
         return self._approach
 
 
@@ -665,10 +730,7 @@ pruners = [Pruner()]
 
 
 class WeightPruningConfig:
-    """
-    similiar to torch optimizer's interface
-    """
-
+    """Similiar to torch optimizer's interface."""
     def __init__(self, pruning_configs=[{}],  ##empty dict will use global values
                  target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
                  excluded_op_names=[],
@@ -676,6 +738,7 @@ class WeightPruningConfig:
                  min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98,
                  sparsity_decay_type="exp", pruning_op_types=['Conv', 'Linear'],
                  **kwargs):
+        """Init a WeightPruningConfig object."""
         self.pruning_configs = pruning_configs
         self._weight_compression = DotDict({
             'target_sparsity': target_sparsity,
@@ -696,15 +759,19 @@ class WeightPruningConfig:
 
     @property
     def weight_compression(self):
+        """Get weight_compression."""
         return self._weight_compression
 
     @weight_compression.setter
     def weight_compression(self, weight_compression):
+        """Set weight_compression."""
         self._weight_compression = weight_compression
 
 
 class KnowledgeDistillationLossConfig:
+    """Config Class for Knowledge Distillation Loss."""
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5]):
+        """Init a KnowledgeDistillationLossConfig object."""
         self.config = DotDict({
             'KnowledgeDistillationLoss': {
                 'temperature': temperature,
@@ -715,7 +782,9 @@ class KnowledgeDistillationLossConfig:
 
 
 class IntermediateLayersKnowledgeDistillationLossConfig:
+    """Config Class for Intermediate Layers Knowledge Distillation Loss."""
     def __init__(self, layer_mappings=[], loss_types=[], loss_weights=[], add_origin_loss=False):
+        """Init an IntermediateLayersKnowledgeDistillationLossConfig object."""
         self.config = DotDict({
             'IntermediateLayersKnowledgeDistillationLoss': {
                 'layer_mappings': layer_mappings,
@@ -727,12 +796,14 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
 
 
 class SelfKnowledgeDistillationLossConfig:
+    """Config Class for Self Knowledge Distillation Loss."""
     def __init__(self,
                  layer_mappings=[],
                  temperature=1.0,
                  loss_types=[],
                  loss_weights=[],
                  add_origin_loss=False):
+        """Init a SelfKnowledgeDistillationLossConfig object."""
         self.config = DotDict({
             'SelfKnowledgeDistillationLoss': {
                 'layer_mappings': layer_mappings,
@@ -749,52 +820,58 @@ criterion = KnowledgeDistillationLossConfig()
 
 class DistillationConfig:
     """Config of distillation.
-
+    
     Args:
-
         teacher_model (Callable): Teacher model for distillation. Defaults to None.
         features (optional): Teacher features for distillation, features and teacher_model are alternative.
                              Defaults to None.
         criterion (Callable, optional): Distillation loss configure.
         optimizer (dictionary, optional): Optimizer configure.
     """
-
     def __init__(self,
                  teacher_model=None,
                  criterion=criterion,
                  optimizer={'SGD': {
                      'learning_rate': 0.0001
                  }}):
+        """Init a DistillationConfig object."""
         self.criterion = criterion.config
         self.optimizer = optimizer
         self.teacher_model = teacher_model
 
     @property
     def criterion(self):
+        """Get criterion."""
         return self._criterion
 
     @criterion.setter
     def criterion(self, criterion):
+        """Set criterion."""
         self._criterion = criterion
 
     @property
     def optimizer(self):
+        """Get optimizer."""
         return self._optimizer
 
     @optimizer.setter
     def optimizer(self, optimizer):
+        """Set optimizer."""
         self._optimizer = optimizer
 
     @property
     def teacher_model(self):
+        """Get teacher_model."""
         return self._teacher_model
 
     @teacher_model.setter
     def teacher_model(self, teacher_model):
+        """Set teacher_model."""
         self._teacher_model = teacher_model
 
 
 class MixedPrecisionConfig(PostTrainingQuantConfig):
+    """Config Class for MixedPrecision."""
     def __init__(self,
                  device="cpu",
                  backend="default",
@@ -803,6 +880,7 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
                  excluded_precisions=[]):
+        """Init a MixedPrecisionConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
                          device=device,
@@ -814,6 +892,7 @@ class MixedPrecisionConfig(PostTrainingQuantConfig):
 
 
 class ExportConfig:
+    """Config Class for Export."""
     def __init__(
         self,
         dtype="int8",
@@ -824,6 +903,7 @@ class ExportConfig:
         output_names=None,
         dynamic_axes=None,
     ):
+        """Init an ExportConfig object."""
         self.dtype = dtype
         self.opset_version = opset_version
         self.quant_format = quant_format
@@ -834,65 +914,82 @@ class ExportConfig:
 
     @property
     def dtype(self):
+        """Get dtype."""
         return self._dtype
 
     @dtype.setter
     def dtype(self, dtype):
+        """Set dtype."""
         self._dtype = dtype
 
     @property
     def opset_version(self):
+        """Get opset_version."""
         return self._opset_version
 
     @opset_version.setter
     def opset_version(self, opset_version):
+        """Set opset_version."""
         self._opset_version = opset_version
 
     @property
     def quant_format(self):
+        """Get quant_format."""
         return self._quant_format
 
     @quant_format.setter
     def quant_format(self, quant_format):
+        """Set quant_format."""
         self._quant_format = quant_format
 
     @property
     def example_inputs(self):
+        """Get example_inputs."""
         return self._example_inputs
 
     @example_inputs.setter
     def example_inputs(self, example_inputs):
+        """Set example_inputs."""
         self._example_inputs = example_inputs
 
     @property
     def input_names(self):
+        """Get input_names."""
         return self._input_names
 
     @input_names.setter
     def input_names(self, input_names):
+        """Set input_names."""
         self._input_names = input_names
 
     @property
     def output_names(self):
+        """Get output_names."""
         return self._output_names
 
     @output_names.setter
     def output_names(self, output_names):
+        """Set output_names."""
         self._output_names = output_names
 
     @property
     def dynamic_axes(self):
+        """Get dynamic_axes."""
         return self._dynamic_axes
 
     @dynamic_axes.setter
     def dynamic_axes(self, dynamic_axes):
+        """Set dynamic_axes."""
         self._dynamic_axes = dynamic_axes
 
 class ONNXQlinear2QDQConfig:
+    """Config Class for ONNXQlinear2QDQ."""
     def __init__(self):
+        """Init an ONNXQlinear2QDQConfig object."""
         pass
 
 class Torch2ONNXConfig(ExportConfig):
+    """Config Class for Torch2ONNX."""
     def __init__(
        self,
        dtype="int8",
@@ -905,6 +1002,7 @@ class Torch2ONNXConfig(ExportConfig):
        recipe='QDQ_OP_FP32_BIAS',
        **kwargs,
     ):
+        """Init a Torch2ONNXConfig object."""
         super().__init__(
             dtype=dtype,
             opset_version=opset_version,
@@ -919,6 +1017,7 @@ class Torch2ONNXConfig(ExportConfig):
 
 
 class TF2ONNXConfig(ExportConfig):
+    """Config Class for TF2ONNX."""
     def __init__(
        self,
        dtype="int8",
@@ -930,6 +1029,7 @@ class TF2ONNXConfig(ExportConfig):
        dynamic_axes=None,
        **kwargs,
     ):
+        """Init a TF2ONNXConfig object."""
         super().__init__(
             dtype=dtype,
             opset_version=opset_version,

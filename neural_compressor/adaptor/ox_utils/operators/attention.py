@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""Attention operator."""
 
 import onnx
 from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, qop_registry, QOperator
@@ -22,15 +22,20 @@ from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domai
 
 @op_registry(op_types="Attention")
 class AttentionOperator(Operator):
+    """Attention operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(AttentionOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         self.quantizer.quantize_inputs(node, [0, 1, 2])
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['dynamic', 'static'], \
             "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
@@ -40,6 +45,7 @@ class AttentionOperator(Operator):
         return True
 
     def convert(self, convert_format):
+        """Convert QDQ mode to QOperator format."""
         node = self.node
         parents = self.quantizer.model.get_parents(node)
         quantized_name = []
@@ -77,10 +83,14 @@ class AttentionOperator(Operator):
 
 @qop_registry(op_types="QAttention")
 class QAttentionOperator(QOperator):
+    """QAttention operator."""
+
     def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
         super().__init__(onnx_node, children, initializers)
 
     def convert(self):
+        """Convert to QDQ format."""
         node = self.node
         add_nodes = []
         inputs = []

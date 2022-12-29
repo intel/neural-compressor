@@ -20,7 +20,7 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-
+"""Calibration for onnx models."""
 
 import copy
 import logging
@@ -42,7 +42,7 @@ ONNX18_VERSION = Version("1.8.0")
 ORT112_VERSION = Version("1.12.0")
 
 class ONNXRTAugment:
-    '''augment input model to dump tensor or for calibration'''
+    """augment input model to dump tensor or for calibration."""
 
     def __init__(self, model_wrapper,
                  dataloader,
@@ -52,16 +52,18 @@ class ONNXRTAugment:
                  iterations=[],
                  backend=['CPUExecutionProvider'],
                  reduce_range=False):
-        '''
-        :param model: ONNX model to calibrate
-        :param dataloader: user implemented object to read in and preprocess calibration dataset
-        :param op_types: operator types to be calibrated and quantized, default = 'Conv,MatMul'
-        :param black_nodes: operator names that should not be quantized, default = ''
-        :param white_nodes: operator names that force to be quantized, default = ''
-        :param iterations: tensor of which iteration will be collected.
-        :param backend: execution provider for onnxruntime
-        :reduce_range: use 7 bit or not
-        '''
+        """Initialization.
+
+        Args:
+            model_wrapper (Model): model to be augmented
+            dataloader (object): user implemented object to read in and preprocess calibration dataset
+            dump_op_types (list): operator types to be calibrated and quantized
+            black_nodes (list, optional): operator names that should not be quantized. Defaults to [].
+            white_nodes (list, optional): operator names that force to be quantized. Defaults to [].
+            iterations (list, optional): tensor of which iteration will be collected. Defaults to [].
+            backend (list, optional): execution provider for onnxruntime. Defaults to ['CPUExecutionProvider'].
+            reduce_range (bool, optional): use 7 bit or not. Defaults to False.
+        """
         self.model_wrapper = model_wrapper
         self.model = model_wrapper.model
         ai_onnx_domain = [opset for opset in self.model.opset_import \
@@ -83,13 +85,15 @@ class ONNXRTAugment:
         self.reduce_range = reduce_range
 
     def augment_graph(self, activation_only=False, weight_only=False):
-        '''
-        Adds nodes to all quantization_candidates op type nodes in
-        model and ensures their outputs are stored as part of the graph output
-        :param activation_only(bool): whether to dump activation tensor only
-        :param weight_only(bool): whether to dump weight_only
-        :return: augmented ONNX model
-        '''
+        """Augment_graph.
+        
+        Adds nodes to all quantization_candidates op type nodes in model and
+        ensures their outputs are stored as part of the graph output.
+
+        Args:
+            activation_only (bool, optional): whether to dump activation tensor only. Defaults to False.
+            weight_only (bool, optional): whether to dump weight_only. Defaults to False.
+        """
         self.dequantized_output.clear()
         onnx_version = Version(onnx.__version__)
         if onnx_version < ONNX18_VERSION:
@@ -201,11 +205,7 @@ class ONNXRTAugment:
                             convert_attribute=False)
 
     def get_intermediate_outputs(self, calib_mode=None):
-        '''
-            Gather intermediate model outputs after running inference
-            :return: dictionary mapping: {node output tensor names: node output tensor }
-        '''
-
+        """Gather intermediate model outputs after running inference."""
         # conduct inference session and get intermediate outputs
         so = onnxruntime.SessionOptions()
         if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
@@ -270,8 +270,7 @@ class ONNXRTAugment:
         return list(output_dicts.keys()), output_dicts
 
     def _dequantize(self, tensor, scale_tensor, zo_tensor):
-        ''' helper function to dequantize tensor
-        '''
+        """Helper function to dequantize tensor."""
         int_tensor = self.model_wrapper.get_initializer(tensor)
         if int_tensor: # weight tensor
             return self._dequantize_weight(tensor, scale_tensor, zo_tensor)
@@ -279,14 +278,14 @@ class ONNXRTAugment:
             return self._dequantize_activation(tensor, scale_tensor, zo_tensor)
 
     def _dequantize_activation(self, activation_tensor_name, scale_tensor, zo_tensor):
-        ''' helper funtion to dequantize activation'''
+        """Helper funtion to dequantize activation."""
         added_nodes, added_output = self._add_dequantize_node(activation_tensor_name, \
                                                               scale_tensor, zo_tensor)
         self.dequantized_output[added_output] = activation_tensor_name
         return added_nodes, added_output
 
     def _dequantize_weight(self, weight_tensor_name, scale_tensor, zo_tensor):
-        ''' helper function to dequantize weight'''
+        """Helper function to dequantize weight."""
         weight_tensor = self.model_wrapper.get_initializer(weight_tensor_name)
         if len(scale_tensor.dims) in [1, 2] and weight_tensor.dims[0] == max(scale_tensor.dims):
             logger.debug("weight {} is quantized with per channel granularity."
@@ -316,7 +315,7 @@ class ONNXRTAugment:
         return added_nodes, added_output
 
     def _add_dequantize_node(self, tensor_name, scale_tensor, zo_tensor, axis=None):
-        '''helper function to generate dequantize node'''
+        """Helper function to generate dequantize node."""
         dequantize_node = make_dquant_node(tensor_name + '_DequantizeLinear',
                                            [tensor_name,
                                            scale_tensor.name,
@@ -326,6 +325,7 @@ class ONNXRTAugment:
         return [dequantize_node], tensor_name + '_output'
 
     def _add_dequantize_transpose_node(self, tensor_name, scale_tensor, zo_tensor, dim):
+        """Insert Transpose-DequantizelLinear-Transpose pairs."""
         pre_transpose_node = onnx.helper.make_node(
                                  'Transpose',
                                  inputs=[tensor_name],
@@ -349,6 +349,7 @@ class ONNXRTAugment:
         return added_nodes, tensor_name + '_output'
 
     def _map_calibration(self, node_output_names, output_dicts, calib_mode='naive'):
+        """Map tensor names and min/max values."""
         merged_dict = {}
         for name, minmaxs in output_dicts.items():
             for minmax in minmaxs:
@@ -373,44 +374,35 @@ class ONNXRTAugment:
         return final_dict
 
     def dump_minmax(self, calib_mode='naive'):
+        """Get min/max values of tensors."""
         self.augment_graph()
         node_output_names, output_dicts = self.get_intermediate_outputs(calib_mode)
         return self._map_calibration(node_output_names, output_dicts,
                                      calib_mode=calib_mode)
 
     def dump_calibration(self, q_config, calib_mode='naive'):
-        '''
-            Gather calibration params for quantization
-            parameter calib_mode: type 'naive' gives (Min, Max) pairs
-                                for each intermediate model output across 
-                                test data sets, where the first element is 
-                                a minimum of all values and the 
-                                second element is a maximum of all values;
-            :return: dictionary mapping: {added node names: (ReduceMin, ReduceMax) pairs }
-        '''
+        """Gather calibration params for quantization.
+
+        Args:
+            q_config (dict): op-wise quantization config
+            calib_mode (str, optional): type 'naive' gives (Min, Max) pairs
+                                        for each intermediate model output across
+                                        test data sets, where the first element is
+                                        a minimum of all values and the second element 
+                                        is a maximum of all values. Defaults to 'naive'.
+        """
         return self.calculate_quantization_params(q_config, self.dump_minmax(calib_mode))
 
     def calculate_quantization_params(self, q_config, quantization_thresholds):
-        '''
-            Given quantization thresholds, calculate the quantization params.
-        :param quantization_thresholds:
-            Dictionary specifying the min and max values for outputs of conv and matmul nodes.
-            The quantization_thresholds should be specified in the following format:
-                {
-                    "param_name": [min, max]
-                }
-            example:
-                {
-                    'Conv_3:0': [np.float32(0), np.float32(0.5)],
-                    'Conv_4:0': [np.float32(1), np.float32(3.5)]
-                }
-        :return: Dictionary containing the zero point and
-                  scale values for outputs of conv and matmul nodes.
-            The dictionary format is
-                {
-                    "param_name": [zero_point, scale]
-                }
-        '''
+        """Given quantization thresholds, calculate the quantization params.
+
+        Args:
+            q_config (dict): op-wise quantization config
+            quantization_thresholds (dict): Dictionary specifying the min and max values
+                                              or outputs of conv and matmul nodes, should be
+                                              specified in the following format:
+                                              {"param_name": [min, max]}
+        """
         if quantization_thresholds is None:
             raise ValueError(
                 'quantization thresholds is required to calculate quantization \
@@ -447,6 +439,7 @@ class ONNXRTAugment:
         return quantization_params
 
     def dump_tensor(self, activation=True, weight=False):
+        """Dump activation or weight or both from the model."""
         if "QuantizeLinear" in [node.op_type for node in self.model.graph.node] or \
             "DynamicQuantizeLinear" in [node.op_type for node in self.model.graph.node]:
             self.augment_nodes = ["DequantizeLinear"]
@@ -499,18 +492,7 @@ class ONNXRTAugment:
         return dumped_tensors_map
 
     def calculate_scale_zeropoint(self, last_node, next_node, rmin, rmax, scheme, qType, quantize_range):
-        '''
-           Given the source and destination node of tensor, \
-                 return calculated zero point and scales.
-    
-          :param last_node: the source of the tensor
-          :param next_node: the destination of the tensor
-          :param rmin: min threshold of the tensor
-          :param rmax: max threshold of the tensor
-          :return (List): zero_point and scale
-    
-        '''
-    
+        """Given the source and destination node of tensor, return calculated zero point and scales."""
         zp_and_scale = []
         # adjust rmin and rmax such that 0 is included in the range. This is required
         # to make sure zero can be uniquely represented.

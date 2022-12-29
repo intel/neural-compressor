@@ -3,7 +3,7 @@ Mixed Precision
 
 1. [Introduction](#introduction)
 2. [Mixed Precision Support Matrix](#mixed-precision-support-matrix)
-3. [Get start with Mixed Precision API](#get-start-with-mixed-precision-api)
+3. [Get Started with Mixed Precision API](#get-start-with-mixed-precision-api)
 4. [Examples](#examples)
 
 ## Introduction
@@ -29,33 +29,23 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
 
 > **During quantization, BF16 conversion can be executed if force enabled. Please refer to this [document](./quantization_mixed_precision.md) for its workflow.**
 
-## Get start with Mixed Precision API
+## Get Started with Mixed Precision API
 
-To get a bf16 model, users can use the Mixed Precision API step by step.
+To get a bf16 model, users can use the Mixed Precision API as follows.
 
-- First, initialize an object of MixedPrecision.
 
 ```python
-from neural_compressor.experimental import MixedPrecision
-converter = MixedPrecision()
-```
+from neural_compressor import mix_precision
+from neural_compressor.config import MixedPrecisionConfig
 
-- Next, assign target precision and fp32 model to the attributes of MixedPrecision.
+conf = MixedPrecisionConfig()
+
+converted_model = mix_precision.fit(model, config=conf)
+converted_model.save('./path/to/save/')
+```
 
 > **BF16 conversion may lead to accuracy drop. Intel® Neural Compressor provides an accuracy-aware tuning function to reduce accuracy loss, which will fallback converted ops to FP32 automatically to get better accuracy. To enable this function, users only need to provide an evaluation function (or dataloader + metric).**
 
-```python
-converter.precisions = 'bf16'
-converter.model = model # model is a fp32 model
-converter.eval_func = user_defined_function # optional, this function only accepts model as input and return a higher-is-better scalar as accuracy
-```
-
-- Last, execute convertion and save model.
-
-```python
-converted_model = converter()
-converted_model.save(output_path)
-```
   
 ## Examples
 

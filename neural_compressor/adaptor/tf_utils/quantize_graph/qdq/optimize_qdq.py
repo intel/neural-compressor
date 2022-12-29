@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse the DQ + OP + Q fusion pattern, convert fp32 op to int8."""
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
@@ -30,22 +31,11 @@ from .fuse_qdq_pooling import FuseNodeStartWithPooling
 from .fuse_qdq_deconv import FuseNodeStartWithDeconv2d
 
 class OptimizeQDQGraph(QuantizeGraphBase):
-    """
-
-    """
+    """Apply the fusion DQ + OP + Q pattern."""
 
     def __init__(self, input_graph, input_node_names, output_node_names, op_wise_config, op_wise_sequences, device, \
                  fake_quant=False, new_api=False, performance_only=False, itex_mode=False):
-        """Optimize QDQ Graph
-
-        Arguments:
-            input_graph {[type]} -- [description]
-            rules {[type]} -- [description]
-            output_node_names {[type]} -- [description]
-
-        Keyword Arguments:
-            debug {bool} -- [description] (default: {False})
-        """
+        """Optimize QDQ Graph."""
         super().__init__(output_node_names)
         self.op_wise_config = op_wise_config
         # self.perchannel = perchannel
@@ -86,6 +76,7 @@ class OptimizeQDQGraph(QuantizeGraphBase):
         self.register_transformer("Conv3DBackpropInputV2", FuseNodeStartWithDeconv2d)
 
     def get_quantized_nodes(self):
+        """Get the quantized Ops."""
         count = 0
         remove_redundant_quant_flag = False
         op_wise_config_name_list = list(self.op_wise_config.keys())
@@ -119,6 +110,7 @@ class OptimizeQDQGraph(QuantizeGraphBase):
 
     @dump_elapsed_time("Pass OptimizeQDQGraph")
     def do_transform(self):
+        """Apply all the transformers to fuse into int8 op."""
         count = 0
         remove_redundant_quant_flag = False
         op_wise_config_name_list = list(self.op_wise_config.keys())
@@ -141,7 +133,7 @@ class OptimizeQDQGraph(QuantizeGraphBase):
                     new_api=self.new_api,
                     performance_only=self.performance_only,
                     itex_mode=self.itex_mode).apply_the_transform()
-                    
+
                 if exclude_nodes:
                     self.exclude_node_list.extend(exclude_nodes)
 

@@ -43,7 +43,6 @@ from tqdm import tqdm, trange
 
 from transformers import (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer)
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -88,7 +87,6 @@ class TextDataset(Dataset):
 
     def __getitem__(self, item):
         return torch.tensor(self.examples[item])
-
 
 def load_and_cache_examples(args, tokenizer, evaluate=False):
     dataset = TextDataset(tokenizer, args, file_path=args.data_path, block_size=args.block_size)
@@ -175,7 +173,6 @@ def evaluate(args, model, tokenizer, prefix=""):
     
     return result['perplexity'].item()
 
-
 def main():
     parser = argparse.ArgumentParser()
 
@@ -261,12 +258,20 @@ def main():
             optimization_options=opt_options)
         model = model_optimizer.model  
 
-        from neural_compressor.experimental import Quantization, common
-        quantize = Quantization(args.config)
-        quantize.model = common.Model(model)
-        quantize.calib_dataloader = common.DataLoader(ds, batch_size=args.per_gpu_eval_batch_size)
-        quantize.eval_func = eval_func
-        q_model = quantize()
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.config import AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion()
+        accuracy_criterion.higher_is_better = False
+        accuracy_criterion.relative = 0.11
+        config = PostTrainingQuantConfig(approach='dynamic', 
+                                         op_name_list={'MatMul_2924': {
+                                                            'activation':  {'dtype': ['fp32']},
+                                                            'weight': {'dtype': ['fp32']}
+                                                        }},
+                                         accuracy_criterion=accuracy_criterion)
+        q_model = quantization.fit(model, 
+                                   config,
+                                   eval_func=eval_func)
         q_model.save(args.output_model)
 
 
