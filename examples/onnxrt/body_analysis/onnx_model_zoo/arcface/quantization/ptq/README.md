@@ -4,8 +4,9 @@
 This example load a face recognition model from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [Refined MS-Celeb-1M](https://s3.amazonaws.com/onnx-model-zoo/arcface/dataset/faces_ms1m_112x112.zip). You need to download this dataset yourself.
 
 ### Environment
-onnx: 1.11.0
-onnxruntime: 1.10.0
+onnx: 1.12.0  
+onnxruntime: 1.13.1
+> Validated framework versions can be found in main readme.
 
 ### Prepare model
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)

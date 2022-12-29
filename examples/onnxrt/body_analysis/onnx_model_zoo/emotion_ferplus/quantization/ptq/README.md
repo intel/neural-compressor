@@ -4,8 +4,9 @@
 This example load an model converted from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [Emotion FER dataset](https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data). You need to download this dataset yourself.
 
 ### Environment
-onnx: 1.11.0
-onnxruntime: 1.10.0
+onnx: 1.12.0  
+onnxruntime: 1.13.1
+> Validated framework versions can be found in main readme.
 
 ### Prepare model
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)

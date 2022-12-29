@@ -535,7 +535,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>SD Diffusion</td>
     <td>Text to Image</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-to-image/quantization/ptq_static/fx">fx</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-to-image/quantization">fx</a></td>
   </tr>
 </tbody>
 </table>
@@ -1109,7 +1109,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Emotion FERPlus</td>
     <td>Body Analysis</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="/onnxrt/body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq">qlinearops</a></td>
+    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq">qlinearops</a></td>
   </tr>
   <tr>
     <td>Ultra Face</td>

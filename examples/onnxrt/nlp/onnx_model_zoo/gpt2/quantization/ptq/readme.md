@@ -4,9 +4,10 @@
 This example load a language translation model and confirm its accuracy and speed based on [WikiText](https://blog.einstein.ai/the-wikitext-long-term-dependency-language-modeling-dataset/) dataset. 
 
 ### Environment
-onnx: 1.7.0
-onnxruntime: 1.8.0
+onnx: 1.12.0  
+onnxruntime: 1.13.1
 transformers: 3.2.0
+> Validated framework versions can be found in main readme.
 
 ### Prepare dataset
 Please download [WikiText-2 dataset](https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-raw-v1.zip).
