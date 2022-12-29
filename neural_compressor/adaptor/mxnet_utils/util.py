@@ -440,7 +440,7 @@ def quantize_sym_model(sym_model, ctx, qconfig):
 
 
 def _tensor_to_node(tensor, nodes):
-    """Map tensor to one of the nodes. 
+    """Map tensor to one of the nodes.
 
     This function assumes, that node tensors (weights, outputs, etc) contain node name in their names.
     """
@@ -838,7 +838,7 @@ class CalibCollector(CollectorBase):
                                                              new_max, new_th)
 
     def calc_kl_th_dict(self, quantized_dtype):
-        """calculation kl thresholds."""
+        """Calculation kl thresholds."""
         if len(self.hist_dict) > 0:
             if check_mx_version('2.0.0'):
                 return mx.contrib.quantization._LayerHistogramCollector.get_optimal_thresholds(
@@ -890,12 +890,12 @@ class NameCollector(CollectorBase):
         self.names = []
 
     def collect_gluon(self, name, _, arr):
-        """Collect by gluon api.
-        """
+        """Collect by gluon api."""
         self.names.append(name)
 
 
 class CalibData:
+    """Calibration data class."""
     def __init__(self, cache_kl={}, cache_minmax={}, tensors_kl=[], tensors_minmax=[]):
         """Initialize."""
         self.th_dict = {}
