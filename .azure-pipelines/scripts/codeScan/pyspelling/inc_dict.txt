@@ -2490,3 +2490,8 @@ MLefficiency
 cff
 kawapanion
 mlefficiency
+DistillationConfig
+SelfKnowledgeDistillationLossConfig
+DistillationConfig
+KnowledgeDistillationLossConfig
+confs

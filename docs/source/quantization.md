@@ -197,7 +197,7 @@ User could execute:
 
 This means user could leverage Intel(R) Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It's user responsibility to ensure the accuracy of the quantized model meets expectation.
 
-```
+``` python
 # main.py
 
 # Original code
@@ -210,7 +210,12 @@ val_dataloader = torch.utils.data.Dataloader(
 
 # Quantization code
 from neural_compressor import quantization
-q_model = quantization.fit(model, calib_dataloader=val_dataloader)
+from neural_compressor.config import PostTrainingQuantConfig
+
+conf = PostTrainingQuantConfig()
+q_model = quantization.fit(model=model,
+                           conf=conf,
+                           calib_dataloader=val_dataloader)
 q_model.save('./output')
 
 ```
@@ -219,7 +224,7 @@ q_model.save('./output')
 
 This means user could leverage the advance feature of Intel(R) Neural Compressor to tune out a best quantized model which has best accuracy and good performance.
 
-```
+```python
 # main.py
 
 # Original code
@@ -236,12 +241,18 @@ def validate(val_loader, model, criterion, args):
     return top1.avg
 
 # Quantization code
-def eval_func(model):
-    return validate(val_dataloader, model, criterion, args)
+def train_func(model):
+    ...
 
-from neural_compressor import quantization
-q_model = quantization.fit(model, calib_dataloader=val_dataloader, eval_func=eval_func)
-q_model.save('./output')
+from neural_compressor import QuantizationAwareTrainingConfig
+from neural_compressor.training import prepare_compression
+conf = QuantizationAwareTrainingConfig()
+compression_manager = prepare_compression(model, conf)
+compression_manager.callbacks.on_train_begin()
+model = compression_manager.model
+train_func(model)
+compression_manager.callbacks.on_train_end()
+compression_manager.save('./output')
 
 ```
 
