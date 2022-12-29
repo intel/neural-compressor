@@ -64,6 +64,7 @@ fi
 $BOLD_YELLOW && echo "====== install requirements ======" && $RESET
 /bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh
 
+mkdir -p ${WORK_SOURCE_DIR}
 cd ${WORK_SOURCE_DIR}
 if [[ "${inc_new_api}" == "false" ]]; then
     echo "copy old api examples to workspace..."

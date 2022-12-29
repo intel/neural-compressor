@@ -20,7 +20,7 @@ wget https://github.com/onnx/models/raw/main/vision/body_analysis/ultraface/mode
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
                    --config=ultraface.yaml \ 
-                   --data_path=/path/to/data \
+                   --dataset_location=/path/to/data \
                    --output_model=path/to/save
 ```
 
@@ -29,6 +29,6 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
                       --config=ultraface.yaml \
-                      --data_path=/path/to/data \
+                      --dataset_location=/path/to/data \
                       --mode=performance
 ```

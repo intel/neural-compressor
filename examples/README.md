@@ -1,4 +1,4 @@
-Examples 
+Examples
 ==========
 Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration. Part of the validated cases can be found in the example tables, and the release data is available [here](../docs/source/validated_model_list.md).
 
@@ -15,10 +15,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
 ## Notebook Examples
 
 * [BERT Mini SST2 performance boost with INC](/examples/notebook/bert_mini_distillation): train a BERT-Mini model on SST-2 dataset through distillation, and leverage quantization to accelerate the inference while maintaining the accuracy using Intel® Neural Compressor.
-* [Performance of FP32 Vs. INT8 ResNet50 Model](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly. 
-* [Intel® Neural Compressor Sample for PyTorch*](/examples/notebook/pytorch/alexnet_fashion_mnist): an End-To-End pipeline to build up a CNN model by PyTorch to recognize fashion image and speed up AI model by Intel® Neural Compressor. 
+* [Performance of FP32 Vs. INT8 ResNet50 Model](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
+* [Intel® Neural Compressor Sample for PyTorch*](/examples/notebook/pytorch/alexnet_fashion_mnist): an End-To-End pipeline to build up a CNN model by PyTorch to recognize fashion image and speed up AI model by Intel® Neural Compressor.
 * [Intel® Neural Compressor Sample for TensorFlow*](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
-* [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.  
+* [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
 
 # TensorFlow Examples
 ## Quantization
@@ -305,7 +305,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
-## Pruning 
+## Pruning
 <table>
 <thead>
   <tr>
@@ -363,8 +363,8 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
-# PyTorch  Examples
-## Quantization 
+# PyTorch Examples
+## Quantization
 <table>
 <thead>
   <tr>
@@ -531,6 +531,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a></td>
   </tr>
+  <tr>
+    <td>SD Diffusion</td>
+    <td>Text to Image</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-to-image/quantization/ptq_static/fx">fx</a></td>
+  </tr>
 </tbody>
 </table>
 
@@ -546,6 +552,55 @@ Intel® Neural Compressor validated examples with multiple compression technique
   </tr>
 </thead>
 <tbody>
+  <tr>
+    <td>Distilbert-base-uncased</td>
+    <td>Natural Language Processing (text classification)</td>
+    <td>Structured (4x1, 2in4), Unstructured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-mini</td>
+    <td>Natural Language Processing (text classification)</td>
+    <td>Structured (4x1, 2in4, per channel), Unstructured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>Distilbert-base-uncased</td>
+    <td>Natural Language Processing (question answering)</td>
+    <td>Structured (4x1, 2in4), Unstructured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-mini</td>
+    <td>Natural Language Processing (question answering)</td>
+    <td>Structured (4x1, 2in4), Unstructured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-base-uncased</td>
+    <td>Natural Language Processing (question answering)</td>
+    <td>Structured (4x1, 2in4), Unstructured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>Bert-large</td>
+    <td>Natural Language Processing (question answering)</td>
+    <td>Structured (4x1, 2in4), Unstructured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
+    <td>YOLOv5s6</td>
+    <td>Object Detection</td>
+    <td>Structured (4x1, 2in4), Unstructured</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/object_detection/yolo_v5/pruning/eager">eager</a></td>
+  </tr>
   <tr>
     <td>ResNet18</td>
     <td>Image Recognition</td>
@@ -579,49 +634,36 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Natural Language Processing</td>
     <td>Structured (2x1)</td>
     <td>Group Lasso</td>
-    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager">eager</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/legacy/group_lasso/eager">eager</a></td>
   </tr>
+
   <tr>
     <td>Intel/bert-base-uncased-sparse-70-unstructured</td>
     <td>Natural Language Processing (question-answering)</td>
     <td>Unstructured</td>
     <td>Prune once for all</td>
-    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/pattern_lock/eager">eager</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/legacy/pattern_lock/eager">eager</a></td>
   </tr>
   <tr>
     <td>bert-base-uncased</td>
     <td>Natural Language Processing</td>
     <td>Structured (Filter/Channel-wise)</td>
     <td>Gradient Sensitivity</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/gradient_sensitivity/eager">eager</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/legacy/gradient_sensitivity/eager">eager</a></td>
   </tr>
   <tr>
     <td>DistilBERT</td>
     <td>Natural Language Processing</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/magnitude/eager">eager</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/legacy/magnitude/eager">eager</a></td>
   </tr>
   <tr>
     <td>Intel/bert-base-uncased-sparse-70-unstructured</td>
     <td>Natural Language Processing (text-classification)</td>
     <td>Unstructured</td>
     <td>Prune once for all</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/pattern_lock/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>Bert-mini</td>
-    <td>Natural Language Processing (text classification)</td>
-    <td>Structured (4x1, 2in4), Unstructured</td>
-    <td>Snip-momentum</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>Bert-mini</td>
-    <td>Natural Language Processing (question answering)</td>
-    <td>Structured (4x1, 2in4), Unstructured</td>
-    <td>Snip-momentum</td>
-    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager">eager</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/legacy/pattern_lock/eager">eager</a></td>
   </tr>
 </tbody>
 </table>
@@ -773,55 +815,55 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet50 V1.5</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/resnet50/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/resnet50/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/resnet50/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/resnet50/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>ResNet50 V1.5 MLPerf</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/resnet50/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/resnet50/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/resnet50/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/resnet50/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>VGG16</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/vgg16/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/vgg16/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/vgg16/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/vgg16/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>MobileNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/mobilenet_v2/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/mobilenet_v2/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/mobilenet_v2/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/mobilenet_v2/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>MobileNet V3 MLPerf</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/mobilenet_v3/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/mobilenet_v3/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/mobilenet_v3/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/mobilenet_v3/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>AlexNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>CaffeNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>DenseNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/densenet/quantization/ptq">qlinearops</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/densenet/quantization/ptq">qlinearops</a></td>
   </tr>
   <tr>
     <td>EfficientNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>FCN</td>
@@ -833,37 +875,37 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>GoogleNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>Inception V1</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>MNIST</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/mnist/quantization/ptq">qlinearops</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/mnist/quantization/ptq">qlinearops</a></td>
   </tr>
   <tr>
     <td>MobileNet V2 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>ResNet50 V1.5 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>ShuffleNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>SqueezeNet</td>
@@ -875,19 +917,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>VGG16 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>ZFNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qdq</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>ArcFace</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/arcface/quantization/ptq">qlinearops</a></td>
+    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq">qlinearops</a></td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
@@ -1067,7 +1109,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Emotion FERPlus</td>
     <td>Body Analysis</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq">qlinearops</a></td>
+    <td><a href="/onnxrt/body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq">qlinearops</a></td>
   </tr>
   <tr>
     <td>Ultra Face</td>
@@ -1077,3 +1119,4 @@ Intel® Neural Compressor validated examples with multiple compression technique
   </tr>
 </tbody>
 </table>
+

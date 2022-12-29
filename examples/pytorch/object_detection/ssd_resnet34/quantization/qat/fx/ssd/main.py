@@ -410,14 +410,12 @@ def train300_mlperf_coco(args):
 
     if args.benchmark or args.accuracy:
         ssd300.eval()
-        for img, img_id, img_size, bbox, label in train_dataloader:
-            example_inputs = Variable(img)
-            break
+
         if args.int8:
             from neural_compressor.utils.pytorch import load
             new_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
                              ssd300,
-                             example_inputs=example_inputs)
+                             dataloader=None)
         else:
             new_model = ssd300
         if args.accuracy:

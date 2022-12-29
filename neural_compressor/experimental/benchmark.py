@@ -205,9 +205,9 @@ class Benchmark(object):
                 log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
                 with open(log, "r") as f:
                     for line in f:
-                        latency = re.search(r"Latency:\s+(\d+(\.\d+)?)", line)
+                        latency = re.search(r"[L,l]atency:\s+(\d+(\.\d+)?)", line)
                         latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
-                        throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?)", line)
+                        throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
                         throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
             assert len(latency_l)==len(throughput_l)==num_of_instance, \
                 "Multiple instance benchmark failed with some instance!"

@@ -1327,6 +1327,7 @@ panoptic
 Panoptic
 paperswithcode
 param
+parametrization
 params
 Parinov
 ParseDecodeImagenet

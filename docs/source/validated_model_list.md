@@ -1,3 +1,4 @@
+
 Validated Models
 ======
 
@@ -1733,8 +1734,68 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <td>Bert-Mini</td>
     <td>question answering</br>SQuAD-v1.1</td>
-    <td>f1=76.87</br>f1=76.85</td>
-    <td>-0.02%</td>
+    <td>f1=76.87</br>f1=77.62</td>
+    <td>+0.98%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Distilbert-base-uncased</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1]=86.90</br>f1=86.15</td>
+    <td>-0.86%</td>
+    <td>80%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Distilbert-base-uncased</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=86.90</br>f1=87.50</td>
+    <td>+0.69%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-base-uncased</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1]=88.59</br>f1=87.78</td>
+    <td>-0.92%</td>
+    <td>80%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-base-uncased</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=88.59</br>f1=89.40</td>
+    <td>+0.91%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-large</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1]=91.23</br>f1=90.91</td>
+    <td>-0.35%</td>
+    <td>80%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-large</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=91.23</br>f1=91.67</td>
+    <td>+0.48%</td>
     <td>50%</br>structured 2:4</td>
     <td>snip momentum</br>balanced</td>  
   </tr>
@@ -1744,7 +1805,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>Bert-Mini</td>
     <td>text classification</br>MRPC</td>
     <td>f1=87.52</br>f1=87.22</td>
-    <td>-0.36%</td>
+    <td>-0.34%</td>
     <td>90%</br>structured 4x1</td>
     <td>snip momentum</br>unbalanced</td>  
   </tr>
@@ -1763,8 +1824,8 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <td>Bert-Mini</td>
     <td>text classification</br>MRPC</td>
-    <td>f1=87.52</br>f1=86.95</td>
-    <td>-0.65%</td>
+    <td>f1=87.52</br>f1=86.89</td>
+    <td>-0.72%</td>
     <td>50%</br>structured 2:4</td>
     <td>snip momentum</br>balanced</td>
   </tr>
@@ -1781,6 +1842,26 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
   </tr>
   <tr>
+    <td>Distilbert-base-uncased</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=90.26</br>f1=89.85</td>
+    <td>-0.46%</td>
+    <td>90%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>  
+  </tr>
+  <tr>
+  </tr>  
+  <tr>
+    <td>Distilbert-base-uncased</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=90.26</br>f1=90.88</td>
+    <td>+0.69%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
     <td>Bert-Mini</td>
     <td>text classification</br>SST-2</td>
     <td>accuracy=87.61</br>accuracy=86.92</td>
@@ -1793,8 +1874,8 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <td>Bert-Mini</td>
     <td>text classification</br>SST-2</td>
-    <td>accuracy=87.61</br>accuracy=86.93</td>
-    <td>-0.78%</td>
+    <td>accuracy=87.61</br>accuracy=87.73</td>
+    <td>+0.14%</td>
     <td>50%</br>structured 2:4</td>
     <td>snip momentum</br>balanced</td>
   </tr>
@@ -2003,3 +2084,4 @@ Performance varies by use, configuration and other factors. See [platform config
   </tr>
 </tbody>
 </table>
+

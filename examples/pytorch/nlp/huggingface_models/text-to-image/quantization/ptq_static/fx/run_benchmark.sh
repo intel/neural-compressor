@@ -2,7 +2,7 @@
 set -x
 
 function main {
-
+0
   init_params "$@"
   run_benchmark
 
@@ -10,6 +10,8 @@ function main {
 
 # init params
 function init_params {
+  iters=100
+  batch_size=16 
   tuned_checkpoint=saved_results
   for var in "$@"
   do
@@ -44,37 +46,39 @@ function init_params {
       ;;
     esac
   done
+
 }
+
 
 # run_benchmark
 function run_benchmark {
+    extra_cmd=""
 
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd="--accuracy --val-batch-size ${batch_size} "
+        mode_cmd=" --accuracy_only"
     elif [[ ${mode} == "performance" ]]; then
-        mode_cmd="--benchmark --val-batch-size 1 "
+        mode_cmd=" --benchmark"
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
-    extra_cmd=""
-    if [ -n "$dataset_location" ];then
-        extra_cmd=$extra_cmd"--data ${dataset_location} "
+
+    if [ "${topology}" = "pokemon_diffusers" ]; then
+        model_name_or_path="lambdalabs/sd-pokemon-diffusers"
     fi
-    if [ -n "$input_model" ];then
-        extra_cmd=$extra_cmd"--checkpoint ${input_model} "
-    fi
-    if [ -n "$tuned_checkpoint" ];then
-        extra_cmd=$extra_cmd"--tuned_checkpoint ${tuned_checkpoint} "
-    fi
+
     if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd"--int8"
+        extra_cmd=$extra_cmd" --int8"
     fi
+    echo $extra_cmd
 
-    python ssd/main.py ${mode_cmd} \
-                       ${extra_cmd} \
-
+    python -u ../../run_diffusion.py \
+       --model_name_or_path ${model_name_or_path} \
+       --output_dir ${tuned_checkpoint} \
+       --base_images ../../base_images \
+        ${mode_cmd} \
+        ${extra_cmd}
 }
 
 main "$@"
