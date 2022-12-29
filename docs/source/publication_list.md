@@ -1,7 +1,10 @@
-Full Publications/Events (49)
+Full Publications/Events (52)
 ==========
-## 2022 (31)
-* [Running Fast Transformers on CPUs: Intel Approach Achieves Significant Speed Ups and SOTA Performance](https://medium.com/syncedreview/running-fast-transformers-on-cpus-intel-approach-achieves-significant-speed-ups-and-sota-448521704c5e) (Nov 2022)
+## 2022 (34)
+* [#MLefficiency — Optimizing transformer models for efficiency](https://medium.com/@kawapanion/mlefficiency-optimizing-transformer-models-for-efficiency-a9e230cff051)(Dec 2022)
+* [One-Click Acceleration of Hugging Face Transformers with Intel’s Neural Coder](https://medium.com/intel-analytics-software/one-click-acceleration-of-huggingface-transformers-with-optimum-intel-by-neural-coder-f35ca3b1a82f)(Dec 2022)
+* [One-Click Quantization of Deep Learning Models with the Neural Coder Extension](https://medium.com/intel-analytics-software/one-click-quantize-your-deep-learning-code-in-visual-studio-code-with-neural-coder-extension-8be1a0022c29)(Dec 2022)
+* [Accelerate Stable Diffusion with Intel Neural Compressor](https://medium.com/intel-analytics-software/accelerating-stable-diffusion-inference-through-8-bit-post-training-quantization-with-intel-neural-e28f3615f77c)(Dec 2022)
 * [Intel together with Tencent deepens the cooperation to build a cloud foundation for digital and intelligent industry](https://mp.weixin.qq.com/s/CPz9-5Nsh-5N9Q8-UmK--w) (Dec 2022)
 * [Intel Neural Compressor for TF Virtual Appliance packaged by Bitnami](https://marketplace.cloud.vmware.com/services/details/e9c3d891-ca51-4f07-a5aa-3fe6394f15ae) (Nov 2022)
 * [Neural Compressor: an open-source Python library for network compression](https://cloud.tencent.com/developer/article/2165895) (Nov 2022)

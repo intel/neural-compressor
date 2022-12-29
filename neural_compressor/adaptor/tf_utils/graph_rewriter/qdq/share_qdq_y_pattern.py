@@ -14,17 +14,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Share QDQ for ITEX Y pattern Graph Rewriter."""
 
 from neural_compressor.utils.utility import dump_elapsed_time
 from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 
-# Insert Q/DQ op before one input of Add to enable Conv/MatMul + BiasAdd + Add + Relu fusion for ITEX.
-# Only 1 Q/DQ before Add op need to be inserted. Insert 2 Q/DQ breaks the ITEX fusion pattern.
-# Share the QDQ of one output of Relu node with the another output which is Add node.
+
 class ShareQDQForItexYPatternOptimizer(GraphRewriterBase):
+    """Insert Q/DQ op before one input of Add to enable Conv/MatMul + BiasAdd + Add + Relu fusion for ITEX.
+
+    Only 1 Q/DQ before Add op need to be inserted. Insert 2 Q/DQ breaks the ITEX fusion pattern.
+    """
     @dump_elapsed_time("Pass ShareQDQForItexYPatternOptimizer")
     def do_transformation(self):
+        """Share the QDQ of one output of Relu node with the another output which is Add node."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()
@@ -36,7 +40,7 @@ class ShareQDQForItexYPatternOptimizer(GraphRewriterBase):
             relu_node_name = graph_info[i[0]].node.name
             if len(g.node_name_details[relu_node_name].outputs) != 2:
                 continue
-            
+
             add_node_name = g.node_name_details[relu_node_name].outputs[0]
             quantize_node_name = g.node_name_details[relu_node_name].outputs[1]
             if 'Add' not in g.node_name_details[add_node_name].node.op or \

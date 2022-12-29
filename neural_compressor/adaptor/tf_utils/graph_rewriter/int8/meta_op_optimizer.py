@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Meta OP Graph Rewriter."""
 
 
 from neural_compressor.utils.utility import dump_elapsed_time
@@ -25,9 +26,11 @@ from tensorflow.python.framework import dtypes
 
 class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
     """Fuse the pattern like Dequantize + MetaOp + Quantize into MetaOp(set its type to int8).
-       With such changes, the Quantize and Dequantize OP will removed for better performance.
+
+    With such changes, the Quantize and Dequantize OP will removed for better performance.
     """
     def __init__(self, model):
+        """Initilization."""
         super().__init__(model)
 
         self.graph_analyzer = GraphAnalyzer()
@@ -37,6 +40,7 @@ class MetaInfoChangingMemOpOptimizer(GraphRewriterBase):
 
     @dump_elapsed_time("Pass MetaOpOptimizer")
     def do_transformation(self):
+        """Apply the fusion of Dequantize + MetaOp + QuantizeV2."""
         target_nodes = self.graph_analyzer.query_fusion_pattern_nodes( \
                           [['Dequantize'], ('Squeeze', 'Reshape'), ('Squeeze','Reshape'), ['QuantizeV2']])
         for i in target_nodes:

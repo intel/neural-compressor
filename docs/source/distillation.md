@@ -57,27 +57,6 @@ Architecture from paper [Self-Distillation: Towards Efficient and Compact Neural
 
 ## Get Started with Distillation API 
 
-Simplest launcher code if training behavior is defined in user-defined yaml.
-
-```python
-from neural_compressor.experimental import Distillation, common
-distiller = Distillation('/path/to/user/yaml')
-distiller.student_model = student_model
-distiller.teacher_model = teacher_model
-model = distiller.fit()
-```
-Distillation class also support DistillationConf class as it's argument.
-
-```python
-from neural_compressor.experimental import Distillation, common
-from neural_compressor.conf.config import DistillationConf
-conf = DistillationConf('/path/to/user/yaml')
-distiller = Distillation(conf)
-distiller.student_model = student_model
-distiller.teacher_model = teacher_model
-model = distiller.fit()
-```
-
 User can pass the customized training/evaluation functions to `Distillation` for flexible scenarios. In this case, distillation process can be done by pre-defined hooks in Neural Compressor. User needs to put those hooks inside the training function.
 
 Neural Compressor defines several hooks for user pass
@@ -88,47 +67,44 @@ on_after_compute_loss(input, student_output, student_loss) : Hook executed after
 on_epoch_end() : Hook executed at each epoch end
 ```
 
-Following section shows how to use hooks in user pass-in training function which is part of example from BlendCNN distillation:
+Following section shows how to use hooks in user pass-in training function:
 
 ```python
-def train_func(model):
-    distiller.on_train_begin()
-    for nepoch in range(epochs):
-        model.train()
-        cnt = 0
-        loss_sum = 0.
-        iter_bar = tqdm(train_dataloader, desc='Iter (loss=X.XXX)')
-        for batch in iter_bar:
-            teacher_logits, input_ids, segment_ids, input_mask, target = batch
-            cnt += 1
-            output = model(input_ids, segment_ids, input_mask)
-            loss = criterion(output, target)
-            loss = distiller.on_after_compute_loss(
-                {'input_ids':input_ids, 'segment_ids':segment_ids, 'input_mask':input_mask},
-                output,
-                loss,
-                teacher_logits)
-            optimizer.zero_grad()
+def training_func_for_nc(model):
+    compression_manager.on_train_begin()
+    for epoch in range(epochs):
+        compression_manager.on_epoch_begin(epoch)
+        for i, batch in enumerate(dataloader):
+            compression_manager.on_step_begin(i)
+            ......
+            output = model(batch)
+            loss = ......
+            loss = compression_manager.on_after_compute_loss(batch, output, loss)
             loss.backward()
+            compression_manager.on_before_optimizer_step()
             optimizer.step()
-            if cnt >= iters:
-                break
-        print('Average Loss: {}'.format(loss_sum / cnt))
-        distiller.on_epoch_end()
+            compression_manager.on_step_end()
+        compression_manager.on_epoch_end()
+    compression_manager.on_train_end()
+
 ...
 ```
 
 In this case, the launcher code is like the following:
 
 ```python
-from neural_compressor.experimental import Distillation, common
-from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
-distiller = Distillation(args.config)
-distiller.student_model = model
-distiller.teacher_model = teacher
-distiller.criterion = PyTorchKnowledgeDistillationLoss()
-distiller.train_func = train_func
-model = distiller.fit()
+from neural_compressor.training import prepare_compression
+from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+
+distil_loss = SelfKnowledgeDistillationLossConfig()
+conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+compression_manager = prepare_compression(model, conf)
+model = compression_manager.model
+
+model = training_func_for_nc(model)
+eval_func(model)
 ```
 
 ## Examples

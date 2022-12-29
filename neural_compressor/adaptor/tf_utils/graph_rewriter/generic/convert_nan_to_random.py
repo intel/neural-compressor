@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Convert NAN to random Graph Rewriter."""
 
 import numpy as np
 from ..graph_base import GraphRewriterBase
@@ -24,11 +25,10 @@ from tensorflow.core.framework import attr_value_pb2
 
 
 class ConvertNanToRandom(GraphRewriterBase):
-    """Convert Const node which value consists of NAN to random data.
-    """
+    """Convert Const node which value consists of NAN to random data."""
 
     def do_transformation(self):
-
+        """Execute convert NAN to random."""
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 

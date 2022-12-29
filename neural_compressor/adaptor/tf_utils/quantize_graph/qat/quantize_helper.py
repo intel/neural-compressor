@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""QAT Quantize Helper Class."""
 
 from .quantize_wrapper import QuantizeWrapper
 from .quantize_layers.optimize_layer import config_quantizable_layers
@@ -29,7 +30,7 @@ def init_quantize_config(model, quantize_recipe=None):
     Returns:
         config (QuantizeConfig): QuantizeConfig instance used to decide whether a specific layer 
                                  should be quantized.
-    """ 
+    """
     assert 'quantize_config' not in global_config, ("quantize_config has been unexpectedly"
     "created. Please check your QAT workflow")
 
@@ -38,7 +39,7 @@ def init_quantize_config(model, quantize_recipe=None):
 
     if quantize_recipe:
         config.add_quantize_recipe(quantize_recipe)
-        
+
     return config
 
 def _is_quantizable_layer(layer):
@@ -49,7 +50,7 @@ def _is_quantizable_layer(layer):
 
     Returns:
         capability (bool): whether the input layer is capable of quantization.
-    """ 
+    """
     quantizable = True
     layer_class = layer.__class__.__name__
 
@@ -77,7 +78,7 @@ def qat_clone_function(layer):
 
     Returns:
         wrapped_layer (QuantizeWrapper): layer wrapped by QuantizeWrapper class.
-    """ 
+    """
     wrapped_layer= layer
     if _is_quantizable_layer(layer):
         wrapped_layer = QuantizeWrapper(layer)

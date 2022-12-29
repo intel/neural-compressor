@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize ConcatV2 to int8 op."""
 
 import re
 
@@ -24,7 +25,10 @@ from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGra
 
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):
+    """Quantize ConcatV2 to int8 op QuantizedConcatV2."""
+
     def _apply_concatv2_transform(self, original_node):
+        """Quantize ConcatV2."""
         namespace_prefix = original_node.name + "_eightbit"
         quantized_concat_name = namespace_prefix + "_quantized_concatv2"
         reshape_dims_name, reduction_dims_name = self._add_common_quantization_nodes(
@@ -60,6 +64,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         self._intel_cpu_add_dequantize_result_node(quantized_concat_name, original_node.name, input_data_type)
 
     def _quantizable_concat(self, node):
+        """Check if the ConcatV2 is quantizable."""
         deq_type = []
         for input_node_name in node.input[:node.attr['N'].i]:
             node_name = helper.node_name_from_input(input_node_name)
@@ -74,6 +79,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         return True
 
     def _apply_concatv2_quantization(self):
+        """Quantize ConcatV2 if it's quantizable."""
         for _, v in self.node_name_mapping.items():
             if v.node.op in ("ConcatV2",) and self._quantizable_concat(v.node) and \
                 dtypes.as_dtype(v.node.attr["T"].type) == dtypes.float32 and \
@@ -86,9 +92,11 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def get_longest_fuse(self):
+        """Only single ConcatV2, no fusion pattern."""
         return 1
 
     def apply_the_transform(self):
+        """Apply the quantization of ConcatV2."""
         self.quantizable_node_names = []
         self._apply_concatv2_quantization()
         self._reset_output_node_maps()

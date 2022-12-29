@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""QAT Fake Quantize Graph Class."""
 
 import abc
 import six
@@ -26,6 +27,7 @@ class FakeQuantizeBase(object):
     @abc.abstractmethod
     def __call__(self, inputs, range, training, **kwargs):
         """Apply quantization to the input tensor.
+
         This is the main logic of the 'FakeQuantize' which implements the core logic
         to quantize the tensor. It is invoked during the `call` stage of the layer,
         and allows modifying the tensors used in graph construction.
@@ -36,7 +38,7 @@ class FakeQuantizeBase(object):
             training (bool): Whether the graph is currently training.
             **kwargs: Additional variables which may be passed to the FakeQuantize class.
 
-        Returns: 
+        Returns:
             output (tf.Tensor): The tensor to be quantized.
         """
         raise NotImplementedError
@@ -74,13 +76,14 @@ class FakeQuantize(FakeQuantizeBase):
         Args:
             per_channel (bool): Whether to apply per_channel quantization. The last dimension is
                 used as the channel.
-            num_bits (int): Number of bits for quantization
+            num_bits (int): Number of bits for quantization.
+            channel_axis(int): Channel axis.
             symmetric (bool): If true, use symmetric quantization limits instead of training
                 the minimum and maximum of each quantization range separately.
             narrow_range (bool): In case of 8 bits, narrow_range nudges the quantized range
                 to be [-127, 127] instead of [-128, 127]. This ensures symmetric range
                 has 0 as the centre.
-            """
+        """
         self.num_bits = num_bits
         self.per_channel = per_channel
         self.symmetric = symmetric
@@ -90,6 +93,7 @@ class FakeQuantize(FakeQuantizeBase):
 
     def __call__(self, inputs, ranges, training, **kwargs):
         """Applying fake quantization by insert qdq.
+
         The quantized tensor is calculated based on range of the last batch of values.
 
         Args:
@@ -155,6 +159,7 @@ class FakeQuantize(FakeQuantizeBase):
 
     def _insert_qdq(self, inputs, min_var, max_var):
         """Adds a fake quantization operation.
+
         Depending on value of self.per_channel, this operation may do global quantization
         or per channel quantization.  min_var and max_var should have corresponding
         shapes: [1] when per_channel == False and [d] when per_channel == True.
@@ -193,7 +198,7 @@ class FakeQuantize(FakeQuantizeBase):
 
     def get_config(self):
         """Returns the config used to serialize the 'FakeQuantize'.
-        
+
         Returns:
             config (dict): A dict containing required information.
         """
@@ -206,7 +211,7 @@ class FakeQuantize(FakeQuantizeBase):
 
     def __eq__(self, other):
         """Check if this instance is equal to another instance.
-        
+
         Args:
             other (FakeQuantize): Another instance to be checked.
 
@@ -223,7 +228,7 @@ class FakeQuantize(FakeQuantizeBase):
 
     def __ne__(self, other):
         """Check if this instance is not equal to another instance.
-        
+
         Args:
             other (FakeQuantize): Another instance to be checked.
 

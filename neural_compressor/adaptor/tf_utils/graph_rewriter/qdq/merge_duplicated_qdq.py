@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Merge duplicated QDQ patterns Graph Rewriter."""
 
 from tensorflow.core.framework import node_def_pb2
 from neural_compressor.utils.utility import dump_elapsed_time
@@ -25,9 +25,11 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 
 
 class MergeDuplicatedQDQOptimizer(GraphRewriterBase):
+    """Merge duplicated QDQ patterns."""
 
     @dump_elapsed_time("Pass MergeDuplicatedQDQOptimizer")
     def do_transformation(self):
+        """Execute the merge."""
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
         graph_info = cur_graph.parse_graph()

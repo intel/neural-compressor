@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""Bias correction graph transform."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -28,8 +29,8 @@ from .graph_transform_base import GraphTransformBase
 
 
 class BiasCorrection(GraphTransformBase):
-    """
-    This class implements the bias correction graph transform.
+    """This class implements the bias correction graph transform.
+
     Will correct the weight and scale for *Conv2D* op
     weight_empirical:
     our task is to correct int8 weight distribution close to fp32 weight
@@ -41,8 +42,8 @@ class BiasCorrection(GraphTransformBase):
     scale_c = r * scale and shift = u
     with this we don't change the min/max value, and correct the weight
     """
-
     def __init__(self, input_graph, fp32_graph, method='weight_empirical', new_api=False):
+        """Initilization."""
         # only support weight_empirical now
         self.bias_correct_map = {'weight_empirical': self._weight_empirical}
         assert method in self.bias_correct_map, \
@@ -57,7 +58,7 @@ class BiasCorrection(GraphTransformBase):
         self.new_api = new_api
 
     def _weight_empirical(self):
-
+        """Weight empirical correction method."""
         for node in self.fp32_graph.node:
             if node.name not in self.fp32_node_mapping:
                 self.fp32_node_mapping[node.name] = node
@@ -139,6 +140,5 @@ class BiasCorrection(GraphTransformBase):
         return self.input_graph
 
     def do_transformation(self):
+        """Apply bias correction graph transform."""
         return self.bias_correct_map[self.method]()
-
-

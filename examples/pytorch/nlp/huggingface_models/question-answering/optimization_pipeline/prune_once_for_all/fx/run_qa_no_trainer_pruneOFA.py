@@ -908,7 +908,6 @@ def main():
     confs = []
     if args.do_prune:
         from neural_compressor.config import WeightPruningConfig
-        import pdb;pdb.set_trace()
         p_conf = WeightPruningConfig(pruning_type="pattern_lock")
         confs.append(p_conf)
 
