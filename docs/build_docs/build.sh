@@ -1,5 +1,10 @@
 
-TAG=latest
+if [ ! -n "$1" ]; then
+  TAG=version
+else
+  TAG=latest
+fi
+
 echo "Update ${TAG} folder"
 
 if [[ ${TAG} == "latest" ]]; then
