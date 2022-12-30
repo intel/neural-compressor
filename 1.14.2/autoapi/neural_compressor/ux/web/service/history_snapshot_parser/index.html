@@ -1,39 +1,77 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
   <title>neural_compressor.ux.web.service.history_snapshot_parser &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
-      <link rel="stylesheet" href="../../../../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../../../_static/graphviz.css" type="text/css" />
+  
+
+  
+  <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
   <!--[if lt IE 9]>
     <script src="../../../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../../" src="../../../../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../../../../" id="documentation_options" src="../../../../../../_static/documentation_options.js"></script>
-        <script src="../../../../../../_static/jquery.js"></script>
-        <script src="../../../../../../_static/underscore.js"></script>
-        <script src="../../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../../../../_static/doctools.js"></script>
         <script src="../../../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../../../../../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../../../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          
+
+          
           </a>
+
+          
+            
+            
             <div class="version">
               <a href="/versions.html">1.14.2▼</a>
               <p>Click link above to switch version</p>
             </div>
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -41,9 +79,20 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
@@ -51,42 +100,79 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
 </ul>
 
+            
+          
         </div>
+        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../../../../index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web.service.history_snapshot_parser</span></code></li>
+    
+      <li><a href="../../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web.service.history_snapshot_parser</span></code></li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="../../../../../../_sources/autoapi/neural_compressor/ux/web/service/history_snapshot_parser/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <section id="module-neural_compressor.ux.web.service.history_snapshot_parser">
-<span id="neural-compressor-ux-web-service-history-snapshot-parser"></span><h1><a class="reference internal" href="#module-neural_compressor.ux.web.service.history_snapshot_parser" title="neural_compressor.ux.web.service.history_snapshot_parser"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web.service.history_snapshot_parser</span></code></a><a class="headerlink" href="#module-neural_compressor.ux.web.service.history_snapshot_parser" title="Permalink to this heading"></a></h1>
+<span id="neural-compressor-ux-web-service-history-snapshot-parser"></span><h1><a class="reference internal" href="#module-neural_compressor.ux.web.service.history_snapshot_parser" title="neural_compressor.ux.web.service.history_snapshot_parser"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web.service.history_snapshot_parser</span></code></a><a class="headerlink" href="#module-neural_compressor.ux.web.service.history_snapshot_parser" title="Permalink to this heading">¶</a></h1>
 <p>History Snapshot Parser Service.</p>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser" title="neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HistorySnapshotParser</span></code></a></p></td>
 <td><p>History Snapshot Parser.</p></td>
@@ -95,29 +181,29 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.web.service.history_snapshot_parser.</span></span><span class="sig-name descname"><span class="pre">HistorySnapshotParser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">history_snapshot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provide_performance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.web.service.history_snapshot_parser.</span></span><span class="sig-name descname"><span class="pre">HistorySnapshotParser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">history_snapshot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provide_performance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser" title="Permalink to this definition">¶</a></dt>
 <dd><p>History Snapshot Parser.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.parse_history_snapshot">
-<span class="sig-name descname"><span class="pre">parse_history_snapshot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../../components/db_manager/params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.parse_history_snapshot" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">parse_history_snapshot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../../components/db_manager/params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.parse_history_snapshot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse provided history snapshot.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.parse_history_item">
-<span class="sig-name descname"><span class="pre">parse_history_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">history_item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../../components/db_manager/params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryItemInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryItemInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryItemInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.parse_history_item" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">parse_history_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">history_item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../../components/db_manager/params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryItemInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryItemInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryItemInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.parse_history_item" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse single item from history.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.extract_accuracy">
-<span class="sig-name descname"><span class="pre">extract_accuracy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measurements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.extract_accuracy" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">extract_accuracy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measurements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.extract_accuracy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract accuracy metric from result.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.extract_performance">
-<span class="sig-name descname"><span class="pre">extract_performance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measurements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.extract_performance" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">extract_performance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measurements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#neural_compressor.ux.web.service.history_snapshot_parser.HistorySnapshotParser.extract_performance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract performance metric from result if needed.</p>
 </dd></dl>
 
@@ -129,30 +215,46 @@
 
 
            </div>
+           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
-  </div>
+    <p>
+        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

@@ -1,39 +1,77 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
   <title>neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
-      <link rel="stylesheet" href="../../../../../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../../../../_static/graphviz.css" type="text/css" />
+  
+
+  
+  <link rel="stylesheet" href="../../../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
   <!--[if lt IE 9]>
     <script src="../../../../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../../../" src="../../../../../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../../../../../" id="documentation_options" src="../../../../../../../_static/documentation_options.js"></script>
-        <script src="../../../../../../../_static/jquery.js"></script>
-        <script src="../../../../../../../_static/underscore.js"></script>
-        <script src="../../../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../../../../../_static/doctools.js"></script>
         <script src="../../../../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../../../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../../../../../../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../../../../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../../../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          
+
+          
           </a>
+
+          
+            
+            
             <div class="version">
               <a href="/versions.html">1.14.2▼</a>
               <p>Click link above to switch version</p>
             </div>
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -41,9 +79,20 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/releases_info.html">Release</a></li>
@@ -51,42 +100,79 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
 </ul>
 
+            
+          
         </div>
+        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../../../../../index.html">Intel® Neural Compressor</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../../../../../index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface</span></code></li>
+    
+      <li><a href="../../../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface</span></code></li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="../../../../../../../_sources/autoapi/neural_compressor/ux/components/db_manager/db_operations/optimization_api_interface/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <section id="module-neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface">
-<span id="neural-compressor-ux-components-db-manager-db-operations-optimization-api-interface"></span><h1><a class="reference internal" href="#module-neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface" title="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface</span></code></a><a class="headerlink" href="#module-neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface" title="Permalink to this heading"></a></h1>
+<span id="neural-compressor-ux-components-db-manager-db-operations-optimization-api-interface"></span><h1><a class="reference internal" href="#module-neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface" title="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface</span></code></a><a class="headerlink" href="#module-neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface" title="Permalink to this heading">¶</a></h1>
 <p>INC Bench Optimization API interface.</p>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface" title="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OptimizationAPIInterface</span></code></a></p></td>
 <td><p>Interface for queries connected with optimizations.</p></td>
@@ -95,149 +181,149 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.</span></span><span class="sig-name descname"><span class="pre">OptimizationAPIInterface</span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.</span></span><span class="sig-name descname"><span class="pre">OptimizationAPIInterface</span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interface for queries connected with optimizations.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.delete_optimization">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">delete_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.delete_optimization" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">delete_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.delete_optimization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delete optimization from database and clean workspace.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.get_optimization_details">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_optimization_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.get_optimization_details" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_optimization_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.get_optimization_details" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse input data and get optimization details.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.list_optimizations">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">list_optimizations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.list_optimizations" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">list_optimizations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.list_optimizations" title="Permalink to this definition">¶</a></dt>
 <dd><p>List optimizations assigned to project.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_optimization_status">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_optimization_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_optimization_status" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_optimization_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_optimization_status" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update optimization status.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_optimized_model">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_optimized_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_optimized_model" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_optimized_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_optimized_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update optimized model.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_optimization_duration">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_optimization_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_optimization_duration" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_optimization_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_optimization_duration" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update duration of optimization.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_paths">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_paths" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_paths" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update config path and output log path.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_execution_command">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_execution_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_execution_command" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update_execution_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.update_execution_command" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update optimization execution command.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.pin_accuracy_benchmark">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pin_accuracy_benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.pin_accuracy_benchmark" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pin_accuracy_benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.pin_accuracy_benchmark" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pin accuracy benchmark to optimization.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.pin_performance_benchmark">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pin_performance_benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.pin_performance_benchmark" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pin_performance_benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.pin_performance_benchmark" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pin performance benchmark to optimization.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_optimization">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_optimization" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_optimization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add optimization to database.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_quantization_optimization">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_quantization_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.orm.session.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_quantization_optimization" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_quantization_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.orm.session.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_quantization_optimization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add quantization optimization to database.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_pruning_optimization">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_pruning_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.orm.session.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_pruning_optimization" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_pruning_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.orm.session.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_pruning_optimization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add quantization optimization to database.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_standard_optimization">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_standard_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.orm.session.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_standard_optimization" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_standard_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.orm.session.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_standard_optimization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add optimization to database.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.edit_optimization">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">edit_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.edit_optimization" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">edit_optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.edit_optimization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Edit existing optimization.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.get_pruning_details">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_pruning_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.get_pruning_details" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_pruning_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.get_pruning_details" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gat pruning details in a form of tree.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.edit_tuning_details">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">edit_tuning_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.orm.session.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.edit_tuning_details" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">edit_tuning_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.orm.session.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parsed_optimization_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.edit_tuning_details" title="Permalink to this definition">¶</a></dt>
 <dd><p>Edit tuning details.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.edit_pruning_details">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">edit_pruning_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.orm.session.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.edit_pruning_details" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">edit_pruning_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_session</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.orm.session.Session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.edit_pruning_details" title="Permalink to this definition">¶</a></dt>
 <dd><p>Edit pruning details.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_tuning_history">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_tuning_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_tuning_history" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_tuning_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.add_tuning_history" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add tuning history to database.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.parse_tuning_history">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_tuning_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tuning_history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.parse_tuning_history" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_tuning_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tuning_history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.parse_tuning_history" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse input data for tuning history.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.parse_optimization_data">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_optimization_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.parse_optimization_data" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_optimization_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.parse_optimization_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse input data for optimization.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.parse_optimization_edit_data">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_optimization_edit_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.parse_optimization_edit_data" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parse_optimization_edit_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../params_interfaces/index.html#neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface" title="neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface"><span class="pre">neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface</span></a></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.parse_optimization_edit_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse data for editing optimization.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.load_pruning_details_config">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_pruning_details_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.load_pruning_details_config" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_pruning_details_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.load_pruning_details_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load pruning details config.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.clean_status">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clean_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status_to_clean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../../../utils/consts/index.html#neural_compressor.ux.utils.consts.ExecutionStatus" title="neural_compressor.ux.utils.consts.ExecutionStatus"><span class="pre">neural_compressor.ux.utils.consts.ExecutionStatus</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.clean_status" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clean_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status_to_clean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../../../utils/consts/index.html#neural_compressor.ux.utils.consts.ExecutionStatus" title="neural_compressor.ux.utils.consts.ExecutionStatus"><span class="pre">neural_compressor.ux.utils.consts.ExecutionStatus</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface.clean_status" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clean specified optimization status.</p>
 </dd></dl>
 
@@ -249,30 +335,46 @@
 
 
            </div>
+           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
-  </div>
+    <p>
+        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

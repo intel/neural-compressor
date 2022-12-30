@@ -1,39 +1,77 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
   <title>neural_compressor.experimental.graph_optimization &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
-      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
   <!--[if lt IE 9]>
     <script src="../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
-        <script src="../../../../_static/jquery.js"></script>
-        <script src="../../../../_static/underscore.js"></script>
-        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../../_static/doctools.js"></script>
         <script src="../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          
+
+          
           </a>
+
+          
+            
+            
             <div class="version">
               <a href="/versions.html">1.14.2▼</a>
               <p>Click link above to switch version</p>
             </div>
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -41,9 +79,20 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/releases_info.html">Release</a></li>
@@ -51,42 +100,79 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
 </ul>
 
+            
+          
         </div>
+        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../../index.html">Intel® Neural Compressor</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.graph_optimization</span></code></li>
+    
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.graph_optimization</span></code></li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="../../../../_sources/autoapi/neural_compressor/experimental/graph_optimization/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <section id="module-neural_compressor.experimental.graph_optimization">
-<span id="neural-compressor-experimental-graph-optimization"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.graph_optimization" title="neural_compressor.experimental.graph_optimization"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.graph_optimization</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.graph_optimization" title="Permalink to this heading"></a></h1>
+<span id="neural-compressor-experimental-graph-optimization"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.graph_optimization" title="neural_compressor.experimental.graph_optimization"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.graph_optimization</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.graph_optimization" title="Permalink to this heading">¶</a></h1>
 <p>Graph Optimization Entry.</p>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization" title="neural_compressor.experimental.graph_optimization.Graph_Optimization"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Graph_Optimization</span></code></a></p></td>
 <td><p>Graph_Optimization class.</p></td>
@@ -95,7 +181,7 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.graph_optimization.</span></span><span class="sig-name descname"><span class="pre">Graph_Optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_fname_or_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.graph_optimization.</span></span><span class="sig-name descname"><span class="pre">Graph_Optimization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_fname_or_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Graph_Optimization class.</p>
 <p>automatically searches for optimal quantization recipes for low
 precision model inference, achieving best tuning objectives like inference performance
@@ -108,7 +194,7 @@ Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss cri
 Tuner class provides a flexible configuration interface via YAML for users to specify
 these parameters.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>conf_fname_or_obj</strong> (<em>string</em><em> or </em><em>obj</em>) – The path to the YAML configuration file or
 Graph_Optimization_Conf class containing accuracy goal, tuning objective and
 preferred calibration &amp; quantization tuning space etc.</p>
@@ -116,61 +202,61 @@ preferred calibration &amp; quantization tuning space etc.</p>
 </dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization.precisions">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">precisions</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.precisions" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">precisions</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.precisions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get precision.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization.input">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.input" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.input" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get input.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization.output">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.output" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.output" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get output.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization.eval_dataloader">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_dataloader</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.eval_dataloader" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_dataloader</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.eval_dataloader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get eval_dataloader.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization.model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.model" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get model.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization.metric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metric</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.metric" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metric</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.metric" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get metric.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization.postprocess">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">postprocess</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.postprocess" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">postprocess</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.postprocess" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get postprocess.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization.eval_func">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_func</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.eval_func" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_func</span></span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.eval_func" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get evaluation function.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization.dataset">
-<span class="sig-name descname"><span class="pre">dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.dataset" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.dataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get dataset.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.experimental.graph_optimization.Graph_Optimization.set_config_by_model">
-<span class="sig-name descname"><span class="pre">set_config_by_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.set_config_by_model" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_config_by_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.graph_optimization.Graph_Optimization.set_config_by_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set model config.</p>
 </dd></dl>
 
@@ -182,30 +268,46 @@ preferred calibration &amp; quantization tuning space etc.</p>
 
 
            </div>
+           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
-  </div>
+    <p>
+        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

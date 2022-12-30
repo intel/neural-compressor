@@ -1,39 +1,77 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
   <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
-      <link rel="stylesheet" href="../../../../../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../../../../_static/graphviz.css" type="text/css" />
+  
+
+  
+  <link rel="stylesheet" href="../../../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
   <!--[if lt IE 9]>
     <script src="../../../../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../../../" src="../../../../../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../../../../../" id="documentation_options" src="../../../../../../../_static/documentation_options.js"></script>
-        <script src="../../../../../../../_static/jquery.js"></script>
-        <script src="../../../../../../../_static/underscore.js"></script>
-        <script src="../../../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../../../../../_static/doctools.js"></script>
         <script src="../../../../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../../../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../../../../../../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../../../../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../../../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          
+
+          
           </a>
+
+          
+            
+            
             <div class="version">
               <a href="/versions.html">1.14.2▼</a>
               <p>Click link above to switch version</p>
             </div>
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -41,9 +79,20 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/releases_info.html">Release</a></li>
@@ -51,41 +100,78 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
 </ul>
 
+            
+          
         </div>
+        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../../../../../index.html">Intel® Neural Compressor</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../../../../../index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm</span></code></li>
+    
+      <li><a href="../../../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm</span></code></li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="../../../../../../../_sources/autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fold_batch_norm/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm">
-<span id="neural-compressor-adaptor-tf-utils-graph-rewriter-generic-fold-batch-norm"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm" title="Permalink to this heading"></a></h1>
+<span id="neural-compressor-adaptor-tf-utils-graph-rewriter-generic-fold-batch-norm"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm" title="Permalink to this heading">¶</a></h1>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FoldBatchNormNodesOptimizer</span></code></a></p></td>
 <td><p>Graph Rewrite Base class.</p></td>
@@ -94,27 +180,27 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.</span></span><span class="sig-name descname"><span class="pre">FoldBatchNormNodesOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.</span></span><span class="sig-name descname"><span class="pre">FoldBatchNormNodesOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
 <p>Graph Rewrite Base class.
 We abstract this base class and define the interface only.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>object</strong> (<em>model</em>) – the input model to be converted.</p>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer.scale_after_normalization">
-<span class="sig-name descname"><span class="pre">scale_after_normalization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer.scale_after_normalization" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">scale_after_normalization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer.scale_after_normalization" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>Check the scale_after_normalization attribute value if the node op type</dt><dd><p>is BatchNormWithGlobalNormalization</p>
 </dd>
 </dl>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>node</strong> (<em>nodedef</em>) – input nodedef object</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><dl class="simple">
 <dt>True if the node op is not BatchNormWithGlobalNormalization else it</dt><dd><p>depends on the BatchNormWithGlobalNormalization attribute value of
 <cite>scale_after_normalization</cite>.</p>
@@ -122,7 +208,7 @@ We abstract this base class and define the interface only.</p>
 </dl>
 </p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
@@ -130,7 +216,7 @@ We abstract this base class and define the interface only.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer.do_transformation">
-<span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer.do_transformation" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer.do_transformation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes batch normalization ops by folding them into convolutions.</p>
 <p>Batch normalization during training has multiple dynamic parameters that are
 updated, but once the graph is finalized these become constants. That means
@@ -143,10 +229,10 @@ normalization that’s performed by the BatchNormWithGlobalNormalization, FusedB
 FusedBatchNormV3 and _FusedBatchNormEx ops, and will need to be extended in the future to handle the
 newer style.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Modified graph with BN ops removed, and modified weights.</p>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – If the graph is badly formed with duplicate node names.</p>
 </dd>
 </dl>
@@ -160,30 +246,46 @@ newer style.</p>
 
 
            </div>
+           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
-  </div>
+    <p>
+        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>
