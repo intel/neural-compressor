@@ -93,13 +93,15 @@ echo "UPDATE_LATEST_FOLDER=${UPDATE_LATEST_FOLDER}"
 echo "UPDATE_VERSION_FOLDER=${UPDATE_VERSION_FOLDER}"
 
 if [[ ${PUSH_GH_PAGES} -eq 1 ]]; then
-  if [[ ${CREATE_VERSION_FOLDER} -eq 1 ]]; then
+  if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
     echo "git add ${DST_FOLDER} ../versions.html"
     git add ${DST_FOLDER} ../versions.html
   fi
 
-  echo "git add ${LATEST_FOLDER}"
-  git add ${LATEST_FOLDER}
+  if [[ ${UPDATE_LATEST_FOLDER} -eq 1 ]]; then
+    echo "git add ${LATEST_FOLDER}"
+    git add ${LATEST_FOLDER}
+  fi
   git commit -m "update for ${VERSION}"
   git push origin gh-pages
   echo "git push origin gh-pages is done!"
