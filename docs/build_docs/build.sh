@@ -1,8 +1,8 @@
 
 if [ ! -n "$1" ]; then
-  TAG=version
-else
   TAG=latest
+else
+  TAG=version
 fi
 
 echo "Update ${TAG} folder"
