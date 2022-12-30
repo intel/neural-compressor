@@ -1,5 +1,15 @@
 
-CREATE_VERSION_FOLDER=1
+TAG=latest
+echo "Update ${TAG} folder"
+
+if [[ ${TAG} -eq latest ]]; then
+  UPDATE_LATEST_FOLDER=1
+  UPDATE_VERSION_FOLDER=0
+else
+  UPDATE_LATEST_FOLDER=0
+  UPDATE_VERSION_FOLDER=1
+fi
+
 CHECKOUT_GH_PAGES=1
 PUSH_GH_PAGES=1
 WORK_DIR=../../build_tmp
@@ -53,7 +63,8 @@ DST_FOLDER=../${VERSION}
 LATEST_FOLDER=../latest
 SRC_FOLDER=build/html
 
-if [[ ${CREATE_VERSION_FOLDER} -eq 1 ]]; then
+if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
+  echo "create ${DST_FOLDER}"
   rm -rf ${DST_FOLDER}/*
   mkdir -p ${DST_FOLDER}
   cp -r ${SRC_FOLDER}/* ${DST_FOLDER}
@@ -61,15 +72,20 @@ if [[ ${CREATE_VERSION_FOLDER} -eq 1 ]]; then
   cp -r ./source/docs/source/imgs ${DST_FOLDER}/docs/source
   cp source/_static/index.html ${DST_FOLDER}
 else
-  echo "skip create ${DST_FOLDER}"
+  echo "skip to create ${DST_FOLDER}"
 fi
 
-rm -rf ${LATEST_FOLDER}/*
-mkdir -p ${LATEST_FOLDER}
-cp -r ${SRC_FOLDER}/* ${LATEST_FOLDER}
-python update_html.py ${LATEST_FOLDER} ${VERSION}
-cp -r ./source/docs/source/imgs ${LATEST_FOLDER}/docs/source
-cp source/_static/index.html ${LATEST_FOLDER}
+if [[ ${UPDATE_LATEST_FOLDER} -eq 1 ]]; then
+  echo "create ${LATEST_FOLDER}"
+  rm -rf ${LATEST_FOLDER}/*
+  mkdir -p ${LATEST_FOLDER}
+  cp -r ${SRC_FOLDER}/* ${LATEST_FOLDER}
+  python update_html.py ${LATEST_FOLDER} ${VERSION}
+  cp -r ./source/docs/source/imgs ${LATEST_FOLDER}/docs/source
+  cp source/_static/index.html ${LATEST_FOLDER}
+else
+  echo "skip to create ${LATEST_FOLDER}"
+fi
 
 echo "Create document is done"
 
