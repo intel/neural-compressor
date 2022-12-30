@@ -2,7 +2,7 @@
 TAG=latest
 echo "Update ${TAG} folder"
 
-if [[ ${TAG} -eq latest ]]; then
+if [[ ${TAG} == "latest" ]]; then
   UPDATE_LATEST_FOLDER=1
   UPDATE_VERSION_FOLDER=0
 else
@@ -88,6 +88,9 @@ else
 fi
 
 echo "Create document is done"
+
+echo "UPDATE_LATEST_FOLDER=${UPDATE_LATEST_FOLDER}"
+echo "UPDATE_VERSION_FOLDER=${UPDATE_VERSION_FOLDER}"
 
 if [[ ${PUSH_GH_PAGES} -eq 1 ]]; then
   if [[ ${CREATE_VERSION_FOLDER} -eq 1 ]]; then
