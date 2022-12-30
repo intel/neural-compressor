@@ -2497,3 +2497,9 @@ DistillationConfig
 KnowledgeDistillationLossConfig
 confs
 TensorflowQATModel
+HBM
+Ponte
+SmoothQuant
+Vecchio
+WeChat
+QuaLA

@@ -3,8 +3,9 @@
 This is an experimental example to quantize unet model. We use dummy data to do quantization and evaluation, so the accuracy is not guaranteed.
 
 ### Environment
-onnx: 1.12.0
-onnxruntime: 1.12.1
+onnx: 1.12.0  
+onnxruntime: 1.13.1
+> Validated framework versions can be found in main readme.
 
 ### Prepare model
 

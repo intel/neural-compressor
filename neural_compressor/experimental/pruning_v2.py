@@ -1,5 +1,5 @@
 """pruning module."""
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2021 Intel Corporation
@@ -30,12 +30,14 @@ from ..pruner.utils import process_config, parse_to_prune, check_config, update_
 from ..utils.utility import LazyImport
 from ..pruner.pruners import get_pruner
 from ..conf.pythonic_config import Config
+
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 
 from deprecated import deprecated
 import importlib
 import re
+
 
 class Pruning(Component):
     """This is base class of pruning object.
@@ -71,12 +73,12 @@ class Pruning(Component):
             # yaml file
             raise NotImplementedError("Only WeightPruningConfig config is supported currently.")
         self.pruners_info = process_config(self.conf)
-        # self.model = None # here skip 
+        # self.model = None # here skip
         # align with old Component based API
         # self._init_with_conf()
         self.callbacks = dict(tf_pruning=TfPruningCallback)
         self.pruners = []
-        self.generate_hooks() # place generate hooks here, to get rid of prepare() function.
+        self.generate_hooks()  # place generate hooks here, to get rid of prepare() function.
 
     def update_config(self, *args, **kwargs):
         """Add user-defined arguments to the original configurations.
@@ -134,6 +136,11 @@ class Pruning(Component):
             elementwise_over_all = float(
                 element_sparsity_cnt) / param_cnt
 
+        logger.info(
+            f"elementwise_over_matmul_gemm_conv:{elementwise_over_matmul_gemm_conv},"
+            f" elementwise_over_all:{elementwise_over_all},"
+            f"blockwise_over_matmul_gemm_conv:{blockwise_over_matmul_gemm_conv}")
+
         return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 
     def _on_train_begin(self, dataloader=None):
@@ -188,6 +195,7 @@ class Pruning(Component):
         """Functions called after training."""
         for pruner in self.pruners:
             pruner.on_train_end()
+        self.get_sparsity_ratio()
 
     def _on_before_eval(self):
         """Implement at the beginning of evaluation phase."""
@@ -227,16 +235,16 @@ class Pruning(Component):
         if self._train_dataloader is None and self._train_func is None:
             train_dataloader_cfg = self.cfg.pruning.train.dataloader
             assert train_dataloader_cfg is not None, \
-                   'dataloader field of train field of pruning section ' \
-                   'in yaml file should be configured as train_dataloader property is NOT set!'
+                'dataloader field of train field of pruning section ' \
+                'in yaml file should be configured as train_dataloader property is NOT set!'
             train_dataloader_cfg.distributed = self.train_distributed
             self._train_dataloader = create_dataloader(self.framework, train_dataloader_cfg)
 
         if self._eval_dataloader is None and self._eval_func is None:
             eval_dataloader_cfg = self.cfg.evaluation.accuracy.dataloader
             assert eval_dataloader_cfg is not None, \
-                   'dataloader field of evaluation ' \
-                   'in yaml file should be configured as eval_dataloader property is NOT set!'
+                'dataloader field of evaluation ' \
+                'in yaml file should be configured as eval_dataloader property is NOT set!'
             eval_dataloader_cfg.distributed = self.evaluation_distributed
             self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
 
@@ -246,22 +254,22 @@ class Pruning(Component):
             assert train_cfg, "train field of pruning section in yaml file must " \
                               "be configured for pruning if pruning_func is NOT set."
             self._train_func = create_train_func(self.framework, \
-                                                   self.train_dataloader, \
-                                                   self.adaptor, \
-                                                   train_cfg, \
-                                                   hooks=self.hooks, \
-                                                   callbacks=self.callbacks)
+                                                 self.train_dataloader, \
+                                                 self.adaptor, \
+                                                 train_cfg, \
+                                                 hooks=self.hooks, \
+                                                 callbacks=self.callbacks)
         if self._eval_func is None:
             # eval section in yaml file should be configured.
             eval_cfg = self.cfg.evaluation
             assert eval_cfg, "eval field of pruning section in yaml file must " \
-                              "be configured for pruning if eval_func is NOT set."
+                             "be configured for pruning if eval_func is NOT set."
             self._eval_func = create_eval_func(self.framework, \
                                                self.eval_dataloader, \
                                                self.adaptor, \
                                                eval_cfg.accuracy.metric, \
                                                eval_cfg.accuracy.postprocess, \
-                                               fp32_baseline = False)
+                                               fp32_baseline=False)
         if getattr(self.train_dataloader, 'distributed', False):
             self.register_hook('on_train_begin', self.adaptor._pre_hook_for_hvd)
 
@@ -272,14 +280,14 @@ class Pruning(Component):
         """
         logger.info("Start to get the baseline model's score before pruning.")
         self.baseline_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
-                        else self._model.model)
+                                                  else self._model.model)
         logger.info("Baseline model's score is {}.".format(str(self.baseline_score)))
         logger.info("Model pruning begins.")
         self._train_func(self._model if getattr(self._train_func, 'builtin', None) \
-                        else self._model.model)
+                             else self._model.model)
         logger.info("Model pruning is done. Start to evaluate the pruned model.")
         self.last_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
-                        else self._model.model)
+                                              else self._model.model)
         logger.info("Pruned model score is {}.".format(str(self.last_score)))
         return self._model
 

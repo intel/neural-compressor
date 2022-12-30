@@ -323,6 +323,7 @@ class BasicPruner(BasePruner):
     def on_before_optimizer_step(self):
         """Implement before optimizer.step()."""
         self.reg.on_before_optimizer_step()
+        self.criterion.on_before_optimizer_step()
 
     def on_after_optimizer_step(self):
         """Prune the model after optimization."""
@@ -330,7 +331,7 @@ class BasicPruner(BasePruner):
         if self.global_step >= self.start_step and self.global_step <= self.end_step:
             self.reg.on_after_optimizer_step()
         self.mask_weights()
-        self.criterion.on_after_optimizer_step()
+
         self.global_step += 1
 
 
@@ -563,6 +564,7 @@ class ProgressivePruner(BasicPruner):
     def on_before_optimizer_step(self):
         """Implement before optimizer.step()."""
         self.reg.on_before_optimizer_step()
+        self.criterion.on_before_optimizer_step()
 
     def on_after_optimizer_step(self):
         """Prune the model after optimization."""
@@ -573,7 +575,7 @@ class ProgressivePruner(BasicPruner):
             self.mask_weights()
         else:
             self.mask_weights_general(self.progressive_masks)
-        self.criterion.on_after_optimizer_step()
+
         self.global_step += 1
 
     def print_progressive_sparsity(self):

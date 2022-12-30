@@ -176,12 +176,10 @@
     },
     "squeezenet": {
       "model_src_dir": "image_recognition/onnx_model_zoo/squeezenet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
       "input_model": "/tf_dataset2/models/onnx/squeezenet/squeezenet1.0-12.onnx",
-      "yaml": "squeezenet.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "caffenet": {
       "model_src_dir": "image_recognition/onnx_model_zoo/caffenet/quantization/ptq",
@@ -239,12 +237,10 @@
     },
     "fcn": {
       "model_src_dir": "image_recognition/onnx_model_zoo/fcn/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
       "input_model": "/tf_dataset2/models/onnx/fcn/fcn-resnet50-11.onnx",
-      "yaml": "fcn_rn50.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "ssd_mobilenet_v1-2": {
       "model_src_dir": "object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq",
@@ -516,12 +512,10 @@
     },
     "fcn_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/fcn/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco",
       "input_model": "/tf_dataset2/models/onnx/fcn/fcn-resnet50-13.onnx",
-      "yaml": "fcn_rn50_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "ssd_mobilenet_v1-2_qdq": {
       "model_src_dir": "object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq",
@@ -576,31 +570,25 @@
       "batch_size": 1
     },
     "arcface": {
-      "model_src_dir": "image_recognition/onnx_model_zoo/arcface/quantization/ptq",
+      "model_src_dir": "body_analysis/onnx_model_zoo/arcface/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/faces_ms1m_112x112/lfw.bin",
       "input_model": "/tf_dataset2/models/onnx/arcface/arcfaceresnet100-11.onnx",
-      "yaml": "arcface.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "emotion_ferplus": {
       "model_src_dir": "body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/emotion_data/emotion_ferplus/fer2013/fer2013.csv",
       "input_model": "/tf_dataset2/models/onnx/emotion_ferplus/emotion-ferplus-12.onnx",
-      "yaml": "emotion_ferplus.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "ultraface": {
       "model_src_dir": "body_analysis/onnx_model_zoo/ultraface/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/wider_face_data/WIDER_val",
       "input_model": "/tf_dataset2/models/onnx/ultraface/version-RFB-320-12.onnx",
-      "yaml": "ultraface.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "unet": {
       "model_src_dir": "image_recognition/unet/quantization/ptq",
