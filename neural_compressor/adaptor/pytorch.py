@@ -3740,23 +3740,18 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                 config = self.tune_cfg['op'][(name, op_type)]
                 if config['activation']['dtype'] in ['fp8_e4m3', 'fp8_e3m4']:
                     algorithm = config['activation']['algorithm']
-                    from mpemu.module_wrappers import BatchMatmul, Matmul
-                    if algorithm == 'kl':
+                    from mpemu.module_wrappers import (BatchMatmul, Matmul, AddMatmul,
+                                                        EltwiseAdd, EltwiseMul, EltwiseDiv)
+                    module.add_module(
+                        'input_activation_post_process', torch.quantization.HistogramObserver() if \
+                                    algorithm == 'kl' else torch.quantization.MinMaxObserver()
+                    )
+                    if type(module) in [BatchMatmul, Matmul, AddMatmul,
+                                        EltwiseAdd, EltwiseMul, EltwiseDiv]:
                         module.add_module(
-                            'input_activation_post_process', torch.quantization.HistogramObserver()
+                            'input_activation_post_process1', torch.quantization.HistogramObserver() if \
+                                    algorithm == 'kl' else torch.quantization.MinMaxObserver()
                         )
-                        if type(module) in [BatchMatmul,Matmul]:
-                            module.add_module(
-                                'input_activation_post_process1', torch.quantization.HistogramObserver()
-                            )
-                    elif algorithm == 'minmax':
-                        module.add_module(
-                            'input_activation_post_process', torch.quantization.MinMaxObserver()
-                        )
-                        if type(module) in [BatchMatmul,Matmul]:
-                            module.add_module(
-                                'input_activation_post_process1', torch.quantization.MinMaxObserver()
-                            )
                     module.register_forward_pre_hook(input_observer_forward_pre_hook)
 
     def _calibration_for_scale(self, model, dataloader, model_qconfig_dict):
