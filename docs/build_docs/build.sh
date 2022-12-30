@@ -1,16 +1,17 @@
 CHECKOUT_GH_PAGES=1
 PUSH_GH_PAGES=1
-WORK_DIR=../build_tmp
+WORK_DIR=../../build_tmp
 rm -rf ${WORK_DIR}
 mkdir -p ${WORK_DIR}
 cp -rf ./* ${WORK_DIR}
+
+cd ${WORK_DIR}
 
 if [ ! -d env_sphinx ]; then
     bash pip_set_env.sh
 fi
 source env_sphinx/bin/activate
 
-cd ${WORK_DIR}
 cp -rf ../docs/ ./source
 
 cp -f "../README.md" "./source/docs/source/Welcome.md"
