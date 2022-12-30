@@ -45,6 +45,11 @@ def metrics_generator(array, tolerance):
     return max_diff, mean_diff, median_diff, success_rate
 
 def initialize_graph(model_details, args, od_graph_def):
+    if args.use_nc and not od_graph_def.node:
+        from neural_compressor.model.model import Model
+        model = Model(os.path.join(os.getcwd(), model_details['model_dir']))
+        od_graph_def = model.graph_def
+
     graph = tf_v1.Graph()
     with graph.as_default():
         input_variables = {
@@ -56,11 +61,6 @@ def initialize_graph(model_details, args, od_graph_def):
                 serialized_graph = fid.read()
                 od_graph_def.ParseFromString(serialized_graph)
                 od_graph_def = delete_assign(od_graph_def)
-
-        elif args.use_nc and not od_graph_def.node:
-            from neural_compressor.experimental import common
-            model = common.Model(os.path.join(os.getcwd(), model_details['model_dir']))
-            od_graph_def = model.graph_def
 
         # optimize for inference
         if not args.disable_optimize:
@@ -370,14 +370,19 @@ if __name__ == "__main__":
             dataloader_dict = {'wide_deep': WidedeepDataloader}
             if args.model_name and args.model_name in dataloader_dict.keys():
                 Dataloader = dataloader_dict[args.model_name]
+                calib_dataloader = Dataloader(dataset=dataset,
+                                            batch_size=args.batch_size,
+                                            collate_fn=oob_collate_data_func \
+                                                if model_detail.get('model_name')!='DLRM' \
+                                                else oob_dlrm_collate_func)
             else:
                 Dataloader = DataLoader
-            calib_dataloader = Dataloader(framework='tensorflow',
-                                          dataset=dataset,
-                                          batch_size=args.batch_size,
-                                          collate_fn=oob_collate_data_func \
-                                            if model_detail.get('model_name')!='DLRM' \
-                                            else oob_dlrm_collate_func)
+                calib_dataloader = Dataloader(framework='tensorflow',
+                                            dataset=dataset,
+                                            batch_size=args.batch_size,
+                                            collate_fn=oob_collate_data_func \
+                                                if model_detail.get('model_name')!='DLRM' \
+                                                else oob_dlrm_collate_func)
         q_model = fit(
             model=args.model_path,
             conf=config,

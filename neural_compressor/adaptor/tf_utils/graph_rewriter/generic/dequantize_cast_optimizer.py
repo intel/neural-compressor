@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Dequantize Cast Graph Rerewriter."""
+
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 
@@ -22,10 +24,11 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.utils.utility import dump_elapsed_time
 class DequantizeCastOptimizer(GraphRewriterBase):
+    """Remove the Cast OP and set Dequantize output to B16 if the Cast OP output is BF16."""
 
     @dump_elapsed_time("Pass DequantizeCastOptimizer")
     def do_transformation(self):
-        """
+        """Remove the redundant Cast OP after Dequantize.
 
         Args:
             input_graph_def (graphdef): graphdef object
@@ -41,7 +44,7 @@ class DequantizeCastOptimizer(GraphRewriterBase):
         for i in target_nodes:
             dq_node = graph_info[i[0]].node
             dq_outputs = graph_info[i[0]].outputs
-            
+
             if len(dq_outputs) > 1:
                 continue
             if dq_node.attr['mode'].s == b'MIN_FIRST':
@@ -63,9 +66,9 @@ class DequantizeCastOptimizer(GraphRewriterBase):
                     if value == cast_node.name:
                         replace_index = index
                         break
-                successor_node.input[replace_index] = dq_node.name                 
+                successor_node.input[replace_index] = dq_node.name
 
             # remove Cast node
-            cur_graph.remove_node(cast_node.name)        
+            cur_graph.remove_node(cast_node.name)
 
         return cur_graph.dump_graph()

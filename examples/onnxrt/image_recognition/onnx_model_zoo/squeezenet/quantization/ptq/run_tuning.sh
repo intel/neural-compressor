@@ -13,20 +13,17 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
-      --data_path=*)
-          data_path=$(echo $var |cut -f2 -d=)
+      --dataset_location=*)
+          dataset_location=$(echo $var |cut -f2 -d=)
       ;;
-      --label_path=*)
-          label_path=$(echo $var |cut -f2 -d=)
+      --quant_format=*)
+          quant_format=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -37,10 +34,9 @@ function init_params {
 function run_tuning {
     python main.py \
             --model_path ${input_model} \
-            --data_path ${data_path} \
-            --label_path ${label_path} \
+            --dataset_location ${dataset_location} \
             --output_model ${output_model} \
-            --config ${config} \
+            --quant_format ${quant_format} \
             --tune
 }
 

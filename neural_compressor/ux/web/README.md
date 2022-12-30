@@ -794,7 +794,7 @@
             <td align="center">&#x2610;</td>
         </tr>
         <tr>
-            <td><b>max_trails</b></td>
+            <td><b>max_trials</b></td>
             <td>Optimization max trials</td>
             <td align="center">&#x2610;</td>
         </tr>

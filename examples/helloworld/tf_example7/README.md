@@ -1,6 +1,6 @@
 tf_example7 example
 =====================
-This example is used to demonstrate how to quantize a TensorFlow model with pure python API.
+This example is used to demonstrate how to quantize a TensorFlow model with dummy dataset.
 
 ### 1. Installation
 ```shell

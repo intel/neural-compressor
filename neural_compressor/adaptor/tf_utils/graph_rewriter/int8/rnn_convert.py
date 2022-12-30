@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Quantized RNN Graph Rewriter."""
 
 from neural_compressor.utils.utility import dump_elapsed_time
 
@@ -30,7 +30,9 @@ import tensorflow as tf
 
 
 class QuantizedRNNConverter(GraphRewriterBase):
+    """Quantized RNN converter."""
     def __init__(self, model, calibration_data, rnn_details, new_api=False):
+        """Initilization."""
         super().__init__(model)
         self.calibration_data = calibration_data
         self.rnn_details = rnn_details
@@ -38,6 +40,7 @@ class QuantizedRNNConverter(GraphRewriterBase):
 
     @dump_elapsed_time("Pass QuantizedRNNConverter")
     def do_transformation(self):
+        """Apply the RNN convertion."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()

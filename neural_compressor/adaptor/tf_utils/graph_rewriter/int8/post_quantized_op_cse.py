@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Post CSE Graph Rewriter."""
 
 import hashlib
 from tensorflow.core.framework import graph_pb2
@@ -25,13 +26,11 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class PostCseOptimizer(GraphRewriterBase):
-    """[summary]
-    Remove duplicated nodes like shared quantizev2 and const to decrease the output model size.
-    """
+    """Remove duplicated nodes like shared quantizev2 and const to decrease the output model size."""
     control_op_types = ('Switch', 'Enter', 'Merge', 'NextIteration', 'Exit')
 
     def _gen_node_hash(self, graph_info, node):
-
+        """Generate nodes hash md5 data."""
         hash_str = node.op
         hash_str += str(len(node.input))
         for i in node.input:
@@ -50,6 +49,7 @@ class PostCseOptimizer(GraphRewriterBase):
 
     @dump_elapsed_time("Pass PostCseOptimizer")
     def do_transformation(self):
+        """Apply post CSE optimization."""
         GraphAnalyzer().graph = self.model
         graph_info = GraphAnalyzer().parse_graph()
         node_hash_info = {}

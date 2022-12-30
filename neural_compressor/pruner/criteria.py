@@ -61,6 +61,10 @@ class PruningCriterion:
         """Calculate and store the pruning scores of pruning modules at the beginning of a step."""
         pass
 
+    def on_before_optimizer_step(self):
+        """Calculate and store the pruning scores of pruning modules before the optimizer step."""
+        pass
+
     def on_after_optimizer_step(self):
         """Calculate and store the pruning scores of pruning modules after the optimizer step."""
         pass
@@ -113,7 +117,7 @@ class GradientCriterion(PruningCriterion):
         super(GradientCriterion, self).__init__(modules, config)
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
 
-    def on_after_optimizer_step(self):
+    def on_before_optimizer_step(self):
         """Calculate and store the pruning scores based on gradient criterion."""
         with torch.no_grad():
             for key in self.modules.keys():
@@ -143,7 +147,7 @@ class SnipCriterion(PruningCriterion):
         super(SnipCriterion, self).__init__(modules, config)
         assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
 
-    def on_after_optimizer_step(self):
+    def on_before_optimizer_step(self):
         """Calculate and store the pruning scores based on snip criterion."""
         ##self.mask_weights()
         with torch.no_grad():
@@ -180,7 +184,7 @@ class SnipMomentumCriterion(PruningCriterion):
         self.alpha = 0.9
         self.beta = 1.0
 
-    def on_after_optimizer_step(self):
+    def on_before_optimizer_step(self):
         """Calculate and store the pruning scores based on snip_momentum criterion."""
         with torch.no_grad():
             for key in self.modules.keys():
