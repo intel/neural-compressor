@@ -53,7 +53,7 @@ DST_FOLDER=../${VERSION}
 LATEST_FOLDER=../latest
 SRC_FOLDER=build/html
 
-if [[ ${CREATE_VERSION_FOLDER} -eq 1]]; then
+if [[ ${CREATE_VERSION_FOLDER} -eq 1 ]]; then
   rm -rf ${DST_FOLDER}/*
   mkdir -p ${DST_FOLDER}
   cp -r ${SRC_FOLDER}/* ${DST_FOLDER}
@@ -74,7 +74,7 @@ cp source/_static/index.html ${LATEST_FOLDER}
 echo "Create document is done"
 
 if [[ ${PUSH_GH_PAGES} -eq 1 ]]; then
-  if [[ ${CREATE_VERSION_FOLDER} -eq 1]]; then
+  if [[ ${CREATE_VERSION_FOLDER} -eq 1 ]]; then
     echo "git add ${DST_FOLDER} ../versions.html"
     git add ${DST_FOLDER} ../versions.html
   fi
