@@ -15,5 +15,5 @@ jobs:
     - name: Build Online Document
       run: |
         git config --local --get remote.origin.url
-        cd build_docs
+        cd docs/build_docs
         bash build.sh

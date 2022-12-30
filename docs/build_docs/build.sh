@@ -1,3 +1,5 @@
+
+CREATE_VERSION_FOLDER=1
 CHECKOUT_GH_PAGES=1
 PUSH_GH_PAGES=1
 WORK_DIR=../../build_tmp
@@ -51,12 +53,16 @@ DST_FOLDER=../${VERSION}
 LATEST_FOLDER=../latest
 SRC_FOLDER=build/html
 
-rm -rf ${DST_FOLDER}/*
-mkdir -p ${DST_FOLDER}
-cp -r ${SRC_FOLDER}/* ${DST_FOLDER}
-python update_html.py ${DST_FOLDER} ${VERSION}
-cp -r ./source/docs/source/imgs ${DST_FOLDER}/docs/source
-cp source/_static/index.html ${DST_FOLDER}
+if [[ ${CREATE_VERSION_FOLDER} -eq 1]]; then
+  rm -rf ${DST_FOLDER}/*
+  mkdir -p ${DST_FOLDER}
+  cp -r ${SRC_FOLDER}/* ${DST_FOLDER}
+  python update_html.py ${DST_FOLDER} ${VERSION}
+  cp -r ./source/docs/source/imgs ${DST_FOLDER}/docs/source
+  cp source/_static/index.html ${DST_FOLDER}
+else
+  echo "skip create ${DST_FOLDER}"
+fi
 
 rm -rf ${LATEST_FOLDER}/*
 mkdir -p ${LATEST_FOLDER}
@@ -68,8 +74,13 @@ cp source/_static/index.html ${LATEST_FOLDER}
 echo "Create document is done"
 
 if [[ ${PUSH_GH_PAGES} -eq 1 ]]; then
-  echo "git add ${LATEST_FOLDER} ${DST_FOLDER} ../versions.html"
-  git add ${LATEST_FOLDER} ${DST_FOLDER} ../versions.html
+  if [[ ${CREATE_VERSION_FOLDER} -eq 1]]; then
+    echo "git add ${DST_FOLDER} ../versions.html"
+    git add ${DST_FOLDER} ../versions.html
+  fi
+
+  echo "git add ${LATEST_FOLDER}"
+  git add ${LATEST_FOLDER}
   git commit -m "update for ${VERSION}"
   git push origin gh-pages
   echo "git push origin gh-pages is done!"
