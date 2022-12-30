@@ -1,39 +1,77 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
   <title>neural_compressor.model.torch_model &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
-      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
   <!--[if lt IE 9]>
     <script src="../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
-        <script src="../../../../_static/jquery.js"></script>
-        <script src="../../../../_static/underscore.js"></script>
-        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../../_static/doctools.js"></script>
         <script src="../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          
+
+          
           </a>
+
+          
+            
+            
             <div class="version">
               <a href="/versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -41,7 +79,18 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/examples_readme.html">Examples</a></li>
@@ -51,42 +100,79 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
 </ul>
 
+            
+          
         </div>
+        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../../index.html">Intel® Neural Compressor</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.torch_model</span></code></li>
+    
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.torch_model</span></code></li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="../../../../_sources/autoapi/neural_compressor/model/torch_model/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <section id="module-neural_compressor.model.torch_model">
-<span id="neural-compressor-model-torch-model"></span><h1><a class="reference internal" href="#module-neural_compressor.model.torch_model" title="neural_compressor.model.torch_model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.torch_model</span></code></a><a class="headerlink" href="#module-neural_compressor.model.torch_model" title="Permalink to this heading"></a></h1>
+<span id="neural-compressor-model-torch-model"></span><h1><a class="reference internal" href="#module-neural_compressor.model.torch_model" title="neural_compressor.model.torch_model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.torch_model</span></code></a><a class="headerlink" href="#module-neural_compressor.model.torch_model" title="Permalink to this heading">¶</a></h1>
 <p>Class for PyTorch model.</p>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel" title="neural_compressor.model.torch_model.PyTorchBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchBaseModel</span></code></a></p></td>
 <td><p>Build PyTorch base model.</p></td>
@@ -104,69 +190,69 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">PyTorchBaseModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">PyTorchBaseModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">torch</span></code>, <a class="reference internal" href="../base_model/index.html#neural_compressor.model.base_model.BaseModel" title="neural_compressor.model.base_model.BaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.model.base_model.BaseModel</span></code></a></p>
 <p>Build PyTorch base model.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.model" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Getter to model.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.fp32_model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fp32_model</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.fp32_model" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fp32_model</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.fp32_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Getter to model.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.forward" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pytorch model forward func.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.register_forward_pre_hook">
-<span class="sig-name descname"><span class="pre">register_forward_pre_hook</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.register_forward_pre_hook" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">register_forward_pre_hook</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.register_forward_pre_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>Register forward pre hook.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.remove_hooks">
-<span class="sig-name descname"><span class="pre">remove_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.remove_hooks" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">remove_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.remove_hooks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove hooks.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.generate_forward_pre_hook">
-<span class="sig-name descname"><span class="pre">generate_forward_pre_hook</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.generate_forward_pre_hook" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">generate_forward_pre_hook</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.generate_forward_pre_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate forward pre hook.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.framework">
-<span class="sig-name descname"><span class="pre">framework</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.framework" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">framework</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.framework" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return framework.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.get_all_weight_names">
-<span class="sig-name descname"><span class="pre">get_all_weight_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_all_weight_names" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_all_weight_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_all_weight_names" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get weight names.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.get_weight">
-<span class="sig-name descname"><span class="pre">get_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_weight" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_weight" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get weight value.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.update_weights">
-<span class="sig-name descname"><span class="pre">update_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.update_weights" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">update_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.update_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update weight value.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tensor_name</strong> (<em>string</em>) – weight name.</p></li>
 <li><p><strong>new_tensor</strong> (<em>ndarray</em>) – weight value.</p></li>
@@ -177,10 +263,10 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.update_gradient">
-<span class="sig-name descname"><span class="pre">update_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_grad</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.update_gradient" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">update_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_grad</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.update_gradient" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update grad value.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>grad_name</strong> (<em>str</em>) – grad name.</p></li>
 <li><p><strong>new_grad</strong> (<em>ndarray</em>) – grad value.</p></li>
@@ -191,10 +277,10 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.prune_weights_">
-<span class="sig-name descname"><span class="pre">prune_weights_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.prune_weights_" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">prune_weights_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.prune_weights_" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prune weight in place according to tensor_name with mask.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tensor_name</strong> (<em>str</em>) – weight name.</p></li>
 <li><p><strong>mask</strong> (<em>tensor</em>) – pruning mask.</p></li>
@@ -205,16 +291,16 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.get_inputs">
-<span class="sig-name descname"><span class="pre">get_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_inputs" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_inputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get inputs of model.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input_name</strong> (<em>str</em><em>, </em><em>optional</em>) – name of input tensor. Defaults to None.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>input tensor</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tensor</p>
 </dd>
 </dl>
@@ -222,16 +308,16 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.get_gradient">
-<span class="sig-name descname"><span class="pre">get_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_gradient" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_gradient" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get gradients of specific tensor.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input_tensor</strong> (<em>string</em><em> or </em><em>tensor</em>) – weight name or a tensor.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>gradient tensor array</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ndarray</p>
 </dd>
 </dl>
@@ -239,14 +325,14 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.report_sparsity">
-<span class="sig-name descname"><span class="pre">report_sparsity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.report_sparsity" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">report_sparsity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.report_sparsity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get sparsity of the model.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>DataFrame of sparsity of each weight.
 total_sparsity (float): total sparsity of model.</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>df (DataFrame)</p>
 </dd>
 </dl>
@@ -256,51 +342,51 @@ total_sparsity (float): total sparsity of model.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">PyTorchModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">PyTorchModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel" title="neural_compressor.model.torch_model.PyTorchBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchBaseModel</span></code></a></p>
 <p>Build PyTorchModel object.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.workspace_path">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workspace_path</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.workspace_path" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workspace_path</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.workspace_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return workspace path.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.graph_info">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph_info</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.graph_info" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph_info</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.graph_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return graph info.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.save" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save configure file and weights.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.quantized_state_dict">
-<span class="sig-name descname"><span class="pre">quantized_state_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.quantized_state_dict" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">quantized_state_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.quantized_state_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load quantized state dict.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.load_quantized_state_dict">
-<span class="sig-name descname"><span class="pre">load_quantized_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stat_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.load_quantized_state_dict" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">load_quantized_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stat_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.load_quantized_state_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load quantized state with given dict.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_jit">
-<span class="sig-name descname"><span class="pre">export_to_jit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_jit" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">export_to_jit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_jit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export JIT model.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_fp32_onnx">
-<span class="sig-name descname"><span class="pre">export_to_fp32_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fp32-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_fp32_onnx" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">export_to_fp32_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fp32-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_fp32_onnx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export PyTorch FP32 model to ONNX FP32 model.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>save_path</strong> (<em>str</em><em>, </em><em>optional</em>) – ONNX model path to save. Defaults to ‘fp32-model.onnx’.</p></li>
 <li><p><strong>example_inputs</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – example inputs for export.
@@ -324,10 +410,10 @@ Defaults to True.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_bf16_onnx">
-<span class="sig-name descname"><span class="pre">export_to_bf16_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bf16-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_bf16_onnx" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">export_to_bf16_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bf16-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_bf16_onnx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export PyTorch bf16 model to ONNX bf16 model.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>save_path</strong> (<em>str</em><em>, </em><em>optional</em>) – ONNX model path to save. Defaults to ‘bf16-model.onnx’.</p></li>
 <li><p><strong>example_inputs</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – example inputs for export.
@@ -350,10 +436,10 @@ Defaults to True.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_int8_onnx">
-<span class="sig-name descname"><span class="pre">export_to_int8_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int8-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'S8S8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_int8_onnx" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">export_to_int8_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int8-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'S8S8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_int8_onnx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export PyTorch int8 model to ONNX int8 model.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>save_path</strong> (<em>str</em><em>, </em><em>optional</em>) – ONNX model path to save. Defaults to ‘int8-model.onnx’.</p></li>
 <li><p><strong>example_inputs</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – example inputs for export.
@@ -378,7 +464,7 @@ Defaults to True.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export">
-<span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export PyTorch model to ONNX model.</p>
 </dd></dl>
 
@@ -386,25 +472,25 @@ Defaults to True.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchFXModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">PyTorchFXModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchFXModel" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">PyTorchFXModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchFXModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel" title="neural_compressor.model.torch_model.PyTorchModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchModel</span></code></a></p>
 <p>Build PyTorchFXModel object.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.IPEXModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">IPEXModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.IPEXModel" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">IPEXModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.IPEXModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel" title="neural_compressor.model.torch_model.PyTorchBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchBaseModel</span></code></a></p>
 <p>Build IPEXModel object.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.IPEXModel.workspace_path">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workspace_path</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.IPEXModel.workspace_path" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workspace_path</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.IPEXModel.workspace_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return workspace path.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.IPEXModel.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.IPEXModel.save" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.IPEXModel.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save PyTorch IPEX model.</p>
 </dd></dl>
 
@@ -416,30 +502,46 @@ Defaults to True.</p></li>
 
 
            </div>
+           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
-  </div>
+    <p>
+        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

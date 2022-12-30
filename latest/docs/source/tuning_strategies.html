@@ -1,39 +1,77 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
   <title>Tuning Strategies &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
-      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
-    <script src="../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          
+
+          
           </a>
+
+          
+            
+            
             <div class="version">
               <a href="/versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -41,7 +79,18 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
@@ -51,32 +100,73 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
 </ul>
 
+            
+          
         </div>
+        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">Intel® Neural Compressor</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active">Tuning Strategies</li>
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Tuning Strategies</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="../../_sources/docs/source/tuning_strategies.md.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <section id="tuning-strategies">
-<h1>Tuning Strategies<a class="headerlink" href="#tuning-strategies" title="Permalink to this heading"></a></h1>
+<h1>Tuning Strategies<a class="headerlink" href="#tuning-strategies" title="Permalink to this heading">¶</a></h1>
 <ol>
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#strategy-design">Strategy Design</a></p>
@@ -100,23 +190,23 @@
 <li><p><a class="reference external" href="#customize-a-new-tuning-strategy">Customize a New Tuning Strategy</a></p></li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
 <p>Intel® Neural Compressor aims to help users quickly deploy
 the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several strategies, including <code class="docutils literal notranslate"><span class="pre">O0</span></code>, <code class="docutils literal notranslate"><span class="pre">Basic</span></code>, <code class="docutils literal notranslate"><span class="pre">MSE</span></code>, <code class="docutils literal notranslate"><span class="pre">MSE_V2</span></code>, <code class="docutils literal notranslate"><span class="pre">HAWQ_V2</span></code>, <code class="docutils literal notranslate"><span class="pre">Bayesian</span></code>, <code class="docutils literal notranslate"><span class="pre">Exhaustive</span></code>, <code class="docutils literal notranslate"><span class="pre">Random</span></code>, <code class="docutils literal notranslate"><span class="pre">SigOpt</span></code>, <code class="docutils literal notranslate"><span class="pre">TPE</span></code>, etc are supported. By default, the <code class="docutils literal notranslate"><span class="pre">Basic</span></code> strategy is used for tuning.</p>
 </section>
 <section id="strategy-design">
-<h2>Strategy Design<a class="headerlink" href="#strategy-design" title="Permalink to this heading"></a></h2>
+<h2>Strategy Design<a class="headerlink" href="#strategy-design" title="Permalink to this heading">¶</a></h2>
 <p>Before tuning, the <code class="docutils literal notranslate"><span class="pre">tuning</span> <span class="pre">space</span></code> was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse logic and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
 below:</p>
 <p><img alt="Tuning Strategy" src="../../_images/strategy.png" /></p>
 <section id="tuning-space">
-<h3>Tuning Space<a class="headerlink" href="#tuning-space" title="Permalink to this heading"></a></h3>
+<h3>Tuning Space<a class="headerlink" href="#tuning-space" title="Permalink to this heading">¶</a></h3>
 <p>Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the <code class="docutils literal notranslate"><span class="pre">framework</span> <span class="pre">capability</span></code> to represent the methods that we have already supported. The <code class="docutils literal notranslate"><span class="pre">tuning</span> <span class="pre">space</span></code> includes all tuning items and their options. For example, the tuning items and options of the <code class="docutils literal notranslate"><span class="pre">Conv2D</span></code> (PyTorch) supported by Intel® Neural Compressor are as follows:
 <img alt="Conv2D_PyTorch_Cap" src="../../_images/Conv2D_PyTorch_Cap.png" /></p>
 <p>To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the <code class="docutils literal notranslate"><span class="pre">op_name_list</span></code> and <code class="docutils literal notranslate"><span class="pre">op_type_list</span></code> in <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code> (<code class="docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig</span></code>). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.</p>
 </section>
 <section id="exit-policy">
-<h3>Exit Policy<a class="headerlink" href="#exit-policy" title="Permalink to this heading"></a></h3>
+<h3>Exit Policy<a class="headerlink" href="#exit-policy" title="Permalink to this heading">¶</a></h3>
 <p>User can control the tuning process by setting the exit policy by specifying the <code class="docutils literal notranslate"><span class="pre">timeout</span></code>, and <code class="docutils literal notranslate"><span class="pre">max_trials</span></code> fields in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TuningCriterion</span>
 
@@ -130,7 +220,7 @@ below:</p>
 </div>
 </section>
 <section id="accuracy-criteria">
-<h3>Accuracy Criteria<a class="headerlink" href="#accuracy-criteria" title="Permalink to this heading"></a></h3>
+<h3>Accuracy Criteria<a class="headerlink" href="#accuracy-criteria" title="Permalink to this heading">¶</a></h3>
 <p>User can set the accuracy criteria by specifying the <code class="docutils literal notranslate"><span class="pre">higher_is_better</span></code>, <code class="docutils literal notranslate"><span class="pre">criterion</span></code>, and <code class="docutils literal notranslate"><span class="pre">tolerable_loss</span></code> fields in the <code class="docutils literal notranslate"><span class="pre">AccuracyCriterion</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">AccuracyCriterion</span>
 
@@ -143,20 +233,20 @@ below:</p>
 </div>
 </section>
 <section id="traverse">
-<h3>Traverse<a class="headerlink" href="#traverse" title="Permalink to this heading"></a></h3>
+<h3>Traverse<a class="headerlink" href="#traverse" title="Permalink to this heading">¶</a></h3>
 <p>Once the <code class="docutils literal notranslate"><span class="pre">tuning</span> <span class="pre">space</span></code> was constructed, user can specify the traverse logic by setting the <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> field with <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">1</span></code> in the <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code> (<code class="docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig</span></code>), or the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field with strategy name in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>. The priority of <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> is higher than <code class="docutils literal notranslate"><span class="pre">strategy</span></code>, which means the <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> should be set to <code class="docutils literal notranslate"><span class="pre">1</span></code> if user wants to specify the traverse logic by strategy name. The design and usage of each traverse logic is introduced in the following session.</p>
 </section>
 </section>
 <section id="traverse-logic">
-<h2>Traverse Logic<a class="headerlink" href="#traverse-logic" title="Permalink to this heading"></a></h2>
+<h2>Traverse Logic<a class="headerlink" href="#traverse-logic" title="Permalink to this heading">¶</a></h2>
 <section id="o0">
-<h3>O0<a class="headerlink" href="#o0" title="Permalink to this heading"></a></h3>
+<h3>O0<a class="headerlink" href="#o0" title="Permalink to this heading">¶</a></h3>
 <section id="design">
-<h4>Design<a class="headerlink" href="#design" title="Permalink to this heading"></a></h4>
+<h4>Design<a class="headerlink" href="#design" title="Permalink to this heading">¶</a></h4>
 <p>The quantization level <code class="docutils literal notranslate"><span class="pre">O0</span></code> is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(<code class="docutils literal notranslate"><span class="pre">fp32</span></code>) model, and then quantize the OPs to lower precision OP type wisely and OP wisely.</p>
 </section>
 <section id="usage">
-<h4>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h4>
+<h4>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h4>
 <p>To use <code class="docutils literal notranslate"><span class="pre">O0</span></code>, the <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> field should be set to <code class="docutils literal notranslate"><span class="pre">0</span></code> in <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code> (or <code class="docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig</span></code>).</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
 
@@ -173,9 +263,9 @@ below:</p>
 </section>
 </section>
 <section id="basic">
-<h2>Basic<a class="headerlink" href="#basic" title="Permalink to this heading"></a></h2>
+<h2>Basic<a class="headerlink" href="#basic" title="Permalink to this heading">¶</a></h2>
 <section id="id1">
-<h3>Design<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h3>
+<h3>Design<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">Basic</span></code> strategy is designed for quantizing most models. There are three stages executed by <code class="docutils literal notranslate"><span class="pre">Basic</span></code> strategy sequentially, and the tuning process ends once the condition meets the exit policy.</p>
 <ul>
 <li><p><strong>Stage I</strong>. OP Type Wise Tuning</p>
@@ -193,7 +283,7 @@ below:</p>
 </ul>
 </section>
 <section id="id2">
-<h3>Usage<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h3>
+<h3>Usage<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">Basic</span></code> is the default strategy. It can be used by default with nothing changed in the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field of <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>. Classical settings are shown below:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
 
@@ -206,9 +296,9 @@ below:</p>
 </div>
 </section>
 <section id="mse">
-<h3>MSE<a class="headerlink" href="#mse" title="Permalink to this heading"></a></h3>
+<h3>MSE<a class="headerlink" href="#mse" title="Permalink to this heading">¶</a></h3>
 <section id="id3">
-<h4>Design<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h4>
+<h4>Design<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">MSE</span></code> and <code class="docutils literal notranslate"><span class="pre">Basic</span></code> strategies share similar ideas. The primary difference
 between the two strategies is the way sorted op lists generated in stage II. The <code class="docutils literal notranslate"><span class="pre">MSE</span></code> strategy needs to get the tensors for each OP of raw FP32
 models and the quantized model based on the best model-wise tuning
@@ -217,7 +307,7 @@ OP, sorts those OPs according to the MSE value, and performs
 the op-wise fallback in this order.</p>
 </section>
 <section id="id4">
-<h4>Usage<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h4>
+<h4>Usage<a class="headerlink" href="#id4" title="Permalink to this heading">¶</a></h4>
 <p>The usage of <code class="docutils literal notranslate"><span class="pre">MSE</span></code> is similar to <code class="docutils literal notranslate"><span class="pre">Basic</span></code>. To use <code class="docutils literal notranslate"><span class="pre">MSE</span></code> strategy, the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field of the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code> should be specified with <code class="docutils literal notranslate"><span class="pre">mse</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
 
@@ -231,13 +321,13 @@ the op-wise fallback in this order.</p>
 </section>
 </section>
 <section id="mse-v2">
-<h3>MSE_V2<a class="headerlink" href="#mse-v2" title="Permalink to this heading"></a></h3>
+<h3>MSE_V2<a class="headerlink" href="#mse-v2" title="Permalink to this heading">¶</a></h3>
 <section id="id5">
-<h4>Design<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h4>
+<h4>Design<a class="headerlink" href="#id5" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">MSE_v2</span></code> is a strategy with a two stages fallback and revert fallback. In the fallback stage, it uses multi-batch data to score the op impact and then fallback the op with the highest score util found the quantized model meets accuracy criteria. In the revert fallback stage, it also scores the impact of fallback OPs in the previous stage and selects the op with the lowest score to revert the fallback until the quantized model not meets accuracy criteria.</p>
 </section>
 <section id="id6">
-<h4>Usage<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h4>
+<h4>Usage<a class="headerlink" href="#id6" title="Permalink to this heading">¶</a></h4>
 <p>To use the <code class="docutils literal notranslate"><span class="pre">MSE_V2</span></code> tuning strategy, the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code> should be specified with <code class="docutils literal notranslate"><span class="pre">mse_v2</span></code>. Also, the <code class="docutils literal notranslate"><span class="pre">confidence_batches</span></code> can be specified optionally inside the <code class="docutils literal notranslate"><span class="pre">strategy_kwargs</span></code> for the number of batches to score the op impact. Increasing <code class="docutils literal notranslate"><span class="pre">confidence_batches</span></code> will generally improve the accuracy of the scoring with more time spent in tuning process.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
 
@@ -252,13 +342,13 @@ the op-wise fallback in this order.</p>
 </section>
 </section>
 <section id="hawq-v2">
-<h3>HAWQ_V2<a class="headerlink" href="#hawq-v2" title="Permalink to this heading"></a></h3>
+<h3>HAWQ_V2<a class="headerlink" href="#hawq-v2" title="Permalink to this heading">¶</a></h3>
 <section id="id7">
-<h4>Design<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h4>
+<h4>Design<a class="headerlink" href="#id7" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">HAWQ_V2</span></code> implements the <a class="reference external" href="https://arxiv.org/abs/1911.03852">Hessian Aware trace-Weighted Quantization of Neural Networks</a>. We made a small change to it by using the hessian trace to score the op impact and then fallback the OPs according to the scoring result.</p>
 </section>
 <section id="id8">
-<h4>Usage<a class="headerlink" href="#id8" title="Permalink to this heading"></a></h4>
+<h4>Usage<a class="headerlink" href="#id8" title="Permalink to this heading">¶</a></h4>
 <p>To use the <code class="docutils literal notranslate"><span class="pre">HAWQ_V2</span></code> tuning strategy, the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code> should be specified with <code class="docutils literal notranslate"><span class="pre">hawq_v2</span></code>, and the loss function for calculating the hessian trace of model should be provided. The loss function should be set in the field of <code class="docutils literal notranslate"><span class="pre">hawq_v2_loss</span></code> in the <code class="docutils literal notranslate"><span class="pre">strategy_kwargs</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
 
@@ -276,9 +366,9 @@ the op-wise fallback in this order.</p>
 </section>
 </section>
 <section id="bayesian">
-<h3>Bayesian<a class="headerlink" href="#bayesian" title="Permalink to this heading"></a></h3>
+<h3>Bayesian<a class="headerlink" href="#bayesian" title="Permalink to this heading">¶</a></h3>
 <section id="id9">
-<h4>Design<a class="headerlink" href="#id9" title="Permalink to this heading"></a></h4>
+<h4>Design<a class="headerlink" href="#id9" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">Bayesian</span></code> optimization is a sequential design strategy for the global
 optimization of black-box functions. This strategy comes from the <a class="reference external" href="https://github.com/fmfn/BayesianOptimization">Bayesian
 optimization</a> package and
@@ -292,7 +382,7 @@ and better performance in a short time. We don’t add datatype as a tuning
 parameter into <code class="docutils literal notranslate"><span class="pre">Bayesian</span></code>.</p>
 </section>
 <section id="id10">
-<h4>Usage<a class="headerlink" href="#id10" title="Permalink to this heading"></a></h4>
+<h4>Usage<a class="headerlink" href="#id10" title="Permalink to this heading">¶</a></h4>
 <p>For the <code class="docutils literal notranslate"><span class="pre">Bayesian</span></code> strategy, it is recommended to set <code class="docutils literal notranslate"><span class="pre">timeout</span></code> or <code class="docutils literal notranslate"><span class="pre">max_trials</span></code> to a non-zero
 value as shown in below example, because the param space for <code class="docutils literal notranslate"><span class="pre">bayesian</span></code> can be very small and the accuracy goal might not be reached, which can make the tuning end never. Additionally, if the log level is set to <code class="docutils literal notranslate"><span class="pre">debug</span></code> by <code class="docutils literal notranslate"><span class="pre">LOGLEVEL=DEBUG</span></code> in the environment variable, the message <code class="docutils literal notranslate"><span class="pre">[DEBUG]</span> <span class="pre">Tuning</span> <span class="pre">config</span> <span class="pre">was</span> <span class="pre">evaluated,</span> <span class="pre">skip!</span></code> will print endlessly. If the <code class="docutils literal notranslate"><span class="pre">timeout</span></code> is changed from 0 to an integer, <code class="docutils literal notranslate"><span class="pre">Bayesian</span></code> ends after the timeout is reached.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
@@ -309,16 +399,16 @@ value as shown in below example, because the param space for <code class="docuti
 </section>
 </section>
 <section id="exhaustive">
-<h3>Exhaustive<a class="headerlink" href="#exhaustive" title="Permalink to this heading"></a></h3>
+<h3>Exhaustive<a class="headerlink" href="#exhaustive" title="Permalink to this heading">¶</a></h3>
 <section id="id11">
-<h4>Design<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h4>
+<h4>Design<a class="headerlink" href="#id11" title="Permalink to this heading">¶</a></h4>
 <p>The <code class="docutils literal notranslate"><span class="pre">Exhaustive</span></code> strategy is used to sequentially traverse all possible tuning
 configurations in a tuning space. From the perspective of the impact on
 performance, we currently only traverse all possible quantization tuning
 configs. Same reason as <code class="docutils literal notranslate"><span class="pre">Bayesian</span></code>, fallback datatypes are not included for now.</p>
 </section>
 <section id="id12">
-<h4>Usage<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h4>
+<h4>Usage<a class="headerlink" href="#id12" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">Exhaustive</span></code> usage is similar to <code class="docutils literal notranslate"><span class="pre">basic</span></code>, with <code class="docutils literal notranslate"><span class="pre">exhaustive</span></code> specified to <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
 
@@ -332,15 +422,15 @@ configs. Same reason as <code class="docutils literal notranslate"><span class="
 </section>
 </section>
 <section id="random">
-<h3>Random<a class="headerlink" href="#random" title="Permalink to this heading"></a></h3>
+<h3>Random<a class="headerlink" href="#random" title="Permalink to this heading">¶</a></h3>
 <section id="id13">
-<h4>Design<a class="headerlink" href="#id13" title="Permalink to this heading"></a></h4>
+<h4>Design<a class="headerlink" href="#id13" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">Random</span></code> strategy is used to randomly choose tuning configurations from the
 tuning space. As with the <code class="docutils literal notranslate"><span class="pre">Exhaustive</span></code> strategy, it also only considers quantization
 tuning configs to generate a better-performance quantized model.</p>
 </section>
 <section id="id14">
-<h4>Usage<a class="headerlink" href="#id14" title="Permalink to this heading"></a></h4>
+<h4>Usage<a class="headerlink" href="#id14" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">Random</span></code> usage is similar to <code class="docutils literal notranslate"><span class="pre">basic</span></code>, with <code class="docutils literal notranslate"><span class="pre">random</span></code> specified to <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
 
@@ -354,13 +444,13 @@ tuning configs to generate a better-performance quantized model.</p>
 </section>
 </section>
 <section id="sigopt">
-<h3>SigOpt<a class="headerlink" href="#sigopt" title="Permalink to this heading"></a></h3>
+<h3>SigOpt<a class="headerlink" href="#sigopt" title="Permalink to this heading">¶</a></h3>
 <section id="id15">
-<h4>Design<a class="headerlink" href="#id15" title="Permalink to this heading"></a></h4>
+<h4>Design<a class="headerlink" href="#id15" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">SigOpt</span></code> strategy is to use <a class="reference external" href="https://app.sigopt.com/docs/overview/optimization">SigOpt Optimization Loop</a> method to accelerate and visualize the traversal of the tuning configurations from the tuning space. The metrics add accuracy as a constraint and optimize for latency to improve performance. <a class="reference external" href="https://app.sigopt.com/">SigOpt Projects</a> can show the result of each tuning experiment.</p>
 </section>
 <section id="id16">
-<h4>Usage<a class="headerlink" href="#id16" title="Permalink to this heading"></a></h4>
+<h4>Usage<a class="headerlink" href="#id16" title="Permalink to this heading">¶</a></h4>
 <p>Compared to <code class="docutils literal notranslate"><span class="pre">Basic</span></code>, <code class="docutils literal notranslate"><span class="pre">sigopt_api_token</span></code> and <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code> are necessary for <code class="docutils literal notranslate"><span class="pre">SigOpt</span></code>.
 For details, <a class="reference internal" href="sigopt_strategy.html"><span class="doc">how to use sigopt strategy in neural_compressor</span></a> is available.</p>
 <p>Note that the <code class="docutils literal notranslate"><span class="pre">sigopt_api_token</span></code>, <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code>, and <code class="docutils literal notranslate"><span class="pre">sigopt_experiment_name</span></code> should be set inside the <code class="docutils literal notranslate"><span class="pre">strategy_kwargs</span></code>.</p>
@@ -381,9 +471,9 @@ For details, <a class="reference internal" href="sigopt_strategy.html"><span cla
 </section>
 </section>
 <section id="tpe">
-<h3>TPE<a class="headerlink" href="#tpe" title="Permalink to this heading"></a></h3>
+<h3>TPE<a class="headerlink" href="#tpe" title="Permalink to this heading">¶</a></h3>
 <section id="id17">
-<h4>Design<a class="headerlink" href="#id17" title="Permalink to this heading"></a></h4>
+<h4>Design<a class="headerlink" href="#id17" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">TPE</span></code> uses sequential model-based optimization methods (SMBOs). <strong>Sequential</strong> refers to running trials one after another and selecting a better
 <strong>hyperparameter</strong> to evaluate based on previous trials. A hyperparameter is
 a parameter whose value is set before the learning process begins; it
@@ -424,7 +514,7 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 </div></blockquote>
 </section>
 <section id="id18">
-<h4>Usage<a class="headerlink" href="#id18" title="Permalink to this heading"></a></h4>
+<h4>Usage<a class="headerlink" href="#id18" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">TPE</span></code> usage is similar to <code class="docutils literal notranslate"><span class="pre">basic</span></code> with <code class="docutils literal notranslate"><span class="pre">tpe</span></code> specified to <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
 
@@ -439,7 +529,7 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 </section>
 </section>
 <section id="customize-a-new-tuning-strategy">
-<h2>Customize a New Tuning Strategy<a class="headerlink" href="#customize-a-new-tuning-strategy" title="Permalink to this heading"></a></h2>
+<h2>Customize a New Tuning Strategy<a class="headerlink" href="#customize-a-new-tuning-strategy" title="Permalink to this heading">¶</a></h2>
 <p>Intel® Neural Compressor supports new strategy extension by implementing a sub-class of the <code class="docutils literal notranslate"><span class="pre">TuneStrategy</span></code> class in neural_compressor.strategy package and registering it by the <code class="docutils literal notranslate"><span class="pre">strategy_registry</span></code> decorator.</p>
 <p>For example, user can implement an <code class="docutils literal notranslate"><span class="pre">Abc</span></code> strategy like below:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@strategy_registry</span>
@@ -466,30 +556,46 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 
 
            </div>
+           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
-  </div>
+    <p>
+        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

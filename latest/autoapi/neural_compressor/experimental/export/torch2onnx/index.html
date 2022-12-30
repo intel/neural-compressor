@@ -1,39 +1,77 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
   <title>neural_compressor.experimental.export.torch2onnx &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
-      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
   <!--[if lt IE 9]>
     <script src="../../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
-        <script src="../../../../../_static/jquery.js"></script>
-        <script src="../../../../../_static/underscore.js"></script>
-        <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../../../_static/doctools.js"></script>
         <script src="../../../../../_static/sphinx_highlight.js"></script>
-    <script src="../../../../../_static/js/theme.js"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
+          
+
+          
             <a href="../../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          
+
+          
           </a>
+
+          
+            
+            
             <div class="version">
               <a href="/versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -41,7 +79,18 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/Welcome.html">Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
@@ -51,42 +100,79 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
 </ul>
 
+            
+          
         </div>
+        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../../../index.html">Intel® Neural Compressor</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../../../index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.torch2onnx</span></code></li>
+    
+      <li><a href="../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.torch2onnx</span></code></li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
+          
             <a href="../../../../../_sources/autoapi/neural_compressor/experimental/export/torch2onnx/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
+            
   <section id="module-neural_compressor.experimental.export.torch2onnx">
-<span id="neural-compressor-experimental-export-torch2onnx"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.export.torch2onnx" title="neural_compressor.experimental.export.torch2onnx"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.torch2onnx</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.export.torch2onnx" title="Permalink to this heading"></a></h1>
+<span id="neural-compressor-experimental-export-torch2onnx"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.export.torch2onnx" title="neural_compressor.experimental.export.torch2onnx"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.torch2onnx</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.export.torch2onnx" title="Permalink to this heading">¶</a></h1>
 <p>Helper functions to export model from PyTorch/TensorFlow to ONNX.</p>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.export.torch2onnx.update_weight_bias" title="neural_compressor.experimental.export.torch2onnx.update_weight_bias"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_weight_bias</span></code></a>(int8_model, fp32_onnx_path)</p></td>
 <td><p>Update wegiht and bias of FP32 ONNX model with QAT INT8 PyTorch model .</p></td>
@@ -134,10 +220,10 @@
 </table>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.update_weight_bias">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">update_weight_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_onnx_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.update_weight_bias" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">update_weight_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_onnx_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.update_weight_bias" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update wegiht and bias of FP32 ONNX model with QAT INT8 PyTorch model .</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>int8_model</strong> (<em>torch.nn.module</em>) – int8 model.</p></li>
 <li><p><strong>fp32_onnx_path</strong> (<em>str</em>) – path to fp32 onnx model.</p></li>
@@ -148,17 +234,17 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.set_data_type">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">set_data_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.set_data_type" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">set_data_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.set_data_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set data type of activation and weight with string dtype.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>dtype</strong> (<em>str</em>) – data type description.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>activation type.
 weight_type: weight type.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>activation_type</p>
 </dd>
 </dl>
@@ -166,19 +252,19 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.get_node_mapping">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">get_node_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_onnx_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.get_node_mapping" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">get_node_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_onnx_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.get_node_mapping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get PyTorch module and ONNX node mapping.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fp32_model</strong> (<em>torch.nn.Module</em>) – quantization configuration from PyTorch.</p></li>
 <li><p><strong>fp32_onnx_path</strong> (<em>str</em>) – path to fp32 onnx model.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>op mapping from PyTorch to ONNX.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>module_node_mapping</p>
 </dd>
 </dl>
@@ -186,19 +272,19 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.get_quantizable_onnx_ops">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">get_quantizable_onnx_ops</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_node_mapping</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.get_quantizable_onnx_ops" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">get_quantizable_onnx_ops</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_node_mapping</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.get_quantizable_onnx_ops" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get quantizable onnx ops.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>int8_model</strong> (<em>torch.nn.Module</em>) – PyTorch int8 model.</p></li>
 <li><p><strong>module_node_mapping</strong> (<em>dict</em>) – op mapping from PyTorch to ONNX.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>all onnx node that should be quantized.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>quantize_nodes</p>
 </dd>
 </dl>
@@ -206,20 +292,20 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.build_scale_mapping">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">build_scale_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_onnx_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_node_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int8_scale_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.build_scale_mapping" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">build_scale_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_onnx_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_node_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int8_scale_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.build_scale_mapping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build scale mapping.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fp32_onnx_path</strong> (<em>str</em>) – path to fp32 onnx model.</p></li>
 <li><p><strong>module_node_mapping</strong> (<em>dict</em>) – op mapping from PyTorch to ONNX.</p></li>
 <li><p><strong>int8_scale_info</strong> (<em>dict</em>) – int8 scale infomation.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>scale and zero_point dict.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>scale_zp_dict</p>
 </dd>
 </dl>
@@ -227,20 +313,20 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.set_scale_info">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">set_scale_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_zp_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.set_scale_info" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">set_scale_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_zp_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.set_scale_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set scale to ONNX model.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>int8_onnx_path</strong> (<em>str</em>) – path to onnx file.</p></li>
 <li><p><strong>scale_zp_dict</strong> (<em>dict</em>) – scale zero_point dict.</p></li>
 <li><p><strong>activation_type</strong> – activation type.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>int8 onnx model object.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int8_onnx_model</p>
 </dd>
 </dl>
@@ -248,10 +334,10 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.recalculate_bias">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">recalculate_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_zp_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.recalculate_bias" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">recalculate_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_zp_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.recalculate_bias" title="Permalink to this definition">¶</a></dt>
 <dd><p>Recalculate bias.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>int8_onnx_model</strong> (<em>ModelProto</em>) – onnx int8 model to process.</p></li>
 <li><p><strong>scale_zp_dict</strong> (<em>dict</em>) – scale zero_point dict.</p></li>
@@ -259,10 +345,10 @@ weight_type: weight type.</p>
 <li><p><strong>quant_format</strong> (<a class="reference internal" href="../../../adaptor/ox_utils/util/index.html#neural_compressor.adaptor.ox_utils.util.QuantFormat" title="neural_compressor.adaptor.ox_utils.util.QuantFormat"><em>QuantFormat</em></a>) – quantization format.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>processed onnx int8 model.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int8_onnx_model</p>
 </dd>
 </dl>
@@ -270,19 +356,19 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.remove_nodes_by_name">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">remove_nodes_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.remove_nodes_by_name" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">remove_nodes_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.remove_nodes_by_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove nodes from model by names.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>int8_onnx_model</strong> (<em>ModelProto</em>) – onnx int8 model to process.</p></li>
 <li><p><strong>node_names</strong> (<em>list</em>) – names of nodes to remove.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>processed onnx int8 model.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int8_onnx_model</p>
 </dd>
 </dl>
@@ -290,10 +376,10 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.sub_graph_with_int32_bias">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">sub_graph_with_int32_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.sub_graph_with_int32_bias" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">sub_graph_with_int32_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.sub_graph_with_int32_bias" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a sub graph with int32 bias.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>int8_onnx_model</strong> (<em>ModelProto</em>) – onnx int8 model to process.</p></li>
 <li><p><strong>node</strong> (<em>NodeProto</em>) – MatMul node belonging to nn.quantized.Linear module.</p></li>
@@ -303,10 +389,10 @@ weight_type: weight type.</p>
 <li><p><strong>output_name</strong> (<em>_type_</em>) – output name of the sub graph.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>processed onnx int8 model.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int8_onnx_model</p>
 </dd>
 </dl>
@@ -314,20 +400,20 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.qdq_fp32_bias">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">qdq_fp32_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.qdq_fp32_bias" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">qdq_fp32_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.qdq_fp32_bias" title="Permalink to this definition">¶</a></dt>
 <dd><p>Excute post-process on int8 onnx model with recipe ‘QDQ_OP_FP32_BIAS’.</p>
 <p>Insert QDQ before quantizable op and using fp32 bias.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>int8_onnx_model</strong> (<em>ModelProto</em>) – onnx int8 model to process.</p></li>
 <li><p><strong>quant_format</strong> (<a class="reference internal" href="../../../adaptor/ox_utils/util/index.html#neural_compressor.adaptor.ox_utils.util.QuantFormat" title="neural_compressor.adaptor.ox_utils.util.QuantFormat"><em>QuantFormat</em></a>) – quantization format.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>processed onnx int8 model.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int8_onnx_model</p>
 </dd>
 </dl>
@@ -335,21 +421,21 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.qdq_int32_bias">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">qdq_int32_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.qdq_int32_bias" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">qdq_int32_bias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.qdq_int32_bias" title="Permalink to this definition">¶</a></dt>
 <dd><p>Excute post-process on int8 onnx model with recipe ‘QDQ_OP_INT32_BIAS’.</p>
 <p>Insert QDQ before quantizable op and using int32 bias.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>int8_onnx_model</strong> (<em>ModelProto</em>) – onnx int8 model to process.</p></li>
 <li><p><strong>quantize_nodes</strong> (<em>list</em>) – quantize nodes list.</p></li>
 <li><p><strong>quant_format</strong> (<a class="reference internal" href="../../../adaptor/ox_utils/util/index.html#neural_compressor.adaptor.ox_utils.util.QuantFormat" title="neural_compressor.adaptor.ox_utils.util.QuantFormat"><em>QuantFormat</em></a>) – quantization format.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>processed onnx int8 model.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int8_onnx_model</p>
 </dd>
 </dl>
@@ -357,21 +443,21 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.qdq_fp32_bias_qdq">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">qdq_fp32_bias_qdq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.qdq_fp32_bias_qdq" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">qdq_fp32_bias_qdq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_onnx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.qdq_fp32_bias_qdq" title="Permalink to this definition">¶</a></dt>
 <dd><p>Excute post-process on onnx int8 model with recipe ‘QDQ_OP_FP32_BIAS_QDQ’.</p>
 <p>Insert QDQ before and after quantizable op and using fp32 bias.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>int8_onnx_model</strong> (<em>ModelProto</em>) – onnx int8 model to process.</p></li>
 <li><p><strong>quantize_nodes</strong> (<em>list</em>) – quantize nodes list.</p></li>
 <li><p><strong>quant_format</strong> (<a class="reference internal" href="../../../adaptor/ox_utils/util/index.html#neural_compressor.adaptor.ox_utils.util.QuantFormat" title="neural_compressor.adaptor.ox_utils.util.QuantFormat"><em>QuantFormat</em></a>) – quantization format.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>processed onnx int8 model.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int8_onnx_model</p>
 </dd>
 </dl>
@@ -379,10 +465,10 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.torch_to_fp32_onnx">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">torch_to_fp32_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.torch_to_fp32_onnx" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">torch_to_fp32_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.torch_to_fp32_onnx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export FP32 PyTorch model into FP32 ONNX model.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fp32_model</strong> (<em>torch.nn.module</em>) – fp32 model.</p></li>
 <li><p><strong>int8_model</strong> (<em>torch.nn.module</em>) – int8 model.</p></li>
@@ -402,10 +488,10 @@ weight_type: weight type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.experimental.export.torch2onnx.torch_to_int8_onnx">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">torch_to_int8_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int8_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'U8S8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recipe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'QDQ_OP_FP32_BIAS'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.torch_to_int8_onnx" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.torch2onnx.</span></span><span class="sig-name descname"><span class="pre">torch_to_int8_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int8_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'U8S8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recipe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'QDQ_OP_FP32_BIAS'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.torch2onnx.torch_to_int8_onnx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export INT8 PyTorch model into INT8 ONNX model.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fp32_model</strong> (<em>torch.nn.module</em>) – fp32 model.</p></li>
 <li><p><strong>int8_model</strong> (<em>torch.nn.module</em>) – int8 model.</p></li>
@@ -435,30 +521,46 @@ Defaults to ‘QDQ_OP_FP32_BIAS’.</p></li>
 
 
            </div>
+           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
-  </div>
+    <p>
+        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>
