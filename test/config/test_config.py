@@ -112,7 +112,7 @@ class TestConf(unittest.TestCase):
 
     def test_version(self):
         test = '''
-        version: 2.0
+        version: 1.0
 
         model:
           name: version_yaml 
@@ -128,10 +128,10 @@ class TestConf(unittest.TestCase):
         '''
         helper(test)
         config = conf.Conf('fake_conf.yaml')
-        self.assertEqual(config.usr_cfg.version, 1.0)
+        self.assertEqual(config.usr_cfg.version, 2.0)
 
         test = '''
-        version: 1.0
+        version: 2.0
 
         model:
           name: version_yaml 
@@ -139,7 +139,7 @@ class TestConf(unittest.TestCase):
         '''
         helper(test)
         config = conf.Conf('fake_conf.yaml')
-        self.assertEqual(config.usr_cfg.version, 1.0)
+        self.assertEqual(config.usr_cfg.version, 2.0)
 
     def test_calibration(self):
         test = '''

@@ -4,8 +4,9 @@
 This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task. 
 
 ### Environment
-onnx: 1.9.0
-onnxruntime: 1.10.0
+onnx: 1.12.0  
+onnxruntime: 1.13.1
+> Validated framework versions can be found in main readme.
 
 ### Prepare dataset
 Download pretrained bert model. We will refer to `vocab.txt` file.
