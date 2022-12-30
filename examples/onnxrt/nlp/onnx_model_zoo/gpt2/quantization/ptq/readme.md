@@ -4,9 +4,10 @@
 This example load a language translation model and confirm its accuracy and speed based on [WikiText](https://blog.einstein.ai/the-wikitext-long-term-dependency-language-modeling-dataset/) dataset. 
 
 ### Environment
-onnx: 1.7.0
-onnxruntime: 1.8.0
+onnx: 1.12.0  
+onnxruntime: 1.13.1
 transformers: 3.2.0
+> Validated framework versions can be found in main readme.
 
 ### Prepare dataset
 Please download [WikiText-2 dataset](https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-raw-v1.zip).
@@ -18,14 +19,18 @@ Use `export.py` script for ONNX model conversion.
 python export.py
 ```
 
-### Evaluating
-To evaluate the model, run `gpt2.py` with the path to the model:
+### Quantization
 
 ```bash
-bash run_tuning.sh --topology=gpt2_lm_wikitext2 \ 
-                   --data_path=/path/to/wikitext-2-raw/ \ # NOTE: path must end with /
+bash run_tuning.sh --dataset_location=/path/to/wikitext-2-raw/ \ # NOTE: path must end with /
                    --input_model=path/to/model \ # model path as *.onnx
                    --output_model=path/to/model_tune
 ```
 
-
+### Benchmark
+```bash
+bash run_benchmark.sh --dataset_location=/path/to/wikitext-2-raw/ \ # NOTE: path must end with /
+                      --input_model=path/to/model \ # model path as *.onnx
+                      --batch_size=batch_size \
+                      --mode=performance # or accuracy
+```

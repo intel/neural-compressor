@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize MatMul/BatchMatMul/BatchMatMulV2."""
+
 import numpy as np
 
 from tensorflow.core.framework import graph_pb2
@@ -25,9 +27,11 @@ from ..quantize_graph_base import QuantizeNodeBase
 from tensorflow.python.framework import tensor_util
 
 class FuseNodeStartWithMatmul(QuantizeNodeBase):
+    """Quantize MatMul/BatchMatMul/BatchMatMulV2 and apply the fusion."""
     exclude_matmul_nodes = []
 
     def __init__(self, **kwargs):
+        """Initilization."""
         super().__init__(**kwargs)
 
         self.sorted_patterns = sorted(self.patterns,
@@ -72,21 +76,23 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
 
     def apply_matmul_biasadd_relu_fusion(self, match_node_name):
-        """apply dequantize + matmul + biasadd + activation + quantizev2 fusion"""
-        # Dequantize + MatMul + BiasAdd + Relu + QuantizeV2
-        # Dequantize + MatMul + Relu + QuantizeV2
-        # Dequantize + MatMul + BiasAdd + Relu6 + QuantizeV2
-        # Dequantize + MatMul + Relu6 + QuantizeV2
-        # Dequantize + MatMul + BiasAdd + LeakyRelu + QuantizeV2
-        # Dequantize + MatMul + LeakyRelu + QuantizeV2
-        # Dequantize + MatMul + BiasAdd + Gelu + QuantizeV2
-        # Dequantize + MatMul + Gelu + QuantizeV2
-        # Dequantize + MatMul + BiasAdd + Elu + QuantizeV2
-        # Dequantize + MatMul + Elu + QuantizeV2
-        # Dequantize + MatMul + BiasAdd + Tanh + QuantizeV2
-        # Dequantize + MatMul + Tanh + QuantizeV2
-        # Dequantize + MatMul + BiasAdd + Sigmoid + QuantizeV2
-        # Dequantize + MatMul + Sigmoid + QuantizeV2
+        """Apply dequantize + matmul + biasadd + activation + quantizev2 fusion.
+
+        Dequantize + MatMul + BiasAdd + Relu + QuantizeV2
+        Dequantize + MatMul + Relu + QuantizeV2
+        Dequantize + MatMul + BiasAdd + Relu6 + QuantizeV2
+        Dequantize + MatMul + Relu6 + QuantizeV2
+        Dequantize + MatMul + BiasAdd + LeakyRelu + QuantizeV2
+        Dequantize + MatMul + LeakyRelu + QuantizeV2
+        Dequantize + MatMul + BiasAdd + Gelu + QuantizeV2
+        Dequantize + MatMul + Gelu + QuantizeV2
+        Dequantize + MatMul + BiasAdd + Elu + QuantizeV2
+        Dequantize + MatMul + Elu + QuantizeV2
+        Dequantize + MatMul + BiasAdd + Tanh + QuantizeV2
+        Dequantize + MatMul + Tanh + QuantizeV2
+        Dequantize + MatMul + BiasAdd + Sigmoid + QuantizeV2
+        Dequantize + MatMul + Sigmoid + QuantizeV2
+        """
         matched_node = self.node_name_mapping[match_node_name[1]]
         control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
 
@@ -300,13 +306,15 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         return match_node_name
 
     def apply_matmul_biasadd_fusion(self, match_node_name):
-        """apply dequantize + matmul + biasadd + quantizev2 fusion"""
-        # Dequantize + MatMul + QuantizeV2
-        # Dequantize + MatMul + BiasAdd + QuantizeV2
-        # Dequantize + MatMul + Add + QuantizeV2
-        # Dequantize + MatMul + BiasAdd + Add + QuantizeV2
-        # Dequantize + MatMul + AddV2 + QuantizeV2
-        # Dequantize + MatMul + BiasAdd + AddV2 + QuantizeV2
+        """Apply dequantize + matmul + biasadd + quantizev2 fusion.
+
+        Dequantize + MatMul + QuantizeV2
+        Dequantize + MatMul + BiasAdd + QuantizeV2
+        Dequantize + MatMul + Add + QuantizeV2
+        Dequantize + MatMul + BiasAdd + Add + QuantizeV2
+        Dequantize + MatMul + AddV2 + QuantizeV2
+        Dequantize + MatMul + BiasAdd + AddV2 + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         control_inputs, normal_inputs = self._get_node_input(
@@ -545,8 +553,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         return match_node_name
 
     def apply_batchmatmulv2_fusion(self, match_node_name):  # pragma: no cover
-        """apply dequantize + batchmatmul/batchmatmulv2 + quantizev2 fusion"""
-        # Dequantize + BatchMatMulV2 + QuantizeV2
+        """Apply dequantize + batchmatmul/batchmatmulv2 + quantizev2 fusion.
+
+        Dequantize + BatchMatMulV2 + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         control_inputs, normal_inputs = self._get_node_input(
@@ -675,12 +685,14 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         return match_node_name
 
     def apply_batchmatmulv2_mul_add_fusion(self, match_node_name): # pragma: no cover
-        """apply dequantize + batchmatmul/batchmatmulv2 + mul + add + quantizev2 fusion"""
-        # Dequantize + BatchMatMulV2 + Mul + QuantizeV2
-        # Dequantize + BatchMatMulV2 + Add + QuantizeV2
-        # Dequantize + BatchMatMulV2 + AddV2 + QuantizeV2
-        # Dequantize + BatchMatMulV2 + Mul + Add + QuantizeV2
-        # Dequantize + BatchMatMulV2 + Mul + AddV2 + QuantizeV2
+        """Apply dequantize + batchmatmul/batchmatmulv2 + mul + add + quantizev2 fusion.
+
+        Dequantize + BatchMatMulV2 + Mul + QuantizeV2
+        Dequantize + BatchMatMulV2 + Add + QuantizeV2
+        Dequantize + BatchMatMulV2 + AddV2 + QuantizeV2
+        Dequantize + BatchMatMulV2 + Mul + Add + QuantizeV2
+        Dequantize + BatchMatMulV2 + Mul + AddV2 + QuantizeV2
+        """
         skip_node_name = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
         # oneDNN limitation: add tensor ndim must be 4
@@ -867,11 +879,13 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         return match_node_name
 
     def get_longest_fuse(self):
+        """Get the longest fusion pattern."""
         self._get_op_list()
         matched_rule, matched_node_name = self._is_match_matmul(self.sorted_patterns)
         return matched_rule, matched_node_name
 
     def apply_the_transform(self):
+        """Quantize MatMul/BatchMatMul/BatchMatMulV2 and apply the fusion pattern."""
         self._get_op_list()
         matched_rule, matched_node_name = self._is_match_matmul(self.sorted_patterns, True)
         if matched_node_name:
@@ -962,12 +976,6 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                         if cur_node.attr["transpose_a"].b is True:
                             self.exclude_matmul_nodes.append(cur_node.name)
                             continue
-
-                        for i in self.node_name_mapping:
-                            if weight_node.input and not weight_node.input[0].startswith('^') \
-                               and weight_node.name in self.node_name_mapping[i].output:
-                                self.exclude_matmul_nodes.append(cur_node.name)
-                                continue
 
                 for sub_rule in patterns:
                     if sub_rule[0] != "Dequantize":

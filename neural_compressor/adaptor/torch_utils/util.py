@@ -14,21 +14,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Util Class and Functions."""
 import copy
 import re
 import numpy as np
 from collections import UserDict
+from packaging.version import Version
+from ...utils import logger
 from ...utils.utility import LazyImport, CpuInfo
 
+tqdm = LazyImport("tqdm")
 torch = LazyImport("torch")
 
 def get_embedding_contiguous(model):
-    """This is a helper function for nn.Embedding,
-        and it will get input contiguous.
+    """This is a helper function for nn.Embedding, and it will get input contiguous.
 
     Args:
-        model (object): input model
+        model (object): the input model
 
     Returns:
         None
@@ -44,7 +46,135 @@ def get_embedding_contiguous(model):
             child.register_forward_pre_hook(contiguous_hook)
 
 
+def is_fused_module(module):
+    """This is a helper function for `_propagate_qconfig_helper` to detect if this module is fused.
+
+    Args:
+        module (object): the input module
+
+    Returns:
+        (bool): is fused or not
+    """
+    op_type = str(type(module))
+    if 'fused' in op_type:
+        return True
+    else:
+        return False
+
+
+def _set_input_scale_hook(model, op_cfgs):
+    """Insert hooks to observer input scale and zeropoint.
+
+    Args:
+        model (object): the input model
+        op_cfgs (dict): dictionary of quantization configure for each op
+
+    Returns:
+        hook_list (list): the input observer hooks
+    """
+    def input_scale_hook(module, input):
+        module.input_observer = module.qconfig.activation()
+        module.input_observer(input[0])
+        return input
+
+    def output_scale_hook(module, input, output):
+        module.output_observer = module.qconfig.activation()
+        module.output_observer(output)
+        return output
+
+    def ConvReLU2d_scale_hook(module, input):
+        module.input_observer = module.qconfig.activation()
+        module.input_observer(input[0])
+        output = module._conv_forward(input[0], module.weight_fake_quant(module.weight), module.bias)
+        module.output_observer = module.qconfig.activation()
+        module.output_observer(output)
+        return input
+
+    def LinearReLU_scale_hook(module, input):
+        import torch.nn.functional as F
+        module.input_observer = module.qconfig.activation()
+        module.input_observer(input[0])
+        output = F.linear(input[0], module.weight_fake_quant(module.weight), module.bias)
+        module.output_observer = module.qconfig.activation()
+        module.output_observer(output)
+        return input
+
+    hook_list = []
+    for name, module in model.named_modules():
+        if 'Conv' in str(module.__class__.__name__) or \
+          'Linear' in str(module.__class__.__name__):
+            if not hasattr(module, 'qconfig') or not module.qconfig:
+                continue
+            from torch.nn.intrinsic.qat import ConvBn2d, ConvReLU2d, ConvBnReLU2d, LinearReLU
+            if type(module) in [ConvBn2d, ConvBnReLU2d]:
+                handle_in = module.register_forward_pre_hook(input_scale_hook)
+                # module[0] == torch.nn.BatchNorm2d
+                module[0].qconfig = module.qconfig
+                handle_out = module[0].register_forward_hook(output_scale_hook)
+                hook_list.extend([handle_in, handle_out])
+            elif type(module) in [ConvReLU2d]:
+                handle_in_out = module.register_forward_pre_hook(ConvReLU2d_scale_hook)
+                hook_list.extend([handle_in_out])
+            elif type(module) in [LinearReLU]:
+                handle_in_out = module.register_forward_pre_hook(LinearReLU_scale_hook)
+                hook_list.extend([handle_in_out])
+            else:
+                if is_fused_module(module):
+                    continue
+                handle_in = module.register_forward_pre_hook(input_scale_hook)
+                handle_out = module.register_forward_hook(output_scale_hook)
+                hook_list.extend([handle_in, handle_out])
+    return hook_list
+
+
+def _get_input_scale(model, hook_list):
+    """Fetch input scale and zeropoint from observer.
+
+    Args:
+        model (object): the input model
+        hook_list (list): the input observer hooks
+
+    Returns:
+        input_scale_info (dict): the input scale and zero_point of each modules
+    """
+    scale_info = {}
+    for name, module in model.named_modules():
+        from torch.nn.intrinsic.qat import ConvBn2d, ConvBnReLU2d
+        if type(module) in [ConvBn2d, ConvBnReLU2d]:
+            if hasattr(module, "input_observer") and hasattr(module[0], "output_observer"):
+                scale_in, zero_point_in = module.input_observer.calculate_qparams()
+                scale_out, zero_point_out = module[0].output_observer.calculate_qparams()
+                scale_info[name] = {
+                    'input_scale': float(scale_in),
+                    'input_zeropoint': int(zero_point_in),
+                    'output_scale': float(scale_out),
+                    'output_zeropoint': int(zero_point_out)
+                }
+                del module.input_observer, module[0].output_observer
+        elif hasattr(module, "input_observer") and hasattr(module, "output_observer"):
+            scale_in, zero_point_in = module.input_observer.calculate_qparams()
+            scale_out, zero_point_out = module.output_observer.calculate_qparams()
+            scale_info[name] = {
+                'input_scale': float(scale_in),
+                'input_zeropoint': int(zero_point_in),
+                'output_scale': float(scale_out),
+                'output_zeropoint': int(zero_point_out)
+            }
+            del module.input_observer, module.output_observer
+    for h in hook_list:
+        h.remove()
+    return scale_info
+
+
 def collate_torch_preds(results):
+    """Fetch collated results.
+
+    Args:
+        result (list): input result
+
+    Returns:
+        collate_results (list): collated results
+    """
     batch = results[0]
     if isinstance(batch, list):
         results = zip(*results)
@@ -65,6 +195,14 @@ def collate_torch_preds(results):
 
 
 def input2tuple(input):
+    """This is a helper function to converting a inputting dict values or a list to a tuple.
+
+    Args:
+        input (list or dict).
+
+    Returns:
+        A tuple.
+    """
     if isinstance(input, dict) or isinstance(input, UserDict):
         output = tuple(input.values())
     elif isinstance(input, list) or isinstance(input, tuple):
@@ -75,11 +213,11 @@ def input2tuple(input):
 
 
 def append_attr(fx_model, model):
-    """a helper method to append attributes for the symbolic traced model.
+    """This is a helper method to append attributes for the symbolic traced model.
 
     Args:
-        fx_model(torch.fx.GraphModule): The symbolic traced model.
-        model(torch.nn.Module): The original model.
+        fx_model (torch.fx.GraphModule): The symbolic traced model.
+        model (torch.nn.Module): The original model.
 
     Returns:
         fx_model (dir): The symbolic traced model with additional attributes.
@@ -106,6 +244,15 @@ def append_attr(fx_model, model):
 
 
 def generate_activation_observer(scheme, algorithm): # pragma: no cover
+    """This is a helper method to generate an activation observer.
+
+    Args:
+        scheme (str): Quantization scheme to be used.
+        algorithm (str): What algorithm for computing the quantization parameters based on.
+
+    Returns:
+        An observer.
+    """
     kl_activation_observer = {
                     'name': 'HistogramObserver', 
                     'bins': 2048,
@@ -143,6 +290,17 @@ def generate_activation_observer(scheme, algorithm): # pragma: no cover
         return minmax_activation_observer
 
 def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name): # pragma: no cover
+    """Check configs and quantization configs.
+
+    Args:
+        tune_cfg (dict): dictionary of quantization configuration.
+        cfgs (dict): the input configs.
+        op_infos_from_cfgs (dict): op infos from configs.
+        output_tensor_ids_op_name (dict): dictionary of output tensor op names.
+
+    Returns:
+        cfgs (dict).
+    """
     for op_name in tune_cfg:
         inc_op_cfg = tune_cfg[op_name]
         for i, name in enumerate(op_name[0]):
@@ -189,6 +347,18 @@ def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
     return cfgs
 
 def paser_cfgs(cfgs): # pragma: no cover
+    """Parse configs.
+
+    Args:
+        cfgs (dict): the input configs.
+        
+
+    Returns:
+        ops_name (list): list of op names.
+        tune_cfg (dict): dictionary of quantization configuration.
+        op_infos_from_cfgs (dict): op infos from configs.
+        output_tensor_ids_op_name (dict): dictionary of output tensor op names.
+    """
     ops_name = []
     layer_output_infos_ids = []
     op_infos_from_cfgs = {}
@@ -237,7 +407,16 @@ def paser_cfgs(cfgs): # pragma: no cover
     return ops_name, op_infos_from_cfgs, input_tensor_ids_op_name, output_tensor_ids_op_name
 
 def get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids_op_name): # pragma: no cover
-    # combine fuse ops as one op.
+    """Get quantizable ops from configs, combine fused ops as one op.
+
+    Args:
+        ops_name (list): list of op names.
+        op_infos_from_cfgs (dict): op infos from configs.
+        input_tensor_ids_op_name (dict): dictionary of input tensor op names.
+
+    Returns:
+        cfgs (dict).
+    """
     quantizable_ops = []
     seen_ops = []
     for name in ops_name:
@@ -290,8 +469,14 @@ def get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids
     return quantizable_ops
 
 def auto_copy(module):  # pragma: no cover
-    # module: IPEX prepared model
-    # return fp32 model
+    """Get an IPEX prepared model and return a fp32 model.
+
+    Args:
+        module (object): IPEX prepared model.
+
+    Returns:
+        fp32 model.
+    """
     from intel_extension_for_pytorch.quantization._quantization_state import AutoQuantizationStateModuleDict
     def _nn_sequential_patched_forward(cls, x):
         for module in cls:
@@ -371,3 +556,338 @@ def auto_copy(module):  # pragma: no cover
                 torch.nn.Sequential.forward = orig_nn_sequential_forward  # type: ignore[assignment]
     new_module.__class__ = CopyDispatchModule
     return new_module
+
+def fetch_module(model, op_name):
+    """Get module with a given op name.
+
+    Args:
+        model (object): the input model.
+        op_name (str): name of op.
+
+    Returns:
+        module (object).
+    """
+    module = model
+    name_list = op_name.split('.')
+    for name in name_list:
+        if hasattr(module, name):
+            module = getattr(module, name)
+        else:
+            module = module
+    return module
+
+def set_module(model, op_name, new_module):
+    """Set module with a given op name.
+
+    Args:
+        model (object): the input model.
+        op_name (str): name of op.
+        new_module (object): the input model.
+
+    Returns:
+        module (object).
+    """
+    module = model
+    name_list = op_name.split('.')
+    for name in name_list[:-1]:
+        if hasattr(module, name):
+            module = getattr(module, name)
+        else:
+            module = module
+    setattr(module, name_list[-1], new_module)
+    return module
+
+def simple_inference(model, input):
+    """Record model output tensor.
+
+    Args:
+        model (object): the input model.
+        input (object).
+
+    Returns:
+        output (object).
+    """
+    with torch.no_grad():
+        if type(input) is dict:
+            output = model(**input)
+        elif type(input) is tuple or type(input) is list:
+            try:
+                output = model(*input)
+            except:
+                output = model(input)
+        else:
+            output = model(input)
+    return output
+
+def get_example_input(dataloader, i=1):
+    """Get the example input.
+
+    Args:
+        dataloader (object): calibration dataset.
+
+    Returns:
+        example_inp (object).
+    """
+    iter = 0
+    try:
+        for example_inp, label in dataloader:
+            if iter == i:
+                break
+            else:
+                iter += 1
+    except:
+        for example_inp in dataloader:
+            if iter == i:
+                break
+            else:
+                iter += 1
+    return example_inp
+
+
+def get_fallback_order(adaptor, fp32_model, dataloader, tune_cfg, 
+                       confidence_batches, fallback=False, requantize_cfgs=None):
+    """Get the fall back order for strategy.
+
+    Args:
+        fp32_model (object): the input model.
+        dataloader(torch.utils.data.DataLoader): The calibration dataloader.
+        tune_cfg (dict): dictionary of quantization configuration.
+        confidence_batches (int): number of confidence batches.
+        fallback (bool): if the order is fallback.
+
+    Returns:
+        ordered_ops (dict/list): The fallback order for strategy.
+    """
+    fp32_model.eval()
+    order_dict = {}
+    for i in range(0, confidence_batches):
+        example_input = get_example_input(dataloader, i)
+        if fallback:
+            ordered_ops = get_mse_order_per_fp32(adaptor, fp32_model, example_input, tune_cfg)
+            for i, name in enumerate(ordered_ops):
+                order_dict[name] = order_dict.get(name, 0) + len(order_dict) - i
+            ordered_ops = sorted(order_dict, key=lambda k: order_dict[k], reverse=True)
+        else:
+            ordered_ops = get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg)
+            for i, name in enumerate(ordered_ops):
+                order_dict[name] = order_dict.get(name, 0) + len(order_dict) - i
+    return ordered_ops
+
+op_cfg_mapping = {}
+def get_mse_order_per_fp32(adaptor, model, example_inp, tune_cfg):
+    """This is a helper method to check the mse influence to last module after QDQ(quant/dequant).
+
+    Args:
+        model (torch.fx.GraphModule/torch.nn.Module): A torch model.
+        example_inp (object): example inputs.
+        tune_cfg (dict): dictionary of quantization configuration.
+
+    Returns:
+        fallback_order (dict/list): The fallback order for strategy.
+    """
+    inner_output = None
+    def output_hook(self, input, output):
+        nonlocal inner_output
+        inner_output = output
+        return output
+
+    op_type_dict = {}
+    for k, v in tune_cfg['op'].keys():
+        op_type_dict[k] = v
+
+    from ..pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs, PyTorch_FXAdaptor
+    op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg["approach"])
+    # insert hook to get output tesnor from last module
+    last_module_name = list(op_cfgs.keys())[-1]
+    module = fetch_module(model, last_module_name) # get last module
+    module.register_forward_hook(output_hook)
+    # record fp32 model output tensor at first
+    output_fp32 = simple_inference(model, example_inp)
+    inner_output_fp32 = inner_output
+
+    fx_op_cfgs = {}
+    fallback_order = {}
+    logger.info('Evaluate the sensitivity for each int8 operation')
+    for op_name, qconfig in tqdm(op_cfgs.items()):
+        global op_cfg_mapping
+        if op_name not in op_cfg_mapping:
+            op_cfg_mapping[op_name] = qconfig
+        tmp_model = copy.deepcopy(model)
+        if not qconfig:
+            continue
+        op_cfgs[op_name] = None
+        fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg["approach"])
+        op_cfgs[op_name] = qconfig
+        from torch.quantization.quantize_fx import prepare_fx,convert_fx
+        # do quantization
+        if adaptor.sub_module_list is None:
+            if adaptor.version.release >= Version("1.13.0").release:  # pragma: no cover
+                tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inp)
+            else:
+                tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
+        else:
+            PyTorch_FXAdaptor.prepare_sub_graph(adaptor.sub_module_list, fx_op_cfgs, \
+                                                tmp_model, prefix='')
+        simple_inference(tmp_model, example_inp)
+        if adaptor.sub_module_list is None:
+            tmp_model = convert_fx(tmp_model)
+        else:
+            PyTorch_FXAdaptor.convert_sub_graph(adaptor.sub_module_list, \
+                                                tmp_model, prefix='')
+
+        # insert hook to get output tesnor from last module
+        module = fetch_module(tmp_model, list(op_cfgs.keys())[-1]) # get last module
+        module.register_forward_hook(output_hook)
+        output_qdq = simple_inference(tmp_model, example_inp)
+        inner_output_int8 = inner_output.dequantize() if \
+          inner_output.dtype == torch.quint8 else inner_output
+        mse_val = (inner_output_fp32 - inner_output_int8).pow(2).sum()
+        fallback_order[(op_name, op_type_dict[op_name])] = mse_val
+
+    ordered_ops = sorted(fallback_order.keys(), key=lambda key: fallback_order[key], \
+                                    reverse=False)
+    min_mse, max_mse = fallback_order[ordered_ops[0]], fallback_order[ordered_ops[-1]]
+
+    if min_mse < 0.8 * max_mse:
+        return ordered_ops
+
+
+    double_check_list = []
+    for op_name in ordered_ops:
+        if min_mse <= fallback_order[op_name] <= (max_mse - min_mse) * 0.1 + min_mse:
+            double_check_list.append(op_name)
+
+    check_num = min(len(ordered_ops)//10, 5)
+    double_check_list = ordered_ops[:check_num]
+    worst_op_name = ordered_ops[-1]
+    op_cfgs[worst_op_name[0]] = None # fallback worst module first
+    new_fallback_order = {}
+
+    logger.info('Evaluate the sensitivity gradient for selected operations')
+    for op_name, op_type in tqdm(double_check_list):
+        tmp_model = copy.deepcopy(model)
+        qconfig = op_cfgs[op_name]
+        op_cfgs[op_name] = None
+        fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg["approach"])
+        op_cfgs[op_name] = qconfig
+        from torch.quantization.quantize_fx import prepare_fx,convert_fx
+        # do quantization
+        if adaptor.sub_module_list is None:
+            if adaptor.version.release >= Version("1.13.0").release:  # pragma: no cover
+                tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inp)
+            else:
+                tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
+        else:
+            PyTorch_FXAdaptor.prepare_sub_graph(adaptor.sub_module_list, fx_op_cfgs, \
+                                                tmp_model, prefix='')
+        simple_inference(tmp_model, example_inp)
+        if adaptor.sub_module_list is None:
+            tmp_model = convert_fx(tmp_model)
+        else:
+            PyTorch_FXAdaptor.convert_sub_graph(adaptor.sub_module_list, \
+                                                tmp_model, prefix='')
+
+        # insert hook to get output tesnor from last module
+        module = fetch_module(tmp_model, last_module_name) # get last module
+        module.register_forward_hook(output_hook)
+        output_qdq = simple_inference(tmp_model, example_inp)
+        inner_output_int8 = inner_output.dequantize() if \
+          inner_output.dtype == torch.quint8 else inner_output
+        mse_val = (inner_output_fp32 - inner_output_int8).pow(2).sum()
+        new_fallback_order[(op_name, op_type_dict[op_name])] = mse_val
+
+    ordered_ops = sorted(new_fallback_order.keys(), key=lambda key: new_fallback_order[key], \
+                                    reverse=False)
+
+    return ordered_ops
+
+def get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg):
+    """This is a helper method to check the mse influence to last module after QDQ(quant/dequant).
+
+    Args:
+        model (torch.fx.GraphModule/torch.nn.Module): A torch model.
+        example_inp (object): example inputs.
+        tune_cfg (dict): dictionary of quantization configuration.
+        
+    Returns:
+        fallback_order (dict/list): The fallback order for strategy.
+    """
+    inner_output = None
+    def output_hook(self, input, output):
+        nonlocal inner_output
+        inner_output = output
+        return output
+
+    op_type_dict = {}
+    for k, v in tune_cfg['op'].keys():
+        op_type_dict[k] = v
+
+    example_inp = example_input
+
+    from ..pytorch import _cfg_to_qconfig
+    op_cfgs = _cfg_to_qconfig(tune_cfg, tune_cfg["approach"])
+    module = fetch_module(fp32_model, list(op_cfgs.keys())[-1]) # get last module
+    # insert hook to get output tesnor from last module
+    module.register_forward_hook(output_hook)
+    # record fp32 model output tensor at first
+    output_fp32 = simple_inference(fp32_model, example_inp)
+    inner_output_fp32 = inner_output
+
+    quant_list = []
+    for k, v in tune_cfg['op'].items():
+        if k[1] in ['LayerNorm', 'Dropout', 'InstanceNorm3d']:
+            continue
+        if v['weight']['dtype'] == 'fp32':
+            quant_list.append(k)
+    fallback_order = {}
+    logger.info('Evaluate the sensitivity for each fp32 operation')
+    for op_name, op_type in tqdm(quant_list):
+        if op_name in op_cfg_mapping:
+            tmp_model = copy.deepcopy(fp32_model)
+            from ..pytorch import _cfg_to_qconfig, _cfgs_to_fx_cfgs, PyTorch_FXAdaptor
+            op_cfgs[op_name] = op_cfg_mapping[op_name]
+            fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, tune_cfg["approach"])
+            from torch.quantization.quantize_fx import prepare_fx,convert_fx
+            # do quantization
+            if adaptor.sub_module_list is None:
+                if adaptor.version.release >= Version("1.13.0").release:  # pragma: no cover
+                    tmp_model = prepare_fx(tmp_model, fx_op_cfgs, example_inp)
+                else:
+                    tmp_model = prepare_fx(tmp_model, fx_op_cfgs,)
+            else:
+                PyTorch_FXAdaptor.prepare_sub_graph(adaptor.sub_module_list, fx_op_cfgs, \
+                                                    tmp_model, prefix='')
+            simple_inference(tmp_model, example_inp)
+            if adaptor.sub_module_list is None:
+                tmp_model = convert_fx(tmp_model)
+            else:
+                PyTorch_FXAdaptor.convert_sub_graph(adaptor.sub_module_list, \
+                                                    tmp_model, prefix='')
+
+
+            # record int8 model output tensor
+            module = fetch_module(tmp_model, list(op_cfgs.keys())[-1]) # get last module
+            module.register_forward_hook(output_hook)
+            output_qdq = simple_inference(tmp_model, example_inp)
+            inner_output_int8 = inner_output
+            if inner_output_fp32.dtype == torch.quint8:
+                inner_output_fp32 = inner_output_fp32.dequantize()
+            if inner_output_int8.dtype == torch.quint8:
+                inner_output_int8 = inner_output_int8.dequantize()
+
+            mse_val = (inner_output_fp32 - inner_output_int8).pow(2).sum()
+            fallback_order[(op_name, op_type_dict[op_name])] = mse_val
+            # re-insert fp32 module into model
+    ordered_ops = sorted(fallback_order.keys(), key=lambda key: fallback_order[key], \
+                                            reverse=False)
+    return ordered_ops
+
+def get_torch_version():
+    """Get torch version."""
+    from packaging.version import Version
+    try:
+        torch_version = torch.__version__.split('+')[0]
+    except ValueError as e:  # pragma: no cover
+        assert False, 'Got an unknown version of torch: {}'.format(e)
+    version = Version(torch_version)
+    return version

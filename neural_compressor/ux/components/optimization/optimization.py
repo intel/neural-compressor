@@ -188,6 +188,7 @@ class OptimizationInterface:
     output_precision: str
     batch_size: int
     sampling_size: int
+    pruning_details: dict
 
     def __init__(self, optimization_data: dict):
         """Initialize optimization interface with data."""
@@ -200,6 +201,7 @@ class OptimizationInterface:
             parameter_type="precision",
             value=optimization_data["precision"]["name"],
         )
+        self.pruning_details = optimization_data["pruning_details"]
 
 
 class DataloaderInterface:

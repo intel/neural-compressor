@@ -152,8 +152,11 @@ def register_code_line():
                     # judge_1: indent is equal to def indent
                     judge_1 = following_indent_level <= class_def_indent_level
                     # judge_2: not starting with")"
-                    judge_2 = True if (
-                        following_line != "" and following_line[following_indent_level] != ")") else False
+                    try:
+                        judge_2 = True if (
+                            following_line != "" and following_line[following_indent_level] != ")") else False
+                    except:
+                        judge_2 = False
                     # judge_3: is not a comment or empty line
                     judge_3 = True if (
                         not _is_multi_line_comment and not _is_single_line_comment_or_empty) else False
@@ -216,8 +219,11 @@ def register_code_line():
                     # judge_1: indent is equal to def indent
                     judge_1 = following_indent_level <= func_def_indent_level
                     # judge_2: not starting with")"
-                    judge_2 = True if (
-                        following_line != "" and following_line[following_indent_level] != ")") else False
+                    try:
+                        judge_2 = True if (
+                            following_line != "" and following_line[following_indent_level] != ")") else False
+                    except:
+                        judge_2 = False
                     # judge_3: is not a comment or empty line
                     judge_3 = True if (
                         not _is_multi_line_comment and not _is_single_line_comment_or_empty) else False

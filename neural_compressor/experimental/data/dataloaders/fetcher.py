@@ -14,21 +14,49 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Definitions of the methods to fetch data from an iterable-style or list-style dataset."""
 
 from abc import abstractmethod
 
 class Fetcher(object):
+    """Base class for different fetchers."""
+
     def __init__(self, dataset, collate_fn, drop_last):
+        """Initialize Fetcher.
+
+        Args:
+            dataset (object): dataset object from which to get data 
+            collate_fn (callable): merge data with outer dimension batch size
+            drop_last (bool): whether to drop the last batch if it is incomplete
+        """
         self.dataset = dataset
         self.collate_fn = collate_fn
         self.drop_last = drop_last
 
     @abstractmethod
     def __call__(self, batched_indices):
+        """Fetch data.
+
+        Args:
+            batched_indices (list): fetch data according to batched_indices
+
+        """
         raise NotImplementedError
 
 class IterableFetcher(Fetcher):
+    """Iterate to get next batch-size samples as a batch."""
+
     def __init__(self, dataset, collate_fn, drop_last, distributed):
+        """Initialize IterableFetcher.
+
+        Args:
+            dataset (object): dataset object from which to get data
+            collate_fn (callable): merge data with outer dimension batch size
+            drop_last (bool): whether to drop the last batch if it is incomplete
+            distributed (bool): whether the dataloader is distributed
+
+        """
         super(IterableFetcher, self).__init__(dataset, collate_fn, drop_last)
         self.dataset_iter = iter(dataset)
         self.index_whole = 0
@@ -47,6 +75,12 @@ class IterableFetcher(Fetcher):
                     " please set 'distributed: True' and launch multiple processes.")
 
     def __call__(self, batched_indices):
+        """Fetch data.
+
+        Args:
+            batched_indices (list): fetch data according to batched_indices
+
+        """
         batch_data = []
         batch_size = len(batched_indices)
         while True:
@@ -64,10 +98,26 @@ class IterableFetcher(Fetcher):
         return self.collate_fn(batch_data)
 
 class IndexFetcher(Fetcher):
+    """Take single index or a batch of indices to fetch samples as a batch."""
+
     def __init__(self, dataset, collate_fn, drop_last, distributed):
+        """Initialize IndexFetcher.
+
+        Args:
+            dataset (object): dataset object from which to get data
+            collate_fn (callable): merge data with outer dimension batch size
+            drop_last (bool): whether to drop the last batch if it is incomplete
+            distributed (bool): whether the dataloader is distributed
+        """
         super(IndexFetcher, self).__init__(dataset, collate_fn, drop_last)
 
     def __call__(self, batched_indices):
+        """Fetch data.
+
+        Args:
+            batched_indices (list): fetch data according to batched_indices
+
+        """
         data = [self.dataset[idx] for idx in batched_indices]
         return self.collate_fn(data)
 

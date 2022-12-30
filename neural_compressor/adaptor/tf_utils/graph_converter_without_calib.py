@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""Without calibration Graph Converter Class."""
 
 import copy
 import os
@@ -44,7 +45,8 @@ from .graph_rewriter.bf16.bf16_convert import BF16Convert
 from .graph_rewriter.int8.post_quantized_op_cse import PostCseOptimizer
 from .graph_rewriter.int8.meta_op_optimizer import MetaInfoChangingMemOpOptimizer
 from .graph_rewriter.int8.rnn_convert import QuantizedRNNConverter
-from .util import version1_gte_version2,version1_gt_version2,version1_eq_version2, version1_lt_version2
+from .util import version1_gte_version2,version1_gt_version2,version1_eq_version2,version1_lt_version2
+from .util import TF_SPR_BASE_VERSIONS
 
 TF_SUPPORTED_MAX_VERSION = '2.11.0'
 TF_SUPPORTED_MIN_VERSION = '1.14.0'
@@ -53,6 +55,7 @@ logger = logging.getLogger("neural_compressor")
 debug = bool(logger.level == logging.DEBUG)
 
 class GraphConverterWithoutCalib:
+    """Graph Converter without calibration Class is used to generate the quantization graph without calibration."""
     def __init__(self,
                  model,
                  data_loader=None,
@@ -94,8 +97,10 @@ class GraphConverterWithoutCalib:
         self.performance_only = performance_only
         self.use_bf16 = use_bf16
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
+
     # pylint: disable=no-member
     def _check_tf_version(self):
+        """Check if the installed tensorflow version is supported."""
         is_supported_version = False
         is_sprbase_version = False
         try:
@@ -118,8 +123,8 @@ class GraphConverterWithoutCalib:
 
             if version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
                 is_supported_version = True
-            
-            if version1_eq_version2(tf.version.VERSION, '2.11.0202242'):
+
+            if tf.version.VERSION in TF_SPR_BASE_VERSIONS:
                 is_supported_version = True
                 is_sprbase_version = True
 
@@ -148,12 +153,14 @@ class GraphConverterWithoutCalib:
                     .format(TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
 
     def _check_args(self):
+        """Check model's arguments."""
         if self.model.workspace_path and not os.path.isdir(self.model.workspace_path) \
                 and not os.path.exists(os.path.dirname(self.model.workspace_path)):
             raise ValueError('"output_graph" directory does not exist.')
         self._output_path = self.model.workspace_path
 
     def _gen_tmp_filenames(self):
+        """Generate the temporary file names."""
         self._int8_dynamic_range_model_path = os.path.join(self._output_path, \
                                                       'int8_dynamic_range_graph')
         self._int8_logged_model_path = os.path.join(self._output_path, 'int8_logged_graph')
@@ -170,6 +177,7 @@ class GraphConverterWithoutCalib:
         self._tmp_model.input_tensor_names = self.input_tensor_names
 
     def convert_without_calib(self):
+        """Do convertion without calibration."""
         model = self._tmp_model
 
         if len(self.op_wise_config) > 0:
@@ -188,6 +196,7 @@ class GraphConverterWithoutCalib:
         return model
 
     def _analysis_rnn_model(self):
+        """Match the RNN pattern."""
         g = GraphAnalyzer()
         g.graph = self._tmp_graph_def
         graph_info = g.parse_graph()
@@ -202,7 +211,9 @@ class GraphConverterWithoutCalib:
         return res
 
     def quantize_without_calib(self):
-        """Quantize graph only (without optimizing fp32 graph), including:
+        """Quantize graph only (without optimizing fp32 graph).
+
+        Including:
             1) quantize graph,
             2) fuse RequantizeOp with fused quantized conv, and so on.
 
@@ -224,9 +235,7 @@ class GraphConverterWithoutCalib:
             return self._tmp_model
 
     def bf16_convert(self):
-        """Convert fp32 nodes in bf16_node to bf16 dtype based on
-           FP32 + INT8 mixed precision graph.
-        """
+        """Convert fp32 nodes in bf16_node to bf16 dtype based on FP32 + INT8 mixed precision graph."""
         try:
             self._tmp_model.graph_def = BF16Convert(
                 self._tmp_model.graph_def,
@@ -243,8 +252,7 @@ class GraphConverterWithoutCalib:
             return self._tmp_model
 
     def _quantize_graph(self):
-        """quantize graph."""
-
+        """Quantize graph."""
         non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
         self._tmp_graph_def = FusePadWithConv2DOptimizer(
             self._tmp_graph_def,
@@ -275,7 +283,7 @@ class GraphConverterWithoutCalib:
             self._tmp_model.save(self._int8_dynamic_range_model_path)
 
     def _freeze_requantization_ranges_without_calib(self):
-
+        """Freeze requantization ranges after doing quantization."""
         self._tmp_graph_def = FreezeValueWithoutCalibTransformer(
             self._tmp_graph_def,
             self.recover_config,
@@ -304,6 +312,7 @@ class GraphConverterWithoutCalib:
             self._tmp_model.save(self._int8_frozen_range_model_path)
 
     def _fuse_requantize_with_fused_quantized_node(self):
+        """Fuse the Requantize/Dequantize with fused quantized Ops."""
         self._tmp_graph_def = FuseConvRequantizeTransformer(
             self._tmp_graph_def,
             self.device,

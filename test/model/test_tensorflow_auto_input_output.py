@@ -6,7 +6,7 @@ import os
 import platform
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
 from neural_compressor.experimental.common.model import Model as TensorflowModel
-from neural_compressor.model.model import validate_graph_node
+from neural_compressor.model.tensorflow_model import validate_graph_node
 
 class TestTFAutoDetectInputOutput(unittest.TestCase):
     mb_model_url = 'https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb'

@@ -14,23 +14,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""Attention operator."""
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
-from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, qop_registry, QOperator
+from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain, find_by_name
 
 @op_registry(op_types="Attention")
 class AttentionOperator(Operator):
+    """Attention operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(AttentionOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         self.quantizer.quantize_inputs(node, [0, 1, 2])
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['dynamic', 'static'], \
             "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
@@ -40,6 +45,7 @@ class AttentionOperator(Operator):
         return True
 
     def convert(self, convert_format):
+        """Convert QDQ mode to QOperator format."""
         node = self.node
         parents = self.quantizer.model.get_parents(node)
         quantized_name = []
@@ -74,3 +80,50 @@ class AttentionOperator(Operator):
         self.quantizer.new_nodes.append(qattention_node)
 
         self.quantizer.remove_nodes.append(node)
+
+@qop_registry(op_types="QAttention")
+class QAttentionOperator(QOperator):
+    """QAttention operator."""
+
+    def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
+        super().__init__(onnx_node, children, initializers)
+
+    def convert(self):
+        """Convert to QDQ format."""
+        node = self.node
+        add_nodes = []
+        inputs = []
+        inits = []
+        if find_by_name(node.input[3], self.initializers) is None:
+            return False, add_nodes, inits
+        # input dq
+        in_dq1 = onnx.helper.make_node(
+            'DequantizeLinear',
+            [node.input[0], node.input[3], node.input[6]],
+            [node.name + '_in_dequant1'],
+            node.name + '_in_dequant1')
+        
+        in_dq2 = onnx.helper.make_node(
+            'DequantizeLinear',
+            [node.input[1], node.input[4], node.input[7]],
+            [node.name + '_in_dequant2'],
+            node.name + '_in_dequant2')
+        inputs = [node.name + '_in_dequant1',
+                  node.name + '_in_dequant2',
+                  node.input[2],
+                  node.input[5]]
+        
+        add_nodes.extend([in_dq1, in_dq2])
+
+        outputs = node.output
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+        kwargs["domain"] = ms_domain
+
+        binary_node = onnx.helper.make_node(
+            'Attention', inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(binary_node)
+        return True, add_nodes, inits

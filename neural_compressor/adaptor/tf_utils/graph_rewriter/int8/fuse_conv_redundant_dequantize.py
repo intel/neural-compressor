@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse QuantizedConv QuantizedDeConv with redundant Dequantize Graph Rewriter."""
+
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
@@ -23,8 +25,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
-    """Fuse _QuantizedConv/_QuantizedDeConv with the successor Dequantize Op.
-    """
+    """Fuse _QuantizedConv/_QuantizedDeConv with the successor Dequantize Op."""
     fuse_patterns = [[
         "_FusedQuantizedConv3D",
         "_FusedQuantizedConv2D",
@@ -33,7 +34,16 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
         "_FusedQuantizedDeconv3D"
     ], ['Dequantize']]
 
+    fuse_sum_op_types_str = (
+        str([b'BiasAdd', b'Sum', b'Requantize']),
+        str([b'BiasAdd', b'Sum', b'Relu', b'Requantize']),
+        str([b'BiasAdd', b'Sum', b'LeakyRelu', b'Requantize']),
+        str([b'BiasAdd', b'Relu', b'Sum', b'Requantize']),
+        str([b'BiasAdd', b'LeakyRelu', b'Sum', b'Requantize'])
+        )
+
     def __init__(self, model, device='cpu'):
+        """Initilization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -42,7 +52,9 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
 
     def do_transformation(self):
         """Fuse the _QuantizedConv Op with the following Dequantize op.
-            The output of _QuantizedConv or is fp32 or bf16.
+
+        The output of _QuantizedConv or is fp32 or bf16.
+
         Returns:
             [graphdef]: the optimized graphdef object
         """
@@ -52,7 +64,7 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
             dtypes.float32.as_datatype_enum: dtypes.float32,
             dtypes.qint32.as_datatype_enum: dtypes.qint32,
             dtypes.bfloat16.as_datatype_enum: dtypes.bfloat16
-        }    
+        }
         target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(self.fuse_patterns)
 
         for i in target_nodes:
@@ -64,9 +76,9 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
             if len(self.graph_info[quantized_node_name].outputs) > 3:
                 continue
 
-            # QuantizedConv only supports {"Dequantize"} and {"BiasAdd", "Dequantize"}
-            if str(quantized_node.attr['fused_ops'].list.s) != str([b"BiasAdd", b"Requantize"]) and \
-               str(quantized_node.attr['fused_ops'].list.s) != str([b"Requantize"]):
+            # QuantizedConv doesn't support {"BiasAdd", "Sum", "Activation", "Dequantize"},
+            # {"BiasAdd", "Activation", "Sum", "Dequantize"} and {"BiasAdd", "Sum", "Dequantize"}
+            if str(quantized_node.attr['fused_ops'].list.s) in self.fuse_sum_op_types_str:
                 continue
 
             new_node = node_def_pb2.NodeDef()

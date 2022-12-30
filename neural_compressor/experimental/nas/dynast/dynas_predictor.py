@@ -48,15 +48,25 @@ class Predictor:
         self.best_index = 0
 
         # Create lists of regressors and associated hyper-parameters
-        regressors = [linear_model.Ridge(max_iter=max_iterations),
-                      svm.SVR(kernel='rbf', gamma='auto', epsilon=0.0, max_iter=max_iterations)]
+        regressors = [
+            linear_model.Ridge(max_iter=max_iterations),
+            svm.SVR(kernel='rbf', gamma='auto',
+                    epsilon=0.0, max_iter=max_iterations),
+        ]
         hyper_parameters = [{'alpha': alphas}, {'C': cost_factors}]
 
         # Create list of hyper-parameter searchers
         self.searchers = []
         for regressor, parameters in zip(regressors, hyper_parameters):
-            self.searchers.append(GridSearchCV(estimator=regressor, param_grid=parameters, n_jobs=-1,
-            scoring='neg_mean_absolute_percentage_error', verbose=SEARCHER_VERBOSITY if (verbose) else 0))
+            self.searchers.append(
+                GridSearchCV(
+                    estimator=regressor,
+                    param_grid=parameters,
+                    n_jobs=-1,
+                    scoring='neg_mean_absolute_percentage_error',
+                    verbose=SEARCHER_VERBOSITY if (verbose) else 0,
+                )
+            )
 
     def train(self, examples, labels):
         """Train the predictor on the specified examples and labels using the underlying regressor.
@@ -65,8 +75,14 @@ class Predictor:
             examples: Examples to be used for training.
             labels: Labels to be used for training.
         """
+        # Compute normalization factor
+        max_label = np.amax(np.abs(labels))
+        if max_label > 0.0:
+            self.normalization_factor = 10 ** (np.floor(np.log10(max_label)) - 1.0)
+        else:
+            self.normalization_factor = 1.0
+
         # Compute normalized labels
-        self.normalization_factor = 10 ** (np.floor(np.log10(np.amax(labels))) - 1.0)
         normalized_labels = labels / self.normalization_factor
 
         # Train regressors with optimal parameters
@@ -101,7 +117,7 @@ class Predictor:
             Optimal parameter values of the underlying regressor.
         """
         # Retrieve optimal parameters
-        parameters = {}
+        parameters = {'best_index': self.best_index}
         for searcher in self.searchers:
             regressor_name = searcher.best_estimator_.__class__.__name__
             for key in searcher.best_params_:

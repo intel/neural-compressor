@@ -129,6 +129,8 @@ class ProjectAPIInterface:
         model_data.update({"supports_profiling": supports_profiling})
         supports_graph = model.supports_graph
         model_data.update({"supports_graph": supports_graph})
+        supports_pruning = model.supports_pruning
+        model_data.update({"supports_pruning": supports_pruning})
         framework = model.get_framework_name()
         framework_id = Framework.get_framework_id(db_session, framework)
         model_data.update({"framework_id": framework_id})
@@ -163,6 +165,7 @@ class ProjectAPIInterface:
             output_nodes=model_parameters.output_nodes,
             supports_profiling=model_parameters.supports_profiling,
             supports_graph=model_parameters.supports_graph,
+            supports_pruning=model_parameters.supports_pruning,
         )
         return model_id
 

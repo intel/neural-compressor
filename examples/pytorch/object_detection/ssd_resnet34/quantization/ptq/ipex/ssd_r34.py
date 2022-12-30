@@ -24,6 +24,7 @@ import torch.nn as nn
 from base_model import ResNet34
 
 from typing import List
+import intel_extension_for_pytorch
 
 Vector = List[torch.Tensor]
 

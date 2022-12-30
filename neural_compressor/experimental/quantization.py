@@ -28,6 +28,8 @@ from ..utils import logger
 from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel
+from ..model.tensorflow_model import TensorflowQATModel
+from ..model.model import get_model_fwk_name
 from ..conf.config import QuantConf
 from ..conf.pythonic_config import Config
 from deprecated import deprecated
@@ -133,6 +135,15 @@ class Quantization(Component):
         self._create_eval_dataloader(cfg)
         self._create_calib_dataloader(cfg)
         strategy = cfg.tuning.strategy.name.lower()
+        if cfg.quantization.quant_level == 0:
+            strategy = "conservative"
+            logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
+            
+        if strategy == "mse_v2":
+            if not (self.framework.startswith("tensorflow") or self.framework == 'pytorch_fx'):
+                strategy = "basic"
+                logger.warning(f"MSE_v2 does not support {self.framework} now, use basic instead.")
+                logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
@@ -155,6 +166,7 @@ class Quantization(Component):
             self._eval_func,
             _resume,
             self.hooks)
+        
         if getattr(self._calib_dataloader, 'distributed', False):
             self.register_hook('on_train_begin', self.strategy.adaptor._pre_hook_for_hvd)
 
@@ -229,8 +241,8 @@ class Quantization(Component):
 
     def dataset(self, dataset_type, *args, **kwargs):
         """Get dataset according to dataset_type."""
-        from ..data import DATASETS
-        return DATASETS(self.framework)[dataset_type](*args, **kwargs)
+        from ..data import Datasets
+        return Datasets(self.framework)[dataset_type](*args, **kwargs)
 
     @property
     def calib_dataloader(self):
@@ -372,7 +384,7 @@ class Quantization(Component):
                            " as user defines the value of `postprocess` attribute by code.")
         deep_set(
             self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
-        from ..data import TRANSFORMS
+        from .data import TRANSFORMS
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
 
@@ -390,12 +402,11 @@ class Quantization(Component):
         return None
 
     @q_func.setter
-    @deprecated(version='2.0', reason="please use `train_func` instead")
     def q_func(self, user_q_func):
-        """Training function for Quantization-Aware Training.
+        """Calibrate quantization parameters for Post-training static quantization.
 
            It is optional and only takes effect when user choose
-           "quant_aware_training" approach in yaml.
+           "post_training_static_quant" approach in yaml.
 
         Args:
             user_q_func: This function takes "model" as input parameter
@@ -405,6 +416,39 @@ class Quantization(Component):
         self._calib_func = user_q_func
 
     calib_func = q_func
+
+    @property
+    def model(self):
+        """Override model getter method to handle quantization aware training case."""
+        return self._model
+
+    @model.setter
+    def model(self, user_model):
+        """Override model setter method to handle quantization aware training case.
+
+        Args:
+           user_model: user are supported to set model from original framework model format
+                       (eg, tensorflow frozen_pb or path to a saved model),
+                       but not recommended. Best practice is to set from a initialized
+                       neural_compressor.experimental.common.Model.
+                       If tensorflow model is used, model's inputs/outputs will be
+                       auto inferenced, but sometimes auto inferenced
+                       inputs/outputs will not meet your requests,
+                       set them manually in config yaml file.
+                       Another corner case is slim model of tensorflow,
+                       be careful of the name of model configured in yaml file,
+                       make sure the name is in supported slim model list.
+        """
+        approach_cfg = deep_get(self.cfg, 'quantization.approach')
+        if not self.framework:
+            self.framework = get_model_fwk_name(user_model)
+        if self.framework == 'tensorflow' and approach_cfg == 'quant_aware_training':
+            if type(user_model) == str:
+                self._model = TensorflowQATModel(user_model)
+            else:
+                self._model = TensorflowQATModel(user_model._model)
+        else:
+            Component.model.__set__(self, user_model)
 
     def __repr__(self):
         """Return the class string."""

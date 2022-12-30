@@ -25,7 +25,7 @@ FRAMEWORK="pytorch"
 FRAMEWORK_VERSION="1.12.0+cpu"
 TORCH_VISION_VERSION="0.13.0+cpu"
 
-
+inc_new_api=false
 # ======== set up config for pytorch models ========
 if [ "${model}" == "resnet18" ]; then
     model_src_dir="image_recognition/torchvision_models/quantization/ptq/cpu/eager"
@@ -64,6 +64,7 @@ fi
     --new_benchmark=${new_benchmark} \
     --tuning_cmd="${tuning_cmd}" \
     --benchmark_cmd="${benchmark_cmd}" \
+    --inc_new_api="${inc_new_api}" \
     --mode=${mode} \
     --USE_TUNE_ACC=${USE_TUNE_ACC} \
     --PERF_STABLE_CHECK=${PERF_STABLE_CHECK} \

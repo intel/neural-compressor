@@ -3,7 +3,7 @@
 ## Steps
 The following diagram shows steps for enabling model with Neural Compressor:
 
-<img src="/docs/imgs/tutorial.png" alt="Tutorial" width="50%"/>
+<img src="./_static/imgs/tutorial.png" alt="Tutorial" width="50%"/>
 
 ## Example
 

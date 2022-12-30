@@ -188,7 +188,7 @@ class Pruner:
         """
         self.mask_weights()
 
-    def on_train_begin(self):
+    def on_train_begin(self, dataloader = None):
         """Functions called in the beginning of training."""
         pass
 

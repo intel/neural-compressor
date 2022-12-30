@@ -16,7 +16,7 @@
 ---
 -
   version:
-    name: ['2.11.0202242']
+    name: ['2.11.0202242', '2.11.0202250']
 
   precisions:
     names: int8, uint8, bf16, fp32
@@ -30,12 +30,12 @@
             'MaxPool', 'MaxPool3D', 'AvgPool', 'Conv2DBackpropInput', 'Conv3DBackpropInputV2']
     bf16: ["_MklLayerNorm", "Conv2D", "Conv2DBackpropFilter", "Conv2DBackpropInput", "Conv3D", "Conv3DBackpropFilterV2", "Conv3DBackpropInputV2",
            "DepthwiseConv2dNative", "DepthwiseConv2dNativeBackpropFilter", "DepthwiseConv2dNativeBackpropInput", "GRUBlockCell",
-           "AUGRUBlockCell", "MklGRU", "MklAUGRU", "MatMul", "BatchMatMul", "BatchMatMulV2", "Einsum", # allow_list
+           "AUGRUBlockCell", "MklGRU", "MklAUGRU", "MatMul", "BatchMatMul", "BatchMatMulV2", "_MklFusedBatchMatMulV2", "Einsum", # allow_list
            "Add", "AddN", "AddV2", "AvgPool", "AvgPool3D", "AvgPool3DGrad", "AvgPoolGrad", "BiasAdd", "BiasAddGrad", "BiasAddV1",
            "Erf", "FusedBatchNormV2", "FusedBatchNormGradV2", "FusedBatchNormV3", "FusedBatchNormGradV3", "LeakyRelu", "LeakyReluGrad",
            "Mean", "Mul", "Sub", "Elu", "EluGrad", "FloorDiv", "_FusedBatchNormEx", "Log", "Log1p", "LogSoftmax", "Prod", "RealDiv",
            "Reciprocal", "Rsqrt", "Selu", "SeluGrad", "Sigmoid", "SigmoidGrad", "Softmax", "Softplus", "SoftplusGrad", "Softsign",
-           "SoftsignGrad", "Sqrt", "SquaredDifference", "Tanh", "TanhGrad", #infer_list
+           "SoftsignGrad", "Sqrt", "Square", "SquaredDifference", "Sum", "Tanh", "TanhGrad", "SparseSegmentSqrtN", # infer_list
            "Abs", "ArgMax","ArgMin","BatchToSpace","BatchToSpaceND","BroadcastTo","Ceil","CheckNumerics","ClipByValue","Concat","ConcatV2",
            "DepthToSpace","DynamicPartition","DynamicStitch","EnsureShape","Enter","Equal","Exit","ExpandDims","Fill","Floor","Gather",
            "GatherNd","GatherV2","Greater","GreaterEqual","Identity","IsFinite","IsInf","IsNan","Less","LessEqual","Max","Maximum","MaxPool",
@@ -273,6 +273,10 @@
         'Dequantize + Conv2D + BiasAdd + LeakyRelu + Add + QuantizeV2',
         'Dequantize + Conv2D + LeakyRelu + AddV2 + QuantizeV2',
         'Dequantize + Conv2D + LeakyRelu + Add + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Relu + AddV2 + QuantizeV2',
+        'Dequantize + Conv2D + BiasAdd + Relu + Add + QuantizeV2',
+        'Dequantize + Conv2D + Relu + AddV2 + QuantizeV2',
+        'Dequantize + Conv2D + Relu + Add + QuantizeV2',
         'Dequantize + Conv2D + Add + QuantizeV2',
         'Dequantize + Conv2D + AddV2 + QuantizeV2',
         'Dequantize + Conv2D + AddV2 + Add + QuantizeV2',
@@ -299,6 +303,7 @@
         'Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2',
         'Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2',
         'Dequantize + FusedBatchNormV3 + Relu + QuantizeV2',
+        'Dequantize + FusedBatchNormV3 + LeakyRelu + QuantizeV2',
         'Dequantize + _MklFusedInstanceNorm + Relu + QuantizeV2',
         'Dequantize + _MklFusedInstanceNorm + LeakyRelu + QuantizeV2',
         'Dequantize + Conv2DBackpropInput + BiasAdd + QuantizeV2',

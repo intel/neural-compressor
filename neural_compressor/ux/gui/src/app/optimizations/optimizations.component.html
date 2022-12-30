@@ -249,6 +249,11 @@
       </table>
     </div>
 
+    <div class="item" *ngIf="optimizationDetails['pruning_details']">
+      <h2>Pruning details</h2>
+      <app-pruning [optimizationId]="activeOptimizationId" [editable]="!optimizationDetails['status']"></app-pruning>
+    </div>
+
     <ng-container *ngIf="chartsReady">
       <div class="item" *ngIf="this.historyData['accuracy'][0]['series'].length > 1">
         <h2>Accuracy - tuning history</h2>
@@ -277,3 +282,5 @@
 
   </div>
 </ng-container>
+
+<ng-keyboard-shortcuts [shortcuts]="shortcuts"></ng-keyboard-shortcuts>

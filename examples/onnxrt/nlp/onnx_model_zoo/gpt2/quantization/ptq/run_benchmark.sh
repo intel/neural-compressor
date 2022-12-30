@@ -11,15 +11,11 @@ function main {
 
 # init params
 function init_params {
-  gpt2_yaml="./gpt2.yaml"
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
-      ;;
-      --data_path=*)
-          data_path=$(echo $var |cut -f2 -d=)
+      --dataset_location=*)
+          dataset_location=$(echo $var |cut -f2 -d=)
       ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
@@ -45,9 +41,9 @@ function init_params {
 
 function define_mode {
     if [[ ${mode} == "accuracy" ]]; then
-      mode_cmd=" --benchmark --mode=accuracy"
-    elif [[ ${mode} == "benchmark" ]]; then
-      mode_cmd=" --iter ${iters} --benchmark"
+      mode_cmd=""
+    elif [[ ${mode} == "performance" ]]; then
+      mode_cmd=" --iter ${iters}"
     else
       echo "Error: No such mode: ${mode}"
       exit 1
@@ -56,17 +52,16 @@ function define_mode {
 
 # run_benchmark
 function run_benchmark {
-    if [ "${topology}" = "gpt2_lm_wikitext2" ];then
-      model_type='gpt2'
-      model_name_or_path='gpt2'
-      test_data='wiki.test.raw'
-    fi
+    model_type='gpt2'
+    model_name_or_path='gpt2'
+    test_data='wiki.test.raw'
     python gpt2.py --model_path ${input_model} \
-                        --data_path ${data_path}${test_data} \
+                        --data_path ${dataset_location}${test_data} \
                         --model_type ${model_type} \
                         --model_name_or_path ${model_name_or_path} \
-                        --config ${gpt2_yaml} \
                         --per_gpu_eval_batch_size ${batch_size} \
+                        --benchmark \
+                        --mode ${mode} \
                         ${mode_cmd}
 }
 

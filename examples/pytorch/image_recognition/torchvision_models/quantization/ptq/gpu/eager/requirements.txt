@@ -1,3 +1,0 @@
-neural-compressor
---find-links https://download.pytorch.org/whl/torch_stable.html
-torchvision==0.6.0+cpu

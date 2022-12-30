@@ -4,10 +4,12 @@ import unittest
 import os
 import yaml
 import numpy as np
-import tensorflow as tf
 import tempfile
 import re
+import platform
 from neural_compressor.adaptor.tf_utils.util import write_graph
+
+import tensorflow as tf
 
 def build_fake_yaml():
     fake_yaml = '''
@@ -43,12 +45,14 @@ from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
-import neural_compressor
-from neural_compressor.data import DATASETS
-from neural_compressor.experimental import common
-dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
-b_dataloader = common.DataLoader(dataset, batch_size=10)
-neural_compressor.benchmark(args.input_model, 'fake_yaml.yaml', b_dataloader=b_dataloader)
+from neural_compressor.data import Datasets
+dataset = Datasets('tensorflow')['dummy']((100, 32, 32, 1), label=True)
+from neural_compressor.experimental import Benchmark, common
+from neural_compressor.conf.config import BenchmarkConf
+benchmarker = Benchmark('fake_yaml.yaml')
+benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
+benchmarker.model = args.input_model
+benchmarker.fit()
     '''
 
     seq1 = '''
@@ -56,14 +60,15 @@ from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
-import neural_compressor
-from neural_compressor.data import DATASETS
-dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
-from neural_compressor.experimental import common
+from neural_compressor.data import Datasets
+dataset = Datasets('tensorflow')['dummy']((100, 32, 32, 1), label=True)
+from neural_compressor.experimental import Benchmark, common
 from neural_compressor.conf.config import BenchmarkConf
 conf = BenchmarkConf('fake_yaml.yaml')
-b_dataloader = common.DataLoader(dataset, batch_size=10)
-neural_compressor.benchmark(args.input_model, conf, b_dataloader=b_dataloader)
+benchmarker = Benchmark(conf)
+benchmarker.b_dataloader = common.DataLoader(dataset, batch_size=10)
+benchmarker.model = args.input_model
+benchmarker.fit()
     '''
 
     # test normal case
@@ -88,13 +93,15 @@ def build_benchmark2():
         "arg_parser = ArgumentParser(description='Parse args')\n",
         "arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')\n",
         "args = arg_parser.parse_args()\n",
-        "import neural_compressor\n"
-        "from neural_compressor.data import DATASETS\n",
-        "dataset = DATASETS('tensorflow')['dummy']((5, 32, 32, 1), label=True)\n",
 
-        "from neural_compressor.experimental import common\n",
-        "b_dataloader = common.DataLoader(dataset)\n",
-        "neural_compressor.benchmark(args.input_model, b_dataloader=b_dataloader)\n"
+        "from neural_compressor.data import Datasets\n",
+        "dataset = Datasets('tensorflow')['dummy']((5, 32, 32, 1), label=True)\n",
+
+        "from neural_compressor.experimental import Benchmark, common\n",
+        "benchmarker = Benchmark()\n",
+        "benchmarker.model = args.input_model\n",
+        "benchmarker.b_dataloader = common.DataLoader(dataset)\n",
+        "benchmarker.fit()\n"
     ]
 
     seq1 = '''
@@ -102,11 +109,13 @@ from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
-import neural_compressor
+
 from neural_compressor import conf
-from neural_compressor.experimental import common
+from neural_compressor.experimental import Benchmark, common
 conf.evaluation.performance.dataloader.dataset = {'dummy': {'shape': [100,32,32,1], 'label':True}}
-neural_compressor.benchmark(args.input_model, conf)
+benchmarker = Benchmark(conf)
+benchmarker.model = args.input_model
+benchmarker.fit()
     '''
 
     seq2 = '''
@@ -188,6 +197,7 @@ class TestObjective(unittest.TestCase):
         build_benchmark()
         build_benchmark2()
         self.cpu_counts = psutil.cpu_count(logical=False)
+        self.platform = platform.system().lower()
 
     @classmethod
     def tearDownClass(self):
@@ -195,11 +205,11 @@ class TestObjective(unittest.TestCase):
             os.remove('fake_yaml.yaml')
         if os.path.exists('fake.py'):
             os.remove('fake.py')
-        if os.path.exists('fake.py'):
+        if os.path.exists('fake2.py'):
             os.remove('fake2.py')
-        if os.path.exists('fake.py'):
+        if os.path.exists('fake3.py'):
             os.remove('fake3.py')
-        if os.path.exists('fake.py'):
+        if os.path.exists('fake4.py'):
             os.remove('fake4.py')
         if os.path.exists('fake_data_5.py'):
             os.remove('fake_data_5.py')
@@ -248,8 +258,8 @@ class TestObjective(unittest.TestCase):
         os.system("python fake2.py --input_model={} 2>&1 | tee benchmark.log".format(self.graph_path))
         with open('benchmark.log', "r") as f:
             for line in f:
-                accuracy = re.search(r"Accuracy is\s+(\d+(\.\d+)?)", line)
-            self.assertIsNotNone(accuracy)
+                throughput = re.search(r"Throughput sum: (\d+(\.\d+)?)", line)
+            self.assertIsNotNone(throughput)
         os.system("rm *.log")
 
     def test_benchmark_with_conf(self):
@@ -259,7 +269,7 @@ class TestObjective(unittest.TestCase):
                 throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?) images/sec", line)
             self.assertIsNotNone(throughput)
         os.system("rm *.log")
- 
+
     def test_benchmark_with_custom_metric(self):
         os.system("python fake4.py --input_model={} 2>&1 | tee benchmark.log".format(self.graph_path))
         with open('benchmark.log', "r") as f:
@@ -267,6 +277,6 @@ class TestObjective(unittest.TestCase):
                 accuracy = re.search(r"Accuracy is\s+(\d+(\.\d+)?)", line)
             self.assertIsNotNone(accuracy)
         os.system("rm *.log")
- 
+
 if __name__ == "__main__":
     unittest.main()

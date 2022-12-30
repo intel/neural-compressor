@@ -1,6 +1,7 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { ShortcutInput } from 'ng-keyboard-shortcuts';
 import { ModelService } from '../services/model.service';
 
 @Component({
@@ -9,7 +10,9 @@ import { ModelService } from '../services/model.service';
   styleUrls: ['./profiling-form.component.scss', './../error/error.component.scss', './../home/home.component.scss',
     './../datasets/datasets.component.scss']
 })
-export class ProfilingFormComponent implements OnInit {
+export class ProfilingFormComponent implements OnInit, AfterViewInit {
+
+  shortcuts: ShortcutInput[] = [];
 
   profilingFormGroup: FormGroup;
   models = [];
@@ -52,6 +55,18 @@ export class ProfilingFormComponent implements OnInit {
       dataset_id: new FormControl(),
       num_threads: new FormControl(1),
     });
+  }
+
+  ngAfterViewInit(): void {
+    this.shortcuts.push(
+      {
+        key: 'ctrl + right',
+        preventDefault: true,
+        command: e => {
+          document.getElementsByName('next')[0].click();
+        }
+      },
+    );
   }
 
   addProfiling() {

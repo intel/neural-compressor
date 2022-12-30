@@ -10,6 +10,8 @@ pr:
     include:
     - neural_compressor/ux
     - test/ux
+    - setup.py
+    - .azure-pipelines/scripts/ut
 
 pool: ICX-16C
 

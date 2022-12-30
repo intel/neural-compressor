@@ -26,7 +26,8 @@ Intel Extension for Tensorflow is mandatory to be installed for quantizing the m
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
-For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
+Please refer to the [Installation Guides](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html) for latest Intel GPU driver installation.
+For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers).
 
 #### Quantizing the model on Intel CPU(Experimental)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
@@ -49,7 +50,6 @@ bash run_tuning.sh \
     --dataset_location=$DATASET_DIR \
     --output_model=$OUTPUT_MODEL \
     --file_out=$OUTPUT_TRANSLATION_FILE \
-    --config=$CONFIG_FILE \
     --batch_size=$BATCH_SIZE \
     --warmup_steps=$WARMUPS \
     --bleu_variant=$VARIANT \
@@ -58,12 +58,12 @@ bash run_tuning.sh \
 ```
 ### Run Benchmark:
 ```
-# benchmark mode: only get performance
+# performance mode: get performance
 bash run_benchmark.sh \
     --input_model=$INPUT_MODEL \
     --dataset_location=$DATASET_DIR \
     --file_out=$OUTPUT_TRANSLATION_FILE \
-    --mode=benchmark \
+    --mode=performance \
     --batch_size=$BATCH_SIZE \
     --iters=$ITERATIONS \
     --warmup_steps=$WARMUPS \
@@ -73,7 +73,7 @@ bash run_benchmark.sh \
 ```
 
 ```
-# accuracy mode: get performance and accuracy
+# accuracy mode: get accuracy
 bash run_benchmark.sh \
     --input_model=$INPUT_MODEL \
     --dataset_location=$DATASET_DIR \
@@ -91,7 +91,6 @@ Where (Default values are shown in the square brackets):
    * $DATASET_DIR ["./transformer_uniform_data"]-- The path to input dataset directory, which should include newstest2014.en, newstest2014.de and vocab.ende.32768
    * $OUTPUT_MODEL ["./output_transformer_mlperf_int8.pb"]-- The user-specified export path to the output INT8 quantized model
    * $OUTPUT_TRANSLATION_FILE ["./output_translation_result.txt"] -- The file path to save model translation result, only the most recent translation result will be saved
-   * $CONFIG_FILE ["./transformer_lt_mlperf.yaml"]-- The path to quantization configuration .yaml file to load for tuning
    * $BATCH_SIZE [64]-- The batch size for model inference
    * $ITERATIONS [-1]-- The user-defined total inference iterations in benchmark mode. If it is -1, it means to run the entire dataset
    * $WARMUPS [10]-- The number of warmup steps before benchmarking the model
@@ -105,7 +104,7 @@ Details of enabling Intel® Neural Compressor on Transformer_LT_mlperf for Tenso
 
 This is a tutorial of how to enable Transformer_LT_mlperf model with Intel® Neural Compressor.
 ## User Code Analysis
-1. User specifies fp32 *model*, calibration dataset *q_dataloader*, evaluation dataset *eval_dataloader* and metric in tuning.metric field of model-specific yaml config file.
+1. User specifies fp32 *model*, calibration dataset *q_dataloader*, evaluation dataset *eval_dataloader* and metric.
 
 2. User specifies fp32 *model*, calibration dataset *q_dataloader* and a custom *eval_func* which encapsulates the evaluation dataset and metric by itself.
 
@@ -131,51 +130,54 @@ class Dataset(object):
 ### Evaluation Part Adaption
 We evaluate the model with BLEU score, its source: https://github.com/IntelAI/models/blob/master/models/language_translation/tensorflow/transformer_mlperf/inference/fp32/transformer/compute_bleu.py
 
-### Write Yaml config file
-In examples directory, there is a transformer_lt_mlperf.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The transformer_lt_mlperf_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
+### Quantization Config
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
 
-```yaml
-model:
-  name: transformer_lt_mlperf
-  framework: tensorflow
-  inputs: input_tokens
-  outputs: model/Transformer/strided_slice_15
-
-device: cpu                                          # optional. default value is cpu, other value is gpu.
-
-quantization:
-  calibration:
-    sampling_size: 500
-  model_wise:
-    weight:
-      granularity: per_channel
-
-tuning:
-  accuracy_criterion:
-    relative: 0.01
-  exit_policy:
-    timeout: 0
-    max_trials: 100
-  random_seed: 9527
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    inputs=['input_tokens'],
+    outputs=['model/Transformer/strided_slice_15'],
+    ...
+    )
 ```
 
-Here we set the input tensor and output tensors name into *inputs* and *outputs* field.
+Here we set the input tensor and output tensors name into *inputs* and *outputs* args.
 In this case we calibrate and quantize the model, and use our calibration dataloader initialized from a 'Dataset' object.
 
 ### Code update
 After prepare step is done, we add tune code to generate quantized model.
 
+#### Tune
 ```python
-from neural_compressor.experimental import Quantization, common
-quantizer = Quantization(FLAGS.config)
-dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
-quantizer.calib_dataloader = common.DataLoader(dataset,
-                                               collate_fn = collate_fn,
-                                               batch_size = FLAGS.batch_size)
-quantizer.model = common.Model(graph)
-quantizer.eval_func = eval_func
-q_model = quantizer.fit()
-q_model.save(FLAGS.output_model)
+    graph = load_graph(FLAGS.input_graph)
+    from neural_compressor import quantization
+    from neural_compressor.config import PostTrainingQuantConfig
+    from neural_compressor.data.dataloaders.dataloader import DataLoader
+    dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
+    calib_dataloader = DataLoader(dataset = dataset,
+                                  framework ='tensorflow',
+                                  collate_fn = collate_fn,
+                                  batch_size = FLAGS.batch_size)
+                                    
+    conf = PostTrainingQuantConfig(inputs=['input_tokens'],
+                                   outputs=['model/Transformer/strided_slice_15'],
+                                   calibration_sampling_size=[500])       
+    q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
+                eval_func=eval_func)
+    try:
+        q_model.save(FLAGS.output_model)
+    except Exception as e:
+        tf.compat.v1.logging.error("Failed to save model due to {}".format(str(e)))
 ```
-
-The Intel® Neural Compressor quantizer.fit() function will return a best quantized model under time constraint.
+#### Benchmark
+```python
+    from neural_compressor.benchmark import fit
+    from neural_compressor.config import BenchmarkConfig
+    if FLAGS.mode == 'performance':
+        fit(graph, conf=BenchmarkConfig(), b_func=eval_func)
+    elif FLAGS.mode == 'accuracy':
+        eval_func(graph)
+```
+The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.

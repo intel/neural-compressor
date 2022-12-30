@@ -77,7 +77,7 @@ class TestQuantizeInput(unittest.TestCase):
 
             framework_specific_info = {'device': 'cpu', 'approach': 'post_training_static_quant', \
                 'random_seed': 1978, 'inputs': ['input'], 'outputs': ['op_to_store'], \
-                    'workspace_path': 'saved'}
+                    'workspace_path': 'saved', 'format': 'default', 'backend': 'default'}
 
             quantize_input_graph, _ = TensorFlowAdaptor(framework_specific_info).quantize_input(q_model.graph)
             Not_found_QuantizedV2 = True

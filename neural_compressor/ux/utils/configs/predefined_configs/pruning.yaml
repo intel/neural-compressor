@@ -1,0 +1,25 @@
+pruning:
+  train:
+    epoch: 40
+    optimizer:
+      Adam:
+        learning_rate: 1e-06
+        beta_1: 0.9
+        beta_2: 0.999
+        epsilon: 1e-07
+        amsgrad: False
+    criterion:
+      SparseCategoricalCrossentropy:
+        reduction: sum_over_batch_size
+        from_logits: False
+  approach:
+    weight_compression:
+      initial_sparsity: 0.0
+      target_sparsity: 0.54
+      start_epoch: 0
+      end_epoch: 19
+      pruners:
+        - !Pruner
+            start_epoch: 0
+            end_epoch: 19
+            prune_type: basic_magnitude

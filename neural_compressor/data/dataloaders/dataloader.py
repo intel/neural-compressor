@@ -15,13 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Built-in dataloaders for multiple framework backends."""
+
 from neural_compressor.experimental.data.dataloaders import DATALOADERS
 
 # THIS API IS TO BE DEPRECATED!
 class DataLoader(object):
     """Entrance of all configured DataLoaders. Will dispatch the DataLoaders to framework
        specific one. Users will be not aware of the dispatching, and the Interface is unified.
-
     """
 
     def __new__(cls, framework, dataset, batch_size=1, collate_fn=None,

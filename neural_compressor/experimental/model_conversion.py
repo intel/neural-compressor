@@ -17,20 +17,14 @@
 
 """Helps convert one model format to another."""
 
-import pickle
-import random
 import tempfile
-import sys
 import datetime
-import numpy as np
 import yaml
 from neural_compressor.adaptor import FRAMEWORKS
 from ..conf.config import Conf
 from ..conf.dotdict import deep_get, deep_set, DotDict
-from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader, create_eval_func
-from ..utils.utility import CpuInfo, set_backend
 from .common import Model as NCModel
 from ..model import BaseModel
 
@@ -85,8 +79,6 @@ class ModelConversion():
         else:
             self.conf = None
 
-        set_backend(self.framework)
-
     def __call__(self):
         """Execute model conversion process.
 
@@ -104,6 +96,8 @@ class ModelConversion():
         cfg = self.conf.usr_cfg
         framework_specific_info.update(
             {'name': cfg.model.name,
+             'backend': 'default',
+             'format': 'default',
              'device': cfg.device,
              'fake_quant': True,
              'inputs': cfg.model.inputs,
@@ -157,13 +151,13 @@ class ModelConversion():
         """Return dataset.
 
         Args:
-            dataset_typ: dataset type
+            dataset_type: dataset type
 
         Returns:
             class: dataset class
         """
-        from .data import DATASETS
-        return DATASETS(self.framework)[dataset_type](*args, **kwargs)
+        from .data import Datasets
+        return Datasets(self.framework)[dataset_type](*args, **kwargs)
 
     @property
     def source(self):
@@ -203,20 +197,20 @@ class ModelConversion():
         in yaml file or set postprocess and metric cls. Notice evaluation dataloader will be 
         used to generate data for model inference, make sure the input data can be feed to model.
 
-           Args:
-               dataloader(generator): user are supported to set a user defined dataloader
-                                      which meet the requirements that can yield tuple of
-                                      (input, label)/(input, _) batched data.
-                                      Another good practice is to use neural_compressor.common.DataLoader
-                                      to initialize a neural_compressor dataloader object.
-                                      Notice neural_compressor.common.DataLoader is just a wrapper of the
-                                      information needed to build a dataloader, it can't yield
-                                      batched data and only in this setter method
-                                      a 'real' eval_dataloader will be created,
-                                      the reason is we have to know the framework info
-                                      and only after the Quantization object created then
-                                      framework infomation can be known. Future we will support
-                                      creating iterable dataloader from neural_compressor.common.DataLoader
+        Args:
+            dataloader(generator): user are supported to set a user defined dataloader
+                                    which meet the requirements that can yield tuple of
+                                    (input, label)/(input, _) batched data.
+                                    Another good practice is to use neural_compressor.common.DataLoader
+                                    to initialize a neural_compressor dataloader object.
+                                    Notice neural_compressor.common.DataLoader is just a wrapper of the
+                                    information needed to build a dataloader, it can't yield
+                                    batched data and only in this setter method
+                                    a 'real' eval_dataloader will be created,
+                                    the reason is we have to know the framework info
+                                    and only after the Quantization object created then
+                                    framework infomation can be known. Future we will support
+                                    creating iterable dataloader from neural_compressor.common.DataLoader
 
         """
         from .common import _generate_common_dataloader
@@ -276,7 +270,7 @@ class ModelConversion():
         postprocess(if have) as inputs, neural_compressor built-in metric always take
         (predictions, labels) as inputs for update,
         and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
-        or user defined metric object
+        or user defined metric object.
 
         Args:
             user_metric(neural_compressor.common.Metric): user_metric should be object initialized from
@@ -304,7 +298,7 @@ class ModelConversion():
             self._metric = user_metric
 
     @property
-    def postprocess(self, user_postprocess):
+    def postprocess(self):
         """Check postprocess."""
         assert False, 'Should not try to get the value of `postprocess` attribute.'
         return None
@@ -318,10 +312,10 @@ class ModelConversion():
         user_postprocess.postprocess_cls should be sub_class of neural_compressor.data.BaseTransform.
 
         Args:
-            user_postprocess(neural_compressor.common.Postprocess):
-                user_postprocess should be object initialized from neural_compressor.common.Postprocess,
-                in this method the user_postprocess.postprocess_cls will be
-                registered to specific frameworks and initialized.
+            user_postprocess(neural_compressor.common.Postprocess):user_postprocess should be 
+                            object initialized from neural_compressor.common.Postprocess,
+                            in this method the user_postprocess.postprocess_cls will be
+                            registered to specific frameworks and initialized.
 
         """
         from .common import Postprocess as NCPostprocess

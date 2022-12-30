@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Strip Equivalent Nodes Graph Rewriter."""
 
 from neural_compressor.utils.utility import dump_elapsed_time
 from ..graph_base import GraphRewriterBase
@@ -23,12 +23,15 @@ from neural_compressor.adaptor.tf_utils.util import strip_equivalent_nodes
 from neural_compressor.utils import logger
 
 class StripEquivalentNodesOptimizer(GraphRewriterBase):
+    """Remove the equivalent nodes which have the same inputs and attributes."""
     def __init__(self, model, output_node_names):
+        """Initilization."""
         super().__init__(model)
         self.output_node_names = output_node_names
 
     @dump_elapsed_time("Pass StripEquivalentNodesOptimizer")
     def do_transformation(self):
+        """Strip the equivalent nodes in the graph."""
         self.model = fix_ref_type_of_graph_def(self.model)
         iter_num = 0
         replaced_nodes_type = True

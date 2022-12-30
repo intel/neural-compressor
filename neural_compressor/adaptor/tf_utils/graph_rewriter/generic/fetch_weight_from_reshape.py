@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Featch Weight from Reshape Graph Rewriter."""
 
 
 from ..graph_base import GraphRewriterBase
@@ -25,16 +25,17 @@ from tensorflow.python.framework import dtypes
 import numpy as np
 
 class FetchWeightFromReshapeOptimizer(GraphRewriterBase):
+    """Handle the Pack + Reshape + Conv2D fusion pattern."""
+
     @dump_elapsed_time("Pass FetchWeightFromReshapeOptimizer")
     def do_transformation(self):
-        """ fetch weight of Conv2D from Pack+Reshape+Conv2D pattern
+        """Fetch weight of Conv2D from Pack+Reshape+Conv2D pattern.
+
         Args:
           input_graph_def (graphdef): graphdef object
         Returns:
            [graphdef]: optimized graph
         """
-
-
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 
@@ -53,7 +54,7 @@ class FetchWeightFromReshapeOptimizer(GraphRewriterBase):
             for index in range(pack_node.attr["N"].i):
                 values_node =  graph_info[pack_node.input[index]].node
                 if values_node.op == 'Const':
-                    unpack_values.append(Helper.values_from_const(values_node))            
+                    unpack_values.append(Helper.values_from_const(values_node))
             input_reshape = np.stack(unpack_values, axis=pack_node.attr["axis"].i)
             if shape_node.op != 'Const':
                 continue

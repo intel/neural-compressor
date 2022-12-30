@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Built-in dataloaders for multiple framework backends."""
 
 from .tensorflow_dataloader import TensorflowDataLoader
 from .mxnet_dataloader import MXNetDataLoader
@@ -23,6 +25,7 @@ from .default_dataloader import DefaultDataLoader
 
 DATALOADERS = {"tensorflow": TensorflowDataLoader,
                "tensorflow_itex": TensorflowDataLoader,
+               "keras": TensorflowDataLoader,
                "mxnet": MXNetDataLoader,
                "pytorch": PyTorchDataLoader,
                "pytorch_ipex": PyTorchDataLoader,

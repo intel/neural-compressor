@@ -15,87 +15,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The basic tuning strategy."""
+
 import copy
 import numpy as np
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 
-from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
-from .st_utils.tuning_structs import OpTuningConfig
-from .st_utils.tuning_space import TUNING_ITEMS_LST
+from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
+from .utils.tuning_structs import OpTuningConfig
+from .utils.tuning_space import TUNING_ITEMS_LST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
-    """The basic tuning strategy which tunes the low precision model with below order.
-
-    1. modelwise tuning for all quantizable ops.
-    2. fallback tuning from bottom to top to decide the priority of which op has biggest impact
-       on accuracy.
-    3. incremental fallback tuning by fallbacking multiple ops with the order got from #2.
-
-    Args:
-        model (object):                        The FP32 model specified for low precision tuning.
-        conf (Class):                          The Conf class instance initialized from user yaml
-                                               config file.
-        q_dataloader (generator):              Data loader for calibration, mandatory for
-                                               post-training quantization.
-                                               It is iterable and should yield a tuple (input,
-                                               label) for calibration dataset containing label,
-                                               or yield (input, _) for label-free calibration
-                                               dataset. The input could be a object, list, tuple or
-                                               dict, depending on user implementation, as well as
-                                               it can be taken as model input.
-        q_func (function, optional):           Reserved for future use.
-        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
-                                               and should yield a tuple of (input, label).
-                                               The input could be a object, list, tuple or dict,
-                                               depending on user implementation, as well as it can
-                                               be taken as model input. The label should be able
-                                               to take as input of supported metrics. If this
-                                               parameter is not None, user needs to specify
-                                               pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" parameter as None.
-                                               Tuner will combine model, eval_dataloader and
-                                               pre-defined metrics to run evaluation process.
-        eval_func (function, optional):        The evaluation function provided by user.
-                                               This function takes model as parameter, and
-                                               evaluation dataset and metrics should be
-                                               encapsulated in this function implementation and
-                                               outputs a higher-is-better accuracy scalar value.
-
-                                               The pseudo code should be something like:
-
-                                               def eval_func(model):
-                                                    input, label = dataloader()
-                                                    output = model(input)
-                                                    accuracy = metric(output, label)
-                                                    return accuracy
-        dicts (dict, optional):                The dict containing resume information.
-                                               Defaults to None.
-
-    """
-
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        super(
-            BasicTuneStrategy,
-            self).__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
+    """The basic tuning strategy."""
 
     def next_tune_cfg(self):
-        """The generator of yielding next tuning config to traverse by concrete strategies
-           according to last tuning result.
+        """Generate and yield the next tuning config with below order.
+        
+            1. OP Type Wise Tuning
+            2. Fallback OP One by One
+            3. Fallback Multiple OPs Accumulated
 
         Yields:
-            tune_config (dict): It's a dict containing the tuning configuration to run.
+            tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         from copy import deepcopy
         tuning_space = self.tuning_space
@@ -130,7 +74,7 @@ class BasicTuneStrategy(TuneStrategy):
 
                 new_op_tuning_cfg = deepcopy(self.cur_best_tuning_cfg)
                 for item in static_dynamic_items:
-                    new_op_tuning_cfg[item.name] = self.initial_dynamic_cfg_based_on_static_cfg(
+                    new_op_tuning_cfg[item.name] = self._initial_dynamic_cfg_based_on_static_cfg(
                                                    new_op_tuning_cfg[item.name])
                 new_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield new_op_tuning_cfg
@@ -157,7 +101,7 @@ class BasicTuneStrategy(TuneStrategy):
                     op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
 
 
-                # do accumulated fallback according to the order in the previous stage
+                # Fallback OPs accumulated according to the order in the previous stage
                 if len(op_fallback_acc_impact) > 0:
                     ordered_ops = sorted(op_fallback_acc_impact.keys(), 
                                          key=lambda key: op_fallback_acc_impact[key],
@@ -172,7 +116,7 @@ class BasicTuneStrategy(TuneStrategy):
                         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                         yield op_tuning_cfg
                         
-    def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
+    def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
         op_state = op_static_cfg.get_state()
         op_name = op_static_cfg.op_name
         op_type = op_static_cfg.op_type

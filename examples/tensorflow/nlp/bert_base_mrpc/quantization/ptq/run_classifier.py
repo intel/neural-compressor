@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2018 The Google AI Language Team Authors.
+# Copyright 2022 The Google AI Language Team Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ from datetime import timedelta
 import collections
 import csv
 import os
+import numpy as np
 import modeling as modeling
 import optimization as optimization
 import time
@@ -39,10 +40,6 @@ FLAGS = flags.FLAGS
 flags.DEFINE_bool(
     "tune", False,
     "neural_compressor tune the model.")
-
-flags.DEFINE_string(
-    "config", None,
-    "neural_compressor config for the model.")
 
 flags.DEFINE_string(
     "input_model", None,
@@ -221,7 +218,6 @@ class InputExample(object):
 
   def __init__(self, guid, text_a, text_b=None, label=None):
     """Constructs a InputExample.
-
     Args:
       guid: Unique id for the example.
       text_a: string. The untokenized text of the first sequence. For single
@@ -239,12 +235,10 @@ class InputExample(object):
 
 class PaddingInputExample(object):
   """Fake example so the num input examples is a multiple of the batch size.
-
   When running eval/predict on the TPU, we need to pad the number of examples
   to be a multiple of the batch size, because the TPU requires a fixed batch
   size. The alternative is to drop the last batch, which is bad because it means
   the entire output data won't be generated.
-
   We use this class instead of `None` because treating `None` as padding
   battches could cause silent errors.
   """
@@ -855,273 +849,331 @@ def input_fn_builder(input_file, seq_length, is_training, drop_remainder):
 
 def convert_examples_to_features(examples, label_list, max_seq_length,
                                  tokenizer, output_file):
-  """Convert a set of `InputExample`s to a list of `InputFeatures`."""
-  writer = tf.compat.v1.python_io.TFRecordWriter(output_file)
+    """Convert a set of `InputExample`s to a list of `InputFeatures`."""
+    writer = tf.compat.v1.python_io.TFRecordWriter(output_file)
 
-  for (ex_index, example) in enumerate(examples):
-    if ex_index % 10000 == 0:
-      tf.compat.v1.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
+    for (ex_index, example) in enumerate(examples):
+        if ex_index % 10000 == 0:
+            tf.compat.v1.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
 
-    feature = convert_single_example(ex_index, example, label_list,
-                                     max_seq_length, tokenizer)
+        feature = convert_single_example(ex_index, example, label_list,
+                                        max_seq_length, tokenizer)
 
-    def create_int_feature(values):
-      f = tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
-      return f
+        def create_int_feature(values):
+            f = tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
+            return f
 
-    features = collections.OrderedDict()
-    features["input_ids"] = create_int_feature(feature.input_ids)
-    features["input_mask"] = create_int_feature(feature.input_mask)
-    features["segment_ids"] = create_int_feature(feature.segment_ids)
-    features["label_ids"] = create_int_feature([feature.label_id])
-    features["is_real_example"] = create_int_feature(
-        [int(feature.is_real_example)])
+        features = collections.OrderedDict()
+        features["input_ids"] = create_int_feature(feature.input_ids)
+        features["input_mask"] = create_int_feature(feature.input_mask)
+        features["segment_ids"] = create_int_feature(feature.segment_ids)
+        features["label_ids"] = create_int_feature([feature.label_id])
+        features["is_real_example"] = create_int_feature(
+            [int(feature.is_real_example)])
 
-    tf_example = tf.train.Example(features=tf.train.Features(feature=features))
-    writer.write(tf_example.SerializeToString())
-  writer.close()
+        tf_example = tf.train.Example(features=tf.train.Features(feature=features))
+        writer.write(tf_example.SerializeToString())
+    writer.close()
 
 def main(_):
-  tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
-  processors = {
-      "cola": ColaProcessor,
-      "mnli": MnliProcessor,
-      "mrpc": MrpcProcessor,
-      "xnli": XnliProcessor,
-  }
+    processors = {
+        "cola": ColaProcessor,
+        "mnli": MnliProcessor,
+        "mrpc": MrpcProcessor,
+        "xnli": XnliProcessor,
+    }
 
-  tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
-                                                FLAGS.init_checkpoint)
+    tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
+                                                    FLAGS.init_checkpoint)
 
-  bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
+    bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
 
-  if FLAGS.max_seq_length > bert_config.max_position_embeddings:
-    raise ValueError(
-        "Cannot use sequence length %d because the BERT model "
-        "was only trained up to sequence length %d" %
-        (FLAGS.max_seq_length, bert_config.max_position_embeddings))
+    if FLAGS.max_seq_length > bert_config.max_position_embeddings:
+        raise ValueError(
+            "Cannot use sequence length %d because the BERT model "
+            "was only trained up to sequence length %d" %
+            (FLAGS.max_seq_length, bert_config.max_position_embeddings))
 
-  tf.compat.v1.gfile.MakeDirs(FLAGS.output_dir)
+    tf.compat.v1.gfile.MakeDirs(FLAGS.output_dir)
 
-  task_name = FLAGS.task_name.lower()
+    task_name = FLAGS.task_name.lower()
 
-  if task_name not in processors:
-    raise ValueError("Task not found: %s" % (task_name))
+    if task_name not in processors:
+        raise ValueError("Task not found: %s" % (task_name))
 
-  processor = processors[task_name]()
+    processor = processors[task_name]()
 
-  label_list = processor.get_labels()
+    label_list = processor.get_labels()
 
-  tokenizer = tokenization.FullTokenizer(
-      vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
+    tokenizer = tokenization.FullTokenizer(
+        vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
 
-  tpu_cluster_resolver = None
-  if FLAGS.use_tpu and FLAGS.tpu_name:
-    tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
-        FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
+    tpu_cluster_resolver = None
+    if FLAGS.use_tpu and FLAGS.tpu_name:
+        tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
+            FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
-  is_per_host = tf.compat.v1.estimator.tpu.InputPipelineConfig.PER_HOST_V2
-  session_config = tf.compat.v1.ConfigProto(inter_op_parallelism_threads=FLAGS.num_inter_threads,
-                                            intra_op_parallelism_threads=FLAGS.num_intra_threads)
-  run_config = tf.compat.v1.estimator.tpu.RunConfig(
-      cluster=tpu_cluster_resolver,
-      master=FLAGS.master,
-      model_dir=FLAGS.output_dir,
-      save_checkpoints_steps=FLAGS.save_checkpoints_steps,
-      tpu_config=tf.compat.v1.estimator.tpu.TPUConfig(
-          iterations_per_loop=FLAGS.iterations_per_loop,
-          num_shards=FLAGS.num_tpu_cores,
-          per_host_input_for_training=is_per_host),
-      session_config=session_config)
+    is_per_host = tf.compat.v1.estimator.tpu.InputPipelineConfig.PER_HOST_V2
+    session_config = tf.compat.v1.ConfigProto(inter_op_parallelism_threads=FLAGS.num_inter_threads,
+                                                intra_op_parallelism_threads=FLAGS.num_intra_threads)
+    run_config = tf.compat.v1.estimator.tpu.RunConfig(
+        cluster=tpu_cluster_resolver,
+        master=FLAGS.master,
+        model_dir=FLAGS.output_dir,
+        save_checkpoints_steps=FLAGS.save_checkpoints_steps,
+        tpu_config=tf.compat.v1.estimator.tpu.TPUConfig(
+            iterations_per_loop=FLAGS.iterations_per_loop,
+            num_shards=FLAGS.num_tpu_cores,
+            per_host_input_for_training=is_per_host),
+        session_config=session_config)
 
-  train_examples = None
-  num_train_steps = None
-  num_warmup_steps = None
-  if FLAGS.do_train:
-    train_examples = processor.get_train_examples(FLAGS.data_dir)
-    num_train_steps = int(
-        len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs)
-    num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion)
+    train_examples = None
+    num_train_steps = None
+    num_warmup_steps = None
+    if FLAGS.do_train:
+        train_examples = processor.get_train_examples(FLAGS.data_dir)
+        num_train_steps = int(
+            len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs)
+        num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion)
 
-  model_fn = model_fn_builder(
-      bert_config=bert_config,
-      num_labels=len(label_list),
-      init_checkpoint=FLAGS.init_checkpoint,
-      learning_rate=FLAGS.learning_rate,
-      num_train_steps=num_train_steps,
-      num_warmup_steps=num_warmup_steps,
-      use_tpu=FLAGS.use_tpu,
-      use_one_hot_embeddings=FLAGS.use_tpu,)
+    model_fn = model_fn_builder(
+        bert_config=bert_config,
+        num_labels=len(label_list),
+        init_checkpoint=FLAGS.init_checkpoint,
+        learning_rate=FLAGS.learning_rate,
+        num_train_steps=num_train_steps,
+        num_warmup_steps=num_warmup_steps,
+        use_tpu=FLAGS.use_tpu,
+        use_one_hot_embeddings=FLAGS.use_tpu,)
 
 
-  # If TPU is not available, this will fall back to normal Estimator on CPU
-  # or GPU.
-  estimator = tf.compat.v1.estimator.tpu.TPUEstimator(
-      use_tpu=FLAGS.use_tpu,
-      model_fn=model_fn,
-      config=run_config,
-      train_batch_size=FLAGS.train_batch_size,
-      eval_batch_size=FLAGS.eval_batch_size,
-      predict_batch_size=FLAGS.predict_batch_size)
+    # If TPU is not available, this will fall back to normal Estimator on CPU
+    # or GPU.
+    estimator = tf.compat.v1.estimator.tpu.TPUEstimator(
+        use_tpu=FLAGS.use_tpu,
+        model_fn=model_fn,
+        config=run_config,
+        train_batch_size=FLAGS.train_batch_size,
+        eval_batch_size=FLAGS.eval_batch_size,
+        predict_batch_size=FLAGS.predict_batch_size)
 
-  if FLAGS.do_train:
-    train_file = os.path.join(FLAGS.output_dir, "train.tf_record")
-    file_based_convert_examples_to_features(
-        train_examples, label_list, FLAGS.max_seq_length, tokenizer, train_file)
-    tf.compat.v1.logging.info("***** Running training *****")
-    tf.compat.v1.logging.info("  Num examples = %d", len(train_examples))
-    tf.compat.v1.logging.info("  Batch size = %d", FLAGS.train_batch_size)
-    tf.compat.v1.logging.info("  Num steps = %d", num_train_steps)
-    train_input_fn = file_based_input_fn_builder(
-        input_file=train_file,
-        seq_length=FLAGS.max_seq_length,
-        is_training=True,
-        drop_remainder=True)
-    estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
+    if FLAGS.do_train:
+        train_file = os.path.join(FLAGS.output_dir, "train.tf_record")
+        file_based_convert_examples_to_features(
+            train_examples, label_list, FLAGS.max_seq_length, tokenizer, train_file)
+        tf.compat.v1.logging.info("***** Running training *****")
+        tf.compat.v1.logging.info("  Num examples = %d", len(train_examples))
+        tf.compat.v1.logging.info("  Batch size = %d", FLAGS.train_batch_size)
+        tf.compat.v1.logging.info("  Num steps = %d", num_train_steps)
+        train_input_fn = file_based_input_fn_builder(
+            input_file=train_file,
+            seq_length=FLAGS.max_seq_length,
+            is_training=True,
+            drop_remainder=True)
+        estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 
-  if FLAGS.do_eval:
+    if FLAGS.do_eval:
+        eval_examples = processor.get_dev_examples(FLAGS.data_dir)
+        num_actual_eval_examples = len(eval_examples)
+        if FLAGS.use_tpu:
+            # TPU requires a fixed batch size for all batches, therefore the number
+            # of examples must be a multiple of the batch size, or else examples
+            # will get dropped. So we pad with fake examples which are ignored
+            # later on. These do NOT count towards the metric (all tf.metrics
+            # support a per-instance weight, and these get a weight of 0.0).
+            while len(eval_examples) % FLAGS.eval_batch_size != 0:
+                eval_examples.append(PaddingInputExample())
+
+        eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
+        file_based_convert_examples_to_features(
+            eval_examples, label_list, FLAGS.max_seq_length, tokenizer, eval_file)
+
+        tf.compat.v1.logging.info("***** Running evaluation *****")
+        tf.compat.v1.logging.info("  Num examples = %d (%d actual, %d padding)",
+                        len(eval_examples), num_actual_eval_examples,
+                        len(eval_examples) - num_actual_eval_examples)
+        tf.compat.v1.logging.info("  Batch size = %d", FLAGS.eval_batch_size)
+
+        # This tells the estimator to run through the entire set.
+        eval_steps = None
+        # However, if running eval on the TPU, you will need to specify the
+        # number of steps.
+        if FLAGS.use_tpu:
+            assert len(eval_examples) % FLAGS.eval_batch_size == 0
+        eval_steps = int(len(eval_examples) // FLAGS.eval_batch_size) + 1
+
+        eval_drop_remainder = True if FLAGS.use_tpu else False
+        eval_input_fn = file_based_input_fn_builder(
+            input_file=eval_file,
+            seq_length=FLAGS.max_seq_length,
+            is_training=False,
+            drop_remainder=eval_drop_remainder)
+
+        start = time.time()
+        result = estimator.evaluate(input_fn=eval_input_fn, steps=eval_steps, hooks=[LoggerHook()])
+        end = time.time() - start
+        result['global_step'] = str(eval_steps)
+        result['latency_total'] = str(end)
+        result['latency_per_step'] = str(end/eval_steps)
+        if FLAGS.eval_batch_size != 1:
+            result['samples_per_sec'] = str(FLAGS.eval_batch_size/(end/eval_steps))
+
+        output_eval_file = os.path.join(FLAGS.output_dir, "eval_results.txt")
+        with tf.compat.v1.gfile.GFile(output_eval_file, "w") as writer:
+            tf.compat.v1.logging.info("***** Eval results *****")
+            for key in sorted(result.keys()):
+                tf.compat.v1.logging.info("  %s = %s", key, str(result[key]))
+                writer.write("%s = %s\n" % (key, str(result[key])))
+
+    # BELOW IS Neural Compressor TUNING AND BENCHMARK CODE
+
+    class Dataset(object):
+        def __init__(self, file_name, batch_size):
+                self.file_name = file_name
+                self.batch_size = batch_size
+
+        def __getitem__(self, idx):
+                return (self.file_name, self.batch_size), 0
+
+        def __len__(self):
+                return 1
+
+    def collate_fn(batch):
+        """Puts each data field into a pd frame with outer dimension batch size"""
+        elem = batch[0]
+        return elem
+
+    from neural_compressor.metric import METRICS
+    class Accuracy(object):
+        def __init__(self):
+                self.metric = METRICS('tensorflow')['Accuracy']()
+            
+        # it's ugly that the label is in the iterator
+        def update(self, preds, label):
+                logits, labels = preds
+                self.metric.update(logits, labels)
+
+        def reset(self):
+                self.metric.reset()
+
+        def result(self):
+                return self.metric.result()
+
     eval_examples = processor.get_dev_examples(FLAGS.data_dir)
-    num_actual_eval_examples = len(eval_examples)
-    if FLAGS.use_tpu:
-      # TPU requires a fixed batch size for all batches, therefore the number
-      # of examples must be a multiple of the batch size, or else examples
-      # will get dropped. So we pad with fake examples which are ignored
-      # later on. These do NOT count towards the metric (all tf.metrics
-      # support a per-instance weight, and these get a weight of 0.0).
-      while len(eval_examples) % FLAGS.eval_batch_size != 0:
-        eval_examples.append(PaddingInputExample())
-
     eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
-    file_based_convert_examples_to_features(
-        eval_examples, label_list, FLAGS.max_seq_length, tokenizer, eval_file)
+    dataset = Dataset(eval_file, FLAGS.eval_batch_size)
+    from neural_compressor.model.model import Model
+    from neural_compressor.model.base_model import BaseModel
 
-    tf.compat.v1.logging.info("***** Running evaluation *****")
-    tf.compat.v1.logging.info("  Num examples = %d (%d actual, %d padding)",
-                    len(eval_examples), num_actual_eval_examples,
-                    len(eval_examples) - num_actual_eval_examples)
-    tf.compat.v1.logging.info("  Batch size = %d", FLAGS.eval_batch_size)
+    def evaluate(model):
+        """Custom evaluate function to estimate the accuracy of the bert model.
 
-    # This tells the estimator to run through the entire set.
-    eval_steps = None
-    # However, if running eval on the TPU, you will need to specify the
-    # number of steps.
-    if FLAGS.use_tpu:
-      assert len(eval_examples) % FLAGS.eval_batch_size == 0
-    eval_steps = int(len(eval_examples) // FLAGS.eval_batch_size) + 1
+        Args:
+            model (tf.Graph_def): The input model graph
+            
+        Returns:
+            accuracy (float): evaluation result, the larger is better.
+        """
+        from neural_compressor.adaptor.tf_utils.util import iterator_sess_run
+        from neural_compressor.objective import Performance
+        if not isinstance(model, BaseModel):
+          model = Model(model)
+        model.input_tensor_names = ["input_file", "batch_size"]
+        model.output_tensor_names = ["loss/Softmax:0", "IteratorGetNext:3"]
+        input_tensor = model.input_tensor
+        output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
+                            model.output_tensor[0]
+        iteration = -1
+        if FLAGS.benchmark and FLAGS.mode == 'performance':
+            iteration = 100
+        metric = Accuracy()
+        measurer = Performance()
 
-    eval_drop_remainder = True if FLAGS.use_tpu else False
-    eval_input_fn = file_based_input_fn_builder(
+        def eval_func(dataloader):
+            warmup = 5
+            for idx, (inputs, labels) in enumerate(dataloader):
+                # dataloader should keep the order and len of inputs same with input_tensor
+                assert len(input_tensor) == len(inputs), \
+                    'inputs len must equal with input_tensor'
+                feed_dict = dict(zip(input_tensor, inputs))
+                predictions = iterator_sess_run(model.sess, model.iter_op, \
+                    feed_dict, output_tensor, iteration, measurer)
+                metric.update(predictions, labels)
+                if idx + 1 == iteration:
+                    break
+
+            latency_list = measurer.result_list()
+            latency = np.array(latency_list[warmup:]).mean() / FLAGS.eval_batch_size
+            return latency
+
+        from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
+        dataloader = DefaultDataLoader(dataset, collate_fn=collate_fn, batch_size=FLAGS.eval_batch_size)
+        latency = eval_func(dataloader)
+        if FLAGS.benchmark and FLAGS.mode == 'performance':
+            print("Batch size = {}".format(FLAGS.eval_batch_size))
+            print("Latency: {:.3f} ms".format(latency * 1000))
+            print("Throughput: {:.3f} images/sec".format(1. / latency))
+        acc = metric.result()
+        return acc 
+
+    convert_examples_to_features(
+        examples=eval_examples,
+        label_list=label_list,
+        max_seq_length=FLAGS.max_seq_length,
+        tokenizer=tokenizer,
+        output_file=eval_file)
+
+    estimator_input_fn = input_fn_builder(
         input_file=eval_file,
         seq_length=FLAGS.max_seq_length,
         is_training=False,
-        drop_remainder=eval_drop_remainder)
+        drop_remainder=False)
 
-    start = time.time()
-    result = estimator.evaluate(input_fn=eval_input_fn, steps=eval_steps, hooks=[LoggerHook()])
-    end = time.time() - start
-    result['global_step'] = str(eval_steps)
-    result['latency_total'] = str(end)
-    result['latency_per_step'] = str(end/eval_steps)
-    if FLAGS.eval_batch_size != 1:
-      result['samples_per_sec'] = str(FLAGS.eval_batch_size/(end/eval_steps))
+    from neural_compressor.model.tensorflow_model import get_model_type
+    try:
+        model_type = get_model_type(FLAGS.input_model)
+    except:
+        model_type = None
+    if model_type == 'frozen_pb':
+        model = FLAGS.input_model
+    else:
+        model = Model(estimator, input_fn=estimator_input_fn)
 
-    output_eval_file = os.path.join(FLAGS.output_dir, "eval_results.txt")
-    with tf.compat.v1.gfile.GFile(output_eval_file, "w") as writer:
-      tf.compat.v1.logging.info("***** Eval results *****")
-      for key in sorted(result.keys()):
-        tf.compat.v1.logging.info("  %s = %s", key, str(result[key]))
-        writer.write("%s = %s\n" % (key, str(result[key])))
+    if isinstance(model, BaseModel):
+        model = model.graph_def
 
-  # BELOW IS Neural Compressor TUNING AND BENCHMARK CODE
+    if FLAGS.tune:
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        config = PostTrainingQuantConfig(
+            inputs=["input_file", "batch_size"],
+            outputs=["loss/Softmax:0", "IteratorGetNext:3"],
+            calibration_sampling_size=[500],)
+        calib_dataloader=DataLoader(dataset=dataset, collate_fn=collate_fn, framework='tensorflow')
+        eval_dataloader=DataLoader(dataset=dataset, collate_fn=collate_fn, framework='tensorflow')
+        q_model = quantization.fit(model=model, conf=config, calib_dataloader=calib_dataloader,
+                        eval_dataloader=eval_dataloader, eval_metric=Accuracy())
 
-  class Dataset(object):
-      def __init__(self, file_name, batch_size):
-          self.file_name = file_name
-          self.batch_size = batch_size
+        if FLAGS.strip_iterator:
+            q_model.graph_def = strip_iterator(q_model.graph_def)
+        q_model.save(FLAGS.output_model)
+  
+    if FLAGS.benchmark:
+        assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
+            "Benchmark only supports performance or accuracy mode."
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
 
-      def __getitem__(self, idx):
-          return (self.file_name, self.batch_size), 0
-
-      def __len__(self):
-          return 1
-
-  def collate_fn(batch):
-      """Puts each data field into a pd frame with outer dimension batch size"""
-      elem = batch[0]
-      return elem
-
-  from neural_compressor.metric import METRICS
-  class Accuracy(object):
-      def __init__(self):
-          self.metric = METRICS('tensorflow')['Accuracy']()
-          
-      # it's ugly that the label is in the iterator
-      def update(self, preds, label):
-          logits, labels = preds
-          self.metric.update(logits, labels)
-
-      def reset(self):
-          self.metric.reset()
-
-      def result(self):
-          return self.metric.result()
-
-  if FLAGS.tune:
-
-      eval_examples = processor.get_dev_examples(FLAGS.data_dir)
-      eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
-
-      convert_examples_to_features(
-          examples=eval_examples,
-          label_list=label_list,
-          max_seq_length=FLAGS.max_seq_length,
-          tokenizer=tokenizer,
-          output_file=eval_file)
-
-      estimator_input_fn = input_fn_builder(
-          input_file=eval_file,
-          seq_length=FLAGS.max_seq_length,
-          is_training=False,
-          drop_remainder=False)
-
-      from neural_compressor.experimental import Quantization, common
-      quantizer = Quantization(FLAGS.config)
-      dataset = Dataset(eval_file, FLAGS.eval_batch_size)
-      quantizer.model = common.Model(estimator, input_fn=estimator_input_fn)
-      quantizer.calib_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
-      quantizer.eval_dataloader = common.DataLoader(dataset, collate_fn=collate_fn)
-      quantizer.metric = Accuracy()
-      q_model = quantizer.fit()
-      if FLAGS.strip_iterator:
-          q_model.graph_def = strip_iterator(q_model.graph_def)
-      q_model.save(FLAGS.output_model)
-
-  if FLAGS.benchmark:
-      eval_examples = processor.get_dev_examples(FLAGS.data_dir)
-      eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
-
-      from neural_compressor.experimental import Benchmark, common
-      evaluator = Benchmark(FLAGS.config)
-      dataset = Dataset(eval_file, FLAGS.eval_batch_size)
-      evaluator.b_dataloader = common.DataLoader(\
-          dataset, batch_size=FLAGS.eval_batch_size, collate_fn=collate_fn)
-      evaluator.metric = Accuracy()
-
-
-      from neural_compressor.model.model import get_model_type
-      model_type = get_model_type(FLAGS.input_model)
-      if model_type == 'frozen_pb':
-          evaluator.model = FLAGS.input_model
-      else:
-          estimator_input_fn = input_fn_builder(
-              input_file=eval_file,
-              seq_length=FLAGS.max_seq_length,
-              is_training=False,
-              drop_remainder=False)
-          evaluator.model = common.Model(estimator, input_fn=estimator_input_fn)
-      evaluator(FLAGS.mode)
-      
+        if FLAGS.mode == 'performance':
+            conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
+            fit(model, conf, b_func=evaluate)
+        else:
+            accuracy = evaluate(model)
+            print('Batch size = %d' % FLAGS.eval_batch_size)
+            print("Accuracy: %.5f" % accuracy)
 
 if __name__ == "__main__":
   flags.mark_flag_as_required("data_dir")

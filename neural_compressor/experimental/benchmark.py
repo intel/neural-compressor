@@ -30,7 +30,7 @@ from ..conf.config import BenchmarkConf
 from ..conf.dotdict import DotDict
 from ..utils import logger
 from ..utils import OPTIONS
-from ..utils.utility import set_backend, GLOBAL_STATE, MODE
+from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
 from ..model import BaseModel
@@ -166,7 +166,6 @@ class Benchmark(object):
             self.conf = BenchmarkConf(conf_fname_or_obj)
         if self.conf.usr_cfg.model.framework != 'NA':
             self.framework = self.conf.usr_cfg.model.framework.lower()
-            set_backend(self.framework)
 
     def __call__(self, mode='performance'):
         """Directly call a Benchmark object.
@@ -179,16 +178,10 @@ class Benchmark(object):
         """
         cfg = self.conf.usr_cfg
         assert cfg.evaluation is not None, 'benchmark evaluation filed should not be None...'
-        if self._b_func is None:
-            assert cfg.evaluation is not None, \
-                'You must pass b_func or benchmark evaluation filed should be set in config yaml file...'
-        # use first eval config in yaml if mode from __call__not same with yaml config
-        if not mode in cfg.evaluation:
-            mode = list(cfg.evaluation.keys())[0]
         assert sys.platform in ['linux', 'win32'], 'only support platform windows and linux...'
         set_all_env_var(deep_get(cfg, 'evaluation.{}.configs'.format(mode)))
-        # disable multi-instance for accuracy mode
-        if mode == "accuracy":
+        # disable multi-instance for accuracy mode or running bechmark on GPU device
+        if mode == "accuracy" or cfg.device == 'gpu':
             set_env_var('NC_ENV_CONF', True, overwrite_existing=True)
 
         logger.info("Start to run Benchmark.")
@@ -212,9 +205,9 @@ class Benchmark(object):
                 log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
                 with open(log, "r") as f:
                     for line in f:
-                        latency = re.search(r"Latency:\s+(\d+(\.\d+)?)", line)
+                        latency = re.search(r"[L,l]atency:\s+(\d+(\.\d+)?)", line)
                         latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
-                        throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?)", line)
+                        throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
                         throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
             assert len(latency_l)==len(throughput_l)==num_of_instance, \
                 "Multiple instance benchmark failed with some instance!"
@@ -232,13 +225,13 @@ class Benchmark(object):
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
 
-        if(get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
-            raise OSError('Currently no support on AMD with hyperthreads')
-        else:
+        if(sys.platform in ['linux'] and get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
+            raise OSError('Currently no support on ARM with hyperthreads')
+        elif sys.platform in ['linux']:
             bounded_threads = get_bounded_threads(get_core_ids(), get_threads(), get_physical_ids())
 
         for i in range(0, num_of_instance):
-            if get_architecture() == 'x86_64':
+            if sys.platform in ['linux'] and get_architecture() == 'x86_64':
                 core_list_idx = np.arange(0, cores_per_instance) + i * cores_per_instance
                 core_list = np.array(bounded_threads)[core_list_idx]
             else:
@@ -304,19 +297,22 @@ class Benchmark(object):
         GLOBAL_STATE.STATE = MODE.BENCHMARK
         framework_specific_info = {'device': cfg.device, \
                                    'approach': cfg.quantization.approach, \
-                                   'random_seed': cfg.tuning.random_seed}
+                                   'random_seed': cfg.tuning.random_seed,
+                                   'backend': cfg.model.get('backend', 'default'),
+                                   'format': cfg.model.get('quant_format', 'default')}
         framework = cfg.model.framework.lower()
         if 'tensorflow' in framework:
             framework_specific_info.update({"inputs": cfg.model.inputs, \
                                             "outputs": cfg.model.outputs, \
                                             "recipes": cfg.model.recipes, \
                                             'workspace_path': cfg.tuning.workspace.path})
+        if framework == 'keras':
+            framework_specific_info.update({'workspace_path': cfg.tuning.workspace.path})
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": self._b_dataloader})
-        if 'onnxrt' in framework.lower():
+        if 'onnx' in framework.lower():
             framework_specific_info.update(
-                                {"backend": framework.lower().split('_')[-1], \
-                                 'workspace_path': cfg.tuning.workspace.path, \
+                                 {'workspace_path': cfg.tuning.workspace.path, \
                                  'graph_optimization': OPTIONS[framework].graph_optimization})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
@@ -344,8 +340,9 @@ class Benchmark(object):
             b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
             self._b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
 
-        is_measure = True
+        is_measure = False
         if self._b_func is None:
+            is_measure = True
             self._b_func = create_eval_func(self.framework, \
                                     self._b_dataloader, \
                                     adaptor, \
@@ -354,7 +351,6 @@ class Benchmark(object):
                                     iteration=iteration)
         else:
             self._custom_b_func = True
-            is_measure = False
 
         objectives = [i.lower() for i in cfg.tuning.multi_objectives.objective] if \
             deep_get(cfg, 'tuning.multi_objectives') else [cfg.tuning.objective]
@@ -365,12 +361,14 @@ class Benchmark(object):
 
         if self._custom_b_func:
             val = self.objectives.evaluate(self._b_func, self._model.model)
+            return
         else:
             val = self.objectives.evaluate(self._b_func, self._model)
         # measurer contain info not only performance(eg, memory, model_size)
         # also measurer have result list among steps
         acc, _ = val
-        warmup = 0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
+        batch_size = self._b_dataloader.batch_size
+        warmup =  0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
             else deep_get(cfg, 'evaluation.{}.warmup'.format(mode))
 
         if len(self.objectives.objectives[0].result_list()) < warmup:
@@ -380,20 +378,19 @@ class Benchmark(object):
                 warmup = 0
 
         result_list = self.objectives.objectives[0].result_list()[warmup:]
+        latency = np.array(result_list).mean() / batch_size
+        self._results[mode] = acc, batch_size, result_list
 
         logger.info("\n{} mode benchmark result:".format(mode))
         for i, res in enumerate(result_list):
             logger.debug("Iteration {} result {}:".format(i, res))
         if mode == 'accuracy':
-            self._results[mode] = acc, result_list
+            logger.info("Batch size = {}".format(batch_size))
             if isinstance(acc, list):
                 logger.info("Accuracy is" + "".join([" {:.4f}".format(i) for i in acc]))
             else:
                 logger.info("Accuracy is {:.4f}".format(acc))
         elif mode == 'performance':
-            batch_size = self._b_dataloader.batch_size
-            latency = np.array(result_list).mean() / batch_size
-            self._results[mode] = acc, batch_size, result_list
             logger.info("Batch size = {}".format(batch_size))
             logger.info("Latency: {:.3f} ms".format(latency * 1000))
             logger.info("Throughput: {:.3f} images/sec".format(1. / latency))
@@ -475,22 +472,38 @@ class Benchmark(object):
                        auto inferenced, but sometimes auto inferenced
                        inputs/outputs will not meet your requests, so it is better to
                        set them manually in config yaml file.
-                       Another corner case is slim model of tensorflow,
-                       be careful of the name of model configured in yaml file,
-                       make sure the name is in supported slim model list.
-
+                       Another corner case is the slim model of tensorflow,
+                       be careful of the name of the model configured in the yaml file,
+                       make sure the name is in the supported slim model list.
         """
-        if not isinstance(user_model, BaseModel):
-            logger.warning("Force convert framework model to neural_compressor model.")
-            self._model = NCModel(user_model)
-        else:
-            self._model = user_model
-
         cfg = self.conf.usr_cfg
         if cfg.model.framework == 'NA':
+            assert not isinstance(user_model, BaseModel), \
+                "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
+            if self.framework == "tensorflow":
+                from ..model.tensorflow_model import get_model_type
+                if get_model_type(user_model) == 'keras' and cfg.model.backend == 'itex':
+                    self.framework = 'keras'
+            if self.framework == "pytorch":
+                if cfg.model.backend == "default":
+                    self.framework = "pytorch_fx"
+                elif cfg.model.backend == "ipex":
+                    self.framework = "pytorch_ipex"
+                    import intel_extension_for_pytorch
             cfg.model.framework = self.framework
-            set_backend(self.framework)
+
+        if not isinstance(user_model, BaseModel):
+            logger.warning("Force convert framework model to neural_compressor model.")
+            self._model = NCModel(user_model, framework=self.framework)
+        else:
+            # It is config of neural_compressor version < 2.0, no need in 2.0
+            if cfg.model.framework == "pytorch_ipex":
+                from neural_compressor.model.torch_model import IPEXModel
+                if not isinstance(user_model, IPEXModel):
+                    self._model = NCModel(user_model.model, framework=cfg.model.framework)
+                    return
+            self._model = user_model
 
         # (TODO) ugly to set these params, but tensorflow need
         if 'tensorflow' in self.framework:
@@ -525,7 +538,7 @@ class Benchmark(object):
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
                            " as user defines the value of `metric` attribute by code.")
-
+ 
         if isinstance(user_metric, NCMetric):
             metric_cfg = {user_metric.name : {**user_metric.kwargs}}
             deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)

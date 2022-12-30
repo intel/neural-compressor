@@ -100,6 +100,8 @@
                         }
                     },
           }
+    CPUExecutionProvider: *ref_1_6
+    CUDAExecutionProvider: *ref_1_6
 
   graph_optimization: &default_optimization  # from onnxruntime graph_optimization_level
       level: 'ENABLE_EXTENDED'         # choices are ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']
@@ -138,7 +140,7 @@
     fp32: ['*'] # '*' means all op types
 
   capabilities:
-    int8: {
+    int8: &ref_1_8 {
           'FusedConv': {
             'weight': {
                         'dtype': ['int8'],
@@ -210,6 +212,8 @@
                         }
                     },
           }
+    CPUExecutionProvider: *ref_1_8
+    CUDAExecutionProvider: *ref_1_8
 
   graph_optimization: 
     <<: *default_optimization
@@ -225,7 +229,7 @@
     <<: *common_ops
 
   capabilities:
-    int8: {
+    int8: &ref_1_9 {
           'FusedConv': {
             'weight': {
                         'dtype': ['int8'],
@@ -311,6 +315,8 @@
                         }
                     },
           }
+    CPUExecutionProvider: *ref_1_9
+    CUDAExecutionProvider: *ref_1_9
 
   graph_optimization: 
     <<: *default_optimization
@@ -332,7 +338,7 @@
     fp32: ['*'] # '*' means all op types
 
   capabilities:
-    int8: {
+    int8: &ref_1_11 {
           'FusedConv': {
             'weight': {
                         'dtype': ['int8'],
@@ -432,6 +438,8 @@
                         }
                     },
           }
+    CPUExecutionProvider: *ref_1_11
+    CUDAExecutionProvider: *ref_1_11
 
   graph_optimization: 
     <<: *default_optimization

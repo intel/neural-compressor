@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse Pad into Conv Graph Rewriter."""
+
 import tensorflow as tf
 
 from tensorflow.python.framework import tensor_util
@@ -24,11 +26,10 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 from neural_compressor.adaptor.tf_utils.util import version1_gt_version2
 
 class FusePadWithConv2DOptimizer(GraphRewriterBase):
-    """Fuse Pad op into Conv2D
-    Pad + Conv2D --> Conv2D
-    """
+    """Fuse Pad op into Conv2D/DepthwiseConv2dNative/Conv3D."""
 
     def __init__(self, model, excluded_op_names, inputs, cfg, new_api, itex_qdq_mode=False):
+        """Intilization."""
         super().__init__(model)
         self.excluded_conv = excluded_op_names
         self.inputs = inputs
@@ -37,6 +38,7 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
         self.itex_qdq_mode = itex_qdq_mode
 
     def do_transformation(self):
+        """Fuse Pad + Conv2D/DepthwiseConv2dNative/Conv3D --> Conv2D/DepthwiseConv2dNative/Conv3D."""
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 
@@ -45,6 +47,7 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
         target_nodes = cur_graph.query_fusion_pattern_nodes(
             [["Pad"], ["Conv2D", "Conv3D", "DepthwiseConv2dNative"], ('BiasAdd', 'Add', 'AddV2')])
 
+        padding_tensor_dict = {}
         for node_combination in target_nodes:
             conv_name = node_combination[1]
 
@@ -70,21 +73,26 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
                 continue
 
             padding_tensor = None
-            pad_node = graph_info[node_combination[0]].node
-            if graph_info[pad_node.input[1]].node.op != 'Const':
-                input_node = graph_info[pad_node.input[1]].node
-                if input_node.op == 'DataFormatVecPermute':
-                    parent_input_node = graph_info[input_node.input[0]].node
-                    if parent_input_node.op == 'Const':
-                        padding_tensor = tensor_util.MakeNdarray( \
-                            parent_input_node.attr["value"].tensor).flatten()
+            pad_node = None
+            if node_combination[0] not in padding_tensor_dict:
+                pad_node = graph_info[node_combination[0]].node
+                if graph_info[pad_node.input[1]].node.op != 'Const':
+                    input_node = graph_info[pad_node.input[1]].node
+                    if input_node.op == 'DataFormatVecPermute':
+                        parent_input_node = graph_info[input_node.input[0]].node
+                        if parent_input_node.op == 'Const':
+                            padding_tensor = tensor_util.MakeNdarray( \
+                                parent_input_node.attr["value"].tensor).flatten()
+                        else:
+                            continue
                     else:
                         continue
                 else:
-                    continue
+                    padding_tensor = tensor_util.MakeNdarray(
+                        graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
+                padding_tensor_dict[node_combination[0]] = padding_tensor
             else:
-                padding_tensor = tensor_util.MakeNdarray(
-                    graph_info[pad_node.input[1]].node.attr["value"].tensor).flatten()
+                padding_tensor = padding_tensor_dict[node_combination[0]]
 
             if self.itex_qdq_mode:
                 enabled_pad_conv2d = bool(tf.version.VERSION == '1.15.0-up3' or \
@@ -95,12 +103,13 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
             if any(padding_tensor) and not enabled_pad_conv2d: # pragma: no cover
                 continue
 
-            if graph_info[pad_node.input[1]].node.op != 'Const':
-                cur_graph.node_name_details[pad_node.name].node.input.remove(pad_node.input[1])
-                cur_graph.remove_node_with_single_input_output(pad_node.name)
-            else:
-                cur_graph.remove_node_with_single_input_output(pad_node.name)
-                cur_graph.remove_node(pad_node.input[1])
+            if pad_node:
+                if graph_info[pad_node.input[1]].node.op != 'Const':
+                    cur_graph.node_name_details[pad_node.name].node.input.remove(pad_node.input[1])
+                    cur_graph.remove_node_with_single_input_output(pad_node.name)
+                else:
+                    cur_graph.remove_node_with_single_input_output(pad_node.name)
+                    cur_graph.remove_node(pad_node.input[1])
             conv_node = graph_info[node_combination[1]].node
             if self.itex_qdq_mode:
                 if any(padding_tensor) and enabled_pad_conv2d: # pragma: no cover

@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Class for ONNX model."""
+
 import os
 import logging
 from pathlib import Path
@@ -28,7 +30,14 @@ ortq = LazyImport("neural_compressor.adaptor.ox_utils.util")
 logger = logging.getLogger("neural_compressor")
 
 class ONNXModel(BaseModel):
+    """Build ONNX model."""
+
     def __init__(self, model, **kwargs):
+        """Initialize an ONNX model.
+
+        Args:
+            model (str or ModelProto): path to onnx model or loaded ModelProto model object.
+        """
         self._model = model if not isinstance(model, str) else onnx.load(model)
         self._model_path = None if not isinstance(model, str) else model
         self._large_size = False
@@ -51,33 +60,41 @@ class ONNXModel(BaseModel):
 
     @property
     def large_size(self):
+        """Return large size."""
         return self._large_size
 
     @property
     def model_path(self):
+        """Return model path."""
         return self._model_path
 
     @model_path.setter
     def model_path(self, path):
+        """Set model path."""
         self._model_path = path
 
     def framework(self):
+        """Return framework."""
         return 'onnxruntime'
 
     @property
     def q_config(self):
+        """Return q_config."""
         return self._q_config
 
     @q_config.setter
     def q_config(self, q_config):
+        """Set q_config."""
         self._q_config = q_config
 
     @property
     def model(self):
+        """Return model itself."""
         return self._model
 
     @model.setter
     def model(self, model):
+        """Set model itself."""
         self._model = model
         self._graph_info = {}
         self._get_graph_info()
@@ -87,12 +104,15 @@ class ONNXModel(BaseModel):
         self._get_output_name_to_node(self._model.graph.node)
 
     def input(self):
+        """Return input of model."""
         return [i.name for i in self._model.graph.input]
 
     def output(self):
+        """Return output of model."""
         return [i.name for i in self._model.graph.output]
 
     def update(self):
+        """Update model info."""
         self._graph_info = {}
         self._get_graph_info()
         self._output_name_to_node = {}
@@ -102,13 +122,16 @@ class ONNXModel(BaseModel):
 
     @property
     def graph_info(self):
+        """Return ORT Graph Info object holding information about backend graph."""
         return self._graph_info
 
     def _get_graph_info(self):
+        """Update graph info."""
         for node in self._model.graph.node:
             self.graph_info.update({node.name: node.op_type})
 
     def save(self, root):
+        """Save ONNX model."""
         if os.path.split(root)[0] != '' and not os.path.exists(os.path.split(root)[0]):
             raise ValueError('"root" directory does not exists.')
         if self.large_size: # pragma: no cover
@@ -122,53 +145,72 @@ class ONNXModel(BaseModel):
         onnx.save(self._model, root)
 
     def nodes(self):
+        """Return model nodes."""
         return self._model.graph.node
 
     def initializer(self):
+        """Return model initializer."""
         return self._model.graph.initializer
 
     def graph(self):
+        """Return model graph."""
         return self._model.graph
 
     def ir_version(self):
+        """Return model ir_version."""
         return self._model.ir_version
 
     def opset_import(self):
+        """Return model opset_import."""
         return self._model.opset_import
 
     def remove_node(self, node):
+        """Remove a node from model."""
         if node in self._model.graph.node:
             self._model.graph.node.remove(node)
 
     def remove_nodes(self, nodes_to_remove):
+        """Remove nodes from model."""
         for node in nodes_to_remove:
             self.remove_node(node)
 
     def add_node(self, node):
+        """Add a node to model."""
         self._model.graph.node.extend([node])
 
     def add_nodes(self, nodes_to_add):
+        """Add nodes to model."""
         self._model.graph.node.extend(nodes_to_add)
 
     def add_initializer(self, tensor):
+        """Add a initializer to model."""
         if ortq.find_by_name(tensor.name, self._model.graph.initializer) is None:
             self._model.graph.initializer.extend([tensor])
 
+    def add_initializers(self, tensors):
+        """Add initializers to model."""
+        for tensor in tensors:
+            self.add_initializer(tensor)
+
     def get_initializer(self, name):
+        """Get an initializer by name."""
         for tensor in self._model.graph.initializer:
             if tensor.name == name:
                 return tensor
         return None
 
     def remove_initializer(self, tensor):
+        """Remove an initializer from model."""
         if tensor in self._model.graph.initializer:
             self._model.graph.initializer.remove(tensor)
 
     def remove_initializers(self, init_to_remove):
+        """Remove initializers from model."""
         for initializer in init_to_remove:
             self.remove_initializer(initializer)
 
     def set_initializer(self, tensor, array):
+        """Update initializer."""
         old_tensor = self.get_initializer(tensor)
         self.remove_initializer(old_tensor)
         dims = old_tensor.dims
@@ -178,9 +220,11 @@ class ONNXModel(BaseModel):
     
     @property
     def input_name_to_nodes(self):
+        """Return input names of nodes."""
         return self._input_name_to_nodes
     
     def _get_input_name_to_nodes(self, nodes):
+        """Get input names of nodes."""
         for node in nodes:
             attrs = [attr for attr in node.attribute if attr.type == onnx.AttributeProto.GRAPH \
                 or attr.type == onnx.AttributeProto.GRAPHS]
@@ -195,9 +239,11 @@ class ONNXModel(BaseModel):
 
     @property
     def output_name_to_node(self):
+        """Return output names of nodes."""
         return self._output_name_to_node
 
     def _get_output_name_to_node(self, nodes):
+        """Get output names of nodes."""
         for node in nodes:
             attrs = [attr for attr in node.attribute if attr.type == onnx.AttributeProto.GRAPH \
                 or attr.type == onnx.AttributeProto.GRAPHS]
@@ -208,6 +254,7 @@ class ONNXModel(BaseModel):
                 self._output_name_to_node[output_name] = node
 
     def get_children(self, node, input_name_to_nodes=None):
+        """Get children nodes."""
         if input_name_to_nodes is None:
             input_name_to_nodes = self._input_name_to_nodes
 
@@ -219,6 +266,7 @@ class ONNXModel(BaseModel):
         return children
 
     def get_parents(self, node, output_name_to_node=None):
+        """Get parents nodes."""
         if output_name_to_node is None:
             output_name_to_node = self._output_name_to_node
 
@@ -229,6 +277,7 @@ class ONNXModel(BaseModel):
         return parents
 
     def get_parent(self, node, idx, output_name_to_node=None):
+        """Get parent node by idx."""
         if output_name_to_node is None:
             output_name_to_node = self._output_name_to_node
 
@@ -242,19 +291,14 @@ class ONNXModel(BaseModel):
         return output_name_to_node[input]
 
     def find_node_by_name(self, node_name, new_nodes_list, graph):
-        '''
-        Find out if a node exists in a graph or a node is in the
-        new set of nodes created during quantization. Return the node found.
-        '''
+        """Find out node by name."""
         graph_nodes_list = list(graph.node)  #deep copy
         graph_nodes_list.extend(new_nodes_list)
         node = ortq.find_by_name(node_name, graph_nodes_list)
         return node
 
     def find_nodes_by_initializer(self, graph, initializer):
-        '''
-        Find all nodes with given initializer as an input.
-        '''
+        """Find all nodes with given initializer as an input."""
         nodes = []
         for node in graph.node:
             for node_input in node.input:
@@ -263,7 +307,7 @@ class ONNXModel(BaseModel):
         return nodes
 
     def get_scale_zero(self, tensor):
-        ''' help function to get scale and zero_point '''
+        """Help function to get scale and zero_point."""
         if not tensor.endswith('_quantized'):
             logger.debug("Find {} in the quantized graph is not quantized.".format(tensor))
             return None, None
@@ -285,9 +329,7 @@ class ONNXModel(BaseModel):
         return scale_tensor, zo_tensor
 
     def save_model_to_file(self, output_path, use_external_data_format=False):
-        '''
-        Save model to external data, which is needed for model size > 2GB
-        '''
+        """Save model to external data, which is needed for model size > 2GB."""
         if use_external_data_format:
             onnx.external_data_helper.convert_model_to_external_data(self._model,
                                                     all_tensors_to_one_file=True,
@@ -296,6 +338,7 @@ class ONNXModel(BaseModel):
 
     @staticmethod
     def replace_node_input(node, old_input_name, new_input_name):
+        """Replace input of a node."""
         assert isinstance(old_input_name, str) and isinstance(new_input_name, str)
         for j in range(len(node.input)):
             if node.input[j] == old_input_name:
@@ -303,6 +346,7 @@ class ONNXModel(BaseModel):
 
     def replace_input_of_all_nodes(self, old_input_name, new_input_name,
         white_optype=[], black_optype=[]):
+        """Replace inputs of all nodes."""
         if len(white_optype) > 0:
             for node in self.model.graph.node:
                 if node.op_type in white_optype:
@@ -315,6 +359,7 @@ class ONNXModel(BaseModel):
 
     @staticmethod
     def replace_node_output(node, old_output_name, new_output_name):
+        """Replace output of a node."""
         assert isinstance(old_output_name, str) and isinstance(new_output_name, str)
         for j in range(len(node.output)):
             if node.output[j] == old_output_name:
@@ -322,6 +367,7 @@ class ONNXModel(BaseModel):
 
     def replace_output_of_all_nodes(self, old_output_name, new_output_name, 
         white_optype=[], black_optype=[]):
+        """Replace outputs of all nodes."""
         if len(white_optype) > 0:
             for node in self.model.graph.node:
                 if node.op_type in white_optype:
@@ -332,6 +378,7 @@ class ONNXModel(BaseModel):
                     ONNXModel.replace_node_output(node, old_output_name, new_output_name)
 
     def remove_unused_constant(self):
+        """Remove unused constant."""
         unused_nodes = []
         nodes = self.nodes()
         for node in nodes:
@@ -359,6 +406,7 @@ class ONNXModel(BaseModel):
         self.update()
 
     def topological_sort(self, enable_subgraph=False):
+        """Topological sort the model."""
         from collections import deque
         from functools import reduce
         import copy
@@ -409,6 +457,7 @@ class ONNXModel(BaseModel):
         self.model.graph.node.extend(nodes)
 
     def get_nodes_chain(self, start_node, stop_node, result_chain=[]):
+        """Get nodes chain with given start node and stop node."""
         while start_node:
             node_name = start_node.popleft()
             if node_name in stop_node:
@@ -423,3 +472,22 @@ class ONNXModel(BaseModel):
                 start_node.append(parent.name)
 
         return result_chain
+
+    def export(self, save_path, conf):
+        """Export Qlinear to QDQ model."""
+        from neural_compressor.experimental.export import onnx_qlinear_to_qdq
+        from neural_compressor.config import ONNXQlinear2QDQConfig
+        if isinstance(conf, ONNXQlinear2QDQConfig):
+            add_nodes, remove_nodes, inits = onnx_qlinear_to_qdq(self._model,
+                                             self._input_name_to_nodes)
+            self.add_nodes(add_nodes)
+            self.remove_nodes(remove_nodes)
+            self.add_initializers(inits)
+            self.update()
+            self.remove_unused_constant()
+            self.topological_sort()
+            self.save(save_path)
+        else:
+            logger.warning("Unsupported config for export, "
+                "only ONNXQlinear2QDQConfig is supported!")
+            exit(0)

@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tensorflow Graph Utils Helper Classes."""
 
 import copy
 
@@ -33,6 +34,7 @@ logger = logging.getLogger("neural_compressor")
 @singleton
 class GraphAnalyzer():
     """Tensorflow Graph Analyzer class which implemented under singleton mode.
+
     This class provides the following API:
     * Analyze the graph
     * Analyze the input/output node names of the specified graph
@@ -41,12 +43,17 @@ class GraphAnalyzer():
     node_details = namedtuple('node_details', ['node', 'outputs'])
 
     def __init__(self, extend_engine=None):
+        """Intialization.
+
+        Args:
+            extend_engine: extended engine, for future extension API。
+        """
         self._graph = None
         self.extend_engine = extend_engine
 
     @property
     def graph(self):
-        """Getter of the _graph object
+        """Getter of the _graph object.
 
         Returns:
             graph: current graphdef object
@@ -63,6 +70,7 @@ class GraphAnalyzer():
         self._graph = new_graph
 
     def _has_positive_input(self, start_node):
+        """Check the start_node if has positive input."""
         op_type = start_node.op
         if op_type in ("Relu", "Relu6") or op_type.find("AndRelu") != -1:
             return True
@@ -97,10 +105,12 @@ class GraphAnalyzer():
         return self._has_positive_input(self.node_name_details[node_name].node)
 
     def get_graph_input_output(self):
-        """Get the graphdef input/output node names. Sometimes, the configuration doesn't
-            specifies the input/output names of the graph, but tensorflow need to know them
-            clearly to run the graph.We implement this function has the similar feature like
-            summarize_graph.py which writtern by Google.
+        """Get the graphdef input/output node names.
+
+        Sometimes, the configuration doesn't specifies the input/output names of the graph,
+        but tensorflow need to know them clearly to run the graph.We implement this function has the similar
+        feature like summarize_graph.py which writtern by Google.
+
         Returns:
             tuple: (inputs' name list, outputs'name list)
         """
@@ -163,7 +173,7 @@ class GraphAnalyzer():
             return self._search_patterns(patterns)
 
     def _search_patterns(self, input_pattern):
-        """search user specified patterns on internal grpah structure.
+        """Search user specified patterns on internal grpah structure.
 
         Args:
             input_pattern (list): The element of the pattern list could be string/list/tuple.
@@ -204,6 +214,7 @@ class GraphAnalyzer():
 
         def _compare_list(list_a, list_b):
             """Check list a is a subset of list b.
+
             e.g, list a is ['a', 'b', 'c'] while list b is ['a', 'b', 'c', 'd'],
             then list a is subset of list b.
 
@@ -381,7 +392,6 @@ class GraphAnalyzer():
             [bool]: True if remove the node without exception.
                     False if failed to remove it.
         """
-
         if node_name not in self.node_name_details:
             logger.debug("The {} is not a valid node name.".format(node_name))
             return False
@@ -431,7 +441,7 @@ class GraphAnalyzer():
                         break
 
     def replace_constant_graph_with_constant_node(self, new_node, old_end_node_name):
-        """remove sub-graph with a const node
+        """Remove sub-graph with a const node.
 
         Args:
             new_node (nodedef): the constant node
@@ -467,6 +477,7 @@ class GraphAnalyzer():
     def replace_single_node(self, new_node, old_output_node_names, old_output_name,
                             old_input_node_names, old_input_name):
         """Insert one node into the graph.
+
         Args:
             new_node (nodedef): new nodedef object
             old_output_node_names (string list):the node names that would be the top node of new
@@ -498,14 +509,13 @@ class GraphAnalyzer():
                     self.node_name_details[each_input_node_name].node.input.extend(new_input_name)
 
     def replace_node(self, new_node, old_node_name, output_nodes_name):
-        """Replace the node into the internal data structure node_name_details
+        """Replace the node into the internal data structure node_name_details.
 
         Args:
             new_node (nodedef): the nodedef object.
             old_node_name (string): the parent node of input node.
             output_nodes_name (string list): output node names list
         """
-
         new_node_name = new_node.name
         self.node_name_details[new_node_name] = self.node_details(node=new_node,
                                                                   outputs=output_nodes_name)
@@ -528,7 +538,7 @@ class GraphAnalyzer():
         self.remove_node(old_node_name)
 
     def add_node(self, new_node, start_node_name, end_node_names):
-        """Add the node into the internal data structure node_name_details
+        """Add the node into the internal data structure node_name_details.
 
         Args:
             new_node (nodedef): the nodedef object.
@@ -570,7 +580,7 @@ class GraphAnalyzer():
                 start_node_name)].outputs.append(new_node_name)
 
     def dump_graph(self):
-        """Dump the current model's graphdef
+        """Dump the current model's graphdef.
 
         Returns:
             [graphdef]: A graphdef object
@@ -582,6 +592,11 @@ class GraphAnalyzer():
         return output_graph_def
 
     def get_frame_info(self):
+        """Get the frame info of the model.
+
+        Returns:
+            [parent_frame_details]: OrderedDict frame info of the graph nodes.
+        """
         from collections import OrderedDict
         self.parent_frame_details = OrderedDict()
         input_node_names, _ = self.get_graph_input_output()
@@ -620,8 +635,7 @@ class GraphAnalyzer():
         return self.parent_frame_details
 
     def parse_graph(self, input_graph_def=None):
-        """Analyze the input graphdef and return the list contains each node's input/output
-            node names
+        """Analyze the input graphdef and return the list contains each node's input/outputnode names.
 
         Args:
             input_graph_def ([graphdef]): graphdef object
@@ -629,7 +643,6 @@ class GraphAnalyzer():
         Returns:
             [list]: A list contains each node's inputs/outputs info.
         """
-
         if not input_graph_def:
             input_graph_def = self._graph
 
@@ -653,8 +666,7 @@ class GraphAnalyzer():
 
 
 class GraphRewriterHelper():
-    """Encapsulates the graph operation into one class.
-    """
+    """Encapsulates the graph operation into one class."""
     node_name_cache = {}
     node_name_port_cache = {}
 
@@ -695,7 +707,7 @@ class GraphRewriterHelper():
 
     @staticmethod
     def create_node(op, name, inputs):
-        """Create a nodedef object
+        """Create a nodedef object.
 
         Args:
             op (string): op type
@@ -714,7 +726,7 @@ class GraphRewriterHelper():
 
     @staticmethod
     def create_constant_node(name, value, dtype, shape=None, device='cpu'):
-        """create constant node.
+        """Create constant node.
 
         Args:
             name (string): op name
@@ -735,8 +747,7 @@ class GraphRewriterHelper():
 
     @staticmethod
     def set_attr_dtype(node, key, value):
-        """Set the attribute data type
-        """
+        """Set the attribute data type."""
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(type=value.as_datatype_enum))
 
     @staticmethod
@@ -753,47 +764,43 @@ class GraphRewriterHelper():
         node.attr[key].CopyFrom(
             attr_value_pb2.AttrValue(
                 tensor=tensor_util.make_tensor_proto(value, dtype=dtype, shape=shape)))
+
     @staticmethod
     def set_attr_type_list(node, key, value):
-        """Set the node's attr which data type is int list.
-        """
+        """Set the node's attr which data type is int list."""
         list_value = attr_value_pb2.AttrValue.ListValue(type=value)
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
+
     @staticmethod
     def set_attr_string_list(node, key, value):
-        """Set the node's attr which data type is int list.
-        """
+        """Set the node's attr which data type is int list."""
         list_value = attr_value_pb2.AttrValue.ListValue(s=value)
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
+
     @staticmethod
     def set_attr_string(node, key, value):
-        """Set the node's attr which data type is string.
-        """
+        """Set the node's attr which data type is string."""
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(s=value))
 
     @staticmethod
     def set_attr_int_list(node, key, value):
-        """Set the node's attr which data type is int list.
-        """
+        """Set the node's attr which data type is int list."""
         list_value = attr_value_pb2.AttrValue.ListValue(i=value)
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(list=list_value))
 
     @staticmethod
     def set_attr_int(node, key, value):
-        """Set the node's attr which data type is int.
-        """
+        """Set the node's attr which data type is int."""
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(i=value))
 
     @staticmethod
     def set_attr_float(node, key, value):
-        """Set the node's attr which data type is float.
-        """
+        """Set the node's attr which data type is float."""
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(f=value))
 
     @staticmethod
     def set_attr_bool(node, key, value):
-        """Set the node's attr which data type is bool.
-        """
+        """Set the node's attr which data type is bool."""
         node.attr[key].CopyFrom(attr_value_pb2.AttrValue(b=value))
 
     @staticmethod
@@ -832,7 +839,6 @@ class GraphRewriterHelper():
         Raises:
           ValueError: If the node isn't a Const.
         """
-
         assert node_def.op == 'Const', "Node named '%s' should be a Const op." % node_def.name
 
         input_tensor = node_def.attr["value"].tensor
@@ -844,6 +850,21 @@ class GraphRewriterHelper():
                                      max_input, min_input,
                                      max_filter_tensor, min_filter_tensor,
                                      activation_range, weights_range=127.0):
+        """Static method that generate int32 bias for conv op.
+
+        Args:
+            bias_tensor: bias node tensor.
+            channel_size: channel size.
+            max_input: max activation input value.
+            min_input: min activation input value.
+            max_filter_tensor: max weight input tensor.
+            min_filter_tensor: min weight input tensor.
+            activation_range: activation range value.
+            weights_range: weight range value.
+
+        Returns:
+            int32_bias: int32 bias
+        """
         bias_length = bias_tensor.shape[0]
         scales = []
         if len(max_filter_tensor) > 1:
@@ -871,6 +892,20 @@ class GraphRewriterHelper():
                                      input_range, max_input, min_input,
                                      max_filter_value, min_filter_value,
                                      ):
+        """Static method that generate int32 bias for matmul op.
+
+        Args:
+            bias_tensor: bias node tensor.
+            weights_tensor: weights tensor.
+            input_range: activation range value.
+            max_input: max activation input value.
+            min_input: min activation input value.
+            max_filter_tensor: max weight input tensor.
+            min_filter_tensor: min weight input tensor.
+
+        Returns:
+            int32_bias: int32 bias
+        """
         bias_scale = 255.0 * 127.0 / (
                 input_range * max(abs(max_filter_value), abs(min_filter_value)))
         relative_scale = 255 * min_input / (max_input - min_input)
@@ -888,6 +923,14 @@ class GraphRewriterHelper():
 
     @staticmethod
     def gen_valid_sampling_log(log_path):
+        """Generate the valid sampling log.
+
+        Args:
+          log_path: the valid sampling log file path.
+
+        Returns:
+          the sampling min max value.
+        """
         def gen_per_iter(data):
             res = []
             requant_tmp = []
@@ -918,16 +961,19 @@ class GraphRewriterHelper():
             if i.startswith(first_line):
                 iterations += 1
 
-        step = len(valid_data) / iterations
+        step = int(len(valid_data) / iterations)
         final_res = []
 
         for i in range(iterations):
             final_res.extend(gen_per_iter(valid_data[int(i*step): int(step*( i+ 1))]))
+            if i + 1 == iterations and int(step*( i+ 1)) < len(valid_data):
+                final_res.extend(gen_per_iter(valid_data[int(step*( i+ 1)): len(valid_data)]))
 
         return final_res
 
     @staticmethod
     def analysis_rnn_model(graph_def, bf16_ops=[], fp32_ops=[]):
+        """Match the RNN and dynamic RNN patterns."""
         g = GraphAnalyzer()
         g.graph = graph_def
         graph_info = g.parse_graph()

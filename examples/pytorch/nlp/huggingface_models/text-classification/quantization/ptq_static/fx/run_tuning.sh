@@ -41,7 +41,6 @@ function run_tuning {
     batch_size=16
     MAX_SEQ_LENGTH=128
     model_type='bert'
-    approach='post_training_static_quant'
     TASK_NAME='mrpc'
     model_name_or_path=${input_model}
     if [ "${topology}" = "bert_base_MRPC" ];then
@@ -79,9 +78,6 @@ function run_tuning {
         model_name_or_path=${input_model}
     fi
 
-    sed -i "/: bert/s|name:.*|name: $model_type|g" conf.yaml
-    sed -i "/approach:/s|approach:.*|approach: $approach|g" conf.yaml
-
     python -u ./run_glue.py \
         --model_name_or_path ${model_name_or_path} \
         --task_name ${TASK_NAME} \
@@ -92,6 +88,7 @@ function run_tuning {
         --no_cuda \
         --output_dir ${tuned_checkpoint} \
         --tune \
+        --onnx \
         --overwrite_output_dir \
         ${extra_cmd}
 }

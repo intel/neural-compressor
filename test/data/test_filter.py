@@ -4,7 +4,7 @@ import os
 import json
 import shutil
 from PIL import Image
-from neural_compressor.data import FILTERS, TRANSFORMS, DATASETS, DATALOADERS
+from neural_compressor.data import FILTERS, TRANSFORMS, Datasets, DATALOADERS
 from neural_compressor.utils.create_obj_from_config import create_dataset, get_preprocess, create_dataloader
 
 import tensorflow as tf
@@ -60,7 +60,7 @@ class TestCOCOFilter(unittest.TestCase):
         preprocesses = TRANSFORMS('tensorflow', 'preprocess')
         filters = FILTERS('tensorflow')
         filter = filters['LabelBalanceCOCORecord'](2)
-        datasets = DATASETS('tensorflow')
+        datasets = Datasets('tensorflow')
         dataset = datasets['COCORecord']('test.record', \
             transform=None, filter=filter)
         dataloader = DATALOADERS['tensorflow'](dataset=dataset, batch_size=1)
@@ -146,7 +146,7 @@ class TestCOCOFilter(unittest.TestCase):
 
         filters = FILTERS('onnxrt_qlinearops')
         filter = filters['LabelBalanceCOCORaw'](1)
-        datasets = DATASETS('onnxrt_qlinearops')
+        datasets = Datasets('onnxrt_qlinearops')
         dataset = datasets['COCORaw']('./', transform=None, filter=filter)
         dataloader = DATALOADERS['onnxrt_qlinearops'](dataset=dataset, batch_size=1)
         for (inputs, labels) in dataloader:

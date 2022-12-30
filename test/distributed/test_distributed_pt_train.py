@@ -8,7 +8,7 @@ import torchvision
 import torch.nn as nn
 import horovod.torch as hvd
 
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 def build_fake_py():
@@ -22,7 +22,7 @@ import torchvision
 import torch.nn as nn
 import horovod.torch as hvd
 
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 

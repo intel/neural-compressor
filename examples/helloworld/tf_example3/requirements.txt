@@ -1,2 +1,1 @@
-https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up3-cp37-cp37m-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
-tf_slim
+intel-tensorflow==2.10.0

@@ -14,16 +14,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""MaxPool Operator."""
 
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 
 @op_registry(op_types="MaxPool")
 class MaxPoolOperator(Operator):
+    """MaxPool Operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(MaxPoolOperator, self).__init__(onnx_quantizer, onnx_node)
     
     def quantize_check(self):
+        """Check if quantizaion can be done."""
         node = self.node
         # if opset version is less than 12, just no change
         if self.quantizer.opset_version < 12: # pragma: no cover
@@ -35,6 +39,7 @@ class MaxPoolOperator(Operator):
         return True
 
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         self.quantizer.quantize_inputs(self.node, direct_int8=True)
         if not self.disable_qdq_for_node_output or self.quantizer.mode != 'qdq':
@@ -42,6 +47,7 @@ class MaxPoolOperator(Operator):
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['static'], \
             "convert format for {} should be in ['static']".format(node.op_type)
@@ -52,6 +58,7 @@ class MaxPoolOperator(Operator):
         return True
 
     def convert(self, convert_format):
+        """Convert to QOperator format."""
         node = self.node
         parent = self.quantizer.model.get_parents(node)[0]
         children = self.quantizer.model.get_children(node)
@@ -68,3 +75,11 @@ class MaxPoolOperator(Operator):
                                     child.output[0], node.output[0])
 
         self.quantizer.remove_nodes.append(parent)
+
+@qop_registry(op_types="MaxPool")
+class QMaxPoolOperator(QOperator):
+    """QMaxPool Operator."""
+
+    def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
+        super().__init__(onnx_node, children, initializers)

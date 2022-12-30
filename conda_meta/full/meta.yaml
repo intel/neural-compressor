@@ -1,4 +1,4 @@
-{% set version = "1.14.2" %}
+{% set version = "2.0" %}
 {% set buildnumber = 0 %}
 package:
   name: neural-compressor-full
@@ -18,12 +18,11 @@ requirements:
   run:
     - python
     - pip
-    - numpy
+    - numpy<=1.22.3
     - pyyaml
     - scikit-learn
     - schema
     - py-cpuinfo
-    - hyperopt
     - pandas
     - pycocotools
     - opencv
@@ -35,14 +34,13 @@ requirements:
     - psutil
     - Pillow
     - requests
-    - sigopt
     - prettytable
     - cryptography
     - sqlalchemy==1.4.27
     - alembic==1.7.7
-    - cython
     - pywin32  # [win]
     - packaging
+    - deprecated
 test:
   imports:
     - neural_compressor

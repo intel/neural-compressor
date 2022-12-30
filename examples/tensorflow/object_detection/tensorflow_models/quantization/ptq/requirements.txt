@@ -1,8 +1,0 @@
-Cython
-contextlib2
-pillow>=8.2.0
-lxml>=4.6.2
-matplotlib
-numpy>=1.17.4
-pycocotools
-protobuf

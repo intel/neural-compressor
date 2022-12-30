@@ -1,7 +1,5 @@
 
 import torch
-import torch.nn.quantized as nnq
-from torch.quantization import QuantStub, DeQuantStub
 import torchvision
 import unittest
 import os
@@ -217,8 +215,8 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         fake_yaml = 'fx_dynamic_yaml.yaml'
         model = torchvision.models.resnet18()
         quantizer = Quantization(fake_yaml)
-        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
         quantizer.model = model
+        dataset = quantizer.dataset('dummy', (100, 3, 256, 256), label=True)
         quantizer.calib_dataloader = common.DataLoader(dataset)
         quantizer.eval_dataloader = common.DataLoader(dataset)
         q_model = quantizer.fit()

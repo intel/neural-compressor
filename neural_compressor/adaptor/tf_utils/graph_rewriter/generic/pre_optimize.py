@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Pre Optimization Entrance."""
 
 import logging
 import tensorflow as tf
@@ -51,7 +51,10 @@ from .convert_placeholder_to_const import ConvertPlaceholderToConst
 from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
 
 class PreOptimization():
+    """Pre optimization for the FP32 models."""
+
     def __init__(self, model, optimization, new_api, device):
+        """Initilization."""
         self.model = model
         self.optimization = optimization
         # Table initialization should disable grappler dependency and pruning pass
@@ -69,7 +72,7 @@ class PreOptimization():
 
 
     def get_excluded_node_names(self):
-        """Get the excluded node name
+        """Get the excluded node name.
 
         Returns:
             string list: the excluded ops' name
@@ -79,6 +82,7 @@ class PreOptimization():
     @dump_elapsed_time("Pass Pre Optimization")
     def get_optimized_model(self, itex_mode=False):
         """Executed the non-precision dependant graph optimization.
+
         The input graph will be optimized with following passes:
         1. Remove the training nodes like Identity Op.
         2. Split the shared nodes like weights node for multi-Conv2d.
@@ -91,7 +95,6 @@ class PreOptimization():
         Returns:
             [graphdef]: the optimized graphdef object.
         """
-
         from neural_compressor.experimental.common import Model
 
         origin_model = Model(self.model._model, **self.model.kwargs)
@@ -146,16 +149,16 @@ class PreOptimization():
 
         self._tmp_graph_def = ConvertPlaceholderToConst(self._tmp_graph_def).do_transformation()
 
-        self._tmp_graph_def = RemoveTrainingNodesOptimizer(
-            self._tmp_graph_def, protected_nodes=input_output_names).do_transformation()
-
         self._tmp_graph_def = SwitchOptimizer(self._tmp_graph_def).do_transformation()
+
+        self._tmp_graph_def = GrapplerOptimizer(
+            self._tmp_graph_def, input_output_names, self.optimization).do_transformation()
 
         self._tmp_graph_def = StripUnusedNodesOptimizer(self._tmp_graph_def,
             input_node_names, output_node_names).do_transformation()
 
-        self._tmp_graph_def = GrapplerOptimizer(
-            self._tmp_graph_def, input_output_names, self.optimization).do_transformation()
+        self._tmp_graph_def = RemoveTrainingNodesOptimizer(
+            self._tmp_graph_def, protected_nodes=input_output_names).do_transformation()
 
         self._tmp_graph_def = SplitSharedInputOptimizer(self._tmp_graph_def).do_transformation()
 
@@ -204,7 +207,7 @@ class PreOptimization():
 
         self._tmp_graph_def = FetchWeightFromReshapeOptimizer(
             self._tmp_graph_def).do_transformation()
-        if not self.new_api:
+        if not self.new_api and not itex_mode:
             #TODO we need to remove below optimizer once the TF enabled the single
             # matmul op quantization
             self._tmp_graph_def = InjectDummyBiasAddOptimizer(
@@ -221,7 +224,7 @@ class PreOptimization():
         self._tmp_graph_def = StripEquivalentNodesOptimizer(
             self._tmp_graph_def, output_node_names).do_transformation()
 
-        if self.new_api:
+        if self.new_api or itex_mode:
             self._tmp_graph_def = DilatedContraction(
                 self._tmp_graph_def).do_transformation()
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
@@ -231,11 +234,12 @@ class PreOptimization():
         return origin_model
 
     def get_matched_nodes(self, patterns):
-        """Searche the matched nodes with the specified patterns
+        """Searche the matched nodes with the specified patterns.
 
         Args:
             patterns ([string list]): The patterns should be illustrated as below.
                 [['MatMul'], ("BiasAdd"), ("Relu",)]
+
         Returns:
             [string list]: It will return the list that contains the matched nodes name
                 and pattern. ['matched_node_a_name', 'matched_node_a_name',['MatMul','BiasAdd']]

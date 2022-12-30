@@ -15,19 +15,16 @@ function init_params {
   input_model="./distilbert_base_fp32.pb"
   dataset_location="./sst2_validation_dataset"
   output_model="./output_distilbert_base_int8.pb"
-  config="./distilbert_base.yaml"
   batch_size=128
   max_seq_length=128
   warmup_steps=10
   num_inter=2
   num_intra=28
+  tune=True
 
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo ${var} |cut -f2 -d=)
       ;;
@@ -36,9 +33,6 @@ function init_params {
       ;;
       --output_model=*)
           output_model=$(echo ${var} |cut -f2 -d=)
-      ;;
-      --config=*)
-          config=$(echo ${var} |cut -f2 -d=)
       ;;
       --batch_size=*)
           batch_size=$(echo ${var} |cut -f2 -d=)
@@ -55,9 +49,8 @@ function init_params {
       --num_intra=*)
          num_intra=$(echo ${var} |cut -f2 -d=)
       ;;
-      *)
-          echo "Parameter error: ${var}"
-          exit 1
+      --tune=*)
+         tune=$(echo ${var} |cut -f2 -d=)
       ;;
     esac
   done
@@ -71,8 +64,7 @@ function run_tuning {
             --in-graph=${input_model} \
             --data-location=${dataset_location} \
             --output-graph=${output_model} \
-            --config=${config} \
-            --mode=tune \
+            --tune=${tune} \
             --warmup-steps=${warmup_steps} \
             --batch-size=${batch_size} \
             --max-seq-length=${max_seq_length} \

@@ -317,7 +317,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
 
             for i in output_graph.graph_def.node:
                 if i.op == '_FusedQuantizedConv2D' and \
-                    i.attr['fused_ops'].list.s == [b'BiasAdd', b'Dequantize']:
+                    i.attr['fused_ops'].list.s == [b'BiasAdd', b'Sum', b'Relu', b'Requantize']:
                     found_conv_fusion = True
                     break
             self.assertEqual(found_conv_fusion, True)

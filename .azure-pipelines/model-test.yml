@@ -9,6 +9,10 @@ pr:
   paths:
     include:
       - neural_compressor
+      - setup.py
+      - .azure-pipelines/model-test.yml
+      - .azure-pipelines/scripts/models
+      - examples/tensorflow/oob_models/quantization/ptq
     exclude:
       - neural_compressor/ux
 
@@ -44,7 +48,7 @@ parameters:
       - ssd_mobilenet_v1_ckpt
       # - ssd_resnet50_v1_ckpt
       - inception_v1
-      - resnet50_fashion
+      # - resnet50_fashion
       - darknet19
       - densenet-121
       - resnet-101
@@ -125,7 +129,6 @@ stages:
     pool:
       vmImage: "ubuntu-latest"
     dependsOn: [TensorFlowModels, PyTorchModels, MXNetModels, ONNXModels]
-    condition: succeededOrFailed()
     jobs:
       - job: GenerateReport
         steps:
@@ -155,7 +158,8 @@ stages:
               cd ${OUT_SCRIPT_PATH}
               mkdir generated
               mkdir last_generated
-              python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated
+              pip install requests
+              python -u collect_log_all.py --logs_dir $(OUT_SCRIPT_PATH) --output_dir generated --build_id=$(Build.BuildId)
             displayName: "Collect all logs"
           - task: DownloadPipelineArtifact@2
             continueOnError: true

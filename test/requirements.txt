@@ -13,7 +13,6 @@ pillow>=8.2.0
 transformers<=4.12.3; python_version < '3.10'
 transformers==4.16.0; python_version == '3.10'
 tensorflow_model_optimization
-sigopt
 horovod
 tensorflow-addons
 onnxruntime-extensions; python_version < '3.10'

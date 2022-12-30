@@ -195,6 +195,15 @@ class ModelArguments:
     accuracy_only: bool = field(
         default=False, metadata={"help": "get accuracy"}
     )
+    onnx: bool = field(
+        default=False, metadata={"help": "convert PyTorch model to ONNX"}
+    )
+    iters: int = field(
+        default=100,
+        metadata={
+            "help": "The inference iterations to run for benchmark."
+        },
+    )
 
 
 def main():
@@ -498,19 +507,63 @@ def main():
 
     # optimize and quantize with Neural Compressor
     if model_args.tune:
-        from neural_compressor.experimental import Quantization, common
-        calib_dataloader = eval_dataloader
-        quantizer = Quantization('conf.yaml')
-        quantizer.eval_func = eval_func
-        quantizer.calib_dataloader = calib_dataloader
-        quantizer.model = common.Model(model)
-        model = quantizer.fit()
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+        tuning_criterion = TuningCriterion(max_trials=600)
+        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion)
+        q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
-        save_for_huggingface_upstream(model, tokenizer, training_args.output_dir)
+        save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
+
+        if model_args.onnx:
+            it = iter(eval_dataloader)
+            input = next(it)
+            input.pop('labels')
+            symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
+            dynamic_axes = {k: symbolic_names for k in input.keys()}
+            from neural_compressor.config import Torch2ONNXConfig
+            fp32_onnx_config = Torch2ONNXConfig(
+                dtype="fp32",
+                opset_version=14,
+                example_inputs=tuple(input.values()),
+                input_names=list(input.keys()),
+                output_names=['labels'],
+                dynamic_axes=dynamic_axes,
+            )
+            q_model.export('fp32-model.onnx', fp32_onnx_config)
+            int8_onnx_config = Torch2ONNXConfig(
+                dtype="int8",
+                opset_version=14,
+                quant_format="QDQ",
+                example_inputs=tuple(input.values()),
+                input_names=list(input.keys()),
+                output_names=['labels'],
+                dynamic_axes=dynamic_axes,
+            )
+            q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
+            int8_onnx_config = Torch2ONNXConfig(
+                dtype="int8",
+                opset_version=14,
+                quant_format="QLinear",
+                example_inputs=tuple(input.values()),
+                input_names=list(input.keys()),
+                output_names=['labels'],
+                dynamic_axes=dynamic_axes,
+            )
+            q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
         return
 
     if model_args.benchmark or model_args.accuracy_only:
-        eval_func(model)
+        if model_args.benchmark:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(warmup=5,
+                                     iteration=model_args.iters,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
+        else:
+            eval_func(model)
         return
 
     # Training

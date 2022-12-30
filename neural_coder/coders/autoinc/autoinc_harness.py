@@ -51,7 +51,12 @@ class AutoInc_Harness(object):
         bk_trans_location = backend_dict["transformation"]["location"]  # string
         bk_trans_content = backend_dict["transformation"]["content"]  # string
         bk_trans_order = backend_dict["transformation"]["order"]  # list
-
+        
+        # modular design
+        if globals.use_modular:
+            content = globals.modular_item
+            bk_trans_content = ["[+] " + content.replace("\n", "\n[+] ")[:-5]]
+        
         list_code = []
         history = set()
         for i in globals.list_code_path:
@@ -269,10 +274,9 @@ class AutoInc_Harness(object):
                             .replace("DATALOADER_NAME", globals.list_calib_dataloader_name[0])
                     else:
                         lines_to_insert = lines_to_insert \
-                            .replace("DATALOADER_NAME", dataloader_name)
+                            .replace("DATALOADER_NAME", dataloader_name)\
+                            .replace("def eval_func", "# def eval_func")
 
-                    if globals.optimum_quant_config == "":
-                        globals.optimum_quant_config = "quantization/quant_config"
                     optimum_quant_config_line = \
                         'IncQuantizationConfig.from_pretrained("' + globals.optimum_quant_config + '")'
 
@@ -286,7 +290,7 @@ class AutoInc_Harness(object):
                     lines_to_insert = lines_to_insert \
                         .replace("MODEL_NAME", model_name) \
                         .replace("INPUT_NAME", input_name) \
-                        .replace("EVAL_FUNC_LINES", "return 1") \
+                        .replace("EVAL_FUNC_LINES", "# return 1") \
                         .replace("OPTIMUM_QUANT_CONFIG", optimum_quant_config_line) \
                         .replace("\n", " # [coder-enabled]\n")
                     # add end indicator

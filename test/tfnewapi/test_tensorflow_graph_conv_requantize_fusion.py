@@ -217,7 +217,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             self.assertNotEqual(output_graph, None)
             elu_fused = False
             for node in output_graph.graph_def.node:
-                if node.name == 'conv_eightbit_requantize':
+                if node.name == 'conv_eightbit_requantize_dequantize':
                     if b'Elu' in node.attr['fused_ops'].list.s:
                         elu_fused = True
             self.assertEqual(elu_fused, True)

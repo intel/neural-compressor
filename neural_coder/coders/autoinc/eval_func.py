@@ -40,6 +40,8 @@ class Eval_Func(object):
                 '    "eval_corr",', 
                 '    "eval_mnli/acc",', 
                 '    "eval_mnli-mm/acc",', 
+                '    "eval_exact_match",', 
+                '    "eval_f1",', 
                 '] # METRIC_TAGS in transformers', 
                 'for key in keys:', 
                 '    if key in metrics.keys():', 

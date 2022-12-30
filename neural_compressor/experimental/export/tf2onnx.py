@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2022 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Helper functions to export model from TensorFlow to ONNX."""
+
+import os
+from neural_compressor.utils import logger
+
+def tf_to_fp32_onnx(
+    fp32_model,
+    save_path,
+    opset_version=14,
+    input_names=None,
+    output_names=None
+):
+    """Export FP32 Tensorflow model into FP32 ONNX model.
+
+    Args:
+        fp32_model (torch.nn.module): fp32 model.
+        int8_model (torch.nn.module): int8 model.
+        save_path (str): save path of ONNX model.
+        example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
+        opset_version (int, optional): opset version. Defaults to 14.
+        dynamic_axes (dict, optional): dynamic axes. Defaults to {"input": {0: "batch_size"}, 
+                                                                  "output": {0: "batch_size"}}.
+        input_names (list, optional): input names. Defaults to None.
+        output_names (list, optional): output names. Defaults to None.
+        do_constant_folding (bool, optional): do constant folding or not. Defaults to True.
+        verbose (bool, optional): dump verbose or not. Defaults to True.
+    """
+
+    info = "The FP32 ONNX Model exported to path: {0}".format(save_path)
+    logger.info("*"*len(info))
+    logger.info(info)
+    logger.info("*"*len(info))
+
+
+def tf_to_int8_onnx(
+    int8_model,
+    save_path,
+    opset_version: int = 14,
+    input_names=None,
+    output_names=None
+):
+    """Export INT8 Tensorflow model into INT8 ONNX model.
+
+    Args:
+        fp32_model (torch.nn.module): fp32 model.
+        int8_model (torch.nn.module): int8 model.
+        q_config (dict): containing quantization configuration.
+        save_path (str): save path of ONNX model.
+        example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
+        opset_version (int, optional): opset version. Defaults to 14.
+        dynamic_axes (dict, optional): dynamic axes. Defaults to {"input": {0: "batch_size"}, 
+                                                                  "output": {0: "batch_size"}}.
+        input_names (list, optional): input names. Defaults to None.
+        output_names (list, optional): output names. Defaults to None.
+        quant_format (str, optional): quantization format of ONNX model. Defaults to 'QDQ'.
+        dtype (str, optional): data types of activation and weight of ONNX model. Defaults to 'U8S8'.
+        recipe (str, optionl): Recipe for processing nn.quantized.Linear module. 
+            'QDQ_OP_FP32_BIAS': inserting QDQ before quantizable op and using fp32 bias.
+            'QDQ_OP_INT32_BIAS': inserting QDQ before quantizable op and using int32 bias.
+            'QDQ_OP_FP32_BIAS_QDQ': inserting QDQ before and after quantizable op and using fp32 bias.
+            Defaults to 'QDQ_OP_FP32_BIAS'.
+    """
+    from neural_compressor.adaptor.tf_utils.tf2onnx_converter import TensorflowQDQToOnnxQDQConverter
+    TensorflowQDQToOnnxQDQConverter(int8_model, input_names, \
+                        output_names, opset_version).convert(save_path)
+
+    info = "The INT8 ONNX Model is exported to path: {0}".format(save_path)
+    logger.info("*"*len(info))
+    logger.info(info)
+    logger.info("*"*len(info))

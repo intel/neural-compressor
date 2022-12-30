@@ -6,7 +6,7 @@ import numpy as np
 import shutil
 from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
 from neural_compressor.data.dataloaders.dataloader import DataLoader
-from neural_compressor.data import DATASETS, DATALOADERS, TRANSFORMS
+from neural_compressor.data import Datasets, DATALOADERS, TRANSFORMS
 from PIL import Image
 
 class TestBuiltinDataloader(unittest.TestCase):
@@ -1069,7 +1069,7 @@ class TestDataloader(unittest.TestCase):
         self.assertEqual(5, len(ds[0][0]))
 
     def test_tensorflow_dummy(self):
-        datasets = DATASETS('tensorflow')
+        datasets = Datasets('tensorflow')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
 
         data_loader = DATALOADERS['tensorflow'](dataset)
@@ -1092,7 +1092,7 @@ class TestDataloader(unittest.TestCase):
             dataset = datasets['dummy'](shape=(4, 256, 256, 3), dtype=['float32', 'int8'])
 
     def test_tensorflow_dummy_v2(self):
-        datasets = DATASETS('tensorflow')
+        datasets = Datasets('tensorflow')
         # test with label
         dataset = datasets['dummy_v2'](\
             input_shape=(256, 256, 3), label_shape=(1,))
@@ -1131,7 +1131,7 @@ class TestDataloader(unittest.TestCase):
                 input_shape=(256, 256, 3), dtype=['float32', 'int8'])
 
     def test_tensorflow_sparse_dummy_v2(self):
-        datasets = DATASETS('tensorflow')
+        datasets = Datasets('tensorflow')
         # test with label
         dataset = datasets['sparse_dummy_v2'](\
             dense_shape=[[10, 20], [5, 3]], label_shape=[[1]], sparse_ratio=[0.98, 0.8])
@@ -1184,7 +1184,7 @@ class TestDataloader(unittest.TestCase):
         im = Image.fromarray(random_array)
         im.save('test.jpg')
 
-        datasets = DATASETS('tensorflow')
+        datasets = Datasets('tensorflow')
         dataset = datasets['style_transfer'](content_folder='./', style_folder='./')
         length = len(dataset)
         image, label = dataset[0]
@@ -1223,7 +1223,7 @@ class TestDataloader(unittest.TestCase):
     #     self.assertEqual(data[0][1], 2)
 
     def test_pytorch_dummy(self):
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         transform = TRANSFORMS('pytorch', 'preprocess')['Resize'](**{'size':100})
         dataset = datasets['dummy'](shape=[(4, 256, 256, 3), (4, 1)], \
             high=[10., 10.], low=[0., 0.], transform=transform)
@@ -1240,7 +1240,7 @@ class TestDataloader(unittest.TestCase):
 
     @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_mxnet_dummy(self):
-        datasets = DATASETS('mxnet')
+        datasets = Datasets('mxnet')
         transform = TRANSFORMS('mxnet', 'preprocess')['Resize'](**{'size':100})
         dataset = datasets['dummy'](shape=(4, 256, 256, 3), transform=transform)
 
@@ -1258,7 +1258,7 @@ class TestDataloader(unittest.TestCase):
         self.assertEqual(dataset[0][1], 0)
 
     def test_onnxrt_qlinear_dummy(self):
-        datasets = DATASETS('onnxrt_qlinearops')
+        datasets = Datasets('onnxrt_qlinearops')
         transform = TRANSFORMS('onnxrt_qlinearops', 'preprocess')['Resize'](**{'size':100})
         dataset = datasets['dummy'](shape=(4, 256, 256, 3), transform=transform)
 
@@ -1283,7 +1283,7 @@ class TestDataloader(unittest.TestCase):
                 shape=[(4, 256, 256, 3), (4, 256, 256, 3)], dtype=['float32', 'int8', 'int8'])
 
     def test_onnx_integer_dummy(self):
-        datasets = DATASETS('onnxrt_integerops')
+        datasets = Datasets('onnxrt_integerops')
         dataset = datasets['dummy'](shape=(4, 256, 256, 3))
 
         data_loader = DATALOADERS['onnxrt_integerops'](dataset)
@@ -1321,7 +1321,7 @@ class TestDataloader(unittest.TestCase):
             tsv_w.writerow(['Quality', '#1 ID', '#2 ID', '#1 String', '#2 String'])
             tsv_w.writerow(['1', '702876', '702977', """Amrozi accused his brother , whom he called " the witness " , of deliberately distorting his evidence .""", """Referring to him as only " the witness " , Amrozi accused his brother of deliberately distorting his evidence ."""])
 
-        datasets = DATASETS('onnxrt_integerops')
+        datasets = Datasets('onnxrt_integerops')
         args = {'GLUE':
                     {'data_dir': './MRPC',
                      'model_name_or_path': 'bert-base-uncased',

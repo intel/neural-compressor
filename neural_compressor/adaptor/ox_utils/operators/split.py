@@ -14,19 +14,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""Split Operator."""
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
 
 
 @op_registry(op_types="Split")
 class SplitOperator(Operator):
+    """Split Operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(SplitOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         self.quantizer.quantize_inputs(node, [0])
         if not self.disable_qdq_for_node_output or self.quantizer != 'qdq':
@@ -34,6 +38,7 @@ class SplitOperator(Operator):
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['static'], \
             "convert format for {} should be in ['static']".format(node.op_type)
@@ -46,6 +51,7 @@ class SplitOperator(Operator):
         return True
 
     def convert(self, convert_format):
+        """Convert to QOperator format."""
         node = self.node
 
         parent = self.quantizer.model.get_parents(node)[0]
@@ -77,7 +83,60 @@ class SplitOperator(Operator):
         self.quantizer.remove_nodes.extend([parent, node])
 
     def cast(self): # pragma: no cover
+        """Cast node."""
         node = self.node
         if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
             return
         self.quantizer.dtype_cast(self.node, self.dtype)
+
+@qop_registry(op_types="Split")
+class QSplitOperator(QOperator):
+    """QSplit Operator."""
+
+    def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
+        super().__init__(onnx_node, children, initializers)
+
+    def convert(self):
+        """Convert to QDQ format."""
+        node = self.node
+        add_nodes = []
+        inputs = []
+        inits = []
+
+        if all([child.op_type not in self.qop_list or \
+                child.op_type != 'DequantizeLinear' for child in self.children]):
+            return False, add_nodes, inits
+
+        # input dq
+        for child in self.children:
+            if child.op_type == 'DequantizeLinear':
+                in_dq = onnx.helper.make_node(
+                    'DequantizeLinear',
+                    [node.input[0], child.input[1], child.input[2]],
+                    [node.name + '_in_dequant'],
+                    node.name + '_in_dequant')
+                inputs.append(node.name + '_in_dequant')
+                add_nodes.append(in_dq)
+                break
+
+        outputs = []
+        for i, out in enumerate(node.output):
+            out_q = onnx.helper.make_node(
+                'QuantizeLinear',
+                [node.name + '_out_' + str(i), in_dq.input[1], in_dq.input[2]],
+                [node.output[i]],
+                node.name + '_out_quant_' + str(i))
+        outputs.append([node.name + '_out_quant_' + str(i)])
+        add_nodes.append(out_q)
+
+        outputs = node.output
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+
+        gather_node = onnx.helper.make_node(
+            node.op_type, inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(gather_node)
+        return True, add_nodes, inits

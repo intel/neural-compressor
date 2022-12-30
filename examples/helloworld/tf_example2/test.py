@@ -16,7 +16,6 @@ class Dataset(object):
       return len(self.test_images)
 
 # Define a customized Metric function 
-from neural_compressor.experimental import Quantization,  common
 from neural_compressor.metric import BaseMetric
 class MyMetric(BaseMetric):
   def __init__(self, *args):
@@ -44,13 +43,17 @@ class MyMetric(BaseMetric):
 
 
 # Quantize with customized dataloader and metric
-quantizer = Quantization('./conf.yaml')
+from neural_compressor.quantization import fit
+from neural_compressor.config import PostTrainingQuantConfig
+from neural_compressor.data.dataloaders.dataloader import DataLoader
 dataset = Dataset()
-quantizer.metric = MyMetric()
-quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=1)
-quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=1)
-quantizer.model = common.Model('../models/saved_model')
-q_model = quantizer.fit()
+config = PostTrainingQuantConfig()
+q_model = fit(
+    model='../models/saved_model',
+    conf=config,
+    calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset),
+    eval_dataloader=DataLoader(framework='tensorflow', dataset=dataset),
+    eval_metric=MyMetric())
 
 # Optional, run quantized model
 import tensorflow as tf

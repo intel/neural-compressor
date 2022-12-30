@@ -8,9 +8,8 @@ import torch.nn as nn
 import unittest
 import neural_compressor.adaptor.pytorch as nc_torch
 from neural_compressor import quantization
-from neural_compressor.conf.pythonic_config import PostTrainingConfig, QuantizationAwareTrainingConfig
-from neural_compressor.experimental.data.datasets.dataset import DATASETS
-from neural_compressor.training import prepare_compression
+from neural_compressor.config import PostTrainingQuantConfig
+from neural_compressor.experimental.data.datasets.dataset import Datasets
 from packaging.version import Version
 from torch.quantization import QuantStub, DeQuantStub
 
@@ -82,7 +81,7 @@ def build_pytorch_yaml():
         f.write(fake_dyn_yaml)
 
     fake_qat_yaml = fake_ptq_yaml.replace(
-        'post_training_static_quant', 
+        'post_training_static_quant',
         'quant_aware_training',
     )
     with open('qat_yaml.yaml', 'w', encoding="utf-8") as f:
@@ -206,16 +205,11 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         os.remove('int8-model.onnx')
 
     def test_fx_quant(self):
-        for fake_yaml in ['dynamic', 'static']:
+        for approach in ['dynamic', 'static']:
             model = DynamicControlModel()
             # run fx_quant in neural_compressor and save the quantized GraphModule
-            conf = PostTrainingConfig(
-                approach="post_training_dynamic_quant" \
-                    if fake_yaml == "dynamic" else "post_training_static_quant",
-                backend="pytorch_fx",
-                performance_only=True
-            )
-            dataset = DATASETS("pytorch")['dummy']((100, 3, 224, 224))
+            conf = PostTrainingQuantConfig(approach=approach)
+            dataset = Datasets("pytorch")['dummy']((100, 3, 224, 224))
             dataloader = torch.utils.data.DataLoader(dataset)
             q_model = quantization.fit(model,
                                        conf,
@@ -225,7 +219,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
 
             int8_jit_model = q_model.export_to_jit(example_inputs)
             # INC will keep fallbacked fp32 modules when exporting onnx model
-            if fake_yaml == 'static':
+            if approach == 'static':
                 calib_dataloader = dataloader
             else:
                 calib_dataloader = None

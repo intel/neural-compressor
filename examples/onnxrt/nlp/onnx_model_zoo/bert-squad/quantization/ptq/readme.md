@@ -4,8 +4,9 @@
 This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task. 
 
 ### Environment
-onnx: 1.9.0
-onnxruntime: 1.10.0
+onnx: 1.12.0  
+onnxruntime: 1.13.1
+> Validated framework versions can be found in main readme.
 
 ### Prepare dataset
 You should download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
@@ -30,8 +31,7 @@ Dynamic quantize:
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
-                   --data_path=/path/to/SQuAD/dataset \
-                   --config=bert.yaml
+                   --dataset_location=/path/to/SQuAD/dataset 
 ```
 
 QDQ mode:
@@ -39,16 +39,16 @@ QDQ mode:
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
-                   --data_path=/path/to/SQuAD/dataset \
-                   --config=bert_qdq.yaml
+                   --dataset_location=/path/to/SQuAD/dataset \
+                   --quant_format='QDQ'
 ```
 
 ### Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=/path/to/model \ # model path as *.onnx
-                      --data_path=/path/to/SQuAD/dataset \
-                      --config=bert.yaml
+                      --dataset_location=/path/to/SQuAD/dataset \
+                      --batch_size=batch_size \ 
                       --mode=performance # or accuracy
 ```
 

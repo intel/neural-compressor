@@ -109,6 +109,15 @@ class TensorflowModel(Model):
         """Get the name of framework."""
         return Frameworks.TF.value
 
+    @property
+    def supports_pruning(self) -> bool:
+        """Check if pruning is supported for the model."""
+        try:
+            self.nc_model_instance.get_all_weight_names()
+            return True
+        except AttributeError:
+            return False
+
     def guard_requirements_installed(self) -> None:
         """Ensure all requirements are installed."""
         check_module("tensorflow")

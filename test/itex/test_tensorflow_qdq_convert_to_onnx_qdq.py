@@ -7,7 +7,7 @@ import shutil
 import yaml
 
 from neural_compressor.adaptor.tf_utils.util import disable_random
-from neural_compressor.experimental import Quantization, common
+from neural_compressor.experimental import Quantization, common, Benchmark
 
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2, version1_gte_version2
 
@@ -19,7 +19,6 @@ def build_fake_yaml(fake_yaml, save_path, **kwargs):
     with open(file=save_path, mode=kwargs['mode'], encoding=kwargs['encoding']) as f:
         yaml.dump(y, f)
 
-@unittest.skipIf(tf.version.VERSION.find('up') == -1 and tf.version.VERSION < '2.0', "Only supports tf 1.15.up2/up3 and 2.x")
 class TestConvertTensorflowQDQToOnnxQDQ(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -55,6 +54,8 @@ class TestConvertTensorflowQDQToOnnxQDQ(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove('fake_yaml.yaml')
+        if version1_gte_version2(tf.version.VERSION, '2.8.0'):
+            shutil.rmtree('workspace')
 
     @disable_random()
     @unittest.skipIf(version1_lt_version2(tf.version.VERSION, '2.8.0'), "Only supports tf greater 2.7.0")
@@ -88,13 +89,18 @@ class TestConvertTensorflowQDQToOnnxQDQ(unittest.TestCase):
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
+
             quantizer.model = output_graph_def
             output_graph = quantizer.fit()
-            output_graph.save("/home/lvl/tf_itex_qdq.pb")
-            output_graph.export("workspace/tf_qdq_to_onnx_qdq.onnx")
+
+            from neural_compressor.config import TF2ONNXConfig
+            config = TF2ONNXConfig()
+            output_graph.export("workspace/tf_qdq_to_onnx_qdq.onnx", config)
+
             import onnx
             onnx_model = onnx.load("workspace/tf_qdq_to_onnx_qdq.onnx")
             onnx.checker.check_model(onnx_model)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Built-in dataloaders for onnxruntime framework backends."""
 
 from neural_compressor.utils.utility import LazyImport
 from .base_dataloader import BaseDataLoader
@@ -23,6 +25,8 @@ import logging
 torch = LazyImport('torch')
 
 class ONNXRTBertDataLoader(DefaultDataLoader):
+    """Built-in dataloader for onnx bert model and its varients."""
+
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory,
                              shuffle, distributed):
@@ -59,6 +63,8 @@ class ONNXRTBertDataLoader(DefaultDataLoader):
                 return
 
 class ONNXRTDataLoader(BaseDataLoader):
+    """Built-in dataloader for onnxruntime framework backends."""
+
     def _generate_dataloader(self, dataset, batch_size, last_batch, collate_fn,
                              sampler, batch_sampler, num_workers, pin_memory,
                              shuffle, distributed):

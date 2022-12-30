@@ -14,9 +14,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
@@ -31,10 +28,6 @@ function init_params {
       ;;
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
-      ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
       ;;
     esac
   done
@@ -57,7 +50,6 @@ function run_benchmark {
       --num_train_epochs=3.0 \
       --output_dir=$init_checkpoint \
       --input_model=$input_model \
-      --config=$config \
       --mode=$mode \
       --benchmark \
 

@@ -22,14 +22,14 @@ import time
 import autograd.numpy as anp
 import numpy as np
 import pymoo
+from neural_compressor.experimental.nas.dynast.dynas_utils import \
+    EvaluationInterface
+from neural_compressor.utils import logger
 from pymoo.algorithms.moo.age import AGEMOEA
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.problem import Problem
 from pymoo.factory import get_crossover, get_mutation, get_sampling
 from pymoo.optimize import minimize
-
-from neural_compressor.experimental.nas.dynast.dynas_utils import EvaluationInterface
-from neural_compressor.utils import logger
 
 
 class SearchAlgoManager:
@@ -60,9 +60,10 @@ class SearchAlgoManager:
         elif self.algorithm == 'age':
             self.configure_age()
             self.engine = 'pymoo'
-        else: # pragma: no cover
+        else:  # pragma: no cover
             logger.error(
-                '[DyNAS-T] algorithm "{}" not implemented.'.format(self.algorithm)
+                '[DyNAS-T] algorithm "{}" not implemented.'.format(
+                    self.algorithm)
             )
             raise NotImplementedError
 
@@ -88,8 +89,10 @@ class SearchAlgoManager:
         self.algorithm_def = NSGA2(
             pop_size=population,
             sampling=sample_strategy,
-            crossover=get_crossover("int_sbx", prob=crossover_prob, eta=crossover_eta),
-            mutation=get_mutation("int_pm", prob=mutation_prob, eta=mutation_eta),
+            crossover=get_crossover(
+                "int_sbx", prob=crossover_prob, eta=crossover_eta),
+            mutation=get_mutation(
+                "int_pm", prob=mutation_prob, eta=mutation_eta),
             eliminate_duplicates=True,
         )
 
@@ -116,8 +119,10 @@ class SearchAlgoManager:
         self.algorithm_def = AGEMOEA(
             pop_size=population,
             sampling=sample_strategy,
-            crossover=get_crossover("int_sbx", prob=crossover_prob, eta=crossover_eta),
-            mutation=get_mutation("int_pm", prob=mutation_prob, eta=mutation_eta),
+            crossover=get_crossover(
+                "int_sbx", prob=crossover_prob, eta=crossover_eta),
+            mutation=get_mutation(
+                "int_pm", prob=mutation_prob, eta=mutation_eta),
             eliminate_duplicates=True,
         )
 
@@ -140,7 +145,7 @@ class SearchAlgoManager:
                 save_history=save_history,
                 verbose=self.verbose,
             )
-        else: # pragma: no cover
+        else:  # pragma: no cover
             logger.error('[DyNAS-T] Invalid algorithm engine configuration!')
             raise NotImplementedError
 
@@ -175,7 +180,7 @@ class ProblemMultiObjective(Problem):
             n_constr=0,
             xl=0,
             xu=param_upperbound,
-            type_var=np.int,
+            type_var=np.int32,
         )
 
         self.evaluation_interface = evaluation_interface
@@ -194,12 +199,11 @@ class ProblemMultiObjective(Problem):
         # Measure new individuals
         for i in range(len(x)):
 
-            _, objective_x, objective_y = self.evaluation_interface.eval_subnet(x[i])
+            _, objective_x, objective_y = self.evaluation_interface.eval_subnet(
+                x[i])
 
             objective_x_arr.append(objective_x)
             objective_y_arr.append(objective_y)
-
-        print('.', end='', flush=True)
 
         # Update PyMoo with evaluation data
         out["F"] = anp.column_stack([objective_x_arr, objective_y_arr])

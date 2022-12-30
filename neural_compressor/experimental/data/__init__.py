@@ -14,17 +14,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Built-in dataloaders, datasets, transforms, filters for multiple framework backends."""
 
-"""Built-in datasets class for multiple framework backends."""
 
-from .datasets import DATASETS, Dataset, IterableDataset, dataset_registry
+from .datasets import Datasets, Dataset, IterableDataset, dataset_registry
 from .transforms import TRANSFORMS, BaseTransform, transform_registry
 from .dataloaders import DATALOADERS
 from .filters import FILTERS, Filter, filter_registry
 
 __all__ = [
     "DATALOADERS",
-    "DATASETS",
+    "Datasets",
     "Dataset",
     "IterableDataset",
     "dataset_registry",

@@ -15,9 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""ONNX options."""
+
 from ..conf.dotdict import DotDict
 
 class onnxrt:
+    """ONNX helper configuration."""
     graph_optimization = DotDict({'level': None, 'gemm2matmul': True})
     qdq_setting = DotDict({'OpTypesToExcludeOutputQuantizatioin': None, 
                            'AddQDQPairToWeight': False,
@@ -32,7 +35,7 @@ OPTIONS = {'tensorflow': None,
            'onnxrt_integerops': onnxrt,
            'onnxrt_qlinearops': onnxrt,
            'onnxrt_qdq': onnxrt,
-           'onnxrt_qoperator': onnxrt,
+           'onnxruntime': onnxrt,
            }
 
 

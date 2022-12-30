@@ -20,6 +20,8 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
+"""Quantizer for onnx models."""
+
 import os
 import onnx
 import logging
@@ -37,21 +39,33 @@ from neural_compressor.adaptor.ox_utils.util import find_by_name, dtype_to_name
 from neural_compressor.adaptor.ox_utils.util import __producer__, __version__
 from neural_compressor.adaptor.ox_utils.util import quantize_data, dtype_mapping, support_pair, ValueInfo
 from neural_compressor import options
-from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.operators import OPERATORS
 
 logger = logging.getLogger("neural_compressor")
 
 class Quantizer:
+    """Quantizer class."""
+
     def __init__(self, model, q_config, mode, static, quantization_params,
                  op_types_to_quantize, fallback_list=['fp32'], reduce_range=None):
+        """Initialization.
+
+        Args:
+            model (ModelProto or ONNXModel): onnx model or onnx model wrapper by neural compressor
+            q_config (dict): op-wise quantization config.
+            mode (QuantizationMode): quantizaion mode
+            static (bool): static or not
+            quantization_params (dict): scale and zero point of tensors
+            op_types_to_quantize (list): optypes to quantize
+            fallback_list (list, optional): fallback data type. Defaults to ['fp32'].
+            reduce_range (bool, optional): use 7 bit or not. Defaults to None.
+        """
         self.model = ONNXModel(model) if not isinstance(model, ONNXModel) else model
         model = onnx.shape_inference.infer_shapes(self.model.model) if \
             not self.model.large_size else self.model.model
         self.config = q_config
-        self.reduce_range = reduce_range if reduce_range is not None \
-            else False if CpuInfo().vnni else True
+        self.reduce_range = reduce_range
         self.mode = mode # QuantizationMode.Value
         self.static = static  # use static quantization for inputs.
         self.fuse_dynamic_quant = False
@@ -90,6 +104,7 @@ class Quantizer:
         self.dedicated_qdq_pair = options.onnxrt.qdq_setting.DedicatedQDQPair
 
     def check_opset_version(self):
+        """Check opset version."""
         ai_onnx_domain = [
             opset for opset in self.model.model.opset_import if not opset.domain \
                                                         or opset.domain == "ai.onnx"]
@@ -114,6 +129,7 @@ class Quantizer:
         return opset_version
 
     def should_quantize(self, node):
+        """Check if node should be quantized."""
         if node.name in self.config and self.config[node.name] not in self.fallback_list:
             return True
         elif node.name.split('_quant')[0] in self.config and \
@@ -123,6 +139,7 @@ class Quantizer:
             return False
 
     def quantize_model(self):
+        """Quantize onnx model."""
         # step 1: insert q-dq, cast-cast pairs
         self.insert_qdq()
  
@@ -142,6 +159,7 @@ class Quantizer:
         return self.model.model
 
     def merge_dedicated_qdq_pair(self):
+        """Merge dedicated Q/DQ pairs."""
         self.remove_nodes = []
         self.replace_input = []
         self.new_nodes = []
@@ -202,12 +220,14 @@ class Quantizer:
                 self.model.update()
 
     def should_cast(self, node):
+        """Check if node should be casted."""
         if node.name in self.config and self.config[node.name] != 'fp32': # pragma: no cover
             return True
         else:
             return False
 
     def insert_qdq(self):
+        """Insert Q/DQ pairs."""
         for node in self.model.nodes():
             if self.should_quantize(node):
                 op_quantizer = OPERATORS[node.op_type](self, node)
@@ -224,6 +244,7 @@ class Quantizer:
         self.model.update()
  
     def should_convert(self, node):
+        """Check if node should be converted."""
         name = node.name.split('_quant')[0]
         if name in self.config and self.config[name] not in self.fallback_list and \
             (self.config[name]['activation']['quant_mode'] == 'dynamic' or self.mode != 'qdq'):
@@ -232,6 +253,7 @@ class Quantizer:
             return False
 
     def convert_qdq_to_operator_oriented(self):
+        """Convert QDQ to QOperator format."""
         self.new_nodes = []
         self.remove_nodes = []
         self.replace_input = []
@@ -249,6 +271,7 @@ class Quantizer:
         self.model.update()
 
     def remove_redundant_pairs(self):
+        """Remove redudant Q/DQ, Cast/Cast pairs."""
         self.remove_nodes = []
         self.replace_input = []
         pairs = [['QuantizeLinear', 'DequantizeLinear'], 
@@ -329,6 +352,7 @@ class Quantizer:
         self.model.update()
 
     def dtype_cast(self, node, cfg, keep_io_types=True): # pragma: no cover
+        """Cast node dtype."""
         min_positive_val = 1e-7
         max_finite_val = 1e4
         for idx, tensor_name in enumerate(node.input):
@@ -369,6 +393,7 @@ class Quantizer:
                                                          dtype_mapping[cfg], TensorProto.FLOAT)
 
     def quantize_outputs(self, node, initializer_use_weight_qType=True, direct_int8=False):
+        """Quantize node outputs."""
         if self.config[node.name]['activation']['quant_mode'] == 'dynamic':
             return
         for idx, tensor_name in enumerate(node.output):
@@ -421,6 +446,7 @@ class Quantizer:
  
     def quantize_inputs(self, node, indices=None, 
             initializer_use_weight_qType=True, direct_int8=False):
+        """Quantize node inputs."""
         # Quantize the input
         for idx, tensor_name in enumerate(node.input):
             if indices and idx not in indices:
@@ -566,6 +592,7 @@ class Quantizer:
                     self.replace_input.append([node, tensor_name, qlinear_node.output[0]])
  
     def quantize_bias_tensor(self, node):
+        """Quantize bias."""
         input_name, weight_name, bias_name = node.input
         if self.quantization_params is None or \
             input_name not in self.quantization_params or \
@@ -597,9 +624,10 @@ class Quantizer:
                 bias_name, bias_name + '_dequantized'])
 
     def quantize_bias(self, bias_name, input_name, weight_name, beta=1.0):
-        '''
-        Quantized the bias. Zero Point == 0 and Scale == Input_Scale * Weight_Scale
-        '''
+        """Quantized the bias.
+        
+        Zero Point == 0 and Scale == Input_Scale * Weight_Scale
+        """
         # get scale for weight
         weight_scale_initializer = find_by_name(weight_name + '_scale', self.model.initializer())
         weight_scale = self.tensor_proto_to_array(weight_scale_initializer)
@@ -664,13 +692,14 @@ class Quantizer:
 
     def _dynamic_quantize_bias(self, input_name, weight_scale_name, \
         bias_name, quantized_bias_name):
-        '''
-        Adds series of nodes required to quantize the bias dynamically.
-            parameter input_name: Input name
-            parameter weight_scale_name: Weight scale.
-            parameter bias_scale_name: Bias to quantize.
-            parameter quantied_bias_name: Output name to use for quantized bias.
-        '''
+        """Adds series of nodes required to quantize the bias dynamically.
+
+        Args:
+            input_name (string): Input name
+            weight_scale_name (string): Weight scale name
+            bias_name (string): bias name
+            quantized_bias_name (string): quantized bias name
+        """
         qType = onnx_proto.TensorProto.INT32
         input_scale_name = input_name + "_scale"
         bias_scale_node = onnx.helper.make_node("Mul",
@@ -697,6 +726,7 @@ class Quantizer:
         return
 
     def quantize_weights_per_channel(self, node, indices, weight_qType, scheme, axis):
+        """Quantize weights per-channel."""
         if self.opset_version < 13 and self.mode == 'qdq':
             self.quantize_inputs(node, indices)
             return
@@ -731,6 +761,7 @@ class Quantizer:
                 self.replace_input.append([node, weight_name, dequant_node.output[0]])
 
     def quantize_weight_per_channel(self, weight_name, weight_qType, scheme, channel_axis):
+        """Quantize weight per-channel."""
         initializer = find_by_name(weight_name, self.model.initializer())
         if initializer is None:
             raise ValueError("{} is not an initializer", weight_name)
@@ -780,14 +811,15 @@ class Quantizer:
                 initializer.name + "_scale")
 
     def _update_weight(self, weight):
-        '''
-            Given a weight object, update the graph by doing the following:
-             - remove old initializer, update new initializers for 
-               quantized weight, zero point, and scale
-             - remove old weight input, update with new inputs for 
-               quantized weight, zero point, and scale
-            This function does NOT update the nodes in the graph, just initializers and inputs
-        '''
+        """Update weight.
+
+        Given a weight object, update the graph by doing the following:
+         - remove old initializer, update new initializers for 
+           quantized weight, zero point, and scale
+         - remove old weight input, update with new inputs for 
+           quantized weight, zero point, and scale
+        This function does NOT update the nodes in the graph, just initializers and inputs
+        """
         if weight.name in self.quantized_value_map:
             return
         packed_weight_name = weight.name + "_quantized"
@@ -817,6 +849,7 @@ class Quantizer:
 
     @staticmethod
     def tensor_proto_to_array(initializer):
+        """Convert TensorProto to array."""
         if initializer.data_type == onnx_proto.TensorProto.FLOAT:
             weights = onnx.numpy_helper.to_array(initializer)
         else:
@@ -826,12 +859,14 @@ class Quantizer:
         return weights
 
     def _get_quantization_params(self, param_name):
-        '''
-        Create initializers and inputs in the graph for zero point and scale of output.
+        """Create initializers and inputs in the graph for zero point and scale of output.
+
         Zero point and scale values are obtained from self.quantization_params if specified.
-            parameter param_name: Name of the quantization parameter.
-            return: result, scale_name, zero_point_name, scale_shape, zero_point_shape.
-        '''
+
+        Args:
+            param_name (string): Name of the quantization parameter.
+
+        """
         if self.quantization_params is None or param_name not in self.quantization_params:
             return False, "", "", "", ""
 
@@ -840,12 +875,12 @@ class Quantizer:
             raise ValueError("Quantization parameters should contain zero point and scale. "
                              "Specified values for output {}: {}".format(param_name, params))
 
-        zero_point_values = [params[0].item()]
+        zero_point_values = [params[0]]
         zero_point_shape = []
         zero_point_name = param_name + "_zero_point"
         zero_point_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[params[0].dtype]
 
-        scale_values = [params[1].item()]
+        scale_values = [params[1]]
         scale_shape = []
         scale_name = param_name + "_scale"
 
@@ -860,12 +895,7 @@ class Quantizer:
         return True, scale_name, zero_point_name, scale_shape, zero_point_shape
 
     def _get_quantized_weight(self, initializer, qType, scheme):
-        '''
-            :param initializer: TensorProto initializer
-            :param scheme: sym or asym quantization.
-            :param qType: type to quantize to
-            :return: Weight class with quantization information
-        '''
+        """Get quantized weight."""
         if initializer.name in self.quantized_value_map:
             return self.quantized_value_map[initializer.name]
         weights_data = self.tensor_proto_to_array(initializer)
@@ -882,13 +912,14 @@ class Quantizer:
         return weight
 
     def get_bias_add_nodes(self, node, weight_name, last_output, quantized_bias_name):
-        '''
-        Given a node, this function handles bias add by
-            adding a "reshape" node on bias and an "add" node
-            parameter node: current node (Conv)
-            parameter last_output: output of previous node (input to bias add)
-            return: the name of output
-        '''
+        """Given a node, this function handles bias add by adding a "reshape" node on bias and an "add" node.
+
+        Args:
+            node (NodeProto): current node (Conv)
+            weight_name (string): weight name
+            last_output (_type_): output of previous node (input to bias add)
+            quantized_bias_name (string): bias name
+        """
         # Add tensors for the shape to be reshaped to
         weight = find_by_name(weight_name, self.model.initializer())
         if weight is None:
@@ -919,6 +950,7 @@ class Quantizer:
         return add_node_output
 
     def is_valid_quantize_weight(self, weight_name):
+        """Check weight can be quantized."""
         weight = find_by_name(weight_name, self.model.initializer())
         if weight is not None:
             return weight.data_type == onnx_proto.TensorProto.FLOAT
@@ -926,6 +958,7 @@ class Quantizer:
             return weight_name in self.quantized_value_map
 
     def dequantize_tensor(self, node, value_name):
+        """Dequantize tensor."""
         if value_name in self.quantized_value_map:
             quantized_value = self.quantized_value_map[value_name]
             dqlinear_name = value_name + "_DequantizeLinear"
@@ -958,11 +991,11 @@ class Quantizer:
                 self.new_nodes.append(dequantize_node)
 
     def _get_dynamic_input_quantization_params(self, input_name, qType):
-        """
-        Create nodes for dynamic quantization of input
-            parameter input_name: Name of the input.
-            parameter qType: type to quantize to.
-            return: scale_name, zero_point_name, scale_shape, zero_point_shape.
+        """Create nodes for dynamic quantization of input.
+
+        Args:
+            input_name (string): Name of the input.
+            qType (int): type to quantize to.
         """
         if qType == onnx_proto.TensorProto.INT8:
             return self._get_dynamic_input_quantization_params_int8(input_name)
@@ -970,10 +1003,10 @@ class Quantizer:
         return self._get_dynamic_input_quantization_params_uint8(input_name)
 
     def _get_dynamic_input_quantization_params_int8(self, input_name): # pragma: no cover
-        """
-        Create nodes for dynamic quantization of input to int8
-            parameter input_name: Name of the input.
-            return: scale_name, zero_point_name, scale_shape, zero_point_shape.
+        """Create nodes for dynamic quantization of input to int8.
+
+        Args:
+            input_name (string): Name of the input.
         """
         qType = onnx_proto.TensorProto.INT8
 
@@ -1052,10 +1085,10 @@ class Quantizer:
         return input_scale_name, self.fixed_zero_zp_name, [], []
 
     def _get_dynamic_input_quantization_params_uint8(self, input_name):
-        """
-        Create nodes for dynamic quantization of input to uint8
-            parameter input_name: Name of the input.
-            return: scale_name, zero_point_name, scale_shape, zero_point_shape.
+        """Create nodes for dynamic quantization of input to uint8.
+
+        Args:
+            input_name (string): Name of the input.
         """
         qType = onnx_proto.TensorProto.UINT8
         # Reduce min and Reduce max

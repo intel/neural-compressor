@@ -15,8 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Utility methods to create corresponding objects from configuration."""
+
 from neural_compressor.experimental.metric import METRICS
-from neural_compressor.experimental.data import DATASETS, TRANSFORMS, FILTERS, DATALOADERS
+from neural_compressor.experimental.data import Datasets, TRANSFORMS, FILTERS, DATALOADERS
 from neural_compressor.experimental.common import Optimizers, Criterions
 from collections import OrderedDict
 import copy
@@ -26,6 +28,7 @@ DEFAULT_BATCH_SIZE = 64
 
 
 def get_func_from_config(func_dict, cfg, compose=True):
+    """Get the function or the composed function from configuration."""
     func_list = []
     for func_name, func_value in OrderedDict(cfg).items():
         func_kwargs = {}
@@ -42,22 +45,27 @@ def get_func_from_config(func_dict, cfg, compose=True):
 
 
 def get_preprocess(preprocesses, cfg, compose=True):
+    """Get the preprocess function from configuration."""
     return get_func_from_config(preprocesses, cfg, compose)
 
 
 def get_metrics(metrics, cfg, compose=True):
+    """Get the metrics function from configuration."""
     return get_func_from_config(metrics, cfg, compose)
 
 def get_postprocess(postprocesses, cfg, compose=True):
+    """Get the postprocess function from configuration."""
     return get_func_from_config(postprocesses, cfg, compose)
 
 def get_algorithm(algorithms, cfg, compose=False):
+    """Get the algorithms from configuration."""
     # recipes contains quantization part, only use algorithms in that
     algo_conf = algorithms.support_algorithms().intersection(set(cfg.keys()))
     #(TODO) only support open/close according to cfg
     return [algorithms()[algo]() for algo in algo_conf if cfg[algo]]
 
 def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
+    """Create the dataset from the data source."""
     transform_list = []
     # generate framework specific transforms
     preprocess = None
@@ -65,7 +73,7 @@ def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
         preprocesses = TRANSFORMS(framework, 'preprocess')
         preprocess = get_preprocess(preprocesses, cfg_preprocess)
     # even we can unify transform, how can we handle the IO, or we do the transform here
-    datasets = DATASETS(framework)
+    datasets = Datasets(framework)
     dataset_type = list(data_source.keys())[0]
     # generate framework and dataset specific filters
     filter = None
@@ -81,6 +89,7 @@ def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
 
 
 def create_dataloader(framework, dataloader_cfg):
+    """Create the dataloader according to the framework."""
     batch_size = int(dataloader_cfg['batch_size']) \
         if dataloader_cfg.get('batch_size') is not None else DEFAULT_BATCH_SIZE
     last_batch = dataloader_cfg['last_batch'] \
@@ -109,12 +118,18 @@ def create_eval_func(framework, dataloader, adaptor,
     """The interface to create evaluate function from config.
 
     Args:
-        model (object): The model to be evaluated.
+        framework (str): The string of framework.
+        dataloader (common.DataLoader): The object of common.DataLoader.
+        adaptor (obj): The object of adaptor.
+        metric: The evaluation metric.
+        postprocess_cfg: The postprocess configuration.
+        iteration: The number of iterations to evaluate.
+        tensorboard: Whether to use tensorboard.
+        fp32_baseline: The fp32 baseline score.
 
     Returns:
-        Objective: The objective value evaluated
+        The constructed evaluation function
     """
-
     # eval_func being None means user will provide dataloader and metric info
     # in config yaml file
     assert dataloader, "dataloader should NOT be empty when eval_func is None"

@@ -75,13 +75,14 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'N processes per node, which has N GPUs. This is the '
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
-parser.add_argument("--config", default=None, help="tuning config")
 parser.add_argument('-i', "--iter", default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('-w', "--warmup_iter", default=5, type=int,
                     help='For benchmark measurement only.')
-parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+parser.add_argument('--performance', dest='performance', action='store_true',
                     help='run benchmark')
+parser.add_argument("--accuracy", dest='accuracy', action='store_true',
+                    help='For accuracy measurement only.')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
@@ -164,7 +165,7 @@ def main():
         return
 
     if args.tune:
-        def training_func_for_nc(model):
+        def train_func(model):
             epochs = 8
             iters = 30
             optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
@@ -189,19 +190,21 @@ def main():
                     # Freeze batch norm mean and variance estimates
                     model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
 
-            return model
 
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization(args.config)
-        quantizer.model = common.Model(model)
-        quantizer.q_func = training_func_for_nc
-        quantizer.calib_dataloader = val_loader
-        quantizer.eval_dataloader = val_loader
-        q_model = quantizer.fit()
-        q_model.save(args.tuned_checkpoint)
+        import copy
+        from neural_compressor import QuantizationAwareTrainingConfig
+        from neural_compressor.training import prepare_compression
+        model = copy.deepcopy(model)
+        conf = QuantizationAwareTrainingConfig()
+        compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
+        train_func(model)
+        compression_manager.callbacks.on_train_end()
+        compression_manager.save(args.tuned_checkpoint)
         return
 
-    if args.benchmark:
+    if args.performance or args.accuracy:
         model.eval()
         if args.int8:
             from neural_compressor.utils.pytorch import load
@@ -210,7 +213,16 @@ def main():
                              dataloader=val_loader)
         else:
             new_model = model
-        validate(val_loader, new_model, criterion, args)
+        if args.performance:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(warmup=5,
+                                     iteration=args.iter,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(new_model, b_conf, b_dataloader=val_loader)
+        if args.accuracy:
+            validate(val_loader, new_model, criterion, args)
         return
 
 
@@ -298,11 +310,6 @@ def validate(val_loader, model, criterion, args):
                 break
 
         print('Batch size = %d' % args.batch_size)
-        if args.batch_size == 1:
-            print('Latency: %.3f ms' % (batch_time.avg * 1000))
-        print('Throughput: %.3f images/sec' % (args.batch_size / batch_time.avg))
-
-        # TODO: this should also be done with the ProgressMeter
         print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
               .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 

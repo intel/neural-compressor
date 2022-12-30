@@ -56,13 +56,13 @@ class NAS(object):
         elif isinstance(conf_fname_or_obj, Config):
             self.conf = NASConfig()
             self.conf.map_pyconfig_to_cfg(conf_fname_or_obj)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             raise NotImplementedError(
                 "Please provide a str path to the config file."
             )
         assert self.conf.usr_cfg.nas is not None, "nas section must be set"
         if isinstance(self.conf.usr_cfg.nas.approach, str) and \
-            self.conf.usr_cfg.nas.approach.lower() in NASMethods:
+                self.conf.usr_cfg.nas.approach.lower() in NASMethods:
             method = self.conf.usr_cfg.nas.approach.lower()
         else:
             logger.warning(
@@ -127,29 +127,38 @@ class NASBase(object):
                 )
             )
             model_arch_paras = self.select_model_arch()
-            logger.info("Model architecture {} proposed.".format(model_arch_paras))
+            logger.info(
+                "Model architecture {} proposed.".format(model_arch_paras))
             model = self._model_builder(model_arch_paras)
             model_paras = self.count_model_parameters(model)
             logger.info(
-                "***** Number of model parameters: {:.2f}M *****".format(model_paras / 10**6)
+                "***** Number of model parameters: {:.2f}M *****".format(
+                    model_paras / 10**6)
             )
-            self.model_paras_num[tuple(model_arch_paras.values())] = model_paras
+            self.model_paras_num[tuple(
+                model_arch_paras.values())] = model_paras
             if tuple(model_arch_paras.values()) in self.search_results:
-                logger.info("Skip evaluated model architecture {}.".format(model_arch_paras))
+                logger.info(
+                    "Skip evaluated model architecture {}.".format(model_arch_paras))
                 continue
             if tuple(model_arch_paras.values()) in self.resumed_search_results:
                 logger.info(
-                    "Find previous results of model architecture: {}.".format(model_arch_paras)
+                    "Find previous results of model architecture: {}.".format(
+                        model_arch_paras)
                 )
-                metrics = self.resumed_search_results[tuple(model_arch_paras.values())]
+                metrics = self.resumed_search_results[tuple(
+                    model_arch_paras.values())]
             else:
-                logger.info("Assessing model architecture: {}.".format(model_arch_paras))
+                logger.info(
+                    "Assessing model architecture: {}.".format(model_arch_paras))
                 metrics = self.estimate(model)
             logger.info(
-                "Metrics of model architecture {} is {}.".format(model_arch_paras, metrics)
+                "Metrics of model architecture {} is {}.".format(
+                    model_arch_paras, metrics)
             )
             self.search_results[tuple(model_arch_paras.values())] = metrics
-            self._search_algorithm.get_feedback(sum(self.metrics_conversion(metrics)))
+            self._search_algorithm.get_feedback(
+                sum(self.metrics_conversion(metrics)))
             self.dump_search_results(
                 os.path.join(save_path, 'Trial_{}_results.txt'.format(i+1))
             )
@@ -158,9 +167,12 @@ class NASBase(object):
             if model_arch_vec not in self.search_results:
                 self.search_results[model_arch_vec] = \
                     self.resumed_search_results[model_arch_vec]
-                model = self._model_builder(self.params_vec2params_dict(model_arch_vec))
-                self.model_paras_num[model_arch_vec] = self.count_model_parameters(model)
-        self.dump_search_results(os.path.join(save_path, 'Final_results.txt'.format(i+1)))
+                model = self._model_builder(
+                    self.params_vec2params_dict(model_arch_vec))
+                self.model_paras_num[model_arch_vec] = self.count_model_parameters(
+                    model)
+        self.dump_search_results(os.path.join(
+            save_path, 'Final_results.txt'.format(i+1)))
         self.find_best_model_archs()
         logger.info(
             "{fix} Found {n} best model architectures {fix}".format(
@@ -168,10 +180,11 @@ class NASBase(object):
             )
         )
         for i, model_arch in enumerate(self.best_model_archs):
-            logger.info("Best model architecture {}: {}".format(i+1, model_arch))
+            logger.info(
+                "Best model architecture {}: {}".format(i+1, model_arch))
         return self.best_model_archs
 
-    def estimate(self, model): # pragma: no cover
+    def estimate(self, model):  # pragma: no cover
         """Estimate performance of the model. Depends on specific NAS algorithm.
 
         Returns:
@@ -188,7 +201,8 @@ class NASBase(object):
         if isinstance(model, torch.nn.Module):
             return sum(p.numel() for p in model.parameters())
         else:
-            raise NotImplementedError("Only support torch model now.") # pragma: no cover
+            raise NotImplementedError(
+                "Only support torch model now.")  # pragma: no cover
 
     def load_search_results(self, path):
         """Load previous search results if exist."""
@@ -196,11 +210,13 @@ class NASBase(object):
         lastest_results_record = os.path.join(path, 'lastest_results.npy')
         if not os.path.exists(path) or not os.path.exists(lastest_results_record):
             return
-        self.resumed_search_results = np.load(lastest_results_record, allow_pickle=True).item()
+        self.resumed_search_results = np.load(
+            lastest_results_record, allow_pickle=True).item()
         os.makedirs(os.path.join(path, 'previous_results'), exist_ok=True)
         for f in os.listdir(path):
             if os.path.isfile(os.path.join(path, f)):
-                shutil.move(os.path.join(path, f), os.path.join(path, 'previous_results', f))
+                shutil.move(os.path.join(path, f), os.path.join(
+                    path, 'previous_results', f))
         logger.info("Loaded previous results.")
 
     def dump_search_results(self, path):
@@ -209,23 +225,24 @@ class NASBase(object):
         np.save(lastest_results_record, self.search_results, allow_pickle=True)
         write_contents = '=' * 30 + ' All Search Results ' + '=' * 30 + '\n\n'
         for model_arch_vec in self.search_results:
-            tmp = ','.join(['{}_{}'.format(k, v) \
-                for k, v in zip(self.search_space_keys, model_arch_vec)])
+            tmp = ','.join(['{}_{}'.format(k, v)
+                            for k, v in zip(self.search_space_keys, model_arch_vec)])
             write_contents += '{}: {} Paras: {}M\n'.format(
                 tmp, self.search_results[model_arch_vec],
                 self.model_paras_num[model_arch_vec] / 10**6
             )
-        write_contents += '\n\n\n' + '=' * 30 + ' Best Search Results ' + '=' * 30 + '\n\n'
+        write_contents += '\n\n\n' + '=' * 30 + \
+            ' Best Search Results ' + '=' * 30 + '\n\n'
         self.find_best_model_archs()
         for i, model_arch in enumerate(self.best_model_archs):
             model_arch_vec = tuple(model_arch.values())
-            tmp = ','.join(['{}_{}'.format(k, v) \
-                for k, v in zip(self.search_space_keys, model_arch_vec)])
+            tmp = ','.join(['{}_{}'.format(k, v)
+                            for k, v in zip(self.search_space_keys, model_arch_vec)])
             write_contents += \
                 '{}. {}: {} Paras: {}M\n'.format(
                     i+1, tmp, self.search_results[model_arch_vec],
                     self.model_paras_num[model_arch_vec] / 10**6
-            )
+                )
         with open(path, mode='w') as f:
             f.write(write_contents)
 
@@ -239,7 +256,7 @@ class NASBase(object):
         """
         assert len(paras_vec) == len(self.search_space_keys), \
             "Length of paras_vec and search_space_keys should be the same."
-        return {k:v for k, v in zip(self.search_space_keys, paras_vec)}
+        return {k: v for k, v in zip(self.search_space_keys, paras_vec)}
 
     def find_best_model_archs(self):
         """Find the best model architectures.
@@ -248,10 +265,11 @@ class NASBase(object):
         """
         assert len(self.search_results) > 0, "Zero result in search_results."
         model_arches = list(self.search_results.keys())
-        metrics = [self.metrics_conversion(self.search_results[ma]) for ma in model_arches]
+        metrics = [self.metrics_conversion(
+            self.search_results[ma]) for ma in model_arches]
         pareto_front_indices = find_pareto_front(metrics)
-        self.best_model_archs = [self.params_vec2params_dict(model_arches[i]) \
-            for i in pareto_front_indices]
+        self.best_model_archs = [self.params_vec2params_dict(model_arches[i])
+                                 for i in pareto_front_indices]
 
     def metrics_conversion(self, metrics):
         """Convert the metrics to specific format.
@@ -268,11 +286,11 @@ class NASBase(object):
                 "Keys of metrics not match with metrics in the configuration."
             metrics = list(metrics.values())
         if self.higher_is_better is None:
-            self.higher_is_better = [True,] * len(metrics)
-            logger.warning("higher_is_better not set in the configuration, " + \
-                "set it to all True for every metric entry by default.")
-        converted_metrics = [metric if higher_is_better else -metric \
-            for metric, higher_is_better in zip(metrics, self.higher_is_better)]
+            self.higher_is_better = [True, ] * len(metrics)
+            logger.warning("higher_is_better not set in the configuration, " +
+                           "set it to all True for every metric entry by default.")
+        converted_metrics = [metric if higher_is_better else -metric
+                             for metric, higher_is_better in zip(metrics, self.higher_is_better)]
         return converted_metrics
 
     def init_search_cfg(self, config):
@@ -301,18 +319,21 @@ class NASBase(object):
             if self.search_cfg.higher_is_better else None
         self.seed = self.search_cfg.seed
         self.max_trials = self.search_cfg.max_trials \
-            if self.search_cfg.max_trials is not None else 3 # set default 3 for max_trials
+            if self.search_cfg.max_trials is not None else 3  # set default 3 for max_trials
         self.search_algorithm_type = self.search_cfg.search_algorithm \
             if self.search_cfg.search_algorithm else None
         if not self.search_algorithm_type:
-            self._search_algorithm = BayesianOptimizationSearcher(self.search_space, self.seed)
+            self._search_algorithm = BayesianOptimizationSearcher(
+                self.search_space, self.seed)
         elif self.search_algorithm_type.lower() == 'grid':
             self._search_algorithm = GridSearcher(self.search_space)
         elif self.search_algorithm_type.lower() == 'random':
-            self._search_algorithm = RandomSearcher(self.search_space, self.seed)
+            self._search_algorithm = RandomSearcher(
+                self.search_space, self.seed)
         elif self.search_algorithm_type.lower() == 'bo':
-            self._search_algorithm = BayesianOptimizationSearcher(self.search_space, self.seed)
-        else: # pragma: no cover
+            self._search_algorithm = BayesianOptimizationSearcher(
+                self.search_space, self.seed)
+        else:  # pragma: no cover
             logger.warning(
                 'Please be aware that \'{}\' is not a built-in search algorithm.'.format(
                     self.search_algorithm_type
@@ -322,7 +343,7 @@ class NASBase(object):
     @property
     def search_space(self):
         """Getter of the search space.
-        
+
         Returns:
             The search space.
         """
@@ -336,7 +357,7 @@ class NASBase(object):
     @property
     def search_algorithm(self):
         """Getter of the search algorithm.
-        
+
         Returns:
             The search algorithm.
         """
@@ -350,7 +371,7 @@ class NASBase(object):
     @property
     def model_builder(self):
         """Getter of the model builder.
-        
+
         Returns:
             The model builder.
         """

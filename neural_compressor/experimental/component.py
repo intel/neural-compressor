@@ -22,7 +22,7 @@ The Component class will be inherited by the class 'Quantization', 'Pruning' and
 
 from ..conf.config import Conf
 from ..utils import logger
-from ..utils.utility import set_backend, required_libs
+from ..utils.utility import required_libs
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
 from ..model import BaseModel
 from .common import Model
@@ -68,7 +68,10 @@ class Component(object):
             'on_step_begin': self.on_step_begin,
             'on_step_end': self.on_step_end,
             'on_after_compute_loss': self.on_after_compute_loss,
-            'on_before_optimizer_step': self.on_before_optimizer_step
+            'on_before_optimizer_step': self.on_before_optimizer_step,
+            'on_after_optimizer_step': self.on_after_optimizer_step,
+            'on_before_eval': self.on_before_eval,
+            'on_after_eval': self.on_after_eval
         }
         self.hooks_dict = {
             'on_train_begin': [],
@@ -78,7 +81,10 @@ class Component(object):
             'on_step_begin': [],
             'on_step_end': [],
             'on_after_compute_loss': [],
-            'on_before_optimizer_step': []
+            'on_before_optimizer_step': [],
+            'on_after_optimizer_step': [],
+            'on_before_eval': [],
+            'on_after_eval': []
         }
         if conf_fname_or_obj is not None:  # pragma: no cover
             if isinstance(conf_fname_or_obj, str):
@@ -96,7 +102,6 @@ class Component(object):
         self.cfg = self.conf.usr_cfg
         if self.cfg.model.framework != 'NA':
             self.framework = self.cfg.model.framework.lower()
-            set_backend(self.framework)
             if self.framework in required_libs:
                 for lib in required_libs[self.framework]:
                     try:
@@ -105,14 +110,6 @@ class Component(object):
                         logger.error("{}.".format(e))
                         raise RuntimeError("{} is not correctly installed. " \
                             "Please check your environment".format(lib))
-            if self.framework == 'tensorflow' or self.framework == 'inteltensorflow':
-                try:
-                    import tensorflow as tf
-                except Exception as e:
-                    logger.error("{}.".format(e))
-                    raise RuntimeError(
-                        "The TensorFlow framework is not correctly installed. Please check your environment"
-                    )
 
     def prepare(self):
         """Register Quantization Aware Training hooks."""
@@ -133,14 +130,15 @@ class Component(object):
             self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
             self.register_hook('on_train_end', self.adaptor._post_hook_for_qat)
 
-
     def prepare_qat(self):
         """Register Quantization Aware Training hooks."""
         if self.adaptor is None:
             framework_specific_info = {'device': self.cfg.device,
                                     'random_seed': self.cfg.tuning.random_seed,
                                     'workspace_path': self.cfg.tuning.workspace.path,
-                                    'q_dataloader': None}
+                                    'q_dataloader': None,
+                                    'backend': self.cfg.model.get('backend', 'default'),
+                                    'format': self.cfg.model.get('quant_format', 'default')}
             if self.cfg.quantization.approach is not None:
                 framework_specific_info['approach'] = self.cfg.quantization.approach
 
@@ -291,6 +289,21 @@ class Component(object):
         """Be called before optimizer step."""
         for on_before_optimizer_step_hook in self.hooks_dict['on_before_optimizer_step']:
             on_before_optimizer_step_hook()
+
+    def on_after_optimizer_step(self):
+        """Be called after optimizer step."""
+        for on_after_optimizer_step_hook in self.hooks_dict['on_after_optimizer_step']:
+            on_after_optimizer_step_hook()
+
+    def on_before_eval(self):
+        """Be called before evaluation."""
+        for on_before_eval_hook in self.hooks_dict['on_before_eval']:
+            on_before_eval_hook()
+
+    def on_after_eval(self):
+        """Be called after evaluation."""
+        for on_after_eval_hook in self.hooks_dict['on_after_eval']:
+            on_after_eval_hook()
 
     @deprecated(version='2.0', reason="please use `on_before_optimizer_step` instead")
     def on_post_grad(self):
@@ -478,18 +491,33 @@ class Component(object):
                         make sure the name is in supported slim model list.
 
         """
+        if self.cfg.model.framework == 'NA':
+            assert not isinstance(user_model, BaseModel), \
+                "Please pass an original framework model but not neural compressor model!"
+            self.framework = get_model_fwk_name(user_model)
+            if self.framework == "tensorflow":
+                from ..model.tensorflow_model import get_model_type
+                if get_model_type(user_model) == 'keras' and self.cfg.model.backend == 'itex':
+                    self.framework = 'keras'
+            if self.framework == "pytorch":
+                if self.cfg.model.backend == "default":
+                    self.framework = "pytorch_fx"
+                elif self.cfg.model.backend == "ipex":
+                    self.framework = "pytorch_ipex"
+            self.cfg.model.framework = self.framework
+
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            self._model = Model(user_model)
+            self._model = Model(user_model, framework=self.framework)
         else:
-            self._model = user_model
+            # It is config of neural_compressor version < 2.0, no need in 2.0
+            if self.cfg.model.framework == "pytorch_ipex":
+                from neural_compressor.model.torch_model import IPEXModel
+                if not isinstance(user_model, IPEXModel):
+                    self._model = Model(user_model.model, framework=self.cfg.model.framework)
+                    return
 
-        if self.cfg.model.framework == 'NA':
-            self.framework = get_model_fwk_name(user_model)
-            if self.framework == 'onnxruntime':
-                self.framework = 'onnxrt_qoperator'
-            self.cfg.model.framework = self.framework
-            set_backend(self.framework)
+            self._model = user_model
 
         if 'tensorflow' in self.framework:
             self._model.name = self.cfg.model.name

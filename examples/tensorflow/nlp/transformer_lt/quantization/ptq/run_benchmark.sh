@@ -15,9 +15,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
-      ;;
       --dataset_location=*)
           dataset_location=$(echo "$var" |cut -f2 -d=)
       ;;
@@ -33,10 +30,6 @@ function init_params {
       --iters=*)
           iters=$(echo ${var} |cut -f2 -d=)
       ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
-      ;;
     esac
   done
 
@@ -46,8 +39,8 @@ function define_mode {
     
     if [[ ${mode} == "accuracy" ]]; then
         mode="accuracy"
-    elif [[ ${mode} == "benchmark" ]]; then
-        mode="benchmark"
+    elif [[ ${mode} == "performance" ]]; then
+        mode="performance"
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -56,13 +49,12 @@ function define_mode {
         
 # run_benchmark
 function run_benchmark {
-    config=$topology'.yaml'
     python main.py \
       --input_graph=${input_model} \
       --inputs_file=${dataset_location}/newstest2014.en \
       --reference_file=${dataset_location}/newstest2014.de \
       --vocab_file=${dataset_location}/vocab.txt \
-      --config=${config} \
+      --benchmark \
       --mode=${mode} \
       --iters=${iters} \
       --batch_size=${batch_size} 

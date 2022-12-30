@@ -3,6 +3,7 @@
 .idea
 /venv/
 */__pycache__
+.ipynb_checkpoints/
 *.snapshot
 *.csv
 *.pb

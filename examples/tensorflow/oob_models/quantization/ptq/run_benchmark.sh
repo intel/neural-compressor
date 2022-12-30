@@ -35,21 +35,16 @@ function init_params {
       --iters=*)
           iters=$(echo ${var} |cut -f2 -d=)
       ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
-      ;;
     esac
   done
 
 }
 
 function define_mode {
-
     if [[ ${mode} == "accuracy" ]]; then
       echo "For TF OOB models, there is only benchmark mode!, num iter is: ${iters}"
       exit 1
-    elif [[ ${mode} == "benchmark" ]]; then
+    elif [[ ${mode} == "performance" ]]; then
       mode_cmd=" --benchmark "
     else
       echo "Error: No such mode: ${mode}"
@@ -101,6 +96,9 @@ function set_args {
   NeuMF
   PRNet
   DIEN_Deep-Interest-Evolution-Network
+  EfficientDet-D2-768x768
+  EfficientDet-D4-1024x1024
+  centernet_hg104
   --------
   )
 

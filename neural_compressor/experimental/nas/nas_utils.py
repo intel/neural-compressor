@@ -35,6 +35,7 @@ def nas_registry(nas_method):
         cls: The class of register.
     """
     assert isinstance(nas_method, str), "Expect nas_method to be a string."
+
     def decorator(cls):
         NASMethods[nas_method.lower()] = cls
         return cls

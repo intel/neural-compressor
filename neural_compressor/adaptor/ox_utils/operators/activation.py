@@ -14,18 +14,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""Activation operator."""
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
 
 @op_registry(op_types="LeakyRelu, Sigmoid")
 class ActivationOperator(Operator):
+    """Activation operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(ActivationOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize_check(self):
+        """Check if quantizaion can be done."""
         node = self.node
         data_found, _, _, _, _ = self.quantizer._get_quantization_params(node.output[0])
         if not data_found:
@@ -33,11 +37,13 @@ class ActivationOperator(Operator):
         return True
     
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         super().quantize()
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['static'], \
             "convert format for {} should be in ['static']".format(node.op_type)
@@ -48,6 +54,7 @@ class ActivationOperator(Operator):
         return True
 
     def convert(self, convert_format):
+        """Convert to QOperator format."""
         node = self.node
 
         parent = self.quantizer.model.get_parents(node)[0]
@@ -72,19 +79,63 @@ class ActivationOperator(Operator):
 
 @op_registry(op_types="Relu, Clip")
 class RemovableActivationOperator(Operator):
+    """Removable activation operator."""
+    
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(RemovableActivationOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize_check(self):
+        """Check if quantizaion can be done."""
         node = self.node
         if node.input[0] not in self.quantizer.quantized_value_map:
             return False
         return True
     
     def quantize(self):
+        """Do quantization."""
         node = self.node
         if node.output[0] in [i.name for i in self.quantizer.model.model.graph.output]:
             self.quantizer.dequantize_tensor(node, node.input[0])
         else:
             self.quantizer.model.replace_input_of_all_nodes(node.output[0], node.input[0])
             self.quantizer.remove_nodes.append(node)
+
+@qop_registry(op_types="QLinearLeakyRelu, QLinearSigmoid")
+class QActivationOperator(QOperator):
+    """INT8 activation operator in QOperator format."""
+    def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
+        super().__init__(onnx_node, children, initializers)
+
+    def convert(self):
+        """Convert to QDQ format."""
+        node = self.node
+        add_nodes = []
+        inits = []
+        # input dq
+        in_dq = onnx.helper.make_node(
+            'DequantizeLinear',
+            node.input[:3],
+            [node.name + '_in_dequant'],
+            node.name + '_in_dequant')
+        inputs = [node.name + '_in_dequant']
+        add_nodes.append(in_dq)
+        # output q
+        out_q = onnx.helper.make_node(
+            'QuantizeLinear',
+            [node.name + '_out', node.input[3], node.input[4]],
+            node.output,
+            node.name + '_out_quant')
+        outputs = [node.name + '_out']
+        add_nodes.append(out_q)
+
+        kwargs = {}
+        for attribute in node.attribute: # pragma: no cover
+            kwargs.update(attribute_to_kwarg(attribute))
+
+        activation_node = onnx.helper.make_node(
+            node.op_type.split('QLinear')[-1], inputs,
+            outputs, node.name + '_convert', **kwargs)
+        add_nodes.append(activation_node)
+        return True, add_nodes, inits

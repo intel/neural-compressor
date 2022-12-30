@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Default dataloader for multiple framework backends."""
 
 import collections
 import numpy as np
@@ -24,7 +26,7 @@ from .fetcher import FETCHERS
 from .base_dataloader import BaseDataLoader
 
 def default_collate(batch):
-    """Puts each data field into a pd frame with outer dimension batch size"""
+    """Merge data with outer dimension batch size."""
     elem = batch[0]
     if isinstance(elem, collections.abc.Mapping):
         return {key: default_collate([d[key] for d in batch]) for key in elem}
@@ -40,13 +42,27 @@ def default_collate(batch):
         return batch
 
 class DefaultDataLoader(BaseDataLoader):
-    """DefaultDataLoader
-
-    """
-
+    """DefaultDataLoader for multiple framework backends."""
+    
     def __init__(self, dataset, batch_size=1, last_batch='rollover', collate_fn=None,
                  sampler=None, batch_sampler=None, num_workers=0, pin_memory=False,
                  shuffle=False, distributed=False):
+        """Initialize DefaultDataLoader.
+
+        Args:
+            dataset (object): dataset from which to load the data
+            batch_size (int, optional): number of samples per batch. Defaults to 1.
+            last_batch (str, optional): whether to drop the last batch if it is incomplete.
+                                        Support ['rollover', 'discard'], rollover means False, discard means True.
+                                        Defaults to 'rollover'.
+            collate_fn (callable, optional): merge data with outer dimension batch size. Defaults to None.
+            sampler (Sampler, optional): Sampler object to sample data. Defaults to None.
+            batch_sampler (BatchSampler, optional): BatchSampler object to generate batch of indices. Defaults to None.
+            num_workers (int, optional): number of subprocesses to use for data loading. Defaults to 0.
+            pin_memory (bool, optional): whether to copy data into pinned memory before returning. Defaults to False.
+            shuffle (bool, optional): whether to shuffle data. Defaults to False.
+            distributed (bool, optional): whether the dataloader is distributed. Defaults to False.            
+        """
         self.dataset = dataset
         self.last_batch = last_batch
         self.sampler = sampler
@@ -62,14 +78,17 @@ class DefaultDataLoader(BaseDataLoader):
             self.collate_fn = default_collate
 
     def batch(self, batch_size, last_batch='rollover'):
+        """Set batch_size and last_batch."""
         self._batch_size = batch_size
         self.last_batch = last_batch
 
     @property
     def dataloader(self):
+        """Return dataloader."""
         return self
 
     def __iter__(self):
+        """Yield data in iterative order."""
         return self._generate_dataloader(
             self.dataset,
             batch_size=self.batch_size,
@@ -83,6 +102,7 @@ class DefaultDataLoader(BaseDataLoader):
             distributed=self.distributed)
 
     def __len__(self):
+        """Get dataset length."""
         try:
             dataset_len = self.dataset.__len__()
         except (AttributeError, TypeError):
