@@ -17,32 +17,29 @@
 
 """Helper functions to export model from TensorFlow to ONNX."""
 
-import os
 from neural_compressor.utils import logger
+import tf2onnx as t2o
 
 def tf_to_fp32_onnx(
-    fp32_model,
+    graph_def,
     save_path,
     opset_version=14,
     input_names=None,
     output_names=None
 ):
-    """Export FP32 Tensorflow model into FP32 ONNX model.
+    """Export FP32 Tensorflow model into FP32 ONNX model using tf2onnx tool.
 
     Args:
-        fp32_model (torch.nn.module): fp32 model.
-        int8_model (torch.nn.module): int8 model.
+        graph_def (graph_def to convert): fp32 graph_def.
         save_path (str): save path of ONNX model.
-        example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
         opset_version (int, optional): opset version. Defaults to 14.
-        dynamic_axes (dict, optional): dynamic axes. Defaults to {"input": {0: "batch_size"}, 
-                                                                  "output": {0: "batch_size"}}.
         input_names (list, optional): input names. Defaults to None.
         output_names (list, optional): output names. Defaults to None.
-        do_constant_folding (bool, optional): do constant folding or not. Defaults to True.
-        verbose (bool, optional): dump verbose or not. Defaults to True.
     """
-
+    input_names[:] = [i+":0" for i in input_names]
+    output_names[:] = [o+":0" for o in output_names]
+    t2o.convert.from_graph_def(graph_def=graph_def, input_names=input_names,
+                      output_names=output_names, opset=opset_version, output_path=save_path)
     info = "The FP32 ONNX Model exported to path: {0}".format(save_path)
     logger.info("*"*len(info))
     logger.info(info)
