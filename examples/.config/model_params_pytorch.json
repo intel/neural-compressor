@@ -782,6 +782,42 @@
       "strategy": "basic",
       "batch_size": 8,
       "new_benchmark": false
+    },
+    "unet": {
+      "model_src_dir": "semantic_segmentation/unet/quantization/ptq_dynamic/eager",
+      "dataset_location": "/tf_dataset2/models/pytorch/carvana_image",
+      "input_model": "/tf_dataset2/models/pytorch/UNet/unet_carvana_scale0.5_epoch2.pth",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": false
+    },
+    "runwayml_stable-diffusion-v1-5": {
+      "model_src_dir":"nlp/huggingface_models/text_to_image/quantization/ptq_dynamic/eager",
+      "dataset_location": "",
+      "input_model": "runwayml/stable-diffusion-v1-5",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": false
+    },
+    "unet_fx": {
+      "model_src_dir": "semantic_segmentation/unet/quantization/ptq_static/fx",
+      "dataset_location": "/tf_dataset2/models/pytorch/carvana_image",
+      "input_model": "/tf_dataset2/models/pytorch/UNet/unet_carvana_scale0.5_epoch2.pth",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": false
+    },
+    "runwayml_stable-diffusion-v1-5_fx": {
+      "model_src_dir":"nlp/huggingface_models/text_to_image/quantization/ptq_static/fx",
+      "dataset_location": "",
+      "input_model": "runwayml/stable-diffusion-v1-5",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
+      "batch_size": 1,
+      "new_benchmark": false
     }
   }
 }
