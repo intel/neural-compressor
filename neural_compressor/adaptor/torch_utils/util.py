@@ -762,7 +762,7 @@ def quantize_tensor(tensor, qtconfig, scale=None, inplace=False):
         elif mode in ['E4M3', 'E3M4']:
             HF_max = qtconfig.get_flt_max()
             amax = torch.max(torch.abs(tensor))
-            scale = HF_max / amax
+            scale = float(HF_max)/ float(amax)
 
     if qtconfig.scheme is not None:
         mode += "_"+qtconfig.scheme.upper()

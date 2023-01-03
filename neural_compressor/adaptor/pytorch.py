@@ -3818,17 +3818,10 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
     def quantize_model_weights(self, model, model_qconfig_dict):
         def _quantize_weight(module, wt_qconfig, granularity='per_channel'):
             from .torch_utils.util import quantize_tensor
-            def preprocess(i):
-                module.weight.data[i] = quantize_tensor(module.weight.data[i], wt_qconfig)
-
             if granularity == 'per_channel':
-                from concurrent.futures import ThreadPoolExecutor
-                import multiprocessing
-                cpu_num = multiprocessing.cpu_count()
-                threadPool = ThreadPoolExecutor(max_workers=cpu_num, thread_name_prefix="test_")
+                # this would be innerloop parallelized.
                 for i, data in enumerate(module.weight.data):
-                    threadPool.submit(preprocess, i)
-                threadPool.shutdown(wait=True)
+                    module.weight.data[i] = quantize_tensor(module.weight.data[i], wt_qconfig)
             else:
                 module.weight.data = quantize_tensor(module.weight.data, wt_qconfig)
             module.weight.data.copy_(module.weight.data)
