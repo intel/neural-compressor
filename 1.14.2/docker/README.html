@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>build Neural Compressor(INC) Containers: &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docs/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docs/doclist.html">Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docs/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docs/contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docs/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>build <code class="docutils literal notranslate"><span class="pre">Neural</span> <span class="pre">Compressor(INC)</span></code> Containers:</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docker/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="build-neural-compressor-inc-containers">
+<h1>build <code class="docutils literal notranslate"><span class="pre">Neural</span> <span class="pre">Compressor(INC)</span></code> Containers:<a class="headerlink" href="#build-neural-compressor-inc-containers" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="to-build-the-the-pip-based-deployment-container">
+<h2>To build the the <code class="docutils literal notranslate"><span class="pre">Pip</span></code> based deployment container:<a class="headerlink" href="#to-build-the-the-pip-based-deployment-container" title="Permalink to this headline">¶</a></h2>
+<p>Please note that <code class="docutils literal notranslate"><span class="pre">INC_VER</span></code> must be set to a valid version published here:
+https://pypi.org/project/neural-compressor/#history</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nv">PYTHON</span><span class="o">=</span>python3.8
+<span class="gp">$</span> <span class="nv">INC_VER</span><span class="o">=</span><span class="m">1</span>.12
+<span class="gp">$</span> <span class="nv">IMAGE_NAME</span><span class="o">=</span>neural-compressor
+<span class="gp">$</span> <span class="nv">IMAGE_TAG</span><span class="o">=</span><span class="si">${</span><span class="nv">INC_VER</span><span class="si">}</span>
+<span class="gp">$</span> docker build --build-arg <span class="nv">PYTHON</span><span class="o">=</span><span class="si">${</span><span class="nv">PYTHON</span><span class="si">}</span> --build-arg <span class="nv">INC_VER</span><span class="o">=</span><span class="si">${</span><span class="nv">INC_VER</span><span class="si">}</span> -f Dockerfile -t <span class="si">${</span><span class="nv">IMAGE_NAME</span><span class="si">}</span>:<span class="si">${</span><span class="nv">IMAGE_TAG</span><span class="si">}</span> .
+</pre></div>
+</div>
+</div>
+<div class="section" id="to-build-the-the-pip-based-development-container">
+<h2>To build the the <code class="docutils literal notranslate"><span class="pre">Pip</span></code> based development container:<a class="headerlink" href="#to-build-the-the-pip-based-development-container" title="Permalink to this headline">¶</a></h2>
+<p>Please note that <code class="docutils literal notranslate"><span class="pre">INC_BRANCH</span></code> must be a set to a valid branch name otherwise, Docker build fails.
+If <code class="docutils literal notranslate"><span class="pre">${INC_BRANCH}-devel</span></code> does not meet Docker tagging requirements described here:
+https://docs.docker.com/engine/reference/commandline/tag/
+then please modify the tag so that the tagging requirement is met. For example replace <code class="docutils literal notranslate"><span class="pre">/</span></code> with <code class="docutils literal notranslate"><span class="pre">-</span></code>.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nv">PYTHON</span><span class="o">=</span>python3.8
+<span class="gp">$</span> <span class="nv">INC_BRANCH</span><span class="o">=</span>v1.12
+<span class="gp">$</span> <span class="nv">IMAGE_NAME</span><span class="o">=</span>neural-compressor
+<span class="gp">$</span> <span class="nv">IMAGE_TAG</span><span class="o">=</span><span class="si">${</span><span class="nv">INC_BRANCH</span><span class="si">}</span>-devel
+<span class="gp">$</span> docker build --build-arg <span class="nv">PYTHON</span><span class="o">=</span><span class="si">${</span><span class="nv">PYTHON</span><span class="si">}</span> --build-arg <span class="nv">INC_BRANCH</span><span class="o">=</span><span class="si">${</span><span class="nv">INC_BRANCH</span><span class="si">}</span> -f Dockerfile.devel -t <span class="si">${</span><span class="nv">IMAGE_NAME</span><span class="si">}</span>:<span class="si">${</span><span class="nv">IMAGE_TAG</span><span class="si">}</span> .
+</pre></div>
+</div>
+</div>
+<div class="section" id="check-the-containers-built">
+<h2>Check the Containers built:<a class="headerlink" href="#check-the-containers-built" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker images <span class="p">|</span> grep -i neural-compressor
+<span class="go">neural-compressor                                                                           v1.12-devel                                               5c0dc1371312   5 minutes ago    2.76GB</span>
+<span class="go">neural-compressor                                                                           1.12                                                      303de7f7c38d   36 minutes ago   1.61GB</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,8 +1,0 @@
-:orphan:
-
-:py:mod:`neural_compressor.adaptor.mxnet_utils`
-===============================================
-
-.. py:module:: neural_compressor.adaptor.mxnet_utils
-
-

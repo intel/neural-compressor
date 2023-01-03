@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Benchmarking &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Mixed Precision" href="mixed_precision.html" />
+    <link rel="prev" title="Pruning" href="pruning.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="doclist.html">Developer Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="doclist.html#get-started">Get Started</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="doclist.html#deep-dive">Deep Dive</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Quantization.html">Quantization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PTQ.html">PTQ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="QAT.html">Quantization-aware Training</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dynamic_quantization.html">Dynamic Quantization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pruning.html">Pruning</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Benchmarking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#config-evaluation-filed-in-a-yaml-file">Config evaluation filed in a yaml file</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#use-a-user-specific-dataloader-to-run-benchmark">Use a user-specific dataloader to run benchmark</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mixed_precision.html">Mixed Precision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="graph_optimization.html">Graph Optimization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="model_conversion.html">Model Conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tensorboard.html">TensorBoard</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="doclist.html#advanced-topics">Advanced Topics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="doclist.html">Developer Documentation</a> &raquo;</li>
+      <li>Benchmarking</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/benchmark.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="benchmarking">
+<h1>Benchmarking<a class="headerlink" href="#benchmarking" title="Permalink to this headline">¶</a></h1>
+<p>The benchmarking feature of Neural Compressor is used to measure the model performance with the objective settings; the user can get the performance of the models between the float32 model and the quantized low precision model in the same scenarios that they configured in Yaml. Benchmarking is always used after a quantization process.</p>
+<p>The following examples show how to use benchmarking.</p>
+<div class="section" id="config-evaluation-filed-in-a-yaml-file">
+<h2>Config evaluation filed in a yaml file<a class="headerlink" href="#config-evaluation-filed-in-a-yaml-file" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">evaluation</span><span class="p">:</span>                                          <span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+  <span class="nt">accuracy</span><span class="p">:</span>                                          <span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+    <span class="nt">metric</span><span class="p">:</span>
+      <span class="nt">topk</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>                                        <span class="c1"># built-in metrics are topk, map, f1, allow user to register new metric.</span>
+    <span class="nt">dataloader</span><span class="p">:</span>
+      <span class="nt">batch_size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">30</span>
+      <span class="nt">dataset</span><span class="p">:</span>
+        <span class="nt">ImageFolder</span><span class="p">:</span>
+          <span class="nt">root</span><span class="p">:</span> <span class="nt">/path/to/evaluation/dataset          # NOTE</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">modify to evaluation dataset location if needed</span>
+      <span class="nt">transform</span><span class="p">:</span>
+        <span class="nt">Resize</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">256</span>
+        <span class="nt">CenterCrop</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">224</span>
+        <span class="nt">ToTensor</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+        <span class="nt">Normalize</span><span class="p">:</span>
+          <span class="nt">mean</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span> <span class="nv">0.456</span><span class="p p-Indicator">,</span> <span class="nv">0.406</span><span class="p p-Indicator">]</span>
+          <span class="nt">std</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.229</span><span class="p p-Indicator">,</span> <span class="nv">0.224</span><span class="p p-Indicator">,</span> <span class="nv">0.225</span><span class="p p-Indicator">]</span>
+  <span class="nt">performance</span><span class="p">:</span>                                       <span class="c1"># optional. used to benchmark performance of passing model.</span>
+    <span class="nt">configs</span><span class="p">:</span>
+      <span class="nt">cores_per_instance</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
+      <span class="nt">num_of_instance</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">7</span>
+    <span class="nt">dataloader</span><span class="p">:</span>
+      <span class="nt">batch_size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+      <span class="nt">dataset</span><span class="p">:</span>
+        <span class="nt">ImageFolder</span><span class="p">:</span>
+          <span class="nt">root</span><span class="p">:</span> <span class="nt">/path/to/evaluation/dataset          # NOTE</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">modify to evaluation dataset location if needed</span>
+      <span class="nt">transform</span><span class="p">:</span>
+        <span class="nt">Resize</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">256</span>
+        <span class="nt">CenterCrop</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">224</span>
+        <span class="nt">ToTensor</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+        <span class="nt">Normalize</span><span class="p">:</span>
+          <span class="nt">mean</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span> <span class="nv">0.456</span><span class="p p-Indicator">,</span> <span class="nv">0.406</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<p>The above example config two sub-fields named ‘accuracy’ and ‘performance’ which indicates that the benchmark module will get the accuracy and performance of the model. The user can also remove the performance field to only get model accuracy or performance. It’s flexible enough to configure the benchmark you want.</p>
+</div>
+<div class="section" id="use-a-user-specific-dataloader-to-run-benchmark">
+<h2>Use a user-specific dataloader to run benchmark<a class="headerlink" href="#use-a-user-specific-dataloader-to-run-benchmark" title="Permalink to this headline">¶</a></h2>
+<p>In this case, configure your dataloader and Neural Compressor will construct an evaluation function to run the benchmarking. The user can also register the postprocess transform and metric to get the accuracy.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">()</span> <span class="c1">#  dataset class that implement __getitem__ method or __iter__ method</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Benchmark</span><span class="p">,</span> <span class="n">common</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">Benchmark</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+<span class="c1"># user can also register postprocess and metric, this is optional</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">postprocess</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Postprocess</span><span class="p">(</span><span class="n">postprocess_cls</span><span class="p">)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Metric</span><span class="p">(</span><span class="n">metric_cls</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">evaluator</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Benchmark class also support BenchmarkConf class as it’s argument:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">()</span> <span class="c1">#  dataset class that implement __getitem__ method or __iter__ method</span>
+<span class="kn">from</span> <span class="nn">lpot.experimental</span> <span class="kn">import</span> <span class="n">Benchmark</span><span class="p">,</span> <span class="n">common</span>
+<span class="kn">from</span> <span class="nn">lpot.conf.config</span> <span class="kn">import</span> <span class="n">BenchmarkConf</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">BenchmarkConf</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">Benchmark</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+<span class="c1"># user can also register postprocess and metric, this is optional</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">postprocess</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Postprocess</span><span class="p">(</span><span class="n">postprocess_cls</span><span class="p">)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Metric</span><span class="p">(</span><span class="n">metric_cls</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">evaluator</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="section" id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
+<p>Refer to the <a class="reference external" href="https://github.com/intel/neural-compressor/blob/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/run_benchmark.sh">Benchmark example</a>.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="pruning.html" class="btn btn-neutral float-left" title="Pruning" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mixed_precision.html" class="btn btn-neutral float-right" title="Mixed Precision" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

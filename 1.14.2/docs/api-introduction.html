@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Documentation &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Developer Documentation" href="doclist.html" />
+    <link rel="prev" title="Quantization" href="../api-documentation/quantization-api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api-documentation/apis.html">APIs</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api-documentation/api-reference.html">API Reference</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">API Documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-facing-apis">User-facing APIs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#experimental-user-facing-apis">Experimental user-facing APIs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#quantization-related-apis">Quantization-related APIs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pruning-related-apis-poc">Pruning-related APIs (POC)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#benchmarking-related-apis">Benchmarking-related APIs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#default-user-facing-apis">Default user-facing APIs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doclist.html">Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../api-documentation/apis.html">APIs</a> &raquo;</li>
+      <li>API Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/api-introduction.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="api-documentation">
+<h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Intel® Neural Compressor is an open-source Python library designed to help users quickly deploy low-precision inference solutions on popular deep learning (DL) frameworks such as TensorFlow*, PyTorch*, MXNet, and ONNX Runtime. It automatically optimizes low-precision recipes for deep learning models in order to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria.</p>
+</div>
+<div class="section" id="user-facing-apis">
+<h2>User-facing APIs<a class="headerlink" href="#user-facing-apis" title="Permalink to this headline">¶</a></h2>
+<p>These APIs are intended to unify low-precision quantization interfaces cross multiple DL frameworks for the best out-of-the-box experiences.</p>
+<blockquote>
+<div><p><strong>Note</strong></p>
+<p>Neural Compressor is continuously improving user-facing APIs to create a better user experience.</p>
+</div></blockquote>
+<blockquote>
+<div><p>Two sets of user-facing APIs exist. One is the default one supported from Neural Compressor v1.0 for backwards compatibility. The other set consists of new APIs in
+the <code class="docutils literal notranslate"><span class="pre">neural_compressor.experimental</span></code> package.</p>
+</div></blockquote>
+<blockquote>
+<div><p>We recommend that you use the APIs located in neural_compressor.experimental. All examples have been updated to use the experimental APIs.</p>
+</div></blockquote>
+<p>The major differences between the default user-facing APIs and the experimental APIs are:</p>
+<ol class="simple">
+<li><p>The experimental APIs abstract the <code class="docutils literal notranslate"><span class="pre">neural_compressor.experimental.common.Model</span></code> concept to cover those cases whose weight and graph files are stored separately.</p></li>
+<li><p>The experimental APIs unify the calling style of the <code class="docutils literal notranslate"><span class="pre">Quantization</span></code>, <code class="docutils literal notranslate"><span class="pre">Pruning</span></code>, and <code class="docutils literal notranslate"><span class="pre">Benchmark</span></code> classes by setting model, calibration dataloader, evaluation dataloader, and metric through class attributes rather than passing them as function inputs.</p></li>
+<li><p>The experimental APIs refine Neural Compressor built-in transforms/datasets/metrics by unifying the APIs cross different framework backends.</p></li>
+</ol>
+</div>
+<div class="section" id="experimental-user-facing-apis">
+<h2>Experimental user-facing APIs<a class="headerlink" href="#experimental-user-facing-apis" title="Permalink to this headline">¶</a></h2>
+<p>Experimental user-facing APIs consist of the following components:</p>
+<div class="section" id="quantization-related-apis">
+<h3>Quantization-related APIs<a class="headerlink" href="#quantization-related-apis" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># neural_compressor.experimental.Quantization</span>
+<span class="k">class</span> <span class="nc">Quantization</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf_fname_or_obj</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">calib_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">eval_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">metric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">postprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_postprocess</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">q_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">eval_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">conf_fname_or_obj</span></code> parameter used in the class initialization is the path to the user yaml configuration file or Quantization_Conf class. This yaml file is used to control the entire tuning behavior on the model.</p>
+<p><strong>Neural Compressor User YAML Syntax</strong></p>
+<blockquote>
+<div><p>Intel® Neural Compressor provides template yaml files for <a class="reference external" href="https://github.com/intel/neural-compressor/blob/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../neural_compressor/template/ptq.yaml">Post-Training Quantization</a>, <a class="reference external" href="https://github.com/intel/neural-compressor/blob/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../neural_compressor/template/qat.yaml">Quantization-Aware Training</a>, and <a class="reference external" href="https://github.com/intel/neural-compressor/blob/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../neural_compressor/template/pruning.yaml">Pruning</a> scenarios. Refer to these template files to understand the meaning of each field.</p>
+</div></blockquote>
+<blockquote>
+<div><p>Note that most fields in the yaml templates are optional. View the <a class="reference external" href="https://github.com/intel/neural-compressor/blob/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../examples/helloworld/tf_example2/conf.yaml">HelloWorld Yaml</a> example for reference.</p>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Typical Launcher code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span><span class="p">,</span> <span class="n">common</span>
+
+<span class="c1"># optional if Neural Compressor built-in dataset could be used as model input in yaml</span>
+<span class="k">class</span> <span class="nc">dataset</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+      <span class="o">...</span>
+
+  <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+      <span class="c1"># return single sample and label tuple without collate. label should be 0 for label-free case</span>
+      <span class="o">...</span>
+
+  <span class="k">def</span> <span class="nf">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="o">...</span>
+
+<span class="c1"># optional if Neural Compressor built-in metric could be used to do accuracy evaluation on model output in yaml</span>
+<span class="k">class</span> <span class="nc">custom_metric</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">predict</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="c1"># metric update per mini-batch</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># final metric calculation invoked only once after all mini-batch are evaluated</span>
+        <span class="c1"># return a scalar to neural_compressor for accuracy-driven tuning.</span>
+        <span class="c1"># by default the scalar is higher-is-better. if not, set tuning.accuracy_criterion.higher_is_better to false in yaml.</span>
+        <span class="o">...</span>
+
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/model&#39;</span>
+<span class="c1"># below two lines are optional if Neural Compressor built-in dataset is used as model calibration input in yaml</span>
+<span class="n">cal_dl</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">(</span><span class="s1">&#39;/path/to/calibration/dataset&#39;</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">cal_dl</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="c1"># below two lines are optional if Neural Compressor built-in dataset is used as model evaluation input in yaml</span>
+<span class="n">dl</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">(</span><span class="s1">&#39;/path/to/evaluation/dataset&#39;</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">eval_dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dl</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="c1"># optional if Neural Compressor built-in metric could be used to do accuracy evaluation in yaml</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Metric</span><span class="p">(</span><span class="n">custom_metric</span><span class="p">)</span> 
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;/path/to/output/dir&#39;</span><span class="p">)</span> 
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">model</span></code> attribute in <code class="docutils literal notranslate"><span class="pre">Quantization</span></code> class is an abstraction of model formats across different frameworks. Neural Compressor supports passing the path of <code class="docutils literal notranslate"><span class="pre">keras</span> <span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">frozen</span> <span class="pre">pb</span></code>, <code class="docutils literal notranslate"><span class="pre">checkpoint</span></code>, <code class="docutils literal notranslate"><span class="pre">saved</span> <span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">torch.nn.model</span></code>, <code class="docutils literal notranslate"><span class="pre">mxnet.symbol.Symbol</span></code>, <code class="docutils literal notranslate"><span class="pre">gluon.HybirdBlock</span></code>, and <code class="docutils literal notranslate"><span class="pre">onnx</span> <span class="pre">model</span></code> to instantiate a <code class="docutils literal notranslate"><span class="pre">neural_compressor.experimental.</span></code> class and set to <code class="docutils literal notranslate"><span class="pre">quantizer.model</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">calib_dataloader</span></code> and <code class="docutils literal notranslate"><span class="pre">eval_dataloader</span></code> attribute in <code class="docutils literal notranslate"><span class="pre">Quantization</span></code> class is used to set up a calibration dataloader by code. It is optional to set if the user sets corresponding fields in yaml.</p>
+<p><code class="docutils literal notranslate"><span class="pre">metric</span></code> attribute in <code class="docutils literal notranslate"><span class="pre">Quantization</span></code> class is used to set up a custom metric by code. It is optional to set if user finds Neural Compressor built-in metric could be used with their model and sets corresponding fields in yaml.</p>
+<p><code class="docutils literal notranslate"><span class="pre">postprocess</span></code> attribute in <code class="docutils literal notranslate"><span class="pre">Quantization</span></code> class is not necessary in most of the use cases. It is only needed when the user wants to use the built-in metric but the model output can not directly be handled by Neural Compressor built-in metrics. In this case, the user can register a transform to convert the model output to the expected one required by the built-in metric.</p>
+<p><code class="docutils literal notranslate"><span class="pre">q_func</span></code> attribute in <code class="docutils literal notranslate"><span class="pre">Quantization</span></code> class is only for <code class="docutils literal notranslate"><span class="pre">Quantization</span> <span class="pre">Aware</span> <span class="pre">Training</span></code> case, in which the user needs to register a function that takes <code class="docutils literal notranslate"><span class="pre">model</span></code> as the input parameter and executes the entire training process with self-contained training hyper-parameters.</p>
+<p><code class="docutils literal notranslate"><span class="pre">eval_func</span></code> attribute in <code class="docutils literal notranslate"><span class="pre">Quantization</span></code> class is reserved for special cases. If the user had an evaluation function when train a model, the user must implement a <code class="docutils literal notranslate"><span class="pre">calib_dataloader</span></code> and leave <code class="docutils literal notranslate"><span class="pre">eval_dataloader</span></code> as None. Then, modify this evaluation function to take <code class="docutils literal notranslate"><span class="pre">model</span></code> as the input parameter and return a higher-is-better scaler. In some scenarios, it may reduce development effort.</p>
+</div>
+<div class="section" id="pruning-related-apis-poc">
+<h3>Pruning-related APIs (POC)<a class="headerlink" href="#pruning-related-apis-poc" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Pruning</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf_fname_or_obj</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">on_epoch_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">on_step_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">on_step_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">q_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>This API is used to do sparsity pruning. Currently, it is a Proof of Concept; Neural Compressor only supports <code class="docutils literal notranslate"><span class="pre">magnitude</span> <span class="pre">pruning</span></code> on PyTorch.</p>
+<p>To learn how to use this API, refer to the <a class="reference internal" href="pruning.html"><span class="doc">pruning document</span></a>.</p>
+</div>
+<div class="section" id="benchmarking-related-apis">
+<h3>Benchmarking-related APIs<a class="headerlink" href="#benchmarking-related-apis" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Benchmark</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf_fname_or_obj</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">metric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">b_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">postprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_postprocess</span><span class="p">):</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>This API is used to measure model performance and accuracy.</p>
+<p>To learn how to use this API, refer to the <a class="reference internal" href="benchmark.html"><span class="doc">benchmarking document</span></a>.</p>
+</div>
+</div>
+<div class="section" id="default-user-facing-apis">
+<h2>Default user-facing APIs<a class="headerlink" href="#default-user-facing-apis" title="Permalink to this headline">¶</a></h2>
+<p>The default user-facing APIs exist for backwards compatibility from the v1.0 release. Refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/v1.1/docs/introduction.md">v1.1 API</a> to understand how the default user-facing APIs work.</p>
+<p>View the <a class="reference external" href="https://github.com/intel/neural-compressor/tree/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/examples/helloworld/tf_example6">HelloWorld example</a> that uses default user-facing APIs for user reference.</p>
+<p>Full examples using default user-facing APIs can be found <a class="reference external" href="https://github.com/intel/neural-compressor/tree/v1.1/examples">here</a>.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../api-documentation/quantization-api.html" class="btn btn-neutral float-left" title="Quantization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="doclist.html" class="btn btn-neutral float-right" title="Developer Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

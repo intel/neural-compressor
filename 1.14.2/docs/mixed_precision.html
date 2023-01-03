@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mixed Precision &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Graph Optimization" href="graph_optimization.html" />
+    <link rel="prev" title="Benchmarking" href="benchmark.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="doclist.html">Developer Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="doclist.html#get-started">Get Started</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="doclist.html#deep-dive">Deep Dive</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Quantization.html">Quantization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PTQ.html">PTQ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="QAT.html">Quantization-aware Training</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dynamic_quantization.html">Dynamic Quantization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pruning.html">Pruning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="benchmark.html">Benchmarking</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Mixed Precision</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pre-requirements">Pre-requirements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#methods-to-enable-disable-bf16-support">Methods to enable &amp; disable BF16 support</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-use">How to use</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="graph_optimization.html">Graph Optimization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="model_conversion.html">Model Conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tensorboard.html">TensorBoard</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="doclist.html#advanced-topics">Advanced Topics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="doclist.html">Developer Documentation</a> &raquo;</li>
+      <li>Mixed Precision</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/mixed_precision.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="mixed-precision">
+<h1>Mixed Precision<a class="headerlink" href="#mixed-precision" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The recent growth of Deep Learning has driven the development of more complex models that require significantly more compute and memory capabilities. Several low precision numeric formats have been proposed to address the problem. Google’s <a class="reference external" href="https://cloud.google.com/tpu/docs/bfloat16">bfloat16</a> and the <a class="reference external" href="https://en.wikipedia.org/wiki/Half-precision_floating-point_format">FP16: IEEE</a> half-precision format are two of the most widely used sixteen bit formats. <a class="reference external" href="https://arxiv.org/abs/1710.03740">Mixed precision</a> training and inference using low precision formats have been developed to reduce compute and bandwidth requirements.</p>
+<p>The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Cooper Lake), featuring Intel® Deep Learning Boost, is the first general-purpose x86 CPU to support the bfloat16 format. Specifically, three new bfloat16 instructions are added as a part of the AVX512_BF16 extension within Intel Deep Learning Boost: VCVTNE2PS2BF16, VCVTNEPS2BF16, and VDPBF16PS. The first two instructions allow converting to and from bfloat16 data type, while the last one performs a dot product of bfloat16 pairs. Further details can be found in the <a class="reference external" href="https://software.intel.com/content/www/us/en/develop/download/bfloat16-hardware-numerics-definition.html">hardware numerics document</a> published by Intel.</p>
+<p>Intel® Neural Compressor (INC) supports <code class="docutils literal notranslate"><span class="pre">BF16</span> <span class="pre">+</span> <span class="pre">FP32</span></code> mixed precision conversion by MixedPrecision API.</p>
+<p>Its support status:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Framework</th>
+<th style="text-align: center;">BF16</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TensorFlow</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>ONNX</td>
+<td style="text-align: center;">plan to support in the future</td>
+</tr>
+<tr>
+<td>MXNet</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+</tbody>
+</table></div>
+<div class="section" id="pre-requirements">
+<h2>Pre-requirements<a class="headerlink" href="#pre-requirements" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="hardware">
+<h3>Hardware<a class="headerlink" href="#hardware" title="Permalink to this headline">¶</a></h3>
+<p>It needs the CPU supports <code class="docutils literal notranslate"><span class="pre">avx512_bf16</span></code> instruction set.</p>
+</div>
+<div class="section" id="software">
+<h3>Software<a class="headerlink" href="#software" title="Permalink to this headline">¶</a></h3>
+<p>Intel has worked with the PyTorch &amp; TensorFlow development teams to enhance PyTorch &amp; TensorFlow to include bfloat16 data support for CPUs.</p>
+<ul class="simple">
+<li><p>For PyTorch, the version higher than <a class="reference external" href="https://download.pytorch.org/whl/torch_stable.html">1.11.0</a> is necessary.</p></li>
+<li><p>For Tensorflow, the version higher than <a class="reference external" href="https://pypi.org/project/intel-tensorflow/2.3.0/">2.3.0</a> is necessary.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="methods-to-enable-disable-bf16-support">
+<h2>Methods to enable &amp; disable BF16 support<a class="headerlink" href="#methods-to-enable-disable-bf16-support" title="Permalink to this headline">¶</a></h2>
+<p>By default, BF16 has been added into activation and weight supported datatype if <strong>the TensorFlow/PyTorch version and CPU meet the requirements at the same time</strong>. We can disable it in the yaml config file by specifying the datatype for activation and weight.</p>
+<p>If either pre-requirement can’t be met, the program would exit consequently. But we can force enable it for debug usage by setting the environment variable <code class="docutils literal notranslate"><span class="pre">FORCE_BF16=1</span></code>:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nv">FORCE_BF16</span><span class="o">=</span><span class="m">1</span> /path/to/executable_nc_wrapper
+</pre></div>
+</div>
+<blockquote>
+<div><p>⚠️Without hardware or software support, the poor performance or other problems may expect for force enabling.</p>
+</div></blockquote>
+<blockquote>
+<div><p>During quantization, BF16 conversion will be executed automatically as well if pre-requirements are met or force enable it. Please refer to this <a class="reference internal" href="quantization_mixed_precision.html"><span class="doc">document</span></a> for its workflow.</p>
+</div></blockquote>
+</div>
+<div class="section" id="how-to-use">
+<h2>How to use<a class="headerlink" href="#how-to-use" title="Permalink to this headline">¶</a></h2>
+<p>INC queries framework capability and user-defined precision to generate an op-wise config based on the pre-optimized fp32 model. Direct mixed precision conversion will be implemented under the direction of config. Further, if users add necessary evaluation components, INC will tune accuracy during conversion.</p>
+<ul>
+<li><p>Convert as many nodes as possible to target dtype</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">MixedPrecision</span>
+<span class="n">converter</span> <span class="o">=</span> <span class="n">MixedPrecision</span><span class="p">()</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">precisions</span> <span class="o">=</span> <span class="s1">&#39;bf16&#39;</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/model&#39;</span>
+<span class="n">optimized_model</span> <span class="o">=</span> <span class="n">converter</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+<li><p>Tune accuracy during conversion</p>
+<p>Users can add dataloader and metric in yaml to execute evaluation.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">resnet50_v1</span>
+  <span class="nt">framework</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">tensorflow</span>
+
+<span class="nt">mixed_precision</span><span class="p">:</span>
+  <span class="nt">precisions</span><span class="p">:</span> <span class="s">&#39;bf16&#39;</span>
+
+<span class="nt">evaluation</span><span class="p">:</span>
+  <span class="nt">accuracy</span><span class="p">:</span>
+    <span class="nt">dataloader</span><span class="p">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">...</span>
+    <span class="nt">metric</span><span class="p">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">...</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">MixedPrecision</span>
+<span class="n">converter</span> <span class="o">=</span> <span class="n">MixedPrecision</span><span class="p">(</span><span class="s1">&#39;./conf.yaml&#39;</span><span class="p">)</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;./model.pb&#39;</span>
+<span class="n">output_model</span> <span class="o">=</span> <span class="n">converter</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Users can also define their own dataloader or metric by python code.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>class Metric:
+   def __init__(self):
+     # initialization code
+
+   def update(self, sample):
+     # update predictions and label to recorder
+
+   def reset(self):
+     # reset recorder
+
+   def result(self):
+     # return accuracy
+
+class Dataset:
+   def __init__(self):
+     # initialization code
+
+   def getitem(self, index)：
+     # use idx to get data and label
+
+   def __length__(self):
+     # return data length
+
+from neural_compressor.experimental import MixedPrecision, common
+dataset = Dataset()
+converter = MixedPrecision()
+converter.metric = Metric()
+converter.precisions = &#39;bf16&#39;
+converter.eval_dataloader = common.DataLoader(dataset)
+converter.model = &#39;./model.pb&#39;
+output_model = converter()
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="benchmark.html" class="btn btn-neutral float-left" title="Benchmarking" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="graph_optimization.html" class="btn btn-neutral float-right" title="Graph Optimization" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

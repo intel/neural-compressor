@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Execute benchmark endpoint &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/doclist.html">Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Execute benchmark endpoint</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/neural_compressor/ux/components/benchmark/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="execute-benchmark-endpoint">
+<h1>Execute benchmark endpoint<a class="headerlink" href="#execute-benchmark-endpoint" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="request">
+<h2>Request<a class="headerlink" href="#request" title="Permalink to this headline">¶</a></h2>
+<p><strong>Path</strong>: <code class="docutils literal notranslate"><span class="pre">/api/benchmark</span></code></p>
+<p><strong>Body parameters</strong>:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Parameter</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>id</strong></td>
+<td style="text-align: left;">workload ID</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>workspace_path</strong></td>
+<td style="text-align: left;">path to current UX workspace</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>input_model</strong></td>
+<td style="text-align: left;">input model to benchmark</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>optimized_model</strong></td>
+<td style="text-align: left;">optimized model to benchmark</td>
+</tr>
+</tbody>
+</table><blockquote>
+<div><p><em>Model definition</em>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span>{
+    &quot;precision&quot;: &quot;fp32&quot;,  // Model datatype
+    &quot;path&quot;: &quot;/path/to/fp32_model.pb&quot;  // Model path
+    &quot;mods&quot;: [&quot;benchmark&quot;, &quot;accuracy&quot;] // Benchmark mode
+}
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p><strong>Body</strong>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+   <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;configuration_id&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;workspace_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/path/to/workspace&quot;</span><span class="p">,</span>
+   <span class="nt">&quot;input_model&quot;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&quot;precision&quot;</span><span class="p">:</span> <span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;/localdisk/fp32.pb&quot;</span>
+   <span class="p">},</span>
+   <span class="nt">&quot;optimized_model&quot;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="nt">&quot;precision&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;/localdisk/int8.pb&quot;</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Responses</strong></p>
+<ol>
+<li><p><strong>Subject</strong>: <code class="docutils literal notranslate"><span class="pre">benchmark_start</span></code></p>
+<p><strong>Data</strong>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;configuration_id&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;started&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Subject</strong>: <code class="docutils literal notranslate"><span class="pre">benchmark_progress</span></code></p>
+<p><strong>Data</strong>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span>{
+    &quot;id&quot;: &quot;configuration_id&quot;,
+    &quot;execution_details&quot;: {
+        &quot;input_model_benchmark&quot;: {
+            &quot;performance&quot;: {
+                &quot;instances&quot;: 7,
+                &quot;cores_per_instance&quot;: 4,
+                &quot;model_path&quot;: &quot;/localdisk/fp32.pb&quot;,
+                &quot;precision&quot;: &quot;fp32&quot;,
+                &quot;mode&quot;: &quot;performance&quot;,
+                &quot;batch_size&quot;: 1,
+                &quot;framework&quot;: &quot;tensorflow&quot;,
+                &quot;config_path&quot;: &quot;/path/to/workspace/workloads/&lt;model_name&gt;_&lt;configuration_id&gt;/config.yaml&quot;,
+                &quot;benchmark_script&quot;: &quot;/localdisk/neural_compressor/ux/components/benchmark/benchmark_model.py&quot;,
+                &quot;command&quot;: &quot;python /localdisk/neural_compressor/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/&lt;model_name&gt;_&lt;configuration_id&gt;/config.yaml --input-graph /localdisk/fp32.pb --mode performance --framework tensorflow&quot;
+            }
+        }
+    },
+    &quot;progress&quot;: &quot;1/2&quot;,
+    &quot;perf_throughput_input_model&quot;: &lt;float&gt;
+}
+</pre></div>
+</div>
+</li>
+<li><p><strong>Subject</strong>: <code class="docutils literal notranslate"><span class="pre">benchmark_progress</span></code></p>
+<p><strong>Data</strong>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span>{
+    &quot;id&quot;: &quot;configuration_id&quot;,
+    &quot;execution_details&quot;: {
+        &quot;input_model_benchmark&quot;: {
+            &quot;performance&quot;: {
+                &quot;instances&quot;: 7,
+                &quot;cores_per_instance&quot;: 4,
+                &quot;model_path&quot;: &quot;/localdisk/fp32.pb&quot;,
+                &quot;precision&quot;: &quot;fp32&quot;,
+                &quot;mode&quot;: &quot;performance&quot;,
+                &quot;batch_size&quot;: 1,
+                &quot;framework&quot;: &quot;tensorflow&quot;,
+                &quot;config_path&quot;: &quot;/path/to/workspace/workloads/&lt;model_name&gt;_&lt;configuration_id&gt;/config.yaml&quot;,
+                &quot;benchmark_script&quot;: &quot;/localdisk/neural_compressor/ux/components/benchmark/benchmark_model.py&quot;,
+                &quot;command&quot;: &quot;python /localdisk/neural_compressor/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/&lt;model_name&gt;_&lt;configuration_id&gt;/config.yaml --input-graph /localdisk/fp32.pb --mode performance --framework tensorflow&quot;
+            }
+        },
+        &quot;optimized_model_benchmark&quot;: {
+            &quot;performance&quot;: {
+                &quot;instances&quot;: 7,
+                &quot;cores_per_instance&quot;: 4,
+                &quot;model_path&quot;: &quot;/localdisk/int8.pb&quot;,
+                &quot;precision&quot;: &quot;int8&quot;,
+                &quot;mode&quot;: &quot;performance&quot;,
+                &quot;batch_size&quot;: 1,
+                &quot;framework&quot;: &quot;tensorflow&quot;,
+                &quot;config_path&quot;: &quot;/path/to/workspace/workloads/&lt;model_name&gt;_&lt;configuration_id&gt;/config.yaml&quot;,
+                &quot;benchmark_script&quot;: &quot;/localdisk/neural_compressor/ux/components/benchmark/benchmark_model.py&quot;,
+                &quot;command&quot;: &quot;python /localdisk/neural_compressor/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/&lt;model_name&gt;_&lt;configuration_id&gt;/config.yaml --input-graph /localdisk/int8.pb --mode performance --framework tensorflow&quot;
+            }
+        }
+    },
+    &quot;progress&quot;: &quot;2/2&quot;,
+    &quot;perf_throughput_input_model&quot;: &lt;float&gt;,
+    &quot;perf_throughput_optimized_model&quot;: &lt;float&gt;
+}
+</pre></div>
+</div>
+</li>
+<li><p><strong>Subject</strong>: <code class="docutils literal notranslate"><span class="pre">benchmark_finish</span></code></p>
+<p><strong>Data</strong>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span>{
+    &quot;id&quot;: &quot;configuration_id&quot;,
+    &quot;execution_details&quot;: {
+        &quot;input_model_benchmark&quot;: {
+            &quot;performance&quot;: {
+                &quot;instances&quot;: 7,
+                &quot;cores_per_instance&quot;: 4,
+                &quot;model_path&quot;: &quot;/localdisk/fp32.pb&quot;,
+                &quot;precision&quot;: &quot;fp32&quot;,
+                &quot;mode&quot;: &quot;performance&quot;,
+                &quot;batch_size&quot;: 1,
+                &quot;framework&quot;: &quot;tensorflow&quot;,
+                &quot;config_path&quot;: &quot;/path/to/workspace/workloads/&lt;model_name&gt;_&lt;configuration_id&gt;/config.yaml&quot;,
+                &quot;benchmark_script&quot;: &quot;/localdisk/neural_compressor/ux/components/benchmark/benchmark_model.py&quot;,
+                &quot;command&quot;: &quot;python /localdisk/neural_compressor/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/&lt;model_name&gt;_&lt;configuration_id&gt;/config.yaml --input-graph /localdisk/fp32.pb --mode performance --framework tensorflow&quot;
+            }
+        },
+        &quot;optimized_model_benchmark&quot;: {
+            &quot;performance&quot;: {
+                &quot;instances&quot;: 7,
+                &quot;cores_per_instance&quot;: 4,
+                &quot;model_path&quot;: &quot;/localdisk/int8.pb&quot;,
+                &quot;precision&quot;: &quot;int8&quot;,
+                &quot;mode&quot;: &quot;performance&quot;,
+                &quot;batch_size&quot;: 1,
+                &quot;framework&quot;: &quot;tensorflow&quot;,
+                &quot;config_path&quot;: &quot;/path/to/workspace/workloads/&lt;model_name&gt;_&lt;configuration_id&gt;/config.yaml&quot;,
+                &quot;benchmark_script&quot;: &quot;/localdisk/neural_compressor/ux/components/benchmark/benchmark_model.py&quot;,
+                &quot;command&quot;: &quot;python /localdisk/neural_compressor/ux/components/benchmark/benchmark_model.py --config /path/to/workspace/workloads/&lt;model_name&gt;_&lt;configuration_id&gt;/config.yaml --input-graph /localdisk/int8.pb --mode performance --framework tensorflow&quot;
+            }
+        }
+    },
+    &quot;progress&quot;: &quot;2/2&quot;,
+    &quot;perf_throughput_input_model&quot;: &lt;float&gt;,
+    &quot;perf_throughput_optimized_model&quot;: &lt;float&gt;
+}
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

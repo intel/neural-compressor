@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Graph Optimization &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Model Conversion" href="model_conversion.html" />
+    <link rel="prev" title="Mixed Precision" href="mixed_precision.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="doclist.html">Developer Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="doclist.html#get-started">Get Started</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="doclist.html#deep-dive">Deep Dive</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Quantization.html">Quantization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PTQ.html">PTQ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="QAT.html">Quantization-aware Training</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dynamic_quantization.html">Dynamic Quantization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pruning.html">Pruning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="benchmark.html">Benchmarking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mixed_precision.html">Mixed Precision</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Graph Optimization</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-use-it">How to use it</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="model_conversion.html">Model Conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tensorboard.html">TensorBoard</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="doclist.html#advanced-topics">Advanced Topics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="doclist.html">Developer Documentation</a> &raquo;</li>
+      <li>Graph Optimization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/graph_optimization.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="graph-optimization">
+<h1>Graph Optimization<a class="headerlink" href="#graph-optimization" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Graph optimization is primarily focused on two scenarios, shown below:</p>
+<ol class="simple">
+<li><p><strong>FP32 optimization</strong>. This is similar to the TensorFlow optimization tool <a class="reference external" href="https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/tools/optimize_for_inference.py">optimize_for_inference</a> while Neural Compressor enables more optimizations (such as common subexpression elimination).</p></li>
+<li><p><strong>Auto-mixed precision optimization</strong>. Neural Compressor generates the optimal model with auto-mixed precision (<a class="reference external" href="https://cloud.google.com/tpu/docs/bfloat16">bfloat16</a> and FP32) and allows for additional auto-tuning per accuracy requirements.</p></li>
+</ol>
+</div>
+<div class="section" id="how-to-use-it">
+<h2>How to use it<a class="headerlink" href="#how-to-use-it" title="Permalink to this headline">¶</a></h2>
+<p>See the following three examples which demonstrate graph optimization API usage.</p>
+<div class="section" id="fp32-optimization">
+<h3>FP32 Optimization<a class="headerlink" href="#fp32-optimization" title="Permalink to this headline">¶</a></h3>
+<p>Neural Compressor runs the graph optimization under FP32 Optimization by default. In other words, the <strong>precisions</strong> field is explicitly set to <strong>fp32</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Graph_Optimization</span>
+    <span class="n">graph_optimizer</span> <span class="o">=</span> <span class="n">Graph_Optimization</span><span class="p">()</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">precisions</span> <span class="o">=</span> <span class="s1">&#39;fp32&#39;</span> <span class="c1">#Optional, default is &#39;fp32&#39;</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="s1">&#39;input&#39;</span>  <span class="c1"># Optional</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="s1">&#39;op_to_store&#39;</span>  <span class="c1"># Optional</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/model&#39;</span>
+    <span class="n">optimized_model</span> <span class="o">=</span> <span class="n">graph_optimizer</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="auto-mixed-precision-optimization">
+<h3>Auto-mixed Precision Optimization<a class="headerlink" href="#auto-mixed-precision-optimization" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="default-auto-mixed-precision">
+<h4>Default auto-mixed precision<a class="headerlink" href="#default-auto-mixed-precision" title="Permalink to this headline">¶</a></h4>
+<p>The only difference between this and the default mode (FP32 optimization) is that <strong>bf16</strong> must be added to the <strong>precisions</strong> field.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Graph_Optimization</span>
+    <span class="n">graph_optimizer</span> <span class="o">=</span> <span class="n">Graph_Optimization</span><span class="p">()</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">precisions</span> <span class="o">=</span> <span class="s1">&#39;bf16, fp32&#39;</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="s1">&#39;input&#39;</span>  <span class="c1"># Optional</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="s1">&#39;op_to_store&#39;</span>  <span class="c1"># Optional</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/model&#39;</span>
+    <span class="n">optimized_model</span> <span class="o">=</span> <span class="n">graph_optimizer</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Note the <strong>fp32</strong> is optional when the <strong>bf16</strong> is set to precisions field. The below example has the identical action under the hardware platform supports bf16, e.g, the CPX platform.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Graph_Optimization</span>
+    <span class="n">graph_optimizer</span> <span class="o">=</span> <span class="n">Graph_Optimization</span><span class="p">()</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">precisions</span> <span class="o">=</span> <span class="s1">&#39;bf16&#39;</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/model&#39;</span>
+    <span class="n">optimized_model</span> <span class="o">=</span> <span class="n">graph_optimizer</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>For those platforms without bf16 enabling, like CLX. Neural Compressor also could leverage the graph optimization feature to generate the model under bf16 precision.The usage is just adding the <code class="docutils literal notranslate"><span class="pre">FORCE_BF16=1</span></code> before the cmd.
+e.g, <code class="docutils literal notranslate"><span class="pre">FORCE_BF16=1</span> <span class="pre">/path/to/executable_nc_wrapper</span></code>. If we do not add such prefix <code class="docutils literal notranslate"><span class="pre">FORCE_BF16=1</span></code>, the program would exit consequently.</p>
+</div>
+<div class="section" id="auto-mixed-precision-with-auto-tuning">
+<h4>Auto-mixed precision with auto-tuning<a class="headerlink" href="#auto-mixed-precision-with-auto-tuning" title="Permalink to this headline">¶</a></h4>
+<p>Neural Compressor also supports tuning the model in graph optimization mode. The end user must replace the quantization field with graph_optimization parts such as shown below. The <strong>precisions</strong> field only supports <strong>bf16</strong> and <strong>fp32</strong>.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">graph_optimization</span><span class="p">:</span>
+  <span class="nt">precisions</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="s">&#39;bf16&#39;</span><span class="p p-Indicator">,</span> <span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<p>Note that if we remove the evaluation field from the yaml file, the graph optimization will only convert the model depending on the precisions setting.</p>
+<p>When the graph_optimization field is set and the evaluation field exists in the yaml file, Neural Compressor executes the similar process like quantization. It converts op into bf16 as much as possible and checks the metric later. If the metric meets the criterion, Neural Compressor exits or it fallbacks one op to fp32 and re-runs the above process until it meets the exit policy setting.</p>
+<p>Below is an example of using yaml to trigger graph optimization.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Graph_Optimization</span>
+    <span class="n">graph_optimizer</span> <span class="o">=</span> <span class="n">Graph_Optimization</span><span class="p">(</span><span class="s1">&#39;/path/to/config.yaml&#39;</span><span class="p">)</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/model&#39;</span>
+    <span class="n">optimized_model</span> <span class="o">=</span> <span class="n">graph_optimizer</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Graph_Optimization class also support Graph_Optimization_Conf class as it’s argument.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span> <span class="nn">lpot.experimental</span> <span class="kn">import</span> <span class="n">Graph_Optimization</span>
+    <span class="kn">from</span> <span class="nn">lpot.conf.config</span> <span class="kn">import</span> <span class="n">Graph_Optimization_Conf</span>
+    <span class="n">conf</span> <span class="o">=</span> <span class="n">Graph_Optimization_Conf</span><span class="p">(</span><span class="s1">&#39;/path/to/config.yaml&#39;</span><span class="p">)</span>
+    <span class="n">graph_optimizer</span> <span class="o">=</span> <span class="n">Graph_Optimization</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
+    <span class="n">graph_optimizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/model&#39;</span>
+    <span class="n">optimized_model</span> <span class="o">=</span> <span class="n">graph_optimizer</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>FP32 optimization<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>The below example demonstrate how to speed up the Resnet50 FP32 throughput performance via Graph Optimization.</p>
+<ol class="simple">
+<li><p>Download the pre-trained ResNet-50 model with below command.</p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>  wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resnet50_fp32_pretrained_model.pb
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Measure the performance on original FP32 model.</p></li>
+</ol>
+<p>First of all, we create the <strong>resnet50_measurement.yaml</strong> with below settings for leveraging Neural Compressor Benchmark API.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span>  <span class="nt">model</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">resnet50_v1</span>
+    <span class="nt">framework</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">tensorflow</span>
+
+  <span class="nt">evaluation</span><span class="p">:</span>
+    <span class="nt">performance</span><span class="p">:</span>
+      <span class="nt">configs</span><span class="p">:</span>
+        <span class="nt">cores_per_instance</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">28</span>
+        <span class="nt">num_of_instance</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+      <span class="nt">dataloader</span><span class="p">:</span>
+        <span class="nt">batch_size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span>
+        <span class="nt">dataset</span><span class="p">:</span>
+          <span class="nt">dummy</span><span class="p">:</span>
+            <span class="nt">shape</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">1000</span><span class="p p-Indicator">,</span> <span class="nv">224</span><span class="p p-Indicator">,</span> <span class="nv">224</span><span class="p p-Indicator">,</span> <span class="nv">3</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<p>Then, we can leverage the Benchmark API to measure the performance.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Benchmark</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">Benchmark</span><span class="p">(</span><span class="s1">&#39;/path/to/resnet50_measurement.yaml&#39;</span><span class="p">)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/resnet50_fp32_pretrained_model.pb&#39;</span>
+<span class="n">evaluator</span><span class="p">(</span><span class="s1">&#39;performance&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We got below performance result under Intel Xeon Scalable processor Cascade Lake 8280.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>performance mode benchmark result:
+<span class="m">2021</span>-05-28 <span class="m">15</span>:16:11 <span class="o">[</span>INFO<span class="o">]</span> Batch <span class="nv">size</span> <span class="o">=</span> <span class="m">100</span>
+<span class="m">2021</span>-05-28 <span class="m">15</span>:16:11 <span class="o">[</span>INFO<span class="o">]</span> Latency: <span class="m">7</span>.165 ms
+<span class="m">2021</span>-05-28 <span class="m">15</span>:16:11 <span class="o">[</span>INFO<span class="o">]</span> Throughput: <span class="m">139</span>.567 images/sec
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Re-Measure the performance on optimized FP32 model.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Graph_Optimization</span>
+
+<span class="n">graph_optimizer</span> <span class="o">=</span> <span class="n">Graph_Optimization</span><span class="p">()</span>
+<span class="n">graph_optimizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/resnet50_fp32_pretrained_model.pb&#39;</span>
+<span class="n">output_graph</span> <span class="o">=</span> <span class="n">graph_optimizer</span><span class="p">()</span>
+<span class="n">output_graph</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;/path/to/fp32_optimized_model&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then, We measure the optimized performance via Neural Compressor Benchmark API again.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Benchmark</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">Benchmark</span><span class="p">(</span><span class="s1">&#39;/path/to/resnet50_measurement.yaml&#39;</span><span class="p">)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;/path/to/fp32_optimized_model&#39;</span>
+<span class="n">evaluator</span><span class="p">(</span><span class="s1">&#39;performance&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, the throughput has been improved ~2.3x (325.99 vs 139.56) compared with the initial data.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>performance mode benchmark result:
+<span class="m">2021</span>-05-28 <span class="m">15</span>:16:41 <span class="o">[</span>INFO<span class="o">]</span> Batch <span class="nv">size</span> <span class="o">=</span> <span class="m">100</span>
+<span class="m">2021</span>-05-28 <span class="m">15</span>:16:41 <span class="o">[</span>INFO<span class="o">]</span> Latency: <span class="m">3</span>.068 ms
+<span class="m">2021</span>-05-28 <span class="m">15</span>:16:41 <span class="o">[</span>INFO<span class="o">]</span> Throughput: <span class="m">325</span>.992 images/sec
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mixed_precision.html" class="btn btn-neutral float-left" title="Mixed Precision" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="model_conversion.html" class="btn btn-neutral float-right" title="Model Conversion" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

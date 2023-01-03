@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparsity &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doclist.html">Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Sparsity</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/sparsity.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="sparsity">
+<h1>Sparsity<a class="headerlink" href="#sparsity" title="Permalink to this headline">¶</a></h1>
+<p>Sparsity is one of promising model compression techniques that can be used to accelerate the deep learning inference. Typically, sparsity can be classified as 1) structured sparsity, and 2) unstructured sparsity. Structured sparsity indicates an observed structure pattern of zero (or non-zero) values, while unstructured sparsity indicates no such pattern for zero (or non-zero) values. In general, structured sparsity has lower accuracy due to restrictive structure than unstructured sparsity; however, it can accelerate the model execution significantly with software or hardware sparsity.</p>
+<p>The document describes the sparsity definition, sparsity training flow, validated models, and performance benefit using software sparsity. Note that the document discusses the sparse weight (with dense activation) for inference acceleration. Sparse activation or sparse embedding for inference acceleration or training acceleration is out of the scope.</p>
+<blockquote>
+<div><p><strong>Note</strong>: training for sparsity with 2:4 or similar structured pattern is supported, please refer it at our new <a class="reference external" href="https://github.com/intel/neural-compressor/tree/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../neural_compressor/experimental/pytorch_pruner/">API</a>, <a class="reference external" href="https://github.com/intel/neural-compressor/tree/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager">question-answering examples</a> and <a class="reference external" href="https://github.com/intel/neural-compressor/tree/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager">text-classification examples</a></p>
+</div></blockquote>
+<div class="section" id="sparsity-definition">
+<h2>Sparsity Definition<a class="headerlink" href="#sparsity-definition" title="Permalink to this headline">¶</a></h2>
+<p>NVidia proposed <a class="reference external" href="https://developer.nvidia.com/blog/accelerating-inference-with-sparsity-using-ampere-and-tensorrt/">2:4 sparsity</a> (or known as “2in4 sparsity”) in Ampere architecture, for every 4 continuous elements in a matrix, two of them are zero and others are non-zero.</p>
+<a target="_blank" href="./docs/imgs/2in4_sparsity_demo.png">
+    <img src="../docs/imgs/2in4_sparsity_demo.png" width=600 height=200 alt="Sparsity Pattern">
+</a><p>Different from 2:4 sparsity above, we propose the block-wise structured sparsity patterns that we are able to demonstrate the performance benefits on existing Intel hardwares even without the support of hardware sparsity. A block-wise sparsity pattern with block size <code class="docutils literal notranslate"><span class="pre">S</span></code> means the contiguous <code class="docutils literal notranslate"><span class="pre">S</span></code> elements in this block are all zero values.</p>
+<p>For a typical GEMM, the weight dimension is <code class="docutils literal notranslate"><span class="pre">IC</span></code> x <code class="docutils literal notranslate"><span class="pre">OC</span></code>, where <code class="docutils literal notranslate"><span class="pre">IC</span></code> is the number of input channels and <code class="docutils literal notranslate"><span class="pre">OC</span></code> is the number of output channels. Note that sometimes <code class="docutils literal notranslate"><span class="pre">IC</span></code> is also called dimension <code class="docutils literal notranslate"><span class="pre">K</span></code>, and <code class="docutils literal notranslate"><span class="pre">OC</span></code> is called dimension <code class="docutils literal notranslate"><span class="pre">N</span></code>. The sparsity dimension is on <code class="docutils literal notranslate"><span class="pre">OC</span></code> (or <code class="docutils literal notranslate"><span class="pre">N</span></code>).</p>
+<p>For a typical Convolution, the weight dimension is <code class="docutils literal notranslate"><span class="pre">OC</span> <span class="pre">x</span> <span class="pre">IC</span> <span class="pre">x</span> <span class="pre">KH</span> <span class="pre">x</span> <span class="pre">KW</span></code>, where <code class="docutils literal notranslate"><span class="pre">OC</span></code> is the number of output channels, <code class="docutils literal notranslate"><span class="pre">IC</span></code> is the number of input channels, and <code class="docutils literal notranslate"><span class="pre">KH</span></code> and <code class="docutils literal notranslate"><span class="pre">KW</span></code> is the kernel height and weight. The sparsity dimension is also on <code class="docutils literal notranslate"><span class="pre">OC</span></code>.</p>
+<p>Here is a figure showing a matrix with <code class="docutils literal notranslate"><span class="pre">IC</span></code> = 32 and <code class="docutils literal notranslate"><span class="pre">OC</span></code> = 16 dimension, and a block-wise sparsity pattern with block size 4 on <code class="docutils literal notranslate"><span class="pre">OC</span></code> dimension.
+<a target="_blank" href="./docs/imgs/sparse_dim.png">
+<img src="../docs/imgs/sparse_dim.png" width=854 height=479 alt="Sparsity Pattern">
+</a></p>
+</div>
+<div class="section" id="training-flow-sample-code">
+<h2>Training Flow &amp; Sample Code<a class="headerlink" href="#training-flow-sample-code" title="Permalink to this headline">¶</a></h2>
+<p>The following image describes the typical flow of training for sparsity. Compared with normal training flow, training for sparsity requires more steps (e.g., regularization and pruning) to meet the goal of sparsity ratio.</p>
+<a target="_blank" href="./docs/imgs/train_for_sparsity.png">
+    <img src="../docs/imgs/train_for_sparsity.png" width=336 height=465 alt="Sparsity Training Flow">
+</a><p>Here is the pseudo code of a modified training function on <code class="docutils literal notranslate"><span class="pre">PyTorch</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">train</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">x</span><span class="p">,</span><span class="n">label</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_func</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">prune_gradient_with_magnitude</span><span class="p">()</span>    <span class="c1"># prune gradients</span>
+        <span class="n">group_lasso_regularize</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>     <span class="c1"># update gradients by sparsification rate</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">lr_scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">prune_weights_with_magnitude</span><span class="p">()</span>     <span class="c1"># prune weights</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="validated-models">
+<h2>Validated Models<a class="headerlink" href="#validated-models" title="Permalink to this headline">¶</a></h2>
+<p>We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). The below table shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. We also provide a simplified <a class="reference external" href="https://github.com/intel/neural-compressor/tree/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager">BERT example</a> with only one sparse layer.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align: center;">Sparsity Pattern</th>
+<th style="text-align: center;">Sparsity Ratio</th>
+<th style="text-align: center;">Dataset</th>
+<th style="text-align: center;">Accuracy (Sparse Model)</th>
+<th style="text-align: center;">Accuracy (Dense Model)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bert Large</td>
+<td style="text-align: center;"><a href="../examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager"><strong><em>2</em></strong>x1</a></td>
+<td style="text-align: center;">70%</td>
+<td style="text-align: center;">SQuAD</td>
+<td style="text-align: center;">90.70%</td>
+<td style="text-align: center;">91.34%</td>
+</tr>
+<tr>
+<td>DLRM</td>
+<td style="text-align: center;">4x<strong><em>16</em></strong></td>
+<td style="text-align: center;">85%</td>
+<td style="text-align: center;">Criteo Terabyte</td>
+<td style="text-align: center;">80.29%</td>
+<td style="text-align: center;">80.25%</td>
+</tr>
+<tr>
+<td>Bert Mini</td>
+<td style="text-align: center;"><a href="../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager"><strong><em>4</em></strong>x1</a></td>
+<td style="text-align: center;">90%</td>
+<td style="text-align: center;">MRPC</td>
+<td style="text-align: center;">87.22%</td>
+<td style="text-align: center;">87.52%</td>
+</tr>
+<tr>
+<td>Bert Mini</td>
+<td style="text-align: center;"><a href="../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager"><strong><em>4</em></strong>x1</a></td>
+<td style="text-align: center;">90%</td>
+<td style="text-align: center;">SST-2</td>
+<td style="text-align: center;">86.92%</td>
+<td style="text-align: center;">87.61%</td>
+</tr>
+<tr>
+<td>Bert Mini</td>
+<td style="text-align: center;"><a href="../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager"><strong><em>4</em></strong>x1</a></td>
+<td style="text-align: center;">80%</td>
+<td style="text-align: center;">SQuAD</td>
+<td style="text-align: center;">76.27%</td>
+<td style="text-align: center;">76.87%</td>
+</tr>
+<tr>
+<td>Bert Mini</td>
+<td style="text-align: center;"><a href="../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager">2 in <strong><em>4</em></strong></a></td>
+<td style="text-align: center;">50%</td>
+<td style="text-align: center;">MRPC</td>
+<td style="text-align: center;">86.95%</td>
+<td style="text-align: center;">87.52%</td>
+</tr>
+<tr>
+<td>Bert Mini</td>
+<td style="text-align: center;"><a href="../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager">2 in <strong><em>4</em></strong></a></td>
+<td style="text-align: center;">50%</td>
+<td style="text-align: center;">SST-2</td>
+<td style="text-align: center;">86.93%</td>
+<td style="text-align: center;">87.61%</td>
+</tr>
+<tr>
+<td>Bert Mini</td>
+<td style="text-align: center;"><a href="../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager">2 in <strong><em>4</em></strong></a></td>
+<td style="text-align: center;">50%</td>
+<td style="text-align: center;">SQuAD</td>
+<td style="text-align: center;">76.85%</td>
+<td style="text-align: center;">76.87%</td>
+</tr>
+<tr>
+<td>ResNet50 v1.5</td>
+<td style="text-align: center;"><a href="../examples/pytorch/image_recognition/torchvision_models/pruning/magnitude/eager"><strong><em>2</em></strong>x1</a></td>
+<td style="text-align: center;">78%</td>
+<td style="text-align: center;">Image-Net</td>
+<td style="text-align: center;">75.3%</td>
+<td style="text-align: center;">76.13%</td>
+</tr>
+<tr>
+<td>SSD-ResNet34</td>
+<td style="text-align: center;"><strong><em>2</em></strong>x1</td>
+<td style="text-align: center;">75%</td>
+<td style="text-align: center;">Coco</td>
+<td style="text-align: center;">22.85%</td>
+<td style="text-align: center;">23%</td>
+</tr>
+<tr>
+<td>ResNext101</td>
+<td style="text-align: center;"><strong><em>2</em></strong>x1</td>
+<td style="text-align: center;">73%</td>
+<td style="text-align: center;">Image-Net</td>
+<td style="text-align: center;">79.14%</td>
+<td style="text-align: center;">79.37%</td>
+</tr>
+</tbody>
+</table><p>Note:</p>
+<ul class="simple">
+<li><p><em><strong>bold</strong></em> means the sparsity dimension (<code class="docutils literal notranslate"><span class="pre">OC</span></code>).</p></li>
+<li><p>Bert-Mini related examples are developed based on our <a class="reference external" href="https://github.com/intel/neural-compressor/tree/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../neural_compressor/experimental/pytorch_pruner/">Pytorch Pruner API</a>. Examples of <a class="reference external" href="https://github.com/intel/neural-compressor/tree/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../examples/pytorch/nlp/huggingface_models/question-answering/pruning/pytorch_pruner/eager">question answering</a> and <a class="reference external" href="https://github.com/intel/neural-compressor/tree/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager">text classification</a> are developed.</p></li>
+</ul>
+</div>
+<div class="section" id="performance">
+<h2>Performance<a class="headerlink" href="#performance" title="Permalink to this headline">¶</a></h2>
+<p>We explore kernels development with software sparsity and apply to DLRM, a very popular industrial recommendation model as one of <a class="reference external" href="https://mlcommons.org/en/">MLPerf</a> benchmarks. We achieve 1.6x performance gains on INT8 sparse model over INT8 dense model, and 6.4x total performance gains over FP32 dense model in <a class="reference external" href="https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/A-Double-Play-for-MLPerf-Inference-Performance-Gains-with-3rd/post/1335759">MLPerf inference submissions</a>. We expect further performance speedup with the support of hardware sparsity.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th></th>
+<th style="text-align: center;">Dense Model (FP32)</th>
+<th style="text-align: center;">Dense Model (INT8)</th>
+<th style="text-align: center;">Sparse Model (INT8)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Accuracy</td>
+<td style="text-align: center;">80.25% (100%)</td>
+<td style="text-align: center;">80.21% (99.96%)</td>
+<td style="text-align: center;">79.91% (99.57%)</td>
+</tr>
+<tr>
+<td>Offline QPS</td>
+<td style="text-align: center;">5732</td>
+<td style="text-align: center;">23174 (1.0x)</td>
+<td style="text-align: center;">36883 (1.6x)</td>
+</tr>
+<tr>
+<td>Online QPS</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">20245 (1.0x)</td>
+<td style="text-align: center;">30396 (1.5x)</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

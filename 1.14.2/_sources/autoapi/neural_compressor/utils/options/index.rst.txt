@@ -1,8 +1,0 @@
-:orphan:
-
-:py:mod:`neural_compressor.utils.options`
-=========================================
-
-.. py:module:: neural_compressor.utils.options
-
-

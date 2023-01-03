@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neural Architecture Search &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doclist.html">Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Neural Architecture Search</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/NAS.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="neural-architecture-search">
+<h1>Neural Architecture Search<a class="headerlink" href="#neural-architecture-search" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Neural Architecture Search (NAS) is the process of automating the design of artificial neural networks (ANN) architecture. NAS has been used to design networks that are on par or outperform hand-designed architectures. Intel® Neural Compressor has supported two different NAS methods: Basic NAS and Dynamic NAS.</p>
+</div>
+<div class="section" id="nas-api">
+<h2>NAS API<a class="headerlink" href="#nas-api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="basic-usage">
+<h3>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="python-code-yaml">
+<h4>1. Python code + YAML<a class="headerlink" href="#python-code-yaml" title="Permalink to this headline">¶</a></h4>
+<p>Simplest launcher code if NAS configuration is defined in user-defined yaml.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">NAS</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">NAS</span><span class="p">(</span><span class="s1">&#39;/path/to/user/yaml&#39;</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The user-defined yaml follows below syntax, note <code class="docutils literal notranslate"><span class="pre">dynas</span></code> section is optional (only required for ‘dynas’ approach).</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">nas</span><span class="p">:</span>
+  <span class="nt">approach</span><span class="p">:</span> <span class="s">&#39;dynas&#39;</span>
+  <span class="nt">search</span><span class="p">:</span>
+    <span class="nt">search_algorithm</span><span class="p">:</span> <span class="s">&#39;nsga2&#39;</span>
+    <span class="nt">seed</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">42</span>
+  <span class="nt">dynas</span><span class="p">:</span>
+    <span class="nt">supernet</span><span class="p">:</span> <span class="s">&#39;ofa_mbv3_d234_e346_k357_w1.2&#39;</span>
+    <span class="nt">metrics</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="s">&#39;acc&#39;</span><span class="p p-Indicator">,</span> <span class="s">&#39;macs&#39;</span><span class="p p-Indicator">]</span>
+    <span class="nt">population</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">50</span>
+    <span class="nt">num_evals</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">250</span>
+    <span class="nt">results_csv_path</span><span class="p">:</span> <span class="s">&#39;search_results.csv&#39;</span>
+    <span class="nt">batch_size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">64</span>
+    <span class="nt">dataset_path</span><span class="p">:</span> <span class="s">&#39;/datasets/imagenet-ilsvrc2012&#39;</span> <span class="c1">#example</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="python-code-only">
+<h4>2. Python code only<a class="headerlink" href="#python-code-only" title="Permalink to this headline">¶</a></h4>
+<p>NAS class also support <code class="docutils literal notranslate"><span class="pre">NASConfig</span></code> class as it’s argument.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.conf.config</span> <span class="kn">import</span> <span class="n">NASConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">NAS</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">NASConfig</span><span class="p">(</span><span class="n">approach</span><span class="o">=</span><span class="s1">&#39;dynas&#39;</span><span class="p">,</span> <span class="n">search_algorithm</span><span class="o">=</span><span class="s1">&#39;nsga2&#39;</span><span class="p">)</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">supernet</span> <span class="o">=</span> <span class="s1">&#39;ofa_mbv3_d234_e346_k357_w1.2&#39;</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;acc&#39;</span><span class="p">,</span> <span class="s1">&#39;macs&#39;</span><span class="p">]</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">population</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">num_evals</span> <span class="o">=</span> <span class="mi">250</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">results_csv_path</span> <span class="o">=</span> <span class="s1">&#39;search_results.csv&#39;</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">dataset_path</span> <span class="o">=</span> <span class="s1">&#39;/datasets/imagenet-ilsvrc2012&#39;</span> <span class="c1">#example</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">NAS</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="advanced-usage-custom-nas">
+<h3>Advanced Usage (Custom NAS)<a class="headerlink" href="#advanced-usage-custom-nas" title="Permalink to this headline">¶</a></h3>
+<p>Intel® Neural Compressor NAS API is defined under <code class="docutils literal notranslate"><span class="pre">neural_compressor.experimental.NAS</span></code>, which takes a user defined yaml file or a <code class="docutils literal notranslate"><span class="pre">NASConfig</span></code> object as input. The user defined yaml or the <code class="docutils literal notranslate"><span class="pre">NASConfig</span></code> object defines necessary configuration NAS process. The NAS class below aims to create an object according to the defined NAS approach in the configuration, please note this NAS approach should be registered in the Intel® Neural Compressor.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># nas.py in neural_compressor/experimental/nas</span>
+<span class="k">class</span> <span class="nc">NAS</span><span class="p">():</span>
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf_fname_or_obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Create an object according to the defined NAS approach in the configuration.</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>Currently, Intel® Neural Compressor supported two built-in NAS methods: Basic NAS and Dynamic NAS. Both methods inherit from a base class called <code class="docutils literal notranslate"><span class="pre">NASBase</span></code>, its interface is shown below. User can also customize their own NAS approach in Intel® Neural Compressor just by decorating their NAS approach class with function <code class="docutils literal notranslate"><span class="pre">nas_registry</span></code> as well as following the API in <code class="docutils literal notranslate"><span class="pre">NASBase</span></code>, like the way used in two built-in NAS methods.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># nas.py in neural_compressor/experimental/nas</span>
+<span class="k">class</span> <span class="nc">NASBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_space</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">model_builder</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># NAS configuration initialization.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">select_model_arch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Propose architecture of the model based on search algorithm for next search iteration.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">res_save_path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># NAS search process.</span>
+        <span class="o">...</span>    
+
+    <span class="k">def</span> <span class="nf">estimate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+        <span class="c1"># Estimate performance of the model. Depends on specific NAS algorithm.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">load_search_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="c1"># Load search results from existing file.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">dump_search_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="c1"># Save the search results.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">find_best_model_archs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Find best performing model architectures in the pareto front.</span>
+        <span class="o">...</span>
+
+    <span class="nd">@search_space.setter</span>
+    <span class="k">def</span> <span class="nf">search_space</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_space</span><span class="p">):</span>
+        <span class="c1"># Search space should be defined by user.</span>
+        <span class="o">...</span>
+
+    <span class="nd">@search_algorithm.setter</span>
+    <span class="k">def</span> <span class="nf">search_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">search_algorithm</span><span class="p">):</span>
+        <span class="c1"># Search algorithm used in the NAS process.</span>
+        <span class="o">...</span>
+
+    <span class="nd">@model_builder.setter</span>
+    <span class="k">def</span> <span class="nf">model_builder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_builder</span><span class="p">):</span>
+        <span class="c1"># A callable object that returns a model instance based on the model architecture input.</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<div class="section" id="basic-nas">
+<h4>Basic NAS<a class="headerlink" href="#basic-nas" title="Permalink to this headline">¶</a></h4>
+<p>Our Basic NAS method leverages a specific search algorithm from built-in search algorithms (grid search, random search and bayesian optimization are supported in Intel® Neural Compressor now) or user defined search algorithms to propose the model architecture based on the given search space, then perform the train evaluation process to evaluate the potential of the proposed model architecture, after several iterations of such procedure, best performing model architectures which lie in pareto front will be returned. This class is registered to the Intel® Neural Compressor as a built-in NAS method through a decorator <code class="docutils literal notranslate"><span class="pre">nas_registry</span></code>, its interface is shown below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># basic_nas.py in neural_compressor/experimental/nas</span>
+<span class="nd">@nas_registry</span><span class="p">(</span><span class="s2">&quot;Basic&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">BasicNAS</span><span class="p">(</span><span class="n">NASBase</span><span class="p">,</span> <span class="n">Component</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf_fname_or_obj</span><span class="p">,</span> <span class="n">search_space</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">model_builder</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># NAS configuration initialization.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">estimate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="c1"># Estimate performance of the model with train and evaluation process.</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="dynamic-nas">
+<h4>Dynamic NAS<a class="headerlink" href="#dynamic-nas" title="Permalink to this headline">¶</a></h4>
+<p>Dynamic Neural Architecture Search (DyNAS) is a super-network-based NAS approach which use the metric predictors for predicting the metrics of the model architecture, it is &gt;4x more sample efficient than typical one-shot predictor-based NAS approaches.
+<br>
+The flow of the DyNAS approach is shown in the following figure. In the first phase of the search, a small population of sub-networks are randomly sampled from the super-network and evaluated (validation measurement) to provide the initial training set for the inner predictor loop. After the predictors are trained, a multi-objective evolutionary search is performed in the predictor objective space. After this extensive search is performed, the best performing sub-network configurations are selected to be the next iteration’s validation population. The cycle continues until the search concludes when the user defined evaluation count is met.
+<br>
+<img alt="DyNAS Workflow" src="../_images/dynas.png" />
+<br>
+This class is also registered to the Intel® Neural Compressor as a built-in NAS method through a decorator <code class="docutils literal notranslate"><span class="pre">nas_registry</span></code>, its interface is shown below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># dynas.py in neural_compressor/experimental/nas</span>
+<span class="nd">@nas_registry</span><span class="p">(</span><span class="s2">&quot;DyNAS&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">DyNAS</span><span class="p">(</span><span class="n">NASBase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf_fname_or_obj</span><span class="p">):</span>
+        <span class="c1"># NAS configuration initialization.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">estimate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">individual</span><span class="p">):</span>
+        <span class="c1"># Estimate performance of the model.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># DyNAS search process.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">create_acc_predictor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Create accuracy predictor.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">create_macs_predictor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Create macs predictor.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">create_latency_predictor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Create latency predictor.</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Following examples are supported in Intel® Neural Compressor:</p>
+<ul class="simple">
+<li><p>DyNAS MobileNetV3 supernet Example:</p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/intel/neural-compressor/blob/566a9c1f0709a21aa8bed27c39ca2f25bd6ad783/docs/../examples/notebook/dynas/MobileNetV3_Supernet_NAS.ipynb">DyNAS MobileNetV3 supernet Example</a>: DyNAS with MobileNetV3 supernet on ImageNet dataset.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

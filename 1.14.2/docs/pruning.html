@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pruning &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Benchmarking" href="benchmark.html" />
+    <link rel="prev" title="Dynamic Quantization" href="dynamic_quantization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="doclist.html">Developer Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="doclist.html#get-started">Get Started</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="doclist.html#deep-dive">Deep Dive</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="Quantization.html">Quantization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PTQ.html">PTQ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="QAT.html">Quantization-aware Training</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dynamic_quantization.html">Dynamic Quantization</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Pruning</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pruning-types">Pruning Types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pruning-algorithms">Pruning Algorithms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pruning-api">Pruning API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="benchmark.html">Benchmarking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mixed_precision.html">Mixed Precision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="graph_optimization.html">Graph Optimization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="model_conversion.html">Model Conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tensorboard.html">TensorBoard</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="doclist.html#advanced-topics">Advanced Topics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="doclist.html">Developer Documentation</a> &raquo;</li>
+      <li>Pruning</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/pruning.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="pruning">
+<h1>Pruning<a class="headerlink" href="#pruning" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Network pruning is one of popular approaches of network compression, which removes the least important parameters in the network to achieve compact architectures with minimal accuracy drop.</p>
+</div>
+<div class="section" id="pruning-types">
+<h2>Pruning Types<a class="headerlink" href="#pruning-types" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Unstructured Pruning</p></li>
+</ul>
+<p>Unstructured pruning means finding and removing the less salient connection in the model where the nonzero patterns are irregular and could be anywhere in the matrix.</p>
+<ul class="simple">
+<li><p>Structured Pruning</p></li>
+</ul>
+<p>Structured pruning means finding parameters in groups, deleting entire blocks, filters, or channels according to some pruning criterions.</p>
+</div>
+<div class="section" id="pruning-algorithms">
+<h2>Pruning Algorithms<a class="headerlink" href="#pruning-algorithms" title="Permalink to this headline">¶</a></h2>
+<table>
+<thead>
+  <tr>
+    <th>Pruning Type</th>
+    <th>Pruning Granularity</th>
+    <th>Pruning Algorithm</th>
+    <th>Framework</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="2">Unstructured Pruning</td>
+    <td rowspan="2">Element-wise</td>
+    <td>Magnitude</td>
+    <td>PyTorch, TensorFlow</td>
+  </tr>
+  <tr>
+    <td>Pattern Lock</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td rowspan="3">Structured Pruning</td>
+    <td>Filter/Channel-wise</td>
+    <td>Gradient Sensitivity</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>Block-wise</td>
+    <td>Group Lasso</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>Element-wise</td>
+    <td>Pattern Lock</td>
+    <td>PyTorch</td>
+  </tr>
+</tbody>
+</table><ul class="simple">
+<li><p>Magnitude</p>
+<ul>
+<li><p>The algorithm prunes the weight by the lowest absolute value at each layer with given sparsity target.</p></li>
+</ul>
+</li>
+<li><p>Gradient sensitivity</p>
+<ul>
+<li><p>The algorithm prunes the head, intermediate layers, and hidden states in NLP model according to importance score calculated by following the paper <a class="reference external" href="https://arxiv.org/abs/2010.13382">FastFormers</a>.</p></li>
+</ul>
+</li>
+<li><p>Group Lasso</p>
+<ul>
+<li><p>The algorithm uses Group lasso regularization to prune entire rows, columns or blocks of parameters that result in a smaller dense network.</p></li>
+</ul>
+</li>
+<li><p>Pattern Lock</p>
+<ul>
+<li><p>The algorithm locks the sparsity pattern in fine tune phase by freezing those zero values of weight tensor during weight update of training.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="pruning-api">
+<h2>Pruning API<a class="headerlink" href="#pruning-api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="user-facing-api">
+<h3>User facing API<a class="headerlink" href="#user-facing-api" title="Permalink to this headline">¶</a></h3>
+<p>Neural Compressor pruning API is defined under <code class="docutils literal notranslate"><span class="pre">neural_compressor.experimental.Pruning</span></code>, which takes a user defined yaml file as input. The user defined yaml defines training, pruning and evaluation behaviors.
+<a class="reference internal" href="pruning_api.html"><span class="doc">API Readme</span></a>.</p>
+</div>
+<div class="section" id="usage-1-launch-pruning-with-user-defined-yaml">
+<h3>Usage 1: Launch pruning with user-defined yaml<a class="headerlink" href="#usage-1-launch-pruning-with-user-defined-yaml" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="launcher-code">
+<h4>Launcher code<a class="headerlink" href="#launcher-code" title="Permalink to this headline">¶</a></h4>
+<p>Below is the launcher code if training behavior is defined in user-defined yaml.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="k">import</span> <span class="n">Pruning</span>
+<span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="s1">&#39;/path/to/user/pruning/yaml&#39;</span><span class="p">)</span>
+<span class="n">prune</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prune</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="user-defined-yaml">
+<h4>User-defined yaml<a class="headerlink" href="#user-defined-yaml" title="Permalink to this headline">¶</a></h4>
+<p>The user-defined yaml follows below syntax, note <code class="docutils literal notranslate"><span class="pre">train</span></code> section is optional if user implements <code class="docutils literal notranslate"><span class="pre">pruning_func</span></code> and sets to <code class="docutils literal notranslate"><span class="pre">pruning_func</span></code> attribute of pruning instance.
+User could refer to <a class="reference external" href="../docs/pruning.yaml">the yaml template file</a> to know field meanings.</p>
+<div class="section" id="train">
+<h5><code class="docutils literal notranslate"><span class="pre">train</span></code><a class="headerlink" href="#train" title="Permalink to this headline">¶</a></h5>
+<p>The <code class="docutils literal notranslate"><span class="pre">train</span></code> section defines the training behavior, including what training hyper-parameter would be used and which dataloader is used during training.</p>
+</div>
+<div class="section" id="approach">
+<h5><code class="docutils literal notranslate"><span class="pre">approach</span></code><a class="headerlink" href="#approach" title="Permalink to this headline">¶</a></h5>
+<p>The <code class="docutils literal notranslate"><span class="pre">approach</span></code> section defines which pruning algorithm is used and how to apply it during training process.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">weight</span> <span class="pre">compression</span></code>: pruning target, currently only <code class="docutils literal notranslate"><span class="pre">weight</span> <span class="pre">compression</span></code> is supported. <code class="docutils literal notranslate"><span class="pre">weight</span> <span class="pre">compression</span></code> means zeroing the weight matrix. The parameters for <code class="docutils literal notranslate"><span class="pre">weight</span> <span class="pre">compression</span></code> is divided into global parameters and local parameters in different <code class="docutils literal notranslate"><span class="pre">pruners</span></code>. Global parameters may contain <code class="docutils literal notranslate"><span class="pre">start_epoch</span></code>, <code class="docutils literal notranslate"><span class="pre">end_epoch</span></code>, <code class="docutils literal notranslate"><span class="pre">initial_sparsity</span></code>, <code class="docutils literal notranslate"><span class="pre">target_sparsity</span></code> and <code class="docutils literal notranslate"><span class="pre">frequency</span></code>.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">start_epoch</span></code>:  on which epoch pruning begins</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">end_epoch</span></code>: on which epoch pruning ends</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">initial_sparsity</span></code>: initial sparsity goal, default 0.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">target_sparsity</span></code>: target sparsity goal</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">frequency</span></code>: frequency to updating sparsity</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Pruner</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">prune_type</span></code>: pruning algorithm, currently <code class="docutils literal notranslate"><span class="pre">basic_magnitude</span></code>, <code class="docutils literal notranslate"><span class="pre">gradient_sensitivity</span></code> and <code class="docutils literal notranslate"><span class="pre">group_lasso</span></code>are supported.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">names</span></code>: weight name to be pruned. If no weight is specified, all weights of the model will be pruned.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">parameters</span></code>: Additional parameters is required <code class="docutils literal notranslate"><span class="pre">gradient_sensitivity</span></code> prune_type, which is defined in <code class="docutils literal notranslate"><span class="pre">parameters</span></code> field. Those parameters determined how a weight is pruned, including the pruning target and the calculation of weight’s importance. It contains:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">target</span></code>: the pruning target for weight, will override global config <code class="docutils literal notranslate"><span class="pre">target_sparsity</span></code> if set.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">stride</span></code>: each stride of the pruned weight.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">transpose</span></code>: whether to transpose weight before prune.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">normalize</span></code>: whether to normalize the calculated importance.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">index</span></code>: the index of calculated importance.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">importance_inputs</span></code>: inputs of the importance calculation for weight.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">importance_metric</span></code>: the metric used in importance calculation, currently <code class="docutils literal notranslate"><span class="pre">abs_gradient</span></code> and <code class="docutils literal notranslate"><span class="pre">weighted_gradient</span></code> are supported.</p></li>
+</ul>
+<p>Take above as an example, if we assume the ‘bert.encoder.layer.0.attention.output.dense.weight’ is the shape of [N, 12*64]. The target 8 and stride 64 is used to control the pruned weight shape to be [N, 8*64]. <code class="docutils literal notranslate"><span class="pre">Transpose</span></code> set to True indicates the weight is pruned at dim 1 and should be transposed to [12*64, N] before pruning. <code class="docutils literal notranslate"><span class="pre">importance_input</span></code> and <code class="docutils literal notranslate"><span class="pre">importance_metric</span></code> specify the actual input and metric to calculate importance matrix.</p>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="usage-2-launch-pruning-with-user-defined-pruning-function">
+<h3>Usage 2: Launch pruning with user-defined pruning function<a class="headerlink" href="#usage-2-launch-pruning-with-user-defined-pruning-function" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h4>Launcher code<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<p>In this case, the launcher code is like the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Pruning</span><span class="p">,</span> <span class="n">common</span>
+<span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+<span class="n">prune</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">prune</span><span class="o">.</span><span class="n">train_func</span> <span class="o">=</span> <span class="n">pruning_func</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prune</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="user-defined-pruning-function">
+<h4>User-defined pruning function<a class="headerlink" href="#user-defined-pruning-function" title="Permalink to this headline">¶</a></h4>
+<p>User can pass the customized training/evaluation functions to <code class="docutils literal notranslate"><span class="pre">Pruning</span></code> for flexible scenarios. In this case, pruning process can be done by pre-defined hooks in Neural Compressor. User needs to put those hooks inside the training function.</p>
+<p>Neural Compressor defines several hooks for user use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">epoch</span> <span class="n">beginning</span>
+<span class="n">on_step_begin</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">batch</span> <span class="n">beginning</span>
+<span class="n">on_step_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">batch</span> <span class="n">end</span>
+<span class="n">on_epoch_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">epoch</span> <span class="n">end</span>
+<span class="n">on_before_optimizer_step</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">after</span> <span class="n">gradients</span> <span class="n">calculated</span> <span class="ow">and</span> <span class="n">before</span> <span class="n">backward</span>
+</pre></div>
+</div>
+<p>Following section shows how to use hooks in user pass-in training function which is part of example from BERT training:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">pruning_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">num_train_epochs</span><span class="p">)):</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">ProgressBar</span><span class="p">(</span><span class="n">n_total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Training&#39;</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">prune</span><span class="o">.</span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
+            <span class="n">prune</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">)</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;input_ids&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                      <span class="s1">&#39;attention_mask&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                      <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="mi">3</span><span class="p">]}</span>
+            <span class="c1">#inputs[&#39;token_type_ids&#39;] = batch[2]</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># model outputs are always tuple in transformers (see doc)</span>
+
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>  <span class="c1"># mean() to average on multi-gpu parallel training</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">gradient_accumulation_steps</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">/</span> <span class="n">args</span><span class="o">.</span><span class="n">gradient_accumulation_steps</span>
+
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">args</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">gradient_accumulation_steps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">prune</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
+                <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+                <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>  <span class="c1"># Update learning rate schedule</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    
+            <span class="n">prune</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">()</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>For related examples, please refer to <a class="reference external" href="../examples/README">Pruning examples</a>.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dynamic_quantization.html" class="btn btn-neutral float-left" title="Dynamic Quantization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="benchmark.html" class="btn btn-neutral float-right" title="Benchmarking" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

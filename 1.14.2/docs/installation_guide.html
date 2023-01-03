@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doclist.html">Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/installation_guide.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="linux-installation">
+<h2>Linux Installation<a class="headerlink" href="#linux-installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
+<p>You can install Neural Compressor using one of three options: Install only the library
+from binary or source, or get the Intel-optimized framework together with the
+library by installing the <a class="reference external" href="https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html">Intel® oneAPI AI Analytics Toolkit</a>.</p>
+<p>The following prerequisites and requirements must be satisfied for a successful installation:</p>
+<ul class="simple">
+<li><p>Python version: 3.7 or 3.8 or 3.9 or 3.10</p></li>
+</ul>
+<blockquote>
+<div><p>If you get some build issues, please check <a class="reference internal" href="faq.html"><span class="doc">frequently asked questions</span></a> at first.</p>
+</div></blockquote>
+</div>
+<div class="section" id="option-1-install-from-binary">
+<h3>Option 1 Install from binary<a class="headerlink" href="#option-1-install-from-binary" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install stable basic version from pip</span>
+pip install neural-compressor
+<span class="c1"># install stable full version from pip (including GUI)</span>
+pip install neural-compressor-full
+</pre></div>
+</div>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install nightly version</span>
+git clone https://github.com/intel/neural-compressor.git
+<span class="nb">cd</span> neural-compressor
+pip install -r requirements.txt
+<span class="c1"># install nightly basic version from pip</span>
+pip install -i https://test.pypi.org/simple/ neural-compressor
+<span class="c1"># install nightly full version from pip (including GUI)</span>
+pip install -i https://test.pypi.org/simple/ neural-compressor-full
+</pre></div>
+</div>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install stable basic version from from conda</span>
+conda install neural-compressor -c conda-forge -c intel
+<span class="c1"># install stable full version from from conda (including GUI)</span>
+conda install neural-compressor-full -c conda-forge -c intel  
+</pre></div>
+</div>
+</div>
+<div class="section" id="option-2-install-from-source">
+<h3>Option 2 Install from source<a class="headerlink" href="#option-2-install-from-source" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/intel/neural-compressor.git
+<span class="nb">cd</span> neural-compressor
+pip install -r requirements.txt
+<span class="c1"># build with basic functionality</span>
+python setup.py install
+<span class="c1"># build with full functionality (including GUI)</span>
+python setup.py --full install
+</pre></div>
+</div>
+</div>
+<div class="section" id="option-3-install-from-ai-kit">
+<h3>Option 3 Install from AI Kit<a class="headerlink" href="#option-3-install-from-ai-kit" title="Permalink to this headline">¶</a></h3>
+<p>The Intel® Neural Compressor library is released as part of the
+<a class="reference external" href="https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html">Intel® oneAPI AI Analytics Toolkit</a> (AI Kit).
+The AI Kit provides a consolidated package of Intel’s latest deep learning and
+machine optimizations all in one place for ease of development. Along with
+Neural Compressor, the AI Kit includes Intel-optimized versions of deep learning frameworks
+(such as TensorFlow and PyTorch) and high-performing Python libraries to
+streamline end-to-end data science and AI workflows on Intel architectures.</p>
+<p>The AI Kit is distributed through many common channels,
+including from Intel’s website, YUM, APT, Anaconda, and more.
+Select and <a class="reference external" href="https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/download.html">download</a>
+the AI Kit distribution package that’s best suited for you and follow the
+<a class="reference external" href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Get Started Guide</a>
+for post-installation instructions.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th><a href="https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/">Download AI Kit</a></th>
+<th><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">AI Kit Get Started Guide</a></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="section" id="windows-installation">
+<h2>Windows Installation<a class="headerlink" href="#windows-installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>Prerequisites<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>The following prerequisites and requirements must be satisfied for a successful installation:</p>
+<ul class="simple">
+<li><p>Python version: 3.7 or 3.8 or 3.9 or 3.10</p></li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h3>Option 1 Install from binary<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install stable version from pip</span>
+pip install neural-compressor
+
+<span class="c1"># install from conda</span>
+conda install pycocotools -c esri   
+conda install neural-compressor -c conda-forge -c intel
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h3>Option 2 Install from source<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/intel/neural-compressor.git
+<span class="nb">cd</span> neural-compressor
+pip install -r requirements.txt
+python setup.py install
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

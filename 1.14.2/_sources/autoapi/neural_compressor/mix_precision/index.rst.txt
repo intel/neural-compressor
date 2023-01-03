@@ -1,8 +1,0 @@
-:orphan:
-
-:py:mod:`neural_compressor.mix_precision`
-=========================================
-
-.. py:module:: neural_compressor.mix_precision
-
-

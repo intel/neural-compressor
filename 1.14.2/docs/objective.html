@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Objectives &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doclist.html">Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Objectives</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/objective.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="objectives">
+<h1>Objectives<a class="headerlink" href="#objectives" title="Permalink to this headline">¶</a></h1>
+<p>In terms of evaluating the status of a specific model during tuning, we should have general objectives to measure the status of different models. Neural Compressor Objectives supports code-free configuration through a yaml file, with built-in objectives, so users can compress model with different objectives easily. In special cases, users can also register their own objective classes through below method.</p>
+<div class="section" id="how-to-use-objectives">
+<h2>How to use Objectives<a class="headerlink" href="#how-to-use-objectives" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="config-built-in-objective-in-a-yaml-file">
+<h3>Config built-in objective in a yaml file<a class="headerlink" href="#config-built-in-objective-in-a-yaml-file" title="Permalink to this headline">¶</a></h3>
+<p>Users can specify an Neural Compressor built-in objective as shown below:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tuning</span><span class="p">:</span>
+  <span class="nt">objective</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">performance</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="config-custom-objective-in-code">
+<h3>Config custom objective in code<a class="headerlink" href="#config-custom-objective-in-code" title="Permalink to this headline">¶</a></h3>
+<p>Users can also register their own objective and pass it to quantizer as below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.objective</span> <span class="kn">import</span> <span class="n">Objective</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span>
+
+<span class="k">class</span> <span class="nc">CustomObj</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
+    <span class="n">representation</span> <span class="o">=</span> <span class="s1">&#39;CustomObj&#39;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1"># init code here</span>
+
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># do needed operators before inference</span>
+
+    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># do needed operators after the end of inference</span>
+        <span class="c1"># add status value to self._result_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_result_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">CustomObj</span><span class="p">()</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="multi-objectives-support">
+<h2>Multi-objectives support<a class="headerlink" href="#multi-objectives-support" title="Permalink to this headline">¶</a></h2>
+<p>In some cases, users want to use more than one objective to evaluate the status of a specific model and they can realize it with multi_objectives of Neural Compressor. Currently multi_objectives supports built-in objectives.</p>
+<div class="section" id="config-multi-objectives-in-a-yaml-file">
+<h3>Config multi_objectives in a yaml file<a class="headerlink" href="#config-multi-objectives-in-a-yaml-file" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tuning</span><span class="p">:</span>
+  <span class="nt">multi_objectives</span><span class="p">:</span>
+    <span class="nt">objective</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">accuracy</span><span class="p p-Indicator">,</span> <span class="nv">performance</span><span class="p p-Indicator">]</span>
+    <span class="nt">higher_is_better</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">True</span><span class="p p-Indicator">,</span> <span class="nv">False</span><span class="p p-Indicator">]</span>
+    <span class="nt">weight</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.8</span><span class="p p-Indicator">,</span> <span class="nv">0.2</span><span class="p p-Indicator">]</span> <span class="c1"># default is to calculate the average value of objectives</span>
+</pre></div>
+</div>
+<p>If users use multi_objectives to evaluate the status of a model during tuning, Neural Compressor will return a model with the best score of multi_objectives and meeting accuracy_criterion after tuning ending.</p>
+<p>When calculating the weighted score of objectives, Neural Compressor will normalize the results of objectives to [0, 1] one by one first.</p>
+</div>
+</div>
+<div class="section" id="built-in-objective-support-list">
+<h2>Built-in objective support list<a class="headerlink" href="#built-in-objective-support-list" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Accuracy</td>
+<td style="text-align: left;">Evaluate the accuracy</td>
+</tr>
+<tr>
+<td style="text-align: left;">Performance</td>
+<td style="text-align: left;">Evaluate the inference time</td>
+</tr>
+<tr>
+<td style="text-align: left;">Footprint</td>
+<td style="text-align: left;">Evaluate the peak size of memory blocks during inference</td>
+</tr>
+<tr>
+<td style="text-align: left;">ModelSize</td>
+<td style="text-align: left;">Evaluate the model size</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

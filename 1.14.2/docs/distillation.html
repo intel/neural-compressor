@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Distillation &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doclist.html">Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Distillation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/distillation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="distillation">
+<h1>Distillation<a class="headerlink" href="#distillation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Knowledge distillation is one of popular approaches of network compression, which transfers knowledge from a large model to a smaller one without loss of validity. As smaller models are less expensive to evaluate, they can be deployed on less powerful hardware (such as a mobile device). Graph shown below is the workflow of the distillation, the teacher model will take the same input that feed into the student model to produce the output that contains knowledge of the teacher model to instruct the student model.
+<br>
+<img alt="Distillation Workflow" src="../_images/Distillation_workflow.png" /></p>
+</div>
+<div class="section" id="distillation-api">
+<h2>Distillation API<a class="headerlink" href="#distillation-api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="user-facing-api">
+<h3>User facing API<a class="headerlink" href="#user-facing-api" title="Permalink to this headline">¶</a></h3>
+<p>Neural Compressor distillation API is defined under <code class="docutils literal notranslate"><span class="pre">neural_compressor.experimental.Distillation</span></code>, which takes a user defined yaml file as input. The user defined yaml defines distillation and evaluation behaviors.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># distillation.py in neural_compressor/experimental</span>
+<span class="k">class</span> <span class="nc">Distillation</span><span class="p">():</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf_fname_or_obj</span><span class="p">):</span>
+        <span class="c1"># The initialization function of distillation, taking the path or Distillation_Conf class to user-defined yaml as input</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># The main entry of distillation, executing distillation according to user configuration.</span>
+        <span class="o">...</span>
+
+    <span class="nd">@model.setter</span>
+    <span class="k">def</span> <span class="nf">student_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_model</span><span class="p">):</span>
+        <span class="c1"># The wrapper of framework model. `user_model` is the path to framework model or framework runtime model object.</span>
+        <span class="c1"># This attribute needs to be set before invoking self.__call__().</span>
+        <span class="o">...</span>
+
+    <span class="nd">@model.setter</span>
+    <span class="k">def</span> <span class="nf">teacher_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_model</span><span class="p">):</span>
+        <span class="c1"># The wrapper of framework model. `user_model` is the path to framework model or framework runtime model object.</span>
+        <span class="c1"># This attribute needs to be set before invoking self.__call__().</span>
+        <span class="o">...</span>    
+
+    <span class="nd">@train_func.setter</span>
+    <span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_train_func</span><span class="p">)</span>
+        <span class="c1"># The training function provided by user. This function takes framework runtime model object as input parameter, </span>
+        <span class="c1"># and executes entire training process with self contained training hyper-parameters.</span>
+        <span class="c1"># It is optional if training could be configured by neural_compressor built-in dataloader/optimizer/criterion.</span>
+        <span class="o">...</span>
+
+    <span class="nd">@eval_func.setter</span>
+    <span class="k">def</span> <span class="nf">eval_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_eval_func</span><span class="p">)</span>
+        <span class="c1"># The evaluation function provided by user. This function takes framework runtime model object as input parameter and executes evaluation process.</span>
+        <span class="c1"># It is optional if evaluation could be configured by neural_compressor built-in dataloader/optimizer/criterion.</span>
+        <span class="o">...</span>
+
+    <span class="nd">@train_dataloader.setter</span>
+    <span class="k">def</span> <span class="nf">train_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">):</span>
+        <span class="c1"># The dataloader used in training phase. It is optional if training dataloader is configured in user-define yaml.</span>
+        <span class="o">...</span>
+
+    <span class="nd">@eval_dataloader.setter</span>
+    <span class="k">def</span> <span class="nf">eval_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">):</span>
+        <span class="c1"># The dataloader used in evaluation phase. It is optional if training dataloader is configured in user-define yaml.</span>
+        <span class="o">...</span>
+
+    <span class="nd">@optimizer.setter</span>
+    <span class="k">def</span> <span class="nf">optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">):</span>
+        <span class="c1"># The optimizer used in training phase. It is optional if optimizer is configured in user-define yaml.</span>
+        <span class="o">...</span>
+
+    <span class="nd">@criterion.setter</span>
+    <span class="k">def</span> <span class="nf">criterion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">):</span>
+        <span class="c1"># The criterion used in training phase. It is optional if criterion is configured in user-define yaml.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">on_train_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># The hook point used by distillation algorithm</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">on_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># The hook point used by distillation algorithm</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">on_after_compute_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">student_output</span><span class="p">,</span> <span class="n">student_loss</span><span class="p">,</span> <span class="n">teacher_output</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># The hook point used by distillation algorithm</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="launcher-code">
+<h3>Launcher code<a class="headerlink" href="#launcher-code" title="Permalink to this headline">¶</a></h3>
+<p>Simplest launcher code if training behavior is defined in user-defined yaml.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Distillation</span><span class="p">,</span> <span class="n">common</span>
+<span class="n">distiller</span> <span class="o">=</span> <span class="n">Distillation</span><span class="p">(</span><span class="s1">&#39;/path/to/user/yaml&#39;</span><span class="p">)</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">student_model</span> <span class="o">=</span> <span class="n">student_model</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">teacher_model</span> <span class="o">=</span> <span class="n">teacher_model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">distiller</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Distillation class also support DistillationConf class as it’s argument.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lpot.experimental</span> <span class="kn">import</span> <span class="n">Distillation</span><span class="p">,</span> <span class="n">common</span>
+<span class="kn">from</span> <span class="nn">lpot.conf.config</span> <span class="kn">import</span> <span class="n">DistillationConf</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConf</span><span class="p">(</span><span class="s1">&#39;/path/to/user/yaml&#39;</span><span class="p">)</span>
+<span class="n">distiller</span> <span class="o">=</span> <span class="n">Distillation</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">student_model</span> <span class="o">=</span> <span class="n">student_model</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">teacher_model</span> <span class="o">=</span> <span class="n">teacher_model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">distiller</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="user-defined-yaml">
+<h3>User-defined yaml<a class="headerlink" href="#user-defined-yaml" title="Permalink to this headline">¶</a></h3>
+<p>The user-defined yaml follows below syntax, note <code class="docutils literal notranslate"><span class="pre">train</span></code> section is optional if user implements <code class="docutils literal notranslate"><span class="pre">train_func</span></code> and sets to <code class="docutils literal notranslate"><span class="pre">train_func</span></code> attribute of distillation instance.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">distillation</span><span class="p">:</span>
+  <span class="nt">train</span><span class="p">:</span>                    <span class="c1"># optional. No need if user implements `train_func` and pass to `train_func` attribute of pruning instance.</span>
+    <span class="nt">start_epoch</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+    <span class="nt">end_epoch</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+    <span class="nt">iteration</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span>
+    
+    <span class="nt">dataloader</span><span class="p">:</span>
+      <span class="nt">batch_size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">256</span>
+      <span class="nt">dataset</span><span class="p">:</span>
+        <span class="nt">ImageFolder</span><span class="p">:</span>
+          <span class="nt">root</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/imagenet/train</span>
+      <span class="nt">transform</span><span class="p">:</span>
+        <span class="nt">RandomResizedCrop</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">224</span>
+        <span class="nt">RandomHorizontalFlip</span><span class="p">:</span>
+        <span class="nt">ToTensor</span><span class="p">:</span>
+        <span class="nt">Normalize</span><span class="p">:</span>
+          <span class="nt">mean</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span> <span class="nv">0.456</span><span class="p p-Indicator">,</span> <span class="nv">0.406</span><span class="p p-Indicator">]</span>
+          <span class="nt">std</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.229</span><span class="p p-Indicator">,</span> <span class="nv">0.224</span><span class="p p-Indicator">,</span> <span class="nv">0.225</span><span class="p p-Indicator">]</span> 
+    <span class="nt">criterion</span><span class="p">:</span>
+      <span class="nt">KnowledgeDistillationLoss</span><span class="p">:</span>
+        <span class="nt">temperature</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1.0</span>
+        <span class="nt">loss_types</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="s">&#39;CE&#39;</span><span class="p p-Indicator">,</span> <span class="s">&#39;KL&#39;</span><span class="p p-Indicator">]</span>
+        <span class="nt">loss_weights</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.5</span><span class="p p-Indicator">,</span> <span class="nv">0.5</span><span class="p p-Indicator">]</span>
+    <span class="nt">optimizer</span><span class="p">:</span>
+      <span class="nt">SGD</span><span class="p">:</span>
+        <span class="nt">learning_rate</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.1</span>
+        <span class="nt">momentum</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.9</span>
+        <span class="nt">weight_decay</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.0004</span>
+        <span class="nt">nesterov</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+<span class="nt">evaluation</span><span class="p">:</span>                              <span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+  <span class="nt">accuracy</span><span class="p">:</span>                              <span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+    <span class="nt">metric</span><span class="p">:</span>
+      <span class="nt">topk</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>                            <span class="c1"># built-in metrics are topk, map, f1, allow user to register new metric.</span>
+    <span class="nt">dataloader</span><span class="p">:</span>
+      <span class="nt">batch_size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">256</span>
+      <span class="nt">dataset</span><span class="p">:</span>
+        <span class="nt">ImageFolder</span><span class="p">:</span>
+          <span class="nt">root</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/imagenet/val</span>
+      <span class="nt">transform</span><span class="p">:</span>
+        <span class="nt">RandomResizedCrop</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">224</span>
+        <span class="nt">RandomHorizontalFlip</span><span class="p">:</span>
+        <span class="nt">ToTensor</span><span class="p">:</span>
+        <span class="nt">Normalize</span><span class="p">:</span>
+          <span class="nt">mean</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span> <span class="nv">0.456</span><span class="p p-Indicator">,</span> <span class="nv">0.406</span><span class="p p-Indicator">]</span>
+          <span class="nt">std</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.229</span><span class="p p-Indicator">,</span> <span class="nv">0.224</span><span class="p p-Indicator">,</span> <span class="nv">0.225</span><span class="p p-Indicator">]</span> 
+</pre></div>
+</div>
+<div class="section" id="train">
+<h4><code class="docutils literal notranslate"><span class="pre">train</span></code><a class="headerlink" href="#train" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">train</span></code> section defines the training behavior, including what training hyper-parameter would be used and which dataloader is used during training. For criterion, we provided a built-in knowledge distillation loss class for distillation loss calculation. It is defined under <code class="docutils literal notranslate"><span class="pre">neural_compressor.experimental.common.criterion</span></code> with following structure.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># criterion.py in neural_compressor/experimental/common</span>
+<span class="k">class</span> <span class="nc">KnowledgeDistillationLoss</span><span class="p">():</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> 
+                 <span class="n">loss_types</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CE&#39;</span><span class="p">,</span> <span class="s1">&#39;CE&#39;</span><span class="p">],</span> 
+                 <span class="n">loss_weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]):</span>
+        <span class="c1"># The initialization function, taking the distillation hyper-parameters as input</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">student_outputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+        <span class="c1"># The main entry of distillation loss, calculating distillation loss according to the model outputs and labels.</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">teacher_model_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">teacher_model</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># The teacher model inference function, providing for distillation loss calculation with corresponding teacher model outputs. Must be called before loss calculation if attribute teacher_outputs is not provided accordingly.</span>
+        <span class="o">...</span>
+    
+    <span class="nd">@teacher_model.setter</span>
+    <span class="k">def</span> <span class="nf">teacher_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="c1"># The teacher model attribute setter.</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="distillation-with-user-defined-train-func">
+<h3>Distillation with user-defined train_func()<a class="headerlink" href="#distillation-with-user-defined-train-func" title="Permalink to this headline">¶</a></h3>
+<p>User can pass the customized training/evaluation functions to <code class="docutils literal notranslate"><span class="pre">Distillation</span></code> for flexible scenarios. In this case, distillation process can be done by pre-defined hooks in Neural Compressor. User needs to put those hooks inside the training function.</p>
+<p>Neural Compressor defines several hooks for user pass</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">on_train_begin</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">before</span> <span class="n">training</span> <span class="n">begins</span>
+<span class="n">on_after_compute_loss</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">student_output</span><span class="p">,</span> <span class="n">student_loss</span><span class="p">)</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">after</span> <span class="n">each</span> <span class="n">batch</span> <span class="n">inference</span> <span class="n">of</span> <span class="n">student</span> <span class="n">model</span>
+<span class="n">on_epoch_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">epoch</span> <span class="n">end</span>
+</pre></div>
+</div>
+<p>Following section shows how to use hooks in user pass-in training function which is part of example from BlendCNN distillation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">distiller</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">nepoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">loss_sum</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="n">iter_bar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Iter (loss=X.XXX)&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">iter_bar</span><span class="p">:</span>
+            <span class="n">teacher_logits</span><span class="p">,</span> <span class="n">input_ids</span><span class="p">,</span> <span class="n">segment_ids</span><span class="p">,</span> <span class="n">input_mask</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span>
+            <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">segment_ids</span><span class="p">,</span> <span class="n">input_mask</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">distiller</span><span class="o">.</span><span class="n">on_after_compute_loss</span><span class="p">(</span>
+                <span class="p">{</span><span class="s1">&#39;input_ids&#39;</span><span class="p">:</span><span class="n">input_ids</span><span class="p">,</span> <span class="s1">&#39;segment_ids&#39;</span><span class="p">:</span><span class="n">segment_ids</span><span class="p">,</span> <span class="s1">&#39;input_mask&#39;</span><span class="p">:</span><span class="n">input_mask</span><span class="p">},</span>
+                <span class="n">output</span><span class="p">,</span>
+                <span class="n">loss</span><span class="p">,</span>
+                <span class="n">teacher_logits</span><span class="p">)</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">cnt</span> <span class="o">&gt;=</span> <span class="n">iters</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Average Loss: {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">loss_sum</span> <span class="o">/</span> <span class="n">cnt</span><span class="p">))</span>
+        <span class="n">distiller</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>In this case, the launcher code is like the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Distillation</span><span class="p">,</span> <span class="n">common</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental.common.criterion</span> <span class="kn">import</span> <span class="n">PyTorchKnowledgeDistillationLoss</span>
+<span class="n">distiller</span> <span class="o">=</span> <span class="n">Distillation</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">student_model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">teacher_model</span> <span class="o">=</span> <span class="n">teacher</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">criterion</span> <span class="o">=</span> <span class="n">PyTorchKnowledgeDistillationLoss</span><span class="p">()</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">train_func</span> <span class="o">=</span> <span class="n">train_func</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">distiller</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="examples-in-neural-compressor">
+<h3>Examples in Neural Compressor<a class="headerlink" href="#examples-in-neural-compressor" title="Permalink to this headline">¶</a></h3>
+<p>Following examples are supported in Neural Compressor:</p>
+<ul class="simple">
+<li><p>Image Classification Examples:</p>
+<ul>
+<li><p><a class="reference external" href="../examples/pytorch/image_recognition/MobileNetV2-0.35/distillation/eager/README">MobileNetV2 example</a>: distillation of WideResNet40-2 to MobileNetV2-0.35 on CIFAR-10 dataset.</p></li>
+<li><p><a class="reference external" href="../examples/pytorch/image_recognition/CNN-2/distillation/eager/README">CNN example</a>: distillation of CNN-10 to CNN-2 on CIFAR-100 dataset.</p></li>
+<li><p><a class="reference external" href="../examples/pytorch/image_recognition/VGG-8/distillation/eager/README">VGG example</a>: distillation of VGG-13-BN to VGG-8-BN on CIFAR-100 dataset.</p></li>
+<li><p><a class="reference external" href="../examples/pytorch/image_recognition/torchvision_models/distillation/eager/README">ResNet example</a>: distillation of ResNet50 to ResNet18 on ImageNet dataset.</p></li>
+</ul>
+</li>
+<li><p>Natural Language Processing Examples:</p>
+<ul>
+<li><p><a class="reference external" href="../examples/pytorch/nlp/blendcnn/distillation/eager/README">BlendCnn example</a>: distillation of BERT-Base to BlendCnn on MRPC of GLUE dataset.</p></li>
+<li><p><a class="reference external" href="../examples/pytorch/nlp/huggingface_models/text-classification/distillation/eager/README">BiLSTM example</a>: distillation of RoBERTa-Base to BiLSTM on SST-2 of GLUE dataset.</p></li>
+<li><p><a class="reference external" href="../examples/pytorch/nlp/huggingface_models/question-answering/distillation/eager/README">DistilBERT example</a>: distillation of BERT-Base to DistilBERT on SQuAD dataset.</p></li>
+<li><p><a class="reference external" href="../examples/pytorch/nlp/huggingface_models/text-classification/distillation/eager/README">TinyBERT example</a>: distillation of BERT-Base to TinyBERT on MNLI of GLUE dataset.</p></li>
+<li><p><a class="reference external" href="../examples/pytorch/nlp/huggingface_models/text-classification/distillation/eager/README">BERT-3 example</a>: distillation of BERT-Base to BERT-3 on QQP of GLUE dataset.</p></li>
+<li><p><a class="reference external" href="../examples/pytorch/nlp/huggingface_models/text-classification/distillation/eager/README">DistilRoBERTa example</a>: distillation of RoBERTa-Large to DistilRoBERTa on COLA of GLUE dataset.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="results-of-distillation-examples">
+<h3>Results of distillation examples<a class="headerlink" href="#results-of-distillation-examples" title="Permalink to this headline">¶</a></h3>
+<p>Below are results of examples shown above:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Example Name</th>
+<th>Dataset</th>
+<th>Student<br>(Metrics)</th>
+<th>Teacher<br>(Metrics)</th>
+<th>Student With Distillation<br>(Metrics Improvement)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MobileNet example</td>
+<td>CIFAR-10</td>
+<td>MobileNetV2-0.35<br>(0.7965 Acc)</td>
+<td>WideResNet40-2<br>(0.9522 Acc)</td>
+<td>0.8178 Acc<br>(0.0213 Acc)</td>
+</tr>
+<tr>
+<td>CNN example</td>
+<td>CIFAR-100</td>
+<td>CNN-2<br>(0.5494 Acc)</td>
+<td>CNN-10<br>(0.7153 Acc)</td>
+<td>0.5540 Acc<br>(0.0046 Acc)</td>
+</tr>
+<tr>
+<td>VGG example</td>
+<td>CIFAR-100</td>
+<td>VGG-8-BN<br>(0.7022 Acc)</td>
+<td>VGG-13-BN<br>(0.7415 Acc)</td>
+<td>0.7025 Acc<br>(0.0003 Acc)</td>
+</tr>
+<tr>
+<td>ResNet example</td>
+<td>ImageNet</td>
+<td>ResNet18<br>(0.6739 Acc)</td>
+<td>ResNet50<br>(0.7399 Acc)</td>
+<td>0.6845 Acc<br>(0.0106 Acc)</td>
+</tr>
+<tr>
+<td>BlendCnn example</td>
+<td>MRPC</td>
+<td>BlendCnn<br>(0.7034 Acc)</td>
+<td>BERT-Base<br>(0.8382 Acc)</td>
+<td>0.7034 Acc<br>(0 Acc)</td>
+</tr>
+<tr>
+<td>BiLSTM example</td>
+<td>SST-2</td>
+<td>BiLSTM<br>(0.8314 Acc)</td>
+<td>RoBERTa-Base<br>(0.9403 Acc)</td>
+<td>0.9048 Acc<br>(0.0734 Acc)</td>
+</tr>
+<tr>
+<td>DistilBERT example</td>
+<td>SQuAD</td>
+<td>DistilBERT<br>(0.7323/0.8256 EM/F1)</td>
+<td>BERT-Base<br>(0.8084/0.8814 EM/F1)</td>
+<td>0.7442/0.8371 EM/F1<br>(0.0119/0.0115 EM/F1)</td>
+</tr>
+<tr>
+<td>TinyBERT example</td>
+<td>MNLI</td>
+<td>TinyBERT<br>(0.8018/0.8044 m/mm)</td>
+<td>BERT-Base<br>(0.8363/0.8411 m/mm)</td>
+<td>0.8025/0.8074 m/mm<br>(0.0007/0.0030 m/mm)</td>
+</tr>
+<tr>
+<td>BERT-3 example</td>
+<td>QQP</td>
+<td>BERT-3<br>(0.8626/0.8213 EM/F1)</td>
+<td>BERT-Base<br>(0.9091/0.8782 EM/F1)</td>
+<td>0.8684/0.8259 EM/F1<br>(0.0058/0.0046 EM/F1)</td>
+</tr>
+<tr>
+<td>DistilRoBERTa example</td>
+<td>COLA</td>
+<td>DistilRoBERTa<br>(0.6057 ACC)</td>
+<td>RoBERTa-Large<br>(0.6455 ACC)</td>
+<td>0.6187 ACC<br>(0.0130 ACC)</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

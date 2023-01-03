@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataLoader &mdash; Intel® Neural Compressor  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="/versions.html">1.14.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doclist.html">Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributions.html">Contribution Guidelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>DataLoader</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/dataloader.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="dataloader">
+<h1>DataLoader<a class="headerlink" href="#dataloader" title="Permalink to this headline">¶</a></h1>
+<p>Deep Learning often encounters large datasets that are memory-consuming. Previously, working with large datasets required loading them into memory all at once. The constant lack of memory resulted in the need for an efficient data generation scheme. This is not only about handling the lack of memory in large datasets, but also about making the process of loading data faster using a multi-processing thread. We call the data generation object a DataLoader.</p>
+<p>With the importance of a dataloader, different frameworks can have their own DataLoadermodule. As for Neural Compressor, it needs to calibrate the inputs/outputs of each layer of the model; the framework-specific dataloader has different features and APIs that will make it hard to use them same way in the tool. Another request is that the tool also treat batch size as a tuning parameter  which means the tool can dynamically change the batch size to get the accuracy target. The third reason is for ease of use; a unified DataLoader API can make it easy to config dataloader in a yaml file without any code modification. Considering about all these advantages, the tool has implemented an internal dataloader.</p>
+<p>The dataloader takes a dataset as the input parameter and loads data from the dataset when needed.</p>
+<p>A dataset is a container which holds all data that can be used by the dataloader, and have the ability to be fetched by index or created as an iterator. One can implement a specific dataset by inheriting from the Dataset class by implementing <code class="docutils literal notranslate"><span class="pre">__iter__</span></code> method or <code class="docutils literal notranslate"><span class="pre">__getitem__</span></code> method, while implementing <code class="docutils literal notranslate"><span class="pre">__getitem__</span></code> method, <code class="docutils literal notranslate"><span class="pre">__len__</span></code> method is recommended.</p>
+<p>A dataset uses transform as its data process component. Transform contains three parts, aiming at different parts of the life cycle of data processing:</p>
+<ul class="simple">
+<li><p>preprocessing</p></li>
+<li><p>postprocessing</p></li>
+<li><p>general</p></li>
+</ul>
+<p>A general transform can be used in both preprocessing and postprocessing; one can also implement a specific transform by inheriting from the Transform class by implementing the <code class="docutils literal notranslate"><span class="pre">__call__</span></code> method. Usually, a dataloader will use the transform for preprocessing and the postprocessing transform is used to give the right processed data to the metric to update. Transforms also compose together to be one and serially implement the transforms.</p>
+<p>Transform for preprocessing will be launched in the dataset <code class="docutils literal notranslate"><span class="pre">__getitem__</span></code> or <code class="docutils literal notranslate"><span class="pre">__next__</span></code> method; that means the transform will be used after the dataloader has loaded batched data and before the data given to the model for inference. That helps reduce the memory compared with load and process all data at once. Transform for postprocessing is used in evaluation function of the internal Neural Compressor to process the inference data and the processed data used by metric.</p>
+</div>
+<div class="section" id="how-to-use-it">
+<h1>How to use it<a class="headerlink" href="#how-to-use-it" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="config-dataloader-in-a-yaml-file">
+<h2>Config dataloader in a yaml file<a class="headerlink" href="#config-dataloader-in-a-yaml-file" title="Permalink to this headline">¶</a></h2>
+<p>In this case, the dataloader is created after the Quantization object is initialized. As calibrations and evaluations may have different transforms and datasets, you can config different dataloaders in a yaml file.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">quantization</span><span class="p">:</span>                                        <span class="c1"># optional. tuning constraints on model-wise for advance user to reduce tuning space.</span>
+  <span class="nt">calibration</span><span class="p">:</span>
+    <span class="nt">sampling_size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">300</span>                               <span class="c1"># optional. default value is 100 samples. used to set how many samples in calibration dataset are used.</span>
+    <span class="nt">dataloader</span><span class="p">:</span>
+      <span class="nt">dataset</span><span class="p">:</span>
+        <span class="nt">ImageFolder</span><span class="p">:</span>
+          <span class="nt">root</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/calibration/dataset</span>
+      <span class="nt">transform</span><span class="p">:</span>
+        <span class="nt">RandomResizedCrop</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">224</span>
+        <span class="nt">RandomHorizontalFlip</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+        <span class="nt">ToTensor</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+        <span class="nt">Normalize</span><span class="p">:</span>
+          <span class="nt">mean</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span> <span class="nv">0.456</span><span class="p p-Indicator">,</span> <span class="nv">0.406</span><span class="p p-Indicator">]</span>
+          <span class="nt">std</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.229</span><span class="p p-Indicator">,</span> <span class="nv">0.224</span><span class="p p-Indicator">,</span> <span class="nv">0.225</span><span class="p p-Indicator">]</span>
+
+<span class="nt">evaluation</span><span class="p">:</span>                                          <span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+  <span class="nt">accuracy</span><span class="p">:</span>                                          <span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+    <span class="nt">metric</span><span class="p">:</span>
+      <span class="nt">topk</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span> 
+    <span class="nt">dataloader</span><span class="p">:</span>
+      <span class="nt">batch_size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">30</span>
+      <span class="nt">dataset</span><span class="p">:</span>
+        <span class="nt">ImageFolder</span><span class="p">:</span>
+          <span class="nt">root</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span>
+      <span class="nt">transform</span><span class="p">:</span>
+        <span class="nt">Resize</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">256</span>
+        <span class="nt">CenterCrop</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">224</span>
+        <span class="nt">ToTensor</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+        <span class="nt">Normalize</span><span class="p">:</span>
+          <span class="nt">mean</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span> <span class="nv">0.456</span><span class="p p-Indicator">,</span> <span class="nv">0.406</span><span class="p p-Indicator">]</span>
+          <span class="nt">std</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.229</span><span class="p p-Indicator">,</span> <span class="nv">0.224</span><span class="p p-Indicator">,</span> <span class="nv">0.225</span><span class="p p-Indicator">]</span>
+  <span class="nt">performance</span><span class="p">:</span>                                       <span class="c1"># optional. used to benchmark performance of passing model.</span>
+    <span class="nt">configs</span><span class="p">:</span>
+      <span class="nt">cores_per_instance</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
+      <span class="nt">num_of_instance</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">7</span>
+    <span class="nt">dataloader</span><span class="p">:</span>
+      <span class="nt">batch_size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+      <span class="nt">dataset</span><span class="p">:</span>
+        <span class="nt">ImageFolder</span><span class="p">:</span>
+          <span class="nt">root</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span>
+      <span class="nt">transform</span><span class="p">:</span>
+        <span class="nt">Resize</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">256</span>
+        <span class="nt">CenterCrop</span><span class="p">:</span>
+          <span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">224</span>
+        <span class="nt">ToTensor</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+        <span class="nt">Normalize</span><span class="p">:</span>
+          <span class="nt">mean</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span> <span class="nv">0.456</span><span class="p p-Indicator">,</span> <span class="nv">0.406</span><span class="p p-Indicator">]</span>
+          <span class="nt">std</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.229</span><span class="p p-Indicator">,</span> <span class="nv">0.224</span><span class="p p-Indicator">,</span> <span class="nv">0.225</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="create-a-user-specific-dataloader">
+<h2>Create a user-specific dataloader<a class="headerlink" href="#create-a-user-specific-dataloader" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">calib_data</span> <span class="o">=</span> <span class="n">mx</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ImageRecordIter</span><span class="p">(</span><span class="n">path_imgrec</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+                                   <span class="n">label_width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                   <span class="n">preprocess_threads</span><span class="o">=</span><span class="n">data_nthreads</span><span class="p">,</span>
+                                   <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+                                   <span class="n">data_shape</span><span class="o">=</span><span class="n">data_shape</span><span class="p">,</span>
+                                   <span class="n">label_name</span><span class="o">=</span><span class="n">label_name</span><span class="p">,</span>
+                                   <span class="n">rand_crop</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                   <span class="n">rand_mirror</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                   <span class="n">shuffle</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">shuffle_dataset</span><span class="p">,</span>
+                                   <span class="n">shuffle_chunk_seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">shuffle_chunk_seed</span><span class="p">,</span>
+                                   <span class="n">seed</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">shuffle_seed</span><span class="p">,</span>
+                                   <span class="n">dtype</span><span class="o">=</span><span class="n">data_layer_type</span><span class="p">,</span>
+                                   <span class="n">ctx</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span>
+                                   <span class="o">**</span><span class="n">combine_mean_std</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">Quantization</span><span class="p">,</span> <span class="n">common</span>
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="s1">&#39;conf.yaml&#39;</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">fp32_model</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">calib_data</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">eval_dataloader</span> <span class="o">=</span> <span class="n">calib_data</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

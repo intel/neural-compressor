@@ -1,8 +1,0 @@
-:orphan:
-
-:py:mod:`neural_compressor.adaptor.tf_utils`
-============================================
-
-.. py:module:: neural_compressor.adaptor.tf_utils
-
-
