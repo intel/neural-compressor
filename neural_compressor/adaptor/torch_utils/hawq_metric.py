@@ -205,7 +205,7 @@ class HessianTrace:
             self.model = fuse_fx(model.model)  ##TODO need to check whether model has been already fused
         self.dataloader = dataloader
         self.max_iter = 500
-        self.tolerance = 1e-4
+        self.tolerance = 1e-5
         self.eps = 1e-6
         self.index = 0
         self.device = self.get_device(self.model)
@@ -428,7 +428,7 @@ class HessianTrace:
             layer_traces_per_iter.append(layer_traces)
             layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
             model_trace = torch.sum(layer_traces_estimate)
-            diff_ratio = abs(model_trace - prev_avg_model_trace) / (abs(prev_avg_model_trace + self.eps))
+            diff_ratio = abs(model_trace - prev_avg_model_trace) / (prev_avg_model_trace + self.eps)
             logger.info("diff_ratio:"+str(diff_ratio)+"|"+str(self.tolerance))
             if diff_ratio < self.tolerance:  ##TODO magic number
                 logger.info("End of hessian computation!")
