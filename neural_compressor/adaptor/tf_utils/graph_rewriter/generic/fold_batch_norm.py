@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Folding BatchNorm Graph Rewriter."""
 
 import math
 import numpy as np
@@ -28,6 +29,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class FoldBatchNormNodesOptimizer(GraphRewriterBase):
+    """Folding BatchNorm nodes into Conv."""
     INPUT_ORDER = {
         # Order of inputs for BatchNormWithGlobalNormalization.
         "BatchNormWithGlobalNormalization":
@@ -46,8 +48,7 @@ class FoldBatchNormNodesOptimizer(GraphRewriterBase):
     }
 
     def scale_after_normalization(self, node):
-        """Check the scale_after_normalization attribute value if the node op type
-            is BatchNormWithGlobalNormalization
+        """Check the scale_after_normalization attribute if the node is BatchNormWithGlobalNormalization.
 
         Args:
             node (nodedef): input nodedef object

@@ -7,3 +7,4 @@ The adaptor API information is available:
    :maxdepth: 1
 
    adaptor/onnxrt
+   adaptor/torch_utils

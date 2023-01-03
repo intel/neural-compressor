@@ -14,11 +14,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Optimize layer config."""
 
 from .quantize_layer_add import QuantizeLayerAdd
 from .quantize_layer_bn import QuantizeLayerBatchNormalization
 
 def config_quantizable_layers(model):
+    """Configure the quantizable layers."""
     quantize_layer_mapping = {
         'Add': QuantizeLayerAdd,
         'BatchNormalization': QuantizeLayerBatchNormalization

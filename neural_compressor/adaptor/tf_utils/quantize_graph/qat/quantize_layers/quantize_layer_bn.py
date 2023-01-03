@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize Layer BatchNormalization Class."""
 
 from .quantize_layer_base import QuantizeLayerBase
 
@@ -43,6 +44,7 @@ class QuantizeLayerBatchNormalization(QuantizeLayerBase): # pragma: no cover
 
     def __call__(self, layer):
         """The main logic of QuantizeLayerBatchNormalization.
+
         Neural Compressor will enumerate all layers of the input model to check
         if there are any layer meeting the criteria. The choosen ones will be marked
         as quantizable by QuantizeConfig.

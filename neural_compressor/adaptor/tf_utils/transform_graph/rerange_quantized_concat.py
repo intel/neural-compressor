@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""ConcatV2 rerange transform."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -29,9 +30,8 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 
 
 class RerangeQuantizedConcat(GraphTransformBase):
-    """
-    This class implements the rerange_quantize concat graph transform.
-    """
+    """This class implements the rerange_quantize concat graph transform."""
+
     fused_requantized_bias_op = (
         "QuantizedConv2DWithBiasAndRequantize",
         "QuantizedConv2DWithBiasAndReluAndRequantize",
@@ -73,6 +73,7 @@ class RerangeQuantizedConcat(GraphTransformBase):
    
 
     def __init__(self, input_pb, device, performance_only=False):
+        """Initilization."""
         super().__init__(input_pb)
 
         self.parse_input_pb()
@@ -83,6 +84,7 @@ class RerangeQuantizedConcat(GraphTransformBase):
 
     def _analyze_concat_node_recursively(self, quantized_conv_nodes,
                                          input_node):
+        """Analyze all the ConcatV2 nodes recursively."""
         op_type = input_node.op
         if op_type == "QuantizedConcatV2":
             can_rerange = True
@@ -135,6 +137,7 @@ class RerangeQuantizedConcat(GraphTransformBase):
             return False
 
     def do_transformation(self):
+        """Apply the rerange quantized ConcatV2 transform."""
         for _, node in enumerate(self.input_graph.node):
             if node.op != "QuantizedConcatV2":
                 continue
@@ -202,9 +205,7 @@ class RerangeQuantizedConcat(GraphTransformBase):
         return self.input_graph
 
     def _update_bias(self):
-        """
-        Convert the bias from float to int.
-        """
+        """Convert the bias from float to int."""
         for node_name in self.node_mapping:
             current_node = self.node_mapping[node_name]
             current_node_op = current_node.op

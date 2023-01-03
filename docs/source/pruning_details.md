@@ -1,5 +1,4 @@
 Pruning details
-
 ============
 
 
@@ -101,7 +100,7 @@ Neural network pruning is a promising model compression technique that removes t
 
  
 
-Unstructured pruning means pruning the least salient connections in the model. The nonzero patterns are irregular and could be anywhere in the matrix.
+  Unstructured pruning means pruning the least salient connections in the model. The nonzero patterns are irregular and could be anywhere in the matrix.
 
 
 
@@ -113,7 +112,7 @@ Unstructured pruning means pruning the least salient connections in the model. T
 
  
 
-Structured pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. In general, structured pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.
+  Structured pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. In general, structured pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.
 
 
 
@@ -252,20 +251,56 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 
 
   Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
-  typical implementations of mask interpolation:
+  Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
+
   <div style = "width: 77%; margin-bottom: 2%;">
     <a target="_blank" href="./imgs/pruning/progressive_pruning.png">
       <img src="./imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=500>
     </a>
   </div>
+  (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation. (b) uses masks with smaller structured blocks during every pruning step. (c) inserts masks with smaller structured blocks between every pruning steps. (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps. We use (d) as the mask interpolation implementation of progressive pruning.
 
-  Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
+  
 
 
-
+### Pruning Scope
+Range of sparse score calculation in iterative pruning, default scope is global.
 
 
  
+
+- Global
+
+
+
+
+  The score map is computed out of entire parameters, Some layers are higher than the target sparsity and some are lower, the total sparsity of the model reaches the target.
+
+
+
+
+- Local
+
+
+
+
+  The score map is computed from the corresponding layer's weight, The sparsity of each layer is equal to the target.
+
+
+
+
+### Sparsity Decay Type
+
+
+
+
+Growth rules for the sparsity of iterative pruning, "exp", "linear", "cos" and "cube" are available，We use exp by default.
+
+
+
+
+
+
 
 ### Regularization
 
@@ -285,7 +320,7 @@ Regularization is a technique that discourages learning a more complex model and
 
  
 
-  The Group-lasso algorithm is used to prune entire rows, columns or blocks of parameters that result in a smaller dense network.
+  The main idea of Group Lasso is to construct an objective function that penalizes the L2 parametrization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
 
 
 
@@ -319,4 +354,5 @@ We validate the pruning technique on typical models across various domains (incl
 
 
  
+
 

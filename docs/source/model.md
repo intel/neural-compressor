@@ -110,16 +110,17 @@ The Neural Compressor Model feature is used to encapsulate the behavior of model
 Users can create, use, and save models in the following manners:
 
 ```python
-from neural_compressor.common import Model
+from neural_compressor.model import Model
 inc_model = Model(input_model)
 ```
 
 or
 
 ```python
-from neural_compressor.experimental import Quantization
-quantizer = Quantization(args.config)
-quantizer.model = model
-q_model = quantizer.fit()
+from neural_compressor import quantization
+from neural_compressor.config import PostTrainingQuantConfig
+
+conf = PostTrainingQuantConfig()
+q_model = quantization.fit(model = inc_model, conf=conf)
 q_model.save("saved_result")
 ```

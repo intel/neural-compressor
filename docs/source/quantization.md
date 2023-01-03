@@ -48,6 +48,49 @@ If UINT8 is specified, $Scale = max(abs(X_{f_{max}}), abs(X_{f_{min}})) / 255$ a
 
 Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 data bits) to represent int8 range, may be needed on some early Xeon platforms, it's because those platforms may have overflow issues due to fp16 intermediate calculation result when executing int8 dot product operation. After AVX512_VNNI instruction is introduced, this issue gets solved by supporting fp32 intermediate data.
 
+### Quantization Support Matrix
+
+| Framework | Backend Library |  Symmetric Quantization | Asymmetric Quantization |
+| :-------------- |:---------------:| ---------------:|---------------:|
+| TensorFlow    | [oneDNN](https://github.com/oneapi-src/oneDNN) | Activation (int8/uint8), Weight (int8) | - |
+| PyTorch         | [FBGEMM](https://github.com/pytorch/FBGEMM) | Activation (uint8), Weight (int8) | Activation (uint8) |
+| IPEX | [oneDNN](https://github.com/oneapi-src/oneDNN)  | Activation (int8/uint8), Weight (int8) | - |
+| MXNet           | [oneDNN](https://github.com/oneapi-src/oneDNN)  | Activation (int8/uint8), Weight (int8) | - |
+| ONNX Runtime | [MLAS](https://github.com/microsoft/onnxruntime/tree/master/onnxruntime/core/mlas) | Weight (int8) | Activation (uint8) |
+
+#### Quantization Scheme in TensorFlow
++ Symmetric Quantization
+    + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
+    + uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))
+
+#### Quantization Scheme in PyTorch
++ Symmetric Quantization
+    + int8: scale = max(abs(rmin), abs(rmax)) / (float(max(int8) - min(int8)) / 2)
+    + uint8: scale = max(abs(rmin), abs(rmax)) / (float(max(int8) - min(int8)) / 2)
++ Asymmetric Quantization
+    + uint8: scale = (rmax - rmin) / (max(uint8) - min(uint8)); zero_point = min(uint8)  - round(rmin / scale)
+
+#### Quantization Scheme in IPEX
++ Symmetric Quantization
+    + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
+    + uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))
+
+#### Quantization Scheme in MXNet
++ Symmetric Quantization
+    + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
+    + uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))
+
+#### Quantization Scheme in ONNX Runtime
++ Symmetric Quantization
+    + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
++ Asymmetric Quantization
+    + uint8: scale = (rmax - rmin) / (max(uint8) - min(uint8)); zero_point = min(uint8)  - round(rmin / scale) 
+
+#### Reference
++ oneDNN: [Lower Numerical Precision Deep Learning Inference and Training](https://software.intel.com/content/www/us/en/develop/articles/lower-numerical-precision-deep-learning-inference-and-training.html)
++ FBGEMM: [FBGEMM Quantization](https://github.com/pytorch/pytorch/blob/master/torch/quantization/observer.py)
++ MLAS:  [MLAS Quantization](https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/onnx_quantizer.py) 
+
 ### Quantization Approaches
 
 Quantization has three different approaches: 1) post training dynamic quantization 2) post training static  quantization 3) quantization aware training. The first two approaches belong to optimization on inference. The last belongs to optimization during training.
@@ -154,7 +197,7 @@ User could execute:
 
 This means user could leverage Intel(R) Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It's user responsibility to ensure the accuracy of the quantized model meets expectation.
 
-```
+``` python
 # main.py
 
 # Original code
@@ -167,7 +210,12 @@ val_dataloader = torch.utils.data.Dataloader(
 
 # Quantization code
 from neural_compressor import quantization
-q_model = quantization.fit(model, calib_dataloader=val_dataloader)
+from neural_compressor.config import PostTrainingQuantConfig
+
+conf = PostTrainingQuantConfig()
+q_model = quantization.fit(model=model,
+                           conf=conf,
+                           calib_dataloader=val_dataloader)
 q_model.save('./output')
 
 ```
@@ -176,7 +224,7 @@ q_model.save('./output')
 
 This means user could leverage the advance feature of Intel(R) Neural Compressor to tune out a best quantized model which has best accuracy and good performance.
 
-```
+```python
 # main.py
 
 # Original code
@@ -193,12 +241,18 @@ def validate(val_loader, model, criterion, args):
     return top1.avg
 
 # Quantization code
-def eval_func(model):
-    return validate(val_dataloader, model, criterion, args)
+def train_func(model):
+    ...
 
-from neural_compressor import quantization
-q_model = quantization.fit(model, calib_dataloader=val_dataloader, eval_func=eval_func)
-q_model.save('./output')
+from neural_compressor import QuantizationAwareTrainingConfig
+from neural_compressor.training import prepare_compression
+conf = QuantizationAwareTrainingConfig()
+compression_manager = prepare_compression(model, conf)
+compression_manager.callbacks.on_train_begin()
+model = compression_manager.model
+train_func(model)
+compression_manager.callbacks.on_train_end()
+compression_manager.save('./output')
 
 ```
 

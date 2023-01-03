@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize ConcatV2 to int8 op."""
 
 import re
 import os
@@ -24,7 +25,10 @@ from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGra
 
 
 class FuseNodeStartWithConcatV2(QuantizeNodeBase):
+    """Quantize ConcatV2 to int8 op QuantizedConcatV2."""
+
     def __init__(self, **kwargs):
+        """Initilizaiton."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
@@ -33,6 +37,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         self.exclude_concat_nodes = []
 
     def _get_node_from_name(self, name):
+        """Get node struct from node name."""
         if name.startswith("^"):
             name = name[1:]
         if re.search(r"\w+:\d+", name):
@@ -42,6 +47,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         return node
 
     def _get_first_input_from_name(self, name):
+        """Get the first input of the node."""
         if len(name) == 0:
             return name
         node = self._get_node_from_name(name)
@@ -50,6 +56,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         return node.input[0]
 
     def _quantizable_concat(self, node):
+        """Check if the ConcatV2 is quantizable."""
         deq_type = []
         is_quantizable = True
         if self.performance_only or os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
@@ -97,6 +104,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         return is_quantizable
 
     def _apply_concatv2_quantization(self, match_node_name):
+        """Quantize ConcatV2."""
         # Dequantize + ConcatV2 + QuantizeV2
         skip_node_names = match_node_name[2:]
         matched_node = self.node_name_mapping[match_node_name[1]]
@@ -149,6 +157,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                 self.add_output_graph_node(new_node)
 
     def get_longest_fuse(self, do_transform=False):
+        """Get longest fusion pattern."""
         self._get_op_list()
         matched_node_name = []
         
@@ -223,6 +232,7 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
         return None, None
 
     def apply_the_transform(self):
+        """Apply the quantization of ConcatV2."""
         self._get_op_list()
         matched_rule, matched_node_name = self.get_longest_fuse(do_transform=True)
         if matched_node_name:

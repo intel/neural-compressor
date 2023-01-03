@@ -4,8 +4,9 @@
 This example load an object detection model converted from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [cityscapes dataset](https://www.cityscapes-dataset.com/downloads/). You need to download this dataset yourself.
 
 ### Environment
-onnx: 1.9.0
-onnxruntime: 1.10.0
+onnx: 1.12.0  
+onnxruntime: 1.13.1
+> Validated framework versions can be found in main readme.
 
 ### Prepare model
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)

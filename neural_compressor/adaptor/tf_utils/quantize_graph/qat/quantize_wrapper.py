@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""QAT Quantize Wrapper Class."""
 
 import tensorflow as tf
 from abc import abstractmethod
@@ -22,10 +23,11 @@ from tensorflow.python.util import tf_inspect
 from .quantize_config import layer_wise_config, global_config
 
 class QuantizeWrapperBase(tf.keras.layers.Wrapper):
-    """Base class for quantize wrapper"""
+    """Base class for quantize wrapper."""
 
     def __init__(self, layer, **kwargs):
         """Create a quantize wrapper for a keras layer.
+
         This wrapper provides options to quantize inputs and weights of the layer.
 
         Args:
@@ -55,6 +57,7 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
     @staticmethod
     def _weight_name(name):
         """Extracts the weight name from the full TensorFlow variable name.
+
         For example, returns 'kernel' for 'dense_2/kernel:0'.
 
         Args:
@@ -82,6 +85,7 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
 
     def compute_output_shape(self, input_shape):
         """Computes the output shape of the layer.
+
         This method will cause the layer's state to be built, if that has not
         happened before. This requires that the layer will later be used with
         inputs that match the input shape provided here.
@@ -185,6 +189,7 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
     @property
     def trainable_weights(self):
         """List of all trainable weights tracked by this layer.
+
         Trainable weights are updated via gradient descent during training.
 
         Returns:
@@ -195,6 +200,7 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
     @property
     def non_trainable_weights(self):
         """List of all non-trainable weights tracked by this layer.
+
         Non-trainable weights are *not* updated during training. They are
         expected to be updated manually in `call()`.
 
@@ -205,12 +211,13 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
 
     @property
     def updates(self):
-        """update layer """
+        """Update layer."""
         return self.layer.updates + self._updates
 
     @property
     def losses(self):
         """List of losses added using the `add_loss()` API.
+
         Variable regularization tensors are created when this property is
         accessed, so it is eager safe: accessing `losses` under a
         `tf.GradientTape` will propagate gradients back to the corresponding
@@ -222,12 +229,14 @@ class QuantizeWrapperBase(tf.keras.layers.Wrapper):
         return self.layer.losses + self._losses
 
 class QuantizeWrapper(QuantizeWrapperBase):
-    """General QuantizeWrapper for quantizable layers. Weights and inputs will be quantized 
-    according to the layer type and quantize config.
+    """General QuantizeWrapper for quantizable layers.
+
+    Weights and inputs will be quantized according to the layer type and quantize config.
     """
 
     def __init__(self, layer, **kwargs):
         """Create a quantize wrapper for a keras layer.
+
         This wrapper provides options to quantize inputs and weights of the layer.
 
         Args:
@@ -292,7 +301,7 @@ class QuantizeWrapper(QuantizeWrapperBase):
 
         Args:
           inputs (tf.Tensor or dict/list/tuple): Inputs of the wrapped layer.
-            
+
         Returns:
           outputs (tf.Tensor or dict/list/tuple): Outputs of the wrapped layer.
         """
