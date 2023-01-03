@@ -69,7 +69,7 @@ fit(
   calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset),
   eval_dataloader=DataLoader(framework='tensorflow', dataset=dataset))
 ```
-### Quantization with [JupyterLab Extension](https://github.com/intel/neural-compressor/blob/master/neural_coder/extensions/neural_compressor_ext_lab/README.html)
+### Quantization with [JupyterLab Extension](https://github.com/intel/neural-compressor/blob/master/neural_coder/extensions/neural_compressor_ext_lab)
 Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install with one click:
 
 <a target="_blank" href="imgs/extmanager.png">
