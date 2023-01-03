@@ -92,7 +92,7 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
@@ -185,7 +185,7 @@ shows several notable modifications that can be used to enable quantization:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torch.quantization</span> <span class="kn">import</span> <span class="n">QuantStub</span><span class="p">,</span> <span class="n">DeQuantStub</span>
 
 <span class="k">def</span> <span class="nf">_make_divisible</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">divisor</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This function is taken from the original tf repo.</span>
 <span class="sd">    It ensures that all layers have a channel number that is divisible by 8</span>
 <span class="sd">    It can be seen here:</span>
@@ -248,7 +248,7 @@ shows several notable modifications that can be used to enable quantization:</p>
 
 <span class="k">class</span> <span class="nc">MobileNetV2</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">width_mult</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">inverted_residual_setting</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">round_nearest</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        MobileNet V2 main class</span>
 
 <span class="sd">        Args:</span>
@@ -343,7 +343,7 @@ shows several notable modifications that can be used to enable quantization:</p>
 <h3>Helper Functions<a class="headerlink" href="#helper-functions" title="Permalink to this heading">¶</a></h3>
 <p>Define several helper functions to help with the model evaluation:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">AverageMeter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Computes and stores the average and current value&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes and stores the average and current value&quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;:f&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fmt</span> <span class="o">=</span> <span class="n">fmt</span>
@@ -367,7 +367,7 @@ shows several notable modifications that can be used to enable quantization:</p>
 
 
 <span class="k">def</span> <span class="nf">accuracy</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">topk</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,)):</span>
-    <span class="sd">&quot;&quot;&quot;Computes the accuracy over the k top predictions for the specified values of k&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the accuracy over the k top predictions for the specified values of k&quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="n">maxk</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">topk</span><span class="p">)</span>
         <span class="n">batch_size</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>

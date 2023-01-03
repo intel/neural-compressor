@@ -92,7 +92,7 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
@@ -175,19 +175,19 @@
 </div></blockquote>
 <p>As a <a class="reference external" href="./Quantization">quantization</a> class, dynamic quantization allows users to determine the scale factor for activations dynamically based on the data range that’s observed at runtime as opposed to using other methods that entail multiplying a float point value by some scale factor and then rounding the result to a whole number. As noted in <a class="reference external" href="https://pytorch.org/tutorials/recipes/recipes/dynamic_quantization.html">PyTorch documentation</a>, this “ensures that the scale factor is ‘tuned’ so that as much signal as possible about each observed dataset is preserved.” Since it does not use a lot of tuning parameters, dynamic quantization is a good match for NLP models.</p>
 <p>The pytorch bert_base model provides an example where users can create a specific quantization method like the following yaml:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span><span class="w">                                               </span><span class="c1"># mandatory. used to specify model specific information.</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span><span class="w">                                               </span><span class="c1"># mandatory. used to specify model specific information.</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bert</span><span class="w"> </span>
-<span class="w">  </span><span class="nt">framework</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytorch</span><span class="w">                                 </span><span class="c1"># mandatory. possible values are pytorch, onnxrt_integerops.</span><span class="w"></span>
+<span class="w">  </span><span class="nt">framework</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytorch</span><span class="w">                                 </span><span class="c1"># mandatory. possible values are pytorch, onnxrt_integerops.</span>
 
-<span class="nt">quantization</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">approach</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">post_training_dynamic_quant</span><span class="w">              </span><span class="c1"># optional. default value is post_training_static_quant</span><span class="w"></span>
+<span class="nt">quantization</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">approach</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">post_training_dynamic_quant</span><span class="w">              </span><span class="c1"># optional. default value is post_training_static_quant</span>
 
-<span class="nt">tuning</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">accuracy_criterion</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">relative</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w">                                  </span><span class="c1"># optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.</span><span class="w"></span>
-<span class="w">  </span><span class="nt">exit_policy</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                                       </span><span class="c1"># optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.</span><span class="w"></span>
-<span class="w">  </span><span class="nt">random_seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9527</span><span class="w">                                  </span><span class="c1"># optional. random seed for deterministic tuning.</span><span class="w"></span>
+<span class="nt">tuning</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">accuracy_criterion</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">relative</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w">                                  </span><span class="c1"># optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.</span>
+<span class="w">  </span><span class="nt">exit_policy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                                       </span><span class="c1"># optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.</span>
+<span class="w">  </span><span class="nt">random_seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9527</span><span class="w">                                  </span><span class="c1"># optional. random seed for deterministic tuning.</span>
 </pre></div>
 </div>
 </section>

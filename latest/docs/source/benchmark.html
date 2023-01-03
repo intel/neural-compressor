@@ -92,7 +92,7 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
@@ -171,41 +171,41 @@
 <p>The following examples show how to use benchmarking.</p>
 <section id="config-evaluation-filed-in-a-yaml-file">
 <h2>Config evaluation filed in a yaml file<a class="headerlink" href="#config-evaluation-filed-in-a-yaml-file" title="Permalink to this heading">¶</a></h2>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">evaluation</span><span class="p">:</span><span class="w">                                          </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span><span class="w"></span>
-<span class="w">  </span><span class="nt">accuracy</span><span class="p">:</span><span class="w">                                          </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span><span class="w"></span>
-<span class="w">    </span><span class="nt">metric</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">topk</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">                                        </span><span class="c1"># built-in metrics are topk, map, f1, allow user to register new metric.</span><span class="w"></span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span><span class="w"></span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">ImageFolder</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span><span class="w">          </span><span class="c1"># NOTE: modify to evaluation dataset location if needed</span><span class="w"></span>
-<span class="w">      </span><span class="nt">transform</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256</span><span class="w"></span>
-<span class="w">        </span><span class="nt">CenterCrop</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span><span class="w"></span>
-<span class="w">        </span><span class="nt">ToTensor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
-<span class="w">        </span><span class="nt">Normalize</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">mean</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.456</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.406</span><span class="p p-Indicator">]</span><span class="w"></span>
-<span class="w">          </span><span class="nt">std</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.229</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.225</span><span class="p p-Indicator">]</span><span class="w"></span>
-<span class="w">  </span><span class="nt">performance</span><span class="p">:</span><span class="w">                                       </span><span class="c1"># optional. used to benchmark performance of passing model.</span><span class="w"></span>
-<span class="w">    </span><span class="nt">configs</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">cores_per_instance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span><span class="w"></span>
-<span class="w">      </span><span class="nt">num_of_instance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span><span class="w"></span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">ImageFolder</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span><span class="w">          </span><span class="c1"># NOTE: modify to evaluation dataset location if needed</span><span class="w"></span>
-<span class="w">      </span><span class="nt">transform</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256</span><span class="w"></span>
-<span class="w">        </span><span class="nt">CenterCrop</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span><span class="w"></span>
-<span class="w">        </span><span class="nt">ToTensor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
-<span class="w">        </span><span class="nt">Normalize</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">mean</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.456</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.406</span><span class="p p-Indicator">]</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">evaluation</span><span class="p">:</span><span class="w">                                          </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+<span class="w">  </span><span class="nt">accuracy</span><span class="p">:</span><span class="w">                                          </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+<span class="w">    </span><span class="nt">metric</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">topk</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">                                        </span><span class="c1"># built-in metrics are topk, map, f1, allow user to register new metric.</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">ImageFolder</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span><span class="w">          </span><span class="c1"># NOTE: modify to evaluation dataset location if needed</span>
+<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256</span>
+<span class="w">        </span><span class="nt">CenterCrop</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span>
+<span class="w">        </span><span class="nt">ToTensor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">        </span><span class="nt">Normalize</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">mean</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.456</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.406</span><span class="p p-Indicator">]</span>
+<span class="w">          </span><span class="nt">std</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.229</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.225</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">performance</span><span class="p">:</span><span class="w">                                       </span><span class="c1"># optional. used to benchmark performance of passing model.</span>
+<span class="w">    </span><span class="nt">configs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">cores_per_instance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">      </span><span class="nt">num_of_instance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">ImageFolder</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span><span class="w">          </span><span class="c1"># NOTE: modify to evaluation dataset location if needed</span>
+<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256</span>
+<span class="w">        </span><span class="nt">CenterCrop</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span>
+<span class="w">        </span><span class="nt">ToTensor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">        </span><span class="nt">Normalize</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">mean</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.456</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.406</span><span class="p p-Indicator">]</span>
 </pre></div>
 </div>
 <p>The above example config two sub-fields named ‘accuracy’ and ‘performance’ which indicates that the benchmark module will get the accuracy and performance of the model. The user can also remove the performance field to only get model accuracy or performance. It’s flexible enough to configure the benchmark you want.</p>

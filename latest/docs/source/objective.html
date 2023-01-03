@@ -92,7 +92,7 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
@@ -228,19 +228,19 @@
 <section id="config-single-objective">
 <h3>Config Single Objective<a class="headerlink" href="#config-single-objective" title="Permalink to this heading">¶</a></h3>
 <p>Users can specify a built-in objective in a yaml file as shown below:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tuning</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">objective</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">performance</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tuning</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">objective</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">performance</span>
 </pre></div>
 </div>
 </section>
 <section id="config-multiple-objectives">
 <h3>Config Multiple Objectives<a class="headerlink" href="#config-multiple-objectives" title="Permalink to this heading">¶</a></h3>
 <p>Users can specify built-in multiple objectives in a yaml file as shown below:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tuning</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">multi_objectives</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">objective</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">accuracy</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">performance</span><span class="p p-Indicator">]</span><span class="w"></span>
-<span class="w">    </span><span class="nt">higher_is_better</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">True</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">False</span><span class="p p-Indicator">]</span><span class="w"></span>
-<span class="w">    </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.8</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.2</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># default is to calculate the average value of objectives</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tuning</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">multi_objectives</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">objective</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">accuracy</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">performance</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">higher_is_better</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">True</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">False</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.8</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.2</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># default is to calculate the average value of objectives</span>
 </pre></div>
 </div>
 </section>

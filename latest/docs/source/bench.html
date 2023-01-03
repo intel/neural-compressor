@@ -92,7 +92,7 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
@@ -194,23 +194,23 @@
 <section id="option-1-install-from-binary">
 <h3>Option 1: Install from Binary<a class="headerlink" href="#option-1-install-from-binary" title="Permalink to this heading">¶</a></h3>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install stable full version from pip (including GUI)</span>
-pip install neural-compressor-full
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-full
 
 <span class="c1"># install nightly full version from pip (including GUI)</span>
-pip install -i https://test.pypi.org/simple/ neural-compressor-full
+pip<span class="w"> </span>install<span class="w"> </span>-i<span class="w"> </span>https://test.pypi.org/simple/<span class="w"> </span>neural-compressor-full
 
 <span class="c1"># install stable full version from from conda (including GUI)</span>
-conda install neural-compressor-full -c conda-forge -c intel  
+conda<span class="w"> </span>install<span class="w"> </span>neural-compressor-full<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>intel<span class="w">  </span>
 </pre></div>
 </div>
 </section>
 <section id="option-2-install-from-source">
 <h3>Option 2: Install from Source<a class="headerlink" href="#option-2-install-from-source" title="Permalink to this heading">¶</a></h3>
-<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/intel/neural-compressor.git
-<span class="nb">cd</span> neural-compressor
-pip install -r requirements.txt
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/neural-compressor.git
+<span class="nb">cd</span><span class="w"> </span>neural-compressor
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 <span class="c1"># build with full functionality (including GUI)</span>
-python setup.py --full install
+python<span class="w"> </span>setup.py<span class="w"> </span>--full<span class="w"> </span>install
 </pre></div>
 </div>
 </section>
@@ -233,22 +233,22 @@ Open address https://10.11.12.13:5000/?token=338174d13706855fc6924cec7b3a8ae8
 <li><p>Intel® Neural Compressor Bench listens on port 5000.
 Make sure that port 5000 is accessible to your browser (you might need to open it in your firewall),
 or specify different port that is already opened, for example 8080:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>inc_bench -p <span class="m">8080</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>inc_bench<span class="w"> </span>-p<span class="w"> </span><span class="m">8080</span>
 </pre></div>
 </div>
 </li>
 <li><p>When using official TF&gt;=2.6.0, set environment variable <code class="docutils literal notranslate"><span class="pre">TF_ENABLE_ONEDNN_OPTS=1</span></code> for INT8 tuning:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nv">TF_ENABLE_ONEDNN_OPTS</span><span class="o">=</span><span class="m">1</span> inc_bench
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nv">TF_ENABLE_ONEDNN_OPTS</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>inc_bench
 </pre></div>
 </div>
 </li>
 <li><p>To start the Intel® Neural Compressor Bench server with your own TLS certificate add <code class="docutils literal notranslate"><span class="pre">--cert</span></code> and <code class="docutils literal notranslate"><span class="pre">--key</span></code> parameters:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>inc_bench --cert path_to_cert.crt --key path_to_private_key.key
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>inc_bench<span class="w"> </span>--cert<span class="w"> </span>path_to_cert.crt<span class="w"> </span>--key<span class="w"> </span>path_to_private_key.key
 </pre></div>
 </div>
 </li>
 <li><p>To start the Intel® Neural Compressor Bench server without TLS encryption use <code class="docutils literal notranslate"><span class="pre">--allow-insecure-connections</span></code> parameter:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>inc_bench --allow-insecure-connections
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>inc_bench<span class="w"> </span>--allow-insecure-connections
 </pre></div>
 </div>
 <p>This enables access to the server from any machine in your local network (or the whole Internet if your server is exposed to it).</p>

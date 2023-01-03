@@ -92,7 +92,7 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
@@ -530,37 +530,37 @@
 <h2>Get start with Dataset API<a class="headerlink" href="#get-start-with-dataset-api" title="Permalink to this heading">¶</a></h2>
 <section id="config-dataloader-in-a-yaml-file">
 <h3>Config dataloader in a yaml file<a class="headerlink" href="#config-dataloader-in-a-yaml-file" title="Permalink to this heading">¶</a></h3>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">quantization</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">approach</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">post_training_static_quant</span><span class="w"></span>
-<span class="w">  </span><span class="nt">calibration</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">COCORaw</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/calibration/dataset</span><span class="w"></span>
-<span class="w">      </span><span class="nt">filter</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">LabelBalance</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
-<span class="w">      </span><span class="nt">transform</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">quantization</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">approach</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">post_training_static_quant</span>
+<span class="w">  </span><span class="nt">calibration</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">COCORaw</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/calibration/dataset</span>
+<span class="w">      </span><span class="nt">filter</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">LabelBalance</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
 
-<span class="nt">evaluation</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">accuracy</span><span class="p">:</span><span class="w"></span>
+<span class="nt">evaluation</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">accuracy</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">metric</span><span class="p">:</span><span class="w"> </span>
-<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"></span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span><span class="w"></span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">COCORaw</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span><span class="w"></span>
-<span class="w">      </span><span class="nt">transform</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span><span class="w"></span>
-<span class="w">  </span><span class="nt">performance</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span><span class="w"></span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">dummy_v2</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">COCORaw</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span>
+<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+<span class="w">  </span><span class="nt">performance</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">dummy_v2</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">input_shape</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">]</span><span class="w"> </span>
 </pre></div>
 </div>

@@ -92,7 +92,7 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="Welcome.html">1.14.2 Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
@@ -212,11 +212,11 @@ of the passing model vs. original model.</p>
 <ul class="simple">
 <li><p><em><strong>model</strong></em>: The model specifications define a user model’s name, inputs, outputs and framework.</p></li>
 </ul>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span><span class="w">                                               </span><span class="c1"># mandatory. used to specify model specific information.</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span><span class="w">                                               </span><span class="c1"># mandatory. used to specify model specific information.</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mobilenet_v1</span><span class="w"> </span>
-<span class="w">  </span><span class="nt">framework</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tensorflow</span><span class="w">                              </span><span class="c1"># mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.</span><span class="w"></span>
-<span class="w">  </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">image_tensor</span><span class="w">                               </span><span class="c1"># optional. inputs field is only required in tensorflow.</span><span class="w"></span>
-<span class="w">  </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">num_detections,detection_boxes,detection_scores,detection_classes</span><span class="w"> </span><span class="c1"># optional. outputs field is only required in tensorflow.</span><span class="w"></span>
+<span class="w">  </span><span class="nt">framework</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tensorflow</span><span class="w">                              </span><span class="c1"># mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.</span>
+<span class="w">  </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">image_tensor</span><span class="w">                               </span><span class="c1"># optional. inputs field is only required in tensorflow.</span>
+<span class="w">  </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">num_detections,detection_boxes,detection_scores,detection_classes</span><span class="w"> </span><span class="c1"># optional. outputs field is only required in tensorflow.</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -225,37 +225,37 @@ specify <em>sampling_size</em> (optional) and use the subsection <em>dataloader<
 the dataset location using <em>root</em> and transformation using <em>transform</em>. To
 implement tuning space constraints, users can use the subsection <em>model_wise</em> and <em>op_wise</em> for specific configurations.</p></li>
 </ul>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">quantization</span><span class="p">:</span><span class="w">                                        </span><span class="c1"># optional. tuning constraints on model-wise for advance user to reduce tuning space.</span><span class="w"></span>
-<span class="w">  </span><span class="nt">calibration</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">sampling_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">                                </span><span class="c1"># optional. default value is 100. used to set how many samples should be used in calibration.</span><span class="w"></span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">ImageRecord</span><span class="p">:</span><span class="w"></span>
-<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/imagenet/</span><span class="w">                   </span><span class="c1"># NOTE: modify to calibration dataset location if needed</span><span class="w"></span>
-<span class="w">      </span><span class="nt">transform</span><span class="p">:</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">quantization</span><span class="p">:</span><span class="w">                                        </span><span class="c1"># optional. tuning constraints on model-wise for advance user to reduce tuning space.</span>
+<span class="w">  </span><span class="nt">calibration</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">sampling_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">                                </span><span class="c1"># optional. default value is 100. used to set how many samples should be used in calibration.</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">ImageRecord</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/imagenet/</span><span class="w">                   </span><span class="c1"># NOTE: modify to calibration dataset location if needed</span>
+<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">BilinearImagenet</span><span class="p">:</span><span class="w"> </span>
-<span class="w">          </span><span class="nt">height</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span><span class="w"></span>
-<span class="w">          </span><span class="nt">width</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span><span class="w"></span>
-<span class="w">  </span><span class="nt">model_wise</span><span class="p">:</span><span class="w">                                        </span><span class="c1"># optional. tuning constraints on model-wise for advance user to reduce tuning space.</span><span class="w"></span>
-<span class="w">    </span><span class="nt">weight</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">granularity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_channel</span><span class="w"></span>
-<span class="w">      </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">asym</span><span class="w"></span>
-<span class="w">      </span><span class="nt">dtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int8</span><span class="w"></span>
-<span class="w">      </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minmax</span><span class="w"></span>
-<span class="w">    </span><span class="nt">activation</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">granularity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_tensor</span><span class="w"></span>
-<span class="w">      </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">asym</span><span class="w"></span>
-<span class="w">      </span><span class="nt">dtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int8, fp32</span><span class="w"></span>
-<span class="w">      </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minmax, kl</span><span class="w"></span>
-<span class="w">  </span><span class="nt">op_wise</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="w">                                         </span><span class="c1"># optional. tuning constraints on op-wise for advance user to reduce tuning space. </span><span class="w"></span>
-<span class="w">         </span><span class="s">&#39;conv1&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="w"></span>
+<span class="w">          </span><span class="nt">height</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span>
+<span class="w">          </span><span class="nt">width</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span>
+<span class="w">  </span><span class="nt">model_wise</span><span class="p">:</span><span class="w">                                        </span><span class="c1"># optional. tuning constraints on model-wise for advance user to reduce tuning space.</span>
+<span class="w">    </span><span class="nt">weight</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">granularity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_channel</span>
+<span class="w">      </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">asym</span>
+<span class="w">      </span><span class="nt">dtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int8</span>
+<span class="w">      </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minmax</span>
+<span class="w">    </span><span class="nt">activation</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">granularity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_tensor</span>
+<span class="w">      </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">asym</span>
+<span class="w">      </span><span class="nt">dtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int8, fp32</span>
+<span class="w">      </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minmax, kl</span>
+<span class="w">  </span><span class="nt">op_wise</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="w">                                         </span><span class="c1"># optional. tuning constraints on op-wise for advance user to reduce tuning space. </span>
+<span class="w">         </span><span class="s">&#39;conv1&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
 <span class="w">           </span><span class="s">&#39;activation&#39;</span><span class="p p-Indicator">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;uint8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span><span class="w"> </span>
 <span class="w">                           </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;kl&#39;</span><span class="p p-Indicator">],</span><span class="w"> </span>
-<span class="w">                           </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">]},</span><span class="w"></span>
+<span class="w">                           </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">]},</span>
 <span class="w">           </span><span class="s">&#39;weight&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;int8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span><span class="w"> </span>
-<span class="w">                      </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">]}</span><span class="w"></span>
-<span class="w">         </span><span class="p p-Indicator">}</span><span class="w"></span>
-<span class="w">       </span><span class="p p-Indicator">}</span><span class="w"></span>
+<span class="w">                      </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">]}</span>
+<span class="w">         </span><span class="p p-Indicator">}</span>
+<span class="w">       </span><span class="p p-Indicator">}</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -265,32 +265,32 @@ To define the pruning approach, users can use the subsection <em>approach</em> t
 pruning target, choose the type of pruning algorithm, and the way to apply it
 during training process.</p></li>
 </ul>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">pruning</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">train</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">pruning</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">train</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
 <span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"> </span>
-<span class="w">    </span><span class="nt">epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">40</span><span class="w"></span>
-<span class="w">    </span><span class="nt">optimizer</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">Adam</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">learning_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-06</span><span class="w"></span>
-<span class="w">        </span><span class="nt">beta_1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.9</span><span class="w"></span>
-<span class="w">        </span><span class="nt">beta_2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.999</span><span class="w"></span>
-<span class="w">        </span><span class="nt">epsilon</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-07</span><span class="w"></span>
-<span class="w">    </span><span class="nt">criterion</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">SparseCategoricalCrossentropy</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">reduction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sum_over_batch_size</span><span class="w"></span>
-<span class="w">        </span><span class="nt">from_logits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w"></span>
-<span class="w">  </span><span class="nt">approach</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">weight_compression</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">initial_sparsity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"></span>
-<span class="w">      </span><span class="nt">target_sparsity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.54</span><span class="w"></span>
-<span class="w">      </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
-<span class="w">      </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">19</span><span class="w"></span>
-<span class="w">      </span><span class="nt">pruners</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!Pruner</span><span class="w"></span>
-<span class="w">            </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
-<span class="w">            </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">19</span><span class="w"></span>
-<span class="w">            </span><span class="nt">prune_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">basic_magnitude</span><span class="w"></span>
+<span class="w">    </span><span class="nt">epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">40</span>
+<span class="w">    </span><span class="nt">optimizer</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Adam</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">learning_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-06</span>
+<span class="w">        </span><span class="nt">beta_1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.9</span>
+<span class="w">        </span><span class="nt">beta_2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.999</span>
+<span class="w">        </span><span class="nt">epsilon</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-07</span>
+<span class="w">    </span><span class="nt">criterion</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">SparseCategoricalCrossentropy</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">reduction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sum_over_batch_size</span>
+<span class="w">        </span><span class="nt">from_logits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+<span class="w">  </span><span class="nt">approach</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">weight_compression</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">initial_sparsity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">      </span><span class="nt">target_sparsity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.54</span>
+<span class="w">      </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">      </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">19</span>
+<span class="w">      </span><span class="nt">pruners</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!Pruner</span>
+<span class="w">            </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">            </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">19</span>
+<span class="w">            </span><span class="nt">prune_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">basic_magnitude</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -301,37 +301,37 @@ dataloader and it is optional if users implement <em>train_func</em> and set the
 of distillation instance to <em>train_func</em>. For criterion, Intel® Neural Compressor provides a built-in
 knowledge distillation loss class to calculate distillation loss.</p></li>
 </ul>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">distillation</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">train</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
-<span class="w">    </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span><span class="w"></span>
-<span class="w">    </span><span class="nt">iteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w"></span>
-<span class="w">    </span><span class="nt">frequency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"></span>
-<span class="w">    </span><span class="nt">optimizer</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">SGD</span><span class="p">:</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">distillation</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">train</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">    </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
+<span class="w">    </span><span class="nt">iteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<span class="w">    </span><span class="nt">frequency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">    </span><span class="nt">optimizer</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">SGD</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">learning_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span><span class="w">  </span>
-<span class="w">        </span><span class="nt">momentum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span><span class="w"></span>
-<span class="w">        </span><span class="nt">nesterov</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w"></span>
-<span class="w">        </span><span class="nt">weight_decay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span><span class="w"></span>
-<span class="w">    </span><span class="nt">criterion</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="nt">KnowledgeDistillationLoss</span><span class="p">:</span><span class="w"></span>
-<span class="w">        </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w"></span>
-<span class="w">        </span><span class="nt">loss_types</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;CE&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;CE&#39;</span><span class="p p-Indicator">]</span><span class="w"></span>
-<span class="w">        </span><span class="nt">loss_weights</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">]</span><span class="w"></span>
+<span class="w">        </span><span class="nt">momentum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="w">        </span><span class="nt">nesterov</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="w">        </span><span class="nt">weight_decay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span>
+<span class="w">    </span><span class="nt">criterion</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">KnowledgeDistillationLoss</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">        </span><span class="nt">loss_types</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;CE&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;CE&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">loss_weights</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">]</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p><em><strong>evaluation</strong></em>: The evaluation specifications define the dataloader and metric for accuracy evaluation as well as dataloader
 and configurations for performance benchmarking.</p></li>
 </ul>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">evaluation</span><span class="p">:</span><span class="w">                                          </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">evaluation</span><span class="p">:</span><span class="w">                                          </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
 <span class="w">  </span><span class="nt">accuracy</span><span class="p">:</span><span class="w">                                          </span>
-<span class="w">    </span><span class="nt">metric</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"></span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span><span class="w"></span>
-<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"></span>
+<span class="w">    </span><span class="nt">metric</span><span class="p">:</span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -340,13 +340,13 @@ use <em>accuracy_criterion</em> to specify the target of accuracy loss percentag
 <em>exit_policy</em> to specify the tuning timeout in seconds. The random
 seed can be specified using <em>random_seed</em>.</p></li>
 </ul>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tuning</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="nt">accuracy_criterion</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">relative</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w">                                  </span><span class="c1"># the tuning target of accuracy loss percentage: 1%</span><span class="w"></span>
-<span class="w">    </span><span class="nt">higher_is_better</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w"></span>
-<span class="w">  </span><span class="nt">exit_policy</span><span class="p">:</span><span class="w"></span>
-<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                                      </span><span class="c1"># tuning timeout (seconds), 0 means early stop</span><span class="w"></span>
-<span class="w">  </span><span class="nt">random_seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9527</span><span class="w">                                 </span><span class="c1"># random seed</span><span class="w"></span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tuning</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">accuracy_criterion</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">relative</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w">                                  </span><span class="c1"># the tuning target of accuracy loss percentage: 1%</span>
+<span class="w">    </span><span class="nt">higher_is_better</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="w">  </span><span class="nt">exit_policy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                                      </span><span class="c1"># tuning timeout (seconds), 0 means early stop</span>
+<span class="w">  </span><span class="nt">random_seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9527</span><span class="w">                                 </span><span class="c1"># random seed</span>
 </pre></div>
 </div>
 </section>
