@@ -848,7 +848,7 @@ class TensorflowBaseModel(BaseModel):
         logger.info("Save quantized model to {}.".format(pb_file))
 
     def export(self, save_path, conf):
-        """Export the Tensorflow int8 model to ONNX int8 model."""
+        """Export the Tensorflow fp32/int8 model to ONNX fp32/int8 model."""
         from neural_compressor.config import TF2ONNXConfig
 
         if isinstance(conf, TF2ONNXConfig):

@@ -56,23 +56,11 @@ def tf_to_int8_onnx(
     """Export INT8 Tensorflow model into INT8 ONNX model.
 
     Args:
-        fp32_model (torch.nn.module): fp32 model.
-        int8_model (torch.nn.module): int8 model.
-        q_config (dict): containing quantization configuration.
+        int8_model (tensorflow ITEX QDQ model): int8 model.
         save_path (str): save path of ONNX model.
-        example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
         opset_version (int, optional): opset version. Defaults to 14.
-        dynamic_axes (dict, optional): dynamic axes. Defaults to {"input": {0: "batch_size"}, 
-                                                                  "output": {0: "batch_size"}}.
         input_names (list, optional): input names. Defaults to None.
         output_names (list, optional): output names. Defaults to None.
-        quant_format (str, optional): quantization format of ONNX model. Defaults to 'QDQ'.
-        dtype (str, optional): data types of activation and weight of ONNX model. Defaults to 'U8S8'.
-        recipe (str, optionl): Recipe for processing nn.quantized.Linear module. 
-            'QDQ_OP_FP32_BIAS': inserting QDQ before quantizable op and using fp32 bias.
-            'QDQ_OP_INT32_BIAS': inserting QDQ before quantizable op and using int32 bias.
-            'QDQ_OP_FP32_BIAS_QDQ': inserting QDQ before and after quantizable op and using fp32 bias.
-            Defaults to 'QDQ_OP_FP32_BIAS'.
     """
     from neural_compressor.adaptor.tf_utils.tf2onnx_converter import TensorflowQDQToOnnxQDQConverter
     TensorflowQDQToOnnxQDQConverter(int8_model, input_names, \

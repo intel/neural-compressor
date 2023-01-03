@@ -139,7 +139,7 @@ class TestConvertTensorflowQDQToOnnxQDQ(unittest.TestCase):
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
 
-            from neural_compressor.model.model import Model
+            from neural_compressor.model import Model
             from neural_compressor.config import TF2ONNXConfig
             inc_model = Model(output_graph_def)
             config = TF2ONNXConfig(dtype="fp32")
