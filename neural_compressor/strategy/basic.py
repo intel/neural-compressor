@@ -133,6 +133,7 @@ class BasicTuneStrategy(TuneStrategy):
             priority = ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'AddMatmul', 
                         'EltwiseAdd', 'EltwiseMul', 'EltwiseDiv', 'Embedding', 'LayerNorm']
 
+            logger.info("Quantized op types are:{}".format(allowed_op_types))
             for i in range(1, len(priority)):
                 if priority[i] not in allowed_op_types:
                     continue
@@ -161,7 +162,9 @@ class BasicTuneStrategy(TuneStrategy):
                             tune_cfg[k] = fp32_config
                     yield tune_cfg
                     return
-                        
+                else:
+                    return
+
     def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
         op_state = op_static_cfg.get_state()
         op_name = op_static_cfg.op_name
