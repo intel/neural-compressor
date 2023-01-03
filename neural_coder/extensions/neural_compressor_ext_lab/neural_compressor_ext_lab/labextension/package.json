@@ -155,8 +155,10 @@
   },
   "resolutions": {
     "got": "^12.1.0",
-    "bl": "^1.2.3",
     "semver": "^4.3.2",
-    "loader-utils": "^2.0.3"
+    "bl": "^1.2.3",
+    "loader-utils": "^2.0.3",
+    "json5": "^2.2.2",
+    "jsonwebtoken": "^9.0.0"
   }
 }
