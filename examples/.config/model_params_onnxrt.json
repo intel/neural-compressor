@@ -449,7 +449,7 @@
     },
     "squeezenet_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/squeezenet/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw",
       "input_model": "/tf_dataset2/models/onnx/squeezenet/squeezenet1.0-13.onnx",
       "main_script": "main.py",
       "batch_size": 1
