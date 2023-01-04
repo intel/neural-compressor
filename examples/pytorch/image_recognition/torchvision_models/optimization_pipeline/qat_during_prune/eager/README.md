@@ -23,7 +23,7 @@ train  val
 
 Command is shown as below:
 
-```shell
+```python
 python -u main.py \
     ~/imagenet \
     --topology resnet50 \

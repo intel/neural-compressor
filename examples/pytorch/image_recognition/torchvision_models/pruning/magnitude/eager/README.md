@@ -3,16 +3,24 @@ Step-by-Step
 
 This document describes the step-by-step instructions for reproducing PyTorch pruning results with Intel® Neural Compressor.
 
-## Environment
+# Prerequisite
+
+## 1. Environment
 ```shell
 pip install -r requirements.txt
 ```
 
-### Prepare dataset 
-Please update the data path with /path/to/imagenet in "run" scripts.
+## 2. Prepare Dataset
 
-### Run
-#### Non-distributed
+Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.  The dir include below folder:
+
+```bash
+ls /path/to/imagenet
+train  val
+```
+
+# Run
+### Non-distributed
 **run_pruning_cpu.sh** is an example.
 ```shell
 python -u main.py \
@@ -33,7 +41,7 @@ python -u main.py \
     --iteration 30 \
 ```
 
-#### Distributed 
+### Distributed 
 **run_pruning_distributed_cpu.sh** is an example.
 ```shell
 horovodrun -np 2 python -u main.py \
