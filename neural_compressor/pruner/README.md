@@ -86,15 +86,15 @@ Pruning Criteria determines how should the weights of a neural network be scored
 
 - Gradient
 
-    The algorithm prunes the weight by the lowest gradient value at each layer with given sparsity target.
+  The algorithm prunes the weight by the lowest gradient value at each layer with given sparsity target.
 
 - SNIP
 
-    The algorithm prunes the dense model at its initialization, by analyzing the weights' effect to the loss function when they are masked. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for details
+  The algorithm prunes the dense model at its initialization, by analyzing the weights' effect to the loss function when they are masked. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for details
 
 - SNIP with momentum
 
-  The algorithm improves original SNIP algorithms and introduces weights' score maps which updates in a momentum way.\
+  The algorithm improves original SNIP algorithm and introduces weights' score maps which updates in a momentum way.\
   In the following formula, $n$ is the pruning step and $W$ and $G$ are model's weights and gradients respectively.
   $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
@@ -140,12 +140,17 @@ Pruning type defines how the masks are generated and applied to a neural network
   Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
   Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
 
-<div align = "center", style = "width: 77%; margin-bottom: 2%;">
-    <a target="_blank" href="../../docs/source/_static/imgs/pruning/progressive_pruning.png">
-        <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=500>
-    </a>
-</div>
-        (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation. (b) uses masks with smaller structured blocks during every pruning step. (c) inserts masks with smaller structured blocks between every pruning steps. (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps. We use (d) as the mask interpolation implementation of progressive pruning.
+  <div align = "center", style = "width: 77%; margin-bottom: 2%;">
+      <a target="_blank" href="../../docs/source/_static/imgs/pruning/progressive_pruning.png">
+          <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=400 height=280>
+      </a>
+  </div>
+    (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation. 
+    (b) uses masks with smaller structured blocks during every pruning step.
+    (c) inserts masks with smaller structured blocks between every pruning steps.
+    (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
+
+  We use (d) as the mask interpolation implementation of progressive pruning. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks are selected to be pruned by referring to these weights’ score maps. We add these partial-zero unstructured masks to the previous structured masks and do pruning. After training the model with these interpolating masks, we rerurn the mask interpolation process by masking more elements in these blocks. After several steps of mask interpolation, we finally mask all weights in the blocks and train the model with pure block-wise sparsity.
 
 
 
@@ -155,7 +160,7 @@ Range of sparse score calculation in iterative pruning, default scope is global.
 
 - Global
 
-  The score map is computed out of entire parameters, Some layers are higher than the target sparsity and some are lower, the total sparsity of the model reaches the target.
+  The score map is computed out of entire parameters, Some layers are higher than the target sparsity and some are lower, the total sparsity of the model reaches the target. You can also set the "min sparsity ratio"/"max sparsity ratio" to be the same as the target to achieve same sparsity for each layer in a global way.
 
 
 
@@ -170,6 +175,12 @@ Range of sparse score calculation in iterative pruning, default scope is global.
 ### Sparsity Decay Type
 
 Growth rules for the sparsity of iterative pruning, "exp", "linear", "cos" and "cube" are available，We use exp by default.
+<div align=center>
+<a target="_blank" href="../../docs/source/_static/imgs/pruning/sparsity_decay_type.png">
+    <img src="../../docs/source/_static/imgs/pruning/sparsity_decay_type.png" width=850 height=230 alt="Regularization">
+</a>
+</div>
+
 
 
 ### Regularization
@@ -178,7 +189,7 @@ Regularization is a technique that discourages learning a more complex model and
 
 - Group Lasso
 
-    The main idea of Group Lasso is to construct an objective function that penalizes the L2 parametrization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
+  The main idea of Group Lasso is to construct an objective function that penalizes the L2 parametrization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Regularization.JPG">
@@ -199,56 +210,59 @@ Users can pass the customized training/evaluation functions to `Pruning` in vari
 The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default setting is used as a complement.
 
 - Step 1: Define a dict-like configuration in your training codes. We provide you a template of configuration below.
-```python
-    configs = [
-            { ## pruner1
-                'target_sparsity': 0.9,   # Target sparsity ratio of modules.
-                'pruning_type': "snip_momentum", # Default pruning type.
-                'pattern': "4x1", # Default pruning pattern.
-                'op_names': ['layer1.*'],  # A list of modules that would be pruned.
-                'excluded_op_names': ['layer3.*'],  # A list of modules that would not be pruned.
-                'start_step': 0,  # Step at which to begin pruning.
-                'end_step': 10,   # Step at which to end pruning.
-                'pruning_scope': "global", # Default pruning scope.
-                'pruning_frequency': 1, # Frequency of applying pruning.
-                'min_sparsity_ratio_per_op': 0.0,  # Minimum sparsity ratio of each module.
-                'max_sparsity_ratio_per_op': 0.98, # Maximum sparsity ratio of each module.
-                'sparsity_decay_type': "exp", # Function applied to control pruning rate.
-                'pruning_op_types': ['Conv', 'Linear'], # Types of op that would be pruned.
-            },
-            { ## pruner2
-                "op_names": ['layer3.*'], # A list of modules that would be pruned.
-                "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
-                # 'target_sparsity'
-            } # For layer3, the missing target_sparsity would be complemented by default setting (i.e. 0.8)
-        ]
-```
+
+  ```python
+      configs = [
+              { ## pruner1
+                  'target_sparsity': 0.9,   # Target sparsity ratio of modules.
+                  'pruning_type': "snip_momentum", # Default pruning type.
+                  'pattern': "4x1", # Default pruning pattern.
+                  'op_names': ['layer1.*'],  # A list of modules that would be pruned.
+                  'excluded_op_names': ['layer3.*'],  # A list of modules that would not be pruned.
+                  'start_step': 0,  # Step at which to begin pruning.
+                  'end_step': 10,   # Step at which to end pruning.
+                  'pruning_scope': "global", # Default pruning scope.
+                  'pruning_frequency': 1, # Frequency of applying pruning.
+                  'min_sparsity_ratio_per_op': 0.0,  # Minimum sparsity ratio of each module.
+                  'max_sparsity_ratio_per_op': 0.98, # Maximum sparsity ratio of each module.
+                  'sparsity_decay_type': "exp", # Function applied to control pruning rate.
+                  'pruning_op_types': ['Conv', 'Linear'], # Types of op that would be pruned.
+              },
+              { ## pruner2
+                  "op_names": ['layer3.*'], # A list of modules that would be pruned.
+                  "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
+                  # 'target_sparsity'
+              } # For layer3, the missing target_sparsity would be complemented by default setting (i.e. 0.8)
+          ]
+  ```
+
 - Step 2: Insert API functions in your codes. Only 4 lines of codes are required.
-```python
-    """ All you need is to insert following API functions to your codes:
-    pruner.on_train_begin() # Setup pruner
-    pruner.on_step_begin() # Prune weights
-    pruner.on_before_optimizer_step() # Do weight regularization
-    pruner.on_after_optimizer_step() # Update weights' criteria, mask weights
-    """
-    from neural_compressor.pruner.pruning import Pruning, WeightPruningConfig
-    config = WeightPruningConfig(configs)
-    pruner = Pruning(config)  # Define a pruning object.
-    pruner.model = model      # Set model object to prune.
-    pruner.on_train_begin()
-    for epoch in range(num_train_epochs):
-        model.train()
-        for step, batch in enumerate(train_dataloader):
-            pruner.on_step_begin(step)
-            outputs = model(**batch)
-            loss = outputs.loss
-            loss.backward()
-            pruner.on_before_optimizer_step()
-            optimizer.step()
-            pruner.on_after_optimizer_step()
-            lr_scheduler.step()
-            model.zero_grad()
-```
+
+    ```python
+        """ All you need is to insert following API functions to your codes:
+        pruner.on_train_begin() # Setup pruner
+        pruner.on_step_begin() # Prune weights
+        pruner.on_before_optimizer_step() # Do weight regularization
+        pruner.on_after_optimizer_step() # Update weights' criteria, mask weights
+        """
+        from neural_compressor.pruner.pruning import Pruning, WeightPruningConfig
+        config = WeightPruningConfig(configs)
+        pruner = Pruning(config)  # Define a pruning object.
+        pruner.model = model      # Set model object to prune.
+        pruner.on_train_begin()
+        for epoch in range(num_train_epochs):
+            model.train()
+            for step, batch in enumerate(train_dataloader):
+                pruner.on_step_begin(step)
+                outputs = model(**batch)
+                loss = outputs.loss
+                loss.backward()
+                pruner.on_before_optimizer_step()
+                optimizer.step()
+                pruner.on_after_optimizer_step()
+                lr_scheduler.step()
+                model.zero_grad()
+    ```
 
 
  In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function. The pre-defined Neural Compressor hooks are listed below.
@@ -274,16 +288,31 @@ The following section exemplifies how to use hooks in user pass-in training func
 
 
 
-We validate the pruning technique on typical models across various domains (including CV and NLP) and the examples are listed in [Pruning Examples](../../examples/README.md#Pruning-1). A complete overview of validated examples including quantization, pruning and distillation results could be found in  [Intel Neural Compressor Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
+We validate the pruning technique on typical models across various domains (including CV and NLP).
+
+- Text Classification
+
+  We implemented sparse with different pruning patterns on MRPC and SST-2 tasks [Text-classification examples](../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
+
+- Question Answering
+
+  Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
+
+- Object Detection
+
+  Pruning on YOLOv5 model using coco dataset [Object-etection examples](../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
+
+The API used in these examples [Pruning V2](../../docs/source/pruning.md#Get-Started-with-Pruning-API) are called differently from the current pruning one, both can achieve the same result, so you can choose the one you like.
+
+
+
+A complete overview of validated examples including quantization, pruning and distillation results could be found in  [Intel Neural Compressor Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG">
     <img src="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG" alt="Architecture" width=800 height=500>
   </a>
 </div>
-
-Please refer to pruning examples([PyTorch](../../examples/README.md#Pruning-1)) for more information.
-
 
 
 ## Reference
@@ -292,4 +321,4 @@ Please refer to pruning examples([PyTorch](../../examples/README.md#Pruning-1)) 
 
 
 [1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.
-
+[2] Zafrir, Ofir, Ariel Larey, Guy Boudoukh, Haihao Shen, and Moshe Wasserblat. "Prune once for all: Sparse pre-trained language models." arXiv preprint arXiv:2111.05754 (2021).
