@@ -104,16 +104,7 @@ bash run_tuning.sh --topology=resnext101_32x16d_wsl --dataset_location=/path/to/
 bash run_benchmark.sh --topology=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
 
-
-<<<<<<< HEAD
-<<<<<<< HEAD
 # Saving and Loading Model
-=======
-# Saving and loading model
->>>>>>> 0b58ea9d2... update readme
-=======
-# Saving and Loading Model
->>>>>>> 66d01bc76... fix bug
 
 * Saving model:
   After tuning with Neural Compressor, we can get neural_compressor.model:
@@ -134,15 +125,7 @@ Here, q_model is Neural Compressor model class, so it has "save" API:
 q_model.save("Path_to_save_configure_file")
 ```
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 * Loading model:
-=======
-* loading model:
->>>>>>> 0b58ea9d2... update readme
-=======
-* Loading model:
->>>>>>> 66d01bc76... fix bug
 
 ```python
 from neural_compressor.utils.pytorch import load

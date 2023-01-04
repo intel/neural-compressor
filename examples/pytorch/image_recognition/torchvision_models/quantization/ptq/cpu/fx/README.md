@@ -88,15 +88,7 @@ python main.py -t -a efficientnet_b7 --pretrained /path/to/imagenet
 > [`MSE_V2`](/docs/source/tuning_strategies.md#MSE_v2) by default.
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 # Saving and Loading Model
-=======
-# Saving and loading model
->>>>>>> 0b58ea9d2... update readme
-=======
-# Saving and Loading Model
->>>>>>> 66d01bc76... fix bug
 
 * Saving model:
   After tuning with Neural Compressor, we can get neural_compressor.model:
