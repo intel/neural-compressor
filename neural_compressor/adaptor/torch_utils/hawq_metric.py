@@ -464,9 +464,12 @@ class HessianTrace:
             act_gap[fp_i] = np.sum(activation_qnt_error) / activation_qnt_error.size
         return act_gap, mse_gap
 
-    def get_avg_traces(self, enable_act=True):
+    def get_avg_traces(self, enable_act=True,num_sample=0):
         """Estimates average hessian trace for each parameter."""
-        num_samp=self._batch_size
+        if num_sample==0:
+            num_samp=self._batch_size
+        else:
+            num_samp=num_sample
         assert num_samp > 0
         logger.info("num_samp:"+str(num_samp))
         traces = {}
@@ -594,7 +597,7 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
         orig_eval = False
     fp32_model.eval()
     ht = HessianTrace(fp32_model, dataloader=dataloader, q_model=q_model)
-    traces = ht.get_avg_traces(enable_act)
+    traces = ht.get_avg_traces(enable_act,num_sample=0)
     op_to_traces = traces['weight']
     q_model_state_dict = {}
     for key in q_model.state_dict().keys():
