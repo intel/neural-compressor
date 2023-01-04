@@ -120,44 +120,15 @@ class MSETuneStrategy(TuneStrategy):
         Yields:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
-        best_op_tuning_cfg = None
-        if len(self.metric_name) == 1 or self.metric_weight is not None:
-            best_acc = float('-inf') if self.higher_is_better else float('inf')
-        else:
-            best_acc = [float('-inf') if higher_is_better else float('inf') for \
-                higher_is_better in self.metric_criterion]
-
-        from copy import deepcopy
         tuning_space = self.tuning_space
-        initial_op_tuning_cfg = {}
-        for item in tuning_space.root_item.options:
-            if item.item_type == 'op':
-                op_name, op_type = item.name
-                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         for calib_sampling_size in calib_sampling_size_lst:
-            # Collect the ops that support static and dynamic
-            quant_mode_wise_items = OrderedDict()
-            query_order = ['static', 'dynamic', 'bf16', 'fp32']
-            pre_items = set()
-            for quant_mode in query_order:
-                items = tuning_space.query_items_by_quant_mode(quant_mode)
-                filtered_items = [item for item in items if item not in pre_items]
-                pre_items = pre_items.union(set(items))
-                quant_mode_wise_items[quant_mode] = filtered_items
-
-            def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict):
-                for item in items_lst:
-                    op_item_dtype_dict[item.name] = target_quant_mode
-
-            op_item_dtype_dict = OrderedDict()
-            for quant_mode, quant_mode_items in quant_mode_wise_items.items():
-                initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
-
+            op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
             # Optype-wise tuning 
             early_stop_tuning = True
             stage1_cnt = 0  
-            int8_ops = quant_mode_wise_items['dynamic'] + quant_mode_wise_items['static']
+            int8_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
+            int8_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
             stage1_max = min(5, len(int8_ops))  # TODO set a more appropriate value
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
