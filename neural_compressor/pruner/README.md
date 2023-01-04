@@ -70,7 +70,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Pruning_patterns.JPG">
-    <img src="../../docs/source/_static/imgs/pruning/Pruning_patterns.JPG" width=700 height=150 alt="Sparsity Pattern">
+    <img src="../../docs/source/_static/imgs/pruning/Pruning_patterns.JPG" width=700 height=145 alt="Sparsity Pattern">
 </a>
 </div>
 
@@ -120,7 +120,7 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG">
-    <img src="./../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG" width=960 height=170 alt="Pruning schedule">
+    <img src="./../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG" width=950 height=170 alt="Pruning schedule">
 </a>
 </div>
 
