@@ -7,7 +7,7 @@ Distillation for Quantization
 2. [Distillation for Quantization Support Matrix](#distillation-for-quantization-support-matrix)
 
 
-3. [Get Started With Distillation for Quantization API](#get-started-with-api)
+3. [Get Started with Distillation for Quantization API](#get-started-with-api)
 
 
 4. [Examples](#examples)
@@ -29,7 +29,7 @@ Intel provides a quantization-aware training (QAT) method that incorporates a no
 
 
 
-### Get Started With Distillation for Quantization API
+### Get Started with Distillation for Quantization API
 
 User can pass the customized training/evaluation functions to `Distillation` for quantization tasks. In this case, distillation process can be done by pre-defined hooks in Neural Compressor. Users could place those hooks inside the quantization training function.
 
