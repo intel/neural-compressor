@@ -78,12 +78,12 @@ fi
 source env_sphinx/bin/activate
 
 cp -rf ../docs/ ./source
-
+cp -rf ../neural_coder./source/docs
 cp -f "../README.md" "./source/docs/source/Welcome.md"
 cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
 cp ../neural_coder/extensions/screenshots/* ./source/docs/source/imgs
 
-sed -i 's/.\/neural_coder\/extensions\/neural_compressor_ext_lab\/README.md/https\:\/\/github.com\/intel\/neural-compressor\/blob\/master\/neural_coder\/extensions\/neural_compressor_ext_lab/g' ./source/docs/source/Welcome.md
+#sed -i 's/.\/neural_coder\/extensions\/neural_compressor_ext_lab\/README.md/https\:\/\/github.com\/intel\/neural-compressor\/blob\/master\/neural_coder\/extensions\/neural_compressor_ext_lab/g' ./source/docs/source/Welcome.md
 
 sed -i 's/.\/neural_coder\/extensions\/screenshots/imgs/g' ./source/docs/source/Welcome.md
 
