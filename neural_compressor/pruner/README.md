@@ -145,9 +145,9 @@ Pruning type defines how the masks are generated and applied to a neural network
           <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=400 height=280>
       </a>
   </div>
-      (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation. \
-      (b) uses masks with smaller structured blocks during every pruning step.\
-      (c) inserts masks with smaller structured blocks between every pruning steps.\
+      (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation.  <Br/>
+      (b) uses masks with smaller structured blocks during every pruning step.  <Br/>
+      (c) inserts masks with smaller structured blocks between every pruning steps.  <Br/>
       (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
 
   We use (d) as the mask interpolation implementation of progressive pruning. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. We add these partial-zero unstructured masks to the previous structured masks and do pruning. After training the model with these interpolating masks, we return the mask interpolation process by masking more elements in these blocks. After several steps of mask interpolation, we finally mask all weights in the blocks and train the model with pure block-wise sparsity.
