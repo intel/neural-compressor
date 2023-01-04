@@ -23,11 +23,9 @@ Intel provides a quantization-aware training (QAT) method that incorporates a no
 
 ### Distillation for Quantization Support Matrix
 
-|Distillation for Quantization Algorithm         |PyTorch   |TensorFlow |
-|------------------------------------------------|:--------:|:---------:|
-|Knowledge Distillation + Quantization           |&#10004;  |&#10004;   |
-|Intermediate Layer Knowledge Distillation + Quantization      |&#10004;  |Will be supported|
-|Self Distillation + Quantization                             |&#10004;  |&#10006;   |
+|*Algorithm*                      |*PyTorch*   |*TensorFlow* |
+|---------------------------------|:--------:|:---------:|
+|Distillation for Quantization    |&#10004;  |&#10006;   |
 
 
 
@@ -54,7 +52,7 @@ def training_func_for_nc(model):
             compression_manager.on_step_begin(i)
             ......
             output = model(batch)
-            loss = ......
+            loss = output.loss
             loss = compression_manager.on_after_compute_loss(batch, output, loss)
             loss.backward()
             compression_manager.on_before_optimizer_step()
@@ -68,11 +66,21 @@ def training_func_for_nc(model):
 In this case, the launcher code is like the following:
 
 ```python
-from neural_compressor import quantization
+from neural_compressor.experimental import common, Distillation, Quantization
+from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+from neural_compressor import QuantizationAwareTrainingConfig
 from neural_compressor.training import prepare_compression
-from neural_compressor.config import PostTrainingQuantConfig, DistillationConfig, SelfKnowledgeDistillationLossConfig
+combs = []
+distillation_criterion = KnowledgeDistillationLossConfig()
+d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+combs.append(d_conf)
+q_conf = QuantizationAwareTrainingConfig()
+combs.append(q_conf)
+compression_manager = prepare_compression(model, combs)
+model = compression_manager.model
 
-
+model = training_func_for_nc(model)
+eval_func(model)
 ```
 
 ### Examples
