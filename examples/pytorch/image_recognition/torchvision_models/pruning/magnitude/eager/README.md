@@ -1,13 +1,15 @@
-### Prepare an environment
+Step-by-Step
+============
+
+This document describes the step-by-step instructions for reproducing PyTorch pruning results with Intel® Neural Compressor.
+
+## Environment
 ```shell
 pip install -r requirements.txt
 ```
 
 ### Prepare dataset 
 Please update the data path with /path/to/imagenet in "run" scripts.
-
-### Prepare configuration
-Please update the configuration of pruner in **conf.yaml**. Configuration of training is separated from **conf.yaml**
 
 ### Run
 #### Non-distributed
@@ -17,9 +19,14 @@ python -u main.py \
     /path/to/imagenet/ \
     --topology resnet18 \
     --prune \
-    --config conf.yaml \
     --pretrained \
-    --output-model model_final.pth \
+    --pruning_type magnitude \
+    --initial_sparsity 0.0 \
+    --target_sparsity 0.40 \
+    --start_epoch 0 \
+    --end_epoch 9 \
+    --epochs 10 \
+    --output-model saved_results \
     --batch-size 256 \
     --keep-batch-size \
     --lr 0.001 \
@@ -33,9 +40,14 @@ horovodrun -np 2 python -u main.py \
     /path/to/imagenet/ \
     --topology resnet18 \
     --prune \
-    --config conf.yaml \
     --pretrained \
-    --output-model model_final.pth \
+    --pruning_type magnitude \
+    --initial_sparsity 0.0 \
+    --target_sparsity 0.40 \
+    --start_epoch 0 \
+    --end_epoch 9 \
+    --epochs 10 \
+    --output-model saved_results \
     --world-size 1 \
     --num-per-node 2 \
     --batch-size 256 \
