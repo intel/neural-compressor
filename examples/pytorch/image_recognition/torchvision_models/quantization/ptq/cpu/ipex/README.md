@@ -51,10 +51,14 @@ refer [intel/intel-extension-for-pytorch at icx (github.com)](https://github.com
    > Support IPEX version >= 1.8.0, 1.12.0 version need build from source and apply patch.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ## 3. Prepare Dataset
 =======
 ### 3. Prepare Dataset
 >>>>>>> 0b58ea9d2... update readme
+=======
+## 3. Prepare Dataset
+>>>>>>> 66d01bc76... fix bug
 
 Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.  The dir include below folder:
 
@@ -102,10 +106,14 @@ bash run_benchmark.sh --topology=resnext101_32x16d_wsl --dataset_location=/path/
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Saving and Loading Model
 =======
 # Saving and loading model
 >>>>>>> 0b58ea9d2... update readme
+=======
+# Saving and Loading Model
+>>>>>>> 66d01bc76... fix bug
 
 * Saving model:
   After tuning with Neural Compressor, we can get neural_compressor.model:
@@ -127,10 +135,14 @@ q_model.save("Path_to_save_configure_file")
 ```
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 * Loading model:
 =======
 * loading model:
 >>>>>>> 0b58ea9d2... update readme
+=======
+* Loading model:
+>>>>>>> 66d01bc76... fix bug
 
 ```python
 from neural_compressor.utils.pytorch import load
