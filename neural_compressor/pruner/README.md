@@ -49,7 +49,7 @@ Neural network pruning is a promising model compression technique that removes t
 
 <div align=center>
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=350 height=170 alt="pruning intro">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning.PNG" width=350 height=160 alt="pruning intro">
 </a>
 </div>
 
@@ -120,7 +120,7 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG">
-    <img src="./../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG" width=980 height=170 alt="Pruning schedule">
+    <img src="./../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG" width=960 height=170 alt="Pruning schedule">
 </a>
 </div>
 
