@@ -100,7 +100,7 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 <div align=center>
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=380 height=230 alt="Pruning criteria">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=380 height=220 alt="Pruning criteria">
 </a>
 </div>
 
@@ -193,7 +193,7 @@ Regularization is a technique that discourages learning a more complex model and
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Regularization.JPG">
-    <img src="../../docs/source/_static/imgs/pruning/Regularization.JPG" width=380 height=230 alt="Regularization">
+    <img src="../../docs/source/_static/imgs/pruning/Regularization.JPG" width=380 height=220 alt="Regularization">
 </a>
 </div>
 
@@ -284,21 +284,16 @@ We validate the pruning technique on typical models across various domains (incl
 
 The API [Pruning V2](../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one we described above, both API can achieve the same result, so you can choose the one you like.
 
-
-
 A complete overview of validated examples including quantization, pruning and distillation results could be found in  [Intel Neural Compressor Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG">
-    <img src="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG" alt="Architecture" width=400 height=260>
+    <img src="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG" alt="Architecture" width=450 height=300>
   </a>
 </div>
 
 
 ## Reference
-
-
-
 
 [1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.
 
