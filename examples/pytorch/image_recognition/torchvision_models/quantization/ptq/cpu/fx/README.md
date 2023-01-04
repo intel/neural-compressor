@@ -64,9 +64,10 @@ python main.py -t -a efficientnet_b0 --pretrained /path/to/imagenet
 ```
 > **Note**
 >
-> It is recommended to use [`MSE_v2`](/docs/source/tuning_strategies.md#MSE_v2)
-> strategy for quantizing `efficientnet_b0` model to reduce tuning time 
-> and get the result faster.
+> To reduce tuning time and get the result faster, the `efficientnet_b0` model uses 
+> [`MSE_V2`](/docs/source/tuning_strategies.md#MSE_v2) by default.
+
+
 ### 7. Efficientnet_b3
 
 ```shell
@@ -74,9 +75,8 @@ python main.py -t -a efficientnet_b3 --pretrained /path/to/imagenet
 ```
 > **Note**
 >
-> It is recommended to use [`MSE_v2`](/docs/source/tuning_strategies.md#MSE_v2)
-> strategy for quantizing `efficientnet_b3` model to reduce tuning time 
-> and get the result faster.
+> To reduce tuning time and get the result faster, the `efficientnet_b3` model uses 
+> [`MSE_V2`](/docs/source/tuning_strategies.md#MSE_v2) by default.
 ### 8. Efficientnet_b7
 
 ```shell
@@ -84,9 +84,8 @@ python main.py -t -a efficientnet_b7 --pretrained /path/to/imagenet
 ```
 > **Note**
 >
-> It is recommended to use [`MSE_v2`](/docs/source/tuning_strategies.md#MSE_v2)
-> strategy for quantizing `efficientnet_b7` model to reduce tuning time 
-> and get the result faster.
+> To reduce tuning time and get the result faster, the `efficientnet_b7` model uses 
+> [`MSE_V2`](/docs/source/tuning_strategies.md#MSE_v2) by default.
 
 
 # Saving and loading model
