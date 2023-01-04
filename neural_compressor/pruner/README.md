@@ -100,7 +100,7 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 <div align=center>
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG">
-    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=380 height=220 alt="Pruning criteria">
+    <img src="./../../docs/source/_static/imgs/pruning/pruning_criteria.PNG" width=350 height=170 alt="Pruning criteria">
 </a>
 </div>
 
@@ -120,7 +120,7 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG">
-    <img src="./../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG" width=1050 height=240 alt="Pruning schedule">
+    <img src="./../../docs/source/_static/imgs/pruning/Pruning_schedule.JPG" width=980 height=170 alt="Pruning schedule">
 </a>
 </div>
 
@@ -142,7 +142,7 @@ Pruning type defines how the masks are generated and applied to a neural network
 
   <div align = "center", style = "width: 77%; margin-bottom: 2%;">
       <a target="_blank" href="../../docs/source/_static/imgs/pruning/progressive_pruning.png">
-          <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=400 height=280>
+          <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=420 height=290>
       </a>
   </div>
       (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation.  <Br/>
@@ -193,7 +193,7 @@ Regularization is a technique that discourages learning a more complex model and
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Regularization.JPG">
-    <img src="../../docs/source/_static/imgs/pruning/Regularization.JPG" width=380 height=220 alt="Regularization">
+    <img src="../../docs/source/_static/imgs/pruning/Regularization.JPG" width=350 height=170 alt="Regularization">
 </a>
 </div>
 
