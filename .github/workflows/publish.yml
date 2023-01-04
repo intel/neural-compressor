@@ -16,4 +16,4 @@ jobs:
       run: |
         git config --local --get remote.origin.url
         cd docs/build_docs
-        bash build.sh
+        bash build.sh latest

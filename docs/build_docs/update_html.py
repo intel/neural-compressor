@@ -24,20 +24,6 @@ def main(folder, version):
     for index_file in glob.glob('{}/**/*.html'.format(folder),recursive = True):
         update_version_link(version, folder_name, index_file)
 
-    version_file = "{}/versions.html".format(os.path.dirname(folder))
-    #print(version_file)
-    ver_buf = ""
-    with open(version_file, "r") as f:
-        ver_buf = f.read()
-        if ver_buf.find(version)>=0:
-            return
-        key_str = '<li><a href="latest">latest</a></li>'
-        new_ver = '''<li><a href="latest">latest</a></li>
-        <li><a href="{}">{}</a></li>'''.format(version, version)
-        ver_buf = ver_buf.replace(key_str, new_ver)
-
-    with open(version_file, "w") as f:
-        f.write(ver_buf)
 
 def help(me):
     print("python {} html_folder version".format(me))
