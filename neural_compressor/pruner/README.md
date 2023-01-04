@@ -290,7 +290,7 @@ A complete overview of validated examples including quantization, pruning and di
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG">
-    <img src="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG" alt="Architecture" width=800 height=500>
+    <img src="../../docs/source/_static/imgs/pruning/pruning_scatter.JPG" alt="Architecture" width=380 height=200>
   </a>
 </div>
 
