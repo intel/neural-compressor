@@ -5,7 +5,7 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 
 # Prerequisite
 
-### 1. Installation
+### 1. Environment
 
 PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 

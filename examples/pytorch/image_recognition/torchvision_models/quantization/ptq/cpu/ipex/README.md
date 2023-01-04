@@ -5,7 +5,7 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 
 # Prerequisite
 
-### 1. Environment
+## 1. Environment
 
 We verified examples with IPEX backend on Python 3.8, recommended.
 
@@ -14,7 +14,7 @@ cd examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ip
 pip install -r requirements.txt
 ```
 
-### 2. Install pytorch and intel-pytorch-extension
+## 2. Install pytorch and intel-pytorch-extension
 
 refer [intel/intel-extension-for-pytorch at icx (github.com)](https://github.com/intel/intel-extension-for-pytorch/tree/v1.8.0)
 
@@ -50,7 +50,7 @@ refer [intel/intel-extension-for-pytorch at icx (github.com)](https://github.com
    >
    > Support IPEX version >= 1.8.0, 1.12.0 version need build from source and apply patch.
 
-### 3. Prepare Dataset
+## 3. Prepare Dataset
 
 Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.  The dir include below folder:
 
@@ -97,7 +97,7 @@ bash run_benchmark.sh --topology=resnext101_32x16d_wsl --dataset_location=/path/
 ```
 
 
-# Saving and loading model
+# Saving and Loading Model
 
 * Saving model:
   After tuning with Neural Compressor, we can get neural_compressor.model:
@@ -118,7 +118,7 @@ Here, q_model is Neural Compressor model class, so it has "save" API:
 q_model.save("Path_to_save_configure_file")
 ```
 
-* loading model:
+* Loading model:
 
 ```python
 from neural_compressor.utils.pytorch import load

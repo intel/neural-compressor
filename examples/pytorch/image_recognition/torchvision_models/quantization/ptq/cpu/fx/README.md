@@ -88,7 +88,7 @@ python main.py -t -a efficientnet_b7 --pretrained /path/to/imagenet
 > [`MSE_V2`](/docs/source/tuning_strategies.md#MSE_v2) by default.
 
 
-# Saving and loading model
+# Saving and Loading Model
 
 * Saving model:
   After tuning with Neural Compressor, we can get neural_compressor.model:
@@ -109,7 +109,7 @@ Here, `q_model` is the Neural Compressor model class, so it has "save" API:
 q_model.save("Path_to_save_quantized_model")
 ```
 
-* loading model:
+* Loading model:
 
 ```python
 from neural_compressor.utils.pytorch import load
