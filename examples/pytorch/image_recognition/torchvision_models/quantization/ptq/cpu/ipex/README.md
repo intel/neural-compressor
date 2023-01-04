@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Neural Compressor.
+This document describes the step-by-step instructions for reproducing PyTorch tuning results with Intel® Neural Compressor.
 
 # Prerequisite
 
@@ -50,7 +50,11 @@ refer [intel/intel-extension-for-pytorch at icx (github.com)](https://github.com
    >
    > Support IPEX version >= 1.8.0, 1.12.0 version need build from source and apply patch.
 
+<<<<<<< HEAD
 ## 3. Prepare Dataset
+=======
+### 3. Prepare Dataset
+>>>>>>> 0b58ea9d2... update readme
 
 Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.  The dir include below folder:
 
@@ -97,7 +101,11 @@ bash run_benchmark.sh --topology=resnext101_32x16d_wsl --dataset_location=/path/
 ```
 
 
+<<<<<<< HEAD
 # Saving and Loading Model
+=======
+# Saving and loading model
+>>>>>>> 0b58ea9d2... update readme
 
 * Saving model:
   After tuning with Neural Compressor, we can get neural_compressor.model:
@@ -118,7 +126,11 @@ Here, q_model is Neural Compressor model class, so it has "save" API:
 q_model.save("Path_to_save_configure_file")
 ```
 
+<<<<<<< HEAD
 * Loading model:
+=======
+* loading model:
+>>>>>>> 0b58ea9d2... update readme
 
 ```python
 from neural_compressor.utils.pytorch import load
