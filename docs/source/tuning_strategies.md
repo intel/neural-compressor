@@ -84,17 +84,17 @@ accuracy_criterion = AccuracyCriterion(
 ```
 
 ### Traverse 
-Once the `tuning space` was constructed, user can specify the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`), or the `strategy` field with strategy name in the `TuningCriterion`. The priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the traverse logic by strategy name. The design and usage of each traverse logic is introduced in the following session.
+Once the `tuning space` was constructed, user can specify the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig`, or the `strategy` field with strategy name in the `TuningCriterion`. The priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the traverse logic by strategy name. The design and usage of each traverse logic is introduced in the following session.
 
 ## Traverse Logic
 
 ### O0 
 
 #### Design
-The quantization level `O0` is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model, and then quantize the OPs to lower precision OP type wisely and OP wisely.
+The quantization level `0` is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model, and then quantize the OPs to lower precision OP type wisely and OP wisely.
 #### Usage
 
-To use `O0`, the `quant_level` field should be set to `0` in `PostTrainingQuantConfig` (or `QuantizationAwareTrainingConfig`).
+To use quantization level `0`, the `quant_level` field should be set to `0` in `PostTrainingQuantConfig`.
 
 ```python
 from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
