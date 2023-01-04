@@ -45,7 +45,7 @@ Pruning
 
 
 ### Neural Network Pruning
-Neural network pruning is a promising model compression technique that removes the least important parameters/neurons in the network and achieves compact architectures with minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial for reducing the computational and memory footprint that huge neural networks require.
+Neural network pruning is a promising model compression technique that removes the least important parameters/neurons in the network and achieves compact architectures of minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial to reducing the computational and memory footprint that huge neural networks require.
 
 <div align=center>
 <a target="_blank" href="./../../docs/source/_static/imgs/pruning/pruning.PNG">
@@ -78,23 +78,23 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 
 
-Pruning Criteria determines how should the weights of a neural network be scored and pruned. In the image below, pruning scores are represented by neurons' color and those with the lowest scores are pruned. The magnitude and gradient are widely used to score the weights. Currently, Intel Neural Compressor supports **magnitude**, **gradient**, **snip** and **snip_momentum** criteria; pruning criteria is defined along with pruning type in Intel Neural Compressor configurations.
+Pruning Criteria determines how should the weights of a neural network are scored and pruned. In the image below, pruning score is represented by neurons' color and those with the lowest scores are pruned. The magnitude and the gradient are widely used to score the weights. Currently, Intel Neural Compressor supports **magnitude**, **gradient**, **snip** and **snip_momentum** criteria; pruning criteria is defined along with pruning type of Intel Neural Compressor configurations.
 
 - Magnitude
 
-  The algorithm prunes the weight by the lowest absolute value at each layer with given sparsity target.
+  The algorithm prunes the weight by the lowest absolute value of each layer with given sparsity target.
 
 - Gradient
 
-  The algorithm prunes the weight by the lowest gradient value at each layer with given sparsity target.
+  The algorithm prunes the weight by the lowest gradient value of each layer with given sparsity target.
 
 - SNIP
 
-  The algorithm prunes the dense model at its initialization, by analyzing the weights' effect to the loss function when they are masked. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for details
+  The algorithm prunes the dense model at its initialization, by analyzing the weights' effect to the loss function when they are masked. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for more details.
 
 - SNIP with momentum
 
-  The algorithm improves original SNIP algorithm and introduces weights' score maps which updates in a momentum way.\
+  The algorithm improves original SNIP algorithm and introduces weights' scored maps which update in a momentum way.\
   In the following formula, $n$ is the pruning step and $W$ and $G$ are model's weights and gradients respectively.
   $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
@@ -108,7 +108,7 @@ Pruning Criteria determines how should the weights of a neural network be scored
 
 
 
-Pruning schedule defines the way the model reach the target sparsity (the ratio of pruned weights). Both **one-shot** and **iterative** pruning schedules are supported.
+Pruning schedule defines the way the model reaches the target sparsity (the ratio of pruned weights). Both **one-shot** and **iterative** pruning schedules are supported.
 
 - One-shot Pruning
 
@@ -129,15 +129,15 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 
 
 
-Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criteria and types are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. We recommend using progressive pruning When choosing large size patterns like 1xchannel and channelx1.
+Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. We recommend using progressive pruning When choosing large size patterns like 1xchannel and channelx1.
 
 - Pattern_lock Pruning
 
-  Pattern_lock pruning type uses masks of a fixed pattern during the pruning process. It locks the sparsity pattern in finetuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied in the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
+  Pattern_lock pruning type uses masks of a fixed pattern during the pruning process. It locks the sparsity pattern in fine-tuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied for the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
 
 - Progressive Pruning
 
-  Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of interval masks during the pruning process. In this method, a sequence of masks are generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
+  Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of intervals masks during the pruning process. In this method, a sequence of masks is generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
   Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
 
   <div align = "center", style = "width: 77%; margin-bottom: 2%;">
@@ -145,12 +145,12 @@ Pruning type defines how the masks are generated and applied to a neural network
           <img src="../../docs/source/_static/imgs/pruning/progressive_pruning.png" alt="Architecture" width=400 height=280>
       </a>
   </div>
-    (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation. 
-    (b) uses masks with smaller structured blocks during every pruning step.
-    (c) inserts masks with smaller structured blocks between every pruning steps.
-    (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
+      (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation. \
+      (b) uses masks with smaller structured blocks during every pruning step.\
+      (c) inserts masks with smaller structured blocks between every pruning steps.\
+      (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
 
-  We use (d) as the mask interpolation implementation of progressive pruning. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks are selected to be pruned by referring to these weights’ score maps. We add these partial-zero unstructured masks to the previous structured masks and do pruning. After training the model with these interpolating masks, we rerurn the mask interpolation process by masking more elements in these blocks. After several steps of mask interpolation, we finally mask all weights in the blocks and train the model with pure block-wise sparsity.
+  We use (d) as the mask interpolation implementation of progressive pruning. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. We add these partial-zero unstructured masks to the previous structured masks and do pruning. After training the model with these interpolating masks, we return the mask interpolation process by masking more elements in these blocks. After several steps of mask interpolation, we finally mask all weights in the blocks and train the model with pure block-wise sparsity.
 
 
 
@@ -160,7 +160,7 @@ Range of sparse score calculation in iterative pruning, default scope is global.
 
 - Global
 
-  The score map is computed out of entire parameters, Some layers are higher than the target sparsity and some are lower, the total sparsity of the model reaches the target. You can also set the "min sparsity ratio"/"max sparsity ratio" to be the same as the target to achieve same sparsity for each layer in a global way.
+  The score map is computed out of entire parameters, Some layers are higher than the target sparsity and some of them are lower, the total sparsity of the model reaches the target. You can also set the "min sparsity ratio"/"max sparsity ratio" to be the same as the target to achieve same sparsity for each layer in a global way.
 
 
 
@@ -174,10 +174,10 @@ Range of sparse score calculation in iterative pruning, default scope is global.
 
 ### Sparsity Decay Type
 
-Growth rules for the sparsity of iterative pruning, "exp", "linear", "cos" and "cube" are available，We use exp by default.
+Growth rules for the sparsity of iterative pruning, "exp", "cos", "cube",  and "linear" are available，We use exp by default.
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/sparsity_decay_type.png">
-    <img src="../../docs/source/_static/imgs/pruning/sparsity_decay_type.png" width=850 height=230 alt="Regularization">
+    <img src="../../docs/source/_static/imgs/pruning/sparsity_decay_type.png" width=870 height=220 alt="Regularization">
 </a>
 </div>
 
@@ -185,11 +185,11 @@ Growth rules for the sparsity of iterative pruning, "exp", "linear", "cos" and "
 
 ### Regularization
 
-Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection. In the image below, some weights are pushed to be as small as possible and the connections are thus sparsified. **Group-lasso** method is used in Intel Neural Compressor.
+Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection. In the image below, some weights are pushed to be as small as possible and the connections are thus pruned. **Group-lasso** method is used in Intel Neural Compressor.
 
 - Group Lasso
 
-  The main idea of Group Lasso is to construct an objective function that penalizes the L2 parametrization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
+  The main ideas of Group Lasso are to construct an objective function that penalizes the L2 parameterization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Regularization.JPG">
@@ -202,12 +202,12 @@ Regularization is a technique that discourages learning a more complex model and
 
 
 
-Neural Compressor `Pruning` API is defined under `neural_compressor.pruner`, which takes a user-defined config object as input.
+Neural Compressor `Pruning` API is defined under `neural_compressor.pruner`, which takes a user-defined configure object as input.
 Users can pass the customized training/evaluation functions to `Pruning` in various scenarios.
 
 
 
-The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default setting is used as a complement.
+The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default set is used as a complement.
 
 - Step 1: Define a dict-like configuration in your training codes. We provide you a template of configuration below.
 
@@ -263,36 +263,16 @@ The following section exemplifies how to use hooks in user pass-in training func
                 lr_scheduler.step()
                 model.zero_grad()
     ```
-
-
- In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function. The pre-defined Neural Compressor hooks are listed below.
-
-
-
-```python
-    on_train_begin() : Execute at the beginning of training phase.
-    on_epoch_begin(epoch) : Execute at the beginning of each epoch.
-    on_step_begin(batch) : Execute at the beginning of each batch.
-    on_step_end() : Execute at the end of each batch.
-    on_epoch_end() : Execute at the end of each epoch.
-    on_before_optimizer_step() : Execute before optimization step.
-    on_after_optimizer_step() : Execute after optimization step.
-```
-
-
-
-
+ In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function.
 
 
 ## Validated Pruning Models
-
-
 
 We validate the pruning technique on typical models across various domains (including CV and NLP).
 
 - Text Classification
 
-  We implemented sparse with different pruning patterns on MRPC and SST-2 tasks [Text-classification examples](../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
+  We implemented sparse with different pruning patterns of MRPC and SST-2 tasks [Text-classification examples](../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
 
 - Question Answering
 
@@ -302,7 +282,7 @@ We validate the pruning technique on typical models across various domains (incl
 
   Pruning on YOLOv5 model using coco dataset [Object-etection examples](../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
-The API used in these examples [Pruning V2](../../docs/source/pruning.md#Get-Started-with-Pruning-API) are called differently from the current pruning one, both can achieve the same result, so you can choose the one you like.
+The API [Pruning V2](../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one we described above, both API can achieve the same result, so you can choose the one you like.
 
 
 
@@ -321,4 +301,6 @@ A complete overview of validated examples including quantization, pruning and di
 
 
 [1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.
+
 [2] Zafrir, Ofir, Ariel Larey, Guy Boudoukh, Haihao Shen, and Moshe Wasserblat. "Prune once for all: Sparse pre-trained language models." arXiv preprint arXiv:2111.05754 (2021).
+
