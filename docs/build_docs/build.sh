@@ -78,7 +78,7 @@ fi
 source env_sphinx/bin/activate
 
 cp -rf ../docs/ ./source
-cp -rf ../neural_coder ./source/docs
+cp -rf ../neural_coder ./source/docs/source
 cp -f "../README.md" "./source/docs/source/Welcome.md"
 cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
 cp ../neural_coder/extensions/screenshots/* ./source/docs/source/imgs
