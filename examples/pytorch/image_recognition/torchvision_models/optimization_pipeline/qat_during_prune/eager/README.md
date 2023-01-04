@@ -26,7 +26,7 @@ Command is shown as below:
 ```python
 python -u main.py \
     ~/imagenet \
-    --topology resnet50 \
+    --arch resnet50 \
     --prune \
     --quantize \
     --pretrained \
