@@ -129,7 +129,7 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 
 
-Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. We recommend using progressive pruning When choosing large size patterns like 1xchannel and channelx1.
+Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. progressive pruning is preferred when large patterns like 1xchannle and channelx1 are selected.
 
 - Pattern_lock Pruning
 
@@ -150,7 +150,7 @@ Pruning type defines how the masks are generated and applied to a neural network
       (c) inserts masks with smaller structured blocks between every pruning steps.  <Br/>
       (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
 
-  We use (d) as the mask interpolation implementation of progressive pruning. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. We add these partial-zero unstructured masks to the previous structured masks and do pruning. After training the model with these interpolating masks, we return the mask interpolation process by masking more elements in these blocks. After several steps of mask interpolation, we finally mask all weights in the blocks and train the model with pure block-wise sparsity.
+  (d) is adopted in progressive pruning implementation. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. these partial-zero unstructured masks are added to the previous structured masks and  pruning continues. After training the model with these interpolating masks and masking more elements in these blocks, the mask interpolation process is returned. After several steps of mask interpolation, Finally all weights in the blocks are masked and the model is trained as pure block-wise sparsity.
 
 
 
@@ -209,7 +209,7 @@ Users can pass the customized training/evaluation functions to `Pruning` in vari
 
 The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default set is used as a complement.
 
-- Step 1: Define a dict-like configuration in your training codes. We provide you a template of configuration below.
+- Step 1: Define a dict-like configuration in your training codes. A configuration template is shown below:
 
   ```python
       configs = [
@@ -268,11 +268,11 @@ The following section exemplifies how to use hooks in user pass-in training func
 
 ## Validated Pruning Models
 
-We validate the pruning technique on typical models across various domains (including CV and NLP).
+The pruning technique  has been validated on typical models across various domains (including CV and NLP).
 
 - Text Classification
 
-  We implemented sparse with different pruning patterns of MRPC and SST-2 tasks [Text-classification examples](../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
+  Sparsity is implemented in different pruning patterns of MRPC and SST-2 tasks [Text-classification examples](../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
 
 - Question Answering
 
@@ -282,7 +282,7 @@ We validate the pruning technique on typical models across various domains (incl
 
   Pruning on YOLOv5 model using coco dataset [Object-etection examples](../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
-The API [Pruning V2](../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one we described above, both API can achieve the same result, so you can choose the one you like.
+The API [Pruning V2](../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
 
 A complete overview of validated examples including quantization, pruning and distillation results could be found in  [Intel Neural Compressor Validated examples](../../docs/source/validated_model_list.md#validated-pruning-examples).
 
