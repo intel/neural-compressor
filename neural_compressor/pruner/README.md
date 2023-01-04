@@ -70,7 +70,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 <div align=center>
 <a target="_blank" href="../../docs/source/_static/imgs/pruning/Pruning_patterns.JPG">
-    <img src="../../docs/source/_static/imgs/pruning/Pruning_patterns.JPG" width=700 height=160 alt="Sparsity Pattern">
+    <img src="../../docs/source/_static/imgs/pruning/Pruning_patterns.JPG" width=700 height=150 alt="Sparsity Pattern">
 </a>
 </div>
 
