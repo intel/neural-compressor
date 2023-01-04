@@ -1064,8 +1064,8 @@ def main(_):
     eval_examples = processor.get_dev_examples(FLAGS.data_dir)
     eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
     dataset = Dataset(eval_file, FLAGS.eval_batch_size)
-    from neural_compressor.model.model import Model
-    from neural_compressor.model.base_model import BaseModel
+    from neural_compressor.model import Model
+    from neural_compressor.model import BaseModel
 
     def evaluate(model):
         """Custom evaluate function to estimate the accuracy of the bert model.
@@ -1108,7 +1108,7 @@ def main(_):
             latency = np.array(latency_list[warmup:]).mean() / FLAGS.eval_batch_size
             return latency
 
-        from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
+        from neural_compressor.data import DefaultDataLoader
         dataloader = DefaultDataLoader(dataset, collate_fn=collate_fn, batch_size=FLAGS.eval_batch_size)
         latency = eval_func(dataloader)
         if FLAGS.benchmark and FLAGS.mode == 'performance':
@@ -1147,7 +1147,7 @@ def main(_):
     if FLAGS.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.data import DataLoader
         config = PostTrainingQuantConfig(
             inputs=["input_file", "batch_size"],
             outputs=["loss/Softmax:0", "IteratorGetNext:3"],
@@ -1160,7 +1160,7 @@ def main(_):
         if FLAGS.strip_iterator:
             q_model.graph_def = strip_iterator(q_model.graph_def)
         q_model.save(FLAGS.output_model)
-  
+
     if FLAGS.benchmark:
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
             "Benchmark only supports performance or accuracy mode."
@@ -1176,9 +1176,9 @@ def main(_):
             print("Accuracy: %.5f" % accuracy)
 
 if __name__ == "__main__":
-  flags.mark_flag_as_required("data_dir")
-  flags.mark_flag_as_required("task_name")
-  flags.mark_flag_as_required("vocab_file")
-  flags.mark_flag_as_required("bert_config_file")
-  flags.mark_flag_as_required("output_dir")
-  tf.compat.v1.app.run()
+    flags.mark_flag_as_required("data_dir")
+    flags.mark_flag_as_required("task_name")
+    flags.mark_flag_as_required("vocab_file")
+    flags.mark_flag_as_required("bert_config_file")
+    flags.mark_flag_as_required("output_dir")
+    tf.compat.v1.app.run()

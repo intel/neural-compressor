@@ -102,7 +102,7 @@ After prepare step is done, we add quantization and benchmark code to generate q
 #### Benchmark
 ```python
     from neural_compressor.benchmark import fit
-    from neural_compressor.model.model import Model
+    from neural_compressor.model import Model
     from neural_compressor.config import BenchmarkConfig
     assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
     "Benchmark only supports performance or accuracy mode."
