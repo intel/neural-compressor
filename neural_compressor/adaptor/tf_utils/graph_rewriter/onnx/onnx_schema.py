@@ -15,27 +15,27 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""ONNX Operator Schemas for Tensorflow model converting to ONNX model."""
 
 import logging
-import copy
 from collections import defaultdict, OrderedDict
-from onnx import defs, helper, TensorProto, OperatorSetIdProto, shape_inference
+from onnx import defs
 
 from . import tf2onnx_utils as utils
 
 logger = logging.getLogger("neural_compressor")
 
-
 class OnnxOpSchema(object):
     """Wrapper for Onnx schema."""
 
     def __init__(self, name, domain, since_version, attributes):
-        """Create a Onnx schema
+        """Create a Onnx schema.
+
         Args:
             name (str): op name
-            attributes (List[str]): valid attributes
             domain (str): default value "" means it's Onnx domain
             since_version (int): opset version, default is 1
+            attributes (List[str]): valid attributes
         """
         self._name = name
         self._domain = domain
@@ -44,22 +44,27 @@ class OnnxOpSchema(object):
 
     @property
     def attributes(self):
+        """Get valid attributes."""
         return self._attributes
 
     @property
     def domain(self):
+        """Get domain info."""
         return self._domain
 
     @property
     def name(self):
+        """Get op name."""
         return self._name
 
     @property
     def since_version(self):
+        """Get opset version."""
         return self._since_version
 
     @staticmethod
     def from_onnx_schema(onnx_schema):
+        """Static method to construct OnnxOpSchema."""
         name = onnx_schema.name
         domain = onnx_schema.domain
         since_version = int(onnx_schema.since_version)
@@ -67,11 +72,12 @@ class OnnxOpSchema(object):
         return OnnxOpSchema(name, domain, since_version, attributes)
 
     def has_attribute(self, attr):
+        """Check if has the attribute."""
         return attr in self.attributes
 
 
 def _register_all_schemas_with_history():
-    """Register all schemas with history"""
+    """Register all schemas with history."""
     onnx_schemas = defs.get_all_schemas_with_history()
     name_domain_version_schema_map = defaultdict(lambda: defaultdict(dict))
     for s in onnx_schemas:
@@ -88,7 +94,7 @@ def _register_all_schemas_with_history():
 
 
 def _parse_domain_opset_versions(schemas):
-    """ Get max opset version among all schemas within each domain. """
+    """Get max opset version among all schemas within each domain."""
     domain_opset_versions = dict()
     for domain_version_schema_map in schemas.values():
         for domain, version_schema_map in domain_version_schema_map.items():

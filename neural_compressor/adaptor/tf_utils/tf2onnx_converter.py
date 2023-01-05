@@ -15,6 +15,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""Tensorflow QDQ model convert to ONNX QDQ model."""
+
 import logging
 import tensorflow as tf
 from onnx import helper
@@ -31,10 +33,13 @@ logger = logging.getLogger("neural_compressor")
 class TensorflowQDQToOnnxQDQConverter:
     """Convert tensorflow QDQ graph to ONNX QDQ graph."""
     def __init__(self, model, input_names, output_names, opset_version=utils.DEFAULT_OPSET_VERSION):
-        """constructor
+        """Constructor, initilization.
 
         Args:
             model (graphdef): tensorflow QDQ graphdef
+            input_names (list, optional): input names. Defaults to None.
+            output_names (list, optional): output names. Defaults to None.
+            opset_version (int, optional): opset version. Defaults to 14.
         """
         graph_def = self.tf_graph_optimize(model)
 
@@ -116,13 +121,10 @@ class TensorflowQDQToOnnxQDQConverter:
 
     @dump_elapsed_time("Pass TensorflowQDQToOnnxQDQConverter")
     def convert(self, save_path):
-        """ convert tensorflow QDQ model to onnx QDQ model
+        """Convert tensorflow QDQ model to onnx QDQ model.
 
         Args:
-          input_graph_def (graphdef): tensorflow QDQ graphdef object
-
-        Returns:
-           onnx QDQ graph
+          save_path (str): save path of ONNX QDQ model.
         """
         onnx_nodes = []
         output_shapes = {}

@@ -14,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Helper functions to export model from TensorFlow to ONNX."""
 
 from neural_compressor.utils import logger
@@ -25,7 +24,8 @@ def tf_to_fp32_onnx(
     save_path,
     opset_version=14,
     input_names=None,
-    output_names=None
+    output_names=None,
+    inputs_as_nchw=None
 ):
     """Export FP32 Tensorflow model into FP32 ONNX model using tf2onnx tool.
 
@@ -39,7 +39,8 @@ def tf_to_fp32_onnx(
     input_names[:] = [i+":0" for i in input_names]
     output_names[:] = [o+":0" for o in output_names]
     t2o.convert.from_graph_def(graph_def=graph_def, input_names=input_names,
-                      output_names=output_names, opset=opset_version, output_path=save_path)
+                      output_names=output_names, inputs_as_nchw=inputs_as_nchw,
+                      opset=opset_version, output_path=save_path)
     info = "The FP32 ONNX Model exported to path: {0}".format(save_path)
     logger.info("*"*len(info))
     logger.info(info)

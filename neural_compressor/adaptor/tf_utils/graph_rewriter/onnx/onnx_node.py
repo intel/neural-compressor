@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""ONNX Node wrapper for Tensorflow model converting to ONNX model."""
 
 import copy
 import logging
@@ -27,13 +28,15 @@ from . import tf2onnx_utils as utils
 logger = logging.getLogger("neural_compressor")
 
 class OnnxNode:
-    """A ONNX Node Wrapper use for graph manipulations."""
+    """A ONNX Node Wrapper used for graph manipulations."""
 
     def __init__(self, node, graph, skip_conversion=False):
         """Create ONNX Node.
+
         Args:
-            node: Onnx node in NodeProto
-            graph: OnnxGraph
+            node: Onnx node in NodeProto.
+            graph: OnnxGraph.
+            skip_conversion: bool for skipping node conversion.
         """
         self._op = node
         self.graph = graph
@@ -49,24 +52,29 @@ class OnnxNode:
 
     @property
     def input(self):
+        """Get node input."""
         return self._input
 
     @input.setter
     def input(self, val):
-        # The setter can catch that all inputs are change
-        # but it cannot catch that one input is changed.
-        # That's method replace_input and replace_inputs must
-        # be used to change inputs to let the graph instance
-        # update its internal indices.
+        """Node input setter.
+
+        The setter can catch that all inputs are change but it cannot catch that one input is changed.
+        That's method replace_input and replace_inputs must be used to change inputs to let
+        the graph instance update its internal indices.
+        """
         self._input = copy.deepcopy(val)
 
     @property
     def output(self):
+        """Get node output."""
         return self._output
 
     @output.setter
     def output(self, val):
-        """Set op output. Output should be updated explicitly,
+        """Set op output.
+
+        Output should be updated explicitly,
         changing it would require output mapping changed.
         """
         self._graph_check()
@@ -86,36 +94,15 @@ class OnnxNode:
 
     @property
     def attr(self):
+        """Get node attributes."""
         return self._attr
 
-    def get_value_attr(self, external_tensor_storage=None):
-        """Return onnx attr for value property of node.
-        Attr is modified to point to external tensor data stored in external_tensor_storage, if included.
-        """
-        a = self._attr["value"]
-        if external_tensor_storage is not None and self in external_tensor_storage.node_to_modified_value_attr:
-            return external_tensor_storage.node_to_modified_value_attr[self]
-        if external_tensor_storage is None or a.type != AttributeProto.TENSOR:
-            return a
-        if np.product(a.t.dims) > external_tensor_storage.external_tensor_size_threshold:
-            a = copy.deepcopy(a)
-            tensor_name = self.name.strip() + "_" + str(external_tensor_storage.name_counter)
-            for c in '~"#%&*:<>?/\\{|}':
-                tensor_name = tensor_name.replace(c, '_')
-            external_tensor_storage.name_counter += 1
-            external_tensor_storage.name_to_tensor_data[tensor_name] = a.t.raw_data
-            external_tensor_storage.node_to_modified_value_attr[self] = a
-            a.t.raw_data = b''
-            a.t.ClearField("raw_data")
-            location = a.t.external_data.add()
-            location.key = "location"
-            location.value = tensor_name
-            a.t.data_location = TensorProto.EXTERNAL
-        return a
+    def get_value_attr(self):
+        """Return onnx attr for value property of node."""
+        return self._attr["value"]
 
-    def get_onnx_attrs(self, external_tensor_storage=None):
-        """Return onnx valid attributes.
-        Attrs point to external tensor data stored in external_tensor_storage, if included."""
+    def get_onnx_attrs(self):
+        """Return onnx valid attributes."""
         schema = get_schema(self.type, self.graph.opset, self.domain)
         if schema is None and not (self.is_const() or self.is_graph_input()):
             logger.debug("Node %s uses non-stardard onnx op <%s, %s>, skip attribute check",
@@ -123,21 +110,23 @@ class OnnxNode:
         onnx_attrs = {}
         for a in self._attr.values():
             if a.name == "value":
-                onnx_attrs[a.name] = self.get_value_attr(external_tensor_storage)
+                onnx_attrs[a.name] = self.get_value_attr()
             elif schema is None or schema.has_attribute(a.name):
                 onnx_attrs[a.name] = a
         return onnx_attrs
 
     @property
     def name(self):
+        """Get op name."""
         return self._op.name
 
     def child_name(self):
+        """Set child name."""
         return utils.set_name(self.name)
 
     @property
     def op(self):
-        """TODO: have a better interface for this."""
+        """Get node's op."""
         return self._op
 
     @property
@@ -152,12 +141,12 @@ class OnnxNode:
 
     @property
     def domain(self):
-        """Return Op type."""
+        """Return Op domain."""
         return self._op.domain
 
     @domain.setter
     def domain(self, val):
-        """Set Op type."""
+        """Set Op domain."""
         self._op.domain = val
 
     @property
@@ -192,20 +181,25 @@ class OnnxNode:
         return t.shape == tuple()
 
     def is_graph_input(self):
+        """Check if the node is the input of the graph."""
         return self.type in ["Placeholder", "PlaceholderWithDefault", "PlaceholderV2"]
 
     def is_graph_input_default_const(self):
+        """Check if the node is the input of the graph and const."""
         return self.is_const() and any(
             out.is_graph_input() for out in self.graph.find_output_consumers(self.output[0])
         )
 
     def is_while(self):
+        """Check if the node is while op."""
         return self.type in ["While", "StatelessWhile", "Loop"]
 
     def __str__(self):
+        """Return string of the node op."""
         return str(self._op)
 
     def __repr__(self):
+        """Return string of op type and name."""
         return "<onnx op type='%s' name=%s>" % (self.type, self._op.name)
 
     @property
@@ -236,6 +230,7 @@ class OnnxNode:
         return attr
 
     def get_attr_value(self, name, default=None):
+        """Get attribute value."""
         attr = self.get_attr(name)
         if attr:
             return helper.get_attribute_value(attr)
@@ -260,21 +255,26 @@ class OnnxNode:
         return attr_str.decode(encoding)
 
     def set_attr(self, name, value):
+        """Set node's attribute."""
         self.attr[name] = helper.make_attribute(name, value)
 
     def set_attr_onnx(self, value):
+        """Set node's onnx attributes."""
         self.attr[value.name] = value
 
     @property
     def skip_conversion(self):
+        """Get skip conversion setting."""
         return self._skip_conversion
 
     @skip_conversion.setter
     def skip_conversion(self, val):
+        """Set skip conversion."""
         self._skip_conversion = val
 
     # If some Node is created as onnx_node, then we don't need convert it
     def need_skip(self):
+        """Check if need to skip conversion."""
         return self._skip_conversion
 
     @property
@@ -293,8 +293,10 @@ class OnnxNode:
 
     def get_tensor_value(self, as_list=True):
         """Get value for onnx tensor.
+
         Args:
             as_list: whether return numpy ndarray in list.
+
         Returns:
             If as_list=True, return the array as a (possibly nested) list.
             Otherwise, return data of type np.ndarray.
@@ -327,6 +329,7 @@ class OnnxNode:
 
     def set_tensor_value(self, new_val):
         """Set new value for existing onnx tensor.
+
         Args:
             new_val: value of type numpy ndarray
         """
@@ -344,10 +347,12 @@ class OnnxNode:
         self.graph.set_shape(onnx_tensor.name, list(onnx_tensor.dims))
 
     def get_body_graphs(self):
+        """Get body graphs."""
         self._graph_check()
         return self.graph.contained_graphs.get(self.name, None)
 
     def set_body_graph_as_attr(self, attr_name, graph):
+        """Set body graphs as attribute."""
         self._graph_check()
         if self.name not in self.graph.contained_graphs:
             self.graph.contained_graphs[self.name] = {}
@@ -355,7 +360,7 @@ class OnnxNode:
         self.graph.contained_graphs[self.name].update({attr_name: graph})
         graph.parent_graph = self.graph
 
-    def update_proto(self, external_tensor_storage=None):
+    def update_proto(self):
         """Update protobuf from internal structure."""
         nodes = list(self._op.input)
         for node in nodes:
@@ -373,11 +378,10 @@ class OnnxNode:
         attr_graphs = self.get_body_graphs()
         if attr_graphs:
             for attr_name, sub_graph in attr_graphs.items():
-                graph_proto = sub_graph.make_graph("graph for " + self.name + " " + attr_name,
-                                                   external_tensor_storage=external_tensor_storage)
+                graph_proto = sub_graph.make_graph("graph for " + self.name + " " + attr_name)
                 self.set_attr(attr_name, graph_proto)
 
-        attr = list(self.get_onnx_attrs(external_tensor_storage).values())
+        attr = list(self.get_onnx_attrs().values())
         if attr:
             self._op.attribute.extend(attr)
 
@@ -407,26 +411,5 @@ class OnnxNode:
         return list(outer_scope_node_input_ids)
 
     def _graph_check(self):
-        utils.assert_error(self.graph is not None, "Node %s not belonging any graph",
-                        self.name)
-
-    def maybe_cast_input(self, supported, type_map):
-        """.maybe_cast_input
-        Args:
-            supported: list of supported types for inputs
-            type_map: dict type to supported type mapping
-        """
-        did_cast = False
-        for i, name in enumerate(self.input):
-            dtype = self.graph.get_dtype(name)
-            if dtype not in supported[i]:
-                tdtype = type_map.get(dtype)
-                if tdtype is None:
-                    raise RuntimeError("don't know how to cast type {} on node {}".format(dtype, name))
-                shape = self.graph.get_shape(name)
-                cast_node = self.graph.insert_new_node_on_input(
-                    self, "Cast", name, to=tdtype)
-                self.graph.set_dtype(cast_node.output[0], tdtype)
-                self.graph.set_shape(cast_node.output[0], shape)
-                did_cast = True
-        return did_cast
+        """Check the graph is None."""
+        utils.assert_error(self.graph is not None, "Node %s not belonging any graph", self.name)

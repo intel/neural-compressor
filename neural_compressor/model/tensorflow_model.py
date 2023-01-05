@@ -867,12 +867,14 @@ class TensorflowBaseModel(BaseModel):
                     output_names=conf.output_names if conf.output_names else self.output_tensor_names
                 )
             elif conf.dtype == 'fp32':
+                inputs_as_nchw = conf.kwargs.get("inputs_as_nchw", None)
                 tf_to_fp32_onnx(
                     self.graph_def,
                     save_path,
                     opset_version=conf.opset_version,
                     input_names=conf.input_names if conf.input_names else self.input_tensor_names,
-                    output_names=conf.output_names if conf.output_names else self.output_tensor_names
+                    output_names=conf.output_names if conf.output_names else self.output_tensor_names,
+                    inputs_as_nchw=inputs_as_nchw
                 )
             else:   # pragma: no cover
                 assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)

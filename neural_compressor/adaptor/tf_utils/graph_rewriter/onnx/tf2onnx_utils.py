@@ -15,6 +15,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+"""Utils for Tensorflow model converting to ONNX model."""
+
 import os
 import copy
 import logging
@@ -137,7 +139,7 @@ def assert_error(bool_val, error_msg, *args):
         raise ValueError("Assert failure: " + error_msg % args)
 
 def map_numpy_to_onnx_dtype(np_dtype):
-    """Map numpy dtype to ONNX dtype"""
+    """Map numpy dtype to ONNX dtype."""
     for onnx_dtype, numpy_dtype in ONNX_TO_NUMPY_DTYPE.items():
         if numpy_dtype == np_dtype:
             return onnx_dtype
@@ -230,13 +232,13 @@ def read_tensorflow_node_attrs(node):
     return attr
 
 def infer_onnx_shape_dtype(node, opset_version, input_shapes, input_dtypes, initializers=None):
-    """
-    Infer shapes and dtypes for outputs of the node.
+    """Infer shapes and dtypes for outputs of the node.
+
     Sometimes, shape inference needs the values of node's inputs, so initializers are used.
     """
 
     def build_onnx_op(node):
-        """Build onnx op"""
+        """Build onnx op."""
         onnx_node = helper.make_node(node.type, node.input, node.output, name=node.name)
         # deal with attributes
         attr = []
@@ -305,30 +307,35 @@ def infer_onnx_shape_dtype(node, opset_version, input_shapes, input_dtypes, init
     return output_shapes, output_dtypes
 
 def make_onnx_shape(shape):
-    """shape with -1 is not valid in onnx ... make it a name."""
+    """Shape with -1 is not valid in onnx ... make it a name."""
     if shape:
         # don't do this if input is a scalar
         return [set_name("unk") if i == -1 else i for i in shape]
     return shape
 
 class SeqType:
-    """Wrap around TensorProto.* to signify a tensor sequence of a given type"""
+    """Wrap around TensorProto.* to signify a tensor sequence of a given type."""
     def __init__(self, tensor_dtype):
+        """Initlization."""
         self.dtype = tensor_dtype
 
     def __eq__(self, other):
+        """Check if the SeqType is same."""
         if isinstance(other, SeqType):
             return self.dtype == other.dtype
         return NotImplemented
 
     def __repr__(self):
+        """Return string of SeqType's dtype."""
         return "SeqType(%r)" % self.dtype
 
 def make_onnx_inputs_outputs(name, elem_type, shape, **kwargs):
-    """Wrapper for creating onnx graph inputs or outputs
-       name,  # type: Text
-       elem_type,  # type: TensorProto.DataType
-       shape,  # type: Optional[Sequence[int]]
+    """Wrapper for creating onnx graph inputs or outputs.
+
+    Args:
+        name: Text
+        elem_type: TensorProto.DataType
+        shape: Optional[Sequence[int]]
     """
     if elem_type is None:
         elem_type = onnx_pb.TensorProto.UNDEFINED
@@ -364,7 +371,7 @@ def is_list_or_tuple(obj):
     return isinstance(obj, (list, tuple))
 
 def are_shapes_equal(src, dest):
-    """ Check whether 2 shapes are equal. """
+    """Check whether 2 shapes are equal."""
     if src is None:
         return dest is None
     if dest is None:
@@ -378,7 +385,7 @@ def are_shapes_equal(src, dest):
     return all(i == j for i, j in zip(src, dest))
 
 def get_subgraphs_from_onnx(model_proto):
-    """Returns an iterator over the graphs/subgraphs of a model (using dfs)"""
+    """Returns an iterator over the graphs/subgraphs of a model (using dfs)."""
     stack = [model_proto.graph]
     while stack:
         g = stack.pop()
@@ -391,7 +398,7 @@ def get_subgraphs_from_onnx(model_proto):
                     stack.extend(attr.graphs)
 
 def initialize_name_counter(model_proto):
-    """Avoid name conflicts by initializing the counter used by make_name based on the provided model"""
+    """Avoid name conflicts by initializing the counter used by make_name based on the provided model."""
     suffix_regex = re.compile(r"__(\d+)(:\d+)?$")
     def avoid_name(name):
         global INSERTED_OP_NAME
