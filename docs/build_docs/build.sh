@@ -141,6 +141,7 @@ if [[ ${CHECKOUT_GH_PAGES} -eq 1 ]]; then
   echo 3
   git branch --set-upstream-to=origin/gh-pages gh-pages
   echo 4
+  git config pull.rebase true
   git pull
   echo 5
   git fetch origin
