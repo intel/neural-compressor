@@ -183,6 +183,7 @@ BNInception
 bobw
 booktitle
 bool
+Boudoukh
 BoW
 boxlist
 BoxList
@@ -905,6 +906,7 @@ lang
 LanguageModeling
 Lapata
 Larochelle
+Larey
 LastLayerShape
 latencies
 LaTeX
@@ -2502,3 +2504,9 @@ SmoothQuant
 Vecchio
 WeChat
 QuaLA
+Moshe
+Ofir
+Wasserblat
+Zafrir
+etection
+parameterization
