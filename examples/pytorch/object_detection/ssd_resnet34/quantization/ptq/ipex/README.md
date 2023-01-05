@@ -1,7 +1,11 @@
-# SSD-ResNet34 Inference
+Step-by-Step
+============
+
 > Note: IPEX version >= 1.10
 
-## Model Specific Setup
+# Prerequisite
+
+## 1. Model Specific Setup
 - Install dependencies
 
 ```
@@ -31,7 +35,7 @@
     export DNNL_MAX_CPU_ISA=AVX512_CORE_AMX
 ```
 
-## Dataset
+## 2. Prepare Dataset
 Download the 2017 COCO dataset using the `download_dataset.sh` script. 
 
 ```
@@ -40,7 +44,7 @@ Download the 2017 COCO dataset using the `download_dataset.sh` script.
     bash download_dataset.sh
 ```
 
-## Run
+# Run
 
 
 ```
