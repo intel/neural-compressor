@@ -144,6 +144,7 @@ if [[ ${CHECKOUT_GH_PAGES} -eq 1 ]]; then
   git branch --set-upstream-to=origin/gh-pages gh-pages
   git fetch origin gh-pages
   git reset --hard FETCH_HEAD
+  git clean -df
   
   git fetch origin
   git reset --hard origin/gh-pages
