@@ -102,6 +102,9 @@ DST_FOLDER=./${VERSION}
 LATEST_FOLDER=./latest
 SRC_FOLDER=build/html
 
+ROOT_DST_FOLDER=../${VERSION}
+ROOT_LATEST_FOLDER=../latest
+
 if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
   echo "create ${DST_FOLDER}"
   rm -rf ${DST_FOLDER}/*
@@ -147,12 +150,12 @@ if [[ ${CHECKOUT_GH_PAGES} -eq 1 ]]; then
   git reset --hard origin/gh-pages
  
   if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
-    python update_version.py ${DST_FOLDER} ${VERSION}
+    python update_version.py ${ROOT_DST_FOLDER} ${VERSION}
     cp -rf ${DST_FOLDER} ../
   fi
 
   if [[ ${UPDATE_LATEST_FOLDER} -eq 1 ]]; then
-    python update_version.py ${LATEST_FOLDER} ${VERSION}
+    python update_version.py ${ROOT_LATEST_FOLDER} ${VERSION}
     cp -rf ${LATEST_FOLDER} ../
   fi
 
@@ -163,8 +166,7 @@ fi
 echo "UPDATE_LATEST_FOLDER=${UPDATE_LATEST_FOLDER}"
 echo "UPDATE_VERSION_FOLDER=${UPDATE_VERSION_FOLDER}"
 
-ROOT_DST_FOLDER=../${VERSION}
-ROOT_LATEST_FOLDER=../latest
+
 
 if [[ ${PUSH_GH_PAGES} -eq 1 ]]; then
   if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
