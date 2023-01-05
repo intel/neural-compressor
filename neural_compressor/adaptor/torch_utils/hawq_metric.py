@@ -21,17 +21,15 @@ torch = LazyImport("torch")
 
 import copy
 import numpy as np
-from collections import OrderedDict
 import torch.nn
 from torch.quantization.quantize_fx import fuse_fx
-import torch.nn.intrinsic.quantized as nniq
-from torch.fx import symbolic_trace, graph_module
 import torch.nn as nn
 import logging
 
 logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional, Any, Union, Callable, Set
 import torch
+import tqdm
 
 class Node_collector:
     """Define Collector based on hook, which is used to record the intermediate result."""
@@ -71,7 +69,7 @@ class HessianTrace:
             self.model = model.model
         else:
             logger.info("fusing model")
-            self.model = fuse_fx(model.model)  ##TODO need to check whether model has been already fused
+            self.model = fuse_fx(model.model)
         self.dataloader = dataloader
         self.max_iter = 500
         self.tolerance = 1e-5
@@ -290,7 +288,6 @@ class HessianTrace:
         Returns:
             op_name_to_trace (dict): op names to trace.
         """
-        import tqdm
         layer_traces_per_iter = []
         prev_avg_model_trace = 0
         for iter in tqdm.tqdm(range(self.max_iter)):
