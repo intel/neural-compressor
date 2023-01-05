@@ -141,7 +141,7 @@ if [[ ${CHECKOUT_GH_PAGES} -eq 1 ]]; then
   git pull
   git fetch origin gh-pages
   git reset --hard FETCH_HEAD
-  git clean -df
+  #git clean -df
  
   if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
     python update_version.py ${DST_FOLDER} ${VERSION}
