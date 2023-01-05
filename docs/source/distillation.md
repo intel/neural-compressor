@@ -18,7 +18,7 @@ Distillation
 Distillation is one of popular approaches of network compression, which transfers knowledge from a large model to a smaller one without loss of validity. As smaller models are less expensive to evaluate, they can be deployed on less powerful hardware (such as a mobile device). Graph shown below is the workflow of the distillation, the teacher model will take the same input that feed into the student model to produce the output that contains knowledge of the teacher model to instruct the student model.
 <br>
 
-<img src="./_static/imgs/Distillation_workflow.png" alt="Architecture" width=700 height=300>
+<img src="./imgs/Distillation_workflow.png" alt="Architecture" width=700 height=300>
 
 Intel® Neural Compressor supports Knowledge Distillation and Intermediate Layer Knowledge Distillation algorithms.
 
@@ -43,7 +43,7 @@ Self-distillation ia a one-stage training method where the teacher model and stu
 The additional classifiers in self-distillation allow the neural network to work in a dynamic manner, which leads to a much higher acceleration.
 <br>
 
-<img src="./_static/imgs/self-distillation.png" alt="Architecture" width=800 height=350>
+<img src="./imgs/self-distillation.png" alt="Architecture" width=800 height=350>
 
 Architecture from paper [Self-Distillation: Towards Efficient and Compact Neural Networks](https://ieeexplore.ieee.org/document/9381661)
 

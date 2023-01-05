@@ -16,9 +16,9 @@ Intel has worked with the TensorFlow development team to enhance TensorFlow to i
 
 - BF16 conversion during quantization in TensorFlow
 
-<a target="_blank" href="./_static/imgs/bf16_convert_tf.png" text-align:center>
+<a target="_blank" href="./imgs/bf16_convert_tf.png" text-align:center>
     <center> 
-        <img src="./_static/imgs/bf16_convert_tf.png" alt="Architecture" height=200> 
+        <img src="./imgs/bf16_convert_tf.png" alt="Architecture" height=200> 
     </center>
 </a>
 
@@ -43,9 +43,9 @@ Intel has also worked with the PyTorch development team to enhance PyTorch to in
 
 - BF16 conversion during quantization in PyTorch
 
-<a target="_blank" href="./_static/imgs/bf16_convert_pt.png" text-align:center>
+<a target="_blank" href="./imgs/bf16_convert_pt.png" text-align:center>
     <center> 
-        <img src="./_static/imgs/bf16_convert_pt.png" alt="Architecture" height=200> 
+        <img src="./imgs/bf16_convert_pt.png" alt="Architecture" height=200> 
     </center>
 </a>
 
