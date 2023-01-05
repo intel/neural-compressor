@@ -17,6 +17,9 @@ jobs:
         git config --local --get remote.origin.url
         cd docs/build_docs
         bash build.sh latest
+     - name: Remove files
+        run: |
+          rm -rf build_tmp
     - name: Push to github
       uses: peaceiris/actions-gh-pages@v3
       with:
