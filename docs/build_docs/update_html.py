@@ -8,13 +8,11 @@ def find_index_path(index_file):
             pos = line.find('index.html" class="icon icon-home"')
             if pos<0:
                 continue
-            print('pos', pos)
             pos1 = line.rfind("\"", 0, pos)
-            print('pos1', pos1)
             if pos1<0:
                 return ""
             else:
-                return line[pos1+1: pos]
+                return "../" + line[pos1+1: pos]
     return "ignore"
 
 def update_version_link(version, folder_name, index_file):
