@@ -1,14 +1,17 @@
-# Evaluate performance of ONNX Runtime(MobileBERT) 
->ONNX runtime quantization is under active development. please use 1.6.0+ to get more quantization support. 
+Step-by-Step
+============
 
-This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task. 
+This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task.
 
-### Environment
+# Prerequisite
+
+## 1. Environment
 onnx: 1.12.0  
 onnxruntime: 1.13.1
 > Validated framework versions can be found in main readme.
 
-### Prepare dataset
+## 2. Prepare Model
+
 Download pretrained bert model. We will refer to `vocab.txt` file.
 
 ```bash
@@ -24,9 +27,14 @@ wget https://github.com/fatihcakirs/mobile_models/raw/main/v0_7/tflite/mobileber
 python -m tf2onnx.convert --opset 11 --tflite mobilebert_float_384_20200602.tflite --output mobilebert_SQuAD.onnx
 ```
 
-### Quantization
+## 3. Prepare Dataset
+Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
 
-Dynamic quantize:
+# Run
+
+## 1. Quantization
+
+Quantize model with dynamic quantization:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
@@ -34,7 +42,7 @@ bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --dataset_location=/path/to/SQuAD/dataset 
 ```
 
-QDQ mode:
+Quantize model with QDQ mode:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
@@ -43,7 +51,7 @@ bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --quant_format='QDQ'
 ```
 
-### Benchmark
+## 2. Benchmark
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
@@ -51,5 +59,3 @@ bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --batch_size=batch_size \
                    --mode=performance # or accuracy
 ```
-
-

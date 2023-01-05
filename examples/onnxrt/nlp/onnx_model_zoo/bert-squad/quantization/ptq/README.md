@@ -1,17 +1,17 @@
-# Evaluate performance of ONNX Runtime(BERT) 
->ONNX runtime quantization is under active development. please use 1.6.0+ to get more quantization support. 
+Step-by-Step
+============
 
-This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task. 
+This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task.
 
-### Environment
+# Prerequisite
+
+## 1. Environment
 onnx: 1.12.0  
 onnxruntime: 1.13.1
 > Validated framework versions can be found in main readme.
 
-### Prepare dataset
-You should download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
+## 2. Prepare Model
 
-### Prepare model
 Download pretrained bert model. We will refer to `vocab.txt` file.
 
 ```bash
@@ -20,13 +20,19 @@ unzip uncased_L-12_H-768_A-12.zip
 ```
 
 Download BERT-Squad from [onnx model zoo](https://github.com/onnx/models/tree/master/text/machine_comprehension/bert-squad).
+
 ```bash
 wget https://github.com/onnx/models/raw/main/text/machine_comprehension/bert-squad/model/bertsquad-12.onnx
 ```
 
-### Quantization
+## 3. Prepare Dataset
+Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
 
-Dynamic quantize:
+# Run
+
+## 1. Quantization
+
+Quantize model with dynamic quantization:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
@@ -34,16 +40,7 @@ bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --dataset_location=/path/to/SQuAD/dataset 
 ```
 
-QDQ mode:
-
-```bash
-bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
-                   --output_model=/path/to/model_tune \
-                   --dataset_location=/path/to/SQuAD/dataset \
-                   --quant_format='QDQ'
-```
-
-### Benchmark
+## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=/path/to/model \ # model path as *.onnx
@@ -51,4 +48,3 @@ bash run_benchmark.sh --input_model=/path/to/model \ # model path as *.onnx
                       --batch_size=batch_size \ 
                       --mode=performance # or accuracy
 ```
-
