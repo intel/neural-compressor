@@ -219,6 +219,7 @@ def evaluation(model, accelerator, eval_dataloader, metric):
     logger.info(f"eval_metric : {eval_metric}")
     return eval_metric['accuracy']
 
+
 def save_checkpoint(state, is_best, save_dir):
     """Saves checkpoint to disk"""
     if not os.path.exists(save_dir):
@@ -227,6 +228,7 @@ def save_checkpoint(state, is_best, save_dir):
     torch.save(state, filename)
     if is_best:
         shutil.copyfile(filename, save_dir + 'model_best.pth')
+
 
 def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_manager, accelerator, eval_dataloader, metric):
     # Train!
@@ -241,9 +243,8 @@ def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_ma
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
     # Only show the progress bar once on each machine.
     completed_steps = 0
-    best_prec = 0
+    best_prec1 = 0
 
-    compression_manager.callbacks.on_train_begin()
     model_device = next(model.parameters()).device
     for epoch in range(args.num_train_epochs):
         model.train()
@@ -261,7 +262,7 @@ def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_ma
             outputs_for_kd = torch.vstack([torch.vstack([sx, ex]) \
                 for sx, ex in zip(outputs['start_logits'], outputs['end_logits'])])
             loss = outputs['loss'].item()
-            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs, loss, teacher_logits)
+            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs_for_kd, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
 
@@ -277,16 +278,15 @@ def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_ma
 
         compression_manager.callbacks.on_epoch_end()
         best_score = evaluation(model, accelerator, eval_dataloader, metric)
-        is_best = best_score > best_prec
-        best_prec = max(best_score, best_prec)
+        is_best = best_score > best_prec1
+        best_prec1 = max(best_score, best_prec1)
         save_checkpoint({
             'epoch': epoch + 1,
             'state_dict': model.state_dict(),
-            'best_prec1': best_prec,
+            'best_prec1': best_prec1,
         }, is_best, args.output_dir)
 
     model.load_state_dict(torch.load(args.output_dir + "/model_best.pth")["state_dict"])
-    compression_manager.callbacks.on_train_end()
 
 
 def main():
@@ -607,8 +607,8 @@ def main():
 
     from neural_compressor.training import prepare_compression
     compression_manager = prepare_compression(model, combs)
+    compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
-
     train(args,
           model,
           train_dataloader=train_dataloader,
@@ -618,6 +618,7 @@ def main():
           accelerator=accelerator,
           eval_dataloader=eval_dataloader,
           metric=metric)
+    compression_manager.callbacks.on_train_end()
 
     if accelerator.local_process_index in [-1, 0]:
         model.save(args.output_dir)
