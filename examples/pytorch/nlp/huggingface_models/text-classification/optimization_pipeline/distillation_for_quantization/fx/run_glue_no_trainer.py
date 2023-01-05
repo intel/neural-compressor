@@ -534,8 +534,8 @@ def main():
 
     from neural_compressor.training import prepare_compression
     compression_manager = prepare_compression(model, combs)
-    model = compression_manager.model
     compression_manager.callbacks.on_train_begin()
+    model = compression_manager.model
     train(args, model, train_dataloader, lr_scheduler, compression_manager, optimizer, eval_dataloader,
           metric)
     compression_manager.callbacks.on_train_end()
