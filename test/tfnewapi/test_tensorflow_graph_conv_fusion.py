@@ -88,10 +88,14 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
+            f = tf.io.gfile.GFile('dump0.pb', 'wb')
+            f.write(output_graph_def.SerializeToString())
             quantizer.model = output_graph_def
             output_graph = quantizer.fit()
 
             find_single_qconv = []
+            f = tf.io.gfile.GFile('dump.pb', 'wb')
+            f.write(output_graph.graph_def.SerializeToString())
             for i in output_graph.graph_def.node:
                 if i.op == '_FusedQuantizedConv2D':
                     find_single_qconv.append(i.attr['fused_ops'].list.s == [b'Requantize'])

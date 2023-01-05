@@ -10,7 +10,48 @@ from neural_compressor.adaptor.tf_utils.util import disable_random
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
 
+def build_fake_yaml():
+    fake_yaml = '''
+        model:
+          name: fake_yaml
+          framework: tensorflow
+          inputs: input
+        device: cpu
+        quantization:
+          model_wise:
+            weight:
+                granularity: per_tensor
+                scheme: sym
+                dtype: int8
+                algorithm: minmax
+        evaluation:
+          accuracy:
+            metric:
+              topk: 1
+        tuning:
+            strategy:
+              name: basic
+            accuracy_criterion:
+              relative: 0.1
+            exit_policy:
+              performance_only: True
+            workspace:
+              path: saved
+        '''
+    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
+    with open('fake_yaml.yaml', "w", encoding="utf-8") as f:
+        yaml.dump(y, f)
+    f.close()
+
 class TestBiasCorrectionNewApi(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        build_fake_yaml()
+
+    @classmethod
+    def tearDownClass(self):
+        os.remove('fake_yaml.yaml')
+
     @disable_random()
     def test_bias_correction_new_api(self):
         tf.compat.v1.disable_eager_execution()
@@ -41,13 +82,18 @@ class TestBiasCorrectionNewApi(unittest.TestCase):
                 "Conv2D": (False, 'minmax', False, 7.0),
             }
 
-            int8_graph_def, _, _ = QuantizeGraphForIntel(output_graph_def, inputs, outputs,
-                                                   op_wise_config, op_wise_sequences,
-                                                  'cpu', False, True).do_transform()
+            from neural_compressor.experimental import Quantization, common
+            quantizer = Quantization('fake_yaml.yaml')
+            dataset = quantizer.dataset('dummy', shape=(100, 224, 224, 3), label=True)
+            quantizer.eval_dataloader = common.DataLoader(dataset)
+            quantizer.calib_dataloader = common.DataLoader(dataset)
+            quantizer.model = output_graph_def
+            int8_output_graph = quantizer.fit()
 
         correct_graph_def = BiasCorrection(
-            int8_graph_def, output_graph_def, 'weight_empirical', True).do_transformation()
-        self.assertEqual(len(correct_graph_def.node), len(int8_graph_def.node))
+            int8_output_graph.graph_def, output_graph_def, 'weight_empirical', True).do_transformation()
+
+        self.assertEqual(len(correct_graph_def.node), len(correct_graph_def.node))
 
 class TestBiasCorrectionOldApi(unittest.TestCase):
     @disable_random()
