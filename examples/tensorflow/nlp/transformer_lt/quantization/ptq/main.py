@@ -131,9 +131,9 @@ def load_graph(file_name):
 
 def eval_func(infer_graph, iteration=-1):
     if isinstance(infer_graph, tf.compat.v1.GraphDef):
-        graph = tf.Graph() 
+        graph = tf.Graph()
         with graph.as_default():
-            tf.import_graph_def(infer_graph, name='') 
+            tf.import_graph_def(infer_graph, name='')
         infer_graph = graph
 
     subtokenizer = Subtokenizer(FLAGS.vocab_file)
@@ -174,7 +174,7 @@ def eval_func(infer_graph, iteration=-1):
         print('Batch size = {}'.format(FLAGS.batch_size))
         print('Latency: {:.3f} ms'.format(latency * 1000))
         print('Throughput: {:.3f} items/sec'.format(1./ latency))
-    
+
     # only calculate accuracy when running out all predictions
     if iteration == -1:
         decode = []
@@ -189,7 +189,7 @@ def eval_func(infer_graph, iteration=-1):
         bleu_eval.update(decode, labels)
         print('Accuracy is {:.3f}'.format(bleu_eval.result()))
         return bleu_eval.result()
- 
+
 class Dataset(object):
     def __init__(self, inputs_file, reference_file, vocab_file):
         with tf.io.gfile.GFile(inputs_file) as f:
@@ -197,22 +197,22 @@ class Dataset(object):
             inputs = [record.strip() for record in records]
             if not inputs[-1]:
                 inputs.pop()
-    
+
         self.ref_lines = tokenizer.native_to_unicode(
             tf.io.gfile.GFile(reference_file).read()).strip().splitlines()
-        
+
         subtokenizer = Subtokenizer(vocab_file)
         self.batch = []
         token_lens=[]
         for i, line in enumerate(inputs):
             enc = subtokenizer.encode(line, add_eos=True)
             token_lens.append((i, len(enc)))
-    
+
         sorted_by_token_input_lens = sorted(token_lens, key=lambda x: x[1], reverse=True)
-    
+
         sorted_inputs = [None] * len(sorted_by_token_input_lens)
         sorted_keys = [0] * len(sorted_by_token_input_lens)
-    
+
         lines = []
         for i, (index, _) in enumerate(sorted_by_token_input_lens):
             sorted_inputs[i] = inputs[index]
@@ -234,7 +234,7 @@ def main(_):
     graph = load_graph(FLAGS.input_graph)
     if FLAGS.tune:
         from neural_compressor import quantization
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.data import DataLoader
         from neural_compressor.config import PostTrainingQuantConfig
         ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
         calib_dataloader = DataLoader(dataset=ds, collate_fn=collate_fn, \
@@ -248,7 +248,7 @@ def main(_):
             q_model.save(FLAGS.output_model)
         except Exception as e:
             print("Failed to save model due to {}".format(str(e)))
-    
+
     if FLAGS.benchmark:
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
         "Benchmark only supports performance or accuracy mode."
@@ -259,7 +259,6 @@ def main(_):
             fit(graph, conf, b_func=eval_func)
         elif FLAGS.mode == 'accuracy':
             eval_func(graph)
-        
+
 if __name__ == "__main__":
     tf.compat.v1.app.run()
-                                

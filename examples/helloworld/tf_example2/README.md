@@ -26,9 +26,8 @@ python test.py
 ```
 ## Introduction 
 This example can demonstrate the steps to do quantization on Keras generated saved model with customized dataloader and metric. 
-### 1. Add inputs and outputs information into conf.yaml, to get the input and output tensor name please refer to helloworld/train.py.  
 
-### 2. Define a customer dataloader for mnist  
+### 1. Define a customer dataloader for mnist  
 
 ```python
     class Dataset(object):
@@ -47,7 +46,7 @@ This example can demonstrate the steps to do quantization on Keras generated sav
 
 ```
 
-### 3. Define a customized metric  
+### 2. Define a customized metric  
 This customized metric will calculate accuracy.
 ```python
     class MyMetric(object):
@@ -75,21 +74,22 @@ This customized metric will calculate accuracy.
           return correct_num / self.samples
 
 ```
-### 4. Use the customized data loader and metric for quantization 
+### 3. Use the customized data loader and metric for quantization 
 ```python
     dataset = Dataset()
+    dataloader = DataLoader(framework='tensorflow', dataset=dataset, batch_size=1)
     config = PostTrainingQuantConfig()
     q_model = fit(
         model='../models/saved_model',
         conf=config,
-        calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset, batch_size=1),
-        eval_dataloader=DataLoader(framework='tensorflow', dataset=dataset, batch_size=1),
+        calib_dataloader=dataloader,
+        eval_dataloader=dataloader,
         eval_metric=MyMetric())
 
 ```
 
-### 5. Run quantized model
-please get the input and output op name from nc_workspace/tensorflow/hello_world/deploy.yaml
+### 4. Run quantized model
+Please get the input and output op name from nc_workspace/tensorflow/hello_world/deploy.yaml
 
 Run inference on the quantized model
 ```python

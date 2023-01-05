@@ -121,7 +121,9 @@ class QConv2D(Conv):
         self.weight_quantizer = Quantize(float(min_value), float(max_value))
         self.weight_dequantizer = DeQuantize(float(min_value), float(max_value))
 
-    def call(self, inputs):
+    def call(self, inputs):   # pragma: no cover
+      # This call method will be automatically decorated by tf.function in TF2
+      # and will not be observed by coverage check
       input_shape = inputs.shape
 
       if self._is_causal:  # Apply causal padding to inputs for Conv1D.
@@ -190,7 +192,9 @@ class QDense(Dense):
       self.weight_quantizer = Quantize(float(min_value), float(max_value))
       self.weight_dequantizer = DeQuantize(float(min_value), float(max_value))
 
-    def call(self, inputs):
+    def call(self, inputs):   # pragma: no cover
+      # This call method will be automatically decorated by tf.function in TF2
+      # and will not be observed by coverage check
       if inputs.dtype.base_dtype != self._compute_dtype_object.base_dtype:
         inputs = math_ops.cast(inputs, dtype=self._compute_dtype_object)
 

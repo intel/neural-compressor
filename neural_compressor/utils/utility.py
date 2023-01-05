@@ -373,17 +373,17 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
     from neural_compressor.adaptor import FRAMEWORKS
     adaptor = FRAMEWORKS[framework](q_config['framework_specific_info'])
     if 'onnx' in framework:
-        from neural_compressor.model.model import Model
+        from neural_compressor.model import Model
         ox_fp32_model = Model(fp32_model)
         tune_index_qmodel = adaptor.recover(ox_fp32_model, q_config)
         return tune_index_qmodel
     elif 'tensorflow' in framework:
-        from neural_compressor.model.model import Model
+        from neural_compressor.model import Model
         tf_fp32_model = Model(fp32_model)
         tune_index_qmodel = adaptor.recover_tuned_model(tf_fp32_model, q_config)
         return tune_index_qmodel
     elif 'mxnet' in framework:
-        from neural_compressor.model.model import Model
+        from neural_compressor.model import Model
         mx_fp32_model = Model(fp32_model)
         tune_index_qmodel = adaptor.recover_tuned_model(mx_fp32_model, q_config)
         return tune_index_qmodel

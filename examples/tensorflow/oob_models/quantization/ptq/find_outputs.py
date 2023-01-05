@@ -161,7 +161,7 @@ def get_input_output(graph_path, args):
     fix_dynamic_shape = 300
 
     if args.use_nc:
-        from neural_compressor.model.model import Model
+        from neural_compressor.model import Model
         model = Model(graph_path)
         if args.output_name in [[], ['']]:
             raise AttributeError("Empty '--output_name', please specify a valid '--output_name'.")

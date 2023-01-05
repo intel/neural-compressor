@@ -535,7 +535,7 @@ class TensorFlowAdaptor(Adaptor):
             assert q_func is not None, "quantization aware training mode \
                 is not configured correctly"
 
-            from neural_compressor.model.model import Model
+            from neural_compressor.model import Model
             qat_model = q_func(model)
 
             return self.convert(Model(qat_model), 'QAT', 'default')
