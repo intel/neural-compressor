@@ -234,30 +234,30 @@ def train(args, model, train_dataloader, lr_scheduler, compression_manager, opti
     completed_steps = 0
     best_prec = 0
 
-    compression_manager.on_train_begin()
+    compression_manager.callbacks.on_train_begin()
 
     model_device = next(model.parameters()).device
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
-        compression_manager.on_epoch_begin(epoch)
+        compression_manager.callbacks.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
             batch = move_input_to_device(batch, model_device)
-            compression_manager.on_step_begin(step)
+            compression_manager.callbacks.on_step_begin(step)
             outputs = model(**batch)
-            loss = compression_manager.on_after_compute_loss(batch, outputs['logits'], outputs['loss'])
+            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs['logits'], outputs['loss'])
             loss = loss / args.gradient_accumulation_steps
             loss.backward()
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                compression_manager.on_before_optimizer_step()
+                compression_manager.callbacks.on_before_optimizer_step()
                 optimizer.step()
                 lr_scheduler.step()
                 optimizer.zero_grad()
                 completed_steps += 1
-            compression_manager.on_step_end()
+            compression_manager.callbacks.on_step_end()
             if completed_steps >= args.max_train_steps:
                 break
-        compression_manager.on_epoch_end()
+        compression_manager.callbacks.on_epoch_end()
         best_score = evaluation(model, eval_dataloader, metric)
         is_best = best_score > best_prec
         best_prec = max(best_score, best_prec)

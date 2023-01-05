@@ -243,15 +243,15 @@ def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_ma
     completed_steps = 0
     best_prec = 0
 
-    compression_manager.on_train_begin()
+    compression_manager.callbacks.on_train_begin()
     model_device = next(model.parameters()).device
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
-        compression_manager.on_epoch_begin(epoch)
+        compression_manager.callbacks.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
             batch = move_input_to_device(batch, model_device)
-            compression_manager.on_step_begin(step)
+            compression_manager.callbacks.on_step_begin(step)
             teacher_logits = None
             if 'teacher_logits' in batch:
                 teacher_logits = batch['teacher_logits']
@@ -261,17 +261,17 @@ def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_ma
             outputs_for_kd = torch.vstack([torch.vstack([sx, ex]) \
                 for sx, ex in zip(outputs['start_logits'], outputs['end_logits'])])
             loss = outputs['loss'].item()
-            loss = compression_manager.on_after_compute_loss(batch, outputs, loss, teacher_logits)
+            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
 
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                compression_manager.on_before_optimizer_step()
+                compression_manager.callbacks.on_before_optimizer_step()
                 optimizer.step()
                 lr_scheduler.step()
                 optimizer.zero_grad()
                 completed_steps += 1
-            compression_manager.on_step_end()
+            compression_manager.callbacks.on_step_end()
             if completed_steps >= args.max_train_steps:
                 break
 
@@ -286,7 +286,7 @@ def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_ma
         }, is_best, args.output_dir)
 
     model.load_state_dict(torch.load(args.output_dir + "/model_best.pth")["state_dict"])
-    compression_manager.on_train_end()
+    compression_manager.callbacks.on_train_end()
 
 
 def main():
@@ -607,7 +607,6 @@ def main():
 
     from neural_compressor.training import prepare_compression
     compression_manager = prepare_compression(model, combs)
-    compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
 
     train(args,
