@@ -1,0 +1,85 @@
+model:                                               # mandatory. neural_compressor uses this model name and framework name to decide where to save tuning history and deploy yaml.
+  name: yolo_v3
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, or mxnet; allow new framework backend extension.
+  inputs: inputs
+  outputs: output_boxes
+
+device: cpu                                          # optional. default value is cpu, other value is gpu.
+
+quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+  calibration:
+    sampling_size: 2                  # optional. default value is the size of whole dataset. used to set how many portions of calibration dataset is used. exclusive with iterations field.
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
+      batch_size: 1
+      dataset:
+        COCORecord:
+          root: /path/to/calibration/dataset
+      filter:
+        LabelBalance:
+          size: 1
+      transform:
+        ParseDecodeCoco:
+        ResizeWithRatio:
+          min_dim: 416
+          max_dim: 416
+          padding: True
+
+  model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+    activation:
+      algorithm: minmax
+    weight:
+      granularity: per_channel
+  op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space.
+         'detector/yolo-v3/Conv_6/Conv2D': {
+           'activation':  {'dtype': ['fp32']},
+         },
+         'detector/yolo-v3/Conv_14/Conv2D': {
+           'activation':  {'dtype': ['fp32']},
+         },
+         'detector/yolo-v3/Conv_22/Conv2D': {
+           'activation':  {'dtype': ['fp32']},
+         }
+       }
+
+evaluation:                                          # optional. used to config evaluation process.
+  accuracy:
+    metric:
+      COCOmAP:
+        map_key: 'DetectionBoxes_Precision/mAP@.50IOU'
+    dataloader:
+      batch_size: 1
+      dataset:
+        COCORecord:
+          root: /path/to/evaluation/dataset
+      transform:
+        ParseDecodeCoco: {}
+        ResizeWithRatio:
+          min_dim: 416
+          max_dim: 416
+          padding: True
+          constant_value: 128
+  performance:
+    iteration: 100
+    configs:
+      cores_per_instance: 28
+      num_of_instance: 1
+      kmp_blocktime: 1
+    dataloader:
+      batch_size: 10
+      dataset:
+        COCORecord:
+          root: /path/to/evaluation/dataset
+      transform:
+        ParseDecodeCoco:
+        ResizeWithRatio:
+          min_dim: 416
+          max_dim: 416
+          padding: True
+          constant_value: 128
+
+tuning:
+  accuracy_criterion:
+    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+  exit_policy:
+    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
+  random_seed: 9527                                  # optional. random seed for deterministic tuning.
