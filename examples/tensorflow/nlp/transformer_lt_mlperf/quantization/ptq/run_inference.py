@@ -306,16 +306,16 @@ def main(unused_args):
     if FLAGS.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.data import DataLoader
         dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
         calib_dataloader = DataLoader(dataset = dataset,
                                       framework ='tensorflow',
                                       collate_fn = collate_fn,
                                       batch_size = FLAGS.batch_size)
-										
+
         conf = PostTrainingQuantConfig(inputs=['input_tokens'],
                                         outputs=['model/Transformer/strided_slice_15'],
-                                        calibration_sampling_size=[500])       
+                                        calibration_sampling_size=[500])
         q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
                     eval_func=eval_func)
         try:
@@ -333,7 +333,6 @@ def main(unused_args):
             fit(graph, conf, b_func=eval_func)
         elif FLAGS.mode == 'accuracy':
             eval_func(graph)
-            
 
 if __name__ == "__main__":
     app.run()

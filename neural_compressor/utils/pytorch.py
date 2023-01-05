@@ -231,12 +231,6 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
 
     if isinstance(stat_dict, torch.jit._script.RecursiveScriptModule):
         q_model = torch.jit.freeze(stat_dict.eval())
-        if isinstance(example_inputs, torch.Tensor):
-            q_model(example_inputs)
-            q_model(example_inputs)
-        else:
-            q_model(*example_inputs)
-            q_model(*example_inputs)
         logger.info("Finish load the model quantized by INC IPEX backend.")
         return q_model
 

@@ -1,7 +1,12 @@
 tf_example5 example
 =====================
-This example is used to demonstrate how to config benchmark using pure python API for performance measurement.
 
+Step-by-Step
+============
+
+This example is used to demonstrate how to configure benchmark using pure python API for performance measurement.
+
+## Prerequisite
 ### 1. Installation
 ```shell
 pip install -r requirements.txt
@@ -16,7 +21,8 @@ We also prepared related scripts in [TF image_recognition example](../../tensorf
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
 
-### 5. Run Command
+## Run
+### 1. Run Command
 * Run quantization
 ```shell
 python test.py --tune --dataset_location=/path/to/imagenet/
@@ -26,7 +32,7 @@ python test.py --tune --dataset_location=/path/to/imagenet/
 python test.py --benchmark --dataset_location=/path/to/imagenet/
 ``` 
 
-### 6. Introduction
+### 2. Introduction
 * We only need to add the following lines for quantization to create an int8 model.
 ```python
     from neural_compressor.quantization import fit

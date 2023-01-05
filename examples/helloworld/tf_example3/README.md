@@ -1,7 +1,12 @@
 tf_example3 example
 =====================
+
+Step-by-Step
+============
+
 This example is used to demonstrate how to convert a TensorFlow model with mix precision.
 
+## Prerequisite
 ### 1. Installation
 ```shell
 pip install -r requirements.txt
@@ -12,12 +17,13 @@ pip install -r requirements.txt
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
 
-### 3. Run Command
+## Run
+### 1. Run Command
 ```shell
 python test.py --dataset_location=/path/to/imagenet/
 ``` 
 
-### 4. Introduction
+### 2. Introduction
 We can get a BF16 model using the Mixed Precision API.
 ```python
     from neural_compressor.config import MixedPrecisionConfig

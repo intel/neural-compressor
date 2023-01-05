@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
-from neural_compressor.data.datasets.dataset import TensorflowImageRecord
-from neural_compressor.data.transforms.imagenet_transform import BilinearImagenetTransform
-from neural_compressor.data.transforms.transform import ComposeTransform
-from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
+from neural_compressor.data import TensorflowImageRecord
+from neural_compressor.data import BilinearImagenetTransform
+from neural_compressor.data import ComposeTransform
+from neural_compressor.data import DefaultDataLoader
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.config import BenchmarkConfig
 

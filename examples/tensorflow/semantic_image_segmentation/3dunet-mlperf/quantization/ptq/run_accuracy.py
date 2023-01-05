@@ -203,10 +203,10 @@ if __name__ == "__main__":
     print(args)
     graph = load_graph(args.input_model)
     if args.mode == 'tune':
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.data import DataLoader
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils.utility import set_random_seed
+        from neural_compressor.utils import set_random_seed
         set_random_seed(9527)
         config = PostTrainingQuantConfig(calibration_sampling_size=[40])
 
@@ -221,7 +221,7 @@ if __name__ == "__main__":
         except Exception as e:
             print("Failed to save model due to {}".format(str(e)))
     else:
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.data import DataLoader
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)

@@ -51,12 +51,12 @@ flags.DEFINE_integer('batch_size', 32, 'batch_size')
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
-from neural_compressor.metric.metric import TensorflowTopK
-from neural_compressor.data.transforms.transform import ComposeTransform
-from neural_compressor.data.datasets.dataset import TensorflowImageRecord
-from neural_compressor.data.transforms.imagenet_transform import LabelShift
-from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
-from neural_compressor.data.transforms.imagenet_transform import BilinearImagenetTransform
+from neural_compressor.metric import TensorflowTopK
+from neural_compressor.data import ComposeTransform
+from neural_compressor.data import TensorflowImageRecord
+from neural_compressor.data import LabelShift
+from neural_compressor.data import DefaultDataLoader
+from neural_compressor.data import BilinearImagenetTransform
 
 eval_dataset = TensorflowImageRecord(root=FLAGS.eval_data, transform=ComposeTransform(transform_list= \
                  [BilinearImagenetTransform(height=299, width=299)]))
@@ -123,7 +123,7 @@ def main(_):
     if FLAGS.tune:
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils.utility import set_random_seed
+        from neural_compressor.utils import set_random_seed
         set_random_seed(9527)
         config = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
         q_model = fit(
@@ -141,7 +141,7 @@ def main(_):
             conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
-            from neural_compressor.model.model import Model
+            from neural_compressor.model import Model
             accuracy = evaluate(Model(FLAGS.input_model).model)
             logger.info('Batch size = %d' % FLAGS.batch_size)
             logger.info("Accuracy: %.5f" % accuracy)

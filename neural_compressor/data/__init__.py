@@ -20,23 +20,32 @@
 
 import neural_compressor.data.datasets
 import neural_compressor.data.transforms
-from .datasets import Datasets, Dataset, IterableDataset, dataset_registry
+from .datasets import Datasets, Dataset, IterableDataset, dataset_registry, TensorflowImageRecord
 from .dataloaders import DATALOADERS, DataLoader
-from .transforms import TRANSFORMS, BaseTransform, transform_registry, Postprocess
+from .dataloaders.default_dataloader import DefaultDataLoader
+from .transforms import TRANSFORMS, BaseTransform, ComposeTransform, transform_registry, Postprocess
+from .transforms import LabelShift, BilinearImagenetTransform, TensorflowResizeCropImagenetTransform
+
 
 from .filters import FILTERS, Filter, filter_registry
 
 __all__ = [
     "DataLoader",
     "DATALOADERS",
+    "DefaultDataLoader",
     "Datasets",
     "Dataset",
     "IterableDataset",
     "dataset_registry",
+    'TensorflowImageRecord',
     "TRANSFORMS",
     "BaseTransform",
+    "ComposeTransform",
     "transform_registry",
     "Postprocess",
+    'LabelShift',
+    'BilinearImagenetTransform',
+    'TensorflowResizeCropImagenetTransform',
     "FILTERS",
     "Filter",
     "filter_registry",]
