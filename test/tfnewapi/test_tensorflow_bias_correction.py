@@ -93,7 +93,7 @@ class TestBiasCorrectionNewApi(unittest.TestCase):
         correct_graph_def = BiasCorrection(
             int8_output_graph.graph_def, output_graph_def, 'weight_empirical', True).do_transformation()
 
-        self.assertEqual(len(correct_graph_def.node), len(correct_graph_def.node))
+        self.assertEqual(len(correct_graph_def.node), len(int8_output_graph.graph_def.node))
 
 class TestBiasCorrectionOldApi(unittest.TestCase):
     @disable_random()
