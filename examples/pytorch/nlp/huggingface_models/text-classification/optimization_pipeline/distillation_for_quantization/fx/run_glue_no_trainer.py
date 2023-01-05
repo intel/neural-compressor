@@ -150,6 +150,15 @@ def parse_args():
         help="Path to pretrained model or model identifier from huggingface.co/models"
              " to be the teacher model."
     )
+    parser.add_argument("--temperature", default=1, type=float,
+                        help='temperature parameter of distillation')
+    parser.add_argument("--loss_types", default=['CE', 'KL'], type=str, nargs='+',
+                        help='loss types of distillation, should be a list of length 2, '
+                        'first for student targets loss, second for teacher student loss.')
+    parser.add_argument("--loss_weights", default=[0.5, 0.5], type=float, nargs='+',
+                        help='loss weights of distillation, should be a list of length 2, '
+                        'and sum to 1.0, first for student targets loss weight, '
+                        'second for teacher student loss weight.')
     args = parser.parse_args()
 
     # Sanity checks
@@ -233,8 +242,6 @@ def train(args, model, train_dataloader, lr_scheduler, compression_manager, opti
     # Only show the progress bar once on each machine.
     completed_steps = 0
     best_prec = 0
-
-    compression_manager.callbacks.on_train_begin()
 
     model_device = next(model.parameters()).device
     for epoch in range(args.num_train_epochs):
@@ -528,8 +535,10 @@ def main():
     from neural_compressor.training import prepare_compression
     compression_manager = prepare_compression(model, combs)
     model = compression_manager.model
+    compression_manager.callbacks.on_train_begin()
     train(args, model, train_dataloader, lr_scheduler, compression_manager, optimizer, eval_dataloader,
           metric)
+    compression_manager.callbacks.on_train_end()
 
     model = model.model
 
