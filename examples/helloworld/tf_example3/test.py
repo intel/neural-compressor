@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
-from neural_compressor.data.datasets.dataset import TensorflowImageRecord
-from neural_compressor.data.transforms.imagenet_transform import BilinearImagenetTransform
-from neural_compressor.data.transforms.transform import ComposeTransform
-from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
+from neural_compressor.data import TensorflowImageRecord
+from neural_compressor.data import BilinearImagenetTransform
+from neural_compressor.data import ComposeTransform
+from neural_compressor.data import DefaultDataLoader
 
 arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--dataset_location',

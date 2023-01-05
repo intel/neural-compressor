@@ -1,7 +1,12 @@
 tf_example4 example
 =====================
-This example is used to demonstrate how to quantize a TensorFlow checkpoint and run with a dummy dataloader.  
 
+Step-by-Step
+============
+
+This example is used to demonstrate how to quantize a TensorFlow checkpoint and run with a dummy dataloader.
+
+## Prerequisite
 ### 1. Installation
 ```shell
 pip install -r requirements.txt
@@ -16,12 +21,13 @@ cd ..
 python ./open_model_zoo/tools/downloader/downloader.py --name rfcn-resnet101-coco-tf --output_dir model 
 ```
 
-### 3. Run Command
+## Run
+### 1. Run Command
 ```shell
 python test.py
 ``` 
 
-### 4. Introduction
+### 2. Introduction
 We will create a dummy dataloader and only need to add the following lines for quantization to create an int8 model.
 ```python
     dataset = Datasets('tensorflow')['dummy_v2']( \

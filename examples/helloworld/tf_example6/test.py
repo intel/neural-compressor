@@ -1,12 +1,11 @@
 import tensorflow as tf
 from argparse import ArgumentParser
-from neural_compressor.metric.metric import TensorflowTopK
-from neural_compressor.data.transforms.imagenet_transform import LabelShift
-from neural_compressor.data.datasets.dataset import TensorflowImageRecord
-from neural_compressor.data.transforms.imagenet_transform import BilinearImagenetTransform
-from neural_compressor.data.transforms.transform import ComposeTransform
-from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
-from neural_compressor.config import PostTrainingQuantConfig, BenchmarkConfig
+from neural_compressor.metric import TensorflowTopK
+from neural_compressor.data import LabelShift
+from neural_compressor.data import TensorflowImageRecord
+from neural_compressor.data import BilinearImagenetTransform
+from neural_compressor.data import ComposeTransform
+from neural_compressor.data import DefaultDataLoader
 
 import numpy as np
 import time
@@ -76,6 +75,7 @@ def evaluate(model):
 def main():
     if args.tune:
         from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
         config = PostTrainingQuantConfig(calibration_sampling_size=[20])
         quantized_model = fit(
             model="./mobilenet_v1_1.0_224_frozen.pb",
@@ -88,7 +88,7 @@ def main():
                           as_text=False)
 
     if args.benchmark:
-        from neural_compressor.model.model import Model
+        from neural_compressor.model import Model
         evaluate(Model('./int8.pb'))
 
 if __name__ == "__main__":
