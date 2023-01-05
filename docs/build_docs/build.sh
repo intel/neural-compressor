@@ -134,23 +134,17 @@ fi
 echo "Create document is done"
 
 if [[ ${CHECKOUT_GH_PAGES} -eq 1 ]]; then
-  echo 1
-  git pull
-  echo 2
-  git checkout -b gh-pages
-  echo 3
-  git branch --set-upstream-to=origin/gh-pages gh-pages
-  echo 4
+
   git config pull.rebase true
   git pull
-  echo 5
-  git fetch origin
-  echo 6
-  git reset --hard origin/gh-pages
-  echo 7
-
-  #git config pull.rebase true
+  git checkout -b gh-pages
+  git branch --set-upstream-to=origin/gh-pages gh-pages
+  git fetch origin gh-pages
+  git reset --hard FETCH_HEAD
   #git clean -df
+
+  git fetch origin
+  git reset --hard origin/gh-pages
  
   if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
     python update_version.py ${DST_FOLDER} ${VERSION}
