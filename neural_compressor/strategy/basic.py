@@ -122,6 +122,9 @@ class BasicTuneStrategy(TuneStrategy):
                 op_tuning_cfg['bn_calib_sampling_size'] = self.bn_calib_sampling_size
                 yield op_tuning_cfg
 
+            if self.objectives.compare(self.last_tune_result, self.baseline):
+                logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(alowed_types[:-1], self.last_tune_result))
+
             self.re_quant = True
             all_op_type = set()
             for k ,v in op_tuning_cfg.items():
@@ -129,41 +132,97 @@ class BasicTuneStrategy(TuneStrategy):
                     continue
                 op_name, op_type = k
                 all_op_type.add(op_type)
-            allowed_op_types = copy.deepcopy(all_op_type)
-            priority = ['Conv2d', 'Linear', 'Matmul', 'BatchMatmul', 'AddMatmul', 
-                        'EltwiseAdd', 'EltwiseMul', 'EltwiseDiv', 'Embedding', 'LayerNorm']
+            tuning_op_types = copy.deepcopy(all_op_type)
+            log_op_types = []
+            if 'Conv2d' in all_op_type:
+                log_op_types.append('Conv2d')
+            if 'Linear' in all_op_type:
+                log_op_types.append('Linear')
 
-            logger.info("Quantized op types are:{}".format(allowed_op_types))
-            for i in range(1, len(priority)):
-                if priority[i] not in allowed_op_types:
+            # only conv, linear check
+            tune_cfg = copy.deepcopy(op_tuning_cfg)
+            alowed_types = log_op_types
+            for k ,v in op_tuning_cfg.items():
+                if len(k) != 2:
                     continue
-                tune_cfg = copy.deepcopy(op_tuning_cfg)
-                not_alowed_type = priority[i+1:]
-                for k ,v in op_tuning_cfg.items():
-                    if len(k) != 2:
+                op_name, op_type = k
+                if op_type not in alowed_types:
+                    fp32_config = OpTuningConfig(op_name, op_type, 'fp32', self.tuning_space)
+                    tune_cfg[k] = fp32_config
+            yield tune_cfg
+
+            if self.objectives.compare(self.last_tune_result, self.baseline):
+                last_accu = self.last_tune_result[0]
+                # per op type check
+                accu_pass_op_types = []
+                for op in tuning_op_types:
+                    if op in ['Conv2d', 'Linear']:
                         continue
-                    op_name, op_type = k
-                    if op_type in not_alowed_type:
-                        fp32_config = OpTuningConfig(op_name, op_type, 'fp32', self.tuning_space)
-                        tune_cfg[k] = fp32_config
-                yield tune_cfg
-
-                if self.objectives.compare(self.last_tune_result, self.baseline):
-                    continue
-                elif i == 1 and 'Conv2d' in all_op_type and 'Linear' in all_op_type:
-                    exempt_modules = [self.adaptor.first_conv, self.adaptor.last_linear]
-                    logger.info("Disable first conv and last linear:{}".format(exempt_modules))
+                    tune_cfg = copy.deepcopy(op_tuning_cfg)
+                    alowed_types = log_op_types + [op]
                     for k ,v in op_tuning_cfg.items():
                         if len(k) != 2:
                             continue
                         op_name, op_type = k
-                        if op_name in exempt_modules:
+                        if op_type not in alowed_types:
                             fp32_config = OpTuningConfig(op_name, op_type, 'fp32', self.tuning_space)
                             tune_cfg[k] = fp32_config
                     yield tune_cfg
+
+                    if self.objectives.compare(self.last_tune_result, self.baseline):
+                        accu_pass_op_types.append(op)
+                        last_accu = self.last_tune_result[0]
+
+                # accumulate op type check
+                if accu_pass_op_types:
+                    alowed_types = log_op_types + [accu_pass_op_types[0]]
+                    if len(accu_pass_op_types) == 1:
+                        logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(alowed_types, last_accu))
+                        return
+
+                    for op in accu_pass_op_types[1:]:
+                        tune_cfg = copy.deepcopy(op_tuning_cfg)
+                        alowed_types.append(op)
+                        for k ,v in op_tuning_cfg.items():
+                            if len(k) != 2:
+                                continue
+                            op_name, op_type = k
+                            if op_type not in alowed_types:
+                                fp32_config = OpTuningConfig(op_name, op_type, 'fp32', self.tuning_space)
+                                tune_cfg[k] = fp32_config
+                        yield tune_cfg
+
+                        if not self.objectives.compare(self.last_tune_result, self.baseline):
+                            logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(alowed_types[:-1], last_accu))
+                            return
+                        else:
+                            last_accu = self.last_tune_result[0]
+                    logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(alowed_types, last_accu))
                     return
                 else:
+                    logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(log_op_types, last_accu))
                     return
+            elif 'Conv2d' in all_op_type and 'Linear' in all_op_type:
+                count_linear = 0
+                exempt_modules = [self.adaptor.first_conv, self.adaptor.last_linear]
+                logger.info("Disable first conv and last linear:{}".format(exempt_modules))
+                for k ,v in op_tuning_cfg.items():
+                    if len(k) != 2:
+                        continue
+                    op_name, op_type = k
+                    if op_type == 'Linear':
+                        count_linear += 1
+                    if op_name in exempt_modules:
+                        fp32_config = OpTuningConfig(op_name, op_type, 'fp32', self.tuning_space)
+                        tune_cfg[k] = fp32_config
+                yield tune_cfg
+                if count_linear == 1:
+                    log_op_types.remove('Linear')
+                logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(log_op_types, self.last_tune_result[0]))
+                return
+            else:
+                logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(log_op_types, self.last_tune_result[0]))
+                return
 
     def initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
         op_state = op_static_cfg.get_state()
