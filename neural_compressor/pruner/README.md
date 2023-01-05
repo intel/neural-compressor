@@ -268,7 +268,7 @@ The following section exemplifies how to use hooks in user pass-in training func
 
 ## Validated Pruning Models
 
-The pruning technique  has been validated on typical models across various domains (including CV and NLP).
+The pruning technique  is validated on typical models across various domains (including CV and NLP).
 
 - Text Classification
 
