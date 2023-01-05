@@ -16,7 +16,7 @@ Quantization is a very popular deep learning model optimization technique invent
 
 `Affine quantization` and `Scale quantization` are two common range mapping techniques used in tensor conversion between different data types.
 
-The math equation is like: $X_{int8} = round(Scale \times X_{fp32} + ZeroPoint)$.
+The math equation is like: $$X_{int8} = round(Scale \times X_{fp32} + ZeroPoint)$$.
 
 **Affine Quantization**
 
