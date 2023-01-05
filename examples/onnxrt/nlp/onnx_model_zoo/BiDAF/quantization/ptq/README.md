@@ -29,7 +29,7 @@ Quantize model with dynamic quantization:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
-                   --dataset_locatiPon=path/to/squad_v1/dev-v1.1.json
+                   --dataset_location=path/to/squad_v1/dev-v1.1.json
                    --output_model=path/to/model_tune
 ```
 
