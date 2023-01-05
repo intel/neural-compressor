@@ -88,14 +88,10 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             dataset = quantizer.dataset('dummy', shape=(100, 56, 56, 16), label=True)
             quantizer.eval_dataloader = common.DataLoader(dataset)
             quantizer.calib_dataloader = common.DataLoader(dataset)
-            f = tf.io.gfile.GFile('dump0.pb', 'wb')
-            f.write(output_graph_def.SerializeToString())
             quantizer.model = output_graph_def
             output_graph = quantizer.fit()
 
             find_single_qconv = []
-            f = tf.io.gfile.GFile('dump.pb', 'wb')
-            f.write(output_graph.graph_def.SerializeToString())
             for i in output_graph.graph_def.node:
                 if i.op == '_FusedQuantizedConv2D':
                     find_single_qconv.append(i.attr['fused_ops'].list.s == [b'Requantize'])
@@ -617,7 +613,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 
 
     @disable_random()
-    @unittest.skipIf(tf.__version__ != "2.11.0202240", "deconv2d quantization only support 2.11")
+    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250"], "deconv2d quantization only support 2.11")
     def test_deconv2d_biasadd_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1,2,2,1], name="input")
         conv_weights2 = tf.compat.v1.get_variable("weight2", [3,3,1,1], 
@@ -654,7 +650,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(found_deconv2d_fusion, True)
 
     @disable_random()
-    @unittest.skipIf(tf.__version__ != "2.11.0202240", "deconv2d quantization only support 2.11")
+    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250"], "deconv2d quantization only support 2.11")
     def test_single_deconv2d_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1,2,2,1], name="input")
         conv_weights2 = tf.compat.v1.get_variable("weight2", [3,3,1,1], 
@@ -689,7 +685,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(found_deconv2d_fusion, True)
 
     @disable_random()
-    @unittest.skipIf(tf.__version__ != "2.11.0202240", "deconv2d quantization only support 2.11")
+    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250"], "deconv2d quantization only support 2.11")
     def test_deconv3d_biasadd_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 2, 2, 2, 1], name="input")
         conv3d_weights = tf.compat.v1.get_variable("weight_conv3d_1", [3, 3, 3, 1, 1],
@@ -725,7 +721,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             self.assertEqual(found_deconv3d_fusion, True)
 
     @disable_random()
-    @unittest.skipIf(tf.__version__ != "2.11.0202240", "deconv2d quantization only support 2.11")
+    @unittest.skipIf(tf.__version__ not in ["2.11.0202242", "2.11.0202250"], "deconv2d quantization only support 2.11")
     def test_single_deconv3d_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 2, 2, 2, 1], name="input")
         conv3d_weights = tf.compat.v1.get_variable("weight_conv3d_1", [3, 3, 3, 1, 1],
