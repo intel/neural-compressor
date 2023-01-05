@@ -134,13 +134,14 @@ fi
 echo "Create document is done"
 
 if [[ ${CHECKOUT_GH_PAGES} -eq 1 ]]; then
-  git config pull.rebase true
-  git pull
   git checkout -b gh-pages
   git branch --set-upstream-to=origin/gh-pages gh-pages
   git pull
-  git fetch origin gh-pages
-  git reset --hard FETCH_HEAD
+  git fetch origin
+  git reset --hard origin/gh-pages
+
+
+  #git config pull.rebase true
   #git clean -df
  
   if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
