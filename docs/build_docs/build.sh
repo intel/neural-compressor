@@ -47,7 +47,7 @@ elif [ ${ACT} == "build_latest" ]; then
   UPDATE_LATEST_FOLDER=1
   UPDATE_VERSION_FOLDER=0
   CHECKOUT_GH_PAGES=1
-  PUSH_GH_PAGES=0
+  PUSH_GH_PAGES=1
 fi
 
 WORK_DIR=../../build_tmp
