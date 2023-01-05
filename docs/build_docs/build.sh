@@ -134,12 +134,19 @@ fi
 echo "Create document is done"
 
 if [[ ${CHECKOUT_GH_PAGES} -eq 1 ]]; then
-  git checkout -b gh-pages
-  git branch --set-upstream-to=origin/gh-pages gh-pages
+  echo 1
   git pull
+  echo 2
+  git checkout -b gh-pages
+  echo 3
+  git branch --set-upstream-to=origin/gh-pages gh-pages
+  echo 4
+  git pull
+  echo 5
   git fetch origin
+  echo 6
   git reset --hard origin/gh-pages
-
+  echo 7
 
   #git config pull.rebase true
   #git clean -df
