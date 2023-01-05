@@ -81,14 +81,8 @@ cp -rf ../docs/ ./source
 cp -rf ../neural_coder ./source/docs/source
 cp -f "../README.md" "./source/docs/source/Welcome.md"
 cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
-cp ../neural_coder/extensions/screenshots/* ./source/docs/source/imgs
-
-#sed -i 's/.\/neural_coder\/extensions\/neural_compressor_ext_lab\/README.md/https\:\/\/github.com\/intel\/neural-compressor\/blob\/master\/neural_coder\/extensions\/neural_compressor_ext_lab/g' ./source/docs/source/Welcome.md
-
-sed -i 's/.\/neural_coder\/extensions\/screenshots/imgs/g' ./source/docs/source/Welcome.md
 
 sed -i 's/.\/docs\/source\/_static/./g' ./source/docs/source/Welcome.md
-
 sed -i 's/.md/.html/g; s/.\/docs\/source\//.\//g' ./source/docs/source/Welcome.md
 
 
@@ -115,6 +109,9 @@ if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
   cp -r ${SRC_FOLDER}/* ${DST_FOLDER}
   python update_html.py ${DST_FOLDER} ${VERSION}
   cp -r ./source/docs/source/imgs ${DST_FOLDER}/docs/source
+  cp -r ./source/docs/source/neural_coder/extensions/neural_compressor_ext_vscode/images ${DST_FOLDER}/docs/source/neural_coder/extensions/neural_compressor_ext_vscode
+  cp -r ./source/docs/source/neural_coder/extensions/screenshots ${DST_FOLDER}/docs/source/neural_coder/extensions
+
   cp source/_static/index.html ${DST_FOLDER}
 else
   echo "skip to create ${DST_FOLDER}"
@@ -127,6 +124,8 @@ if [[ ${UPDATE_LATEST_FOLDER} -eq 1 ]]; then
   cp -r ${SRC_FOLDER}/* ${LATEST_FOLDER}
   python update_html.py ${LATEST_FOLDER} ${VERSION}
   cp -r ./source/docs/source/imgs ${LATEST_FOLDER}/docs/source
+  cp -r ./source/docs/source/neural_coder/extensions/neural_compressor_ext_vscode/images ${LATEST_FOLDER}/docs/source/neural_coder/extensions/neural_compressor_ext_vscode
+  cp -r ./source/docs/source/neural_coder/extensions/screenshots ${LATEST_FOLDER}/docs/source/neural_coder/extensions
   cp source/_static/index.html ${LATEST_FOLDER}
 else
   echo "skip to create ${LATEST_FOLDER}"
