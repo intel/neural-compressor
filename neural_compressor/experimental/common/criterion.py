@@ -873,9 +873,9 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
             self.teacher_features[teacher_layer] = []
 
         self.loss_weights = [1.0 / len(layer_mappings)] * len(layer_mappings) \
-                            if loss_weights is None else loss_weights
+                            if (loss_weights is None or loss_weights == []) else loss_weights
         self.loss_types = ['MSE'] * len(layer_mappings) \
-                          if loss_types is None else loss_types
+                          if (loss_types is None or loss_types == []) else loss_types
         self.add_origin_loss = add_origin_loss
         self.loss_funcs = []
         self.feature_matchers = None
@@ -1193,9 +1193,9 @@ class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
         param_dict = self.param_dict
         _params = ['layer_mappings', 'loss_types', 'loss_weights', 'add_origin_loss']
         layer_mappings = param_dict['layer_mappings']
-        if 'loss_types' not in param_dict:
+        if 'loss_types' not in param_dict or param_dict['loss_types'] == []:
             param_dict['loss_types'] = ['MSE'] * len(layer_mappings)
-        if 'loss_weights' not in param_dict:
+        if 'loss_weights' not in param_dict or param_dict['loss_weights'] == []:
             param_dict['loss_weights'] = [1.0 / len(layer_mappings)] * len(layer_mappings)
         if 'add_origin_loss' not in param_dict:
             param_dict['add_origin_loss'] = False

@@ -16,21 +16,16 @@
 import argparse
 import logging
 import shutil
-from neural_compressor.utils.logger import log
 import math
 import os
 import random
-import copy
 import datasets
 from datasets import load_dataset, load_metric
 import torch
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader
 import torch.distributed as dist
 from tqdm.auto import tqdm
 
-import numpy as np
-
-import transformers
 from transformers import (
     AdamW,
     AutoConfig,
@@ -234,30 +229,28 @@ def train(args, model, train_dataloader, lr_scheduler, compression_manager, opti
     completed_steps = 0
     best_prec = 0
 
-    compression_manager.on_train_begin()
-
     model_device = next(model.parameters()).device
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
-        compression_manager.on_epoch_begin(epoch)
+        compression_manager.callbacks.on_epoch_begin(epoch)
         for step, batch in enumerate(train_dataloader):
             batch = move_input_to_device(batch, model_device)
-            compression_manager.on_step_begin(step)
+            compression_manager.callbacks.on_step_begin(step)
             outputs = model(**batch)
-            loss = compression_manager.on_after_compute_loss(batch, outputs['logits'], outputs['loss'])
+            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs['logits'], outputs['loss'])
             loss = loss / args.gradient_accumulation_steps
             loss.backward()
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                compression_manager.on_before_optimizer_step()
+                compression_manager.callbacks.on_before_optimizer_step()
                 optimizer.step()
                 lr_scheduler.step()
                 optimizer.zero_grad()
                 completed_steps += 1
-            compression_manager.on_step_end()
+            compression_manager.callbacks.on_step_end()
             if completed_steps >= args.max_train_steps:
                 break
-        compression_manager.on_epoch_end()
+        compression_manager.callbacks.on_epoch_end()
         best_score = evaluation(model, eval_dataloader, metric)
         is_best = best_score > best_prec
         best_prec = max(best_score, best_prec)
@@ -336,12 +329,12 @@ def main():
     #
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
-    config = AutoConfig.from_pretrained(args.model_name_or_path, 
-                                        num_labels=num_labels, 
-                                        finetuning_task=args.task_name, 
+    config = AutoConfig.from_pretrained(args.model_name_or_path,
+                                        num_labels=num_labels,
+                                        finetuning_task=args.task_name,
                                         use_auth_token=args.use_auth_token)
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, 
-                                              use_fast=not args.use_slow_tokenizer, 
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path,
+                                              use_fast=not args.use_slow_tokenizer,
                                               use_auth_token=args.use_auth_token)
     model = AutoModelForSequenceClassification.from_pretrained(
         args.model_name_or_path,
@@ -478,12 +471,44 @@ def main():
         metric = load_metric("glue", args.task_name)
 
     combs = []
-    from neural_compressor.experimental import common, Distillation, Quantization
     if args.do_distillation:
-        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
-        distillation_criterion = KnowledgeDistillationLossConfig(temperature=args.temperature,
-                                                                 loss_types=args.loss_types,
-                                                                 loss_weights=args.loss_weights)
+        from neural_compressor.config import DistillationConfig, \
+                                             IntermediateLayersKnowledgeDistillationLossConfig
+        layer_mappings = [
+            [['bert.encoder.layer.0.output', ]],
+            [['bert.encoder.layer.0.attention', '1']],
+            [['bert.encoder.layer.1.output', ]],
+            [['bert.encoder.layer.1.attention', '1']],
+            [['bert.encoder.layer.2.output', ]],        
+            [['bert.encoder.layer.2.attention', '1']],      
+            [['bert.encoder.layer.3.output', ]],        
+            [['bert.encoder.layer.3.attention', '1']],      
+            [['bert.encoder.layer.4.output', ]],        
+            [['bert.encoder.layer.4.attention', '1']],      
+            [['bert.encoder.layer.5.output', ]],        
+            [['bert.encoder.layer.5.attention', '1']],      
+            [['bert.encoder.layer.6.output', ]],        
+            [['bert.encoder.layer.6.attention', '1']],      
+            [['bert.encoder.layer.7.output', ]],        
+            [['bert.encoder.layer.7.attention', '1']],      
+            [['bert.encoder.layer.8.output', ]],        
+            [['bert.encoder.layer.8.attention', '1']],      
+            [['bert.encoder.layer.9.output', ]],        
+            [['bert.encoder.layer.9.attention', '1']],
+            [['bert.encoder.layer.10.output', ]],
+            [['bert.encoder.layer.10.attention', '1']],
+            [['bert.encoder.layer.11.output', ]],
+            [['bert.encoder.layer.11.attention', '1']],
+            [['classifier', ]],
+        ]
+        loss_weights = [1, 1, 1, 1, 1,
+                        1, 1, 1, 1, 1,
+                        1, 1, 1, 1, 1,
+                        1, 1, 1, 1, 1,
+                        1, 1, 1, 1, 1]
+        distillation_criterion = IntermediateLayersKnowledgeDistillationLossConfig(
+            layer_mappings=layer_mappings,
+            loss_weights=loss_weights)
 
         teacher_config = AutoConfig.from_pretrained(args.teacher_model_name_or_path, \
                             num_labels=num_labels, finetuning_task=args.task_name)
@@ -527,9 +552,11 @@ def main():
 
     from neural_compressor.training import prepare_compression
     compression_manager = prepare_compression(model, combs)
+    compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
     train(args, model, train_dataloader, lr_scheduler, compression_manager, optimizer, eval_dataloader,
           metric)
+    compression_manager.callbacks.on_train_end()
 
     model = model.model
 
