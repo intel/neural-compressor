@@ -131,7 +131,7 @@ class BasicTuneStrategy(TuneStrategy):
                     op_name, op_type = k
                     if 'int8' in v.weight_dtype:
                         all_op_type.add(op_type)
-                logger.info("INT8 op types are: {}".format(all_op_type))
+                logger.info("INT8 op types are: {}".format(list(all_op_type)))
 
                 yield op_tuning_cfg
             # Fallback the ops supported both static and dynamic from static to dynamic
