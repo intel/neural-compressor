@@ -29,7 +29,6 @@ from datasets import load_dataset, load_metric
 
 from torch.utils.data import Dataset, DataLoader
 
-import sys
 import onnx
 import onnxruntime as ort
 import numpy as np
@@ -124,6 +123,10 @@ class ModelArguments:
     batch_size: int = field(
         default=1,
         metadata={"help": ("batch size for benchmark")},
+    )
+    quant_format: str = field(
+        default='default', 
+        metadata={"help": ("INC quantization format")},
     )
 
 
@@ -263,8 +266,8 @@ class SquadDataset(Dataset):
             self.attention_mask.append(np.array(inputs['attention_mask'], dtype=np.int64))
     
     def __getitem__(self, index):
-        return (self.input_ids[index:index + self.bs][0][0], self.token_type_ids[index:index + self.bs][0][0], self.attention_mask[index:index + self.bs][0][0]), 0
-        # return (self.input_ids[index:index + self.bs][0], self.attention_mask[index:index + self.bs][0], self.token_type_ids[index:index + self.bs][0]), 0
+        # return (self.input_ids[index:index + self.bs][0][0], self.token_type_ids[index:index + self.bs][0][0], self.attention_mask[index:index + self.bs][0][0]), 0
+        return (self.input_ids[index:index + self.bs][0][0], self.attention_mask[index:index + self.bs][0][0], self.token_type_ids[index:index + self.bs][0][0]), 0
 
     def __len__(self):
         assert len(self.input_ids) == len(self.attention_mask)
@@ -282,6 +285,7 @@ def main():
 
     training_args.do_eval = True
     training_args.per_device_eval_batch_size = model_args.batch_size
+    assert model_args.quant_format in ['default', 'QDQ', 'QOperator'], "quant_format can only be in ['default', 'QDQ', 'QOperator']"
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
@@ -573,11 +577,19 @@ def main():
             optimization_options=opt_options)
         model = model_optimizer.model
 
+        b_dataloader = SquadDataset(eval_dataloader)
+        b_dataloader = DataLoader(b_dataloader)
+
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='dynamic')
+        if model_args.quant_format == 'default':
+            config = PostTrainingQuantConfig(quant_format=model_args.quant_format)
+        else:
+            config = PostTrainingQuantConfig(quant_format=model_args.quant_format,
+                                             quant_level=0,)
         q_model = quantization.fit(model, 
                                    config,
-                                   eval_func=eval_func)
+                                   eval_func=eval_func,
+                                   calib_dataloader = b_dataloader)
         q_model.save(model_args.save_path)
 
     if model_args.benchmark:

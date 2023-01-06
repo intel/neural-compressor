@@ -349,6 +349,13 @@ if __name__ == "__main__":
         default=768,
         type=int,
     )
+    parser.add_argument(
+        '--quant_format',
+        type=str,
+        default='default', 
+        choices=['default', 'QDQ', 'QOperator'],
+        help="quantization format"
+    )
  
     args = parser.parse_args()
 
@@ -413,8 +420,13 @@ if __name__ == "__main__":
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='dynamic')
+        if args.quant_format == 'default':
+            config = PostTrainingQuantConfig(quant_format=args.quant_format)
+        else:
+            config = PostTrainingQuantConfig(quant_format=args.quant_format,
+                                             quant_level=0,)
         q_model = quantization.fit(model, 
                                    config,
-                                   eval_func=eval_func)
+                                   eval_func=eval_func,
+                                   calib_dataloader = dataloader)
         q_model.save(args.output_model)
