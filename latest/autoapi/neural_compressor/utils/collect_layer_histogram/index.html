@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.utils.collect_layer_histogram &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.utils.collect_layer_histogram &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.utils.collect_layer_histogram">
 <span id="neural-compressor-utils-collect-layer-histogram"></span><h1><a class="reference internal" href="#module-neural_compressor.utils.collect_layer_histogram" title="neural_compressor.utils.collect_layer_histogram"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.collect_layer_histogram</span></code></a><a class="headerlink" href="#module-neural_compressor.utils.collect_layer_histogram" title="Permalink to this heading">¶</a></h1>
+<p>LayerHistogramCollector: save the histogram by layer.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -174,7 +175,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.collect_layer_histogram.LayerHistogramCollector" title="neural_compressor.utils.collect_layer_histogram.LayerHistogramCollector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LayerHistogramCollector</span></code></a></p></td>
-<td><p>Saves layer histogram in a dict with layer names as keys and lists of NDArrays as</p></td>
+<td><p>The collector of the histogram by layer.</p></td>
 </tr>
 </tbody>
 </table>
@@ -182,13 +183,14 @@
 <dt class="sig sig-object py" id="neural_compressor.utils.collect_layer_histogram.LayerHistogramCollector">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.collect_layer_histogram.</span></span><span class="sig-name descname"><span class="pre">LayerHistogramCollector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_tensor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.collect_layer_histogram.LayerHistogramCollector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The collector of the histogram by layer.</p>
 <p>Saves layer histogram in a dict with layer names as keys and lists of NDArrays as
 values. The collected histogram will be used for calculating the optimal thresholds for
 quantization using KL divergence.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.utils.collect_layer_histogram.LayerHistogramCollector.collect">
 <span class="sig-name descname"><span class="pre">collect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.collect_layer_histogram.LayerHistogramCollector.collect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Callback function for collecting layer output NDArrays.</p>
+<dd><p>Collect layer output NDArrays as a callback function.</p>
 </dd></dl>
 
 </dd></dl>

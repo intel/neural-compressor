@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer">
 <span id="neural-compressor-adaptor-tf-utils-graph-rewriter-generic-graph-cse-optimizer"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer" title="Permalink to this heading">¶</a></h1>
+<p>CSE Graph Rewriter.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -182,46 +183,39 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer.GraphCseOptimizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer.</span></span><span class="sig-name descname"><span class="pre">GraphCseOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer.GraphCseOptimizer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
-<dl>
-<dt>We introduce the CSE optimizer to optimize the nodes that contains identical op type.</dt><dd><dl>
-<dt>Case 1. Node A has three output nodes(B,C,D) and those child nodes has their own outputs</dt><dd><blockquote>
-<div><p>(B1/C1C2/D1).
-Node A</p>
-</div></blockquote>
-<p>/    |                 /     |             NODE B   NODE C  NODE D</p>
+<p>We introduce the CSE optimizer to optimize the nodes that contains identical op type.</p>
+<dl class="simple">
+<dt>Case 1. Node A has three output nodes(B,C,D) and those child nodes has their own outputs</dt><dd><p>(B1/C1C2/D1).
+Node A
+x    x    x
+x    x     x</p>
 </dd>
 </dl>
-<div class="line-block">
-<div class="line">|   |     |</div>
-</div>
-<p>B1       C1  C2    D1
+<p>NODE B   NODE C  NODE D
+x        x   x     x
+B1       C1  C2    D1
 If Node B/C/D have the identical memory-bound op, like relu/relu6. The graph will be
 converted as below.
 We removed the Node C &amp; Node D, updated the B as the input of C1/C2/D1.</p>
 <blockquote>
 <div><blockquote>
-<div><dl>
-<dt>Node A</dt><dd><div class="line-block">
-<div class="line"><br /></div>
-</div>
+<div><p>Node A
+x
+Node B
+x x  x  x
+x  x   x  x</p>
+</div></blockquote>
+<p>x   x    x  x
+B1  C1   C2  D1</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Case 2.  Node A has three output nodes(B,C,D) and those child nodes has their own outputs</dt><dd><p>(B1/C1C2/D1).
+Node A
+x   x    x
+x    x     x</p>
 </dd>
-</dl>
-<p>Node B</p>
-</div></blockquote>
-<p>/ |                /  |                /   |                 B1  C1   C2  D1</p>
-</div></blockquote>
-<dl>
-<dt>Case 2.  Node A has three output nodes(B,C,D) and those child nodes has their own outputs</dt><dd><blockquote>
-<div><blockquote>
-<div><p>(B1/C1C2/D1).
-Node A</p>
-</div></blockquote>
-<p>/   |                 /    |             NODE B   NODE C  NODE D</p>
-</div></blockquote>
-<div class="line-block">
-<div class="line">|   |     |</div>
-</div>
-<p>B1     C1  C2    D1</p>
+<dt>NODE B   NODE C  NODE D</dt><dd><p>x      x   x     x
+B1     C1  C2    D1</p>
 </dd>
 </dl>
 <p>If Node B and C have the identical memory-bound op, like relu/relu6. The graph will be
@@ -230,12 +224,14 @@ We removed the Node C, updated the B as the input of C1/C2.</p>
 <blockquote>
 <div><blockquote>
 <div><p>Node A
-|                     Node B  Node D</p>
+x     x</p>
 </div></blockquote>
-<p>/   |                     /   |                      /   |                      B1   C1    C2   D1</p>
+<p>Node B  Node D
+x   x  x    x
+x   |   x    x
+x   |    x    x
+B1   C1    C2   D1</p>
 </div></blockquote>
-</dd>
-</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A optimized graphdef object.</p>
@@ -247,10 +243,9 @@ We removed the Node C, updated the B as the input of C1/C2.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer.GraphCseOptimizer.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.graph_cse_optimizer.GraphCseOptimizer.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Optimize the graph contains multi output nodes. If those nodes’ type are identical,</dt><dd><p>those nodes should be elimated. Currently, we supported memory bound ops only.</p>
-</dd>
-</dl>
+<dd><p>Optimize the graph contains multi output nodes.</p>
+<p>If those nodes’ type are identical, those nodes should be elimated.
+Currently, we supported memory bound ops only.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input_graph_def</strong> (<em>graphdef</em>) – graphdef object</p>

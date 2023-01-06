@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.transform_graph.bias_correction`
 ============================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.transform_graph.bias_correction
+
+.. autoapi-nested-parse::
+
+   Bias correction graph transform.
+
 
 
 Module Contents
@@ -24,6 +27,7 @@ Classes
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base.GraphTransformBase`
 
    This class implements the bias correction graph transform.
+
    Will correct the weight and scale for *Conv2D* op
    weight_empirical:
    our task is to correct int8 weight distribution close to fp32 weight
@@ -37,7 +41,7 @@ Classes
 
    .. py:method:: do_transformation()
 
-      Virtual Interface. Each transformation should implement it.
+      Apply bias correction graph transform.
 
 
 

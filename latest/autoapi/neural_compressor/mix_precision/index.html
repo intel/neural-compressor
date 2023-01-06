@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.mix_precision &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.mix_precision &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,70 @@
             
   <section id="module-neural_compressor.mix_precision">
 <span id="neural-compressor-mix-precision"></span><h1><a class="reference internal" href="#module-neural_compressor.mix_precision" title="neural_compressor.mix_precision"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.mix_precision</span></code></a><a class="headerlink" href="#module-neural_compressor.mix_precision" title="Permalink to this heading">¶</a></h1>
+<p>Mix Precision for Neural Compressor.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.mix_precision.fit" title="neural_compressor.mix_precision.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(model[, config, eval_func, eval_dataloader, ...])</p></td>
+<td><p>Fit low precision model generation across multiple framework backends.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.mix_precision.fit">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.mix_precision.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.mix_precision.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit low precision model generation across multiple framework backends.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – For Tensorflow model, it could be a path
+to frozen pb, loaded graph_def object or
+a path to ckpt/savedmodel folder.
+For PyTorch model, it’s torch.nn.model
+instance.
+For MXNet model, it’s mxnet.symbol.Symbol
+or gluon.HybirdBlock instance.</p></li>
+<li><p><strong>config</strong> (<em>string</em><em> or </em><em>obj</em>) – The path to the YAML configuration file or
+QuantConf class containing accuracy goal,
+tuning objective and preferred calibration &amp;
+quantization tuning space etc.</p></li>
+<li><p><strong>eval_func</strong> (<em>function</em><em>, </em><em>optional</em>) – The evaluation function provided by user.
+This function takes model as parameter,
+and evaluation dataset and metrics should be
+encapsulated in this function implementation
+and outputs a higher-is-better accuracy scalar
+value.</p></li>
+<li><p><strong>eval_dataloader</strong> (<em>generator</em><em>, </em><em>optional</em>) – Data loader for evaluation. It is iterable
+and should yield a tuple of (input, label).
+The input could be a object, list, tuple or
+dict, depending on user implementation,
+as well as it can be taken as model input.
+The label should be able to take as input of
+supported metrics. If this parameter is
+not None, user needs to specify pre-defined
+evaluation metrics through configuration file
+and should set “eval_func” paramter as None.
+Tuner will combine model, eval_dataloader
+and pre-defined metrics to run evaluation
+process.</p></li>
+<li><p><strong>eval_metric</strong> (<em>obj</em><em>, </em><em>optional</em>) – An Accuracy object that measures metric for
+quantization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A MixedPrecision object that generates low precision model across various DL frameworks.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AssertionError.</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
 </section>
 
 

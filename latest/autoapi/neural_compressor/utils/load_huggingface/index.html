@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.utils.load_huggingface &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.utils.load_huggingface &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,70 @@
             
   <section id="module-neural_compressor.utils.load_huggingface">
 <span id="neural-compressor-utils-load-huggingface"></span><h1><a class="reference internal" href="#module-neural_compressor.utils.load_huggingface" title="neural_compressor.utils.load_huggingface"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.load_huggingface</span></code></a><a class="headerlink" href="#module-neural_compressor.utils.load_huggingface" title="Permalink to this heading">¶</a></h1>
+<p>Huggingface Loader: provides access to Huggingface pretrained models.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.load_huggingface.OptimizedModel" title="neural_compressor.utils.load_huggingface.OptimizedModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OptimizedModel</span></code></a></p></td>
+<td><p>The class provides a method from_pretrained to access Huggingface models.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.load_huggingface.save_for_huggingface_upstream" title="neural_compressor.utils.load_huggingface.save_for_huggingface_upstream"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_for_huggingface_upstream</span></code></a>(model, tokenizer, output_dir)</p></td>
+<td><p>Save the model and tokenizer in the output directory.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.utils.load_huggingface.OptimizedModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.load_huggingface.</span></span><span class="sig-name descname"><span class="pre">OptimizedModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.load_huggingface.OptimizedModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class provides a method from_pretrained to access Huggingface models.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.utils.load_huggingface.OptimizedModel.from_pretrained">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_pretrained</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name_or_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.nn.Module</span></span></span><a class="headerlink" href="#neural_compressor.utils.load_huggingface.OptimizedModel.from_pretrained" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiate a quantized pytorch model from a given Intel Neural Compressor (INC) configuration file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name_or_path</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – Repository name in the Hugging Face Hub or path to a local directory hosting the model.</p></li>
+<li><p><strong>cache_dir</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>, <cite>optional</cite>) – Path to a directory in which a downloaded configuration should be cached if the standard cache should
+not be used.</p></li>
+<li><p><strong>force_download</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>, <cite>optional</cite>, defaults to <code class="xref py py-obj docutils literal notranslate"><span class="pre">False</span></code>) – Whether or not to force to (re-)download the configuration files and override the cached versions if
+they exist.</p></li>
+<li><p><strong>resume_download</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>, <cite>optional</cite>, defaults to <code class="xref py py-obj docutils literal notranslate"><span class="pre">False</span></code>) – Whether or not to delete incompletely received file. Attempts to resume the download if such a file
+exists.</p></li>
+<li><p><strong>revision</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>, <cite>optional</cite>) – The specific model version to use. It can be a branch name, a tag name, or a commit id, since we use a
+git-based system for storing models and other artifacts on huggingface.co, so <code class="docutils literal notranslate"><span class="pre">revision</span></code> can be any
+identifier allowed by git.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Quantized model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>q_model</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.load_huggingface.save_for_huggingface_upstream">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.load_huggingface.</span></span><span class="sig-name descname"><span class="pre">save_for_huggingface_upstream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.load_huggingface.save_for_huggingface_upstream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the model and tokenizer in the output directory.</p>
+</dd></dl>
+
+</section>
+</section>
 </section>
 
 

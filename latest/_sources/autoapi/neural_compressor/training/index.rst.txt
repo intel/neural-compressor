@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.training`
 ====================================
 
 .. py:module:: neural_compressor.training
+
+.. autoapi-nested-parse::
+
+   The configuration of the training loop.
+
 
 
 Module Contents
@@ -56,6 +59,56 @@ Functions
    compression_manager.callbacks.on_train_end()
    compression_manager.save("path_to_save")
 
+   .. py:class:: CallBacks(component)
+
+      Define the basic command for the training loop.
+
+      .. py:method:: on_train_begin(dataloader=None)
+
+         Called before the beginning of epochs.
+
+
+      .. py:method:: on_train_end()
+
+         Called after the end of epochs.
+
+
+      .. py:method:: on_epoch_begin(epoch)
+
+         Called on the beginning of epochs.
+
+
+      .. py:method:: on_step_begin(batch_id)
+
+         Called on the beginning of batches.
+
+
+      .. py:method:: on_after_compute_loss(input, student_output, student_loss, teacher_output=None)
+
+         Called on the end of loss computation.
+
+
+      .. py:method:: on_before_optimizer_step()
+
+         Called on the end of backward.
+
+
+      .. py:method:: on_after_optimizer_step()
+
+         Called on the end of backward.
+
+
+      .. py:method:: on_step_end()
+
+         Called on the end of batches.
+
+
+      .. py:method:: on_epoch_end()
+
+         Called on the end of epochs.
+
+
+
    .. py:method:: save(root=None)
 
       Save compressed model.
@@ -68,18 +121,20 @@ Functions
 
       Convert the model to another type model, like `onnx` model and so on.
 
-      Args:
-
+      :param save_path: The path to save the model
+      :type save_path: str
+      :param conf: The configure for onnx exportation.
+      :type conf: Union[Callable, List]
 
 
 
 .. py:function:: prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
 
-   _summary_
+   Summary.
 
-   :param model: model to optimize.
+   :param model: The model to optimize.
    :type model: Callable, optional
-   :param confs: config of Distillation, Quantization, Pruning,
+   :param confs: Config of Distillation, Quantization, Pruning,
                  or list of config for orchestration optimization
    :type confs: Union[Callable, List]
    :param options: The configure for random_seed, workspace,

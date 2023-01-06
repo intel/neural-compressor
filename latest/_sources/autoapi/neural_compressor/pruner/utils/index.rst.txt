@@ -23,6 +23,7 @@ Functions
    neural_compressor.pruner.utils.update_params
    neural_compressor.pruner.utils.process_weight_config
    neural_compressor.pruner.utils.process_yaml_config
+   neural_compressor.pruner.utils.check_key_validity
    neural_compressor.pruner.utils.process_and_check_config
    neural_compressor.pruner.utils.process_config
    neural_compressor.pruner.utils.parse_to_prune
@@ -76,6 +77,14 @@ Functions
 
    :returns: A config dict object that contains pruning parameters and configurations.
    :rtype: pruners_info
+
+
+.. py:function:: check_key_validity(template_config, user_config)
+
+   Check the validity of keys.
+
+   :param template_config: A default config dict object that contains pruning parameters and configurations.
+   :param user_config: A user config dict object that contains pruning parameters and configurations.
 
 
 .. py:function:: process_and_check_config(val)

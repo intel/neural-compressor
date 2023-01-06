@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize">
 <span id="neural-compressor-adaptor-tf-utils-graph-rewriter-int8-fuse-conv-redundant-dequantize"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize" title="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize" title="Permalink to this heading">¶</a></h1>
+<p>Fuse QuantizedConv QuantizedDeConv with redundant Dequantize Graph Rewriter.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -186,10 +187,8 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize.FuseConvRedundantDequantizeTransformer.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize.FuseConvRedundantDequantizeTransformer.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Fuse the _QuantizedConv Op with the following Dequantize op.</dt><dd><p>The output of _QuantizedConv or is fp32 or bf16.</p>
-</dd>
-</dl>
+<dd><p>Fuse the _QuantizedConv Op with the following Dequantize op.</p>
+<p>The output of _QuantizedConv or is fp32 or bf16.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>the optimized graphdef object</p>

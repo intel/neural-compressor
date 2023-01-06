@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.pruner.utils &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.pruner.utils &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -189,13 +189,16 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.pruner.utils.process_yaml_config" title="neural_compressor.pruner.utils.process_yaml_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_yaml_config</span></code></a>(global_config, local_configs, ...)</p></td>
 <td><p>Process the yaml configuration file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.pruner.utils.process_and_check_config" title="neural_compressor.pruner.utils.process_and_check_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_and_check_config</span></code></a>(val)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.pruner.utils.check_key_validity" title="neural_compressor.pruner.utils.check_key_validity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_key_validity</span></code></a>(template_config, user_config)</p></td>
+<td><p>Check the validity of keys.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.pruner.utils.process_and_check_config" title="neural_compressor.pruner.utils.process_and_check_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_and_check_config</span></code></a>(val)</p></td>
 <td><p>Process and check configurations.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.pruner.utils.process_config" title="neural_compressor.pruner.utils.process_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_config</span></code></a>(config)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.pruner.utils.process_config" title="neural_compressor.pruner.utils.process_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_config</span></code></a>(config)</p></td>
 <td><p>Obtain a config dict object from the config file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.pruner.utils.parse_to_prune" title="neural_compressor.pruner.utils.parse_to_prune"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_to_prune</span></code></a>(config, model)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.pruner.utils.parse_to_prune" title="neural_compressor.pruner.utils.parse_to_prune"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_to_prune</span></code></a>(config, model)</p></td>
 <td><p>Keep target pruned layers.</p></td>
 </tr>
 </tbody>
@@ -276,6 +279,20 @@
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>pruners_info</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.pruner.utils.check_key_validity">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.pruner.utils.</span></span><span class="sig-name descname"><span class="pre">check_key_validity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.pruner.utils.check_key_validity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the validity of keys.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>template_config</strong> – A default config dict object that contains pruning parameters and configurations.</p></li>
+<li><p><strong>user_config</strong> – A user config dict object that contains pruning parameters and configurations.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

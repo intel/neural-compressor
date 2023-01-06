@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Mixed Precision &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>Mixed Precision &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -170,7 +170,7 @@
 <ol class="simple">
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#mixed-precision-support-matrix">Mixed Precision Support Matrix</a></p></li>
-<li><p><a class="reference external" href="#get-start-with-mixed-precision-api">Get start with Mixed Precision API</a></p></li>
+<li><p><a class="reference external" href="#get-start-with-mixed-precision-api">Get Started with Mixed Precision API</a></p></li>
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
 </ol>
 <section id="introduction">
@@ -213,34 +213,21 @@
 <div><p><strong>During quantization, BF16 conversion can be executed if force enabled. Please refer to this <a class="reference internal" href="quantization_mixed_precision.html"><span class="doc">document</span></a> for its workflow.</strong></p>
 </div></blockquote>
 </section>
-<section id="get-start-with-mixed-precision-api">
-<h2>Get start with Mixed Precision API<a class="headerlink" href="#get-start-with-mixed-precision-api" title="Permalink to this heading">¶</a></h2>
-<p>To get a bf16 model, users can use the Mixed Precision API step by step.</p>
-<ul class="simple">
-<li><p>First, initialize an object of MixedPrecision.</p></li>
-</ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">MixedPrecision</span>
-<span class="n">converter</span> <span class="o">=</span> <span class="n">MixedPrecision</span><span class="p">()</span>
+<section id="get-started-with-mixed-precision-api">
+<h2>Get Started with Mixed Precision API<a class="headerlink" href="#get-started-with-mixed-precision-api" title="Permalink to this heading">¶</a></h2>
+<p>To get a bf16 model, users can use the Mixed Precision API as follows.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">mix_precision</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">MixedPrecisionConfig</span><span class="p">()</span>
+
+<span class="n">converted_model</span> <span class="o">=</span> <span class="n">mix_precision</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
+<span class="n">converted_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./path/to/save/&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<ul class="simple">
-<li><p>Next, assign target precision and fp32 model to the attributes of MixedPrecision.</p></li>
-</ul>
 <blockquote>
 <div><p><strong>BF16 conversion may lead to accuracy drop. Intel® Neural Compressor provides an accuracy-aware tuning function to reduce accuracy loss, which will fallback converted ops to FP32 automatically to get better accuracy. To enable this function, users only need to provide an evaluation function (or dataloader + metric).</strong></p>
 </div></blockquote>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">converter</span><span class="o">.</span><span class="n">precisions</span> <span class="o">=</span> <span class="s1">&#39;bf16&#39;</span>
-<span class="n">converter</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span> <span class="c1"># model is a fp32 model</span>
-<span class="n">converter</span><span class="o">.</span><span class="n">eval_func</span> <span class="o">=</span> <span class="n">user_defined_function</span> <span class="c1"># optional, this function only accepts model as input and return a higher-is-better scalar as accuracy</span>
-</pre></div>
-</div>
-<ul class="simple">
-<li><p>Last, execute convertion and save model.</p></li>
-</ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">converted_model</span> <span class="o">=</span> <span class="n">converter</span><span class="p">()</span>
-<span class="n">converted_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
-</pre></div>
-</div>
 </section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h2>

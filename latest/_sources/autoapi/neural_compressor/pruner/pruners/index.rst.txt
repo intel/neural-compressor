@@ -52,7 +52,7 @@ Functions
 
 .. py:function:: parse_valid_pruner_types()
 
-   Get all valid pruner names
+   Get all valid pruner names.
 
 
 .. py:function:: get_pruner(config, modules)

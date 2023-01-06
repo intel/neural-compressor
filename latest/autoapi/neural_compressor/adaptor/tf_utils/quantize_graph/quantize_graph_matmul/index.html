@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,51 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul">
 <span id="neural-compressor-adaptor-tf-utils-quantize-graph-quantize-graph-matmul"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul" title="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul" title="Permalink to this heading">¶</a></h1>
+<p>Quantize MatMul.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul" title="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FuseNodeStartWithMatmul</span></code></a></p></td>
+<td><p>Quantize MatMul and apply the fusion.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.</span></span><span class="sig-name descname"><span class="pre">FuseNodeStartWithMatmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../quantize_graph_base/index.html#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase" title="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase</span></code></a></p>
+<p>Quantize MatMul and apply the fusion.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul.apply_matmul_biasadd_relu_fusion">
+<span class="sig-name descname"><span class="pre">apply_matmul_biasadd_relu_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul.apply_matmul_biasadd_relu_fusion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the MatMul BiasAdd Relu fusion.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul.apply_matmul_biasadd_fusion">
+<span class="sig-name descname"><span class="pre">apply_matmul_biasadd_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul.apply_matmul_biasadd_fusion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply MatMul BiasAdd fusion.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul.get_longest_fuse">
+<span class="sig-name descname"><span class="pre">get_longest_fuse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul.get_longest_fuse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the longest fusion pattern.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul.apply_the_transform">
+<span class="sig-name descname"><span class="pre">apply_the_transform</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul.apply_the_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quantize MatMul and apply the fusion pattern.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
 </section>
 
 

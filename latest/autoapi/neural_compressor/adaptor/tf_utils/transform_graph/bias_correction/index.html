@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.transform_graph.bias_correction &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.transform_graph.bias_correction &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.transform_graph.bias_correction">
 <span id="neural-compressor-adaptor-tf-utils-transform-graph-bias-correction"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.transform_graph.bias_correction" title="neural_compressor.adaptor.tf_utils.transform_graph.bias_correction"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.bias_correction</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.transform_graph.bias_correction" title="Permalink to this heading">¶</a></h1>
+<p>Bias correction graph transform.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -181,9 +182,9 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.transform_graph.bias_correction.BiasCorrection">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.bias_correction.</span></span><span class="sig-name descname"><span class="pre">BiasCorrection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'weight_empirical'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_api</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.transform_graph.bias_correction.BiasCorrection" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base.GraphTransformBase</span></code></p>
-<p>This class implements the bias correction graph transform.
-Will correct the weight and scale for <em>Conv2D</em> op
+<dd><p>Bases: <a class="reference internal" href="../graph_transform_base/index.html#neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base.GraphTransformBase" title="neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base.GraphTransformBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base.GraphTransformBase</span></code></a></p>
+<p>This class implements the bias correction graph transform.</p>
+<p>Will correct the weight and scale for <em>Conv2D</em> op
 weight_empirical:
 our task is to correct int8 weight distribution close to fp32 weight
 r*(W_int8 + u) -&gt; W_fp32, r is variance ratio between fp32 and int8
@@ -196,7 +197,7 @@ with this we don’t change the min/max value, and correct the weight</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.transform_graph.bias_correction.BiasCorrection.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.transform_graph.bias_correction.BiasCorrection.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Virtual Interface. Each transformation should implement it.</p>
+<dd><p>Apply bias correction graph transform.</p>
 </dd></dl>
 
 </dd></dl>

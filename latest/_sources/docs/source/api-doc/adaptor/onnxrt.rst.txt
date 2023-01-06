@@ -1,4 +1,4 @@
-ONNXRT
+ONNX Runtime
 ==============
 
 .. autoapisummary::

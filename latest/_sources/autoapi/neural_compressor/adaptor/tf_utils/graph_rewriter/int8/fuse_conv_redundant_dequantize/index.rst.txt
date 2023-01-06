@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize`
 ===============================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_conv_redundant_dequantize
+
+.. autoapi-nested-parse::
+
+   Fuse QuantizedConv QuantizedDeConv with redundant Dequantize Graph Rewriter.
+
 
 
 Module Contents
@@ -25,11 +28,12 @@ Classes
 
    Fuse _QuantizedConv/_QuantizedDeConv with the successor Dequantize Op.
 
-
    .. py:method:: do_transformation()
 
       Fuse the _QuantizedConv Op with the following Dequantize op.
-          The output of _QuantizedConv or is fp32 or bf16.
+
+      The output of _QuantizedConv or is fp32 or bf16.
+
       :returns: the optimized graphdef object
       :rtype: [graphdef]
 

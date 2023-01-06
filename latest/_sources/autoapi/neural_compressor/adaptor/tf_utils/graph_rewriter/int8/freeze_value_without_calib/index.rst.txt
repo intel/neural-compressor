@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib`
 ===========================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib
+
+.. autoapi-nested-parse::
+
+   Freeze Value without calibration Graph Rewriter.
+
 
 
 Module Contents
@@ -23,15 +26,12 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
 
-   Graph Rewrite Base class.
-   We abstract this base class and define the interface only.
-
-   :param object: the input model to be converted.
-   :type object: model
+   Freeze value without calibration.
 
    .. py:method:: generate_output_graph(max_name_value)
 
       Generate transformed graph for freeze_max/freeze_min transformation.
+
       :param max_name_value: target values
       :return: transformed graph
 
@@ -39,8 +39,14 @@ Classes
    .. py:method:: generate_output_graph_ranges(max_name_value)
 
       Generate transformed graph for freeze_max/freeze_min transformation.
+
       :param max_name_value: target values
       :return: transformed graph
+
+
+   .. py:method:: do_transformation_without_calib()
+
+      Apply transformation without calibration.
 
 
 

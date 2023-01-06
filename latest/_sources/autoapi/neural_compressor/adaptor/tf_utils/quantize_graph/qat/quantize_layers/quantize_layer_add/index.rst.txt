@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_add`
 ==================================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_add
+
+.. autoapi-nested-parse::
+
+   Quantization Add Layer Class.
+
 
 
 Module Contents

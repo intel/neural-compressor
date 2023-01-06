@@ -18,6 +18,7 @@ Classes
    neural_compressor.adaptor.pytorch.PyTorchAdaptor
    neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor
    neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor
+   neural_compressor.adaptor.pytorch.PyTorchQuery
 
 
 
@@ -182,6 +183,71 @@ Functions
       :rtype: (bool)
 
 
+   .. py:method:: save(model, path=None)
+
+      The function is used by tune strategy class for saving model.
+
+      :param model: The model to saved.
+      :type model: object
+      :param path: The path where to save.
+      :type path: string
+
+
+   .. py:method:: inspect_tensor(model, dataloader, op_list=None, iteration_list=None, inspect_type='activation', save_to_disk=False)
+
+      The function is used by tune strategy class for dumping tensor info.
+
+      :param model: The model to inspect.
+      :type model: object
+      :param dataloader: The dataloader used to feed into.
+      :type dataloader: object
+      :param op_list: The op name in the fp32 model for dumpping.
+      :type op_list: list
+      :param iteration_list: The iteration list containing iterations to dump.
+      :type iteration_list: list
+      :param inspect_type: The valid value are 'weight', 'activation', 'all'.
+      :type inspect_type: str
+      :param save_to_disk: Save to disk or memory.
+      :type save_to_disk: bool
+
+      :returns: Numpy Array Dict
+                {
+                  'weight': {
+                    'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
+                    'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
+                    ...
+                  },
+                  'activation': [
+                    # iter 0
+                    {
+                      'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
+                      'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
+                      ...
+                    },
+                    # iter 1
+                    ...
+                  ]
+                }
+
+
+   .. py:method:: set_tensor(model, tensor_dict)
+
+      The function is used by tune strategy class for setting tensor back to model.
+
+      :param model: The model to set tensor. Usually it is quantized model.
+      :type model: object
+      :param tensor_dict: The tensor dict to set. Note the numpy array contains float
+                          value, adaptor layer has the responsibility to quantize to
+                          int8 or int32 to set into the quantized model if needed.
+                          The dict format is something like:
+                          {
+                            'weight0_name': numpy.array,
+                            'bias0_name': numpy.array,
+                            ...
+                          }
+      :type tensor_dict: dict
+
+
    .. py:method:: query_fw_capability(model)
 
       This is a helper function to get all quantizable ops from model.
@@ -278,6 +344,43 @@ Functions
              path (string): No used.
 
       :returns: None
+
+
+   .. py:method:: inspect_tensor(model, dataloader, op_list=None, iteration_list=None, inspect_type='activation', save_to_disk=False)
+
+      The function is used by tune strategy class for dumping tensor info.
+
+      :param model: The model to inspect.
+      :type model: object
+      :param dataloader: The dataloader used to feed into.
+      :type dataloader: object
+      :param op_list: The op name in the fp32 model for dumpping.
+      :type op_list: list
+      :param iteration_list: The iteration list containing iterations to dump.
+      :type iteration_list: list
+      :param inspect_type: The valid value are 'weight', 'activation', 'all'.
+      :type inspect_type: str
+      :param save_to_disk: Save to disk or memory.
+      :type save_to_disk: bool
+
+      :returns: Numpy Array Dict
+                {
+                  'weight': {
+                    'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
+                    'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
+                    ...
+                  },
+                  'activation': [
+                    # iter 0
+                    {
+                      'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
+                      'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
+                      ...
+                    },
+                    # iter 1
+                    ...
+                  ]
+                }
 
 
 
@@ -426,6 +529,41 @@ Functions
 
       :returns: sorted op list by sensitivity
       :rtype: ops_lst (list)
+
+
+
+.. py:class:: PyTorchQuery(local_config_file=None)
+
+   Bases: :py:obj:`neural_compressor.adaptor.query.QueryBackendCapability`
+
+   Base class that defines Query Interface.
+   Each adaption layer should implement the inherited class for specific backend on their own.
+
+   .. py:method:: get_quantization_capability()
+
+      Get the supported op types' quantization capability.
+
+      :returns: A list composed of dictionary which key is precision
+                and value is a dict that describes all op types' quantization capability.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_op_types()
+
+      Get the supported op types by all precisions.
+      :returns: A list composed of dictionary which key is precision
+                and value is the op types.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_op_types_by_precision(precision)
+
+      Get op types per precision
+      :param precision: precision name
+      :type precision: string
+
+      :returns: A list composed of op type.
+      :rtype: [string list]
 
 
 

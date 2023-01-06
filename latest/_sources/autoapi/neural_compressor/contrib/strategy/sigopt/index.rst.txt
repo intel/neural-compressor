@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.contrib.strategy.sigopt`
 ===================================================
 
 .. py:module:: neural_compressor.contrib.strategy.sigopt
+
+.. autoapi-nested-parse::
+
+   The SigOpt Tuning Strategy provides support for the quantization process.
+
 
 
 Module Contents
@@ -71,18 +74,31 @@ Classes
                  Defaults to None.
    :type dicts: dict, optional
 
+   .. py:method:: params_to_tune_configs(params)
+
+      Get the parameters of the tuning strategy.
+
+
    .. py:method:: next_tune_cfg()
 
-      The generator of yielding next tuning config to traverse by concrete strategies
-      according to last tuning result.
+      Yielding the tuning config to traverse by concreting strategies according to last tuning result.
 
+
+   .. py:method:: get_acc_target(base_acc)
+
+      Get the tuning target of the accuracy ceiterion.
 
 
    .. py:method:: traverse()
 
-      The main traverse logic, which could be override by some concrete strategy which needs
-      more hooks.
+      The main traverse logic, which could be override by some concrete strategy which needs more hooks.
+
       This is SigOpt version of traverse -- with additional constraints setting to HPO.
+
+
+   .. py:method:: create_exp(acc_target)
+
+      Set the config for the experiment.
 
 
 

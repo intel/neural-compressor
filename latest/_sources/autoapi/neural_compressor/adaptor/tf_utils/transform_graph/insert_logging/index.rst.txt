@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.transform_graph.insert_logging`
 ===========================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.transform_graph.insert_logging
+
+.. autoapi-nested-parse::
+
+   Insert logging graph transformation.
+
 
 
 Module Contents
@@ -28,6 +31,7 @@ Classes
    .. py:method:: do_transformation()
 
       Execute the insert logging transformation.
+
       :return: Transformed graph
 
 

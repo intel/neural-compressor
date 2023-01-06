@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.utils &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.utils &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,10 +167,19 @@
             
   <section id="module-neural_compressor.utils">
 <span id="neural-compressor-utils"></span><h1><a class="reference internal" href="#module-neural_compressor.utils" title="neural_compressor.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils</span></code></a><a class="headerlink" href="#module-neural_compressor.utils" title="Permalink to this heading">¶</a></h1>
+<p>Utils: provide useful methods and auxiliary functionalities.</p>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="collect_layer_histogram/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.collect_layer_histogram</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="constant/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.constant</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="create_obj_from_config/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.create_obj_from_config</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="kl_divergence/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.kl_divergence</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="load_huggingface/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.load_huggingface</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="logger/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.logger</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="options/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.options</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="pytorch/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.pytorch</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="utility/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.utility</span></code></a></li>
 </ul>
 </div>
@@ -181,70 +190,114 @@
 <h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.KL_Divergence" title="neural_compressor.utils.KL_Divergence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KL_Divergence</span></code></a></p></td>
-<td><p>The class of supporting KL divergence calibration algorithm.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.LayerHistogramCollector" title="neural_compressor.utils.LayerHistogramCollector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LayerHistogramCollector</span></code></a></p></td>
+<td><p>The collector of the histogram by layer.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.LayerHistogramCollector" title="neural_compressor.utils.LayerHistogramCollector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LayerHistogramCollector</span></code></a></p></td>
-<td><p>Saves layer histogram in a dict with layer names as keys and lists of NDArrays as</p></td>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.log" title="neural_compressor.utils.log"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log</span></code></a>(level, msg, *args, **kwargs)</p></td>
+<td><p>Output log with the level as a parameter.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.info" title="neural_compressor.utils.info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">info</span></code></a>(msg, *args, **kwargs)</p></td>
+<td><p>Output log with the info level.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.debug" title="neural_compressor.utils.debug"><code class="xref py py-obj docutils literal notranslate"><span class="pre">debug</span></code></a>(msg, *args, **kwargs)</p></td>
+<td><p>Output log with the debug level.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.warn" title="neural_compressor.utils.warn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">warn</span></code></a>(msg, *args, **kwargs)</p></td>
+<td><p>Output log with the warning level.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.warning" title="neural_compressor.utils.warning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">warning</span></code></a>(msg, *args, **kwargs)</p></td>
+<td><p>Output log with the warining level (Alias of the method warn).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.error" title="neural_compressor.utils.error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">error</span></code></a>(msg, *args, **kwargs)</p></td>
+<td><p>Output log with the error level.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.fatal" title="neural_compressor.utils.fatal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fatal</span></code></a>(msg, *args, **kwargs)</p></td>
+<td><p>Output log with the fatal level.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.set_random_seed" title="neural_compressor.utils.set_random_seed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_random_seed</span></code></a>(seed)</p></td>
+<td><p>Set the random seed in config.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">OPTIONS</span></code></p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.utils.KL_Divergence">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.</span></span><span class="sig-name descname"><span class="pre">KL_Divergence</span></span><a class="headerlink" href="#neural_compressor.utils.KL_Divergence" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The class of supporting KL divergence calibration algorithm.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>TODO</strong> – </p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.utils.KL_Divergence.expand_quantized_bins">
-<span class="sig-name descname"><span class="pre">expand_quantized_bins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantized_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_bins</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.KL_Divergence.expand_quantized_bins" title="Permalink to this definition">¶</a></dt>
-<dd><p>expand quantized bins</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.utils.KL_Divergence.safe_entropy">
-<span class="sig-name descname"><span class="pre">safe_entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference_distr_P</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_sum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidate_distr_Q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Q_sum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.KL_Divergence.safe_entropy" title="Permalink to this definition">¶</a></dt>
-<dd><p>safe entropy</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.utils.KL_Divergence.get_threshold">
-<span class="sig-name descname"><span class="pre">get_threshold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_edges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantized_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_quantized_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">255</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.KL_Divergence.get_threshold" title="Permalink to this definition">¶</a></dt>
-<dd><p>The interface of getting threshold per KL divergency algorithm.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>historgram</strong> (<em>tensor list</em>) – The tensor numpy array list including all ops
-in each iteration.</p></li>
-<li><p><strong>quantized_type</strong> (<em>string</em>) – string being “int8” or “uint8”.</p></li>
-<li><p><strong>number_bins</strong> (<em>integer</em>) – number of bins used in KL.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>threshold per quantized ops, it’s scalar.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.utils.LayerHistogramCollector">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.</span></span><span class="sig-name descname"><span class="pre">LayerHistogramCollector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_tensor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.LayerHistogramCollector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The collector of the histogram by layer.</p>
 <p>Saves layer histogram in a dict with layer names as keys and lists of NDArrays as
 values. The collected histogram will be used for calculating the optimal thresholds for
 quantization using KL divergence.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.utils.LayerHistogramCollector.collect">
 <span class="sig-name descname"><span class="pre">collect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.LayerHistogramCollector.collect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Callback function for collecting layer output NDArrays.</p>
+<dd><p>Collect layer output NDArrays as a callback function.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.log">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.</span></span><span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output log with the level as a parameter.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.info">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.</span></span><span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output log with the info level.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.debug">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.</span></span><span class="sig-name descname"><span class="pre">debug</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.debug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output log with the debug level.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.warn">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.</span></span><span class="sig-name descname"><span class="pre">warn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.warn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output log with the warning level.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.warning">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.</span></span><span class="sig-name descname"><span class="pre">warning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.warning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output log with the warining level (Alias of the method warn).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.error">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.</span></span><span class="sig-name descname"><span class="pre">error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output log with the error level.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.fatal">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.</span></span><span class="sig-name descname"><span class="pre">fatal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.fatal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output log with the fatal level.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.utils.set_random_seed">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.</span></span><span class="sig-name descname"><span class="pre">set_random_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.set_random_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the random seed in config.</p>
 </dd></dl>
 
 </section>

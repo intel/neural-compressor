@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.quantize_graph_common &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.quantize_graph_common &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.quantize_graph_common">
 <span id="neural-compressor-adaptor-tf-utils-quantize-graph-common"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph_common" title="neural_compressor.adaptor.tf_utils.quantize_graph_common"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph_common</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph_common" title="Permalink to this heading">¶</a></h1>
+<p>Quantize Graph Common Utils Herlper Class.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -185,20 +186,22 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.get_sorted_graph">
 <span class="sig-name descname"><span class="pre">get_sorted_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_node_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_node_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.get_sorted_graph" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a sorted graphdef object.Sometimes the input graphdef was composed of
-the randome nodedef objects, we reorder the graph to make the parsing more easier.
-:param input_graph: the input graphdef object
-:type input_graph: graphdef]
-:param input_node_names: the input node names
-:type input_node_names: string list
-:param output_node_names: the output node names
-:type output_node_names: string list</p>
+<dd><p>Return a sorted graphdef object.</p>
+<p>Sometimes the input graphdef was composed of the randome nodedef objects,
+we reorder the graph to make the parsing more easier.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>[description]</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_graph</strong> (<em>graphdef</em><em>]</em>) – the input graphdef object</p></li>
+<li><p><strong>input_node_names</strong> (<em>string list</em>) – the input node names</p></li>
+<li><p><strong>output_node_names</strong> (<em>string list</em>) – the output node names</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>[type]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>[description]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[type]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -206,21 +209,31 @@ the randome nodedef objects, we reorder the graph to make the parsing more easie
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.split_shared_inputs">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">split_shared_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_graph_def</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.split_shared_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Split shared inputs(like weights and bias) of the graph.
-:param in_graph: input graph file.
-:return: path to ouput graph file.</p>
+<dd><p>Split shared inputs(like weights and bias) of the graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>in_graph</strong> – input graph file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>path to ouput graph file.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.remove_training_nodes">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">remove_training_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protected_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types_to_splice</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Identity',</span> <span class="pre">'CheckNumerics']</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.remove_training_nodes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prunes out nodes that aren’t needed for inference.
-:param input_graph: Model to analyze and prune.
-:param types_to_splice: An optional list of types of nodes to be removed
-:param unconditionally.:</p>
+<dd><p>Prunes out nodes that aren’t needed for inference.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A optimized graphdef object.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_graph</strong> – Model to analyze and prune.</p></li>
+<li><p><strong>types_to_splice</strong> – An optional list of types of nodes to be removed</p></li>
+<li><p><strong>unconditionally.</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A optimized graphdef object.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -228,7 +241,7 @@ the randome nodedef objects, we reorder the graph to make the parsing more easie
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.create_node">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.create_node" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a nodedef object</p>
+<dd><p>Create a nodedef object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -249,7 +262,7 @@ the randome nodedef objects, we reorder the graph to make the parsing more easie
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.create_constant_node">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_constant_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.create_constant_node" title="Permalink to this definition">¶</a></dt>
-<dd><p>create constant node.</p>
+<dd><p>Create constant node.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -288,7 +301,7 @@ Defaults to ‘cpu’.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.set_attr_dtype">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">set_attr_dtype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.set_attr_dtype" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the attribute data type</p>
+<dd><p>Set the attribute data type.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -371,6 +384,12 @@ Defaults to ‘cpu’.</p></li>
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.ensure_tensor_name_has_port">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ensure_tensor_name_has_port</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.ensure_tensor_name_has_port" title="Permalink to this definition">¶</a></dt>
 <dd><p>Makes sure that a tensor name has :0 if no explicit port exists.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.generate_quantized_weight_node">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_quantized_weight_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host_op_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">per_channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_bit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enter_node</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper.generate_quantized_weight_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generated the quantized weight node.</p>
 </dd></dl>
 
 </dd></dl>

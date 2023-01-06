@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_quantized_op_cse`
 ======================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_quantized_op_cse
+
+.. autoapi-nested-parse::
+
+   Post CSE Graph Rewriter.
+
 
 
 Module Contents
@@ -23,13 +26,11 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
 
-   [summary]
    Remove duplicated nodes like shared quantizev2 and const to decrease the output model size.
 
    .. py:method:: do_transformation()
 
-      Base Interface that need to be implemented by each sub class.
-
+      Apply post CSE optimization.
 
 
 

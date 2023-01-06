@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern">
 <span id="neural-compressor-adaptor-tf-utils-graph-rewriter-qdq-insert-qdq-pattern"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern" title="neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern" title="Permalink to this heading">¶</a></h1>
+<p>Insert QDQ pattern Graph Rewriter.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -183,16 +184,10 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern.</span></span><span class="sig-name descname"><span class="pre">GenerateGraphWithQDQPattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_wise_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_quant</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bf16_ops</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantized_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_only</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itex_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern.GenerateGraphWithQDQPattern" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
 <p>Insert Q/DQ pairs before quantizable ops.</p>
-<dl class="simple">
-<dt>Args: model: input model.</dt><dd><p>data: sampling data.
-device: cpu or gpu</p>
-</dd>
-</dl>
-<p>Return: converted model with QDQ pattern</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern.GenerateGraphWithQDQPattern.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern.GenerateGraphWithQDQPattern.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base Interface that need to be implemented by each sub class.</p>
+<dd><p>Generate the graph with QDQ patterns, this is the first step to do new api quantizaiton.</p>
 </dd></dl>
 
 </dd></dl>

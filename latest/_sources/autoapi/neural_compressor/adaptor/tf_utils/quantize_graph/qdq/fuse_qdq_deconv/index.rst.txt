@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_deconv`
 ===============================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_deconv
+
+.. autoapi-nested-parse::
+
+   Quantize Conv2DBackpropInput and Conv3DBackpropInputV2.
+
 
 
 Module Contents
@@ -23,21 +26,44 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
 
-   This is the base class for nodes fusion
+   Quantize Conv2DBackpropInput and Conv3DBackpropInputV2 and apply the fusion.
+
+   .. py:method:: apply_single_deconv2d_fusion(match_node_name)
+
+      Apply single Conv2DBackpropInput fusion.
+
+      Dequantize + Conv2DBackpropInput + QuantizeV2
 
 
-   :param object {[type]} -- [description]:
+   .. py:method:: apply_deconv2d_biasadd_fusion(match_node_name)
+
+      Apply Conv2DBackpropInput BiasAdd fusion.
+
+      Dequantize + Conv2DBackpropInput + Biasadd + QuantizeV2
+
+
+   .. py:method:: apply_single_deconv3d_fusion(match_node_name)
+
+      Apply single Conv3DBackpropInputV2 fusion.
+
+      Dequantize + Conv3DBackpropInputV2 + QuantizeV2
+
+
+   .. py:method:: apply_deconv3d_biasadd_fusion(match_node_name)
+
+      Apply the Conv3DBackpropInputV2 BiasAdd fusion.
+
+      Dequantize + Conv3DBackpropInputV2 + Biasadd + QuantizeV2
+
 
    .. py:method:: get_longest_fuse()
 
-      This is the virtual interface to be implemented by derived class
-
+      Get the longest fusion pattern.
 
 
    .. py:method:: apply_the_transform()
 
-      This is the virtual interface to be implemented by derived class
-      :return: transformed graphdef
+      Quantize Conv2DBackpropInput and Conv3DBackpropInputV2 and apply the fusion.
 
 
 

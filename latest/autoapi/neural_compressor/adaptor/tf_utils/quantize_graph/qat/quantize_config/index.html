@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config">
 <span id="neural-compressor-adaptor-tf-utils-quantize-graph-qat-quantize-config"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config" title="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config" title="Permalink to this heading">¶</a></h1>
+<p>QAT Quantize Config Class.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -181,8 +182,8 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.</span></span><span class="sig-name descname"><span class="pre">QuantizeConfig</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class for building custom quantize config.
-There should be only one QuantizeConfig instance for global setting.</p>
+<dd><p>Class for building custom quantize config.</p>
+<p>There should be only one QuantizeConfig instance for global setting.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.add_quantize_recipe">
 <span class="sig-name descname"><span class="pre">add_quantize_recipe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantize_recipe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig.add_quantize_recipe" title="Permalink to this definition">¶</a></dt>
@@ -242,7 +243,7 @@ For example:</p>
 <dd><p>Remove a batch of layers from the quantize_recipe dict.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>layers_names</strong> (<em>List</em>) – The names of layers to be removed.</p>
+<dd class="field-odd"><p><strong>layer_names</strong> (<em>List</em>) – The names of layers to be removed.</p>
 </dd>
 </dl>
 </dd></dl>

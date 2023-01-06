@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fetch_weight_from_reshape`
 =============================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fetch_weight_from_reshape
+
+.. autoapi-nested-parse::
+
+   Featch Weight from Reshape Graph Rewriter.
+
 
 
 Module Contents
@@ -23,15 +26,12 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
 
-   Graph Rewrite Base class.
-   We abstract this base class and define the interface only.
-
-   :param object: the input model to be converted.
-   :type object: model
+   Handle the Pack + Reshape + Conv2D fusion pattern.
 
    .. py:method:: do_transformation()
 
-      fetch weight of Conv2D from Pack+Reshape+Conv2D pattern
+      Fetch weight of Conv2D from Pack+Reshape+Conv2D pattern.
+
       :param input_graph_def: graphdef object
       :type input_graph_def: graphdef
 

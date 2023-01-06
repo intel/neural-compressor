@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.torch_utils.bf16_convert &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.torch_utils.bf16_convert &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,84 @@
             
   <section id="module-neural_compressor.adaptor.torch_utils.bf16_convert">
 <span id="neural-compressor-adaptor-torch-utils-bf16-convert"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.torch_utils.bf16_convert" title="neural_compressor.adaptor.torch_utils.bf16_convert"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.torch_utils.bf16_convert</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.torch_utils.bf16_convert" title="Permalink to this heading">¶</a></h1>
+<p>Bf16 Convert for Torch Utils.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.bf16_convert.BF16ModuleWrapper" title="neural_compressor.adaptor.torch_utils.bf16_convert.BF16ModuleWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BF16ModuleWrapper</span></code></a></p></td>
+<td><p>BF16Module Wrapper Class.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.bf16_convert.Convert" title="neural_compressor.adaptor.torch_utils.bf16_convert.Convert"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Convert</span></code></a>(model, tune_cfg)</p></td>
+<td><p>Convert to bf16 model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.bf16_convert.bf16_symbolic_trace" title="neural_compressor.adaptor.torch_utils.bf16_convert.bf16_symbolic_trace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bf16_symbolic_trace</span></code></a>(model, fx_sub_module_list[, prefix])</p></td>
+<td><p>Symbolic trace for bf16 models.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.bf16_convert.BF16ModuleWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.bf16_convert.</span></span><span class="sig-name descname"><span class="pre">BF16ModuleWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.bf16_convert.BF16ModuleWrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></p>
+<p>BF16Module Wrapper Class.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.bf16_convert.BF16ModuleWrapper.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.bf16_convert.BF16ModuleWrapper.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert dtype.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.bf16_convert.Convert">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.bf16_convert.</span></span><span class="sig-name descname"><span class="pre">Convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.bf16_convert.Convert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert to bf16 model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – the input model.</p></li>
+<li><p><strong>tune_cfg</strong> (<em>dict</em>) – dictionary of quantization configuration.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>model with mixed precision.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>mixed_precision_model (object)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.bf16_convert.bf16_symbolic_trace">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.bf16_convert.</span></span><span class="sig-name descname"><span class="pre">bf16_symbolic_trace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fx_sub_module_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.bf16_convert.bf16_symbolic_trace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Symbolic trace for bf16 models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – the input model.</p></li>
+<li><p><strong>fx_sub_module_list</strong> (<em>list</em>) – _description_</p></li>
+<li><p><strong>prefix</strong> (<em>str</em>) – prefix of op name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>model (object)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
 </section>
 
 

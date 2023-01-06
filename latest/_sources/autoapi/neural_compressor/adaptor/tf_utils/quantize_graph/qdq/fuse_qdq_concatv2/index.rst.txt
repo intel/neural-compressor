@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_concatv2`
 =================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_concatv2
+
+.. autoapi-nested-parse::
+
+   Quantize ConcatV2 to int8 op.
+
 
 
 Module Contents
@@ -23,21 +26,16 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
 
-   This is the base class for nodes fusion
-
-
-   :param object {[type]} -- [description]:
+   Quantize ConcatV2 to int8 op QuantizedConcatV2.
 
    .. py:method:: get_longest_fuse(do_transform=False)
 
-      This is the virtual interface to be implemented by derived class
-
+      Get longest fusion pattern.
 
 
    .. py:method:: apply_the_transform()
 
-      This is the virtual interface to be implemented by derived class
-      :return: transformed graphdef
+      Apply the quantization of ConcatV2.
 
 
 

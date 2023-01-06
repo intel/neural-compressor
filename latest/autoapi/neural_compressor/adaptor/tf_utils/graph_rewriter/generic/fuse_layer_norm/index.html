@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm">
 <span id="neural-compressor-adaptor-tf-utils-graph-rewriter-generic-fuse-layer-norm"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm" title="Permalink to this heading">¶</a></h1>
+<p>Fuse samll ops to LayerNorm Graph Rewriter.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -203,31 +204,34 @@ And further restrict it to only 2D or 3D tensor inputs to keras LayerNormalizati
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.FuseLayerNormOptimizer.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.FuseLayerNormOptimizer.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><p>The following pattern will be searched in the graph with additional contraints.
-Here * means any type of op.
+<dd><p>The following pattern will be searched in the graph with additional contraints.</p>
+<p>Here * means any type of op.
 Subgraph:</p>
 <blockquote>
 <div><dl>
 <dt><a href="#id1"><span class="problematic" id="id2">*</span></a>(input)  *  * Const  *  Const                       FusedOp</dt><dd><dl>
-<dt>   |    |    |  /        Const              ——-</dt><dd><p>  |    |    | /  Const   /
-Reshape  Fill   Fill  /     /         <a href="#id3"><span class="problematic" id="id4">*</span></a>(input) <a href="#id5"><span class="problematic" id="id6">*</span></a>(gamma)  <a href="#id7"><span class="problematic" id="id8">*</span></a>(beta)</p>
+<dt>x    |   x  |    |  x        Const              ——-</dt><dd><p>x   |    x |    | x  Const   x
+Reshape  Fill   Fill  x     x         <a href="#id3"><span class="problematic" id="id4">*</span></a>(input) <a href="#id5"><span class="problematic" id="id6">*</span></a>(gamma)  <a href="#id7"><span class="problematic" id="id8">*</span></a>(beta)</p>
 <blockquote>
 <div><dl class="simple">
-<dt>     /      /   /     /                    |      /</dt><dd><p>   /      /   /     /                     |     /</p>
+<dt>x      x      x   x     x                x     |      x</dt><dd><p>x    x      x   x     x                  x    |     x</p>
 </dd>
 </dl>
 </div></blockquote>
 </dd>
 <dt>F u s e d B a t c h N o r m V 3              _MklLayerNorm</dt><dd><blockquote>
 <div><blockquote>
-<div><blockquote>
-<div><p>  *</p>
-</div></blockquote>
-<p>/</p>
+<div><dl class="simple">
+<dt>x</dt><dd><dl class="simple">
+<dt>x   *</dt><dd><p>x x</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </div></blockquote>
 <dl class="simple">
 <dt>Reshape</dt><dd><dl class="simple">
-<dt>  <a href="#id9"><span class="problematic" id="id10">*</span></a>(gamma)</dt><dd><p>/
+<dt>x   <a href="#id9"><span class="problematic" id="id10">*</span></a>(gamma)</dt><dd><p>x x
 Mul</p>
 </dd>
 </dl>
@@ -235,8 +239,8 @@ Mul</p>
 </dl>
 </div></blockquote>
 <dl>
-<dt><a href="#id11"><span class="problematic" id="id12">*</span></a>(beta) /</dt><dd><blockquote>
-<div><p>  /</p>
+<dt><a href="#id11"><span class="problematic" id="id12">*</span></a>(beta) x</dt><dd><blockquote>
+<div><p>x   x</p>
 </div></blockquote>
 <p>AddV2(output)</p>
 </dd>
@@ -271,15 +275,19 @@ fused to LayerNorm.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.node_from_map">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.</span></span><span class="sig-name descname"><span class="pre">node_from_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.node_from_map" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pulls a node def from a dictionary for a given name.
-:param node_map: Dictionary containing an entry indexed by name for every node.
-:param name: Identifies the node we want to find.</p>
+<dd><p>Pulls a node def from a dictionary for a given name.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>NodeDef of the node with the given name.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_map</strong> – Dictionary containing an entry indexed by name for every node.</p></li>
+<li><p><strong>name</strong> – Identifies the node we want to find.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the node isn’t present in the dictionary.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>NodeDef of the node with the given name.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the node isn’t present in the dictionary.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -287,14 +295,16 @@ fused to LayerNorm.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.values_from_const">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.</span></span><span class="sig-name descname"><span class="pre">values_from_const</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_def</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm.values_from_const" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extracts the values from a const NodeDef as a numpy ndarray.
-:param node_def: Const NodeDef that has the values we want to access.</p>
+<dd><p>Extracts the values from a const NodeDef as a numpy ndarray.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Numpy ndarray containing the values.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>node_def</strong> – Const NodeDef that has the values we want to access.</p>
 </dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the node isn’t a Const.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Numpy ndarray containing the values.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the node isn’t a Const.</p>
 </dd>
 </dl>
 </dd></dl>

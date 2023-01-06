@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout">
 <span id="neural-compressor-adaptor-tf-utils-graph-rewriter-generic-convert-layout"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout" title="Permalink to this heading">¶</a></h1>
+<p>Convert Layout Graph Rewriter.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -182,9 +183,9 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout.ConvertLayoutOptimizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout.</span></span><span class="sig-name descname"><span class="pre">ConvertLayoutOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout.ConvertLayoutOptimizer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
+<p>The layout convertion optimizer, convert NCHW to NHWC format.</p>
+<p>It is executed only when NCHW node exists and tensorflow version is 2.4.0 and above.</p>
 <dl class="simple">
-<dt>The layout convertion optimizer, convert NCHW to NHWC format.</dt><dd><p>It is executed only when NCHW node exists and tensorflow version is 2.4.0 and above.</p>
-</dd>
 <dt>Args: model: input graph_def</dt><dd><p>outputs: output name list</p>
 </dd>
 </dl>
@@ -192,7 +193,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout.ConvertLayoutOptimizer.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_layout.ConvertLayoutOptimizer.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base Interface that need to be implemented by each sub class.</p>
+<dd><p>Execute converting layout.</p>
 </dd></dl>
 
 </dd></dl>

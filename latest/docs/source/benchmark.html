@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Benchmarking &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>Benchmarking &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,85 +167,62 @@
             
   <section id="benchmarking">
 <h1>Benchmarking<a class="headerlink" href="#benchmarking" title="Permalink to this heading">¶</a></h1>
-<p>The benchmarking feature of Neural Compressor is used to measure the model performance with the objective settings; the user can get the performance (default) or accuracy of the models between the float32 model and the quantized low precision model in the same scenarios that they configured in Yaml. Benchmarking is always used after a quantization process.</p>
-<p>The following examples show how to use benchmarking.</p>
-<section id="config-evaluation-filed-in-a-yaml-file">
-<h2>Config evaluation filed in a yaml file<a class="headerlink" href="#config-evaluation-filed-in-a-yaml-file" title="Permalink to this heading">¶</a></h2>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">evaluation</span><span class="p">:</span><span class="w">                                          </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
-<span class="w">  </span><span class="nt">accuracy</span><span class="p">:</span><span class="w">                                          </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
-<span class="w">    </span><span class="nt">metric</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">topk</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">                                        </span><span class="c1"># built-in metrics are topk, map, f1, allow user to register new metric.</span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">ImageFolder</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span><span class="w">          </span><span class="c1"># NOTE: modify to evaluation dataset location if needed</span>
-<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256</span>
-<span class="w">        </span><span class="nt">CenterCrop</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span>
-<span class="w">        </span><span class="nt">ToTensor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
-<span class="w">        </span><span class="nt">Normalize</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">mean</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.456</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.406</span><span class="p p-Indicator">]</span>
-<span class="w">          </span><span class="nt">std</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.229</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.225</span><span class="p p-Indicator">]</span>
-<span class="w">  </span><span class="nt">performance</span><span class="p">:</span><span class="w">                                       </span><span class="c1"># optional. used to benchmark performance of passing model.</span>
-<span class="w">    </span><span class="nt">configs</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">cores_per_instance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
-<span class="w">      </span><span class="nt">num_of_instance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
-<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">ImageFolder</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span><span class="w">          </span><span class="c1"># NOTE: modify to evaluation dataset location if needed</span>
-<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256</span>
-<span class="w">        </span><span class="nt">CenterCrop</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span>
-<span class="w">        </span><span class="nt">ToTensor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
-<span class="w">        </span><span class="nt">Normalize</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">mean</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.456</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.406</span><span class="p p-Indicator">]</span>
-</pre></div>
-</div>
-<p>The above example config two sub-fields named ‘accuracy’ and ‘performance’ which indicates that the benchmark module will get the accuracy and performance of the model. The user can also remove the performance field to only get model accuracy or performance. It’s flexible enough to configure the benchmark you want.</p>
+<ol class="simple">
+<li><p><a class="reference external" href="#Introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#Benchmark-Support-Matrix">Benchmark Support Matrix</a></p></li>
+<li><p><a class="reference external" href="#Get-Started-with-Benchmark">Get Started with Benchmark</a></p></li>
+<li><p><a class="reference external" href="#Examples">Examples</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<p>The benchmarking feature of Neural Compressor is used to measure the model performance with the objective settings.
+Users can get the performance of the float32 model and the optimized low precision model in the same scenarios.</p>
 </section>
-<section id="use-a-user-specific-dataloader-to-run-benchmark">
-<h2>Use a user-specific dataloader to run benchmark<a class="headerlink" href="#use-a-user-specific-dataloader-to-run-benchmark" title="Permalink to this heading">¶</a></h2>
-<p>In this case, configure your dataloader and Neural Compressor will construct an evaluation function to run the benchmarking. The user can also register the postprocess transform and metric to get the accuracy.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">()</span> <span class="c1">#  dataset class that implement __getitem__ method or __iter__ method</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Benchmark</span><span class="p">,</span> <span class="n">common</span>
-<span class="n">evaluator</span> <span class="o">=</span> <span class="n">Benchmark</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
-<span class="n">evaluator</span><span class="o">.</span><span class="n">b_dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
-<span class="c1"># user can also register postprocess and metric, this is optional</span>
-<span class="n">evaluator</span><span class="o">.</span><span class="n">postprocess</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Postprocess</span><span class="p">(</span><span class="n">postprocess_cls</span><span class="p">)</span>
-<span class="n">evaluator</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Metric</span><span class="p">(</span><span class="n">metric_cls</span><span class="p">)</span>
-<span class="c1"># performance</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">evaluator</span><span class="p">()</span>
-<span class="c1"># accuracy</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">evaluator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">)</span>
+<section id="benchmark-support-matrix">
+<h2>Benchmark Support Matrix<a class="headerlink" href="#benchmark-support-matrix" title="Permalink to this heading">¶</a></h2>
+<table>
+    <thead>
+        <tr>
+            <th>Environment</th>
+            <th>Category</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan=2>Operating System</td>
+            <td> linux </td>
+        </tr>
+        <tr>
+            <td> windows </td>
+        </tr>
+        <tr>
+            <td rowspan=3> Architecture </td>
+            <td> x86_64 </td>
+        </tr>
+        <tr>
+            <td> aarch64 </td>
+        </tr>
+        <tr>
+            <td> gpu </td>
+        </tr>
+    </tbody>
+</table></section>
+<section id="get-started-with-benchmark-api">
+<h2>Get Started with Benchmark API<a class="headerlink" href="#get-started-with-benchmark-api" title="Permalink to this heading">¶</a></h2>
+<p>Benchmark provide capability to automatically run with multiple instance through <code class="docutils literal notranslate"><span class="pre">cores_per_instance</span></code> and <code class="docutils literal notranslate"><span class="pre">num_of_instance</span></code> config (CPU only).
+And please make sure <code class="docutils literal notranslate"><span class="pre">cores_per_instance</span> <span class="pre">*</span> <span class="pre">num_of_instance</span></code> must be less than CPU physical core numbers.
+<code class="docutils literal notranslate"><span class="pre">benchmark.fit</span></code> accept <code class="docutils literal notranslate"><span class="pre">b_dataloader</span></code> or <code class="docutils literal notranslate"><span class="pre">b_func</span></code> as input.
+<code class="docutils literal notranslate"><span class="pre">b_func</span></code> is customized benchmark function. If user passes the <code class="docutils literal notranslate"><span class="pre">b_dataloader</span></code>, then <code class="docutils literal notranslate"><span class="pre">b_func</span></code> is not required.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">BenchmarkConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.benchmark</span> <span class="kn">import</span> <span class="n">fit</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">BenchmarkConfig</span><span class="p">(</span><span class="n">warmup</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">cores_per_instance</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_of_instance</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;./int8.pb&#39;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span> <span class="n">b_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Benchmark class also support BenchmarkConf class as it’s argument:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">()</span> <span class="c1">#  dataset class that implement __getitem__ method or __iter__ method</span>
-<span class="kn">from</span> <span class="nn">lpot.experimental</span> <span class="kn">import</span> <span class="n">Benchmark</span><span class="p">,</span> <span class="n">common</span>
-<span class="kn">from</span> <span class="nn">lpot.conf.config</span> <span class="kn">import</span> <span class="n">BenchmarkConf</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">BenchmarkConf</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
-<span class="n">evaluator</span> <span class="o">=</span> <span class="n">Benchmark</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
-<span class="n">evaluator</span><span class="o">.</span><span class="n">b_dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
-<span class="c1"># user can also register postprocess and metric, this is optional</span>
-<span class="n">evaluator</span><span class="o">.</span><span class="n">postprocess</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Postprocess</span><span class="p">(</span><span class="n">postprocess_cls</span><span class="p">)</span>
-<span class="n">evaluator</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Metric</span><span class="p">(</span><span class="n">metric_cls</span><span class="p">)</span>
-<span class="c1"># performance</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">evaluator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;performance&#39;</span><span class="p">)</span>
-<span class="c1"># accuracy</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">evaluator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
+</section>
 <section id="examples">
-<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h3>
-<p>Refer to the <a class="reference external" href="../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/run_benchmark.sh">Benchmark example</a>.</p>
-</section>
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h2>
+<p>Refer to the <a class="reference external" href="../../examples/helloworld/tf_example5">Benchmark example</a>.</p>
 </section>
 </section>
 

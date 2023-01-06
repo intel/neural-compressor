@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize`
 =============================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize
+
+.. autoapi-nested-parse::
+
+   QAT Fake Quantize Graph Class.
+
 
 
 Module Contents

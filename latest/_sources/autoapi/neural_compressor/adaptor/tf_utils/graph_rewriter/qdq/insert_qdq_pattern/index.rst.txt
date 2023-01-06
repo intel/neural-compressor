@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern`
 ==================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern
+
+.. autoapi-nested-parse::
+
+   Insert QDQ pattern Graph Rewriter.
+
 
 
 Module Contents
@@ -25,16 +28,9 @@ Classes
 
    Insert Q/DQ pairs before quantizable ops.
 
-   Args: model: input model.
-         data: sampling data.
-         device: cpu or gpu
-
-   Return: converted model with QDQ pattern
-
    .. py:method:: do_transformation()
 
-      Base Interface that need to be implemented by each sub class.
-
+      Generate the graph with QDQ patterns, this is the first step to do new api quantizaiton.
 
 
 

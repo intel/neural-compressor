@@ -31,10 +31,16 @@ Classes
    neural_compressor.data.Datasets
    neural_compressor.data.Dataset
    neural_compressor.data.IterableDataset
+   neural_compressor.data.TensorflowImageRecord
    neural_compressor.data.DataLoader
+   neural_compressor.data.DefaultDataLoader
    neural_compressor.data.TRANSFORMS
    neural_compressor.data.BaseTransform
+   neural_compressor.data.ComposeTransform
    neural_compressor.data.Postprocess
+   neural_compressor.data.LabelShift
+   neural_compressor.data.BilinearImagenetTransform
+   neural_compressor.data.TensorflowResizeCropImagenetTransform
    neural_compressor.data.FILTERS
    neural_compressor.data.Filter
 
@@ -108,6 +114,25 @@ Attributes
    :rtype: cls
 
 
+.. py:class:: TensorflowImageRecord
+
+   Bases: :py:obj:`IterableDataset`
+
+   Tensorflow imageNet database in tf record format.
+
+   Please arrange data in this way:
+       root/validation-000-of-100
+       root/validation-001-of-100
+       ...
+       root/validation-099-of-100
+   The file name needs to follow this pattern: '* - * -of- *'
+
+   Args: root (str): Root directory of dataset.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
+
+
 
 .. py:class:: DataLoader
 
@@ -115,6 +140,22 @@ Attributes
 
    Entrance of all configured DataLoaders. Will dispatch the DataLoaders to framework
    specific one. Users will be not aware of the dispatching, and the Interface is unified.
+
+
+.. py:class:: DefaultDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+
+   Bases: :py:obj:`neural_compressor.data.dataloaders.base_dataloader.BaseDataLoader`
+
+   DefaultDataLoader for multiple framework backends.
+
+   .. py:property:: dataloader
+
+      Return dataloader.
+
+   .. py:method:: batch(batch_size, last_batch='rollover')
+
+      Set batch_size and last_batch.
+
 
 
 .. py:class:: TRANSFORMS(framework, process)
@@ -144,6 +185,19 @@ Attributes
    The base class for transform.
 
 
+.. py:class:: ComposeTransform(transform_list)
+
+   Bases: :py:obj:`BaseTransform`
+
+   Composes several transforms together.
+
+   :param transform_list: list of transforms to compose
+   :type transform_list: list of Transform objects
+
+   :returns: tuple of processed image and label
+   :rtype: sample (tuple)
+
+
 .. py:function:: transform_registry(transform_type, process, framework)
 
    Class decorator used to register all transform subclasses.
@@ -166,6 +220,60 @@ Attributes
    Bases: :py:obj:`object`
 
    Just collect the infos to construct a Postprocess.
+
+
+.. py:class:: LabelShift(label_shift=0)
+
+   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
+   Convert label to label - label_shift.
+
+   :param label_shift: number of label shift
+   :type label_shift: int, default=0
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: BilinearImagenetTransform(height, width, central_fraction=0.875, mean_value=[0.0, 0.0, 0.0], scale=1.0)
+
+   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
+   Combination of a series of transforms which is applicable to images in Imagenet.
+
+   :param height: Height of the result
+   :param width: Width of the result
+   :param central_fraction: fraction of size to crop
+   :type central_fraction: float, default=0.875
+   :param mean_value: means for each channel
+   :type mean_value: list, default=[0.0,0.0,0.0]
+   :param scale: std value
+   :type scale: float, default=1.0
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: TensorflowResizeCropImagenetTransform(height, width, random_crop=False, resize_side=256, resize_method='bilinear', random_flip_left_right=False, mean_value=[0.0, 0.0, 0.0], scale=1.0, data_format='channels_last', subpixels='RGB')
+
+   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
+   Combination of a series of transforms which is applicable to images in Imagenet.
+
+   :param height: Height of the result
+   :type height: int
+   :param width: Width of the result
+   :type width: int
+   :param random_crop: whether to random crop
+   :type random_crop: bool, default=False
+   :param resize_side: desired shape after resize operation
+   :type resize_side: int, default=256
+   :param random_flip_left_right: whether to random flip left and right
+   :type random_flip_left_right: bool, default=False
+   :param mean_value: means for each channel
+   :type mean_value: list, default=[0.0,0.0,0.0]
+   :param scale: std value
+   :type scale: float, default=1.0
+
+   :returns: tuple of processed image and label
 
 
 .. py:class:: FILTERS(framework)

@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter">
 <span id="neural-compressor-adaptor-tf-utils-graph-rewriter-int8-post-hostconst-converter"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter" title="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter" title="Permalink to this heading">¶</a></h1>
+<p>Post HostConst Graph Rewriter.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -174,7 +175,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter.PostHostConstConverter" title="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter.PostHostConstConverter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PostHostConstConverter</span></code></a></p></td>
-<td><p>[summary]</p></td>
+<td><p>Support HostConst as default for all devices, not just for GPU.</p></td>
 </tr>
 </tbody>
 </table>
@@ -182,12 +183,11 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter.PostHostConstConverter">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter.</span></span><span class="sig-name descname"><span class="pre">PostHostConstConverter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter.PostHostConstConverter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
-<p>[summary]
-Support HostConst as default for all devices</p>
+<p>Support HostConst as default for all devices, not just for GPU.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter.PostHostConstConverter.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.int8.post_hostconst_converter.PostHostConstConverter.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base Interface that need to be implemented by each sub class.</p>
+<dd><p>Convert Const to HostConst as default.</p>
 </dd></dl>
 
 </dd></dl>

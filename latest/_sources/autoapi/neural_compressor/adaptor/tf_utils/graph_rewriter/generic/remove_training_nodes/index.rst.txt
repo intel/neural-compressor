@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.remove_training_nodes`
 =========================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.remove_training_nodes
+
+.. autoapi-nested-parse::
+
+   Remove training nodes Graph Rewriter.
+
 
 
 Module Contents
@@ -23,16 +26,11 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
 
-   Graph Rewrite Base class.
-   We abstract this base class and define the interface only.
-
-   :param object: the input model to be converted.
-   :type object: model
+   Remove training nodes optimizer.
 
    .. py:method:: do_transformation()
 
-      Base Interface that need to be implemented by each sub class.
-
+      Remove tranining nodes which has no control edge inputs.
 
 
 

@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.utils.kl_divergence &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.utils.kl_divergence &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.utils.kl_divergence">
 <span id="neural-compressor-utils-kl-divergence"></span><h1><a class="reference internal" href="#module-neural_compressor.utils.kl_divergence" title="neural_compressor.utils.kl_divergence"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.kl_divergence</span></code></a><a class="headerlink" href="#module-neural_compressor.utils.kl_divergence" title="Permalink to this heading">¶</a></h1>
+<p>KL Divergence: measure probability distribution difference to determine the thresholds per quantized op.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -183,40 +184,22 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.kl_divergence.</span></span><span class="sig-name descname"><span class="pre">KL_Divergence</span></span><a class="headerlink" href="#neural_compressor.utils.kl_divergence.KL_Divergence" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The class of supporting KL divergence calibration algorithm.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>TODO</strong> – </p>
-</dd>
-</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.utils.kl_divergence.KL_Divergence.expand_quantized_bins">
 <span class="sig-name descname"><span class="pre">expand_quantized_bins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantized_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_bins</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.kl_divergence.KL_Divergence.expand_quantized_bins" title="Permalink to this definition">¶</a></dt>
-<dd><p>expand quantized bins</p>
+<dd><p>Expand quantized bins.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.utils.kl_divergence.KL_Divergence.safe_entropy">
 <span class="sig-name descname"><span class="pre">safe_entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference_distr_P</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P_sum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidate_distr_Q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Q_sum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.kl_divergence.KL_Divergence.safe_entropy" title="Permalink to this definition">¶</a></dt>
-<dd><p>safe entropy</p>
+<dd><p>Safe entropy.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.utils.kl_divergence.KL_Divergence.get_threshold">
 <span class="sig-name descname"><span class="pre">get_threshold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_edges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantized_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_quantized_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">255</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.utils.kl_divergence.KL_Divergence.get_threshold" title="Permalink to this definition">¶</a></dt>
-<dd><p>The interface of getting threshold per KL divergency algorithm.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>historgram</strong> (<em>tensor list</em>) – The tensor numpy array list including all ops
-in each iteration.</p></li>
-<li><p><strong>quantized_type</strong> (<em>string</em>) – string being “int8” or “uint8”.</p></li>
-<li><p><strong>number_bins</strong> (<em>integer</em>) – number of bins used in KL.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>threshold per quantized ops, it’s scalar.</p>
-</dd>
-</dl>
+<dd><p>The interface of getting threshold per op using KL divergency algorithm.</p>
 </dd></dl>
 
 </dd></dl>

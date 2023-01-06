@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm`
 ===================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_layer_norm
+
+.. autoapi-nested-parse::
+
+   Fuse samll ops to LayerNorm Graph Rewriter.
+
 
 
 Module Contents
@@ -39,23 +42,25 @@ Functions
    .. py:method:: do_transformation()
 
       The following pattern will be searched in the graph with additional contraints.
+
       Here * means any type of op.
       Subgraph:
               *(input)  *  * Const  *  Const                       FusedOp
-                   \    |   \  |    |  /        Const              -------
-                    \   |    \ |    | /  Const   /
-                    Reshape  Fill   Fill  /     /         *(input) *(gamma)  *(beta)
-                       \      /      /   /     /                \     |      /
-                        \    /      /   /     /                  \    |     /
+                   x    |   x  |    |  x        Const              -------
+                    x   |    x |    | x  Const   x
+                    Reshape  Fill   Fill  x     x         *(input) *(gamma)  *(beta)
+                       x      x      x   x     x                x     |      x
+                        x    x      x   x     x                  x    |     x
                    F u s e d B a t c h N o r m V 3              _MklLayerNorm
-                                                       \   *
-                            \ /
+                          x
+                           x   *
+                            x x
                          Reshape
-                             \   *(gamma)
-                              \ /
+                             x   *(gamma)
+                              x x
                               Mul
-                      *(beta) /
-                         \   /
+                      *(beta) x
+                         x   x
                        AddV2(output)
       :param input_graph_def: A GraphDef containing a model.
 
@@ -74,6 +79,7 @@ Functions
 .. py:function:: node_from_map(node_map, name)
 
    Pulls a node def from a dictionary for a given name.
+
    :param node_map: Dictionary containing an entry indexed by name for every node.
    :param name: Identifies the node we want to find.
 
@@ -85,6 +91,7 @@ Functions
 .. py:function:: values_from_const(node_def)
 
    Extracts the values from a const NodeDef as a numpy ndarray.
+
    :param node_def: Const NodeDef that has the values we want to access.
 
    :returns: Numpy ndarray containing the values.

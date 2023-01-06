@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_helper`
 ===============================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_helper
+
+.. autoapi-nested-parse::
+
+   QAT Quantize Helper Class.
+
 
 
 Module Contents

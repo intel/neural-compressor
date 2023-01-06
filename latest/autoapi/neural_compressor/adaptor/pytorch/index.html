@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.pytorch &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.pytorch &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -184,6 +184,9 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor" title="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorch_FXAdaptor</span></code></a></p></td>
 <td><p>Adaptor of PyTorch framework with FX graph mode, all PyTorch API is in this class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.PyTorchQuery" title="neural_compressor.adaptor.pytorch.PyTorchQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchQuery</span></code></a></p></td>
+<td><p>Base class that defines Query Interface.</p></td>
 </tr>
 </tbody>
 </table>
@@ -403,6 +406,92 @@
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used by tune strategy class for saving model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – The model to saved.</p></li>
+<li><p><strong>path</strong> (<em>string</em>) – The path where to save.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.inspect_tensor">
+<span class="sig-name descname"><span class="pre">inspect_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inspect_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'activation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_to_disk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.inspect_tensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used by tune strategy class for dumping tensor info.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – The model to inspect.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – The dataloader used to feed into.</p></li>
+<li><p><strong>op_list</strong> (<em>list</em>) – The op name in the fp32 model for dumpping.</p></li>
+<li><p><strong>iteration_list</strong> (<em>list</em>) – The iteration list containing iterations to dump.</p></li>
+<li><p><strong>inspect_type</strong> (<em>str</em>) – The valid value are ‘weight’, ‘activation’, ‘all’.</p></li>
+<li><p><strong>save_to_disk</strong> (<em>bool</em>) – Save to disk or memory.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Numpy Array Dict
+{</p>
+<blockquote>
+<div><dl class="simple">
+<dt>’weight’: {</dt><dd><p>‘node0_name’: {‘weight0_name’: numpy.array, ‘bias0_name’: numpy.array, …},
+‘node1_name’: {‘weight1_name’: numpy.array, ‘bias1_name’: numpy.array, …},
+…</p>
+</dd>
+</dl>
+<p>},
+‘activation’: [</p>
+<blockquote>
+<div><p># iter 0
+{</p>
+<blockquote>
+<div><p>’node0_name’: {‘output0_name’: numpy.array, ‘output1_name’: numpy.array, …}
+‘node1_name’: {‘output1_name’: numpy.array, ‘output1_name’: numpy.array, …}
+…</p>
+</div></blockquote>
+<p>},
+# iter 1
+…</p>
+</div></blockquote>
+<p>]</p>
+</div></blockquote>
+<p>}</p>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.set_tensor">
+<span class="sig-name descname"><span class="pre">set_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.set_tensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used by tune strategy class for setting tensor back to model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – The model to set tensor. Usually it is quantized model.</p></li>
+<li><p><strong>tensor_dict</strong> (<em>dict</em>) – <p>The tensor dict to set. Note the numpy array contains float
+value, adaptor layer has the responsibility to quantize to
+int8 or int32 to set into the quantized model if needed.
+The dict format is something like:
+{</p>
+<blockquote>
+<div><p>’weight0_name’: numpy.array,
+‘bias0_name’: numpy.array,
+…</p>
+</div></blockquote>
+<p>}</p>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchAdaptor.query_fw_capability">
 <span class="sig-name descname"><span class="pre">query_fw_capability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchAdaptor.query_fw_capability" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is a helper function to get all quantizable ops from model.</p>
@@ -531,6 +620,53 @@ path (string): No used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor.inspect_tensor">
+<span class="sig-name descname"><span class="pre">inspect_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inspect_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'activation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_to_disk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor.inspect_tensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used by tune strategy class for dumping tensor info.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – The model to inspect.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – The dataloader used to feed into.</p></li>
+<li><p><strong>op_list</strong> (<em>list</em>) – The op name in the fp32 model for dumpping.</p></li>
+<li><p><strong>iteration_list</strong> (<em>list</em>) – The iteration list containing iterations to dump.</p></li>
+<li><p><strong>inspect_type</strong> (<em>str</em>) – The valid value are ‘weight’, ‘activation’, ‘all’.</p></li>
+<li><p><strong>save_to_disk</strong> (<em>bool</em>) – Save to disk or memory.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Numpy Array Dict
+{</p>
+<blockquote>
+<div><dl class="simple">
+<dt>’weight’: {</dt><dd><p>‘node0_name’: {‘weight0_name’: numpy.array, ‘bias0_name’: numpy.array, …},
+‘node1_name’: {‘weight1_name’: numpy.array, ‘bias1_name’: numpy.array, …},
+…</p>
+</dd>
+</dl>
+<p>},
+‘activation’: [</p>
+<blockquote>
+<div><p># iter 0
+{</p>
+<blockquote>
+<div><p>’node0_name’: {‘output0_name’: numpy.array, ‘output1_name’: numpy.array, …}
+‘node1_name’: {‘output1_name’: numpy.array, ‘output1_name’: numpy.array, …}
+…</p>
+</div></blockquote>
+<p>},
+# iter 1
+…</p>
+</div></blockquote>
+<p>]</p>
+</div></blockquote>
+<p>}</p>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -717,6 +853,60 @@ path (string): No used.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>ops_lst (list)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.pytorch.</span></span><span class="sig-name descname"><span class="pre">PyTorchQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_config_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../query/index.html#neural_compressor.adaptor.query.QueryBackendCapability" title="neural_compressor.adaptor.query.QueryBackendCapability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.query.QueryBackendCapability</span></code></a></p>
+<p>Base class that defines Query Interface.
+Each adaption layer should implement the inherited class for specific backend on their own.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchQuery.get_quantization_capability">
+<span class="sig-name descname"><span class="pre">get_quantization_capability</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchQuery.get_quantization_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the supported op types’ quantization capability.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list composed of dictionary which key is precision
+and value is a dict that describes all op types’ quantization capability.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>[dictionary list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchQuery.get_op_types">
+<span class="sig-name descname"><span class="pre">get_op_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchQuery.get_op_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the supported op types by all precisions.
+:returns: A list composed of dictionary which key is precision</p>
+<blockquote>
+<div><p>and value is the op types.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[dictionary list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchQuery.get_op_types_by_precision">
+<span class="sig-name descname"><span class="pre">get_op_types_by_precision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">precision</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchQuery.get_op_types_by_precision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get op types per precision
+:param precision: precision name
+:type precision: string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list composed of op type.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>[string list]</p>
 </dd>
 </dl>
 </dd></dl>

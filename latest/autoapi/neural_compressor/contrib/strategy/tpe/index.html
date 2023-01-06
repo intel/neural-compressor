@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.contrib.strategy.tpe &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.contrib.strategy.tpe &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.contrib.strategy.tpe">
 <span id="neural-compressor-contrib-strategy-tpe"></span><h1><a class="reference internal" href="#module-neural_compressor.contrib.strategy.tpe" title="neural_compressor.contrib.strategy.tpe"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.contrib.strategy.tpe</span></code></a><a class="headerlink" href="#module-neural_compressor.contrib.strategy.tpe" title="Permalink to this heading">¶</a></h1>
+<p>Fefine the tuning strategy that uses tpe search in tuning space.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -235,15 +236,30 @@ Defaults to None.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.contrib.strategy.tpe.TpeTuneStrategy.add_loss_to_tuned_history_and_find_best">
+<span class="sig-name descname"><span class="pre">add_loss_to_tuned_history_and_find_best</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tuning_history_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.contrib.strategy.tpe.TpeTuneStrategy.add_loss_to_tuned_history_and_find_best" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the best tuned history.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.contrib.strategy.tpe.TpeTuneStrategy.object_evaluation">
+<span class="sig-name descname"><span class="pre">object_evaluation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.contrib.strategy.tpe.TpeTuneStrategy.object_evaluation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if config was alredy evaluated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.contrib.strategy.tpe.TpeTuneStrategy.calculate_loss">
+<span class="sig-name descname"><span class="pre">calculate_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc_diff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_diff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.contrib.strategy.tpe.TpeTuneStrategy.calculate_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the accuracy loss.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.contrib.strategy.tpe.TpeTuneStrategy.stop">
 <span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trials_count</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.contrib.strategy.tpe.TpeTuneStrategy.stop" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Check if need to stop traversing the tuning space, either accuracy goal is met</dt><dd><p>or timeout is reach.</p>
-</dd>
-</dl>
+<dd><p>Check if need to stop traversing the tuning space, either accuracy goal is met or timeout is reach.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>True if need stop, otherwise False</p>
+<dd class="field-odd"><p>True if need stop, otherwise False.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>bool</p>

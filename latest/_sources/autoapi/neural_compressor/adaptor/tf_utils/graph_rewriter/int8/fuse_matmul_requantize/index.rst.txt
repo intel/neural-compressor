@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_requantize`
 =======================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_requantize
+
+.. autoapi-nested-parse::
+
+   Fuse QuantizedMatMul with Requantize/Dequantize Graph Rewriter.
+
 
 
 Module Contents
@@ -28,11 +31,9 @@ Classes
 
    Fuse QuantizedMatMul + Requantize + Dequantize into QuantizedMatMulWithBiasAndDequantize.
 
-
    .. py:method:: do_transformation()
 
-      Base Interface that need to be implemented by each sub class.
-
+      Apply the fusion of QuantizedMatMul + Requantize + Dequantize.
 
 
 
@@ -42,10 +43,10 @@ Classes
 
    Fuse Quantized MatMul Op with the successor Requantize Op.
 
-
    .. py:method:: do_transformation()
 
       Fuse the quantized op with the following requantize op.
+
       :returns: the optimized graphdef object
       :rtype: [graphdef]
 
@@ -57,11 +58,9 @@ Classes
 
    Fuse _QuantizedMatMul + Requantize + Dequantize into _QuantizedMatMul.
 
-
    .. py:method:: do_transformation()
 
-      Base Interface that need to be implemented by each sub class.
-
+      Apply the fusion of QuantizedMatMul + Requantize + Dequantize.
 
 
 
@@ -71,10 +70,10 @@ Classes
 
    Fuse newAPI Quantized MatMul Op with the successor Requantize Op.
 
-
    .. py:method:: do_transformation()
 
       Fuse the quantized op with the following requantize op.
+
       :returns: the optimized graphdef object
       :rtype: [graphdef]
 

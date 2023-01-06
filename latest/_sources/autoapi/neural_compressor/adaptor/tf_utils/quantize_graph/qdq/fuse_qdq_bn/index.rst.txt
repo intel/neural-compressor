@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_bn`
 ===========================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_bn
+
+.. autoapi-nested-parse::
+
+   Quantize FusedBatchNormV3 to int8 op.
+
 
 
 Module Contents
@@ -23,21 +26,26 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
 
-   This is the base class for nodes fusion
+   Quantize FusedBatchNormV3 to int8 op _QuantizedFusedBatchNorm.
+
+   .. py:method:: apply_newly_bn_relu_fusion(match_node_name)
+
+      Apply the BN + Relu fusion.
 
 
-   :param object {[type]} -- [description]:
+   .. py:method:: apply_newly_bn_leakyrelu_fusion(match_node_name)
+
+      Apply BN + LeakyRelu fusion.
+
 
    .. py:method:: get_longest_fuse()
 
-      This is the virtual interface to be implemented by derived class
-
+      Get the longest fusion pattern.
 
 
    .. py:method:: apply_the_transform()
 
-      This is the virtual interface to be implemented by derived class
-      :return: transformed graphdef
+      Apply the BN int8 fusion.
 
 
 

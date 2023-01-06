@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert">
 <span id="neural-compressor-adaptor-tf-utils-graph-rewriter-int8-rnn-convert"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert" title="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert" title="Permalink to this heading">¶</a></h1>
+<p>Quantized RNN Graph Rewriter.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -174,7 +175,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert.QuantizedRNNConverter" title="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert.QuantizedRNNConverter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizedRNNConverter</span></code></a></p></td>
-<td><p>Graph Rewrite Base class.</p></td>
+<td><p>Quantized RNN converter.</p></td>
 </tr>
 </tbody>
 </table>
@@ -182,17 +183,11 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert.QuantizedRNNConverter">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert.</span></span><span class="sig-name descname"><span class="pre">QuantizedRNNConverter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rnn_details</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_api</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert.QuantizedRNNConverter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
-<p>Graph Rewrite Base class.
-We abstract this base class and define the interface only.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>object</strong> (<em>model</em>) – the input model to be converted.</p>
-</dd>
-</dl>
+<p>Quantized RNN converter.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert.QuantizedRNNConverter.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert.QuantizedRNNConverter.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base Interface that need to be implemented by each sub class.</p>
+<dd><p>Apply the RNN convertion.</p>
 </dd></dl>
 
 </dd></dl>

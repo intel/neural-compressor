@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.utils.collect_layer_histogram`
 =========================================================
 
 .. py:module:: neural_compressor.utils.collect_layer_histogram
+
+.. autoapi-nested-parse::
+
+   LayerHistogramCollector: save the histogram by layer.
+
 
 
 Module Contents
@@ -23,13 +26,15 @@ Classes
 
    Bases: :py:obj:`object`
 
+   The collector of the histogram by layer.
+
    Saves layer histogram in a dict with layer names as keys and lists of NDArrays as
    values. The collected histogram will be used for calculating the optimal thresholds for
    quantization using KL divergence.
 
    .. py:method:: collect()
 
-      Callback function for collecting layer output NDArrays.
+      Collect layer output NDArrays as a callback function.
 
 
 

@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.quantization`
 ========================================
 
 .. py:module:: neural_compressor.quantization
+
+.. autoapi-nested-parse::
+
+   Neural Compressor Quantization API.
+
 
 
 Module Contents
@@ -22,6 +25,7 @@ Functions
 .. py:function:: fit(model, conf, calib_dataloader=None, calib_func=None, eval_dataloader=None, eval_func=None, eval_metric=None, **kwargs)
 
    Quantize the model with a given configure.
+
    :param model: For Tensorflow model, it could be a path
                  to frozen pb,loaded graph_def object or
                  a path to ckpt/savedmodel folder.
@@ -78,5 +82,8 @@ Functions
                           accuracy = metric(output, label)
                           return accuracy
    :type eval_func: function, optional
+   :param eval_metric: Set metric class and neural_compressor will initialize
+                       this class when evaluation.
+   :type eval_metric: str or obj
 
 

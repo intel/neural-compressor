@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.utils.kl_divergence`
 ===============================================
 
 .. py:module:: neural_compressor.utils.kl_divergence
+
+.. autoapi-nested-parse::
+
+   KL Divergence: measure probability distribution difference to determine the thresholds per quantized op.
+
 
 
 Module Contents
@@ -25,31 +28,19 @@ Classes
 
    The class of supporting KL divergence calibration algorithm.
 
-   :param TODO:
-
    .. py:method:: expand_quantized_bins(quantized_bins, reference_bins)
 
-      expand quantized bins
+      Expand quantized bins.
 
 
    .. py:method:: safe_entropy(reference_distr_P, P_sum, candidate_distr_Q, Q_sum)
 
-      safe entropy
+      Safe entropy.
 
 
    .. py:method:: get_threshold(hist, hist_edges, min_val, max_val, num_bins, quantized_type, num_quantized_bins=255)
 
-      The interface of getting threshold per KL divergency algorithm.
-
-      :param historgram: The tensor numpy array list including all ops
-                         in each iteration.
-      :type historgram: tensor list
-      :param quantized_type: string being "int8" or "uint8".
-      :type quantized_type: string
-      :param number_bins: number of bins used in KL.
-      :type number_bins: integer
-
-      :returns: threshold per quantized ops, it's scalar.
+      The interface of getting threshold per op using KL divergency algorithm.
 
 
 

@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.benchmark &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.benchmark &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.benchmark">
 <span id="neural-compressor-benchmark"></span><h1><a class="reference internal" href="#module-neural_compressor.benchmark" title="neural_compressor.benchmark"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.benchmark</span></code></a><a class="headerlink" href="#module-neural_compressor.benchmark" title="Permalink to this heading">¶</a></h1>
+<p>Benchmark is used for evaluating the model performance.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -174,7 +175,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.benchmark.Benchmark" title="neural_compressor.benchmark.Benchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Benchmark</span></code></a></p></td>
-<td><p>Benchmark class can be used to evaluate the model performance, with the objective</p></td>
+<td><p>Benchmark class can be used to evaluate the model performance.</p></td>
 </tr>
 </tbody>
 </table>
@@ -192,10 +193,8 @@
 <dt class="sig sig-object py" id="neural_compressor.benchmark.Benchmark">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.benchmark.</span></span><span class="sig-name descname"><span class="pre">Benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_fname_or_obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.benchmark.Benchmark" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="simple">
-<dt>Benchmark class can be used to evaluate the model performance, with the objective</dt><dd><p>setting, user can get the data of what they configured in yaml</p>
-</dd>
-</dl>
+<p>Benchmark class can be used to evaluate the model performance.</p>
+<p>With the objective setting, user can get the data of what they configured in yaml.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>conf_fname_or_obj</strong> (<em>string</em><em> or </em><em>obj</em>) – The path to the YAML configuration file or
@@ -203,6 +202,44 @@ Benchmark_Conf class containing accuracy goal, tuning objective and preferred
 calibration &amp; quantization tuning space etc.</p>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.Benchmark.dataloader">
+<span class="sig-name descname"><span class="pre">dataloader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collate_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_batch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rollover'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pin_memory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distributed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.benchmark.Benchmark.dataloader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set dataloader for benchmarking.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.Benchmark.metric">
+<span class="sig-name descname"><span class="pre">metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_cls</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.benchmark.Benchmark.metric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the metric class and Neural Compressor will initialize this class when evaluation.</p>
+<p>Neural Compressor has many built-in metrics, but users can set specific metrics through
+this api. The metric class should take the outputs of the model or
+postprocess (if have) as inputs. Neural Compressor built-in metrics always take
+(predictions, labels) as inputs for update,
+and user_metric.metric_cls should be a sub_class of neural_compressor.metric.metric
+or an user-defined metric object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>metric_cls</strong> (<em>cls</em>) – Should be a sub_class of neural_compressor.metric.BaseMetric,
+which takes (predictions, labels) as inputs</p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name for metric. Defaults to ‘user_metric’.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.benchmark.Benchmark.postprocess">
+<span class="sig-name descname"><span class="pre">postprocess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocess_cls</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.benchmark.Benchmark.postprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set postprocess class and neural_compressor will initialize this class when evaluation.</p>
+<p>The postprocess function should take the outputs of the model as inputs, and
+outputs (predictions, labels) as inputs for metric updates.</p>
+<p>Args:
+name (str, optional): Name for postprocess.
+postprocess_cls (cls): Should be a sub_class of neural_compressor.data.transforms.postprocess.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -213,12 +250,12 @@ calibration &amp; quantization tuning space etc.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>object</em>) – The model to be benchmarked.</p></li>
-<li><p><strong>config</strong> (<em>BenchmarkConfig</em>) – The configuration for benchmark containing accuracy goal,
+<li><p><strong>config</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.BenchmarkConfig" title="neural_compressor.config.BenchmarkConfig"><em>BenchmarkConfig</em></a>) – The configuration for benchmark containing accuracy goal,
 tuning objective and preferred calibration &amp; quantization
 tuning space etc.</p></li>
 <li><p><strong>b_dataloader</strong> – The dataloader for frameworks.</p></li>
 <li><p><strong>b_func</strong> – customized benchmark function. if user passes the dataloader,
-than b_func is not needed.</p></li>
+then b_func is not needed.</p></li>
 </ul>
 </dd>
 </dl>

@@ -35,6 +35,7 @@ Classes
    neural_compressor.data.datasets.Datasets
    neural_compressor.data.datasets.Dataset
    neural_compressor.data.datasets.IterableDataset
+   neural_compressor.data.datasets.TensorflowImageRecord
 
 
 
@@ -94,5 +95,24 @@ Functions
 
    :returns: The class of register.
    :rtype: cls
+
+
+.. py:class:: TensorflowImageRecord
+
+   Bases: :py:obj:`IterableDataset`
+
+   Tensorflow imageNet database in tf record format.
+
+   Please arrange data in this way:
+       root/validation-000-of-100
+       root/validation-001-of-100
+       ...
+       root/validation-099-of-100
+   The file name needs to follow this pattern: '* - * -of- *'
+
+   Args: root (str): Root directory of dataset.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
 
 

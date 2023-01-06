@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,8 +167,19 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn">
 <span id="neural-compressor-adaptor-tf-utils-graph-rewriter-generic-fuse-decomposed-bn"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn" title="Permalink to this heading">¶</a></h1>
+<p>Fuse Decomposed BatchNorm Graph Rewriter.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.FuseDecomposedBNOptimizer" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.FuseDecomposedBNOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FuseDecomposedBNOptimizer</span></code></a></p></td>
+<td><p>Fuse decomposed small ops to BatchNormalization.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
 <table class="autosummary longtable docutils align-default">
@@ -182,11 +193,158 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.values_from_const" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.values_from_const"><code class="xref py py-obj docutils literal notranslate"><span class="pre">values_from_const</span></code></a>(node_def)</p></td>
 <td><p>Extracts the values from a const NodeDef as a numpy ndarray.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.valid_reshape_inputs" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.valid_reshape_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">valid_reshape_inputs</span></code></a>(reshape_in0_ndef, reshape_in1_ndef)</p></td>
+<td><p>Check if the inputs of the Reshape are valid.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.bypass_reshape" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.bypass_reshape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bypass_reshape</span></code></a>(input_node_map, input_name)</p></td>
+<td><p>Get Reshape input nodes.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.get_const_dim_count" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.get_const_dim_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_const_dim_count</span></code></a>(node_def)</p></td>
 <td><p>Get the number of dimensions for a Const node.</p></td>
 </tr>
 </tbody>
 </table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.FuseDecomposedBNOptimizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.</span></span><span class="sig-name descname"><span class="pre">FuseDecomposedBNOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_graph_def</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.FuseDecomposedBNOptimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fuse decomposed small ops to BatchNormalization.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.FuseDecomposedBNOptimizer.do_transformation">
+<span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.FuseDecomposedBNOptimizer.do_transformation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fuse individual ops in batch normalization to FusedBatchNorm.</p>
+<p>In some models, the batch normalizatin is performed via a group of individual
+ops instead of using single FusedBatchNorm op. This function identifies a
+pattern of batch normalization subgraph which is made of multiple ops and
+transforms the graph by replacing those individual ops with FusedBatchNorm op.
+This will provide the opportunity to further fold the FusedBatchNorm with
+convolution ops to reduce the computation steps during inference.
+This function currently recognizes batch normalization patterns described
+below, this could be extended if newer patterns are seen. Also, the fusion
+is only attempted if the input graph is in NHWC format or has no format set.
+Computation function:</p>
+<blockquote>
+<div><p>(X * multiplier) + (Beta - Mean * multiplier)
+where multiplier = rsqrt (Variance + Epsilon) * Gamma</p>
+<blockquote>
+<div><p>OR = rsqrt (Variance + Epsilon) when Gamma is 1</p>
+</div></blockquote>
+</div></blockquote>
+<p>Subgraph:
+{“Add”</p>
+<blockquote>
+<div><dl>
+<dt>{{“Mul”  // mul_0</dt><dd><p>{{“*”},  // input to apply batchnorm
+{“Mul”  // mul_1, same op is used inside the Sub block</p>
+<blockquote>
+<div><dl>
+<dt>{{“Rsqrt”</dt><dd><dl class="simple">
+<dt>{“Add”</dt><dd><p>{{“Const” | “Reshape(Const)”},  // Variance
+{“Const”}  // Epsilon
+}</p>
+</dd>
+</dl>
+<p>}
+},  // end - Rsqrt
+{“Const” | “Reshape(Const)”}  // Gamma</p>
+</dd>
+</dl>
+<p>}
+}  // end - mul_1</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>},  // end - mul_0
+{“Sub”</p>
+<blockquote>
+<div><p>{{“Const” | “Reshape(Const)”},  // Beta
+{“Mul”  // mul_3</p>
+<blockquote>
+<div><p>{{“Const” | “Reshape(Const)”},  // Mean
+{“Mul”  // same mul_1 op as in previous block</p>
+<blockquote>
+<div><dl>
+<dt>{{“Rsqrt”</dt><dd><dl class="simple">
+<dt>{“Add”</dt><dd><p>{{“Const” | “Reshape(Const)”},  // Variance
+{“Const”}  // Epsilon
+}</p>
+</dd>
+</dl>
+<p>}</p>
+</dd>
+</dl>
+<p>},  // end - Rsqrt
+{“Const” | “Reshape(Const)”}  // Gamma
+}
+}  // end - mul_1</p>
+</div></blockquote>
+<p>}
+}  // end - mul_3</p>
+</div></blockquote>
+<p>}
+}  // end - Sub</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}  // end - Add
+Subgraph pattern when gamma value is 1 and the gamma scaling Mul is skipped
+{“Add”</p>
+<blockquote>
+<div><dl>
+<dt>{{“Mul”  // mul_0</dt><dd><p>{{“*”},  // input to apply batchnorma
+{“Rsqrt”  // same Rsqrt op used in Sub block</p>
+<blockquote>
+<div><dl class="simple">
+<dt>{“Add”</dt><dd><p>{{“Const” | “Reshape(Const)”},  // Variance
+{“Const”}  // Epsilon
+}</p>
+</dd>
+</dl>
+<p>}
+}  // end - Rsqrt</p>
+</div></blockquote>
+<p>}
+},  // end - mul_0
+{“Sub”
+{{“Const” | “Reshape(Const)”},  // Beta
+{“Mul”  // mul_1</p>
+<blockquote>
+<div><p>{{“Const” | “Reshape(Const)”},  // Mean
+{“Rsqrt”  // same Rsqrt op as in previous mul_0 block</p>
+<blockquote>
+<div><dl class="simple">
+<dt>{“Add”</dt><dd><p>{{“Const” | “Reshape(Const)”},  // Variance
+{“Const”}  // Epsilon
+}</p>
+</dd>
+</dl>
+<p>}
+}  // end - Rsqrt</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}  // end - mul_1
+}
+}  // end - Sub</p>
+</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p>}  // end - Add
+:param input_graph_def: A GraphDef containing a model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Modified graph with individual ops that made up of batch normalization
+fused to FusedBatchNorm.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the graph is badly formed with duplicate node names.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.node_name_from_input">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.</span></span><span class="sig-name descname"><span class="pre">node_name_from_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.node_name_from_input" title="Permalink to this definition">¶</a></dt>
@@ -196,15 +354,19 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.node_from_map">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.</span></span><span class="sig-name descname"><span class="pre">node_from_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.node_from_map" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pulls a node def from a dictionary for a given name.
-:param node_map: Dictionary containing an entry indexed by name for every node.
-:param name: Identifies the node we want to find.</p>
+<dd><p>Pulls a node def from a dictionary for a given name.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>NodeDef of the node with the given name.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_map</strong> – Dictionary containing an entry indexed by name for every node.</p></li>
+<li><p><strong>name</strong> – Identifies the node we want to find.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the node isn’t present in the dictionary.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>NodeDef of the node with the given name.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the node isn’t present in the dictionary.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -212,26 +374,42 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.values_from_const">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.</span></span><span class="sig-name descname"><span class="pre">values_from_const</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_def</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.values_from_const" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extracts the values from a const NodeDef as a numpy ndarray.
-:param node_def: Const NodeDef that has the values we want to access.</p>
+<dd><p>Extracts the values from a const NodeDef as a numpy ndarray.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Numpy ndarray containing the values.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>node_def</strong> – Const NodeDef that has the values we want to access.</p>
 </dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the node isn’t a Const.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Numpy ndarray containing the values.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the node isn’t a Const.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.valid_reshape_inputs">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.</span></span><span class="sig-name descname"><span class="pre">valid_reshape_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reshape_in0_ndef</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reshape_in1_ndef</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.valid_reshape_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the inputs of the Reshape are valid.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.bypass_reshape">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.</span></span><span class="sig-name descname"><span class="pre">bypass_reshape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_node_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.bypass_reshape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get Reshape input nodes.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.get_const_dim_count">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.</span></span><span class="sig-name descname"><span class="pre">get_const_dim_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_def</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_decomposed_bn.get_const_dim_count" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the number of dimensions for a Const node.
-:param node_def: Const NodeDef.</p>
+<dd><p>Get the number of dimensions for a Const node.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Number of dimensions for the Const node.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>node_def</strong> – Const NodeDef.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of dimensions for the Const node.</p>
 </dd>
 </dl>
 </dd></dl>

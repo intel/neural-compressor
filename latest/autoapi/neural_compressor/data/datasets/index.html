@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.data.datasets &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.data.datasets &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -197,6 +197,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.IterableDataset" title="neural_compressor.data.datasets.IterableDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IterableDataset</span></code></a></p></td>
 <td><p>An iterable Dataset.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.TensorflowImageRecord" title="neural_compressor.data.datasets.TensorflowImageRecord"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowImageRecord</span></code></a></p></td>
+<td><p>Tensorflow imageNet database in tf record format.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -259,6 +262,29 @@
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>cls</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.TensorflowImageRecord">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.</span></span><span class="sig-name descname"><span class="pre">TensorflowImageRecord</span></span><a class="headerlink" href="#neural_compressor.data.datasets.TensorflowImageRecord" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.data.datasets.IterableDataset" title="neural_compressor.data.datasets.IterableDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IterableDataset</span></code></a></p>
+<p>Tensorflow imageNet database in tf record format.</p>
+<dl class="simple">
+<dt>Please arrange data in this way:</dt><dd><p>root/validation-000-of-100
+root/validation-001-of-100
+…
+root/validation-099-of-100</p>
+</dd>
+</dl>
+<p>The file name needs to follow this pattern: ‘* - * -of- <a href="#id3"><span class="problematic" id="id4">*</span></a>’</p>
+<dl>
+<dt>Args: root (str): Root directory of dataset.</dt><dd><p>transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according</p>
+<blockquote>
+<div><p>to specific conditions.</p>
+</div></blockquote>
 </dd>
 </dl>
 </dd></dl>

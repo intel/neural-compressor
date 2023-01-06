@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.share_qdq_y_pattern`
 ===================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.share_qdq_y_pattern
+
+.. autoapi-nested-parse::
+
+   Share QDQ for ITEX Y pattern Graph Rewriter.
+
 
 
 Module Contents
@@ -23,16 +26,13 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
 
-   Graph Rewrite Base class.
-   We abstract this base class and define the interface only.
+   Insert Q/DQ op before one input of Add to enable Conv/MatMul + BiasAdd + Add + Relu fusion for ITEX.
 
-   :param object: the input model to be converted.
-   :type object: model
+   Only 1 Q/DQ before Add op need to be inserted. Insert 2 Q/DQ breaks the ITEX fusion pattern.
 
    .. py:method:: do_transformation()
 
-      Base Interface that need to be implemented by each sub class.
-
+      Share the QDQ of one output of Relu node with the another output which is Add node.
 
 
 

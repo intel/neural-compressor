@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.contrib.strategy.sigopt &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.contrib.strategy.sigopt &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.contrib.strategy.sigopt">
 <span id="neural-compressor-contrib-strategy-sigopt"></span><h1><a class="reference internal" href="#module-neural_compressor.contrib.strategy.sigopt" title="neural_compressor.contrib.strategy.sigopt"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.contrib.strategy.sigopt</span></code></a><a class="headerlink" href="#module-neural_compressor.contrib.strategy.sigopt" title="Permalink to this heading">¶</a></h1>
+<p>The SigOpt Tuning Strategy provides support for the quantization process.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -229,18 +230,34 @@ Defaults to None.</p></li>
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy.params_to_tune_configs">
+<span class="sig-name descname"><span class="pre">params_to_tune_configs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy.params_to_tune_configs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the parameters of the tuning strategy.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy.next_tune_cfg">
 <span class="sig-name descname"><span class="pre">next_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy.next_tune_cfg" title="Permalink to this definition">¶</a></dt>
-<dd><p>The generator of yielding next tuning config to traverse by concrete strategies
-according to last tuning result.</p>
+<dd><p>Yielding the tuning config to traverse by concreting strategies according to last tuning result.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy.get_acc_target">
+<span class="sig-name descname"><span class="pre">get_acc_target</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_acc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy.get_acc_target" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the tuning target of the accuracy ceiterion.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy.traverse">
 <span class="sig-name descname"><span class="pre">traverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy.traverse" title="Permalink to this definition">¶</a></dt>
-<dd><p>The main traverse logic, which could be override by some concrete strategy which needs
-more hooks.
-This is SigOpt version of traverse – with additional constraints setting to HPO.</p>
+<dd><p>The main traverse logic, which could be override by some concrete strategy which needs more hooks.</p>
+<p>This is SigOpt version of traverse – with additional constraints setting to HPO.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy.create_exp">
+<span class="sig-name descname"><span class="pre">create_exp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc_target</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy.create_exp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the config for the experiment.</p>
 </dd></dl>
 
 </dd></dl>

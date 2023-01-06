@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert`
 ============================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert
+
+.. autoapi-nested-parse::
+
+   Quantized RNN Graph Rewriter.
+
 
 
 Module Contents
@@ -23,16 +26,11 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
 
-   Graph Rewrite Base class.
-   We abstract this base class and define the interface only.
-
-   :param object: the input model to be converted.
-   :type object: model
+   Quantized RNN converter.
 
    .. py:method:: do_transformation()
 
-      Base Interface that need to be implemented by each sub class.
-
+      Apply the RNN convertion.
 
 
 

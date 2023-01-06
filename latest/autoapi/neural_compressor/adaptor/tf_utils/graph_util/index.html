@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_util &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_util &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_util">
 <span id="neural-compressor-adaptor-tf-utils-graph-util"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_util" title="neural_compressor.adaptor.tf_utils.graph_util"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_util</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_util" title="Permalink to this heading">¶</a></h1>
+<p>Tensorflow Graph Utils Helper Classes.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -184,14 +185,14 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_util.</span></span><span class="sig-name descname"><span class="pre">GraphAnalyzer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extend_engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Tensorflow Graph Analyzer class which implemented under singleton mode.
-This class provides the following API:
+<dd><p>Tensorflow Graph Analyzer class which implemented under singleton mode.</p>
+<p>This class provides the following API:
 * Analyze the graph
 * Analyze the input/output node names of the specified graph</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.graph">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph</span></span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.graph" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter of the _graph object</p>
+<dd><p>Getter of the _graph object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>current graphdef object</p>
@@ -226,12 +227,10 @@ This class provides the following API:
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.get_graph_input_output">
 <span class="sig-name descname"><span class="pre">get_graph_input_output</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.get_graph_input_output" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Get the graphdef input/output node names. Sometimes, the configuration doesn’t</dt><dd><p>specifies the input/output names of the graph, but tensorflow need to know them
-clearly to run the graph.We implement this function has the similar feature like
-summarize_graph.py which writtern by Google.</p>
-</dd>
-</dl>
+<dd><p>Get the graphdef input/output node names.</p>
+<p>Sometimes, the configuration doesn’t specifies the input/output names of the graph,
+but tensorflow need to know them clearly to run the graph.We implement this function has the similar
+feature like summarize_graph.py which writtern by Google.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>(inputs’ name list, outputs’name list)</p>
@@ -321,7 +320,7 @@ need to be replaced const node.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.replace_constant_graph_with_constant_node">
 <span class="sig-name descname"><span class="pre">replace_constant_graph_with_constant_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_end_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.replace_constant_graph_with_constant_node" title="Permalink to this definition">¶</a></dt>
-<dd><p>remove sub-graph with a const node</p>
+<dd><p>Remove sub-graph with a const node.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -345,16 +344,13 @@ need to be replaced const node.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.replace_single_node">
 <span class="sig-name descname"><span class="pre">replace_single_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_output_node_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_input_node_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_input_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.replace_single_node" title="Permalink to this definition">¶</a></dt>
-<dd><p>Insert one node into the graph.
-:param new_node: new nodedef object
-:type new_node: nodedef
-:param old_output_node_names: the node names that would be the top node of new</p>
-<blockquote>
-<div><p>node.</p>
-</div></blockquote>
+<dd><p>Insert one node into the graph.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>new_node</strong> (<em>nodedef</em>) – new nodedef object</p></li>
+<li><p><strong>old_output_node_names</strong> (<em>string list</em>) – the node names that would be the top node of new
+node.</p></li>
 <li><p><strong>old_output_name</strong> (<em>string list</em>) – the names that need to be updated with new node name</p></li>
 <li><p><strong>old_input_node_names</strong> (<em>string list</em>) – the node names that would be the bottom node of new
 node.</p></li>
@@ -367,7 +363,7 @@ node.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.replace_node">
 <span class="sig-name descname"><span class="pre">replace_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_node_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_nodes_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.replace_node" title="Permalink to this definition">¶</a></dt>
-<dd><p>Replace the node into the internal data structure node_name_details</p>
+<dd><p>Replace the node into the internal data structure node_name_details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -382,7 +378,7 @@ node.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.add_node">
 <span class="sig-name descname"><span class="pre">add_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_node_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_node_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.add_node" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add the node into the internal data structure node_name_details</p>
+<dd><p>Add the node into the internal data structure node_name_details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -397,7 +393,7 @@ node.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.dump_graph">
 <span class="sig-name descname"><span class="pre">dump_graph</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.dump_graph" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dump the current model’s graphdef</p>
+<dd><p>Dump the current model’s graphdef.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A graphdef object</p>
@@ -409,12 +405,23 @@ node.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.parse_graph">
-<span class="sig-name descname"><span class="pre">parse_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_graph_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.parse_graph" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Analyze the input graphdef and return the list contains each node’s input/output</dt><dd><p>node names</p>
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.get_frame_info">
+<span class="sig-name descname"><span class="pre">get_frame_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.get_frame_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the frame info of the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>OrderedDict frame info of the graph nodes.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>[parent_frame_details]</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.parse_graph">
+<span class="sig-name descname"><span class="pre">parse_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_graph_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer.parse_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Analyze the input graphdef and return the list contains each node’s input/outputnode names.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input_graph_def</strong> (<em>[</em><em>graphdef</em><em>]</em>) – graphdef object</p>
@@ -457,7 +464,7 @@ node.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.create_node">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.create_node" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a nodedef object</p>
+<dd><p>Create a nodedef object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -478,7 +485,7 @@ node.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.create_constant_node">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_constant_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.create_constant_node" title="Permalink to this definition">¶</a></dt>
-<dd><p>create constant node.</p>
+<dd><p>Create constant node.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -502,7 +509,7 @@ Defaults to ‘cpu’.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.set_attr_dtype">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">set_attr_dtype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.set_attr_dtype" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the attribute data type</p>
+<dd><p>Set the attribute data type.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -596,6 +603,77 @@ Defaults to ‘cpu’.</p></li>
 <dd class="field-odd"><p><strong>ValueError</strong> – If the node isn’t a Const.</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.generate_int32_bias_for_conv">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_int32_bias_for_conv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bias_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_filter_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_filter_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">127.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.generate_int32_bias_for_conv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Static method that generate int32 bias for conv op.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bias_tensor</strong> – bias node tensor.</p></li>
+<li><p><strong>channel_size</strong> – channel size.</p></li>
+<li><p><strong>max_input</strong> – max activation input value.</p></li>
+<li><p><strong>min_input</strong> – min activation input value.</p></li>
+<li><p><strong>max_filter_tensor</strong> – max weight input tensor.</p></li>
+<li><p><strong>min_filter_tensor</strong> – min weight input tensor.</p></li>
+<li><p><strong>activation_range</strong> – activation range value.</p></li>
+<li><p><strong>weights_range</strong> – weight range value.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>int32 bias</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int32_bias</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.generate_int32_bias_for_matmul">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_int32_bias_for_matmul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bias_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_filter_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_filter_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.generate_int32_bias_for_matmul" title="Permalink to this definition">¶</a></dt>
+<dd><p>Static method that generate int32 bias for matmul op.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bias_tensor</strong> – bias node tensor.</p></li>
+<li><p><strong>weights_tensor</strong> – weights tensor.</p></li>
+<li><p><strong>input_range</strong> – activation range value.</p></li>
+<li><p><strong>max_input</strong> – max activation input value.</p></li>
+<li><p><strong>min_input</strong> – min activation input value.</p></li>
+<li><p><strong>max_filter_tensor</strong> – max weight input tensor.</p></li>
+<li><p><strong>min_filter_tensor</strong> – min weight input tensor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>int32 bias</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int32_bias</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.gen_valid_sampling_log">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gen_valid_sampling_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.gen_valid_sampling_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the valid sampling log.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>log_path</strong> – the valid sampling log file path.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the sampling min max value.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.analysis_rnn_model">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">analysis_rnn_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bf16_ops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_ops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper.analysis_rnn_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Match the RNN and dynamic RNN patterns.</p>
 </dd></dl>
 
 </dd></dl>

@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.keras &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.keras &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -175,6 +175,9 @@
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.keras.KerasAdaptor" title="neural_compressor.adaptor.keras.KerasAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KerasAdaptor</span></code></a></p></td>
 <td><p>The keras class of framework adaptor layer.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.keras.KerasQuery" title="neural_compressor.adaptor.keras.KerasQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KerasQuery</span></code></a></p></td>
+<td><p>Base class that defines Query Interface.</p></td>
 </tr>
 </tbody>
 </table>
@@ -363,6 +366,89 @@ scale (float): The scale for dataloader to generate quantized input</p>
 <li><p><strong>source</strong> (<em>string</em>) – The source model format.</p></li>
 <li><p><strong>destination</strong> (<em>string</em>) – The destination model format.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.keras.KerasQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.keras.</span></span><span class="sig-name descname"><span class="pre">KerasQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_config_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.keras.KerasQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../query/index.html#neural_compressor.adaptor.query.QueryBackendCapability" title="neural_compressor.adaptor.query.QueryBackendCapability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.query.QueryBackendCapability</span></code></a></p>
+<p>Base class that defines Query Interface.
+Each adaption layer should implement the inherited class for specific backend on their own.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.keras.KerasQuery.get_version">
+<span class="sig-name descname"><span class="pre">get_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.keras.KerasQuery.get_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the current backend version infomation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>version string.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>[string]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.keras.KerasQuery.get_precisions">
+<span class="sig-name descname"><span class="pre">get_precisions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.keras.KerasQuery.get_precisions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get supported precisions for current backend.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the precisions’ name.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>[string list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.keras.KerasQuery.get_op_types">
+<span class="sig-name descname"><span class="pre">get_op_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.keras.KerasQuery.get_op_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the supported op types by all precisions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list composed of dictionary which key is precision
+and value is the op types.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>[dictionary list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.keras.KerasQuery.get_quantization_capability">
+<span class="sig-name descname"><span class="pre">get_quantization_capability</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.keras.KerasQuery.get_quantization_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the supported op types’ quantization capability.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list composed of dictionary which key is precision
+and value is a dict that describes all op types’ quantization capability.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>[dictionary list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.keras.KerasQuery.get_op_types_by_precision">
+<span class="sig-name descname"><span class="pre">get_op_types_by_precision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">precision</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.keras.KerasQuery.get_op_types_by_precision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get op types per precision</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>precision</strong> (<em>string</em>) – precision name</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list composed of op type.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[string list]</p>
 </dd>
 </dl>
 </dd></dl>

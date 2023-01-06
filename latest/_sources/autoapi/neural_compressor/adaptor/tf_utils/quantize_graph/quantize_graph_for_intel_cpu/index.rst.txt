@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu`
 ========================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu
+
+.. autoapi-nested-parse::
+
+   Convert fp32 op to int8 and fuse the pattern.
+
 
 
 Module Contents
@@ -23,6 +26,11 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase`
 
-   
+   Quantize the graph.
+
+   .. py:method:: do_transform()
+
+      Apply all the transformers to fuse into int8 op.
+
 
 

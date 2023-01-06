@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper`
 ================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_wrapper
+
+.. autoapi-nested-parse::
+
+   QAT Quantize Wrapper Class.
+
 
 
 Module Contents
@@ -24,7 +27,7 @@ Classes
 
    Bases: :py:obj:`tensorflow.keras.layers.Wrapper`
 
-   Base class for quantize wrapper
+   Base class for quantize wrapper.
 
    .. py:property:: trainable
 
@@ -33,6 +36,7 @@ Classes
    .. py:property:: trainable_weights
 
       List of all trainable weights tracked by this layer.
+
       Trainable weights are updated via gradient descent during training.
 
       :returns: A list of trainable variables.
@@ -41,6 +45,7 @@ Classes
    .. py:property:: non_trainable_weights
 
       List of all non-trainable weights tracked by this layer.
+
       Non-trainable weights are *not* updated during training. They are
       expected to be updated manually in `call()`.
 
@@ -49,11 +54,12 @@ Classes
 
    .. py:property:: updates
 
-      update layer
+      Update layer.
 
    .. py:property:: losses
 
       List of losses added using the `add_loss()` API.
+
       Variable regularization tensors are created when this property is
       accessed, so it is eager safe: accessing `losses` under a
       `tf.GradientTape` will propagate gradients back to the corresponding
@@ -73,6 +79,7 @@ Classes
    .. py:method:: compute_output_shape(input_shape)
 
       Computes the output shape of the layer.
+
       This method will cause the layer's state to be built, if that has not
       happened before. This requires that the layer will later be used with
       inputs that match the input shape provided here.
@@ -126,8 +133,9 @@ Classes
 
    Bases: :py:obj:`QuantizeWrapperBase`
 
-   General QuantizeWrapper for quantizable layers. Weights and inputs will be quantized
-   according to the layer type and quantize config.
+   General QuantizeWrapper for quantizable layers.
+
+   Weights and inputs will be quantized according to the layer type and quantize config.
 
    .. py:method:: build(input_shape)
 

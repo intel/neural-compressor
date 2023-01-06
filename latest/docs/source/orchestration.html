@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Optimization Orchestration &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>Optimization Orchestration &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -170,7 +170,6 @@
 <ol>
 <li><p><a class="reference external" href="#introduction">Introduction</a></p>
 <p>1.1. <a class="reference external" href="#one-shot">One-shot</a></p>
-<p>1.2. <a class="reference external" href="#multi-shot">Multi-shot</a></p>
 </li>
 <li><p><a class="reference external" href="#orchestration-support-matrix">Orchestration Support Matrix</a></p></li>
 <li><p><a class="reference external" href="#get-started-with-orchestration-api">Get Started with Orchestration API </a></p></li>
@@ -178,7 +177,7 @@
 </ol>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
-<p>Orchestration is the combination of multiple optimization techniques, either applied simultaneously (one-shot) or sequentially (multi-shot). Intel Neural Compressor supports arbitrary meaningful combinations of supported optimization methods under one-shot or multi-shot, such as pruning during quantization-aware training, or pruning and then post-training quantization, pruning and then distillation and then quantization.</p>
+<p>Orchestration is the combination of multiple optimization techniques, either applied simultaneously (one-shot). Intel Neural Compressor supports arbitrary meaningful combinations of supported optimization methods under one-shot, such as pruning during quantization-aware training.</p>
 <section id="one-shot">
 <h3>One-shot<a class="headerlink" href="#one-shot" title="Permalink to this heading">¶</a></h3>
 <p>Since quantization-aware training, pruning and distillation all leverage training process for optimization, we can achieve the goal of optimization through one shot training with arbitrary meaningful combinations of these methods, which often gain more benefits in terms of performance and accuracy than just one compression technique applied, and usually are as efficient as applying just one compression technique. The three possible combinations are shown below.</p>
@@ -186,15 +185,6 @@
 <li><p>Pruning during quantization-aware training</p></li>
 <li><p>Distillation with pattern lock pruning</p></li>
 <li><p>Distillation with pattern lock pruning and quantization-aware training</p></li>
-</ul>
-</section>
-<section id="multi-shot">
-<h3>Multi-shot<a class="headerlink" href="#multi-shot" title="Permalink to this heading">¶</a></h3>
-<p>Of course, besides one-shot, we also support separate execution of each optimization process.</p>
-<ul class="simple">
-<li><p>Pruning and then post-training quantization</p></li>
-<li><p>Distillation and then post-training quantization</p></li>
-<li><p>Distillation, then pruning and post-training quantization</p></li>
 </ul>
 </section>
 </section>
@@ -226,50 +216,40 @@
             <td>Distillation + Pruning + Quantization Aware Training</td>
             <td>&#10004;</td>
         </tr>
-        <tr>
-            <td rowspan=4>Multi-shot</td>
-            <td>Pruning then Quantization</td>
-            <td>&#10004;</td>
-        </tr>
-        <tr>
-            <td>Distillation then Quantization</td>
-            <td>&#10004;</td>
-        </tr>
-        <tr>
-            <td>Distillation then Pruning</td>
-            <td>&#10004;</td>
-        </tr>
-        <tr>
-            <td>Distillation then Pruning then Quantization</td>
-            <td>&#10004;</td>
-        </tr>
     </tbody>
 </table></section>
 <section id="get-started-with-orchestration-api">
 <h2>Get Started with Orchestration API<a class="headerlink" href="#get-started-with-orchestration-api" title="Permalink to this heading">¶</a></h2>
-<p>Neural Compressor defines <code class="docutils literal notranslate"><span class="pre">Scheduler</span></code> class to automatically pipeline execute model optimization with one shot or multiple shots way.</p>
+<p>Neural Compressor defines <code class="docutils literal notranslate"><span class="pre">Scheduler</span></code> class to automatically pipeline execute model optimization with one shot way.</p>
 <p>User instantiates model optimization components, such as quantization, pruning, distillation, separately. After that, user could append
 those separate optimization objects into scheduler’s pipeline, the scheduler API executes them one by one.</p>
-<p>In following example it executes the pruning and then post-training quantization with two-shot way.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span><span class="p">,</span> <span class="n">Pruning</span><span class="p">,</span> <span class="n">Scheduler</span>
-<span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="n">prune_conf</span><span class="p">)</span>
-<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">post_training_quantization_conf</span><span class="p">)</span>
-<span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">()</span>
-<span class="n">scheduler</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-<span class="n">scheduler</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prune</span><span class="p">)</span>
-<span class="n">scheduler</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">quantizer</span><span class="p">)</span>
-<span class="n">opt_model</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>If user wants to execute the pruning and quantization-aware training with one-shot way, the code is like below.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span><span class="p">,</span> <span class="n">Pruning</span><span class="p">,</span> <span class="n">Scheduler</span>
-<span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="n">prune_conf</span><span class="p">)</span>
-<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">quantization_aware_training_conf</span><span class="p">)</span>
-<span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">()</span>
-<span class="n">scheduler</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-<span class="n">combination</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">prune</span><span class="p">,</span> <span class="n">quantizer</span><span class="p">)</span>
-<span class="n">scheduler</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">combination</span><span class="p">)</span>
-<span class="n">opt_model</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<p>In following example it execute the distillation and pruning with one-shot way, the code is like below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">,</span> <span class="n">WeightPruningConfig</span>
+<span class="n">distillation_criterion</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">d_conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">distillation_criterion</span><span class="p">)</span>
+<span class="n">p_conf</span> <span class="o">=</span> <span class="n">WeightPruningConfig</span><span class="p">()</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">confs</span><span class="o">=</span><span class="p">[</span><span class="n">d_conf</span><span class="p">,</span> <span class="n">p_conf</span><span class="p">])</span>
+
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+<span class="n">train_loop</span><span class="p">:</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="o">......</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="o">......</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_after_compute_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">()</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+    
+<span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./path/to/save&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

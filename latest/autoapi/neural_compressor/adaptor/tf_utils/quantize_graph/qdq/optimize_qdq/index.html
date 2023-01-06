@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq">
 <span id="neural-compressor-adaptor-tf-utils-quantize-graph-qdq-optimize-qdq"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq" title="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq" title="Permalink to this heading">¶</a></h1>
+<p>Fuse the DQ + OP + Q fusion pattern, convert fp32 op to int8.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -174,7 +175,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.OptimizeQDQGraph" title="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.OptimizeQDQGraph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OptimizeQDQGraph</span></code></a></p></td>
-<td><p></p></td>
+<td><p>Apply the fusion DQ + OP + Q pattern.</p></td>
 </tr>
 </tbody>
 </table>
@@ -182,11 +183,17 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.OptimizeQDQGraph">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.</span></span><span class="sig-name descname"><span class="pre">OptimizeQDQGraph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_node_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_node_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_wise_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_wise_sequences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fake_quant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_api</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itex_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.OptimizeQDQGraph" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../quantize_graph_base/index.html#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase" title="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase</span></code></a></p>
+<p>Apply the fusion DQ + OP + Q pattern.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.OptimizeQDQGraph.get_quantized_nodes">
+<span class="sig-name descname"><span class="pre">get_quantized_nodes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.OptimizeQDQGraph.get_quantized_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the quantized Ops.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.OptimizeQDQGraph.do_transform">
 <span class="sig-name descname"><span class="pre">do_transform</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.OptimizeQDQGraph.do_transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the virtual interface need to be implemented by derived class
-:return:</p>
+<dd><p>Apply all the transformers to fuse into int8 op.</p>
 </dd></dl>
 
 </dd></dl>

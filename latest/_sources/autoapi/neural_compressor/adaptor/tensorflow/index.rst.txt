@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tensorflow`
 ==============================================
 
 .. py:module:: neural_compressor.adaptor.tensorflow
+
+.. autoapi-nested-parse::
+
+   Tensorflow Adaptor Classes.
+
 
 
 Module Contents
@@ -25,8 +28,27 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.adaptor.Adaptor`
 
-   The base class of framework adaptor layer.
+   Adaptor Layer for stock tensorflow and spr-base.
 
+   .. py:method:: train(model, dataloader, optimizer_tuple, criterion_tuple, hooks, postprocess, **kwargs)
+
+      Model training API.
+
+      :param model: The model could be the graph,
+                    graph_def object, the frozen pb or ckpt/savedmodel folder path.
+      :type model: [Graph, GraphDef or Path String]
+      :param dataloader: generate the data and labels.
+      :type dataloader: generator
+      :param optimizer_tuple: optimizers for model training.
+      :type optimizer_tuple: tuple
+      :param criterion_tuple: criterions for model training.
+      :type criterion_tuple: tuple
+      :param hooks: on_epoch_begin hook on_epoch_end hook.
+      :type hooks: callback
+      :param postprocess: process the result from the model.
+      :type postprocess: object
+
+      :returns: None.
 
 
    .. py:method:: evaluate(model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=False)
@@ -53,14 +75,6 @@ Classes
 
       :returns: evaluation result, the larger is better.
       :rtype: [float]
-
-
-   .. py:method:: tuning_cfg_to_fw(tuning_cfg)
-
-      Parse the neural_compressor wrapped configuration to Tensorflow.
-
-      :param tuning_cfg: configuration for quantization.
-      :type tuning_cfg: dict
 
 
    .. py:method:: quantize(tune_cfg, model, data_loader, q_func=None)
@@ -94,30 +108,18 @@ Classes
 
    .. py:method:: set_tensor(model, tensor_dict)
 
-      The function is used by tune strategy class for setting tensor back to model.
-
-      :param model: The model to set tensor. Usually it is quantized model.
-      :type model: object
-      :param tensor_dict: The tensor dict to set. Note the numpy array contains float
-                          value, adaptor layer has the responsibility to quantize to
-                          int8 or int32 to set into the quantized model if needed.
-                          The dict format is something like:
-                          {
-                            'weight0_name': numpy.array,
-                            'bias0_name': numpy.array,
-                            ...
-                          }
-      :type tensor_dict: dict
+      Quantize the bias and weight tensors in tensor_dict.
 
 
    .. py:method:: inspect_weight_and_bias(node_list, graph_def, graph_info, graph_node_name_mapping)
 
-      Inspect the weights
+      Inspect the weights and biases.
 
 
    .. py:method:: fused_node_mapping(node_list, pattern_mapping, graph_info, graph_node_name_mapping)
 
-      Create the mapping between first node and last node in fused sequence
+      Create the mapping between first node and last node in fused sequence.
+
       :param node_list: node name list
       :param pattern_mapping: key: node name, val: node pattern mapping
       :param graph_info: key: node name, val: node details
@@ -136,6 +138,7 @@ Classes
    .. py:method:: inspect_tensor(model, dataloader=None, op_list=[], iteration_list=[], inspect_type='activation', save_to_disk=False, save_path=None, quantization_cfg=None)
 
       Dump the weight and activation(output) to local disk.
+
       1. create the correspondence between query node name and the actually output node name in graph_def
       2. get the weight and bias for the given node
       3. get the activation for the given node
@@ -175,9 +178,10 @@ Classes
 
    .. py:method:: quantize_input(model)
 
-      quantize the model to be able to take quantized input
-      remove graph QuantizedV2 op and move its input tensor to QuantizedConv2d
-      and calculate the min-max scale
+      Quantize the model to be able to take quantized input.
+
+      Remove graph QuantizedV2 op and move its input tensor to QuantizedConv2d
+      and calculate the min-max scale.
 
       :param model: The model to quantize input
       :type model: tf.compat.v1.GraphDef
@@ -190,6 +194,7 @@ Classes
    .. py:method:: get_optype_wise_ability()
 
       Get the op type wise capability by generating the union value of each op type.
+
       :returns:
 
                 the key is op type while the value is the
@@ -199,12 +204,7 @@ Classes
 
    .. py:method:: save(model, path)
 
-      The function is used by tune strategy class for saving model.
-
-      :param model: The model to saved.
-      :type model: object
-      :param path: The path where to save.
-      :type path: string
+      Save model to the path.
 
 
    .. py:method:: convert(model, source, destination)
@@ -247,6 +247,16 @@ Classes
       :rtype: tf.compat.v1.GraphDef
 
 
+   .. py:method:: diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
+
+      Tensorflow diagnosis helper function.
+
+
+   .. py:method:: get_output_op_names(qmodel)
+
+      Get the oupur OPs's names.
+
+
    .. py:method:: calculate_op_sensitivity(model, dataloader, tune_cfg, output_op_names, confidence_batches, fallback=True, requantize_cfgs=None)
 
       Compute the op sensitivity.
@@ -273,9 +283,7 @@ Classes
 
    Bases: :py:obj:`TensorFlowAdaptor`
 
-   The base class of framework adaptor layer.
-
-
+   Tensorflow ITEX Adaptor Class.
 
    .. py:method:: quantize(tune_cfg, model, data_loader, q_func=None)
 
@@ -300,8 +308,7 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.query.QueryBackendCapability`
 
-   Base class that defines Query Interface.
-   Each adaption layer should implement the inherited class for specific backend on their own.
+   Tensorflow Query Capability Class.
 
    .. py:method:: get_version()
 
@@ -348,7 +355,7 @@ Classes
 
    .. py:method:: get_op_types_by_precision(precision)
 
-      Get op types per precision
+      Get op types per precision.
 
       :param precision: precision name
       :type precision: string
@@ -365,6 +372,19 @@ Classes
       :rtype: [string list]
 
 
+   .. py:method:: get_grappler_optimization_cfg()
+
+      Get grappler optimization configuration.
+
+
+   .. py:method:: get_bf16_patterns()
+
+      Get BF16 pattern list.
+
+      :returns: bf16 patter list.
+      :rtype: [List]
+
+
    .. py:method:: get_eightbit_patterns(qdq_enabled=False)
 
       Get eightbit op wise sequences information.
@@ -379,7 +399,6 @@ Classes
    .. py:method:: generate_internal_patterns()
 
       Translate the patterns defined in the yaml to internal pattern expression.
-
 
 
 

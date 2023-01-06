@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base">
 <span id="neural-compressor-adaptor-tf-utils-quantize-graph-quantize-graph-base"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base" title="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base" title="Permalink to this heading">¶</a></h1>
+<p>QuantizeGraph Base Class.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -177,7 +178,7 @@
 <td><p>This is the base class for quantize graph.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase" title="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizeNodeBase</span></code></a></p></td>
-<td><p>This is the base class for nodes fusion</p></td>
+<td><p>This is the base class for nodes fusion.</p></td>
 </tr>
 </tbody>
 </table>
@@ -186,10 +187,20 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.</span></span><span class="sig-name descname"><span class="pre">QuantizeGraphBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_node_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is the base class for quantize graph.</p>
 <dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase.register_transformer">
+<span class="sig-name descname"><span class="pre">register_transformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase.register_transformer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register transformers API.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase.do_transform">
 <span class="sig-name descname"><span class="pre">do_transform</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase.do_transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the virtual interface need to be implemented by derived class
-:return:</p>
+<dd><p>This is the virtual interface need to be implemented by derived class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -203,7 +214,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.</span></span><span class="sig-name descname"><span class="pre">QuantizeNodeBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the base class for nodes fusion</p>
+<dd><p>This is the base class for nodes fusion.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>[</strong><strong>description</strong><strong>]</strong> (<em>object {</em><em>[</em><em>type</em><em>]</em><em>} --</em>) – </p>
@@ -212,20 +223,36 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.apply_the_transform">
 <span class="sig-name descname"><span class="pre">apply_the_transform</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.apply_the_transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the virtual interface to be implemented by derived class
-:return: transformed graphdef</p>
+<dd><p>This is the virtual interface to be implemented by derived class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>transformed graphdef</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.get_longest_fuse">
 <span class="sig-name descname"><span class="pre">get_longest_fuse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.get_longest_fuse" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the virtual interface to be implemented by derived class</p>
+<dd><p>This is the virtual interface to be implemented by derived class.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.eightbitize_single_input_tensor_node">
+<span class="sig-name descname"><span class="pre">eightbitize_single_input_tensor_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_op_function</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.eightbitize_single_input_tensor_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quantize the single input tensor node.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.add_output_graph_node">
 <span class="sig-name descname"><span class="pre">add_output_graph_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.add_output_graph_node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Inserts one node into the new graph.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.remove_redundant_quantization">
+<span class="sig-name descname"><span class="pre">remove_redundant_quantization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old_graph</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase.remove_redundant_quantization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove the redundant Quantize/QuantizeV2 nodes.</p>
 </dd></dl>
 
 <dl class="py method">

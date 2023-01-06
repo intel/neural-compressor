@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.data.transforms &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.data.transforms &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -191,8 +191,20 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.BaseTransform" title="neural_compressor.data.transforms.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseTransform</span></code></a></p></td>
 <td><p>The base class for transform.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.Postprocess" title="neural_compressor.data.transforms.Postprocess"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Postprocess</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.ComposeTransform" title="neural_compressor.data.transforms.ComposeTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ComposeTransform</span></code></a></p></td>
+<td><p>Composes several transforms together.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.Postprocess" title="neural_compressor.data.transforms.Postprocess"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Postprocess</span></code></a></p></td>
 <td><p>Just collect the infos to construct a Postprocess.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.LabelShift" title="neural_compressor.data.transforms.LabelShift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LabelShift</span></code></a></p></td>
+<td><p>Convert label to label - label_shift.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.BilinearImagenetTransform" title="neural_compressor.data.transforms.BilinearImagenetTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BilinearImagenetTransform</span></code></a></p></td>
+<td><p>Combination of a series of transforms which is applicable to images in Imagenet.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.TensorflowResizeCropImagenetTransform" title="neural_compressor.data.transforms.TensorflowResizeCropImagenetTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowResizeCropImagenetTransform</span></code></a></p></td>
+<td><p>Combination of a series of transforms which is applicable to images in Imagenet.</p></td>
 </tr>
 </tbody>
 </table>
@@ -236,6 +248,24 @@ and provide __getitem__ method to get Transforms according to Transforms type.</
 <p>The base class for transform.</p>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.transforms.ComposeTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.</span></span><span class="sig-name descname"><span class="pre">ComposeTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.data.transforms.ComposeTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.data.transforms.BaseTransform" title="neural_compressor.data.transforms.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseTransform</span></code></a></p>
+<p>Composes several transforms together.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>transform_list</strong> (<em>list</em><em> of </em><em>Transform objects</em>) – list of transforms to compose</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sample (tuple)</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.data.transforms.transform_registry">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.</span></span><span class="sig-name descname"><span class="pre">transform_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.data.transforms.transform_registry" title="Permalink to this definition">¶</a></dt>
@@ -263,6 +293,65 @@ and provide __getitem__ method to get Transforms according to Transforms type.</
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.</span></span><span class="sig-name descname"><span class="pre">Postprocess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">postprocess_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'user_postprocess'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.data.transforms.Postprocess" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Just collect the infos to construct a Postprocess.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.transforms.LabelShift">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.</span></span><span class="sig-name descname"><span class="pre">LabelShift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.data.transforms.LabelShift" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="transform/index.html#neural_compressor.data.transforms.transform.BaseTransform" title="neural_compressor.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.data.transforms.transform.BaseTransform</span></code></a></p>
+<p>Convert label to label - label_shift.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>label_shift</strong> (<em>int</em><em>, </em><em>default=0</em>) – number of label shift</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.transforms.BilinearImagenetTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.</span></span><span class="sig-name descname"><span class="pre">BilinearImagenetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">central_fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.875</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.data.transforms.BilinearImagenetTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="transform/index.html#neural_compressor.data.transforms.transform.BaseTransform" title="neural_compressor.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.data.transforms.transform.BaseTransform</span></code></a></p>
+<p>Combination of a series of transforms which is applicable to images in Imagenet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>height</strong> – Height of the result</p></li>
+<li><p><strong>width</strong> – Width of the result</p></li>
+<li><p><strong>central_fraction</strong> (<em>float</em><em>, </em><em>default=0.875</em>) – fraction of size to crop</p></li>
+<li><p><strong>mean_value</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>0.0</em><em>,</em><em>0.0</em><em>,</em><em>0.0</em><em>]</em>) – means for each channel</p></li>
+<li><p><strong>scale</strong> (<em>float</em><em>, </em><em>default=1.0</em>) – std value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.transforms.TensorflowResizeCropImagenetTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.</span></span><span class="sig-name descname"><span class="pre">TensorflowResizeCropImagenetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_crop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize_side</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_flip_left_right</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'channels_last'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subpixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RGB'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.data.transforms.TensorflowResizeCropImagenetTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="transform/index.html#neural_compressor.data.transforms.transform.BaseTransform" title="neural_compressor.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.data.transforms.transform.BaseTransform</span></code></a></p>
+<p>Combination of a series of transforms which is applicable to images in Imagenet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>height</strong> (<em>int</em>) – Height of the result</p></li>
+<li><p><strong>width</strong> (<em>int</em>) – Width of the result</p></li>
+<li><p><strong>random_crop</strong> (<em>bool</em><em>, </em><em>default=False</em>) – whether to random crop</p></li>
+<li><p><strong>resize_side</strong> (<em>int</em><em>, </em><em>default=256</em>) – desired shape after resize operation</p></li>
+<li><p><strong>random_flip_left_right</strong> (<em>bool</em><em>, </em><em>default=False</em>) – whether to random flip left and right</p></li>
+<li><p><strong>mean_value</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>0.0</em><em>,</em><em>0.0</em><em>,</em><em>0.0</em><em>]</em>) – means for each channel</p></li>
+<li><p><strong>scale</strong> (<em>float</em><em>, </em><em>default=1.0</em>) – std value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

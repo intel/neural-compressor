@@ -78,7 +78,7 @@ Functions
    The Runner base class.
 
 
-.. py:class:: OFARunner(supernet: str, acc_predictor: neural_compressor.experimental.nas.dynast.dynas_predictor.Predictor, macs_predictor: neural_compressor.experimental.nas.dynast.dynas_predictor.Predictor, latency_predictor: neural_compressor.experimental.nas.dynast.dynas_predictor.Predictor, datasetpath: str, batch_size: int, **kwargs)
+.. py:class:: OFARunner(supernet: str, acc_predictor: neural_compressor.experimental.nas.dynast.dynas_predictor.Predictor, macs_predictor: neural_compressor.experimental.nas.dynast.dynas_predictor.Predictor, latency_predictor: neural_compressor.experimental.nas.dynast.dynas_predictor.Predictor, datasetpath: str, batch_size: int, num_workers: int = 20, **kwargs)
 
    Bases: :py:obj:`Runner`
 
@@ -284,7 +284,7 @@ Functions
    :returns: The specified torch model.
 
 
-.. py:class:: TorchVisionReference(model_name: str, dataset_path: str, batch_size: int, input_size: int = 224)
+.. py:class:: TorchVisionReference(model_name: str, dataset_path: str, batch_size: int, input_size: int = 224, num_workers: int = 20)
 
    Baseline of the torchvision model.
 
@@ -296,6 +296,8 @@ Functions
    :type batch_size: int
    :param input_size: Input image's width and height.
    :type input_size: int
+   :param num_workers: How many subprocesses to use for data loading.
+   :type num_workers: int
 
    .. py:method:: validate_top1() -> Tuple[float, float, float]
 

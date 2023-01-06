@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_converter_without_calib &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_converter_without_calib &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,56 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_converter_without_calib">
 <span id="neural-compressor-adaptor-tf-utils-graph-converter-without-calib"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_converter_without_calib" title="neural_compressor.adaptor.tf_utils.graph_converter_without_calib"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_converter_without_calib</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_converter_without_calib" title="Permalink to this heading">¶</a></h1>
+<p>Without calibration Graph Converter Class.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib" title="neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GraphConverterWithoutCalib</span></code></a></p></td>
+<td><p>Graph Converter without calibration Class is used to generate the quantization graph without calibration.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_converter_without_calib.</span></span><span class="sig-name descname"><span class="pre">GraphConverterWithoutCalib</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recover_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_api</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_bf16</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib" title="Permalink to this definition">¶</a></dt>
+<dd><p>Graph Converter without calibration Class is used to generate the quantization graph without calibration.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib.convert_without_calib">
+<span class="sig-name descname"><span class="pre">convert_without_calib</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib.convert_without_calib" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do convertion without calibration.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib.quantize_without_calib">
+<span class="sig-name descname"><span class="pre">quantize_without_calib</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib.quantize_without_calib" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quantize graph only (without optimizing fp32 graph).</p>
+<dl class="simple">
+<dt>Including:</dt><dd><ol class="arabic simple">
+<li><p>quantize graph,</p></li>
+<li><p>fuse RequantizeOp with fused quantized conv, and so on.</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib.bf16_convert">
+<span class="sig-name descname"><span class="pre">bf16_convert</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib.bf16_convert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert fp32 nodes in bf16_node to bf16 dtype based on FP32 + INT8 mixed precision graph.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
 </section>
 
 

@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq`
 ============================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq
+
+.. autoapi-nested-parse::
+
+   Fuse the DQ + OP + Q fusion pattern, convert fp32 op to int8.
+
 
 
 Module Contents
@@ -23,12 +26,16 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase`
 
-   
+   Apply the fusion DQ + OP + Q pattern.
+
+   .. py:method:: get_quantized_nodes()
+
+      Get the quantized Ops.
+
 
    .. py:method:: do_transform()
 
-      This is the virtual interface need to be implemented by derived class
-      :return:
+      Apply all the transformers to fuse into int8 op.
 
 
 

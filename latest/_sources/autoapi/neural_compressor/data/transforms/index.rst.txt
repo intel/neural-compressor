@@ -31,7 +31,11 @@ Classes
 
    neural_compressor.data.transforms.TRANSFORMS
    neural_compressor.data.transforms.BaseTransform
+   neural_compressor.data.transforms.ComposeTransform
    neural_compressor.data.transforms.Postprocess
+   neural_compressor.data.transforms.LabelShift
+   neural_compressor.data.transforms.BilinearImagenetTransform
+   neural_compressor.data.transforms.TensorflowResizeCropImagenetTransform
 
 
 
@@ -71,6 +75,19 @@ Functions
    The base class for transform.
 
 
+.. py:class:: ComposeTransform(transform_list)
+
+   Bases: :py:obj:`BaseTransform`
+
+   Composes several transforms together.
+
+   :param transform_list: list of transforms to compose
+   :type transform_list: list of Transform objects
+
+   :returns: tuple of processed image and label
+   :rtype: sample (tuple)
+
+
 .. py:function:: transform_registry(transform_type, process, framework)
 
    Class decorator used to register all transform subclasses.
@@ -93,5 +110,59 @@ Functions
    Bases: :py:obj:`object`
 
    Just collect the infos to construct a Postprocess.
+
+
+.. py:class:: LabelShift(label_shift=0)
+
+   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
+   Convert label to label - label_shift.
+
+   :param label_shift: number of label shift
+   :type label_shift: int, default=0
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: BilinearImagenetTransform(height, width, central_fraction=0.875, mean_value=[0.0, 0.0, 0.0], scale=1.0)
+
+   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
+   Combination of a series of transforms which is applicable to images in Imagenet.
+
+   :param height: Height of the result
+   :param width: Width of the result
+   :param central_fraction: fraction of size to crop
+   :type central_fraction: float, default=0.875
+   :param mean_value: means for each channel
+   :type mean_value: list, default=[0.0,0.0,0.0]
+   :param scale: std value
+   :type scale: float, default=1.0
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: TensorflowResizeCropImagenetTransform(height, width, random_crop=False, resize_side=256, resize_method='bilinear', random_flip_left_right=False, mean_value=[0.0, 0.0, 0.0], scale=1.0, data_format='channels_last', subpixels='RGB')
+
+   Bases: :py:obj:`neural_compressor.data.transforms.transform.BaseTransform`
+
+   Combination of a series of transforms which is applicable to images in Imagenet.
+
+   :param height: Height of the result
+   :type height: int
+   :param width: Width of the result
+   :type width: int
+   :param random_crop: whether to random crop
+   :type random_crop: bool, default=False
+   :param resize_side: desired shape after resize operation
+   :type resize_side: int, default=256
+   :param random_flip_left_right: whether to random flip left and right
+   :type random_flip_left_right: bool, default=False
+   :param mean_value: means for each channel
+   :type mean_value: list, default=[0.0,0.0,0.0]
+   :param scale: std value
+   :type scale: float, default=1.0
+
+   :returns: tuple of processed image and label
 
 

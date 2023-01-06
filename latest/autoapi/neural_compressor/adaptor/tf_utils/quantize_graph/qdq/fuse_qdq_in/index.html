@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in">
 <span id="neural-compressor-adaptor-tf-utils-quantize-graph-qdq-fuse-qdq-in"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in" title="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in" title="Permalink to this heading">¶</a></h1>
+<p>Quantize FusedInstanceNorm.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -174,7 +175,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm" title="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FuseNodeStartWithFusedInstanceNorm</span></code></a></p></td>
-<td><p>This is the base class for nodes fusion</p></td>
+<td><p>Quantize FusedInstanceNorm and apply the fusion.</p></td>
 </tr>
 </tbody>
 </table>
@@ -182,23 +183,23 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.</span></span><span class="sig-name descname"><span class="pre">FuseNodeStartWithFusedInstanceNorm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../quantize_graph_base/index.html#neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase" title="neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase</span></code></a></p>
-<p>This is the base class for nodes fusion</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>[</strong><strong>description</strong><strong>]</strong> (<em>object {</em><em>[</em><em>type</em><em>]</em><em>} --</em>) – </p>
-</dd>
-</dl>
+<p>Quantize FusedInstanceNorm and apply the fusion.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm.apply_newly_in_relu_fusion">
+<span class="sig-name descname"><span class="pre">apply_newly_in_relu_fusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">match_node_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm.apply_newly_in_relu_fusion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply FusedInstanceNorm Relu/LeakyRelu fusion.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm.get_longest_fuse">
 <span class="sig-name descname"><span class="pre">get_longest_fuse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm.get_longest_fuse" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the virtual interface to be implemented by derived class</p>
+<dd><p>Get the longest fusion pattern.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm.apply_the_transform">
 <span class="sig-name descname"><span class="pre">apply_the_transform</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm.apply_the_transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the virtual interface to be implemented by derived class
-:return: transformed graphdef</p>
+<dd><p>Quantize FusedInstanceNorm and apply the fusion pattern.</p>
 </dd></dl>
 
 </dd></dl>

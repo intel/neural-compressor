@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer">
 <span id="neural-compressor-adaptor-tf-utils-graph-rewriter-generic-dequantize-cast-optimizer"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer" title="Permalink to this heading">¶</a></h1>
+<p>Dequantize Cast Graph Rerewriter.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -174,7 +175,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer.DequantizeCastOptimizer" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer.DequantizeCastOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DequantizeCastOptimizer</span></code></a></p></td>
-<td><p>Graph Rewrite Base class.</p></td>
+<td><p>Remove the Cast OP and set Dequantize output to B16 if the Cast OP output is BF16.</p></td>
 </tr>
 </tbody>
 </table>
@@ -182,17 +183,12 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer.DequantizeCastOptimizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer.</span></span><span class="sig-name descname"><span class="pre">DequantizeCastOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer.DequantizeCastOptimizer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
-<p>Graph Rewrite Base class.
-We abstract this base class and define the interface only.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>object</strong> (<em>model</em>) – the input model to be converted.</p>
-</dd>
-</dl>
+<p>Remove the Cast OP and set Dequantize output to B16 if the Cast OP output is BF16.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer.DequantizeCastOptimizer.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dequantize_cast_optimizer.DequantizeCastOptimizer.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Remove the redundant Cast OP after Dequantize.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input_graph_def</strong> (<em>graphdef</em>) – graphdef object</p>
 </dd>

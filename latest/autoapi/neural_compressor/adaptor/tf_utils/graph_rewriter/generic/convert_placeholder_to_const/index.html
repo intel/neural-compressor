@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const">
 <span id="neural-compressor-adaptor-tf-utils-graph-rewriter-generic-convert-placeholder-to-const"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const" title="Permalink to this heading">¶</a></h1>
+<p>Convert placeholder to const Graph Rewriter.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -174,7 +175,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.ConvertPlaceholderToConst" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.ConvertPlaceholderToConst"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConvertPlaceholderToConst</span></code></a></p></td>
-<td><p>Graph Rewrite Base class.</p></td>
+<td><p>Convert placeholder to const for removing training nodes.</p></td>
 </tr>
 </tbody>
 </table>
@@ -182,18 +183,12 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.ConvertPlaceholderToConst">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.</span></span><span class="sig-name descname"><span class="pre">ConvertPlaceholderToConst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.ConvertPlaceholderToConst" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
-<p>Graph Rewrite Base class.
-We abstract this base class and define the interface only.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>object</strong> (<em>model</em>) – the input model to be converted.</p>
-</dd>
-</dl>
+<p>Convert placeholder to const for removing training nodes.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.ConvertPlaceholderToConst.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.ConvertPlaceholderToConst.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rename the PlaceHolderWithDefault node to constant
-In a frozen graph, PlaceholderWithDefault nodes can be converted to
+<dd><p>Rename the PlaceHolderWithDefault node to constant.</p>
+<p>In a frozen graph, PlaceholderWithDefault nodes can be converted to
 Constant op nodes with same value. This will help simplify the graph.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -212,7 +207,7 @@ Constant op nodes with same value. This will help simplify the graph.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.ConvertPlaceholderToConst.strtobool">
 <span class="sig-name descname"><span class="pre">strtobool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val_str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.ConvertPlaceholderToConst.strtobool" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return boolean value of it’s equivalent string representation</p>
+<dd><p>Return boolean value of it’s equivalent string representation.</p>
 </dd></dl>
 
 </dd></dl>

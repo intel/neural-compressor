@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dummy_biasadd`
 =================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dummy_biasadd
+
+.. autoapi-nested-parse::
+
+   Inject dummy BiasAdd Graph Rewriter.
+
 
 
 Module Contents
@@ -23,16 +26,11 @@ Classes
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
 
-   Graph Rewrite Base class.
-   We abstract this base class and define the interface only.
-
-   :param object: the input model to be converted.
-   :type object: model
+   Inject dummy BiasAdd for MatMul, Conv2D for pattern fusion.
 
    .. py:method:: do_transformation()
 
-      Base Interface that need to be implemented by each sub class.
-
+      Inject dummy BiasAdd if MatMul, Conv2D missing the valid add ops behind them.
 
 
 

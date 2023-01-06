@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_conv_with_math`
 =======================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_conv_with_math
+
+.. autoapi-nested-parse::
+
+   Fuse Conv with Math Graph Rewriter.
+
 
 
 Module Contents
@@ -24,20 +27,20 @@ Classes
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
 
    Convert below subgraph to Conv2D + BiasAdd by eliminating math ops.
+
    Conv2D            Conv2D
      |                  |
-    Sub                 |
+     Sub                 |
      |       ---->      |
    RealDiv              |
      |                  |
-    Mul                 |
+     Mul                 |
      |                  |
    BiasAdd           BiasAdd
 
    .. py:method:: do_transformation()
 
-      Base Interface that need to be implemented by each sub class.
-
+      Fuse Conv + Sub + RealDiv + Mul + BiasAdd to Conv + BiasAdd.
 
 
 

@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Distillation &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>Distillation &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -232,24 +232,6 @@ The additional classifiers in self-distillation allow the neural network to work
 </table></section>
 <section id="get-started-with-distillation-api">
 <h2>Get Started with Distillation API<a class="headerlink" href="#get-started-with-distillation-api" title="Permalink to this heading">¶</a></h2>
-<p>Simplest launcher code if training behavior is defined in user-defined yaml.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Distillation</span><span class="p">,</span> <span class="n">common</span>
-<span class="n">distiller</span> <span class="o">=</span> <span class="n">Distillation</span><span class="p">(</span><span class="s1">&#39;/path/to/user/yaml&#39;</span><span class="p">)</span>
-<span class="n">distiller</span><span class="o">.</span><span class="n">student_model</span> <span class="o">=</span> <span class="n">student_model</span>
-<span class="n">distiller</span><span class="o">.</span><span class="n">teacher_model</span> <span class="o">=</span> <span class="n">teacher_model</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">distiller</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Distillation class also support DistillationConf class as it’s argument.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Distillation</span><span class="p">,</span> <span class="n">common</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.conf.config</span> <span class="kn">import</span> <span class="n">DistillationConf</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConf</span><span class="p">(</span><span class="s1">&#39;/path/to/user/yaml&#39;</span><span class="p">)</span>
-<span class="n">distiller</span> <span class="o">=</span> <span class="n">Distillation</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
-<span class="n">distiller</span><span class="o">.</span><span class="n">student_model</span> <span class="o">=</span> <span class="n">student_model</span>
-<span class="n">distiller</span><span class="o">.</span><span class="n">teacher_model</span> <span class="o">=</span> <span class="n">teacher_model</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">distiller</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
-</pre></div>
-</div>
 <p>User can pass the customized training/evaluation functions to <code class="docutils literal notranslate"><span class="pre">Distillation</span></code> for flexible scenarios. In this case, distillation process can be done by pre-defined hooks in Neural Compressor. User needs to put those hooks inside the training function.</p>
 <p>Neural Compressor defines several hooks for user pass</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">on_train_begin</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">before</span> <span class="n">training</span> <span class="n">begins</span>
@@ -257,43 +239,40 @@ The additional classifiers in self-distillation allow the neural network to work
 <span class="n">on_epoch_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">epoch</span> <span class="n">end</span>
 </pre></div>
 </div>
-<p>Following section shows how to use hooks in user pass-in training function which is part of example from BlendCNN distillation:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-    <span class="n">distiller</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">nepoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
-        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-        <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">loss_sum</span> <span class="o">=</span> <span class="mf">0.</span>
-        <span class="n">iter_bar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Iter (loss=X.XXX)&#39;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">iter_bar</span><span class="p">:</span>
-            <span class="n">teacher_logits</span><span class="p">,</span> <span class="n">input_ids</span><span class="p">,</span> <span class="n">segment_ids</span><span class="p">,</span> <span class="n">input_mask</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span>
-            <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">segment_ids</span><span class="p">,</span> <span class="n">input_mask</span><span class="p">)</span>
-            <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-            <span class="n">loss</span> <span class="o">=</span> <span class="n">distiller</span><span class="o">.</span><span class="n">on_after_compute_loss</span><span class="p">(</span>
-                <span class="p">{</span><span class="s1">&#39;input_ids&#39;</span><span class="p">:</span><span class="n">input_ids</span><span class="p">,</span> <span class="s1">&#39;segment_ids&#39;</span><span class="p">:</span><span class="n">segment_ids</span><span class="p">,</span> <span class="s1">&#39;input_mask&#39;</span><span class="p">:</span><span class="n">input_mask</span><span class="p">},</span>
-                <span class="n">output</span><span class="p">,</span>
-                <span class="n">loss</span><span class="p">,</span>
-                <span class="n">teacher_logits</span><span class="p">)</span>
-            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+<p>Following section shows how to use hooks in user pass-in training function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">training_func_for_nc</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="o">......</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="o">......</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_after_compute_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
             <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
             <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">cnt</span> <span class="o">&gt;=</span> <span class="n">iters</span><span class="p">:</span>
-                <span class="k">break</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Average Loss: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">loss_sum</span> <span class="o">/</span> <span class="n">cnt</span><span class="p">))</span>
-        <span class="n">distiller</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">()</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+
 <span class="o">...</span>
 </pre></div>
 </div>
 <p>In this case, the launcher code is like the following:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Distillation</span><span class="p">,</span> <span class="n">common</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.experimental.common.criterion</span> <span class="kn">import</span> <span class="n">PyTorchKnowledgeDistillationLoss</span>
-<span class="n">distiller</span> <span class="o">=</span> <span class="n">Distillation</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
-<span class="n">distiller</span><span class="o">.</span><span class="n">student_model</span> <span class="o">=</span> <span class="n">model</span>
-<span class="n">distiller</span><span class="o">.</span><span class="n">teacher_model</span> <span class="o">=</span> <span class="n">teacher</span>
-<span class="n">distiller</span><span class="o">.</span><span class="n">criterion</span> <span class="o">=</span> <span class="n">PyTorchKnowledgeDistillationLoss</span><span class="p">()</span>
-<span class="n">distiller</span><span class="o">.</span><span class="n">train_func</span> <span class="o">=</span> <span class="n">train_func</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">distiller</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">SelfKnowledgeDistillationLossConfig</span>
+
+<span class="n">distil_loss</span> <span class="o">=</span> <span class="n">SelfKnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distil_loss</span><span class="p">)</span>
+<span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">)</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">training_func_for_nc</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

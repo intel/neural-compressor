@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat">
 <span id="neural-compressor-adaptor-tf-utils-transform-graph-rerange-quantized-concat"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat" title="neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat" title="Permalink to this heading">¶</a></h1>
+<p>ConcatV2 rerange transform.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -181,12 +182,12 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat.RerangeQuantizedConcat">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat.</span></span><span class="sig-name descname"><span class="pre">RerangeQuantizedConcat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_pb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat.RerangeQuantizedConcat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base.GraphTransformBase</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="../graph_transform_base/index.html#neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base.GraphTransformBase" title="neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base.GraphTransformBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.transform_graph.graph_transform_base.GraphTransformBase</span></code></a></p>
 <p>This class implements the rerange_quantize concat graph transform.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat.RerangeQuantizedConcat.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat.RerangeQuantizedConcat.do_transformation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Virtual Interface. Each transformation should implement it.</p>
+<dd><p>Apply the rerange quantized ConcatV2 transform.</p>
 </dd></dl>
 
 </dd></dl>

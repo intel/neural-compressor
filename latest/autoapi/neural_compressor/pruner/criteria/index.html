@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.pruner.criteria &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.pruner.criteria &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -241,6 +241,12 @@
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.pruner.criteria.PruningCriterion.on_before_optimizer_step">
+<span class="sig-name descname"><span class="pre">on_before_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.pruner.criteria.PruningCriterion.on_before_optimizer_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate and store the pruning scores of pruning modules before the optimizer step.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.pruner.criteria.PruningCriterion.on_after_optimizer_step">
 <span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.pruner.criteria.PruningCriterion.on_after_optimizer_step" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate and store the pruning scores of pruning modules after the optimizer step.</p>
@@ -299,8 +305,8 @@ The absolute value of gradient is used to score and determine if a weight is to 
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.pruner.criteria.GradientCriterion.on_after_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.pruner.criteria.GradientCriterion.on_after_optimizer_step" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neural_compressor.pruner.criteria.GradientCriterion.on_before_optimizer_step">
+<span class="sig-name descname"><span class="pre">on_before_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.pruner.criteria.GradientCriterion.on_before_optimizer_step" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate and store the pruning scores based on gradient criterion.</p>
 </dd></dl>
 
@@ -330,8 +336,8 @@ Please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivit
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.pruner.criteria.SnipCriterion.on_after_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.pruner.criteria.SnipCriterion.on_after_optimizer_step" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neural_compressor.pruner.criteria.SnipCriterion.on_before_optimizer_step">
+<span class="sig-name descname"><span class="pre">on_before_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.pruner.criteria.SnipCriterion.on_before_optimizer_step" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate and store the pruning scores based on snip criterion.</p>
 </dd></dl>
 
@@ -361,8 +367,8 @@ A momentum mechanism is used to calculate snip score, which determines if a weig
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.pruner.criteria.SnipMomentumCriterion.on_after_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.pruner.criteria.SnipMomentumCriterion.on_after_optimizer_step" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neural_compressor.pruner.criteria.SnipMomentumCriterion.on_before_optimizer_step">
+<span class="sig-name descname"><span class="pre">on_before_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.pruner.criteria.SnipMomentumCriterion.on_before_optimizer_step" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate and store the pruning scores based on snip_momentum criterion.</p>
 </dd></dl>
 

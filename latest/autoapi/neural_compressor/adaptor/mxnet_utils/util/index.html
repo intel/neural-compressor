@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>neural_compressor.adaptor.mxnet_utils.util &mdash; Intel® Neural Compressor 1.14.2 documentation</title>
+  <title>neural_compressor.adaptor.mxnet_utils.util &mdash; Intel® Neural Compressor 2.0 documentation</title>
   
 
   
@@ -65,7 +65,7 @@
             
             
             <div class="version">
-              <a href="/versions.html">latest▼</a>
+              <a href="../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
             
@@ -167,6 +167,7 @@
             
   <section id="module-neural_compressor.adaptor.mxnet_utils.util">
 <span id="neural-compressor-adaptor-mxnet-utils-util"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.mxnet_utils.util" title="neural_compressor.adaptor.mxnet_utils.util"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.mxnet_utils.util</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.mxnet_utils.util" title="Permalink to this heading">¶</a></h1>
+<p>mxnet util module.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
 <section id="classes">
@@ -186,13 +187,16 @@
 <td><p>Collector Base class.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CalibCollector" title="neural_compressor.adaptor.mxnet_utils.util.CalibCollector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CalibCollector</span></code></a></p></td>
-<td><p>Collects the calibration thresholds depending on the algorithm set</p></td>
+<td><p>Collect the calibration thresholds depending on the algorithm set.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.TensorCollector" title="neural_compressor.adaptor.mxnet_utils.util.TensorCollector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorCollector</span></code></a></p></td>
-<td><p>Tensors collector. Builds up qtensor_to_tensor mapping</p></td>
+<td><p>Tensors collector. Builds up qtensor_to_tensor mapping.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.NameCollector" title="neural_compressor.adaptor.mxnet_utils.util.NameCollector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NameCollector</span></code></a></p></td>
-<td><p>Collector Base class.</p></td>
+<td><p>Name collector.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CalibData" title="neural_compressor.adaptor.mxnet_utils.util.CalibData"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CalibData</span></code></a></p></td>
+<td><p>Calibration data class.</p></td>
 </tr>
 </tbody>
 </table>
@@ -211,7 +215,7 @@
 <td><p>Checks MXNet version.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.combine_capabilities" title="neural_compressor.adaptor.mxnet_utils.util.combine_capabilities"><code class="xref py py-obj docutils literal notranslate"><span class="pre">combine_capabilities</span></code></a>(current, new)</p></td>
-<td><p>combine capabilities.</p></td>
+<td><p>Combine capabilities.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.make_nc_model" title="neural_compressor.adaptor.mxnet_utils.util.make_nc_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_nc_model</span></code></a>(target, sym_model, ctx, input_desc)</p></td>
 <td><p>Converts a symbolic model to an Neural Compressor model.</p></td>
@@ -220,7 +224,7 @@
 <td><p>Fuse the supplied model.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.get_framework_name" title="neural_compressor.adaptor.mxnet_utils.util.get_framework_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_framework_name</span></code></a>(ctx)</p></td>
-<td><p>get the framework name by version.</p></td>
+<td><p>Get the framework name by version.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.prepare_model_data" title="neural_compressor.adaptor.mxnet_utils.util.prepare_model_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_model_data</span></code></a>(nc_model, ctx, data_x)</p></td>
 <td><p>Prepares sym_model and dataloader needed for quantization, calibration or running.</p></td>
@@ -259,13 +263,13 @@
 <td><p>Convert the strategy config to MXNet quantization config.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.distribute_calib_tensors" title="neural_compressor.adaptor.mxnet_utils.util.distribute_calib_tensors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distribute_calib_tensors</span></code></a>(calib_tensors, calib_cfg, ...)</p></td>
-<td><p>Distributes the tensors for calibration, depending on the</p></td>
+<td><p>Distributes the tensors for calibration, depending on the algorithm set in the configuration of their nodes.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.calib_model" title="neural_compressor.adaptor.mxnet_utils.util.calib_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calib_model</span></code></a>(qsym_model, calib_data, calib_cfg)</p></td>
-<td><p>Calibrate the quantized symbol model using data gathered by</p></td>
+<td><p>Calibrate the quantized symbol model using data gathered by the collector.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.amp_convert" title="neural_compressor.adaptor.mxnet_utils.util.amp_convert"><code class="xref py py-obj docutils literal notranslate"><span class="pre">amp_convert</span></code></a>(sym_model, input_desc, amp_cfg)</p></td>
-<td><p>convert model to support amp.</p></td>
+<td><p>Convert model to support amp.</p></td>
 </tr>
 </tbody>
 </table>
@@ -330,7 +334,7 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.combine_capabilities">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">combine_capabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.combine_capabilities" title="Permalink to this definition">¶</a></dt>
-<dd><p>combine capabilities.</p>
+<dd><p>Combine capabilities.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -388,7 +392,7 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.get_framework_name">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_framework_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.get_framework_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>get the framework name by version.</p>
+<dd><p>Get the framework name by version.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ctx</strong> (<em>object</em>) – mxnet context object.</p>
@@ -647,10 +651,7 @@ dict: calibration configuration.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.distribute_calib_tensors">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">distribute_calib_tensors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calib_tensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_to_node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.distribute_calib_tensors" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Distributes the tensors for calibration, depending on the</dt><dd><p>algorithm set in the configuration of their nodes.</p>
-</dd>
-</dl>
+<dd><p>Distributes the tensors for calibration, depending on the algorithm set in the configuration of their nodes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -671,15 +672,12 @@ dict: calibration configuration.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.calib_model">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">calib_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qsym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_cfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.calib_model" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Calibrate the quantized symbol model using data gathered by</dt><dd><p>the collector.</p>
-</dd>
-</dl>
+<dd><p>Calibrate the quantized symbol model using data gathered by the collector.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>qsym_model</strong> (<em>tuple</em>) – quantized symbol model (symnet, args, auxs).</p></li>
-<li><p><strong>calib_data</strong> (<em>CalibData</em>) – data needed for calibration (thresholds).</p></li>
+<li><p><strong>calib_data</strong> (<a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CalibData" title="neural_compressor.adaptor.mxnet_utils.util.CalibData"><em>CalibData</em></a>) – data needed for calibration (thresholds).</p></li>
 <li><p><strong>calib_cfg</strong> (<em>dict</em>) – calibration configuration.</p></li>
 </ul>
 </dd>
@@ -695,7 +693,7 @@ dict: calibration configuration.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.amp_convert">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">amp_convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sym_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_cfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.amp_convert" title="Permalink to this definition">¶</a></dt>
-<dd><p>convert model to support amp.</p>
+<dd><p>Convert model to support amp.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -717,25 +715,25 @@ dict: calibration configuration.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CollectorBase.collect_gluon">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">collect_gluon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase.collect_gluon" title="Permalink to this definition">¶</a></dt>
-<dd><p>collect by gluon api.</p>
+<dd><p>Collect by gluon api.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CollectorBase.collect_module">
 <span class="sig-name descname"><span class="pre">collect_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase.collect_module" title="Permalink to this definition">¶</a></dt>
-<dd><p>collect by module name.</p>
+<dd><p>Collect by module name.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CollectorBase.pre_batch">
 <span class="sig-name descname"><span class="pre">pre_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase.pre_batch" title="Permalink to this definition">¶</a></dt>
-<dd><p>function to call prior to batch inference.</p>
+<dd><p>Function to call prior to batch inference.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CollectorBase.post_batch">
 <span class="sig-name descname"><span class="pre">post_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">o</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase.post_batch" title="Permalink to this definition">¶</a></dt>
-<dd><p>function to call after batch inference.</p>
+<dd><p>Function to call after batch inference.</p>
 </dd></dl>
 
 </dd></dl>
@@ -744,17 +742,17 @@ dict: calibration configuration.</p>
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CalibCollector">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">CalibCollector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_tensors_kl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_tensors_minmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8001</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CalibCollector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase" title="neural_compressor.adaptor.mxnet_utils.util.CollectorBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CollectorBase</span></code></a></p>
-<p>Collects the calibration thresholds depending on the algorithm set</p>
+<p>Collect the calibration thresholds depending on the algorithm set.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CalibCollector.collect_gluon">
 <span class="sig-name descname"><span class="pre">collect_gluon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CalibCollector.collect_gluon" title="Permalink to this definition">¶</a></dt>
-<dd><p>collect by gluon api.</p>
+<dd><p>Collect by gluon api.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CalibCollector.calc_kl_th_dict">
 <span class="sig-name descname"><span class="pre">calc_kl_th_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantized_dtype</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CalibCollector.calc_kl_th_dict" title="Permalink to this definition">¶</a></dt>
-<dd><p>calculation kl thresholds.</p>
+<dd><p>Calculation kl thresholds.</p>
 </dd></dl>
 
 </dd></dl>
@@ -763,17 +761,17 @@ dict: calibration configuration.</p>
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.TensorCollector">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">TensorCollector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qtensor_to_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_to_node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.TensorCollector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase" title="neural_compressor.adaptor.mxnet_utils.util.CollectorBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CollectorBase</span></code></a></p>
-<p>Tensors collector. Builds up qtensor_to_tensor mapping</p>
+<p>Tensors collector. Builds up qtensor_to_tensor mapping.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.TensorCollector.collect_gluon">
 <span class="sig-name descname"><span class="pre">collect_gluon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.TensorCollector.collect_gluon" title="Permalink to this definition">¶</a></dt>
-<dd><p>collect by gluon api.</p>
+<dd><p>Collect by gluon api.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.TensorCollector.pre_batch">
 <span class="sig-name descname"><span class="pre">pre_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.TensorCollector.pre_batch" title="Permalink to this definition">¶</a></dt>
-<dd><p>preprocess.</p>
+<dd><p>Preprocess.</p>
 </dd></dl>
 
 </dd></dl>
@@ -782,11 +780,29 @@ dict: calibration configuration.</p>
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.NameCollector">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">NameCollector</span></span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.NameCollector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.adaptor.mxnet_utils.util.CollectorBase" title="neural_compressor.adaptor.mxnet_utils.util.CollectorBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CollectorBase</span></code></a></p>
-<p>Collector Base class.</p>
+<p>Name collector.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.NameCollector.collect_gluon">
 <span class="sig-name descname"><span class="pre">collect_gluon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.NameCollector.collect_gluon" title="Permalink to this definition">¶</a></dt>
-<dd><p>collect by gluon api.</p>
+<dd><p>Collect by gluon api.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CalibData">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet_utils.util.</span></span><span class="sig-name descname"><span class="pre">CalibData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_kl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_minmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensors_kl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensors_minmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CalibData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calibration data class.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CalibData.min_max_dict">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">min_max_dict</span></span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CalibData.min_max_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return mix-max dict.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet_utils.util.CalibData.post_collect">
+<span class="sig-name descname"><span class="pre">post_collect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet_utils.util.CalibData.post_collect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return mix-max dict for mxnet version &gt;= 2.0.0.</p>
 </dd></dl>
 
 </dd></dl>

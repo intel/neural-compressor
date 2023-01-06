@@ -1,9 +1,12 @@
-:orphan:
-
 :py:mod:`neural_compressor.utils.pytorch`
 =========================================
 
 .. py:module:: neural_compressor.utils.pytorch
+
+.. autoapi-nested-parse::
+
+   Pytorch utilities.
+
 
 
 Module Contents
