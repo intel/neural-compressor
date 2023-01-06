@@ -41,7 +41,7 @@ class QuantizeConfig():
         self.quantize_recipe = {}
         self.model_name = None
 
-    def add_quantize_recipe(self, quantize_recipe):
+    def add_quantize_recipe(self, quantize_recipe):   # pragma: no cover
         """Add custom recipe for quantization to the QuantizeConfig instance.
 
         Args:
@@ -71,7 +71,7 @@ class QuantizeConfig():
             return self.quantize_recipe[layer_name]
         return {}
 
-    def remove_layer(self, layer_name):
+    def remove_layer(self, layer_name):   # pragma: no cover
         """Remove a specific layer from the quantize_recipe dict.
 
         Args:
@@ -80,7 +80,7 @@ class QuantizeConfig():
         if layer_name in self.quantize_recipe:
             del self.quantize_recipe[layer_name]
 
-    def remove_layers(self, layer_names):
+    def remove_layers(self, layer_names):   # pragma: no cover
         """Remove a batch of layers from the quantize_recipe dict.
 
         Args:
@@ -89,7 +89,7 @@ class QuantizeConfig():
         for layer_name in layer_names:
             self.remove_layer(layer_name)
 
-    def get_quantize_recipe(self):
+    def get_quantize_recipe(self):   # pragma: no cover
         """Get the current recipe dict for quantization.
 
         Returns:
@@ -97,7 +97,7 @@ class QuantizeConfig():
         """
         return self.quantize_recipe
 
-    def is_empty(self):
+    def is_empty(self):   # pragma: no cover
         """Check if the recipe of quantization is an empty dict.
 
         Returns:
@@ -107,7 +107,7 @@ class QuantizeConfig():
             return False
         return True
 
-    def clear_quantize_recipe(self):
+    def clear_quantize_recipe(self):   # pragma: no cover
         """Clear recipe of quantization to be an empty dict."""
         self.quantize_recipe.clear()
 

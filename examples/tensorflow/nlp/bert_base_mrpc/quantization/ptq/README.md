@@ -110,7 +110,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 ```python
     from neural_compressor import quantization
     from neural_compressor.config import PostTrainingQuantConfig
-    from neural_compressor.data.dataloaders.dataloader import DataLoader
+    from neural_compressor.data import DataLoader
     config = PostTrainingQuantConfig(
         inputs=["input_file", "batch_size"],
         outputs=["loss/Softmax:0", "IteratorGetNext:3"],
