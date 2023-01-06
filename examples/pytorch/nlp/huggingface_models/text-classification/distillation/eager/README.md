@@ -17,9 +17,9 @@ Recommend python 3.6 or higher version.
 pip install -r requirements.txt
 ```
 
-# Start to neural_compressor tune for Model Distillation
+# Start to model distillation with neural compressor
 
-Below are example NLP tasks for model distillation from a task specific fine-tuned large model to a smaller model.
+Belows are examples of NLP tasks for model distillation from a task specific fine-tuned large model to a smaller model.
 It requires the pre-trained task specific model such as `textattack/roberta-base-SST-2` from textattack Huggingface portal.
 
 ## SST-2 task
@@ -65,3 +65,6 @@ python run_glue_no_trainer_distillation.py \
       --per_device_train_batch_size 32 --learning_rate 1e-5 --num_train_epochs 10 \
       --output_dir /path/to/output_dir  --temperature 2 --seed 5143
 ```
+
+# Saving and Loading Model
+
