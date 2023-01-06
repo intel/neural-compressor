@@ -123,6 +123,16 @@ class BasicTuneStrategy(TuneStrategy):
                     logger.info("Early stopping the stage 1.")
                     break
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+
+                all_op_type = set()
+                for k ,v in op_tuning_cfg.items():
+                    if len(k) != 2:
+                        continue
+                    op_name, op_type = k
+                    if 'int8' in v.weight_dtype:
+                        all_op_type.add(op_type)
+                logger.info("INT8 op types are: {}".format(all_op_type))
+
                 yield op_tuning_cfg
             # Fallback the ops supported both static and dynamic from static to dynamic
             # Tuning items: None
