@@ -73,29 +73,31 @@ def _set_input_scale_hook(model, op_cfgs):
         hook_list (list): the input observer hooks
     """
     def input_scale_hook(module, input):
-        module.input_observer = module.qconfig.activation()
+        module.input_observer = module.qconfig.activation().to(next(module.parameters()).device)
         module.input_observer(input[0])
         return input
 
     def output_scale_hook(module, input, output):
-        module.output_observer = module.qconfig.activation()
+        module.output_observer = module.qconfig.activation().to(next(module.parameters()).device)
         module.output_observer(output)
         return output
 
     def ConvReLU2d_scale_hook(module, input):
-        module.input_observer = module.qconfig.activation()
+        device = next(module.parameters()).device
+        module.input_observer = module.qconfig.activation().to(device)
         module.input_observer(input[0])
         output = module._conv_forward(input[0], module.weight_fake_quant(module.weight), module.bias)
-        module.output_observer = module.qconfig.activation()
+        module.output_observer = module.qconfig.activation().to(device)
         module.output_observer(output)
         return input
 
     def LinearReLU_scale_hook(module, input):
         import torch.nn.functional as F
-        module.input_observer = module.qconfig.activation()
+        device = next(module.parameters()).device
+        module.input_observer = module.qconfig.activation().to(device)
         module.input_observer(input[0])
         output = F.linear(input[0], module.weight_fake_quant(module.weight), module.bias)
-        module.output_observer = module.qconfig.activation()
+        module.output_observer = module.qconfig.activation().to(device)
         module.output_observer(output)
         return input
 

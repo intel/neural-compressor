@@ -16,21 +16,16 @@
 import argparse
 import logging
 import shutil
-from neural_compressor.utils.logger import log
 import math
 import os
 import random
-import copy
 import datasets
 from datasets import load_dataset, load_metric
 import torch
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader
 import torch.distributed as dist
 from tqdm.auto import tqdm
 
-import numpy as np
-
-import transformers
 from transformers import (
     AdamW,
     AutoConfig,
@@ -150,15 +145,6 @@ def parse_args():
         help="Path to pretrained model or model identifier from huggingface.co/models"
              " to be the teacher model."
     )
-    parser.add_argument("--temperature", default=1, type=float,
-                        help='temperature parameter of distillation')
-    parser.add_argument("--loss_types", default=['CE', 'KL'], type=str, nargs='+',
-                        help='loss types of distillation, should be a list of length 2, '
-                        'first for student targets loss, second for teacher student loss.')
-    parser.add_argument("--loss_weights", default=[0.5, 0.5], type=float, nargs='+',
-                        help='loss weights of distillation, should be a list of length 2, '
-                        'and sum to 1.0, first for student targets loss weight, '
-                        'second for teacher student loss weight.')
     args = parser.parse_args()
 
     # Sanity checks
@@ -343,12 +329,12 @@ def main():
     #
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
-    config = AutoConfig.from_pretrained(args.model_name_or_path, 
-                                        num_labels=num_labels, 
-                                        finetuning_task=args.task_name, 
+    config = AutoConfig.from_pretrained(args.model_name_or_path,
+                                        num_labels=num_labels,
+                                        finetuning_task=args.task_name,
                                         use_auth_token=args.use_auth_token)
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, 
-                                              use_fast=not args.use_slow_tokenizer, 
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path,
+                                              use_fast=not args.use_slow_tokenizer,
                                               use_auth_token=args.use_auth_token)
     model = AutoModelForSequenceClassification.from_pretrained(
         args.model_name_or_path,
@@ -485,12 +471,44 @@ def main():
         metric = load_metric("glue", args.task_name)
 
     combs = []
-    from neural_compressor.experimental import common, Distillation, Quantization
     if args.do_distillation:
-        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
-        distillation_criterion = KnowledgeDistillationLossConfig(temperature=args.temperature,
-                                                                 loss_types=args.loss_types,
-                                                                 loss_weights=args.loss_weights)
+        from neural_compressor.config import DistillationConfig, \
+                                             IntermediateLayersKnowledgeDistillationLossConfig
+        layer_mappings = [
+            [['bert.encoder.layer.0.output', ]],
+            [['bert.encoder.layer.0.attention', '1']],
+            [['bert.encoder.layer.1.output', ]],
+            [['bert.encoder.layer.1.attention', '1']],
+            [['bert.encoder.layer.2.output', ]],        
+            [['bert.encoder.layer.2.attention', '1']],      
+            [['bert.encoder.layer.3.output', ]],        
+            [['bert.encoder.layer.3.attention', '1']],      
+            [['bert.encoder.layer.4.output', ]],        
+            [['bert.encoder.layer.4.attention', '1']],      
+            [['bert.encoder.layer.5.output', ]],        
+            [['bert.encoder.layer.5.attention', '1']],      
+            [['bert.encoder.layer.6.output', ]],        
+            [['bert.encoder.layer.6.attention', '1']],      
+            [['bert.encoder.layer.7.output', ]],        
+            [['bert.encoder.layer.7.attention', '1']],      
+            [['bert.encoder.layer.8.output', ]],        
+            [['bert.encoder.layer.8.attention', '1']],      
+            [['bert.encoder.layer.9.output', ]],        
+            [['bert.encoder.layer.9.attention', '1']],
+            [['bert.encoder.layer.10.output', ]],
+            [['bert.encoder.layer.10.attention', '1']],
+            [['bert.encoder.layer.11.output', ]],
+            [['bert.encoder.layer.11.attention', '1']],
+            [['classifier', ]],
+        ]
+        loss_weights = [1, 1, 1, 1, 1,
+                        1, 1, 1, 1, 1,
+                        1, 1, 1, 1, 1,
+                        1, 1, 1, 1, 1,
+                        1, 1, 1, 1, 1]
+        distillation_criterion = IntermediateLayersKnowledgeDistillationLossConfig(
+            layer_mappings=layer_mappings,
+            loss_weights=loss_weights)
 
         teacher_config = AutoConfig.from_pretrained(args.teacher_model_name_or_path, \
                             num_labels=num_labels, finetuning_task=args.task_name)
