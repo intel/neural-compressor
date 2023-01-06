@@ -24,6 +24,9 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo "$var" |cut -f2 -d=)
       ;;
+      --anno_path=*)
+          anno_path=$(echo "$var" |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -35,6 +38,7 @@ function run_tuning {
           --input-graph "${input_model}" \
           --output_model "${output_model}" \
           --dataset_location "${dataset_location}" \
+          --anno_path "${anno_path}" \
           --tune
 }
 

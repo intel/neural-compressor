@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2020 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,38 +22,107 @@ import time
 import numpy as np
 import tensorflow as tf
 from argparse import ArgumentParser
+from neural_compressor.metric import COCOmAPv2
+from neural_compressor.data import COCORecordDataset, ComposeTransform, RescaleTFTransform, \
+    DataLoader, NormalizeTFTransform, ResizeTFTransform
 
-class eval_object_detection_optimized_graph(object):
-    
-    def __init__(self):
-        arg_parser = ArgumentParser(description='Parse args')
+arg_parser = ArgumentParser(description='Parse args')
 
-        arg_parser.add_argument('-g',
-                            "--input-graph",
-                            help='Specify the input graph.',
-                            dest='input_graph')
-        arg_parser.add_argument('--config', type=str, default='')
-        arg_parser.add_argument('--output_model', type=str, default='')
-        arg_parser.add_argument('--mode', type=str, default='performance')
-        arg_parser.add_argument('--tune', action='store_true', default=False)
-        arg_parser.add_argument('--benchmark', dest='benchmark',
-                            action='store_true', help='run benchmark')
-        self.args = arg_parser.parse_args()
+arg_parser.add_argument('-g',
+                    "--input-graph",
+                    help='Specify the input graph.',
+                    dest='input_graph')
+arg_parser.add_argument('--config', type=str, default='')
+arg_parser.add_argument('--dataset_location', type=str, default='')
+arg_parser.add_argument('--anno_path', type=str, default='')
+arg_parser.add_argument('--output_model', type=str, default='')
+arg_parser.add_argument('--mode', type=str, default='performance')
+arg_parser.add_argument('--batch_size', type=int, default=1)
+arg_parser.add_argument('--tune', action='store_true', default=False)
+arg_parser.add_argument('--benchmark', dest='benchmark',
+                    action='store_true', help='run benchmark')
+args = arg_parser.parse_args()
+
+def evaluate(model):
+    """Custom evaluate function to estimate the accuracy of the model.
+
+    Args:
+        model (tf.Graph_def): The input model graph
         
-    def run(self):
-        if self.args.tune:
-            from neural_compressor.experimental import Quantization
-            quantizer = Quantization(self.args.config)
-            quantizer.model = self.args.input_graph
-            q_model = quantizer.fit()
-            q_model.save(self.args.output_model)
-                
-        if self.args.benchmark:
-            from neural_compressor.experimental import Benchmark
-            evaluator = Benchmark(self.args.config)
-            evaluator.model = self.args.input_graph
-            evaluator(self.args.mode)
+    Returns:
+        accuracy (float): evaluation result, the larger is better.
+    """
+    from neural_compressor.model import Model
+    model = Model(model)
+    model.input_tensor_names = ["image"]
+    model.output_tensor_names = ["num_detections:0", "detection_boxes:0", \
+                                    "detection_scores:0", "detection_classes:0"]
+    input_tensor = model.input_tensor
+    output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
+                        model.output_tensor[0]
+    iteration = -1
+    if args.benchmark and args.mode == 'performance':
+        iteration = 100
+    metric = COCOmAPv2(anno_path=args.anno_path)
+
+    def eval_func(dataloader):
+        latency_list = []
+        for idx, (inputs, labels) in enumerate(dataloader):
+            # dataloader should keep the order and len of inputs same with input_tensor
+            inputs = np.array([inputs])
+            feed_dict = dict(zip(input_tensor, inputs))
+
+            start = time.time()
+            predictions = model.sess.run(output_tensor, feed_dict)
+            end = time.time()
+
+            metric.update(predictions, labels)
+            latency_list.append(end-start)
+            if idx + 1 == iteration:
+                break
+        latency = np.array(latency_list).mean() / args.batch_size
+        return latency
+
+    eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
+        transform=ComposeTransform(transform_list=[RescaleTFTransform({}), NormalizeTFTransform( \
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), ResizeTFTransform(size=1200)]))
+    eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
+
+    latency = eval_func(eval_dataloader)
+    if args.benchmark and args.mode == 'performance':
+        print("Batch size = {}".format(args.batch_size))
+        print("Latency: {:.3f} ms".format(latency * 1000))
+        print("Throughput: {:.3f} images/sec".format(1. / latency))
+    acc = metric.result()
+    return acc 
+
+def main(_):
+    calib_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
+        transform=ComposeTransform(transform_list=[RescaleTFTransform({}), NormalizeTFTransform( \
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), ResizeTFTransform(size=1200)]))
+    calib_dataloader=DataLoader(framework='tensorflow', dataset=calib_dataset, batch_size=args.batch_size)
+
+    if args.tune:
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig
+        config = PostTrainingQuantConfig(
+            inputs=["image"],
+            outputs=["detection_bboxes", "detection_scores", "detection_classes"],
+            calibration_sampling_size=[100])
+        q_model = quantization.fit(model=args.input_graph, conf=config, 
+                                    calib_dataloader=calib_dataloader, eval_func=evaluate)
+        q_model.save(args.output_model)
+            
+    if args.benchmark:
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
+        if args.mode == 'performance':
+            conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
+            fit(args.input_graph, conf, b_func=evaluate)
+        else:
+            accuracy = evaluate(args.input_graph)
+            print('Batch size = %d' % args.batch_size)
+            print("Accuracy: %.5f" % accuracy)
 
 if __name__ == "__main__":
-    evaluate_opt_graph = eval_object_detection_optimized_graph()
-    evaluate_opt_graph.run()
+	tf.compat.v1.app.run()

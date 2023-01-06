@@ -23,7 +23,8 @@ import numpy as np
 import tensorflow as tf
 from argparse import ArgumentParser
 from neural_compressor.metric import COCOmAPv2
-from neural_compressor.data import COCORecordDataset,ComposeTransform,ResizeTFTransform,DataLoader
+from neural_compressor.data import COCORecordDataset,ComposeTransform, \
+                LabelBalanceCOCORecordFilter,TensorflowResizeWithRatio,DataLoader
 
 arg_parser = ArgumentParser(description='Parse args')
 
@@ -34,7 +35,7 @@ arg_parser.add_argument('-g',
 arg_parser.add_argument('--config', type=str, default='')
 arg_parser.add_argument('--dataset_location', type=str, default='')
 arg_parser.add_argument('--output_model', type=str, default='')
-arg_parser.add_argument('--mode', type=str, default='performance')
+arg_parser.add_argument('--mode', type=str, default='accuracy')
 arg_parser.add_argument('--batch_size', type=int, default=10)
 arg_parser.add_argument('--tune', action='store_true', default=False)
 arg_parser.add_argument('--benchmark', dest='benchmark',
@@ -82,8 +83,19 @@ def evaluate(model):
         return latency
 
     eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
-            transform=ComposeTransform(transform_list=[ResizeTFTransform(size=600)]))
-    eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
+            transform=ComposeTransform(transform_list=[TensorflowResizeWithRatio(
+                                        min_dim=800, max_dim=1356, padding=False)]))
+    if args.mode == 'accuracy':
+        eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
+            transform=ComposeTransform(transform_list=[TensorflowResizeWithRatio(
+                                        min_dim=800, max_dim=1356, padding=False)]))
+        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
+    else:
+        eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
+            transform=ComposeTransform(transform_list=[TensorflowResizeWithRatio(
+                                        min_dim=800, max_dim=1356, padding=True)]))
+        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=1)
+
     latency = eval_func(eval_dataloader)
     if args.benchmark and args.mode == 'performance':
         print("Batch size = {}".format(args.batch_size))
@@ -93,12 +105,7 @@ def evaluate(model):
     return acc 
 
 def main(_):
-    eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
-            transform=ComposeTransform(transform_list=[ResizeTFTransform(size=600)]))
-    eval_dataloader = DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
-
-    calib_dataset = COCORecordDataset(root=args.dataset_location, filter=LabelBalanceCOCORecordFilter(), \
-            transform=ComposeTransform(transform_list=[ResizeTFTransform(size=600)]))
+    calib_dataset = COCORecordDataset(root=args.dataset_location, filter=LabelBalanceCOCORecordFilter(size=1))
     calib_dataloader = DataLoader(framework='tensorflow', dataset=calib_dataset, batch_size=args.batch_size)
 
     if args.tune:
@@ -107,8 +114,7 @@ def main(_):
         config = PostTrainingQuantConfig(
             inputs=["image_tensor"],
             outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
-            calibration_sampling_size=[50],
-            excluded_precisions=["bf16"])
+            calibration_sampling_size=[50])
         q_model = quantization.fit(model=args.input_graph, conf=config, 
                                     calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(args.output_model)

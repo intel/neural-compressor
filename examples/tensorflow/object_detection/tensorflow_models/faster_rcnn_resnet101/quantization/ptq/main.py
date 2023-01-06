@@ -93,10 +93,6 @@ def evaluate(model):
     return acc 
 
 def main(_):
-    eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
-            transform=ComposeTransform(transform_list=[ResizeTFTransform(size=600)]))
-    eval_dataloader = DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
-
     calib_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
             transform=ComposeTransform(transform_list=[ResizeTFTransform(size=600)]))
     calib_dataloader = DataLoader(framework='tensorflow', dataset=calib_dataset, batch_size=args.batch_size)
