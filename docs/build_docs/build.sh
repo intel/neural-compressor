@@ -36,26 +36,29 @@ if [ ${ACT} == "only_build_local" ]; then
   UPDATE_LATEST_FOLDER=1
   UPDATE_VERSION_FOLDER=1
   CHECKOUT_GH_PAGES=0
-  PUSH_GH_PAGES=0
-
 elif [ ${ACT} == "build_version" ]; then
   UPDATE_LATEST_FOLDER=0
   UPDATE_VERSION_FOLDER=1
   CHECKOUT_GH_PAGES=1
-  PUSH_GH_PAGES=1
 elif [ ${ACT} == "build_latest" ]; then
   UPDATE_LATEST_FOLDER=1
   UPDATE_VERSION_FOLDER=0
   CHECKOUT_GH_PAGES=1
-  PUSH_GH_PAGES=1
 fi
 
 WORK_DIR=../../build_tmp
+rm -rf /tmp/env_sphinx
 if [ ! -d ${WORK_DIR} ]; then
   echo "no ${WORK_DIR}"
+
 else
-  cp -rf ${WORK_DIR}/env_sphinx /tmp/
-  rm -rf ${WORK_DIR}
+  if [ ! -d ${WORK_DIR}/env_sphinx ]; then
+    echo "no exist ${WORK_DIR}/env_sphinx"
+  else
+    cp -rf ${WORK_DIR}/env_sphinx /tmp/
+    rm -rf ${WORK_DIR}
+    echo "backup ${WORK_DIR}/env_sphinx to /tmp"
+  fi
 fi
 
 mkdir -p ${WORK_DIR}
@@ -66,7 +69,7 @@ cd ${WORK_DIR}
 if [ ! -d /tmp/env_sphinx ]; then
   echo "no /tmp/env_sphinx"
 else
-  echo "restore env_sphinx"
+  echo "restore env_sphinx from /tmp"
   cp -r /tmp/env_sphinx ./
 fi
 
@@ -96,11 +99,16 @@ else
   exit 1
 fi
 
-
+DRAFT_FOLDER=./draft
+mkdir -p ${DRAFT_FOLDER}
 VERSION=`cat source/version.txt`
-DST_FOLDER=./${VERSION}
-LATEST_FOLDER=./latest
+DST_FOLDER=${DRAFT_FOLDER}/${VERSION}
+LATEST_FOLDER=${DRAFT_FOLDER}/latest
 SRC_FOLDER=build/html
+
+RELEASE_FOLDER=./gh-pages
+ROOT_DST_FOLDER=${RELEASE_FOLDER}/${VERSION}
+ROOT_LATEST_FOLDER=${RELEASE_FOLDER}/latest
 
 if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
   echo "create ${DST_FOLDER}"
@@ -134,20 +142,15 @@ fi
 echo "Create document is done"
 
 if [[ ${CHECKOUT_GH_PAGES} -eq 1 ]]; then
-  git checkout -b gh-pages
-  git branch --set-upstream-to=origin/gh-pages gh-pages
-  git pull
-  git fetch origin
-  git reset --hard origin/gh-pages
-
+  git clone -b gh-pages --single-branch https://github.com/intel/neural-compressor.git ${RELEASE_FOLDER}
+ 
   if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
-    python update_version.py ${DST_FOLDER} ${VERSION}
-    cp -rf ${DST_FOLDER} ../
+    python update_version.py ${ROOT_DST_FOLDER} ${VERSION}
+    cp -rf ${DST_FOLDER} ${RELEASE_FOLDER}
   fi
 
   if [[ ${UPDATE_LATEST_FOLDER} -eq 1 ]]; then
-    python update_version.py ${LATEST_FOLDER} ${VERSION}
-    cp -rf ${LATEST_FOLDER} ../
+    cp -rf ${LATEST_FOLDER} ${RELEASE_FOLDER}
   fi
 
 else
@@ -157,30 +160,11 @@ fi
 echo "UPDATE_LATEST_FOLDER=${UPDATE_LATEST_FOLDER}"
 echo "UPDATE_VERSION_FOLDER=${UPDATE_VERSION_FOLDER}"
 
-ROOT_DST_FOLDER=../${VERSION}
-ROOT_LATEST_FOLDER=../latest
-
-if [[ ${PUSH_GH_PAGES} -eq 1 ]]; then
-  if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
-    echo "git add ${ROOT_DST_FOLDER} ../versions.html"
-    git add ${ROOT_DST_FOLDER} ../versions.html
-  fi
-
-  if [[ ${UPDATE_LATEST_FOLDER} -eq 1 ]]; then
-    echo "git add ${ROOT_LATEST_FOLDER}"
-    git add ${ROOT_LATEST_FOLDER}
-  fi
-  git commit -m "update for ${VERSION}"
-  git push origin gh-pages
-  echo "git push origin gh-pages is done!"
-else
-  echo "Skip push"
-fi
 
 if [[ $? -eq 0 ]]; then
-  echo "push online documents successfully!"
+  echo "create online documents successfully!"
 else
-  echo "push build online documents fault!"
+  echo "create online documents fault!"
   exit 1
 fi
 
