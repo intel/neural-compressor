@@ -2,7 +2,6 @@ Step-by-Step
 ============
 
 This document is used to introduce steps of reproducing PyTorch BERT tuning zoo result.
-Original BERT documents please refer to [BERT README](../../../../common/README.md) and [README](../../../../common/examples/text-classification/README.md).
 
 > **Note**
 >
@@ -10,34 +9,27 @@ Original BERT documents please refer to [BERT README](../../../../common/README.
 
 # Prerequisite
 
-## 1. Environment
-
-### Python Version
+## Environment
 
 Recommend python 3.6 or higher version.
-
-#### Install BERT model
 
 ```bash
 pip install transformers
 ```
 
-#### Install dependency
-
 ```shell
 pip install -r requirements.txt
 ```
 
-#### Install PyTorch
 ```shell
 pip install torch
 ```
 
-## 2. Prepare pretrained model
+## Prepare pretrained model
 
 Before using Intel® Neural Compressor, it is recommend to fine-tune the model to get pretrained models or reuse fine-tuned models in [model hub](https://huggingface.co/models). The user should also install the additional packages required by the examples.
 
-# Start to quantize the model with neural compressor
+# Run
  - Here we implemented several models in fx mode.
 ```shell
 cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx

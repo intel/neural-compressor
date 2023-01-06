@@ -8,9 +8,9 @@ Our example comes from [Huggingface/transformers](https://github.com/huggingface
 
 # Prerequisite
 
-### 1. Environment
+## Environment
 
-PyTorch >=1.12.0 is needed for pytorch_fx backend and huggingface/transformers.
+PyTorch >=1.12.0 is recommended for pytorch_fx backend and huggingface/transformers.
 
   ```shell
   cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/qat/fx
@@ -18,7 +18,7 @@ PyTorch >=1.12.0 is needed for pytorch_fx backend and huggingface/transformers.
   ```
 
 
-### 2. Prepare fine-tuned model
+## Prepare fine-tuned model
 
   ```shell
   python run_glue.py \
@@ -35,14 +35,14 @@ PyTorch >=1.12.0 is needed for pytorch_fx backend and huggingface/transformers.
 
 # Run
 
-### 1. Enable bert-base-cased/uncased example with the auto quantization aware training strategy of Neural Compressor.
+## Enable bert-base-cased/uncased example with the auto quantization aware training strategy of Neural Compressor.
 
   The changes made are shown as follows:
   * edit run_glue.py:  
     - For quantization, We used neural_compressor in it.  
     - For training, we enbaled early stop strategy.  
 
-### 2. Get the tuned model and its accuracy: 
+## Get the tuned model and its accuracy: 
 
     bash run_tuning.sh --input_model=./bert_model  --output_model=./saved_results
 
@@ -69,7 +69,7 @@ or
         --save_total_limit 1 \
         --tune
 
-### 3. Get the benchmark of tuned model, includes Batch_size and Throughput: 
+## Get the benchmark of tuned model, including Batch_size and Throughput: 
 
     bash run_benchmark.sh --input_model=./bert_model --config=./saved_results --mode=benchmark --int8=true/false
 

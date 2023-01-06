@@ -2,7 +2,6 @@ Step-by-Step
 ============
 
 This document is used to introduce steps of reproducing PyTorch BERT tuning zoo result.
-Original BERT documents please refer to [BERT README](../../../../common/README.md) and [README](../../../../common/examples/text-classification/README.md).
 
 > **Note**
 >
@@ -10,35 +9,28 @@ Original BERT documents please refer to [BERT README](../../../../common/README.
 
 # Prerequisite
 
-## 1. Prerequisite
-
-### Environment
+## Environment
 
 Recommend python 3.6 or higher version.
-
-#### Install BERT model
 
 ```bash
 pip install transformers
 ```
-
-#### Install dependency
 
 ```shell
 cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx
 pip install -r requirements.txt
 ```
 
-#### Install PyTorch
 ```shell
 pip install torch
 ```
 
-## 2. Prepare pretrained model
+## Prepare pretrained model
 
 Before using Intel® Neural Compressor, it is recommend to fine-tune the model to get pretrained models or reuse fine-tuned models in [model hub](https://huggingface.co/models). Also, the user needs to install the additional packages required by examples.
 
-# Start to quantize the model with neural compressor
+# Run
  - Here we implemented several models in fx mode.
 ```shell
 cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx
@@ -78,7 +70,7 @@ python -u ./run_glue.py \
 
 # HuggingFace model hub
 ## Upstream into HuggingFace model hub
-Intel® Neural Compressor provides an API `save_for_huggingface_upstream` to collect configuration files, tokenizer files and int8 model weights in the format of [transformers](https://github.com/huggingface/transformers). 
+Intel® Neural Compressor provides an API `save_for_huggingface_upstream` to collect configuration files, tokenizer files and INT8 model weights in the format of [transformers](https://github.com/huggingface/transformers). 
 ```
 from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
 ...
@@ -100,7 +92,7 @@ model = OptimizedModel.from_pretrained(
         )
 ```
 
-Neural compressor has upstreamed several int8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.
+Neural compressor has upstreamed several INT8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.
 
 ----
 ----
@@ -108,7 +100,7 @@ Neural compressor has upstreamed several int8 models into HuggingFace [model hub
 
 
 ### Intel® Neural Compressor supports usage:
-* The user needs to specify fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func", which encapsulates the evaluation dataset and metrics by itself.
+* The user needs to specify FP32 'model', calibration dataset 'q_dataloader' and a custom "eval_func", which encapsulates the evaluation dataset and metrics by itself.
 
 ### Code Prepare
 
