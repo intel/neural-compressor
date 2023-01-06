@@ -272,6 +272,10 @@ def eval_func2(model):
         return 0.999
     elif i == 8:
         return 0.99
+    elif i == 9:
+        return 0.997
+    elif i == 10:
+        return 0.994
     else:
         return 0
 
