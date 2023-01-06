@@ -22,8 +22,8 @@ Pruning
 ### Neural Network Pruning
 Neural network pruning (briefly known as pruning or sparsity) is one of the most promising model compression techniques. It removes the least important parameters in the network and achieves compact architectures with minimal accuracy drop and maximal inference acceleration. As current state-of-the-art models have increasingly more parameters, pruning plays a crucial role in enabling them to run on devices whose memory footprints and computing resources are limited. 
 
-<a target="_blank" href="./_static/imgs/pruning/pruning_intro.png">
-    <img src="./_static/imgs/pruning/pruning_intro.png" width=400 height=250 alt="pruning intro">
+<a target="_blank" href="./imgs/pruning/pruning_intro.png">
+    <img src="./imgs/pruning/pruning_intro.png" width=400 height=250 alt="pruning intro">
 </a>
 
 
@@ -31,8 +31,8 @@ Neural network pruning (briefly known as pruning or sparsity) is one of the most
 
 Pruning patterns defines the rules of pruned weights' arrangements in space.
 
-<a target="_blank" href="./_static/imgs/pruning/pruning_pattern.png">
-    <img src="_static/imgs/pruning/pruning_patterns.png" width=600 height=150 alt="Sparsity Pattern">
+<a target="_blank" href="./imgs/pruning/pruning_pattern.png">
+    <img src="imgs/pruning/pruning_patterns.png" width=600 height=150 alt="Sparsity Pattern">
 </a>
 
 
@@ -56,9 +56,9 @@ Pruning patterns defines the rules of pruned weights' arrangements in space.
 
   Here is a figure showing a matrix with ```IC``` = 32 and ```OC``` = 16 dimension, and a block-wise sparsity pattern with block size 4 on ```OC``` dimension.
 
-  <a target="_blank" href="./_static/imgs/pruning/sparse_dim.png">
-      <img src="./_static/imgs/pruning/sparse_dim.png" width=600 height=320 alt="block sparsity Pattern">
-  </a>
+<a target="_blank" href="./imgs/pruning/sparse_dim.png">
+    <img src="./imgs/pruning/sparse_dim.png" width=600 height=320 alt="block sparsity Pattern">
+</a>
 
 ### Pruning Criteria
 
@@ -246,7 +246,7 @@ The following section exemplifies how to use hooks in user pass-in training func
 
 ## Examples
 
-We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). [Validated pruning examples](../../docs/source/validated_model_list.md#validated-pruning-examples) shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. 
+We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). [Validated pruning examples](./validated_model_list.md#validated-pruning-examples) shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. 
 
 Please refer to pruning examples([TensorFlow](../../examples/README.md#Pruning), [PyTorch](../../examples/README.md#Pruning-1)) for more information.
 

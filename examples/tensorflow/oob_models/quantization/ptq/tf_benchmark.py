@@ -46,7 +46,7 @@ def metrics_generator(array, tolerance):
 
 def initialize_graph(model_details, args, od_graph_def):
     if args.use_nc and not od_graph_def.node:
-        from neural_compressor.model.model import Model
+        from neural_compressor.model import Model
         model = Model(os.path.join(os.getcwd(), model_details['model_dir']))
         od_graph_def = model.graph_def
 
@@ -332,10 +332,10 @@ if __name__ == "__main__":
         inputs = model_detail['input']
         outputs = model_detail['output']
 
-        from neural_compressor.data.dataloaders.dataloader import DataLoader
+        from neural_compressor.data import DataLoader
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils.utility import set_random_seed
+        from neural_compressor.utils import set_random_seed
 
         set_random_seed(9527)
         config = PostTrainingQuantConfig(

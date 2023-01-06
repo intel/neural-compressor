@@ -16,7 +16,7 @@ Quantization is a very popular deep learning model optimization technique invent
 
 `Affine quantization` and `Scale quantization` are two common range mapping techniques used in tensor conversion between different data types.
 
-The math equation is like: $X_{int8} = round(Scale \times X_{fp32} + ZeroPoint)$.
+The math equation is like: $$X_{int8} = round(Scale \times X_{fp32} + ZeroPoint)$$.
 
 **Affine Quantization**
 
@@ -123,7 +123,7 @@ Currently `accuracy aware tuning` supports `post training quantization`, `quanti
 
 User could refer to below chart to understand the whole tuning flow.
 
-<img src="./_static/imgs/accuracy_aware_tuning_flow.png" width=914 height=480 alt="accuracy aware tuning working flow">
+<img src="./imgs/accuracy_aware_tuning_flow.png" width=914 height=480 alt="accuracy aware tuning working flow">
 
 ## Supported Feature Matrix
 

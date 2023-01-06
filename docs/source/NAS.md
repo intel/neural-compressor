@@ -26,7 +26,7 @@ Dynamic Neural Architecture Search (DyNAS) is a super-network-based NAS approach
 <br>
 The flow of the DyNAS approach is shown in the following figure. In the first phase of the search, a small population of sub-networks are randomly sampled from the super-network and evaluated (validation measurement) to provide the initial training set for the inner predictor loop. After the predictors are trained, a multi-objective evolutionary search is performed in the predictor objective space. After this extensive search is performed, the best performing sub-network configurations are selected to be the next iteration's validation population. The cycle continues until the search concludes when the user defined evaluation count is met.
 <br>
-![DyNAS Workflow](./_static/imgs/dynas.png)
+![DyNAS Workflow](./imgs/dynas.png)
 
 ## NAS Support Matrix
 

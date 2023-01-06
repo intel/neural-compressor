@@ -20,7 +20,7 @@ import logging
 import numpy as np
 import tensorflow as tf
 
-from neural_compressor.metric.metric import TensorflowTopK
+from neural_compressor.metric import TensorflowTopK
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
@@ -95,7 +95,7 @@ def evaluate(model):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
-    from neural_compressor.model.model import Model
+    from neural_compressor.model import Model
     model = Model(model)
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
@@ -163,7 +163,7 @@ def main():
 
     if FLAGS.benchmark:
         from neural_compressor.benchmark import fit
-        from neural_compressor.model.model import Model
+        from neural_compressor.model import Model
         from neural_compressor.config import BenchmarkConfig
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
         "Benchmark only supports performance or accuracy mode."
