@@ -24,7 +24,7 @@ class Calib_Dataloader(object):
         elif globals.code_domain == 'transformers_no_trainer':
             pass
         elif globals.code_domain == 'torchvision':
-            globals.list_calib_dataloader_name.append('val_loader')
+            globals.list_calib_dataloader_name.append('train_loader')
         elif globals.code_domain == 'onnx':
             codes = open(globals.list_code_path[0], 'r').read().split('\n')
             for line in codes:
