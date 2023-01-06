@@ -50,9 +50,10 @@ class ONNXRTBertDataset:
           filter (Filter objects, default=None): filter out examples according
                                                  to specific conditions.
     """
-    def __init__(self, data_dir, model_name_or_path, max_seq_length=128,\
+    def __init__(self, model, data_dir, model_name_or_path, max_seq_length=128,\
                 do_lower_case=True, task='mrpc', model_type='bert', dynamic_length=False,\
                 evaluate=True, transform=None, filter=None):
+        self.inputs = [inp.name for inp in onnx.load(model).graph.input]
         task = task.lower()
         model_type = model_type.lower()
         assert task in ['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
@@ -73,7 +74,7 @@ class ONNXRTBertDataset:
     def __getitem__(self, index):
         # return self.dataset[index]
         batch = tuple(t.detach().cpu().numpy() if not isinstance(t, np.ndarray) else t for t in self.dataset[index])
-        return batch[:3], batch[-1]
+        return batch[:len(self.inputs)], batch[-1]
 
 def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, \
     model_type, tokenizer, evaluate):
@@ -359,7 +360,8 @@ if __name__ == "__main__":
  
     args = parser.parse_args()
 
-    dataset = ONNXRTBertDataset(data_dir=args.data_path,
+    dataset = ONNXRTBertDataset(args.model_path,
+                                data_dir=args.data_path,
                                 model_name_or_path=args.model_name_or_path,
                                 task=args.task)
     dataloader = DefaultDataLoader(dataset, args.batch_size)
