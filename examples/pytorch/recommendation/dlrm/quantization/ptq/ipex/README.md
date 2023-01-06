@@ -10,7 +10,7 @@ This document is used to list steps of reproducing PyTorch DLRM tuning zoo resul
 
 # Prerequisite
 
-### 1. Installation
+### 1. Environment
 
 PyTorch 1.11 or higher version is needed with pytorch_fx backend.
 
@@ -50,43 +50,8 @@ Examples of enabling Intel® Neural Compressor
 
 This is a tutorial of how to enable DLRM model with Intel® Neural Compressor.
 
-# User Code Analysis
 
-Intel® Neural Compressor supports two usages:
-
-1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics in tuning.metrics field of model-specific yaml config file.
-
-2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
-
-Here we used the second use case.
-
-### Write Yaml config file
-
-In examples directory, there is conf.yaml. We could remove most of the items and only keep mandatory item for tuning.
-
-```yaml
-model:
-  name: dlrm
-  framework: pytorch_ipex
-
-device: cpu
-
-quantization:
-  calibration:
-    sampling_size: 102400
-
-tuning:
-  accuracy_criterion:
-    relative: 0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-```
-
-Here we set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means early stop as well as a tuning config meet accuracy target.
-> **Note** : Intel® Neural Compressor does NOT support "mse" tuning strategy for pytorch framework
-
-### code update
+### Code update
 
 We need update dlrm_s_pytorch.py like below
 
@@ -101,27 +66,31 @@ class DLRM_DataLoader(object):
 ```
 
 ```python
-from neural_compressor.experimental import Quantization, common
+	def eval_func(model):
+		args.int8 = False if model.ipex_config_path is None else True
+		args.int8_configure = "" \
+			if model.ipex_config_path is None else model.ipex_config_path
+		with torch.no_grad():
+			return inference(
+				args,
+				model,
+				best_acc_test,
+				best_auc_test,
+				test_ld,
+				trace=args.int8
+			)
 
-def eval_func(model):
-    args.int8 = False if model.ipex_config_path is None else True
-    args.int8_configure = "" \
-        if model.ipex_config_path is None else model.ipex_config_path
-    with torch.no_grad():
-        return inference(
-            args,
-            model,
-            best_acc_test,
-            best_auc_test,
-            test_ld,
-            trace=args.int8
-        )
-assert args.inference_only, "Please set inference_only in arguments"
-quantizer = Quantization("./conf_ipex.yaml")
-quantizer.model = common.Model(dlrm)
-quantizer.calib_dataloader = DLRM_DataLoader(train_ld)
-quantizer.eval_func = eval_func
-q_model = quantizer.fit()
-q_model.save("/path/to/save/results")
-return
+	assert args.inference_only, "Please set inference_only in arguments"
+	eval_dataloader = DLRM_DataLoader(train_ld)
+	from neural_compressor import PostTrainingQuantConfig, quantization
+	conf = PostTrainingQuantConfig(approach="static",
+								   backend="ipex"
+								   )
+	q_model = quantization.fit(
+						dlrm,
+						conf=conf,
+						eval_func=eval_func,
+						calib_dataloader=eval_dataloader
+						)
+	q_model.save("saved_results")
 ```

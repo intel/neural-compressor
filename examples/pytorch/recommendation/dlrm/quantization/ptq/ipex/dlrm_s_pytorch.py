@@ -828,8 +828,6 @@ def run():
     print("time/loss/accuracy (if enabled):")
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-
         def eval_func(model):
             args.int8 = False if model.ipex_config_path is None else True
             args.int8_configure = "" \
