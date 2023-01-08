@@ -45,12 +45,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         self.q_config = None
         self._workspace_path = ''
         self.is_quantized = False
-        try:
-            self.fp32_model = copy.deepcopy(model)
-        except Exception as e:  # pragma: no cover
-            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                repr(e)))
-            self.fp32_model = model
+        self.fp32_model = model
         self.kwargs = kwargs if kwargs else None
 
     def __repr__(self):
@@ -92,6 +87,16 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
     def model(self, model):
         """ Setter to model """
         self._model = model
+
+    @property
+    def fp32_model(self):
+        """ Getter to model """
+        return self._fp32_model
+
+    @fp32_model.setter
+    def fp32_model(self, fp32_model):
+        """ Setter to model """
+        self._fp32_model = fp32_model
 
     def register_forward_pre_hook(self):
         self.handles.append(

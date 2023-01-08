@@ -2578,7 +2578,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
                             to config.yaml'                                           .format(batch_size))
-            del init_model
+            del(init_model)
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
             if self.version.release < Version("1.12.0").release:
@@ -2770,6 +2770,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
         try:
             q_model = copy.deepcopy(model)
+            q_model.fp32_model = model.fp32_model
         except Exception as e:  # pragma: no cover
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
                 repr(e)))
@@ -2976,6 +2977,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
         # so set it to None.
         example_inputs = None
+
+        # For export API, deepcopy fp32_model
+        try:
+            self.model.fp32_model = copy.deepcopy(self.model.fp32_model)
+        except Exception as e:  # pragma: no cover
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                repr(e)))
 
         if self.sub_module_list is None:
             if self.version.release >= Version("1.13.0").release:  # pragma: no cover
