@@ -11,11 +11,11 @@ Tuning Strategies
 
 	2.3. [Accuracy Criteria](#accuracy-criteria)
 
-    2.4. [Traverse](#traverse)
+    2.4. [Tuning Process](#tuning-process)
 
-3. [Traverse Logic](#traverse-logic)
+3. [Tuning Algorithms](#tuning-algorithms)
 
-    3.1. [O0](#o0)
+    3.1. [Conservative Tuning](#conservative-tuning)
 
     3.2. [Basic](#basic)
 
@@ -83,18 +83,18 @@ accuracy_criterion = AccuracyCriterion(
 )
 ```
 
-### Traverse 
-Once the `tuning space` was constructed, user can specify the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig`, or the `strategy` field with strategy name in the `TuningCriterion`. The priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the traverse logic by strategy name. The design and usage of each traverse logic is introduced in the following session.
+### Tuning Process 
+Once the `tuning space` was constructed, user can specify the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig`, or the `strategy` field with the strategy name in the `TuningCriterion`. If user specifies the `quant_level` with 0, it will execute the conservative tuning, the detail can be found [here](./tuning_strategies.md#conservative-tuning). When user selects `quant_level` with `1`, it will execute the tuning process according to the strategy name. By default, the value of `quant_level` is `1`. Please note that the priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the traverse logic by strategy name. The design and usage of each traverse logic are introduced in the following session.
 
-## Traverse Logic
+## Tuning Algorithms
 
-### O0 
+### Conservative Tuning
 
 #### Design
-The quantization level `0` is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model, and then quantize the OPs to lower precision OP type wisely and OP wisely.
+The conservative tuning (`quant_level` = `0`) is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model, and then quantize the OPs to lower precision OP type wisely and OP wisely.
 #### Usage
 
-To use quantization level `0`, the `quant_level` field should be set to `0` in `PostTrainingQuantConfig`.
+To use conservative tuning, the `quant_level` field should be set to `0` in `PostTrainingQuantConfig`.
 
 ```python
 from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
