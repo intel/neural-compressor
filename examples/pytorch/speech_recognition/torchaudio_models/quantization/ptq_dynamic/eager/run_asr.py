@@ -120,10 +120,16 @@ def main():
                 prediction = [pre.replace("|", " ")for pre in predict]
                 WER = wer(text, prediction)
             return 1-WER
+        def calib_func(model):
+            for index, wave in enumerate(val_dataloader):
+                model(wave[0][0])
+                if index == 300:
+                    break
         from neural_compressor.experimental import Quantization, common
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         quantizer.eval_func = eval_func
+        quantizer.calib_func = calib_func
         q_model = quantizer.fit()
         q_model.save(args.tuned_checkpoint)
         exit(0)

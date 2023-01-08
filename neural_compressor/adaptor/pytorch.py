@@ -3755,11 +3755,14 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                     module.register_forward_pre_hook(input_observer_forward_pre_hook)
 
     def _calibration_for_scale(self, model, dataloader, model_qconfig_dict):
-        calib_sampling_size = self.tune_cfg['calib_sampling_size']
-        iterations = math.ceil(calib_sampling_size / dataloader.batch_size)
-        self.model_calibration(
-            model, dataloader, iterations,
-            calib_sampling_size=calib_sampling_size)
+        if self.q_func:
+            self.q_func(model)
+        else:
+            calib_sampling_size = self.tune_cfg['calib_sampling_size']
+            iterations = math.ceil(calib_sampling_size / dataloader.batch_size)
+            self.model_calibration(
+                model, dataloader, iterations,
+                calib_sampling_size=calib_sampling_size)
 
         for name, module in model.named_modules():
             if hasattr(module, 'input_activation_post_process'):
@@ -3856,11 +3859,14 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
             self.quantize_model_weights(model, model_qconfig_dict) # inplace
             hook_handles = self.add_quantization_hooks(model, model_qconfig_dict)
             model.train()
-            calib_sampling_size = self.tune_cfg['bn_calib_sampling_size']
-            iterations = math.ceil(calib_sampling_size / dataloader.batch_size)
-            self.model_calibration(
-                model, dataloader, iterations,
-                calib_sampling_size=calib_sampling_size)
+            if self.q_func:
+                self.q_func(model)
+            else:
+                calib_sampling_size = self.tune_cfg['bn_calib_sampling_size']
+                iterations = math.ceil(calib_sampling_size / dataloader.batch_size)
+                self.model_calibration(
+                    model, dataloader, iterations,
+                    calib_sampling_size=calib_sampling_size)
             model.eval()
             # Recover all fp8 data back to fp32 after updating BN.
             for name, module in model.named_modules():
