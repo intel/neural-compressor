@@ -1,0 +1,93 @@
+:py:mod:`neural_compressor.pruner.pruner_legacy.gradient_sensitivity`
+=====================================================================
+
+.. py:module:: neural_compressor.pruner.pruner_legacy.gradient_sensitivity
+
+.. autoapi-nested-parse::
+
+   Gradient sensitivity pruner.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.pruner.pruner_legacy.gradient_sensitivity.GradientSensitivityPruner
+
+
+
+
+.. py:class:: GradientSensitivityPruner(model, local_config, global_config)
+
+   Bases: :py:obj:`neural_compressor.pruner.pruner_legacy.pruner.Pruner`
+
+   Gradient sensitivity pruner class.
+
+   :param model: The original model (currently PyTorchModel instance).
+   :type model: object
+   :param local_config: configs specific for this pruning instance.
+   :type local_config: Conf
+   :param global_config: global configs which may be overwritten by local_config.
+   :type global_config: Conf
+
+   .. py:method:: on_epoch_begin(epoch)
+
+      Be called on the beginning of epochs.
+
+
+   .. py:method:: on_step_begin(batch_id)
+
+      Multiple mask to weight elementwisely when elementwise_prune is True.
+
+
+   .. py:method:: on_epoch_end()
+
+      Be called on the end of epochs.
+
+
+   .. py:method:: parse_weight_name(weight_name_pattern)
+
+      Parse weight name.
+
+
+   .. py:method:: on_step_end()
+
+      Update importance tensor.
+
+
+   .. py:method:: compute_mask()
+
+      Compute masks according to absolute values.
+
+
+   .. py:method:: prune_weight(model, importance, weight_name, parameters)
+
+      Prune the specified weight by importance.
+
+
+   .. py:method:: update_importance_elementwise(model, importance, weight_name)
+
+      Update importance tensor elementwisely.
+
+
+   .. py:method:: update_importance_abs(model, importance, weight_name, parameters)
+
+      Update importance tensor with absolute gradient.
+
+
+   .. py:method:: update_importance_weighted(model, importance, weight_name, parameters)
+
+      Update importance tensor with weighted gradient.
+
+
+   .. py:method:: prune_by_importance(tensor, importance, num_instances, stride)
+
+      Reserve specified number of weights only by importance.
+
+
+

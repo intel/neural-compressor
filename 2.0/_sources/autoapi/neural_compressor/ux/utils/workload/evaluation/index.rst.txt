@@ -1,0 +1,105 @@
+:py:mod:`neural_compressor.ux.utils.workload.evaluation`
+========================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.evaluation
+
+.. autoapi-nested-parse::
+
+   Configuration evaluation module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.evaluation.Metric
+   neural_compressor.ux.utils.workload.evaluation.Configs
+   neural_compressor.ux.utils.workload.evaluation.PostprocessSchema
+   neural_compressor.ux.utils.workload.evaluation.Postprocess
+   neural_compressor.ux.utils.workload.evaluation.Accuracy
+   neural_compressor.ux.utils.workload.evaluation.Performance
+   neural_compressor.ux.utils.workload.evaluation.Evaluation
+
+
+
+
+.. py:class:: Metric(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Metric class.
+
+   .. py:property:: name
+      :type: str
+
+      Get metric name.
+
+   .. py:property:: param
+      :type: Optional[Union[int, bool]]
+
+      Get metric param.
+
+   .. py:method:: serialize(serialization_type: str = 'default') -> Union[Dict[str, Any], List[Dict[str, Any]]]
+
+      Return metric dict for config.
+
+
+
+.. py:class:: Configs(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Configs class.
+
+
+.. py:class:: PostprocessSchema(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration PostprocessSchema class.
+
+   .. py:method:: get_label_shift_value(data: dict) -> Optional[int]
+      :staticmethod:
+
+      Get LabelShift value.
+
+
+
+.. py:class:: Postprocess(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Postprocess class.
+
+
+.. py:class:: Accuracy(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Accuracy class.
+
+
+.. py:class:: Performance(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Performance class.
+
+
+.. py:class:: Evaluation(data: Dict[str, Any] = {})
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Evaluation class.
+
+   .. py:method:: set_accuracy_postprocess_transforms(transforms: List[Dict[str, Any]]) -> None
+
+      Set postprocess transformation.
+
+
+

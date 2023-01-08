@@ -1,0 +1,39 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models`
+==============================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models
+
+.. autoapi-nested-parse::
+
+   Package db_models contains all INC Bench database models.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   benchmark/index.rst
+   benchmark_result/index.rst
+   dataloader/index.rst
+   dataset/index.rst
+   domain/index.rst
+   domain_flavour/index.rst
+   example/index.rst
+   framework/index.rst
+   metric/index.rst
+   model/index.rst
+   optimization/index.rst
+   optimization_type/index.rst
+   precision/index.rst
+   profiling/index.rst
+   profiling_result/index.rst
+   project/index.rst
+   pruning_details/index.rst
+   transform/index.rst
+   tuning_details/index.rst
+   tuning_history/index.rst
+
+

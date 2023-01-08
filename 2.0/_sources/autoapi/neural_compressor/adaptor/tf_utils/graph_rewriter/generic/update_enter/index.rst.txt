@@ -1,0 +1,42 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.update_enter`
+================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.update_enter
+
+.. autoapi-nested-parse::
+
+   Update Enter Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.update_enter.UpdateEnterOptimizer
+
+
+
+
+.. py:class:: UpdateEnterOptimizer(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   This is a workaround of control ops exclude all nodes following Enters.
+
+   .. py:method:: do_transformation()
+
+      Replace all enter ops whose output is matmul with const.
+
+      :param input_graph_def: graphdef object
+      :type input_graph_def: graphdef
+
+      :returns: optimized graph
+      :rtype: [graphdef]
+
+
+

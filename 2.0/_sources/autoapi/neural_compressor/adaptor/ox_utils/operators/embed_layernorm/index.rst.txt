@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.embed_layernorm`
+======================================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.embed_layernorm
+
+.. autoapi-nested-parse::
+
+   EmbedLayerNormalization Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.embed_layernorm.EmbedLayerNormalizationOperator
+   neural_compressor.adaptor.ox_utils.operators.embed_layernorm.QEmbedLayerNormalizationOperator
+
+
+
+
+.. py:class:: EmbedLayerNormalizationOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   EmbedLayerNormalization Operator.
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+
+.. py:class:: QEmbedLayerNormalizationOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.QOperator`
+
+   QEmbedLayerNormalization Operator.
+
+   .. py:method:: convert()
+
+      Convert to QDQ format.
+
+
+

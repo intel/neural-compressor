@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.experimental.nas.dynast.supernetwork`
+================================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynast.supernetwork
+
+.. autoapi-nested-parse::
+
+   This module contains all code related to the supernets.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   machine_translation/index.rst
+
+

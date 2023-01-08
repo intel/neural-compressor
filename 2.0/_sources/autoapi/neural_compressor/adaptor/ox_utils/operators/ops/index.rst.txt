@@ -1,0 +1,88 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.ops`
+==========================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.ops
+
+.. autoapi-nested-parse::
+
+   Base Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.ops.Operator
+   neural_compressor.adaptor.ox_utils.operators.ops.QOperator
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.ops.op_registry
+   neural_compressor.adaptor.ox_utils.operators.ops.qop_registry
+
+
+
+.. py:function:: op_registry(op_types)
+
+   The class decorator used to register all Operator subclasses.
+
+
+.. py:function:: qop_registry(op_types)
+
+   The class decorator used to register all QOperator subclasses.
+
+
+.. py:class:: Operator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`object`
+
+   Base Operator.
+
+   .. py:method:: quantize_check()
+
+      Check if quantizaion can be done.
+
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+   .. py:method:: cast()
+
+      Cast node.
+
+
+
+.. py:class:: QOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`object`
+
+   Base QOperator.
+
+   .. py:method:: convert()
+
+      Convert to QDQ format.
+
+
+

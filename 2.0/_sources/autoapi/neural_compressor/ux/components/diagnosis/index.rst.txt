@@ -1,0 +1,33 @@
+:py:mod:`neural_compressor.ux.components.diagnosis`
+===================================================
+
+.. py:module:: neural_compressor.ux.components.diagnosis
+
+.. autoapi-nested-parse::
+
+   The diagnosis package contains all components used for debugging of optimizations.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   onnx_diagnosis/index.rst
+   tensorflow_diagnosis/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   diagnosis/index.rst
+   factory/index.rst
+   op_details/index.rst
+   op_entry/index.rst
+
+

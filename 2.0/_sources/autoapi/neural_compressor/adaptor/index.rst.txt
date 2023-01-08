@@ -1,0 +1,33 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor`
+===================================
+
+.. py:module:: neural_compressor.adaptor
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   mxnet_utils/index.rst
+   ox_utils/index.rst
+   tf_utils/index.rst
+   torch_utils/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   tensorflow/index.rst
+
+
+Package Contents
+----------------
+
+

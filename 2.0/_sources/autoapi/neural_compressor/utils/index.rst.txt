@@ -1,0 +1,106 @@
+:py:mod:`neural_compressor.utils`
+=================================
+
+.. py:module:: neural_compressor.utils
+
+.. autoapi-nested-parse::
+
+   Utils: provide useful methods and auxiliary functionalities.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   collect_layer_histogram/index.rst
+   constant/index.rst
+   create_obj_from_config/index.rst
+   kl_divergence/index.rst
+   load_huggingface/index.rst
+   logger/index.rst
+   options/index.rst
+   pytorch/index.rst
+   utility/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.LayerHistogramCollector
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.log
+   neural_compressor.utils.info
+   neural_compressor.utils.debug
+   neural_compressor.utils.warn
+   neural_compressor.utils.warning
+   neural_compressor.utils.error
+   neural_compressor.utils.fatal
+
+
+
+.. py:class:: LayerHistogramCollector(num_bins=8001, layer_tensor=None, include_layer=None, logger=None)
+
+   Bases: :py:obj:`object`
+
+   The collector of the histogram by layer.
+
+   Saves layer histogram in a dict with layer names as keys and lists of NDArrays as
+   values. The collected histogram will be used for calculating the optimal thresholds for
+   quantization using KL divergence.
+
+   .. py:method:: collect()
+
+      Collect layer output NDArrays as a callback function.
+
+
+
+.. py:function:: log(level, msg, *args, **kwargs)
+
+   Output log with the level as a parameter.
+
+
+.. py:function:: info(msg, *args, **kwargs)
+
+   Output log with the info level.
+
+
+.. py:function:: debug(msg, *args, **kwargs)
+
+   Output log with the debug level.
+
+
+.. py:function:: warn(msg, *args, **kwargs)
+
+   Output log with the warning level.
+
+
+.. py:function:: warning(msg, *args, **kwargs)
+
+   Output log with the warining level (Alias of the method warn).
+
+
+.. py:function:: error(msg, *args, **kwargs)
+
+   Output log with the error level.
+
+
+.. py:function:: fatal(msg, *args, **kwargs)
+
+   Output log with the fatal level.
+
+

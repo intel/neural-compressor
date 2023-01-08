@@ -1,0 +1,42 @@
+:py:mod:`neural_compressor.ux.utils.exceptions`
+===============================================
+
+.. py:module:: neural_compressor.ux.utils.exceptions
+
+.. autoapi-nested-parse::
+
+   Domain Exceptions.
+
+
+
+Module Contents
+---------------
+
+.. py:exception:: NotFoundException
+
+   Bases: :py:obj:`Exception`
+
+   Not Found Exception.
+
+
+.. py:exception:: AccessDeniedException
+
+   Bases: :py:obj:`Exception`
+
+   Access Denied.
+
+
+.. py:exception:: ClientErrorException
+
+   Bases: :py:obj:`Exception`
+
+   Generic user error.
+
+
+.. py:exception:: InternalException
+
+   Bases: :py:obj:`Exception`
+
+   Internal application exception.
+
+

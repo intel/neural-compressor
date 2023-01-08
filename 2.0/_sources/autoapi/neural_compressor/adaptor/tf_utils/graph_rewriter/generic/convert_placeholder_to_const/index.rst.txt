@@ -1,0 +1,50 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const`
+================================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const
+
+.. autoapi-nested-parse::
+
+   Convert placeholder to const Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.ConvertPlaceholderToConst
+
+
+
+
+.. py:class:: ConvertPlaceholderToConst(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Convert placeholder to const for removing training nodes.
+
+   .. py:method:: do_transformation()
+
+      Rename the PlaceHolderWithDefault node to constant.
+
+      In a frozen graph, PlaceholderWithDefault nodes can be converted to
+      Constant op nodes with same value. This will help simplify the graph.
+
+      :param input_graph_def: A GraphDef containing a model.
+      :param nodes_to_convert: A list of PlaceholderWithDefault or Placeholder
+      :param nodes to be converted to Constants with their new value.:
+
+      :returns: modified graph with PlaceholderWithDefault node converted to Constant node
+
+
+   .. py:method:: strtobool(val_str)
+
+      Return boolean value of it's equivalent string representation.
+
+
+

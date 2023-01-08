@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_column_wise_mul`
+========================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_column_wise_mul
+
+.. autoapi-nested-parse::
+
+   Fuse Columnwise Mul Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_column_wise_mul.FuseColumnWiseMulOptimizer
+
+
+
+
+.. py:class:: FuseColumnWiseMulOptimizer(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Fuse Mul op into Conv2D/DepthwiseConv2dNative/MatMul.
+
+   .. py:method:: do_transformation()
+
+      Fuse Mul + Conv2D/DepthwiseConv2dNative/MatMul --> Conv2D/DepthwiseConv2dNative/MatMul.
+
+
+

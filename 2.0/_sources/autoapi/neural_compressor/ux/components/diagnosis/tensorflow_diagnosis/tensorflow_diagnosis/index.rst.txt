@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.ux.components.diagnosis.tensorflow_diagnosis.tensorflow_diagnosis`
+=============================================================================================
+
+.. py:module:: neural_compressor.ux.components.diagnosis.tensorflow_diagnosis.tensorflow_diagnosis
+
+.. autoapi-nested-parse::
+
+   The Tensorflow diagnosis class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.diagnosis.tensorflow_diagnosis.tensorflow_diagnosis.TensorflowDiagnosis
+
+
+
+
+.. py:class:: TensorflowDiagnosis(optimization: neural_compressor.ux.components.optimization.optimization.Optimization)
+
+   Bases: :py:obj:`neural_compressor.ux.components.diagnosis.diagnosis.Diagnosis`
+
+   OnnxRuntime diagnosis class.
+
+   .. py:property:: model
+      :type: neural_compressor.ux.components.model.tensorflow.model.TensorflowModel
+
+      Get Neural Compressor Model instance.
+
+

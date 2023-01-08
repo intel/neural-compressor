@@ -1,0 +1,253 @@
+:orphan:
+
+:py:mod:`neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork`
+=============================================================================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerSuperNetwork
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer
+   neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer
+
+
+
+
+.. py:class:: TransformerSuperNetwork(task)
+
+   Bases: :py:obj:`fairseq`
+
+   Transformer model from `"Attention Is All You Need" (Vaswani, et al, 2017)`.
+
+   <https://arxiv.org/abs/1706.03762>
+
+   :param encoder: the encoder
+   :type encoder: TransformerEncoder
+   :param decoder: the decoder
+   :type decoder: TransformerDecoder
+
+   The Transformer model provides the following named architectures and
+   command-line arguments:
+
+   .. argparse::
+       :ref: fairseq.models.transformer_parser
+       :prog:
+
+
+.. py:class:: TransformerEncoder(encoder_config, dictionary, embed_tokens)
+
+   Bases: :py:obj:`fairseq`
+
+   Transformer encoder consisting of *args.encoder_layers* layers.
+
+   Each layer is a :class:`TransformerEncoderLayer`.
+
+   :param args: parsed command-line arguments
+   :type args: argparse.Namespace
+   :param dictionary: encoding dictionary
+   :type dictionary: ~fairseq.data.Dictionary
+   :param embed_tokens: input embedding
+   :type embed_tokens: torch.nn.Embedding
+
+   .. py:method:: forward(src_tokens, src_lengths)
+
+      Forward function.
+
+      :param src_tokens: tokens in the source language of shape
+                         `(batch, src_len)`
+      :type src_tokens: LongTensor
+      :param src_lengths: lengths of each source sentence of
+                          shape `(batch)`
+      :type src_lengths: torch.LongTensor
+
+      :returns:
+
+                    - **encoder_out** (Tensor): the last encoder layer's output of
+                      shape `(src_len, batch, embed_dim)`
+                    - **encoder_padding_mask** (ByteTensor): the positions of
+                      padding elements of shape `(batch, src_len)`
+      :rtype: dict
+
+
+   .. py:method:: reorder_encoder_out(encoder_out, new_order)
+
+      Reorder encoder output according to *new_order*.
+
+      :param encoder_out: output from the ``forward()`` method
+      :param new_order: desired order
+      :type new_order: LongTensor
+
+      :returns: *encoder_out* rearranged according to *new_order*
+
+
+   .. py:method:: max_positions()
+
+      Maximum input length supported by the encoder.
+
+
+   .. py:method:: upgrade_state_dict_named(state_dict, name)
+
+      Upgrade a (possibly old) state dict for new versions of fairseq.
+
+
+
+.. py:class:: TransformerDecoder(decoder_config, dictionary, embed_tokens, no_encoder_attn=False)
+
+   Bases: :py:obj:`fairseq`
+
+   Transformer decoder consisting of *args.decoder_layers* layers.
+
+   Each layer is a :class:`TransformerDecoderLayer`.
+
+   :param args: parsed command-line arguments
+   :type args: argparse.Namespace
+   :param dictionary: decoding dictionary
+   :type dictionary: ~fairseq.data.Dictionary
+   :param embed_tokens: output embedding
+   :type embed_tokens: torch.nn.Embedding
+   :param no_encoder_attn: whether to attend to encoder outputs
+                           (default: False).
+   :type no_encoder_attn: bool, optional
+
+   .. py:method:: forward(prev_output_tokens, encoder_out=None, incremental_state=None, **unused)
+
+      Forward pass.
+
+      :param prev_output_tokens: previous decoder outputs of shape
+                                 `(batch, tgt_len)`, for teacher forcing
+      :type prev_output_tokens: LongTensor
+      :param encoder_out: output from the encoder, used for
+                          encoder-side attention
+      :type encoder_out: Tensor, optional
+      :param incremental_state: dictionary used for storing state during
+                                :ref:`Incremental decoding`
+      :type incremental_state: dict
+
+      :returns:     - the decoder's output of shape `(batch, tgt_len, vocab)`
+                    - a dictionary with any model-specific outputs
+      :rtype: tuple
+
+
+   .. py:method:: extract_features(prev_output_tokens, encoder_out=None, incremental_state=None, **unused)
+
+      Similar to *forward* but only return features.
+
+      :returns:     - the decoder's features of shape `(batch, tgt_len, embed_dim)`
+                    - a dictionary with any model-specific outputs
+      :rtype: tuple
+
+
+   .. py:method:: output_layer(features, **kwargs)
+
+      Project features to the vocabulary size.
+
+
+   .. py:method:: max_positions()
+
+      Maximum output length supported by the decoder.
+
+
+   .. py:method:: upgrade_state_dict_named(state_dict, name)
+
+      Upgrade a (possibly old) state dict for new versions of fairseq.
+
+
+
+.. py:class:: TransformerEncoderLayer(encoder_config, layer_idx)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   Encoder layer block.
+
+   In the original paper each operation (multi-head attention or FFN) is
+   postprocessed with: `dropout -> add residual -> layernorm`. In the
+   tensor2tensor code they suggest that learning is more robust when
+   preprocessing each layer with layernorm and postprocessing with:
+   `dropout -> add residual`. We default to the approach in the paper, but the
+   tensor2tensor approach can be enabled by setting
+   *args.encoder_normalize_before* to ``True``.
+
+   :param args: parsed command-line arguments
+   :type args: argparse.Namespace
+
+   .. py:method:: upgrade_state_dict_named(state_dict, name)
+
+      Renames keys in state dict.
+
+      Rename layer norm states from `...layer_norms.0.weight` to
+      `...self_attn_layer_norm.weight` and `...layer_norms.1.weight` to
+      `...final_layer_norm.weight`
+
+
+   .. py:method:: forward(x, encoder_padding_mask, attn_mask=None)
+
+      Forward pass.
+
+      :param x: input to the layer of shape `(seq_len, batch, embed_dim)`
+      :type x: Tensor
+      :param encoder_padding_mask: binary ByteTensor of shape
+                                   `(batch, src_len)` where padding elements are indicated by ``1``.
+      :type encoder_padding_mask: ByteTensor
+      :param attn_mask: binary tensor of shape (T_tgt, T_src), where
+      :type attn_mask: ByteTensor
+      :param T_tgt is the length of query:
+      :param while T_src is the length of key:
+      :param :
+      :param though here both query and key is x here:
+      :param :
+      :param attn_mask[t_tgt:
+      :param t_src] = 1 means when calculating embedding:
+      :param for t_tgt:
+      :type for t_tgt: or masked out
+      :param t_src is excluded:
+      :type t_src is excluded: or masked out
+      :param included in attention:
+
+      :returns: encoded output of shape `(seq_len, batch, embed_dim)`
+
+
+
+.. py:class:: TransformerDecoderLayer(decoder_config, layer_idx, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   Decoder layer block.
+
+   In the original paper each operation (multi-head attention, encoder
+   attention or FFN) is postprocessed with: `dropout -> add residual ->
+   layernorm`. In the tensor2tensor code they suggest that learning is more
+   robust when preprocessing each layer with layernorm and postprocessing with:
+   `dropout -> add residual`. We default to the approach in the paper, but the
+   tensor2tensor approach can be enabled by setting
+   *args.decoder_normalize_before* to ``True``.
+
+   :param args: parsed command-line arguments
+   :type args: argparse.Namespace
+   :param no_encoder_attn: whether to attend to encoder outputs
+                           (default: False).
+   :type no_encoder_attn: bool, optional
+
+   .. py:method:: forward(x, encoder_out=None, encoder_padding_mask=None, incremental_state=None, prev_self_attn_state=None, prev_attn_state=None, self_attn_mask=None, self_attn_padding_mask=None)
+
+      Forward pass.
+
+      :param x: input to the layer of shape `(seq_len, batch, embed_dim)`
+      :type x: Tensor
+      :param encoder_padding_mask: binary ByteTensor of shape
+                                   `(batch, src_len)` where padding elements are indicated by ``1``.
+      :type encoder_padding_mask: ByteTensor
+
+      :returns: encoded output of shape `(seq_len, batch, embed_dim)`
+
+
+

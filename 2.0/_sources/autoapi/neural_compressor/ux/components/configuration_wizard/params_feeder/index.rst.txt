@@ -1,0 +1,100 @@
+:py:mod:`neural_compressor.ux.components.configuration_wizard.params_feeder`
+============================================================================
+
+.. py:module:: neural_compressor.ux.components.configuration_wizard.params_feeder
+
+.. autoapi-nested-parse::
+
+   Parameters feeder module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.configuration_wizard.params_feeder.Feeder
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.configuration_wizard.params_feeder.get_possible_values
+
+
+
+.. py:class:: Feeder(data: Dict[str, Any])
+
+   Parameters feeder class.
+
+   .. py:method:: feed() -> Dict[str, Any]
+
+      Feed the parameters.
+
+
+   .. py:method:: get_frameworks() -> List[dict]
+      :staticmethod:
+
+      Get list of available frameworks.
+
+
+   .. py:method:: get_domains() -> List[Dict[str, Any]]
+
+      Get list of available domains.
+
+
+   .. py:method:: get_models() -> List[Dict[str, Any]]
+
+      Get list of models.
+
+
+   .. py:method:: get_dataloaders() -> List[Dict[str, Any]]
+
+      Get available dataloaders.
+
+
+   .. py:method:: get_transforms() -> List[Dict[str, Any]]
+
+      Get available transforms.
+
+
+   .. py:method:: get_objectives() -> List[dict]
+      :staticmethod:
+
+      Get list of supported objectives.
+
+
+   .. py:method:: get_strategies() -> List[Dict[str, Any]]
+      :staticmethod:
+
+      Get list of supported strategies.
+
+
+   .. py:method:: get_precisions() -> List[dict]
+
+      Get list of available precisions.
+
+
+   .. py:method:: get_quantization_approaches() -> List[Dict[str, Any]]
+
+      Get list of supported quantization approaches.
+
+
+   .. py:method:: get_metrics() -> List[Dict[str, Any]]
+
+      Get list of possible metrics.
+
+
+
+.. py:function:: get_possible_values(data: dict) -> Dict[str, List[Any]]
+
+   Get list of possible values for specified scenario with "help" information.
+
+

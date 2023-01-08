@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.torch_utils.onnx`
+====================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.onnx
+
+.. autoapi-nested-parse::
+
+   Onnx Quantization Torch Utils.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.onnx.DataReader
+
+
+
+
+.. py:class:: DataReader(dataloader, sample_size=100)
+
+   Bases: :py:obj:`ortq`
+
+   DataReader Class for onnx static quantization.
+
+   .. py:method:: get_next()
+
+      Get the next data.
+
+
+

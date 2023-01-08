@@ -1,0 +1,655 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Infrastructure of Intel® Neural Compressor &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li>Infrastructure of Intel® Neural Compressor</li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="_sources/infrastructure.md.txt" rel="nofollow"><img src="_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="infrastructure-of-intel-neural-compressor">
+<h1>Infrastructure of Intel® Neural Compressor<a class="headerlink" href="#infrastructure-of-intel-neural-compressor" title="Permalink to this heading">¶</a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#architecture">Architecture</a></p></li>
+<li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<p>Intel® Neural Compressor provides deep-learning model compression techniques like quantization, knowledge distillation, pruning/sparsity and neural architecture search (NAS). These features are already validated on intel cpu/gpu. Quantized models by Intel® Neural Compressor are validated on broad hardware platforms: amd cpu/arm cpu/nvidia gpu through OnnxRuntime extension provider. Intel® Neural Compressor supports different deep-learning frameworks via unified interfaces, so users can define their own evaluation function to support various models. For quantization, 420+ examples are validated with a performance speedup geomean of 2.2x and up to 4.2x on Intel VNNI. Over 30 pruning and knowledge distillation samples are also available.</p>
+<p>Neural Coder automatically inserts quantization code snippets on a PyTorch model script with one-line API, so this feature can increase the productivity. Intel® Neural Compressor provides other no-code features like GUI etc., so users can do basic optimization by uploading the models and clicking the button. After the optimization, the users will get optimized models and performance results.</p>
+</section>
+<section id="architecture">
+<h2>Architecture<a class="headerlink" href="#architecture" title="Permalink to this heading">¶</a></h2>
+<a target="_blank" href="./_static/imgs/architecture.png">
+  <img src="./_static/imgs/architecture.png" alt="Architecture" width=914 height=420>
+</a><p>Intel® Neural Compressor has unified interfaces which dispatch tasks to different frameworks via adaptor layer. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs. Users can select tuning strategies and the strategy module contains model configs and tuning configs. Model configs define the quantization approach, if it’s post-training static quantization, users need to set more parameters like calibration and so on. There are several tuning strategies for users to choose from while the basic strategy is set as default.</p>
+</section>
+<section id="supported-feature-matrix">
+<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Permalink to this heading">¶</a></h2>
+<p><a class="reference internal" href="quantization.html"><span class="doc">Quantization</span></a>:</p>
+<table class="center">
+    <thead>
+        <tr>
+            <th>Types</th>
+            <th>Framework</th>
+            <th>Backend</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="3" align="center">Post-Training Static Quantization (PTQ)</td>
+            <td align="center">PyTorch</td>
+            <td align="center"><a href="https://pytorch.org/docs/stable/quantization.html#eager-mode-quantization">PyTorch Eager</a>/<a href="https://pytorch.org/docs/stable/quantization.html#prototype-fx-graph-mode-quantization">PyTorch FX</a>/<a href="https://github.com/intel/intel-extension-for-pytorch">IPEX</a></td>
+        </tr>
+        <tr>
+            <td align="center">TensorFlow</td>
+            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
+        </tr>
+        <tr>
+            <td align="center">ONNX Runtime</td>
+            <td align="center"><a href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/quantize.py">QLinearops/QDQ</a></td>
+        </tr>
+        <tr>
+            <td rowspan="2" align="center">Post-Training Dynamic Quantization</td>
+            <td align="center">PyTorch</td>
+            <td align="center"><a href="https://pytorch.org/docs/stable/quantization.html#eager-mode-quantization">PyTorch eager mode</a>/<a href="https://pytorch.org/docs/stable/quantization.html#prototype-fx-graph-mode-quantization">PyTorch fx mode</a>/<a href="https://github.com/intel/intel-extension-for-pytorch">IPEX</a></td>
+        </tr>
+        <tr>
+            <td align="center">ONNX Runtime</td>
+            <td align="center"><a href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/quantize.py">QIntegerops</a></td>
+        </tr>  
+        <tr>
+            <td rowspan="2" align="center">Quantization-aware Training (QAT)</td>
+            <td align="center">PyTorch</td>
+            <td align="center"><a href="https://pytorch.org/docs/stable/quantization.html#eager-mode-quantization">PyTorch eager mode</a>/<a href="https://pytorch.org/docs/stable/quantization.html#prototype-fx-graph-mode-quantization">PyTorch fx mode</a>/<a href="https://github.com/intel/intel-extension-for-pytorch">IPEX</a></td>
+        </tr>
+        <tr>
+            <td align="center">TensorFlow</td>
+            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
+        </tr>
+    </tbody>
+</table>
+<br>
+<br><p><a class="reference internal" href="pruning.html"><span class="doc">Pruning</span></a>:</p>
+<table>
+<thead>
+  <tr>
+    <th>Pruning Type</th>
+    <th>Pruning Granularity</th>
+    <th>Pruning Algorithm</th>
+    <th>Framework</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td rowspan="3">Unstructured Pruning</td>
+    <td rowspan="3">Element-wise</td>
+    <td>Magnitude</td>
+    <td>PyTorch, TensorFlow</td>
+  </tr>
+  <tr>
+    <td>Pattern Lock</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>SNIP with momentum</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td rowspan="6">Structured Pruning</td>
+    <td rowspan="2">Filter/Channel-wise</td>
+    <td>Gradient Sensitivity</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>SNIP with momentum</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td rowspan="2">Block-wise</td>
+    <td>Group Lasso</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>SNIP with momentum</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td rowspan="2">Element-wise</td>
+    <td>Pattern Lock</td>
+    <td>PyTorch</td>
+  </tr>
+  <tr>
+    <td>SNIP with momentum</td>
+    <td>PyTorch</td>
+  </tr>
+</tbody>
+</table>
+</br>
+</br><p><a class="reference internal" href="distillation.html"><span class="doc">Distillation</span></a>:
+|Distillation Algorithm                          |PyTorch   |TensorFlow |
+|————————————————|:——–:|:———:|
+|Knowledge Distillation                          |✔  |✔   |
+|Intermediate Layer Knowledge Distillation       |✔  |Will be supported|
+|Self Distillation                               |✔  |✖   |</p>
+</br>
+</br><p><a class="reference internal" href="orchestration.html"><span class="doc">Orchestration</span></a>:</p>
+<table>
+    <thead>
+        <tr>
+            <th>Orchestration</th>
+            <th>Combinations</th>
+            <th>Supported</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan=4>One-shot</td>
+            <td>Pruning + Quantization Aware Training</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation + Quantization Aware Training</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation + Pruning</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation + Pruning + Quantization Aware Training</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td rowspan=4>Multi-shot</td>
+            <td>Pruning then Quantization</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation then Quantization</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation then Pruning</td>
+            <td>&#10004;</td>
+        </tr>
+        <tr>
+            <td>Distillation then Pruning then Quantization</td>
+            <td>&#10004;</td>
+        </tr>
+    </tbody>
+</table></br>
+</br><p><a class="reference internal" href="NAS.html"><span class="doc">Neural architecture search</span></a>:
+|Approach                          |Framework    |
+|————————————————|:———–:|
+|Basic                          |PyTorch     |
+|DyNas       |PyTorch     |</p>
+</br>
+</br><p><a class="reference internal" href="mixed_precision.html"><span class="doc">Mixed precision</span></a>:
+|Framework     |         |
+|————–|:———–:|
+|TensorFlow    |✔     |
+|PyTorch       |✔     |
+|ONNX          |plan to support in the future |
+|MXNet         |✔     |</p>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">Infrastructure of Intel® Neural Compressor</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#architecture">Architecture</a></li>
+<li><a class="reference internal" href="#supported-feature-matrix">Supported Feature Matrix</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/documentation_options.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

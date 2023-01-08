@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.data.dataloaders.dataloader`
+=======================================================
+
+.. py:module:: neural_compressor.data.dataloaders.dataloader
+
+.. autoapi-nested-parse::
+
+   Built-in dataloaders for multiple framework backends.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.dataloaders.dataloader.DataLoader
+
+
+
+
+.. py:class:: DataLoader
+
+   Bases: :py:obj:`object`
+
+   Entrance of all configured DataLoaders. Will dispatch the DataLoaders to framework
+   specific one. Users will be not aware of the dispatching, and the Interface is unified.
+
+

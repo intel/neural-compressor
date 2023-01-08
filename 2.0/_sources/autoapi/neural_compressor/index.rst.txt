@@ -1,0 +1,198 @@
+:py:mod:`neural_compressor`
+===========================
+
+.. py:module:: neural_compressor
+
+.. autoapi-nested-parse::
+
+   Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   algorithm/index.rst
+   contrib/index.rst
+   data/index.rst
+   experimental/index.rst
+   metric/index.rst
+   model/index.rst
+   pruner/index.rst
+   strategy/index.rst
+   utils/index.rst
+   ux/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   benchmark/index.rst
+   config/index.rst
+   mix_precision/index.rst
+   objective/index.rst
+   quantization/index.rst
+   training/index.rst
+   version/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.Benchmark
+   neural_compressor.DistillationConfig
+   neural_compressor.PostTrainingQuantConfig
+   neural_compressor.WeightPruningConfig
+   neural_compressor.QuantizationAwareTrainingConfig
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.set_random_seed
+   neural_compressor.set_tensorboard
+   neural_compressor.set_workspace
+
+
+
+.. py:class:: Benchmark(conf_fname_or_obj)
+
+   Bases: :py:obj:`object`
+
+   Benchmark class can be used to evaluate the model performance.
+
+   With the objective setting, user can get the data of what they configured in yaml.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             Benchmark_Conf class containing accuracy goal, tuning objective and preferred
+                             calibration & quantization tuning space etc.
+   :type conf_fname_or_obj: string or obj
+
+   .. py:method:: dataloader(dataset, batch_size=1, collate_fn=None, last_batch='rollover', sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+
+      Set dataloader for benchmarking.
+
+
+   .. py:method:: metric(name, metric_cls, **kwargs)
+
+      Set the metric class and Neural Compressor will initialize this class when evaluation.
+
+      Neural Compressor has many built-in metrics, but users can set specific metrics through
+      this api. The metric class should take the outputs of the model or
+      postprocess (if have) as inputs. Neural Compressor built-in metrics always take
+      (predictions, labels) as inputs for update,
+      and user_metric.metric_cls should be a sub_class of neural_compressor.metric.metric
+      or an user-defined metric object
+
+      :param metric_cls: Should be a sub_class of neural_compressor.metric.BaseMetric,
+                         which takes (predictions, labels) as inputs
+      :type metric_cls: cls
+      :param name: Name for metric. Defaults to 'user_metric'.
+      :type name: str, optional
+
+
+   .. py:method:: postprocess(name, postprocess_cls, **kwargs)
+
+      Set postprocess class and neural_compressor will initialize this class when evaluation.
+
+      The postprocess function should take the outputs of the model as inputs, and
+      outputs (predictions, labels) as inputs for metric updates.
+
+      Args:
+      name (str, optional): Name for postprocess.
+      postprocess_cls (cls): Should be a sub_class of neural_compressor.data.transforms.postprocess.
+
+
+
+
+.. py:function:: set_random_seed(seed: int)
+
+   Set the random seed in config.
+
+
+.. py:function:: set_tensorboard(tensorboard: bool)
+
+   Set the tensorboard in config.
+
+
+.. py:function:: set_workspace(workspace: str)
+
+   Set the workspace in config.
+
+
+.. py:class:: DistillationConfig(teacher_model=None, criterion=criterion, optimizer={'SGD': {'learning_rate': 0.0001}})
+
+   Config of distillation.
+
+   :param teacher_model: Teacher model for distillation. Defaults to None.
+   :type teacher_model: Callable
+   :param features: Teacher features for distillation, features and teacher_model are alternative.
+                    Defaults to None.
+   :type features: optional
+   :param criterion: Distillation loss configure.
+   :type criterion: Callable, optional
+   :param optimizer: Optimizer configure.
+   :type optimizer: dictionary, optional
+
+   .. py:property:: criterion
+
+      Get criterion.
+
+   .. py:property:: optimizer
+
+      Get optimizer.
+
+   .. py:property:: teacher_model
+
+      Get teacher_model.
+
+
+.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_list=None, op_name_list=None, reduce_range=None, excluded_precisions=[], quant_level=1, tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
+
+   Bases: :py:obj:`_BaseQuantizationConfig`
+
+   Config Class for Post Training Quantization.
+
+   .. py:property:: approach
+
+      Get approach.
+
+   .. py:property:: tuning_criterion
+
+      Get tuning_criterion.
+
+
+.. py:class:: WeightPruningConfig(pruning_configs=[{}], target_sparsity=0.9, pruning_type='snip_momentum', pattern='4x1', op_names=[], excluded_op_names=[], start_step=0, end_step=0, pruning_scope='global', pruning_frequency=1, min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98, sparsity_decay_type='exp', pruning_op_types=['Conv', 'Linear'], **kwargs)
+
+   Similiar to torch optimizer's interface.
+
+   .. py:property:: weight_compression
+
+      Get weight_compression.
+
+
+.. py:class:: QuantizationAwareTrainingConfig(device='cpu', backend='default', inputs=[], outputs=[], op_type_list=None, op_name_list=None, reduce_range=None, excluded_precisions=[], quant_level=1)
+
+   Bases: :py:obj:`_BaseQuantizationConfig`
+
+   Config Class for Quantization Aware Training.
+
+   .. py:property:: approach
+
+      Get approach.
+
+

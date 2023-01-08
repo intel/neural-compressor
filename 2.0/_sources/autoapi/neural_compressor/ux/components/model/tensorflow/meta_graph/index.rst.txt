@@ -1,0 +1,53 @@
+:py:mod:`neural_compressor.ux.components.model.tensorflow.meta_graph`
+=====================================================================
+
+.. py:module:: neural_compressor.ux.components.model.tensorflow.meta_graph
+
+.. autoapi-nested-parse::
+
+   Tensorflow frozen pb model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.tensorflow.meta_graph.MetaGraphModel
+
+
+
+
+.. py:class:: MetaGraphModel(path: str)
+
+   Bases: :py:obj:`neural_compressor.ux.components.model.tensorflow.model.TensorflowModel`
+
+   MetaGraph model.
+
+   .. py:method:: get_input_nodes() -> Optional[List[Any]]
+
+      Get model input nodes.
+
+
+   .. py:method:: get_output_nodes() -> Optional[List[Any]]
+
+      Get model output nodes.
+
+
+   .. py:method:: get_model_graph() -> neural_compressor.ux.components.graph.graph.Graph
+      :abstractmethod:
+
+      Get model graph.
+
+
+   .. py:method:: supports_path(path: str) -> bool
+      :staticmethod:
+
+      Check if given path is of supported model.
+
+
+

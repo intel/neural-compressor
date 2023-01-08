@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.ux.components.model.pytorch`
+=======================================================
+
+.. py:module:: neural_compressor.ux.components.model.pytorch
+
+.. autoapi-nested-parse::
+
+   PyTorch related models.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   model/index.rst
+
+

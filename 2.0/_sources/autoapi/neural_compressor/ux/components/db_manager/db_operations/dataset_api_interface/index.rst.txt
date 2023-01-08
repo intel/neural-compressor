@@ -1,0 +1,144 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface`
+========================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Dataset API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.DatasetAPIInterface
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.set_database_version
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.initialize_associations
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.initialize_precision_optimization_types_association
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.search_in_list_of_dict_for_unique_value
+   neural_compressor.ux.components.db_manager.db_operations.dataset_api_interface.search_in_list_of_dict
+
+
+
+.. py:class:: DatasetAPIInterface
+
+   Interface for queries connected with datasets.
+
+   .. py:method:: delete_dataset(data: dict) -> dict
+      :staticmethod:
+
+      Delete dataset from database and clean workspace.
+
+
+   .. py:method:: get_dataset_details(data: dict) -> dict
+      :staticmethod:
+
+      Parse input data and get dataset details.
+
+
+   .. py:method:: list_datasets(data: dict) -> dict
+      :staticmethod:
+
+      List datasets assigned to project.
+
+
+   .. py:method:: add_dataset(data: dict) -> dict
+      :staticmethod:
+
+      Add dataset to database.
+
+
+   .. py:method:: set_template_path(dataset_id: int, parsed_dataset_data: neural_compressor.ux.components.db_manager.params_interfaces.DatasetAddParamsInterface) -> None
+      :staticmethod:
+
+      Set template path for dataset.
+
+
+   .. py:method:: check_if_custom_metric_or_dataloader(dataset_data: neural_compressor.ux.components.db_manager.params_interfaces.DatasetAddParamsInterface) -> dict
+      :staticmethod:
+
+      Check if dataset contains custom dataloader or metric.
+
+
+   .. py:method:: generate_custom_template(dataloader_path: str, custom: dict) -> Optional[str]
+      :staticmethod:
+
+      Generate template for custom dataloader or metric.
+
+
+   .. py:method:: generate_template(dataloader_path: str, template_type: str) -> str
+      :staticmethod:
+
+      Generate code templates.
+
+
+   .. py:method:: dataloader_path(project_name: str, project_id: int, dataset_name: str, dataset_id: int) -> str
+      :staticmethod:
+
+      Get path for dataset templates.
+
+
+   .. py:method:: parse_dataset_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.DatasetAddParamsInterface
+      :staticmethod:
+
+      Parse input data for dataset.
+
+
+   .. py:method:: get_predefined_dataset(data: dict) -> dict
+      :staticmethod:
+
+      Get predefined dataset for specified configuration.
+
+
+   .. py:method:: prepare_predefined_dataloader(dataloader_data: neural_compressor.ux.utils.workload.dataloader.Dataset) -> dict
+      :staticmethod:
+
+      Prepare predefined transform data.
+
+
+   .. py:method:: prepare_predefined_transform(transforms_data: OrderedDict[str, neural_compressor.ux.utils.workload.dataloader.Transform]) -> List[dict]
+      :staticmethod:
+
+      Prepare predefined transform data.
+
+
+
+.. py:function:: set_database_version() -> None
+
+   Set version_num in alembic_version table.
+
+
+.. py:function:: initialize_associations() -> None
+
+   Initialize association tables in database.
+
+
+.. py:function:: initialize_precision_optimization_types_association() -> None
+
+   Initialize precision and optimization types association table.
+
+
+.. py:function:: search_in_list_of_dict_for_unique_value(list_of_dicts: List[Dict[str, Any]], parameter: str, value: Any) -> Dict[str, Any]
+
+   Search for dictionaries with specific unique parameter value.
+
+
+.. py:function:: search_in_list_of_dict(list_of_dicts: List[Dict[str, Any]], parameter: str, value: Any) -> List[Dict[str, Any]]
+
+   Search for dictionaries with specific parameter value.
+
+

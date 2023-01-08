@@ -1,0 +1,96 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config`
+===============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config
+
+.. autoapi-nested-parse::
+
+   QAT Quantize Config Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_config.QuantizeConfig
+
+
+
+
+.. py:class:: QuantizeConfig
+
+   Class for building custom quantize config.
+
+   There should be only one QuantizeConfig instance for global setting.
+
+   .. py:method:: add_quantize_recipe(quantize_recipe)
+
+      Add custom recipe for quantization to the QuantizeConfig instance.
+
+      :param quantize_recipe: A dict that decide whether given layers should be quantized.
+                              A typical quantize_recipe will be a dict of layer_name and
+                              dict as key-value pairs. In each value dict, there should be
+                              a {'quantize': bool} key-value pair and a {'index': list} pair.
+                              The latter one is used to decide which inputs should be quantized
+                              in some layers with multiple inputs.
+                              For example:
+                                  {'conv5_block3_3_conv': {'quantize': Flase}
+                                   'conv5_block3_3_add' : {'quantize': True, 'index': [1, 3]}
+                                  }
+      :type quantize_recipe: dict
+
+
+   .. py:method:: query_layer(layer_name)
+
+      Query if a specific layer is in the quantize_recipe dict.
+
+      :param layer_name: The input layer name.
+      :type layer_name: string
+
+      :returns: The quantize recipe for this input layer.
+      :rtype: layer_recipe (dict)
+
+
+   .. py:method:: remove_layer(layer_name)
+
+      Remove a specific layer from the quantize_recipe dict.
+
+      :param layer_name: The name of layer to be removed.
+      :type layer_name: string
+
+
+   .. py:method:: remove_layers(layer_names)
+
+      Remove a batch of layers from the quantize_recipe dict.
+
+      :param layer_names: The names of layers to be removed.
+      :type layer_names: List
+
+
+   .. py:method:: get_quantize_recipe()
+
+      Get the current recipe dict for quantization.
+
+      :returns: A dict that decide whether given layers should be quantized.
+      :rtype: quantize_recipe (dict)
+
+
+   .. py:method:: is_empty()
+
+      Check if the recipe of quantization is an empty dict.
+
+      :returns: True if no custom recipe is updated to this class.
+      :rtype: is_empty (bool)
+
+
+   .. py:method:: clear_quantize_recipe()
+
+      Clear recipe of quantization to be an empty dict.
+
+
+

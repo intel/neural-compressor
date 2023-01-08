@@ -1,0 +1,42 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.switch_optimizer`
+====================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.switch_optimizer
+
+.. autoapi-nested-parse::
+
+   Switch Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.switch_optimizer.SwitchOptimizer
+
+
+
+
+.. py:class:: SwitchOptimizer(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Remove switch op if the input condition is true.
+
+   .. py:method:: do_transformation()
+
+      Replace all enter ops whose output is matmul with const.
+
+      :param input_graph_def: graphdef object
+      :type input_graph_def: graphdef
+
+      :returns: optimized graph
+      :rtype: [graphdef]
+
+
+

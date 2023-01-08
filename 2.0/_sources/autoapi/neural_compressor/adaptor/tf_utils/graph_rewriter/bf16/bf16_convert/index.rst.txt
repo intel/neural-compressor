@@ -1,0 +1,38 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert`
+=============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert
+
+.. autoapi-nested-parse::
+
+   Graph rewriter BF16 Converter Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert.BF16Convert
+
+
+
+
+.. py:class:: BF16Convert(model, fp32_ops=[], bf16_ops=[])
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   BF16 node convert transformation.
+
+   .. py:method:: do_transformation()
+
+      Execute BF16 convert.
+
+      Returns: Transformed graph
+
+
+

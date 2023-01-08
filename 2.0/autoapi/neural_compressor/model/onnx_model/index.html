@@ -1,0 +1,836 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor.model.onnx_model &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.onnx_model</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../../../_sources/autoapi/neural_compressor/model/onnx_model/index.rst.txt" rel="nofollow"><img src="../../../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor.model.onnx_model">
+<span id="neural-compressor-model-onnx-model"></span><h1><a class="reference internal" href="#module-neural_compressor.model.onnx_model" title="neural_compressor.model.onnx_model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.onnx_model</span></code></a><a class="headerlink" href="#module-neural_compressor.model.onnx_model" title="Permalink to this heading">¶</a></h1>
+<p>Class for ONNX model.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel" title="neural_compressor.model.onnx_model.ONNXModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXModel</span></code></a></p></td>
+<td><p>Build ONNX model.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.onnx_model.</span></span><span class="sig-name descname"><span class="pre">ONNXModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../base_model/index.html#neural_compressor.model.base_model.BaseModel" title="neural_compressor.model.base_model.BaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.model.base_model.BaseModel</span></code></a></p>
+<p>Build ONNX model.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.large_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">large_size</span></span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.large_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return large size.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.model_path">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_path</span></span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.model_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return model path.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.q_config">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">q_config</span></span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.q_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return q_config.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return model itself.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.graph_info">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph_info</span></span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.graph_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return ORT Graph Info object holding information about backend graph.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.input_name_to_nodes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_name_to_nodes</span></span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.input_name_to_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return input names of nodes.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.output_name_to_node">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_name_to_node</span></span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.output_name_to_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return output names of nodes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.framework">
+<span class="sig-name descname"><span class="pre">framework</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.framework" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return framework.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.input">
+<span class="sig-name descname"><span class="pre">input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return input of model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.output">
+<span class="sig-name descname"><span class="pre">output</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return output of model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update model info.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save ONNX model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.nodes">
+<span class="sig-name descname"><span class="pre">nodes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return model nodes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.initializer">
+<span class="sig-name descname"><span class="pre">initializer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.initializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return model initializer.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.graph">
+<span class="sig-name descname"><span class="pre">graph</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return model graph.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.ir_version">
+<span class="sig-name descname"><span class="pre">ir_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.ir_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return model ir_version.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.opset_import">
+<span class="sig-name descname"><span class="pre">opset_import</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.opset_import" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return model opset_import.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.remove_node">
+<span class="sig-name descname"><span class="pre">remove_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.remove_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a node from model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.remove_nodes">
+<span class="sig-name descname"><span class="pre">remove_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes_to_remove</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.remove_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove nodes from model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.add_node">
+<span class="sig-name descname"><span class="pre">add_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.add_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a node to model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.add_nodes">
+<span class="sig-name descname"><span class="pre">add_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes_to_add</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.add_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add nodes to model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.add_initializer">
+<span class="sig-name descname"><span class="pre">add_initializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.add_initializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a initializer to model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.add_initializers">
+<span class="sig-name descname"><span class="pre">add_initializers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.add_initializers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add initializers to model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.get_initializer">
+<span class="sig-name descname"><span class="pre">get_initializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.get_initializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an initializer by name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.remove_initializer">
+<span class="sig-name descname"><span class="pre">remove_initializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.remove_initializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an initializer from model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.remove_initializers">
+<span class="sig-name descname"><span class="pre">remove_initializers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_to_remove</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.remove_initializers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove initializers from model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.set_initializer">
+<span class="sig-name descname"><span class="pre">set_initializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.set_initializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update initializer.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.get_children">
+<span class="sig-name descname"><span class="pre">get_children</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_name_to_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.get_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get children nodes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.get_parents">
+<span class="sig-name descname"><span class="pre">get_parents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name_to_node</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.get_parents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get parents nodes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.get_parent">
+<span class="sig-name descname"><span class="pre">get_parent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name_to_node</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.get_parent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get parent node by idx.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.find_node_by_name">
+<span class="sig-name descname"><span class="pre">find_node_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_nodes_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.find_node_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find out node by name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.find_nodes_by_initializer">
+<span class="sig-name descname"><span class="pre">find_nodes_by_initializer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initializer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.find_nodes_by_initializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all nodes with given initializer as an input.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.get_scale_zero">
+<span class="sig-name descname"><span class="pre">get_scale_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.get_scale_zero" title="Permalink to this definition">¶</a></dt>
+<dd><p>Help function to get scale and zero_point.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.save_model_to_file">
+<span class="sig-name descname"><span class="pre">save_model_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_external_data_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.save_model_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save model to external data, which is needed for model size &gt; 2GB.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.replace_node_input">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">replace_node_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_input_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_input_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.replace_node_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace input of a node.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.replace_input_of_all_nodes">
+<span class="sig-name descname"><span class="pre">replace_input_of_all_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old_input_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_input_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">white_optype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">black_optype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.replace_input_of_all_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace inputs of all nodes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.replace_node_output">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">replace_node_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_output_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.replace_node_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace output of a node.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.replace_output_of_all_nodes">
+<span class="sig-name descname"><span class="pre">replace_output_of_all_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old_output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">white_optype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">black_optype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.replace_output_of_all_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace outputs of all nodes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.remove_unused_constant">
+<span class="sig-name descname"><span class="pre">remove_unused_constant</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.remove_unused_constant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove unused constant.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.topological_sort">
+<span class="sig-name descname"><span class="pre">topological_sort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enable_subgraph</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.topological_sort" title="Permalink to this definition">¶</a></dt>
+<dd><p>Topological sort the model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.get_nodes_chain">
+<span class="sig-name descname"><span class="pre">get_nodes_chain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_chain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.get_nodes_chain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get nodes chain with given start node and stop node.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.export">
+<span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.export" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export Qlinear to QDQ model.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.onnx_model</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel"><code class="docutils literal notranslate"><span class="pre">ONNXModel</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.large_size"><code class="docutils literal notranslate"><span class="pre">ONNXModel.large_size</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.model_path"><code class="docutils literal notranslate"><span class="pre">ONNXModel.model_path</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.q_config"><code class="docutils literal notranslate"><span class="pre">ONNXModel.q_config</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.model"><code class="docutils literal notranslate"><span class="pre">ONNXModel.model</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.graph_info"><code class="docutils literal notranslate"><span class="pre">ONNXModel.graph_info</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.input_name_to_nodes"><code class="docutils literal notranslate"><span class="pre">ONNXModel.input_name_to_nodes</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.output_name_to_node"><code class="docutils literal notranslate"><span class="pre">ONNXModel.output_name_to_node</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.framework"><code class="docutils literal notranslate"><span class="pre">ONNXModel.framework()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.input"><code class="docutils literal notranslate"><span class="pre">ONNXModel.input()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.output"><code class="docutils literal notranslate"><span class="pre">ONNXModel.output()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.update"><code class="docutils literal notranslate"><span class="pre">ONNXModel.update()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.save"><code class="docutils literal notranslate"><span class="pre">ONNXModel.save()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.nodes"><code class="docutils literal notranslate"><span class="pre">ONNXModel.nodes()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.initializer"><code class="docutils literal notranslate"><span class="pre">ONNXModel.initializer()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.graph"><code class="docutils literal notranslate"><span class="pre">ONNXModel.graph()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.ir_version"><code class="docutils literal notranslate"><span class="pre">ONNXModel.ir_version()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.opset_import"><code class="docutils literal notranslate"><span class="pre">ONNXModel.opset_import()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.remove_node"><code class="docutils literal notranslate"><span class="pre">ONNXModel.remove_node()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.remove_nodes"><code class="docutils literal notranslate"><span class="pre">ONNXModel.remove_nodes()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.add_node"><code class="docutils literal notranslate"><span class="pre">ONNXModel.add_node()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.add_nodes"><code class="docutils literal notranslate"><span class="pre">ONNXModel.add_nodes()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.add_initializer"><code class="docutils literal notranslate"><span class="pre">ONNXModel.add_initializer()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.add_initializers"><code class="docutils literal notranslate"><span class="pre">ONNXModel.add_initializers()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_initializer"><code class="docutils literal notranslate"><span class="pre">ONNXModel.get_initializer()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.remove_initializer"><code class="docutils literal notranslate"><span class="pre">ONNXModel.remove_initializer()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.remove_initializers"><code class="docutils literal notranslate"><span class="pre">ONNXModel.remove_initializers()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.set_initializer"><code class="docutils literal notranslate"><span class="pre">ONNXModel.set_initializer()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_children"><code class="docutils literal notranslate"><span class="pre">ONNXModel.get_children()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_parents"><code class="docutils literal notranslate"><span class="pre">ONNXModel.get_parents()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_parent"><code class="docutils literal notranslate"><span class="pre">ONNXModel.get_parent()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.find_node_by_name"><code class="docutils literal notranslate"><span class="pre">ONNXModel.find_node_by_name()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.find_nodes_by_initializer"><code class="docutils literal notranslate"><span class="pre">ONNXModel.find_nodes_by_initializer()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_scale_zero"><code class="docutils literal notranslate"><span class="pre">ONNXModel.get_scale_zero()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.save_model_to_file"><code class="docutils literal notranslate"><span class="pre">ONNXModel.save_model_to_file()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.replace_node_input"><code class="docutils literal notranslate"><span class="pre">ONNXModel.replace_node_input()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.replace_input_of_all_nodes"><code class="docutils literal notranslate"><span class="pre">ONNXModel.replace_input_of_all_nodes()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.replace_node_output"><code class="docutils literal notranslate"><span class="pre">ONNXModel.replace_node_output()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.replace_output_of_all_nodes"><code class="docutils literal notranslate"><span class="pre">ONNXModel.replace_output_of_all_nodes()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.remove_unused_constant"><code class="docutils literal notranslate"><span class="pre">ONNXModel.remove_unused_constant()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.topological_sort"><code class="docutils literal notranslate"><span class="pre">ONNXModel.topological_sort()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_nodes_chain"><code class="docutils literal notranslate"><span class="pre">ONNXModel.get_nodes_chain()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.export"><code class="docutils literal notranslate"><span class="pre">ONNXModel.export()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel">ONNXModel</a><ul>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.large_size">large_size</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.model_path">model_path</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.q_config">q_config</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.model">model</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.graph_info">graph_info</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.input_name_to_nodes">input_name_to_nodes</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.output_name_to_node">output_name_to_node</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.framework">framework</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.input">input</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.output">output</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.update">update</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.save">save</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.nodes">nodes</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.initializer">initializer</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.graph">graph</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.ir_version">ir_version</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.opset_import">opset_import</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.remove_node">remove_node</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.remove_nodes">remove_nodes</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.add_node">add_node</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.add_nodes">add_nodes</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.add_initializer">add_initializer</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.add_initializers">add_initializers</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_initializer">get_initializer</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.remove_initializer">remove_initializer</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.remove_initializers">remove_initializers</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.set_initializer">set_initializer</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_children">get_children</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_parents">get_parents</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_parent">get_parent</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.find_node_by_name">find_node_by_name</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.find_nodes_by_initializer">find_nodes_by_initializer</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_scale_zero">get_scale_zero</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.save_model_to_file">save_model_to_file</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.replace_node_input">replace_node_input</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.replace_input_of_all_nodes">replace_input_of_all_nodes</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.replace_node_output">replace_node_output</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.replace_output_of_all_nodes">replace_output_of_all_nodes</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.remove_unused_constant">remove_unused_constant</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.topological_sort">topological_sort</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.get_nodes_chain">get_nodes_chain</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.onnx_model.ONNXModel.export">export</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

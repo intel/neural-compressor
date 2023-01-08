@@ -1,0 +1,32 @@
+:py:mod:`neural_compressor.experimental.nas.dynast`
+===================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynast
+
+.. autoapi-nested-parse::
+
+   DyNAS module.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   supernetwork/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   dynas_manager/index.rst
+   dynas_predictor/index.rst
+   dynas_search/index.rst
+   dynas_utils/index.rst
+
+

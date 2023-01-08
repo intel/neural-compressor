@@ -1,0 +1,80 @@
+:py:mod:`neural_compressor.experimental.nas.dynas`
+==================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynas
+
+.. autoapi-nested-parse::
+
+   DyNAS approach class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.dynas.DyNAS
+
+
+
+
+.. py:class:: DyNAS(conf_fname_or_obj)
+
+   Bases: :py:obj:`neural_compressor.experimental.nas.nas.NASBase`
+
+   DyNAS approach.
+
+   Defining the pipeline for DyNAS approach.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or the object of NASConfig.
+   :type conf_fname_or_obj: string or obj
+
+   .. py:method:: estimate(individual)
+
+      Estimate performance of the model.
+
+      :returns: Evaluated metrics of the model.
+
+
+   .. py:method:: init_for_search()
+
+      Initialize the search configuration.
+
+
+   .. py:method:: search()
+
+      Execute the search process.
+
+      :returns: Best model architectures found in the search process.
+
+
+   .. py:method:: select_model_arch()
+
+      Select the model architecture.
+
+
+   .. py:method:: create_acc_predictor()
+
+      Create the accuracy predictor.
+
+
+   .. py:method:: create_macs_predictor()
+
+      Create the MACs predictor.
+
+
+   .. py:method:: create_latency_predictor()
+
+      Create the latency predictor.
+
+
+   .. py:method:: init_cfg(conf_fname_or_obj)
+
+      Initialize the configuration.
+
+
+

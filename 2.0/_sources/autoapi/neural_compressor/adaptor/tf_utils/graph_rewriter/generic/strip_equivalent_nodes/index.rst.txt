@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_equivalent_nodes`
+==========================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_equivalent_nodes
+
+.. autoapi-nested-parse::
+
+   Strip Equivalent Nodes Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.strip_equivalent_nodes.StripEquivalentNodesOptimizer
+
+
+
+
+.. py:class:: StripEquivalentNodesOptimizer(model, output_node_names)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Remove the equivalent nodes which have the same inputs and attributes.
+
+   .. py:method:: do_transformation()
+
+      Strip the equivalent nodes in the graph.
+
+
+

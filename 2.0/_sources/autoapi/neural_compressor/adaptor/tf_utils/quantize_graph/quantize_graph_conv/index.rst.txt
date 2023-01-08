@@ -1,0 +1,61 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_conv`
+===============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_conv
+
+.. autoapi-nested-parse::
+
+   Quantize Conv2D/DepthwiseConv2dNative.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_conv.FuseNodeStartWithConv2d
+
+
+
+
+.. py:class:: FuseNodeStartWithConv2d(**kwargs)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
+
+   Quantize Conv2D/DepthwiseConv2dNative to int8 op.
+
+   .. py:method:: apply_conv_single_fusion(match_node_name)
+
+      Apply Conv2D single fusion.
+
+
+   .. py:method:: apply_conv_biasadd_relu_fusion(match_node_name)
+
+      Fuse the conv/biasadd/relu pattern.
+
+
+   .. py:method:: apply_conv_biasadd_fusion(match_node_name)
+
+      Apply Conv BiasAdd fusion.
+
+
+   .. py:method:: apply_conv_biasadd_addn_relu_fusion(match_node_name)
+
+      Apply Conv BiasAdd AddN Relu fusion.
+
+
+   .. py:method:: get_longest_fuse()
+
+      Get the longest fusion pattern.
+
+
+   .. py:method:: apply_the_transform()
+
+      Quantize Conv2D/DepthwiseConv2dNative and apply the fusion pattern.
+
+
+

@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.model_api_interface`
+======================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.model_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Model API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.model_api_interface.ModelAPIInterface
+
+
+
+
+.. py:class:: ModelAPIInterface
+
+   Interface for queries connected with models.
+
+   .. py:method:: add_model(data: dict) -> int
+      :staticmethod:
+
+      Add model details.
+
+
+   .. py:method:: get_model_details(data: dict) -> dict
+      :staticmethod:
+
+      Parse input data and get model details.
+
+
+   .. py:method:: list_models(data: dict) -> dict
+      :staticmethod:
+
+      List models assigned to project.
+
+
+   .. py:method:: delete_model(data: dict) -> dict
+      :staticmethod:
+
+      Delete model from database.
+
+
+   .. py:method:: parse_model_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.ModelAddParamsInterface
+      :staticmethod:
+
+      Parse input data for model.
+
+
+

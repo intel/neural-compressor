@@ -1,0 +1,31 @@
+:py:mod:`neural_compressor.algorithm.fast_bias_correction`
+==========================================================
+
+.. py:module:: neural_compressor.algorithm.fast_bias_correction
+
+.. autoapi-nested-parse::
+
+   Build FastBiasCorrection algorithm class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.algorithm.fast_bias_correction.FastBiasCorrection
+
+
+
+
+.. py:class:: FastBiasCorrection(threshold=2.0, channel_axis=1)
+
+   Bases: :py:obj:`neural_compressor.algorithm.algorithm.Algorithm`
+
+   FastBiasCorrection algorithm class.
+
+

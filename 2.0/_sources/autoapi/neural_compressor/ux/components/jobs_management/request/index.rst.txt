@@ -1,0 +1,11 @@
+:py:mod:`neural_compressor.ux.components.jobs_management.request`
+=================================================================
+
+.. py:module:: neural_compressor.ux.components.jobs_management.request
+
+.. autoapi-nested-parse::
+
+   Defines data structure of request object.
+
+
+

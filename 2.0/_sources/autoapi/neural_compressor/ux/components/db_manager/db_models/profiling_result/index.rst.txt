@@ -1,0 +1,61 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.profiling_result`
+===============================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.profiling_result
+
+.. autoapi-nested-parse::
+
+   The ProfilingResults class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.profiling_result.ProfilingResult
+
+
+
+
+.. py:class:: ProfilingResult
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench profiling results' table representation.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, profiling_id: int, node_name: str, total_execution_time: int, accelerator_execution_time: int, cpu_execution_time: int, op_run: int, op_defined: int) -> None
+      :staticmethod:
+
+      Add profiling result to database.
+
+
+   .. py:method:: get_results(db_session: sqlalchemy.orm.session.Session, profiling_id: int) -> dict
+      :staticmethod:
+
+      Get results for specified profiling.
+
+
+   .. py:method:: bulk_add(db_session: sqlalchemy.orm.session.Session, profiling_id: int, results: List[neural_compressor.ux.components.db_manager.params_interfaces.ProfilingResultAddParamsInterface]) -> None
+      :staticmethod:
+
+      Bulk add profiling result to database.
+
+
+   .. py:method:: delete_results(db_session: sqlalchemy.orm.session.Session, profiling_id: int) -> None
+      :staticmethod:
+
+      Delete results for specified profiling.
+
+
+   .. py:method:: build_info(result: Any) -> dict
+      :staticmethod:
+
+      Build profiling result info.
+
+
+

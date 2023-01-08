@@ -1,0 +1,227 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.keras`
+=========================================
+
+.. py:module:: neural_compressor.adaptor.keras
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.keras.KerasAdaptor
+   neural_compressor.adaptor.keras.KerasQuery
+
+
+
+
+.. py:class:: KerasAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`neural_compressor.adaptor.adaptor.Adaptor`
+
+   The keras class of framework adaptor layer.
+
+
+
+   .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
+
+      Execute the quantize process on the specified model.
+
+      :param tune_cfg: The chosen tuning configuration.
+      :type tune_cfg: dict
+      :param model: The model to do quantization.
+      :type model: object
+      :param dataloader: The dataloader used to load quantization dataset.
+      :type dataloader: object
+      :param q_func: training function for quantization aware training mode.
+      :type q_func: optional
+
+
+   .. py:method:: evaluate(model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=False)
+
+      The function is used to run evaluation on validation dataset.
+
+      :param model: The model to do calibration.
+      :type model: object
+      :param dataloader: generate the data and labels.
+      :type dataloader: generator
+      :param postprocess: process the result from the model
+      :type postprocess: object, optional
+      :param metric: Depends on model category. Defaults to None.
+      :type metric: object, optional
+      :param measurer: for precise benchmark measurement.
+      :type measurer: object, optional
+      :param iteration: control steps of mini-batch
+      :type iteration: int, optional
+      :param tensorboard: for tensorboard inspect tensor.
+      :type tensorboard: boolean, optional
+      :param fp32_baseline: only for compare_label=False pipeline
+      :type fp32_baseline: boolen, optional
+
+
+   .. py:method:: query_fw_capability(model)
+
+      The function is used to return framework tuning capability.
+
+      :param model: The model to query quantization tuning capability.
+      :type model: object
+
+
+   .. py:method:: get_optype_wise_ability(quantizable_op_details)
+
+      Get the op type wise capability by generating the union value of each op type.
+      :returns:
+
+                the key is op type while the value is the
+                               detail configurations of activation and weight for this op type.
+      :rtype: [string dict]
+
+
+   .. py:method:: inspect_tensor(model, dataloader, op_list=[], iteration_list=[], inspect_type='activation', save_to_disk=False)
+
+      The function is used by tune strategy class for dumping tensor info.
+
+      :param model: The model to inspect.
+      :type model: object
+      :param dataloader: The dataloader used to feed into.
+      :type dataloader: object
+      :param op_list: The op name in the fp32 model for dumpping.
+      :type op_list: list
+      :param iteration_list: The iteration list containing iterations to dump.
+      :type iteration_list: list
+      :param inspect_type: The valid value are 'weight', 'activation', 'all'.
+      :type inspect_type: str
+      :param save_to_disk: Save to disk or memory.
+      :type save_to_disk: bool
+
+      :returns: Numpy Array Dict
+                {
+                  'weight': {
+                    'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
+                    'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
+                    ...
+                  },
+                  'activation': [
+                    # iter 0
+                    {
+                      'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
+                      'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
+                      ...
+                    },
+                    # iter 1
+                    ...
+                  ]
+                }
+
+
+   .. py:method:: set_tensor(model, tensor_dict)
+
+      The function is used by tune strategy class for setting tensor back to model.
+
+      :param model: The model to set tensor. Usually it is quantized model.
+      :type model: object
+      :param tensor_dict: The tensor dict to set. Note the numpy array contains float
+                          value, adaptor layer has the responsibility to quantize to
+                          int8 or int32 to set into the quantized model if needed.
+                          The dict format is something like:
+                          {
+                            'weight0_name': numpy.array,
+                            'bias0_name': numpy.array,
+                            ...
+                          }
+      :type tensor_dict: dict
+
+
+   .. py:method:: quantize_input(model)
+
+      quantize the model to be able to take quantized input
+
+      :param model: The model to quantize input
+      :type model: object
+
+      :returns: The quantized input model
+                scale (float): The scale for dataloader to generate quantized input
+      :rtype: model (object)
+
+
+   .. py:method:: save(model, path)
+
+      The function is used by tune strategy class for saving model.
+
+      :param model: The model to saved.
+      :type model: object
+      :param path: The path where to save.
+      :type path: string
+
+
+   .. py:method:: convert(model, source, destinatin)
+
+      The function is used to convert a source model format to another.
+
+      :param model: base model to be converted.
+      :type model: neural_compressor.model
+      :param source: The source model format.
+      :type source: string
+      :param destination: The destination model format.
+      :type destination: string
+
+
+
+.. py:class:: KerasQuery(local_config_file=None)
+
+   Bases: :py:obj:`neural_compressor.adaptor.query.QueryBackendCapability`
+
+   Base class that defines Query Interface.
+   Each adaption layer should implement the inherited class for specific backend on their own.
+
+   .. py:method:: get_version()
+
+      Get the current backend version infomation.
+
+      :returns: version string.
+      :rtype: [string]
+
+
+   .. py:method:: get_precisions()
+
+      Get supported precisions for current backend.
+
+      :returns: the precisions' name.
+      :rtype: [string list]
+
+
+   .. py:method:: get_op_types()
+
+      Get the supported op types by all precisions.
+
+      :returns: A list composed of dictionary which key is precision
+                and value is the op types.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_quantization_capability()
+
+      Get the supported op types' quantization capability.
+
+      :returns: A list composed of dictionary which key is precision
+                and value is a dict that describes all op types' quantization capability.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_op_types_by_precision(precision)
+
+      Get op types per precision
+
+      :param precision: precision name
+      :type precision: string
+
+      :returns: A list composed of op type.
+      :rtype: [string list]
+
+
+

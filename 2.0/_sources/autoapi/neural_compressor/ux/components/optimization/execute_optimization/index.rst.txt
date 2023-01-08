@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.ux.components.optimization.execute_optimization`
+===========================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.execute_optimization
+
+.. autoapi-nested-parse::
+
+   Execute tune.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.execute_optimization.execute_optimization_pytorch_script
+   neural_compressor.ux.components.optimization.execute_optimization.execute_optimization_regular
+   neural_compressor.ux.components.optimization.execute_optimization.execute_optimization
+   neural_compressor.ux.components.optimization.execute_optimization.parse_model_data_to_bench_names
+   neural_compressor.ux.components.optimization.execute_optimization.parse_logs
+   neural_compressor.ux.components.optimization.execute_optimization.check_if_collect_tuning_history
+
+
+
+.. py:function:: execute_optimization_pytorch_script(optimization: Any, request_id: Any, optimization_id: Any) -> Any
+
+   Optimize PyTorch scripted models.
+
+
+.. py:function:: execute_optimization_regular(optimization: Any, request_id: Any, optimization_id: Any) -> Any
+
+   Optimize PB/ONNX models.
+
+
+.. py:function:: execute_optimization(data: Dict[str, Any]) -> dict
+
+   Get configuration.
+
+
+.. py:function:: parse_model_data_to_bench_names(data: dict) -> dict
+
+   Parse names to Bench format.
+
+
+.. py:function:: parse_logs(optimization: neural_compressor.ux.components.optimization.optimization.Optimization, optimization_details: dict, project_details: dict, logs: List[str]) -> dict
+
+   Parse optimization logs.
+
+
+.. py:function:: check_if_collect_tuning_history(optimization: neural_compressor.ux.components.optimization.optimization.Optimization) -> bool
+
+   Check whether tuning history can be collected for specified optimization.
+
+

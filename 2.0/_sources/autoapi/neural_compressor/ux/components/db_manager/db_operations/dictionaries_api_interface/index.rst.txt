@@ -1,0 +1,101 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.dictionaries_api_interface`
+=============================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.dictionaries_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Dictionaries API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.dictionaries_api_interface.DictionariesAPIInterface
+
+
+
+
+.. py:class:: DictionariesAPIInterface
+
+   Interface for queries connected with dictonaries.
+
+   .. py:method:: list_domains(data: dict) -> dict
+      :staticmethod:
+
+      List model domains.
+
+
+   .. py:method:: list_domain_flavours(data: dict) -> dict
+      :staticmethod:
+
+      List model domain flavours.
+
+
+   .. py:method:: list_optimization_types(data: dict) -> dict
+      :staticmethod:
+
+      List optimization types.
+
+
+   .. py:method:: list_optimization_types_for_precision(data: dict) -> dict
+      :staticmethod:
+
+      List optimization types.
+
+
+   .. py:method:: list_precisions(data: dict) -> dict
+      :staticmethod:
+
+      List precisions.
+
+
+   .. py:method:: list_dataloaders(data: dict) -> dict
+      :staticmethod:
+
+      List all dataloaders.
+
+
+   .. py:method:: list_dataloaders_by_framework(data: dict) -> dict
+      :staticmethod:
+
+      List dataloaders for specified framework.
+
+
+   .. py:method:: list_transforms(data: dict) -> dict
+      :staticmethod:
+
+      List all transforms.
+
+
+   .. py:method:: list_transforms_by_framework(data: dict) -> dict
+      :staticmethod:
+
+      List transforms for specified framework.
+
+
+   .. py:method:: list_transforms_by_domain(data: dict) -> dict
+      :staticmethod:
+
+      List transforms for specified domain.
+
+
+   .. py:method:: list_metrics(data: dict) -> dict
+      :staticmethod:
+
+      List all metrics.
+
+
+   .. py:method:: list_metrics_by_framework(data: dict) -> dict
+      :staticmethod:
+
+      List metrics for specified framework.
+
+
+

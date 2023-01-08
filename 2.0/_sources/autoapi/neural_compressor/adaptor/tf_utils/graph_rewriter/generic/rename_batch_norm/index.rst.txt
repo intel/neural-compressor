@@ -1,0 +1,45 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.rename_batch_norm`
+=====================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.rename_batch_norm
+
+.. autoapi-nested-parse::
+
+   Rename FusedBatchNorm op to FusedBatchNormV2 Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.rename_batch_norm.RenameBatchNormOptimizer
+
+
+
+
+.. py:class:: RenameBatchNormOptimizer(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Rename FusedBatchNorm op to FusedBatchNormV2.
+
+   .. py:method:: do_transformation()
+
+      Rename FusedBatchNorm op to FusedBatchNormV2.
+
+      This pass is needed for bf16 conversion. Due to TensorFlow historical reason,
+      FusedBatchNorm is not a bf16 op but FusedBatchNormV2 is. As the latter is compatible
+      with the former, changing FusedBatchNorm op to FusedBatchNormV2 op will be able to
+      convert to bf16 op on the platforms supporting VNNI_BF16 and AMX instructions.
+
+      :returns: Modified graph with BN ops renamed.
+
+      :raises ValueError: If the graph is badly formed.
+
+
+

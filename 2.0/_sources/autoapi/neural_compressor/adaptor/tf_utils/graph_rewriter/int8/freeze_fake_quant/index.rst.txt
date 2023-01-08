@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_fake_quant`
+==================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_fake_quant
+
+.. autoapi-nested-parse::
+
+   Freeze FakeQuant op Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_fake_quant.FreezeFakeQuantOpOptimizer
+
+
+
+
+.. py:class:: FreezeFakeQuantOpOptimizer(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Freeze fake_quant op to the following Quantize op and prioring Dequantize op.
+
+   .. py:method:: do_transformation()
+
+      Execute freeze FakeQuant optimization.
+
+
+

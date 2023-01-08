@@ -1,0 +1,126 @@
+:py:mod:`neural_compressor.metric.bleu`
+=======================================
+
+.. py:module:: neural_compressor.metric.bleu
+
+.. autoapi-nested-parse::
+
+   Script for BLEU metric.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.metric.bleu.UnicodeRegex
+   neural_compressor.metric.bleu.BLEU
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.metric.bleu.bleu_tokenize
+
+
+
+.. py:class:: UnicodeRegex
+
+   Bases: :py:obj:`object`
+
+   Ad-hoc hack to recognize all punctuation and symbols.
+
+   .. attribute:: nondigit_punct_re
+
+      The compiled regular expressions to recognize
+      punctuation preceded with a digit.
+
+   .. attribute:: punct_nondigit_re
+
+      The compiled regular expressions to recognize
+      punctuation followed by a digit.
+
+   .. attribute:: symbol_re
+
+      The compiled regular expressions to recognize symbols.
+
+   .. py:method:: property_chars(prefix: str) -> str
+
+      Collect all Unicode strings starting with a specific prefix.
+
+      :param prefix: The specific prefix.
+
+      :returns:
+
+                The join result of all Unicode strings starting
+                  with a specific prefix.
+      :rtype: punctuation
+
+
+
+.. py:function:: bleu_tokenize(string: str) -> List[str]
+
+   Tokenize a string following the official BLEU implementation.
+
+   See https://github.com/moses-smt/mosesdecoder/"
+           "blob/master/scripts/generic/mteval-v14.pl#L954-L983
+
+   :param string: The string to be tokenized.
+
+   :returns: A list of tokens.
+   :rtype: tokens
+
+
+.. py:class:: BLEU
+
+   Bases: :py:obj:`object`
+
+   Computes the BLEU (Bilingual Evaluation Understudy) score.
+
+   BLEU is an algorithm for evaluating the quality of text which has
+   been machine-translated from one natural language to another.
+   This implementent approximate the BLEU score since we do not
+   glue word pieces or decode the ids and tokenize the output.
+   By default, we use ngram order of 4 and use brevity penalty.
+   Also, this does not have beam search.
+
+   .. attribute:: predictions
+
+      List of translations to score.
+
+   .. attribute:: labels
+
+      List of the reference corresponding to the prediction result.
+
+   .. py:method:: reset() -> None
+
+      Clear the predictions and labels in the cache.
+
+
+   .. py:method:: update(prediction: Sequence[str], label: Sequence[str]) -> None
+
+      Add the prediction and label.
+
+      :param prediction: The prediction result.
+      :param label: The reference corresponding to the prediction result.
+
+      :raises ValueError: An error occurred when the length of the prediction
+      :raises and label are different.:
+
+
+   .. py:method:: result() -> float
+
+      Compute the BLEU score.
+
+      :returns: The approximate BLEU score.
+      :rtype: bleu_score
+
+
+

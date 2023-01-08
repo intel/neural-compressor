@@ -1,0 +1,849 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor.experimental.metric.coco_tools &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+
+  
+  <script src="../../../../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../../../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.coco_tools</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../../../../_sources/autoapi/neural_compressor/experimental/metric/coco_tools/index.rst.txt" rel="nofollow"><img src="../../../../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor.experimental.metric.coco_tools">
+<span id="neural-compressor-experimental-metric-coco-tools"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.metric.coco_tools" title="neural_compressor.experimental.metric.coco_tools"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.coco_tools</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.metric.coco_tools" title="Permalink to this heading">¶</a></h1>
+<p>Wrappers for third party pycocotools to be used within object_detection.</p>
+<p>Note that nothing in this file is tensorflow related and thus cannot
+be called directly as a slim metric, for example.</p>
+<p>TODO(jonathanhuang): wrap as a slim metric in metrics.py</p>
+<p>Usage example: given a set of images with ids in the list image_ids
+and corresponding lists of numpy arrays encoding groundtruth (boxes and classes)
+and detections (boxes, scores and classes), where elements of each list
+correspond to detections/annotations of a single image,
+then evaluation (in multi-class mode) can be invoked as follows:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>groundtruth_dict = coco_tools.ExportGroundtruthToCOCO(</dt><dd><p>image_ids, groundtruth_boxes_list, groundtruth_classes_list,
+max_num_classes, output_path=None)</p>
+</dd>
+<dt>detections_list = coco_tools.ExportDetectionsToCOCO(</dt><dd><p>image_ids, detection_boxes_list, detection_scores_list,
+detection_classes_list, output_path=None)</p>
+</dd>
+</dl>
+<p>groundtruth = coco_tools.COCOWrapper(groundtruth_dict)
+detections = groundtruth.LoadAnnotations(detections_list)
+evaluator = coco_tools.COCOEvalWrapper(groundtruth, detections,</p>
+<blockquote>
+<div><p>agnostic_mode=False)</p>
+</div></blockquote>
+<p>metrics = evaluator.ComputeMetrics()</p>
+</div></blockquote>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper" title="neural_compressor.experimental.metric.coco_tools.COCOWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COCOWrapper</span></code></a></p></td>
+<td><p>Wrapper for the pycocotools COCO class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper" title="neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COCOEvalWrapper</span></code></a></p></td>
+<td><p>Wrapper for the pycocotools COCOeval class.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageGroundtruthToCoco" title="neural_compressor.experimental.metric.coco_tools.ExportSingleImageGroundtruthToCoco"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExportSingleImageGroundtruthToCoco</span></code></a>(→ list)</p></td>
+<td><p>Export groundtruth of a single image to COCO format.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco" title="neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExportSingleImageDetectionBoxesToCoco</span></code></a>(→ list)</p></td>
+<td><p>Export detections of a single image to COCO format.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionMasksToCoco" title="neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionMasksToCoco"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExportSingleImageDetectionMasksToCoco</span></code></a>(→ list)</p></td>
+<td><p>Export detection masks of a single image to COCO format.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.COCOWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.coco_tools.</span></span><span class="sig-name descname"><span class="pre">COCOWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'bbox'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">pycocotools.coco.COCO</span></code></p>
+<p>Wrapper for the pycocotools COCO class.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.COCOWrapper.dataset">
+<span class="sig-name descname"><span class="pre">dataset</span></span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper.dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>a dictionary holding bounding box annotations in the COCO format.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.COCOWrapper.detection_type">
+<span class="sig-name descname"><span class="pre">detection_type</span></span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper.detection_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>type of detections being wrapped. Can be one of [‘bbox’,
+‘segmentation’]</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.COCOWrapper.LoadAnnotations">
+<span class="sig-name descname"><span class="pre">LoadAnnotations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">annotations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pycocotools.coco.COCO</span></span></span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper.LoadAnnotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load annotations dictionary into COCO datastructure.</p>
+<p>See <a class="reference external" href="http://mscoco.org/dataset/#format">http://mscoco.org/dataset/#format</a> for a description of the annotations
+format.  As above, this function replicates the default behavior of the API
+but does not require writing to external storage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>annotations</strong> – python list holding object detection results where each
+detection is encoded as a dict with required keys [‘image_id’,
+‘category_id’, ‘score’] and one of [‘bbox’, ‘segmentation’] based on
+<cite>detection_type</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a coco.COCO datastructure holding object detection annotations results</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – if (1) annotations is not a list or annotations do not
+correspond to the images contained in self.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.coco_tools.</span></span><span class="sig-name descname"><span class="pre">COCOEvalWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groundtruth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pycocotools.coco.COCO</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pycocotools.coco.COCO</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agnostic_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'bbox'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thrs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">pycocotools.cocoeval.COCOeval</span></code></p>
+<p>Wrapper for the pycocotools COCOeval class.</p>
+<p>To evaluate, create two objects (groundtruth_dict and detections_list)
+using the conventions listed at <a class="reference external" href="http://mscoco.org/dataset/#format">http://mscoco.org/dataset/#format</a>.
+Then call evaluation as follows:</p>
+<blockquote>
+<div><p>groundtruth = coco_tools.COCOWrapper(groundtruth_dict)
+detections = groundtruth.LoadAnnotations(detections_list)
+evaluator = coco_tools.COCOEvalWrapper(groundtruth, detections,</p>
+<blockquote>
+<div><p>agnostic_mode=False)</p>
+</div></blockquote>
+<p>metrics = evaluator.ComputeMetrics()</p>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetCategory">
+<span class="sig-name descname"><span class="pre">GetCategory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">category_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetCategory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch dictionary holding category information given category id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>category_id</strong> – integer id</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dictionary holding ‘id’, ‘name’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetAgnosticMode">
+<span class="sig-name descname"><span class="pre">GetAgnosticMode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetAgnosticMode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether COCO Eval is configured to evaluate in agnostic mode.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetCategoryIdList">
+<span class="sig-name descname"><span class="pre">GetCategoryIdList</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetCategoryIdList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the list of IDs of all valid categories.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.accumulate">
+<span class="sig-name descname"><span class="pre">accumulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pycocotools.cocoeval.Params</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.accumulate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accumulate evaluation results per image and store it to self.eval.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>p</strong> – input params for evaluation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.ComputeMetrics">
+<span class="sig-name descname"><span class="pre">ComputeMetrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_metrics_per_category</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_metrics_per_category</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.ComputeMetrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute detection metrics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>include_metrics_per_category</strong> – Whether include metrics per category.</p></li>
+<li><p><strong>all_metrics_per_category</strong> – Whether include all the summery metrics for
+each category in per_category_ap. Be careful with setting it to true if
+you have more than handful of categories, because it will pollute
+your mldash.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl>
+<dt>A tuple of (summary_metrics, per_category_ap), in which</dt><dd><ol class="arabic simple">
+<li><p>summary_metrics is a dictionary holding:</p></li>
+</ol>
+<blockquote>
+<div><dl class="simple">
+<dt>’Precision/mAP’: mean average precision over classes averaged over IOU</dt><dd><p>thresholds ranging from .5 to .95 with .05 increments;</p>
+</dd>
+</dl>
+<p>’Precision/mAP&#64;.50IOU’: mean average precision at 50% IOU;
+‘Precision/mAP&#64;.75IOU’: mean average precision at 75% IOU;
+‘Precision/mAP (small)’: mean average precision for small objects</p>
+<blockquote>
+<div><p>(area &lt; 32^2 pixels);</p>
+</div></blockquote>
+<dl class="simple">
+<dt>’Precision/mAP (medium)’: mean average precision for medium sized</dt><dd><p>objects (32^2 pixels &lt; area &lt; 96^2 pixels);</p>
+</dd>
+<dt>’Precision/mAP (large)’: mean average precision for large objects</dt><dd><p>(96^2 pixels &lt; area &lt; 10000^2 pixels);</p>
+</dd>
+</dl>
+<p>’Recall/AR&#64;1’: average recall with 1 detection;
+<a class="reference external" href="mailto:'Recall/AR&#37;&#52;&#48;10">‘Recall/AR<span>&#64;</span>10</a>’: average recall with 10 detections;
+<a class="reference external" href="mailto:'Recall/AR&#37;&#52;&#48;100">‘Recall/AR<span>&#64;</span>100</a>’: average recall with 100 detections;
+<a class="reference external" href="mailto:'Recall/AR&#37;&#52;&#48;100">‘Recall/AR<span>&#64;</span>100</a> (small)’: average recall for small objects with 100</p>
+<blockquote>
+<div><p>detections;</p>
+</div></blockquote>
+<dl class="simple">
+<dt><a class="reference external" href="mailto:'Recall/AR&#37;&#52;&#48;100">’Recall/AR<span>&#64;</span>100</a> (medium)’: average recall for medium objects with 100</dt><dd><p>detections;</p>
+</dd>
+<dt><a class="reference external" href="mailto:'Recall/AR&#37;&#52;&#48;100">’Recall/AR<span>&#64;</span>100</a> (large)’: average recall for large objects with 100</dt><dd><p>detections;</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="simple">
+<dt>and (2) per_category_ap is a dictionary holding category specific results with</dt><dd><p>keys of the form: ‘Precision mAP ByCategory/category’
+(without the supercategory part if no supercategories exist).</p>
+</dd>
+</dl>
+</dd>
+<dt>For backward compatibility ‘PerformanceByCategory’ is included in the</dt><dd><p>output regardless of all_metrics_per_category. If evaluating class-agnostic
+mode, per_category_ap is an empty dictionary.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If category_stats does not exist.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.ExportSingleImageGroundtruthToCoco">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.coco_tools.</span></span><span class="sig-name descname"><span class="pre">ExportSingleImageGroundtruthToCoco</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_annotation_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category_id_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groundtruth_boxes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groundtruth_classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groundtruth_masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groundtruth_is_crowd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageGroundtruthToCoco" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export groundtruth of a single image to COCO format.</p>
+<p>This function converts groundtruth detection annotations represented as numpy
+arrays to dictionaries that can be ingested by the COCO evaluation API. Note
+that the image_ids provided here must match the ones given to
+ExportSingleImageDetectionsToCoco. We assume that boxes and classes are in
+correspondence - that is: groundtruth_boxes[i, :], and
+groundtruth_classes[i] are associated with the same groundtruth annotation.</p>
+<p>In the exported result, “area” fields are always set to the area of the
+groundtruth bounding box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_id</strong> – a unique image identifier either of type integer or string.</p></li>
+<li><p><strong>next_annotation_id</strong> – integer specifying the first id to use for the
+groundtruth annotations. All annotations are assigned a continuous integer
+id starting from this value.</p></li>
+<li><p><strong>category_id_set</strong> – A set of valid class ids. Groundtruth with classes not in
+category_id_set are dropped.</p></li>
+<li><p><strong>groundtruth_boxes</strong> – numpy array (float32) with shape [num_gt_boxes, 4]</p></li>
+<li><p><strong>groundtruth_classes</strong> – numpy array (int) with shape [num_gt_boxes]</p></li>
+<li><p><strong>groundtruth_masks</strong> – optional uint8 numpy array of shape [num_detections,
+image_height, image_width] containing detection_masks.</p></li>
+<li><p><strong>groundtruth_is_crowd</strong> – optional numpy array (int) with shape [num_gt_boxes]
+indicating whether groundtruth boxes are crowd.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of groundtruth annotations for a single image in the COCO format.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – if (1) groundtruth_boxes and groundtruth_classes do not have the
+right lengths or (2) if each of the elements inside these lists do not
+have the correct shapes or (3) if image_ids are not integers</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.coco_tools.</span></span><span class="sig-name descname"><span class="pre">ExportSingleImageDetectionBoxesToCoco</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category_id_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_boxes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_scores</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export detections of a single image to COCO format.</p>
+<p>This function converts detections represented as numpy arrays to dictionaries
+that can be ingested by the COCO evaluation API. Note that the image_ids
+provided here must match the ones given to the
+ExporSingleImageDetectionBoxesToCoco. We assume that boxes, and classes are in
+correspondence - that is: boxes[i, :], and classes[i]
+are associated with the same groundtruth annotation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_id</strong> – unique image identifier either of type integer or string.</p></li>
+<li><p><strong>category_id_set</strong> – A set of valid class ids. Detections with classes not in
+category_id_set are dropped.</p></li>
+<li><p><strong>detection_boxes</strong> – float numpy array of shape [num_detections, 4] containing
+detection boxes.</p></li>
+<li><p><strong>detection_scores</strong> – float numpy array of shape [num_detections] containing
+scored for the detection boxes.</p></li>
+<li><p><strong>detection_classes</strong> – integer numpy array of shape [num_detections] containing
+the classes for detection boxes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of detection annotations for a single image in the COCO format.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – if (1) detection_boxes, detection_scores and detection_classes</p></li>
+<li><p><strong>do not have the right lengths</strong><strong> or </strong><strong>(</strong><strong>2</strong><strong>) </strong><strong>if each</strong><strong> of </strong><strong>the elements inside these</strong> – </p></li>
+<li><p><strong>lists do not have the correct shapes</strong><strong> or </strong><strong>(</strong><strong>3</strong><strong>) </strong><strong>if image_ids are not integers.</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionMasksToCoco">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.coco_tools.</span></span><span class="sig-name descname"><span class="pre">ExportSingleImageDetectionMasksToCoco</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category_id_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_scores</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionMasksToCoco" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export detection masks of a single image to COCO format.</p>
+<p>This function converts detections represented as numpy arrays to dictionaries
+that can be ingested by the COCO evaluation API. We assume that
+detection_masks, detection_scores, and detection_classes are in correspondence
+- that is: detection_masks[i, :], detection_classes[i] and detection_scores[i]</p>
+<blockquote>
+<div><p>are associated with the same annotation.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_id</strong> – unique image identifier either of type integer or string.</p></li>
+<li><p><strong>category_id_set</strong> – A set of valid class ids. Detections with classes not in</p></li>
+<li><p><strong>dropped.</strong> (<em>category_id_set are</em>) – </p></li>
+<li><p><strong>detection_masks</strong> – uint8 numpy array of shape [num_detections, image_height,</p></li>
+<li><p><strong>detection_masks.</strong> (<em>image_width</em><em>] </em><em>containing</em>) – </p></li>
+<li><p><strong>detection_scores</strong> – float numpy array of shape [num_detections] containing</p></li>
+<li><p><strong>masks.</strong> (<em>the classes for detection</em>) – </p></li>
+<li><p><strong>detection_classes</strong> – integer numpy array of shape [num_detections] containing</p></li>
+<li><p><strong>masks.</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of detection mask annotations for a single image in the COCO format.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – if (1) detection_masks, detection_scores and detection_classes</p></li>
+<li><p><strong>do not have the right lengths</strong><strong> or </strong><strong>(</strong><strong>2</strong><strong>) </strong><strong>if each</strong><strong> of </strong><strong>the elements inside these</strong> – </p></li>
+<li><p><strong>lists do not have the correct shapes</strong><strong> or </strong><strong>(</strong><strong>3</strong><strong>) </strong><strong>if image_ids are not integers.</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.coco_tools</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper"><code class="docutils literal notranslate"><span class="pre">COCOWrapper</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper.dataset"><code class="docutils literal notranslate"><span class="pre">COCOWrapper.dataset</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper.detection_type"><code class="docutils literal notranslate"><span class="pre">COCOWrapper.detection_type</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper.LoadAnnotations"><code class="docutils literal notranslate"><span class="pre">COCOWrapper.LoadAnnotations()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper"><code class="docutils literal notranslate"><span class="pre">COCOEvalWrapper</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetCategory"><code class="docutils literal notranslate"><span class="pre">COCOEvalWrapper.GetCategory()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetAgnosticMode"><code class="docutils literal notranslate"><span class="pre">COCOEvalWrapper.GetAgnosticMode()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetCategoryIdList"><code class="docutils literal notranslate"><span class="pre">COCOEvalWrapper.GetCategoryIdList()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.accumulate"><code class="docutils literal notranslate"><span class="pre">COCOEvalWrapper.accumulate()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.ComputeMetrics"><code class="docutils literal notranslate"><span class="pre">COCOEvalWrapper.ComputeMetrics()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageGroundtruthToCoco"><code class="docutils literal notranslate"><span class="pre">ExportSingleImageGroundtruthToCoco()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco"><code class="docutils literal notranslate"><span class="pre">ExportSingleImageDetectionBoxesToCoco()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionMasksToCoco"><code class="docutils literal notranslate"><span class="pre">ExportSingleImageDetectionMasksToCoco()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper">COCOWrapper</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper.dataset">dataset</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper.detection_type">detection_type</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOWrapper.LoadAnnotations">LoadAnnotations</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper">COCOEvalWrapper</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetCategory">GetCategory</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetAgnosticMode">GetAgnosticMode</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.GetCategoryIdList">GetCategoryIdList</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.accumulate">accumulate</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.COCOEvalWrapper.ComputeMetrics">ComputeMetrics</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageGroundtruthToCoco">ExportSingleImageGroundtruthToCoco</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco">ExportSingleImageDetectionBoxesToCoco</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.metric.coco_tools.ExportSingleImageDetectionMasksToCoco">ExportSingleImageDetectionMasksToCoco</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../../../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../../../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

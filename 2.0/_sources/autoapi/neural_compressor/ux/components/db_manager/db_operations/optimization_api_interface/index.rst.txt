@@ -1,0 +1,173 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface`
+=============================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface
+
+.. autoapi-nested-parse::
+
+   INC Bench Optimization API interface.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.optimization_api_interface.OptimizationAPIInterface
+
+
+
+
+.. py:class:: OptimizationAPIInterface
+
+   Interface for queries connected with optimizations.
+
+   .. py:method:: delete_optimization(data: dict) -> dict
+      :staticmethod:
+
+      Delete optimization from database and clean workspace.
+
+
+   .. py:method:: get_optimization_details(data: dict) -> dict
+      :staticmethod:
+
+      Parse input data and get optimization details.
+
+
+   .. py:method:: list_optimizations(data: dict) -> dict
+      :staticmethod:
+
+      List optimizations assigned to project.
+
+
+   .. py:method:: update_optimization_status(data: dict) -> dict
+      :staticmethod:
+
+      Update optimization status.
+
+
+   .. py:method:: update_optimized_model(data: dict) -> dict
+      :staticmethod:
+
+      Update optimized model.
+
+
+   .. py:method:: update_optimization_duration(data: dict) -> dict
+      :staticmethod:
+
+      Update duration of optimization.
+
+
+   .. py:method:: update_paths(data: dict) -> dict
+      :staticmethod:
+
+      Update config path and output log path.
+
+
+   .. py:method:: update_execution_command(data: dict) -> dict
+      :staticmethod:
+
+      Update optimization execution command.
+
+
+   .. py:method:: pin_accuracy_benchmark(data: dict) -> dict
+      :staticmethod:
+
+      Pin accuracy benchmark to optimization.
+
+
+   .. py:method:: pin_performance_benchmark(data: dict) -> dict
+      :staticmethod:
+
+      Pin performance benchmark to optimization.
+
+
+   .. py:method:: add_optimization(data: dict) -> dict
+      :staticmethod:
+
+      Add optimization to database.
+
+
+   .. py:method:: add_quantization_optimization(db_session: sqlalchemy.orm.session.Session, optimization_data: neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface) -> int
+      :staticmethod:
+
+      Add quantization optimization to database.
+
+
+   .. py:method:: add_pruning_optimization(db_session: sqlalchemy.orm.session.Session, optimization_data: neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface) -> int
+      :staticmethod:
+
+      Add quantization optimization to database.
+
+
+   .. py:method:: add_standard_optimization(db_session: sqlalchemy.orm.session.Session, optimization_data: neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface) -> int
+      :staticmethod:
+
+      Add optimization to database.
+
+
+   .. py:method:: edit_optimization(data: dict) -> dict
+      :staticmethod:
+
+      Edit existing optimization.
+
+
+   .. py:method:: get_pruning_details(data: dict) -> dict
+      :staticmethod:
+
+      Gat pruning details in a form of tree.
+
+
+   .. py:method:: edit_tuning_details(db_session: sqlalchemy.orm.session.Session, optimization: dict, parsed_optimization_data: neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface) -> dict
+      :staticmethod:
+
+      Edit tuning details.
+
+
+   .. py:method:: edit_pruning_details(db_session: sqlalchemy.orm.session.Session, optimization: dict, pruning_data: dict) -> dict
+      :staticmethod:
+
+      Edit pruning details.
+
+
+   .. py:method:: add_tuning_history(optimization_id: int, tuning_history: dict) -> int
+      :staticmethod:
+
+      Add tuning history to database.
+
+
+   .. py:method:: parse_tuning_history(tuning_history: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface
+      :staticmethod:
+
+      Parse input data for tuning history.
+
+
+   .. py:method:: parse_optimization_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface
+      :staticmethod:
+
+      Parse input data for optimization.
+
+
+   .. py:method:: parse_optimization_edit_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface
+      :staticmethod:
+
+      Parse data for editing optimization.
+
+
+   .. py:method:: load_pruning_details_config(data: dict) -> List[dict]
+      :staticmethod:
+
+      Load pruning details config.
+
+
+   .. py:method:: clean_status(status_to_clean: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Clean specified optimization status.
+
+
+

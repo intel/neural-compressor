@@ -1,0 +1,559 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>SigOpt Strategy &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li>SigOpt Strategy</li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="_sources/sigopt_strategy.md.txt" rel="nofollow"><img src="_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="sigopt-strategy">
+<h1>SigOpt Strategy<a class="headerlink" href="#sigopt-strategy" title="Permalink to this heading">¶</a></h1>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p>
+<p>1.1 <a class="reference external" href="#preparation">Preparation</a></p>
+<p>1.2 <a class="reference external" href="#sigopt-platform">SigOpt Platform</a></p>
+<p>1.3  <a class="reference external" href="#neural-compressor-configuration">Neural Compressor Configuration</a></p>
+</li>
+<li><p><a class="reference external" href="#performance">Performance</a></p>
+<p>2.1 <a class="reference external" href="#benefit-of-sigopt-strategy">Benefit of SigOpt Strategy</a></p>
+<p>2.2 <a class="reference external" href="#performance-comparison-of-different-strategies">Performance Comparison of Different Strategies</a></p>
+</li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<p><a class="reference external" href="https://app.sigopt.com/">SigOpt</a> is an online model development platform that makes it easy to track runs, visualize training, and scale hyperparameter optimization for any type of model. <a class="reference external" href="https://app.sigopt.com/docs/overview/optimization">Optimization Loop</a> is the backbone of using SigOpt. We can set metrics and realize the interaction between the online platform and tuning configurations based on this mechanism.</p>
+<section id="preparation">
+<h3>Preparation<a class="headerlink" href="#preparation" title="Permalink to this heading">¶</a></h3>
+<p>Before using the <code class="docutils literal notranslate"><span class="pre">SigOpt</span></code> strategy, a SigOpt account is necessary.</p>
+<ul class="simple">
+<li><p>Each account has its own API token. Find your API token and then fill it in the <code class="docutils literal notranslate"><span class="pre">sigopt_api_token</span></code> field.</p></li>
+<li><p>Create a new project and fill the corresponding name into the <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code> field.</p></li>
+<li><p>Set the name of this experiment in <code class="docutils literal notranslate"><span class="pre">sigopt_experiment_id</span></code> field optionally. The default name is “nc-tune”.</p></li>
+</ul>
+</section>
+<section id="sigopt-platform">
+<h3>SigOpt Platform<a class="headerlink" href="#sigopt-platform" title="Permalink to this heading">¶</a></h3>
+<p>If you are using the SigOpt products for the first time, please <a class="reference external" href="https://app.sigopt.com/signup">sign-up</a>, if not, please <a class="reference external" href="https://app.sigopt.com/login">login</a>. It is free to apply for an account. Although there are certain restrictions on the model parameters and the number of experiments created, it is sufficient for ordinary customers. If you want higher capacity, please contact support&#64;sigopt.com.</p>
+<p>After logging in, you can use <code class="docutils literal notranslate"><span class="pre">the</span> <span class="pre">token</span> <span class="pre">api</span></code> to connect the local code to the online platform, corresponding to <code class="docutils literal notranslate"><span class="pre">sigopt_api_token</span></code>. It can be obtained <a class="reference external" href="https://app.sigopt.com/tokens/info">here</a>.</p>
+<p>SigOpt has two concepts: <a class="reference external" href="https://app.sigopt.com/projects">project</a> and <a class="reference external" href="https://app.sigopt.com/experiments">experiment</a>. Create a project before experimenting, corresponding to <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code> and <code class="docutils literal notranslate"><span class="pre">sigopt_experiment_name</span></code>. Multiple experiments can be created on each project. After creating the experiment, SigOpt will execute three simple steps below in a loop:</p>
+<ul class="simple">
+<li><p>Receive a Suggestion from SigOpt;</p></li>
+<li><p>Evaluate your metrics;</p></li>
+<li><p>Report an Observation to SigOpt;</p></li>
+</ul>
+<p>In our build-in sigopt strategy, the metrics add accuracy as a constraint and optimize for latency.</p>
+</section>
+<section id="neural-compressor-configuration">
+<h3>Neural Compressor Configuration<a class="headerlink" href="#neural-compressor-configuration" title="Permalink to this heading">¶</a></h3>
+<p>Compare to <code class="docutils literal notranslate"><span class="pre">Basic</span></code> strategy, <code class="docutils literal notranslate"><span class="pre">sigopt_api_token</span></code> and <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code> is necessary for <code class="docutils literal notranslate"><span class="pre">SigOpt</span></code> strategy. Before using the strategy, it is required to create the project corresponding to <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code> in your account.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
+        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;sigopt&quot;</span><span class="p">,</span>
+        <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span>
+          <span class="s2">&quot;sigopt_api_token&quot;</span><span class="p">:</span> <span class="s2">&quot;YOUR-ACCOUNT-API-TOKEN&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;sigopt_project_id&quot;</span><span class="p">:</span> <span class="s2">&quot;PROJECT-ID&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;sigopt_experiment_name&quot;</span><span class="p">:</span> <span class="s2">&quot;nc-tune&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="performance">
+<h2>Performance<a class="headerlink" href="#performance" title="Permalink to this heading">¶</a></h2>
+<section id="benefit-of-sigopt-strategy">
+<h3>Benefit of SigOpt Strategy<a class="headerlink" href="#benefit-of-sigopt-strategy" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Metric based SigOpt is better than self-defining and easy to use. You can read the details <a class="reference external" href="https://app.sigopt.com/docs/overview/metric_constraints">here</a>.</p></li>
+<li><p>With the token api, results of each experiment are recorded in your account. You can use the SigOpt data analysis function to analyze the results, such as drawing a chart, calculating the F1 score, etc.</p></li>
+</ul>
+</section>
+<section id="performance-comparison-of-different-strategies">
+<h3>Performance Comparison of Different Strategies<a class="headerlink" href="#performance-comparison-of-different-strategies" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>MobileNet_v1(tensorflow)</p></li>
+</ul>
+<pre><code>|strategy|FP32 baseline|int8 accuracy|int8 duration(s)|
+|--------|-------------|-------------|----------------|
+|  basic |  0.8266     | 0.8372      |  88.2132       |
+| sigopt |  0.8266     | 0.8372      |  83.7495       |
+</code></pre><ul class="simple">
+<li><p>ResNet50_v1(tensorflow)</p></li>
+</ul>
+<pre><code>|strategy|FP32 baseline|int8 accuracy|int8 duration(s)|
+|--------|-------------|-------------|----------------|
+|  basic |  0.8299     | 0.8294      |  85.0837       |
+| sigopt |  0.8299     | 0.8291      |  83.4469       |
+</code></pre></section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">SigOpt Strategy</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li><a class="reference internal" href="#preparation">Preparation</a></li>
+<li><a class="reference internal" href="#sigopt-platform">SigOpt Platform</a></li>
+<li><a class="reference internal" href="#neural-compressor-configuration">Neural Compressor Configuration</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#performance">Performance</a><ul>
+<li><a class="reference internal" href="#benefit-of-sigopt-strategy">Benefit of SigOpt Strategy</a></li>
+<li><a class="reference internal" href="#performance-comparison-of-different-strategies">Performance Comparison of Different Strategies</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/documentation_options.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

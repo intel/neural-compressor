@@ -1,0 +1,51 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_bn`
+=============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_bn
+
+.. autoapi-nested-parse::
+
+   Quantize FusedBatchNormV3 to int8 op.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_bn.FuseNodeStartWithFusedBatchNormV3
+
+
+
+
+.. py:class:: FuseNodeStartWithFusedBatchNormV3(**kwargs)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
+
+   Quantize FusedBatchNormV3 to int8 op and apply the fusion.
+
+   .. py:method:: apply_newly_bn_relu_fusion(match_node_name)
+
+      Apply the FusedBatchNormV3 Relu fusion.
+
+
+   .. py:method:: apply_newly_bn_leakyrelu_fusion(match_node_name)
+
+      Apply the FusedBatchNormV3 LeakyRelu fusion.
+
+
+   .. py:method:: get_longest_fuse()
+
+      Get the longest fusion pattern.
+
+
+   .. py:method:: apply_the_transform()
+
+      Quantize FusedBatchNormV3 and apply the fusion pattern.
+
+
+

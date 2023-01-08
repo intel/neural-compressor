@@ -1,0 +1,113 @@
+:py:mod:`neural_compressor.ux.components.file_browser.file_browser`
+===================================================================
+
+.. py:module:: neural_compressor.ux.components.file_browser.file_browser
+
+.. autoapi-nested-parse::
+
+   File browser.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.file_browser.file_browser.get_directory_entries
+   neural_compressor.ux.components.file_browser.file_browser.get_requested_path
+   neural_compressor.ux.components.file_browser.file_browser.get_non_hidden_directory_entries
+   neural_compressor.ux.components.file_browser.file_browser.create_dir_entry
+   neural_compressor.ux.components.file_browser.file_browser.create_file_entry
+   neural_compressor.ux.components.file_browser.file_browser.create_entry
+   neural_compressor.ux.components.file_browser.file_browser.sort_entries
+   neural_compressor.ux.components.file_browser.file_browser.should_show_files
+   neural_compressor.ux.components.file_browser.file_browser.should_show_only_model_files
+   neural_compressor.ux.components.file_browser.file_browser.get_setting_value
+   neural_compressor.ux.components.file_browser.file_browser.get_filter_value
+   neural_compressor.ux.components.file_browser.file_browser.filter_requested_entries
+   neural_compressor.ux.components.file_browser.file_browser.is_directory_entry
+   neural_compressor.ux.components.file_browser.file_browser.is_model_or_directory_entry
+   neural_compressor.ux.components.file_browser.file_browser.is_dataset_or_directory_entry
+
+
+
+.. py:function:: get_directory_entries(data: Dict[str, Any]) -> Dict[str, Any]
+
+   Get directory entries.
+
+
+.. py:function:: get_requested_path(data: Dict[str, Any]) -> str
+
+   Get name of requested filter.
+
+
+.. py:function:: get_non_hidden_directory_entries(path: str) -> List
+
+   Build a list of entries for path.
+
+
+.. py:function:: create_dir_entry(entry: os.DirEntry) -> Dict
+
+   Build a Directory entry.
+
+
+.. py:function:: create_file_entry(entry: os.DirEntry) -> Dict
+
+   Build a File entry.
+
+
+.. py:function:: create_entry(path: str, is_directory: bool) -> Dict
+
+   Build an entry.
+
+
+.. py:function:: sort_entries(entries: List) -> List
+
+   Sort entries, directories first, files second.
+
+
+.. py:function:: should_show_files(data: Dict[str, Any]) -> bool
+
+   Decide if files be returned.
+
+
+.. py:function:: should_show_only_model_files(data: Dict[str, Any]) -> bool
+
+   Decide if files be returned.
+
+
+.. py:function:: get_setting_value(setting: str, default: bool, data: Dict[str, Any]) -> bool
+
+   Get bool value from parameters.
+
+
+.. py:function:: get_filter_value(data: Dict[str, Any]) -> str
+
+   Get name of requested filter.
+
+
+.. py:function:: filter_requested_entries(entries: List, filter_name: str) -> List
+
+   Filter list of entries using provided filter.
+
+
+.. py:function:: is_directory_entry(entry: Dict) -> bool
+
+   Return if given entry is for directory.
+
+
+.. py:function:: is_model_or_directory_entry(entry: Dict) -> bool
+
+   Return if given entry should be shown on model list.
+
+
+.. py:function:: is_dataset_or_directory_entry(entry: Dict) -> bool
+
+   Return if given entry should be shown on dataset list.
+
+

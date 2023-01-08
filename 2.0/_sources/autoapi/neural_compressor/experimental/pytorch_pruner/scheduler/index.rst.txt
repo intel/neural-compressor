@@ -1,0 +1,133 @@
+:py:mod:`neural_compressor.experimental.pytorch_pruner.scheduler`
+=================================================================
+
+.. py:module:: neural_compressor.experimental.pytorch_pruner.scheduler
+
+.. autoapi-nested-parse::
+
+   scheduler module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pytorch_pruner.scheduler.Scheduler
+   neural_compressor.experimental.pytorch_pruner.scheduler.OneshotScheduler
+   neural_compressor.experimental.pytorch_pruner.scheduler.IterativeScheduler
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pytorch_pruner.scheduler.register_scheduler
+   neural_compressor.experimental.pytorch_pruner.scheduler.get_scheduler
+
+
+
+.. py:function:: register_scheduler(name)
+
+   Class decorator used to register a Scheduler subclass to the registry.
+
+   Decorator function used before a Scheduler subclass.
+   Make sure that the Scheduler class decorated by this function can be registered in SCHEDULERS.
+
+   :param cls: The class of register.
+   :type cls: class
+   :param name: A string. Define the scheduler type.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:function:: get_scheduler(config)
+
+   Get registered scheduler class.
+
+   Get a scheduler object from SCHEDULERS.
+
+   :param config: A config dict object. Contains the scheduler information.
+
+   :returns: A Scheduler object.
+
+
+.. py:class:: Scheduler(config)
+
+   Pruning Scheduler.
+
+   The class which defines a sparsity changing process during pruning.
+   Mainly contains two types:
+       1. iterative scheduler. Prune the model from dense to target sparsity gradually.
+       2. one-shot scheduler. Prune the model in a single step and reach the target sparsity.
+
+   :param config: A config dict object. Contains the scheduler information.
+
+   .. attribute:: config
+
+      A config dict object. Contains the scheduler information.
+
+   .. py:method:: update_sparsity_ratio(aggressive_ratio, current_prune_step, total_prune_steps, masks)
+      :abstractmethod:
+
+      To be implemented in subclasses.
+
+
+
+.. py:class:: OneshotScheduler(config)
+
+   Bases: :py:obj:`Scheduler`
+
+   Pruning Scheduler.
+
+   A Scheduler class derived from Scheduler.
+   Prune the model to target sparsity once.
+
+   :param config: A config dict object. Contains the scheduler information.
+
+   .. attribute:: Inherit from parent class Scheduler.
+
+      
+
+   .. py:method:: update_sparsity_ratio(aggressive_ratio, current_prune_step, total_prune_steps, masks)
+
+      Return the aggressive ratio.
+
+
+
+.. py:class:: IterativeScheduler(config)
+
+   Bases: :py:obj:`Scheduler`
+
+   Pruning Scheduler.
+
+   A Scheduler class derived from Scheduler.
+   Prune the model to from dense to target sparsity in several steps.
+
+   :param config: A config dict object. Contains the scheduler information.
+
+   .. attribute:: Inherit from parent class Scheduler.
+
+      
+
+   .. py:method:: update_sparsity_ratio(target_ratio, current_prune_step, total_prune_steps, masks)
+
+      Obtain new target sparsity ratio according to the step.
+
+      :param target_ratio: A float. The target sparsity ratio.
+      :param current_prune_step: A integer. The current pruning step.
+      :param total_prune_steps: A integer. The total steps included in the pruning progress.
+      :param masks: A dict{"module_name": Tensor}. The masks for modules' weights.
+
+      Returns：
+          A float. the target sparsity ratio the model will reach after the next pruning step.
+
+
+

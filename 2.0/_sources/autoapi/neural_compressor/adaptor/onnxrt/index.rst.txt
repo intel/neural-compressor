@@ -1,0 +1,219 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.onnxrt`
+==========================================
+
+.. py:module:: neural_compressor.adaptor.onnxrt
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.onnxrt.ONNXRUNTIMEAdaptor
+   neural_compressor.adaptor.onnxrt.ONNXRT_QLinearOpsAdaptor
+   neural_compressor.adaptor.onnxrt.ONNXRT_IntegerOpsAdaptor
+   neural_compressor.adaptor.onnxrt.ONNXRT_QDQAdaptor
+   neural_compressor.adaptor.onnxrt.ONNXRTQuery
+
+
+
+
+.. py:class:: ONNXRUNTIMEAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`neural_compressor.adaptor.adaptor.Adaptor`
+
+   The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+   .. py:method:: quantize(tune_cfg, model, data_loader, q_func=None)
+
+      The function is used to do calibration and quanitization in post-training
+         quantization.
+
+      :param tune_cfg: quantization config.
+      :type tune_cfg: dict
+      :param model: model need to do quantization.
+      :type model: object
+      :param data_loader: calibration dataset.
+      :type data_loader: object
+      :param q_func: training function for quantization aware training mode,
+                     unimplement yet for onnx.
+      :type q_func: optional
+
+      :returns: quantized model
+      :rtype: (dict)
+
+
+   .. py:method:: recover(model, q_config)
+
+      Execute the recover process on the specified model.
+
+      :param model: model need to do quantization.
+      :type model: object
+      :param q_config: recover configuration
+      :type q_config: dict
+
+      :returns: quantized model
+      :rtype: (dict)
+
+
+   .. py:method:: inspect_tensor(model, dataloader, op_list=[], iteration_list=[], inspect_type='activation', save_to_disk=False, save_path=None, quantization_cfg=None)
+
+      The function is used by tune strategy class for dumping tensor info.
+
+
+
+   .. py:method:: set_tensor(model, tensor_dict)
+
+      The function is used by tune strategy class for setting tensor back to model.
+
+      :param model: The model to set tensor. Usually it is quantized model.
+      :type model: object
+      :param tensor_dict: The tensor dict to set. Note the numpy array contains float
+                          value, adaptor layer has the responsibility to quantize to
+                          int8 or int32 to set into the quantized model if needed.
+                          The dict format is something like:
+                          {
+                            'weight0_name': numpy.array,
+                            'bias0_name': numpy.array,
+                            ...
+                          }
+      :type tensor_dict: dict
+
+
+   .. py:method:: query_fw_capability(model)
+
+      The function is used to query framework capability.
+      TODO: will be replaced by framework query API
+
+      :param model: onnx model
+
+      :returns: quantization capability
+      :rtype: (dict)
+
+
+   .. py:method:: evaluate(input_graph, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=False)
+
+      The function is for evaluation if no given eval func
+
+      :param input_graph: onnx model for evaluation
+      :param dataloader: dataloader for evaluation. neural_compressor.data.dataloader.ONNXDataLoader
+      :param postprocess: post-process for evalution. neural_compressor.data.transform.ONNXTransforms
+      :param metrics: : metrics for evaluation. neural_compressor.metric.ONNXMetrics
+      :param measurer: neural_compressor.objective.Measurer
+      :param iteration: max iterations of evaluaton.
+      :type iteration: int
+      :param tensorboard: whether to use tensorboard for visualizaton
+      :type tensorboard: bool
+      :param fp32_baseline: only for compare_label=False pipeline
+      :type fp32_baseline: boolen, optional
+
+      :returns: (float) evaluation results. acc, f1 e.g.
+
+
+   .. py:method:: save(model, path)
+
+      save model
+
+      :param model: model to save
+      :type model: ModelProto
+      :param path: save path
+      :type path: str
+
+
+
+.. py:class:: ONNXRT_QLinearOpsAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`ONNXRUNTIMEAdaptor`
+
+   The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+
+.. py:class:: ONNXRT_IntegerOpsAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`ONNXRUNTIMEAdaptor`
+
+   The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+
+.. py:class:: ONNXRT_QDQAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`ONNXRUNTIMEAdaptor`
+
+   The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+
+.. py:class:: ONNXRTQuery(local_config_file=None)
+
+   Bases: :py:obj:`neural_compressor.adaptor.query.QueryBackendCapability`
+
+   Base class that defines Query Interface.
+   Each adaption layer should implement the inherited class for specific backend on their own.
+
+   .. py:method:: get_version()
+
+      Get the current backend version infomation.
+
+      :returns: version string.
+      :rtype: [string]
+
+
+   .. py:method:: get_precisions()
+
+      Get supported precisions for current backend.
+
+      :returns: the precisions' name.
+      :rtype: [string list]
+
+
+   .. py:method:: get_op_types()
+
+      Get the supported op types by all precisions.
+
+      :returns: A list composed of dictionary which key is precision
+                and value is the op types.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_quantization_capability()
+
+      Get the supported op types' quantization capability.
+
+      :returns: A list composed of dictionary which key is precision
+                and value is a dict that describes all op types' quantization capability.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_op_types_by_precision(precision)
+
+      Get op types per precision
+
+      :param precision: precision name
+      :type precision: string
+
+      :returns: A list composed of op type.
+      :rtype: [string list]
+
+
+   .. py:method:: get_graph_optimization()
+
+      Get onnxruntime graph optimization level
+
+
+

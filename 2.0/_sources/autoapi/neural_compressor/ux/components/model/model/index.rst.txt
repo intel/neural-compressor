@@ -1,0 +1,109 @@
+:py:mod:`neural_compressor.ux.components.model.model`
+=====================================================
+
+.. py:module:: neural_compressor.ux.components.model.model
+
+.. autoapi-nested-parse::
+
+   The abstract model class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.model.Model
+
+
+
+
+.. py:class:: Model(path: str)
+
+   Bases: :py:obj:`abc.ABC`
+
+   Abstract model class.
+
+   .. py:property:: domain
+      :type: neural_compressor.ux.components.model.domain.Domain
+
+      Get model domain.
+
+   .. py:property:: input_shape
+      :type: neural_compressor.ux.components.model.shape.Shape
+
+      Try to detect data shape.
+
+   .. py:property:: shape_elements_order
+      :type: List[str]
+      :abstractmethod:
+
+      Get order of input shape channels.
+
+   .. py:property:: supports_profiling
+      :type: bool
+
+      Check if profiling is supported for the model.
+
+   .. py:property:: supports_graph
+      :type: bool
+
+      Check if it is possible to display model's graph.
+
+   .. py:property:: supports_pruning
+      :type: bool
+
+      Check if pruning is supported for the model.
+
+   .. py:method:: get_input_nodes() -> Optional[List[Any]]
+
+      Get model input nodes.
+
+
+   .. py:method:: get_output_nodes() -> Optional[List[Any]]
+
+      Get model output nodes.
+
+
+   .. py:method:: ensure_supported_path(path: str) -> None
+
+      Make sure that provided path is to supported model.
+
+
+   .. py:method:: get_model_graph() -> neural_compressor.ux.components.graph.graph.Graph
+      :abstractmethod:
+
+      Get model graph.
+
+
+   .. py:method:: get_tensors_info() -> dict
+      :abstractmethod:
+
+      Get information about tensors.
+
+
+   .. py:method:: get_framework_name() -> str
+      :staticmethod:
+      :abstractmethod:
+
+      Get the name of framework.
+
+
+   .. py:method:: supports_path(path: str) -> bool
+      :staticmethod:
+      :abstractmethod:
+
+      Check if given path is of supported model.
+
+
+   .. py:method:: guard_requirements_installed() -> None
+      :abstractmethod:
+
+      Ensure all requirements are installed.
+
+
+

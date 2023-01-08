@@ -1,0 +1,47 @@
+:py:mod:`neural_compressor.ux.components.model.tensorflow.keras`
+================================================================
+
+.. py:module:: neural_compressor.ux.components.model.tensorflow.keras
+
+.. autoapi-nested-parse::
+
+   Tensorflow keras model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.tensorflow.keras.KerasModel
+
+
+
+
+.. py:class:: KerasModel(path: str)
+
+   Bases: :py:obj:`neural_compressor.ux.components.model.tensorflow.model.TensorflowModel`
+
+   Keras model.
+
+   .. py:method:: get_input_nodes() -> Optional[List[Any]]
+
+      Get model input nodes.
+
+
+   .. py:method:: get_output_nodes() -> Optional[List[Any]]
+
+      Get model output nodes.
+
+
+   .. py:method:: supports_path(path: str) -> bool
+      :staticmethod:
+
+      Check if given path is of supported model.
+
+
+

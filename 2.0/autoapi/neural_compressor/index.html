@@ -1,0 +1,974 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/autoapi/neural_compressor/index.rst.txt" rel="nofollow"><img src="../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor">
+<span id="neural-compressor"></span><h1><a class="reference internal" href="#module-neural_compressor" title="neural_compressor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor</span></code></a><a class="headerlink" href="#module-neural_compressor" title="Permalink to this heading">¶</a></h1>
+<p>Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques.</p>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="algorithm/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.algorithm</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algorithm/algorithm/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.algorithm.algorithm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithm/fast_bias_correction/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.algorithm.fast_bias_correction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithm/weight_correction/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.algorithm.weight_correction</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contrib/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.contrib</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contrib/strategy/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.contrib.strategy</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contrib/strategy/sigopt/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.contrib.strategy.sigopt</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="contrib/strategy/tpe/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.contrib.strategy.tpe</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data/datasets/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.datasets</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data/datasets/bert_dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.datasets.bert_dataset</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data/datasets/coco_dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.datasets.coco_dataset</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data/datasets/dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.datasets.dataset</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data/datasets/dummy_dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.datasets.dummy_dataset</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data/datasets/dummy_dataset_v2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.datasets.dummy_dataset_v2</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data/datasets/imagenet_dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.datasets.imagenet_dataset</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data/datasets/style_transfer_dataset/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.datasets.style_transfer_dataset</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data/filters/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.filters</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data/filters/coco_filter/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.filters.coco_filter</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data/filters/filter/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.filters.filter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data/transforms/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.transforms</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data/transforms/imagenet_transform/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.transforms.imagenet_transform</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data/transforms/postprocess/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.transforms.postprocess</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data/transforms/tokenization/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.transforms.tokenization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="data/transforms/transform/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.data.transforms.transform</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="experimental/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="experimental/common/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.common</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="experimental/common/criterion/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.common.criterion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/common/dataloader/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.common.dataloader</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/common/metric/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.common.metric</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/common/model/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.common.model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/common/optimizer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.common.optimizer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/common/postprocess/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.common.postprocess</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/common/torch_utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.common.torch_utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/data/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="experimental/data/dataloaders/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.dataloaders</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/data/datasets/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.datasets</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/data/filters/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.filters</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/data/transforms/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/export/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="experimental/export/qlinear2qdq/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.qlinear2qdq</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/export/torch2onnx/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.torch2onnx</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/export/utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/metric/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="experimental/metric/bleu/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.bleu</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/metric/bleu_util/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.bleu_util</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/metric/coco_label_map/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.coco_label_map</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/metric/coco_tools/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.coco_tools</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/metric/evaluate_squad/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.evaluate_squad</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/metric/f1/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.f1</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/metric/metric/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.metric</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/nas/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="experimental/nas/dynast/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas.dynast</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/nas/basic_nas/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas.basic_nas</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/nas/dynas/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas.dynas</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/nas/nas/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas.nas</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/nas/nas_utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas.nas_utils</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/nas/search_algorithms/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas.search_algorithms</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/pruning_recipes/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pruning_recipes</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="experimental/pruning_recipes/patterns/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pruning_recipes.patterns</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/pytorch_pruner/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pytorch_pruner</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="experimental/pytorch_pruner/logger/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pytorch_pruner.logger</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/pytorch_pruner/patterns/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pytorch_pruner.patterns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/pytorch_pruner/prune_utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pytorch_pruner.prune_utils</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/pytorch_pruner/pruner/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pytorch_pruner.pruner</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/pytorch_pruner/pruning/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pytorch_pruner.pruning</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="experimental/pytorch_pruner/scheduler/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pytorch_pruner.scheduler</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/benchmark/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.benchmark</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/component/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.component</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/distillation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.distillation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/graph_optimization/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.graph_optimization</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/mixed_precision/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.mixed_precision</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/model_conversion/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.model_conversion</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/pruning/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pruning</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/pruning_v2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pruning_v2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/quantization/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.quantization</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="experimental/scheduler/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.scheduler</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="metric/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="metric/bleu/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric.bleu</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="metric/bleu_util/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric.bleu_util</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="metric/coco_label_map/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric.coco_label_map</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="metric/coco_tools/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric.coco_tools</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="metric/evaluate_squad/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric.evaluate_squad</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="metric/f1/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric.f1</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="metric/metric/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric.metric</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="model/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="model/base_model/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.base_model</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model/keras_model/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.keras_model</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model/model/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.model</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model/mxnet_model/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.mxnet_model</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model/nets_factory/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.nets_factory</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model/onnx_model/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.onnx_model</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model/tensorflow_model/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.tensorflow_model</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="model/torch_model/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.torch_model</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pruner/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pruner/pruner_legacy/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.pruner_legacy</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pruner/pruner_legacy/gradient_sensitivity/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.pruner_legacy.gradient_sensitivity</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="pruner/pruner_legacy/group_lasso/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.pruner_legacy.group_lasso</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="pruner/pruner_legacy/magnitude/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.pruner_legacy.magnitude</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="pruner/pruner_legacy/pattern_lock/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.pruner_legacy.pattern_lock</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="pruner/pruner_legacy/pruner/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.pruner_legacy.pruner</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pruner/criteria/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.criteria</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pruner/logger/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.logger</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pruner/patterns/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.patterns</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pruner/pruners/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.pruners</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pruner/pruning/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.pruning</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pruner/regs/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.regs</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pruner/schedulers/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.schedulers</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pruner/utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.pruner.utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="strategy/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="strategy/utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="strategy/utils/tuning_sampler/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.tuning_sampler</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="strategy/utils/tuning_space/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.tuning_space</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="strategy/utils/tuning_structs/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.tuning_structs</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="strategy/auto_mixed_precision/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.auto_mixed_precision</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="strategy/basic/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.basic</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="strategy/bayesian/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.bayesian</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="strategy/conservative/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.conservative</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="strategy/exhaustive/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.exhaustive</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="strategy/hawq_v2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.hawq_v2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="strategy/mse/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.mse</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="strategy/mse_v2/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.mse_v2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="strategy/random/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.random</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="strategy/strategy/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.strategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utils/collect_layer_histogram/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.collect_layer_histogram</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/constant/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.constant</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/create_obj_from_config/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.create_obj_from_config</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/kl_divergence/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.kl_divergence</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/load_huggingface/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.load_huggingface</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/logger/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.logger</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/options/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.options</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/pytorch/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.pytorch</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/utility/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.utils.utility</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ux/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ux/components/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/benchmark/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.benchmark</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/config_generator/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.config_generator</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/configuration_wizard/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.configuration_wizard</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/db_manager/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.db_manager</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/diagnosis/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.diagnosis</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/file_browser/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.file_browser</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/graph/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.graph</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/jobs_management/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.jobs_management</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/model/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/model_zoo/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.model_zoo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/names_mapper/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.names_mapper</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/optimization/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.optimization</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/profiling/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.profiling</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/components/manage_workspace/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.components.manage_workspace</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ux/utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/templates/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.templates</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/workload/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.workload</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/consts/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.consts</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/environment/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.environment</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/exceptions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.exceptions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/executor/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.executor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/expiring_dict/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.expiring_dict</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/github_info/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.github_info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/hw_info/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.hw_info</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/json_serializer/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.json_serializer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/logger/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.logger</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/parser/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.parser</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/proc/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.proc</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/processes/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.processes</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/singleton/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.singleton</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/status_updates/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.status_updates</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.utils</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/utils/yaml_utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.utils.yaml_utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ux/web/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ux/web/service/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web.service</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/web/communication/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web.communication</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/web/configuration/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web.configuration</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/web/exceptions/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web.exceptions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/web/router/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web.router</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ux/web/server/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.web.server</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ux/inc_bench/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.ux.inc_bench</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="benchmark/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.benchmark</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="config/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.config</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="mix_precision/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.mix_precision</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="objective/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.objective</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="quantization/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.quantization</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="training/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.training</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="version/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.version</span></code></a></li>
+</ul>
+</div>
+</section>
+<section id="package-contents">
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.Benchmark" title="neural_compressor.Benchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Benchmark</span></code></a></p></td>
+<td><p>Benchmark class can be used to evaluate the model performance.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.DistillationConfig" title="neural_compressor.DistillationConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DistillationConfig</span></code></a></p></td>
+<td><p>Config of distillation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.PostTrainingQuantConfig" title="neural_compressor.PostTrainingQuantConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code></a></p></td>
+<td><p>Config Class for Post Training Quantization.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.WeightPruningConfig" title="neural_compressor.WeightPruningConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WeightPruningConfig</span></code></a></p></td>
+<td><p>Similiar to torch optimizer's interface.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.QuantizationAwareTrainingConfig" title="neural_compressor.QuantizationAwareTrainingConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig</span></code></a></p></td>
+<td><p>Config Class for Quantization Aware Training.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.set_random_seed" title="neural_compressor.set_random_seed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_random_seed</span></code></a>(seed)</p></td>
+<td><p>Set the random seed in config.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.set_tensorboard" title="neural_compressor.set_tensorboard"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_tensorboard</span></code></a>(tensorboard)</p></td>
+<td><p>Set the tensorboard in config.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.set_workspace" title="neural_compressor.set_workspace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_workspace</span></code></a>(workspace)</p></td>
+<td><p>Set the workspace in config.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.Benchmark">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.</span></span><span class="sig-name descname"><span class="pre">Benchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_fname_or_obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.Benchmark" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Benchmark class can be used to evaluate the model performance.</p>
+<p>With the objective setting, user can get the data of what they configured in yaml.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>conf_fname_or_obj</strong> (<em>string</em><em> or </em><em>obj</em>) – The path to the YAML configuration file or
+Benchmark_Conf class containing accuracy goal, tuning objective and preferred
+calibration &amp; quantization tuning space etc.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.Benchmark.dataloader">
+<span class="sig-name descname"><span class="pre">dataloader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collate_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_batch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rollover'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pin_memory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shuffle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distributed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.Benchmark.dataloader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set dataloader for benchmarking.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.Benchmark.metric">
+<span class="sig-name descname"><span class="pre">metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_cls</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.Benchmark.metric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the metric class and Neural Compressor will initialize this class when evaluation.</p>
+<p>Neural Compressor has many built-in metrics, but users can set specific metrics through
+this api. The metric class should take the outputs of the model or
+postprocess (if have) as inputs. Neural Compressor built-in metrics always take
+(predictions, labels) as inputs for update,
+and user_metric.metric_cls should be a sub_class of neural_compressor.metric.metric
+or an user-defined metric object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>metric_cls</strong> (<em>cls</em>) – Should be a sub_class of neural_compressor.metric.BaseMetric,
+which takes (predictions, labels) as inputs</p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name for metric. Defaults to ‘user_metric’.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.Benchmark.postprocess">
+<span class="sig-name descname"><span class="pre">postprocess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocess_cls</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.Benchmark.postprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set postprocess class and neural_compressor will initialize this class when evaluation.</p>
+<p>The postprocess function should take the outputs of the model as inputs, and
+outputs (predictions, labels) as inputs for metric updates.</p>
+<p>Args:
+name (str, optional): Name for postprocess.
+postprocess_cls (cls): Should be a sub_class of neural_compressor.data.transforms.postprocess.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.set_random_seed">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.</span></span><span class="sig-name descname"><span class="pre">set_random_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.set_random_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the random seed in config.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.set_tensorboard">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.</span></span><span class="sig-name descname"><span class="pre">set_tensorboard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.set_tensorboard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the tensorboard in config.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.set_workspace">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.</span></span><span class="sig-name descname"><span class="pre">set_workspace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workspace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.set_workspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the workspace in config.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.DistillationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.</span></span><span class="sig-name descname"><span class="pre">DistillationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">teacher_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'SGD':</span> <span class="pre">{'learning_rate':</span> <span class="pre">0.0001}}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.DistillationConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Config of distillation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>teacher_model</strong> (<em>Callable</em>) – Teacher model for distillation. Defaults to None.</p></li>
+<li><p><strong>features</strong> (<em>optional</em>) – Teacher features for distillation, features and teacher_model are alternative.
+Defaults to None.</p></li>
+<li><p><strong>criterion</strong> (<em>Callable</em><em>, </em><em>optional</em>) – Distillation loss configure.</p></li>
+<li><p><strong>optimizer</strong> (<em>dictionary</em><em>, </em><em>optional</em>) – Optimizer configure.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.DistillationConfig.criterion">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">criterion</span></span><a class="headerlink" href="#neural_compressor.DistillationConfig.criterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get criterion.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.DistillationConfig.optimizer">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimizer</span></span><a class="headerlink" href="#neural_compressor.DistillationConfig.optimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get optimizer.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.DistillationConfig.teacher_model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">teacher_model</span></span><a class="headerlink" href="#neural_compressor.DistillationConfig.teacher_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get teacher_model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.PostTrainingQuantConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.</span></span><span class="sig-name descname"><span class="pre">PostTrainingQuantConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approach</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'static'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_sampling_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuning_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.PostTrainingQuantConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">_BaseQuantizationConfig</span></code></p>
+<p>Config Class for Post Training Quantization.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.PostTrainingQuantConfig.approach">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">approach</span></span><a class="headerlink" href="#neural_compressor.PostTrainingQuantConfig.approach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get approach.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.PostTrainingQuantConfig.tuning_criterion">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tuning_criterion</span></span><a class="headerlink" href="#neural_compressor.PostTrainingQuantConfig.tuning_criterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tuning_criterion.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.WeightPruningConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.</span></span><span class="sig-name descname"><span class="pre">WeightPruningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pruning_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[{}]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'snip_momentum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'4x1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_scope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.98</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparsity_decay_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_op_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Conv',</span> <span class="pre">'Linear']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.WeightPruningConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Similiar to torch optimizer’s interface.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.WeightPruningConfig.weight_compression">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">weight_compression</span></span><a class="headerlink" href="#neural_compressor.WeightPruningConfig.weight_compression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get weight_compression.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.QuantizationAwareTrainingConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.</span></span><span class="sig-name descname"><span class="pre">QuantizationAwareTrainingConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.QuantizationAwareTrainingConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">_BaseQuantizationConfig</span></code></p>
+<p>Config Class for Quantization Aware Training.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.QuantizationAwareTrainingConfig.approach">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">approach</span></span><a class="headerlink" href="#neural_compressor.QuantizationAwareTrainingConfig.approach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get approach.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor</span></code></a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#package-contents">Package Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a><ul>
+<li><a class="reference internal" href="#neural_compressor.Benchmark"><code class="docutils literal notranslate"><span class="pre">Benchmark</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.Benchmark.dataloader"><code class="docutils literal notranslate"><span class="pre">Benchmark.dataloader()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.Benchmark.metric"><code class="docutils literal notranslate"><span class="pre">Benchmark.metric()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.Benchmark.postprocess"><code class="docutils literal notranslate"><span class="pre">Benchmark.postprocess()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.set_random_seed"><code class="docutils literal notranslate"><span class="pre">set_random_seed()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.set_tensorboard"><code class="docutils literal notranslate"><span class="pre">set_tensorboard()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.set_workspace"><code class="docutils literal notranslate"><span class="pre">set_workspace()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.DistillationConfig"><code class="docutils literal notranslate"><span class="pre">DistillationConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.DistillationConfig.criterion"><code class="docutils literal notranslate"><span class="pre">DistillationConfig.criterion</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.DistillationConfig.optimizer"><code class="docutils literal notranslate"><span class="pre">DistillationConfig.optimizer</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.DistillationConfig.teacher_model"><code class="docutils literal notranslate"><span class="pre">DistillationConfig.teacher_model</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.PostTrainingQuantConfig"><code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.PostTrainingQuantConfig.approach"><code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig.approach</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.PostTrainingQuantConfig.tuning_criterion"><code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig.tuning_criterion</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.WeightPruningConfig"><code class="docutils literal notranslate"><span class="pre">WeightPruningConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.WeightPruningConfig.weight_compression"><code class="docutils literal notranslate"><span class="pre">WeightPruningConfig.weight_compression</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.QuantizationAwareTrainingConfig"><code class="docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.QuantizationAwareTrainingConfig.approach"><code class="docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig.approach</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.Benchmark">Benchmark</a><ul>
+<li><a class="reference internal" href="#neural_compressor.Benchmark.dataloader">dataloader</a></li>
+<li><a class="reference internal" href="#neural_compressor.Benchmark.metric">metric</a></li>
+<li><a class="reference internal" href="#neural_compressor.Benchmark.postprocess">postprocess</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.set_random_seed">set_random_seed</a></li>
+<li><a class="reference internal" href="#neural_compressor.set_tensorboard">set_tensorboard</a></li>
+<li><a class="reference internal" href="#neural_compressor.set_workspace">set_workspace</a></li>
+<li><a class="reference internal" href="#neural_compressor.DistillationConfig">DistillationConfig</a><ul>
+<li><a class="reference internal" href="#neural_compressor.DistillationConfig.criterion">criterion</a></li>
+<li><a class="reference internal" href="#neural_compressor.DistillationConfig.optimizer">optimizer</a></li>
+<li><a class="reference internal" href="#neural_compressor.DistillationConfig.teacher_model">teacher_model</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.PostTrainingQuantConfig">PostTrainingQuantConfig</a><ul>
+<li><a class="reference internal" href="#neural_compressor.PostTrainingQuantConfig.approach">approach</a></li>
+<li><a class="reference internal" href="#neural_compressor.PostTrainingQuantConfig.tuning_criterion">tuning_criterion</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.WeightPruningConfig">WeightPruningConfig</a><ul>
+<li><a class="reference internal" href="#neural_compressor.WeightPruningConfig.weight_compression">weight_compression</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.QuantizationAwareTrainingConfig">QuantizationAwareTrainingConfig</a><ul>
+<li><a class="reference internal" href="#neural_compressor.QuantizationAwareTrainingConfig.approach">approach</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

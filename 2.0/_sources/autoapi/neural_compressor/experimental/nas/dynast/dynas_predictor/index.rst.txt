@@ -1,0 +1,85 @@
+:py:mod:`neural_compressor.experimental.nas.dynast.dynas_predictor`
+===================================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynast.dynas_predictor
+
+.. autoapi-nested-parse::
+
+   DyNAS Manager class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.dynast.dynas_predictor.Predictor
+
+
+
+
+.. py:class:: Predictor(alphas=DEFAULT_ALPHAS, cost_factors=DEFAULT_COST_FACTORS, max_iterations=DEFAULT_MAX_ITERATIONS, verbose=False)
+
+   The Predictor class.
+
+   It handles the prediction of the metrics like accuracy, MACs and latency etc..
+
+   .. py:method:: train(examples, labels)
+
+      Train the predictor on the specified examples and labels using the underlying regressor.
+
+      :param examples: Examples to be used for training.
+      :param labels: Labels to be used for training.
+
+
+   .. py:method:: predict(examples)
+
+      Predict the output values of the specified examples using the underlying regressor.
+
+      :param examples: Examples for which predictions will be made.
+
+      :returns: Predictions of the specified examples.
+
+
+   .. py:method:: get_parameters()
+
+      Return the optimal parameter values of the underlying regressor.
+
+      :returns: Optimal parameter values of the underlying regressor.
+
+
+   .. py:method:: get_metrics(examples, labels)
+
+      Compute the performance metrics of the underlying regressor.
+
+      :param examples: Examples to use when computing performance metrics.
+      :param labels: Labels to use when computing performance metrics.
+
+      :returns:
+
+                Performance metrics of the underlying regressor. The metrics are
+                    Mean absolute percentage error (MAPE)
+                    Root mean squared error (RMSE)
+                    Kendall rank correlation coefficient (kendall)
+                    Spearman's rank correlation coefficient (spearman)
+
+
+   .. py:method:: load(filename)
+
+      Load the model of the underlying regressor and searcher.
+
+      :param filename: Name of the file from which to load the model.
+
+
+   .. py:method:: save(filename)
+
+      Save the model of the underlying regressor and searcher.
+
+      :param filename: Name of the file to which to save the model.
+
+
+

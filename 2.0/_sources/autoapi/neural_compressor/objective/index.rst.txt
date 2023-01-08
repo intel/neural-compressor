@@ -1,0 +1,254 @@
+:py:mod:`neural_compressor.objective`
+=====================================
+
+.. py:module:: neural_compressor.objective
+
+.. autoapi-nested-parse::
+
+   The objectives supported by neural_compressor, which is driven by accuracy.
+
+   To support new objective, developers just need implement a new subclass in this file.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.objective.Objective
+   neural_compressor.objective.Accuracy
+   neural_compressor.objective.Performance
+   neural_compressor.objective.Footprint
+   neural_compressor.objective.ModelSize
+   neural_compressor.objective.MultiObjective
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.objective.objective_registry
+   neural_compressor.objective.objective_custom_registry
+
+
+
+.. py:function:: objective_registry(cls)
+
+   The class decorator used to register all Objective subclasses.
+
+   :param cls: The class of register.
+   :type cls: object
+
+   :returns: The class of register.
+   :rtype: cls (object)
+
+
+.. py:function:: objective_custom_registry(name, obj_cls)
+
+   Register a customized objective.
+
+
+.. py:class:: Objective
+
+   Bases: :py:obj:`object`
+
+   The base class for precise benchmark supported by neural_compressor.
+
+   .. py:property:: model
+
+      The interface benchmark model.
+
+   .. py:method:: reset()
+      :abstractmethod:
+
+      The interface reset benchmark measuring.
+
+
+   .. py:method:: start()
+      :abstractmethod:
+
+      The interface start benchmark measuring.
+
+
+   .. py:method:: end()
+      :abstractmethod:
+
+      The interface end benchmark measuring.
+
+
+   .. py:method:: result(start=None, end=None)
+
+      The result will return the total mean of the result.
+
+      The interface to get benchmark measuring result measurer may sart and end many times,
+      can set the start and end index of the result list to calculate.
+
+      :param start: start point to calculate result from result list
+                    used to skip steps for warm up
+      :type start: int
+      :param end: end point to calculate result from result list
+      :type end: int
+
+
+   .. py:method:: result_list()
+
+      The interface to get benchmark measuring result list.
+
+      This interface will return a list of each start-end loop measure value.
+
+
+
+.. py:class:: Accuracy
+
+   Bases: :py:obj:`Objective`
+
+   Configuration Accuracy class.
+
+   .. py:method:: start()
+
+      The interface start the measuring.
+
+
+   .. py:method:: end(acc)
+
+      The interface end the measuring.
+
+
+
+.. py:class:: Performance
+
+   Bases: :py:obj:`Objective`
+
+   Configuration Performance class.
+
+   .. py:method:: start()
+
+      Record the start time.
+
+
+   .. py:method:: end()
+
+      Record the duration time.
+
+
+
+.. py:class:: Footprint
+
+   Bases: :py:obj:`Objective`
+
+   Configuration Footprint class.
+
+   .. py:method:: start()
+
+      Record the space allocation.
+
+
+   .. py:method:: end()
+
+      Calculate the space usage.
+
+
+
+.. py:class:: ModelSize
+
+   Bases: :py:obj:`Objective`
+
+   Configuration ModelSize class.
+
+   .. py:method:: start()
+
+      Start to calculate the model size.
+
+
+   .. py:method:: end()
+
+      Get the actual model size.
+
+
+
+.. py:class:: MultiObjective(objectives, accuracy_criterion, metric_criterion=[True], metric_weight=None, obj_criterion=None, obj_weight=None, is_measure=False)
+
+   The base class for multiple benchmarks supported by neural_compressor.
+
+   .. py:property:: baseline
+
+      Get the actual model performance.
+
+   .. py:property:: accuracy_target
+
+      Set the accuracy target.
+
+   .. py:method:: compare(last, baseline)
+
+      The interface of comparing if metric reaches the goal with acceptable accuracy loss.
+
+      :param last: The tuple of last metric.
+      :type last: tuple
+      :param baseline: The tuple saving FP32 baseline.
+      :type baseline: tuple
+
+
+   .. py:method:: accuracy_meets()
+
+      Verify the new model performance is better than the previous model performance.
+
+
+   .. py:method:: evaluate(eval_func, model)
+
+      The interface of calculating the objective.
+
+      :param eval_func: function to do evaluation.
+      :type eval_func: function
+      :param model: model to do evaluation.
+      :type model: object
+
+
+   .. py:method:: reset()
+
+      Reset the objective value.
+
+
+   .. py:method:: start()
+
+      Start to measure the objective value.
+
+
+   .. py:method:: end(acc)
+
+      Calculate the objective value.
+
+
+   .. py:method:: result()
+
+      Get the results.
+
+
+   .. py:method:: set_model(model)
+
+      Set the objective model.
+
+
+   .. py:method:: best_result(tune_data, baseline)
+
+      Calculate the best results.
+
+      metric + multi-objectives case:
+          tune_data = [
+              [acc1, [obj1, obj2, ...]],
+              [acc2, [obj1, obj2, ...]],
+              ...
+          ]
+          multi-metrics + multi-objectives case:
+          tune_data = [
+              [[acc1, acc2], [[acc1, acc2], obj1, obj2]],
+              [[acc1, acc2], [[acc1, acc2], obj1, obj2]]
+          ]
+
+
+

@@ -1,0 +1,83 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.pre_optimize`
+================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.pre_optimize
+
+.. autoapi-nested-parse::
+
+   Pre Optimization Entrance.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.pre_optimize.PreOptimization
+
+
+
+
+.. py:class:: PreOptimization(model, optimization, new_api, device)
+
+   Pre optimization for the FP32 models.
+
+   .. py:method:: get_excluded_node_names()
+
+      Get the excluded node name.
+
+      :returns: the excluded ops' name
+      :rtype: string list
+
+
+   .. py:method:: get_optimized_model(itex_mode=False)
+
+      Executed the non-precision dependant graph optimization.
+
+      The input graph will be optimized with following passes:
+      1. Remove the training nodes like Identity Op.
+      2. Split the shared nodes like weights node for multi-Conv2d.
+      3. Fold Constant Nodes as less as possible.
+      4. Fuse the Mul node into the previous Conv2D/MatMul if possible.
+      5. Strip the useless nodes.
+      6. Do the Common sequence elimation optimization on the graph.
+      7. Fold the BN node into the previous Conv2D if possible.
+
+      :returns: the optimized graphdef object.
+      :rtype: [graphdef]
+
+
+   .. py:method:: get_matched_nodes(patterns)
+
+      Searche the matched nodes with the specified patterns.
+
+      :param patterns: The patterns should be illustrated as below.
+                       [['MatMul'], ("BiasAdd"), ("Relu",)]
+      :type patterns: [string list]
+
+      :returns:
+
+                It will return the list that contains the matched nodes name
+                    and pattern. ['matched_node_a_name', 'matched_node_a_name',['MatMul','BiasAdd']]
+      :rtype: [string list]
+
+
+   .. py:method:: has_positive_input(node_name)
+
+      Check the specified node has the positive input or not.
+
+      :param node_name: node's name
+      :type node_name: [string]
+
+      :returns:
+
+                True if the node has the positive input data,
+                        False if the node has the negative input data.
+      :rtype: [bool]
+
+
+

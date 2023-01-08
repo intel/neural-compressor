@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_pad_with_fp32_conv`
+===========================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_pad_with_fp32_conv
+
+.. autoapi-nested-parse::
+
+   Fuse Pad into Conv Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_pad_with_fp32_conv.FusePadWithFP32Conv2DOptimizer
+
+
+
+
+.. py:class:: FusePadWithFP32Conv2DOptimizer(model, excluded_op_names, inputs, cfg, new_api, itex_qdq_mode=False)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Fuse Pad op into Conv.
+
+   .. py:method:: do_transformation()
+
+      Fuse Pad op into Conv2D/DepthwiseConv2dNative/Conv3D.
+
+
+

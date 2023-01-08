@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.ux.utils.workload.mixed_precision`
+=============================================================
+
+.. py:module:: neural_compressor.ux.utils.workload.mixed_precision
+
+.. autoapi-nested-parse::
+
+   Configuration mixed_precision module.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.utils.workload.mixed_precision.MixedPrecision
+
+
+
+
+.. py:class:: MixedPrecision(data: Optional[Dict[str, Any]] = None)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Configuration Mixed Precision class.
+
+   .. py:method:: set_precisions(precisions: Union[str, List[str]]) -> None
+
+      Update mixed_precision precisions in config.
+
+
+

@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert`
+============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert
+
+.. autoapi-nested-parse::
+
+   Quantized RNN Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.rnn_convert.QuantizedRNNConverter
+
+
+
+
+.. py:class:: QuantizedRNNConverter(model, calibration_data, rnn_details, new_api=False)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Quantized RNN converter.
+
+   .. py:method:: do_transformation()
+
+      Apply the RNN convertion.
+
+
+

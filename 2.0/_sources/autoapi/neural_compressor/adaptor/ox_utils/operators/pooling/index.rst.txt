@@ -1,0 +1,64 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.pooling`
+==============================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.pooling
+
+.. autoapi-nested-parse::
+
+   AveragePool Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.pooling.PoolOperator
+   neural_compressor.adaptor.ox_utils.operators.pooling.QPoolOperator
+
+
+
+
+.. py:class:: PoolOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   AveragePool Operator.
+
+   .. py:method:: quantize_check()
+
+      Check if quantizaion can be done.
+
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+
+.. py:class:: QPoolOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.QOperator`
+
+   QLinearAveragePool Operator.
+
+   .. py:method:: convert()
+
+      Convert to QDQ format.
+
+
+

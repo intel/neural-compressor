@@ -1,0 +1,31 @@
+:py:mod:`neural_compressor.ux.components.graph.attribute`
+=========================================================
+
+.. py:module:: neural_compressor.ux.components.graph.attribute
+
+.. autoapi-nested-parse::
+
+   Graph Node Attribute.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.graph.attribute.Attribute
+
+
+
+
+.. py:class:: Attribute(name: str, attribute_type: str, value: Any)
+
+   Bases: :py:obj:`neural_compressor.ux.utils.json_serializer.JsonSerializer`
+
+   Graph Node Attribute.
+
+

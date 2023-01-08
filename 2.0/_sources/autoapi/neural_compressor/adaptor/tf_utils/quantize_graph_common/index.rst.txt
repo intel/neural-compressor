@@ -1,0 +1,207 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph_common`
+==================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph_common
+
+.. autoapi-nested-parse::
+
+   Quantize Graph Common Utils Herlper Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph_common.QuantizeGraphHelper
+
+
+
+
+.. py:class:: QuantizeGraphHelper
+
+   This class contains several staticmethod functions.
+
+   .. py:method:: get_sorted_graph(input_graph, input_node_names, output_node_names)
+
+      Return a sorted graphdef object.
+
+      Sometimes the input graphdef was composed of the randome nodedef objects,
+      we reorder the graph to make the parsing more easier.
+
+      :param input_graph: the input graphdef object
+      :type input_graph: graphdef]
+      :param input_node_names: the input node names
+      :type input_node_names: string list
+      :param output_node_names: the output node names
+      :type output_node_names: string list
+
+      :returns: [description]
+      :rtype: [type]
+
+
+   .. py:method:: split_shared_inputs(input_graph_def)
+      :staticmethod:
+
+      Split shared inputs(like weights and bias) of the graph.
+
+      :param in_graph: input graph file.
+      :return: path to ouput graph file.
+
+
+   .. py:method:: remove_training_nodes(input_graph, protected_nodes=[], types_to_splice=['Identity', 'CheckNumerics'])
+      :staticmethod:
+
+      Prunes out nodes that aren't needed for inference.
+
+      :param input_graph: Model to analyze and prune.
+      :param types_to_splice: An optional list of types of nodes to be removed
+      :param unconditionally.:
+
+      :returns: A optimized graphdef object.
+
+
+   .. py:method:: create_node(op, name, inputs)
+      :staticmethod:
+
+      Create a nodedef object.
+
+      :param op: op type
+      :type op: string
+      :param name: op name
+      :type name: string
+      :param inputs: op's inputs name
+      :type inputs: string list
+
+      :returns: the created nodedef object
+      :rtype: nodedef
+
+
+   .. py:method:: create_constant_node(name, value, dtype, shape=None, device='cpu')
+      :staticmethod:
+
+      Create constant node.
+
+      :param name: op name
+      :type name: string
+      :param value: input data
+      :type value: np.array
+      :param dtype: data type of the input value
+      :type dtype: datatype
+      :param shape: the value's shape. Defaults to None.
+      :type shape: int list, optional
+      :param device: the device type, it may be the 'cpu' or 'gpu'.
+                     Defaults to 'cpu'.
+      :type device: str, optional
+
+      :returns: [description]
+      :rtype: [type]
+
+
+   .. py:method:: copy_attr(node, key, attr_value)
+      :staticmethod:
+
+      Copy the specified attr value to node.
+
+      :param node: a nodedef object
+      :type node: nodedef
+      :param key: string name
+      :type key: string
+      :param attr_value: the specified attribute value
+      :type attr_value: any
+
+
+   .. py:method:: set_attr_dtype(node, key, value)
+      :staticmethod:
+
+      Set the attribute data type.
+
+
+   .. py:method:: set_attr_tensor(node, key, value, dtype, shape=None)
+      :staticmethod:
+
+      Set the tensor value to specified attribute field.
+
+      :param node: the target nodedef object
+      :type node: nodedef
+      :param key: attribute name
+      :type key: string
+      :param value: the content
+      :type value: np.array
+      :param dtype: data type
+      :type dtype: dtypes
+      :param shape: the input tensor's shape. Defaults to None.
+      :type shape: int list, optional
+
+
+   .. py:method:: set_attr_string_list(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is int list.
+
+
+   .. py:method:: set_attr_type_list(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is int list.
+
+
+   .. py:method:: set_attr_string(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is string.
+
+
+   .. py:method:: set_attr_bool(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is bool.
+
+
+   .. py:method:: set_attr_int(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is int.
+
+
+   .. py:method:: set_attr_float(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is float.
+
+
+   .. py:method:: node_name_from_input(node_name)
+      :staticmethod:
+
+      Static method that get the valid node name from input name.
+
+      :param node_name: node name defined in the input field.
+      :type node_name: string
+
+      :returns: node's name
+      :rtype: string
+
+
+   .. py:method:: unique_node_name_from_input(node_name)
+      :staticmethod:
+
+      Get the node name from other node name's input field.
+
+
+   .. py:method:: ensure_tensor_name_has_port(node_name)
+      :staticmethod:
+
+      Makes sure that a tensor name has :0 if no explicit port exists.
+
+
+   .. py:method:: generate_quantized_weight_node(host_op_type, input_node, per_channel, weight_bit=7.0, device='cpu', enter_node=None)
+      :staticmethod:
+
+      Generated the quantized weight node.
+
+
+

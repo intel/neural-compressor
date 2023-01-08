@@ -1,0 +1,1027 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor.config &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.config</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/autoapi/neural_compressor/config/index.rst.txt" rel="nofollow"><img src="../../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor.config">
+<span id="neural-compressor-config"></span><h1><a class="reference internal" href="#module-neural_compressor.config" title="neural_compressor.config"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.config</span></code></a><a class="headerlink" href="#module-neural_compressor.config" title="Permalink to this heading">¶</a></h1>
+<p>Configs for Neural Compressor.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.Options" title="neural_compressor.config.Options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Options</span></code></a></p></td>
+<td><p>Option Class for configs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig" title="neural_compressor.config.BenchmarkConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BenchmarkConfig</span></code></a></p></td>
+<td><p>Config Class for Benchmark.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion" title="neural_compressor.config.AccuracyCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AccuracyCriterion</span></code></a></p></td>
+<td><p>Class of Accuracy Criterion.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.TuningCriterion" title="neural_compressor.config.TuningCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningCriterion</span></code></a></p></td>
+<td><p>Class for Tuning Criterion.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.PostTrainingQuantConfig" title="neural_compressor.config.PostTrainingQuantConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code></a></p></td>
+<td><p>Config Class for Post Training Quantization.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.QuantizationAwareTrainingConfig" title="neural_compressor.config.QuantizationAwareTrainingConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig</span></code></a></p></td>
+<td><p>Config Class for Quantization Aware Training.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.WeightPruningConfig" title="neural_compressor.config.WeightPruningConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WeightPruningConfig</span></code></a></p></td>
+<td><p>Similiar to torch optimizer's interface.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.KnowledgeDistillationLossConfig" title="neural_compressor.config.KnowledgeDistillationLossConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KnowledgeDistillationLossConfig</span></code></a></p></td>
+<td><p>Config Class for Knowledge Distillation Loss.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig" title="neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IntermediateLayersKnowledgeDistillationLossConfig</span></code></a></p></td>
+<td><p>Config Class for Intermediate Layers Knowledge Distillation Loss.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.SelfKnowledgeDistillationLossConfig" title="neural_compressor.config.SelfKnowledgeDistillationLossConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SelfKnowledgeDistillationLossConfig</span></code></a></p></td>
+<td><p>Config Class for Self Knowledge Distillation Loss.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.DistillationConfig" title="neural_compressor.config.DistillationConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DistillationConfig</span></code></a></p></td>
+<td><p>Config of distillation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.MixedPrecisionConfig" title="neural_compressor.config.MixedPrecisionConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MixedPrecisionConfig</span></code></a></p></td>
+<td><p>Config Class for MixedPrecision.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.ExportConfig" title="neural_compressor.config.ExportConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExportConfig</span></code></a></p></td>
+<td><p>Config Class for Export.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.ONNXQlinear2QDQConfig" title="neural_compressor.config.ONNXQlinear2QDQConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXQlinear2QDQConfig</span></code></a></p></td>
+<td><p>Config Class for ONNXQlinear2QDQ.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.Torch2ONNXConfig" title="neural_compressor.config.Torch2ONNXConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Torch2ONNXConfig</span></code></a></p></td>
+<td><p>Config Class for Torch2ONNX.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.config.TF2ONNXConfig" title="neural_compressor.config.TF2ONNXConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TF2ONNXConfig</span></code></a></p></td>
+<td><p>Config Class for TF2ONNX.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.config.check_value" title="neural_compressor.config.check_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_value</span></code></a>(name, src, supported_type[, supported_value])</p></td>
+<td><p>Check if the given object is the given supported type and in the given supported value.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.config.check_value">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">check_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supported_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supported_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.check_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the given object is the given supported type and in the given supported value.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.Options">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">Options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">random_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1978</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workspace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">default_workspace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resume_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.Options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Option Class for configs.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.Options.random_seed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">random_seed</span></span><a class="headerlink" href="#neural_compressor.config.Options.random_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get random seed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.Options.workspace">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workspace</span></span><a class="headerlink" href="#neural_compressor.config.Options.workspace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get workspace.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.Options.resume_from">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">resume_from</span></span><a class="headerlink" href="#neural_compressor.config.Options.resume_from" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get resume_from.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.Options.tensorboard">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tensorboard</span></span><a class="headerlink" href="#neural_compressor.config.Options.tensorboard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tensorboard.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">BenchmarkConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cores_per_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_of_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inter_num_of_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intra_num_of_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Config Class for Benchmark.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig.backend">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backend</span></span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig.backend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get backend.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig.outputs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">outputs</span></span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig.outputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get outputs.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig.inputs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inputs</span></span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig.inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get inputs.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig.warmup">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">warmup</span></span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig.warmup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get warmup.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig.iteration">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">iteration</span></span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig.iteration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get iteration.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig.cores_per_instance">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cores_per_instance</span></span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig.cores_per_instance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get cores_per_instance.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig.num_of_instance">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_of_instance</span></span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig.num_of_instance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get num_of_instance.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig.inter_num_of_threads">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inter_num_of_threads</span></span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig.inter_num_of_threads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get inter_num_of_threads.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig.intra_num_of_threads">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">intra_num_of_threads</span></span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig.intra_num_of_threads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get intra_num_of_threads.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.AccuracyCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">AccuracyCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">higher_is_better</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'relative'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerable_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.AccuracyCriterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class of Accuracy Criterion.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.AccuracyCriterion.higher_is_better">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">higher_is_better</span></span><a class="headerlink" href="#neural_compressor.config.AccuracyCriterion.higher_is_better" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get higher_is_better.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.AccuracyCriterion.relative">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">relative</span></span><a class="headerlink" href="#neural_compressor.config.AccuracyCriterion.relative" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tolerable_loss when criterion is relative.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.AccuracyCriterion.absolute">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">absolute</span></span><a class="headerlink" href="#neural_compressor.config.AccuracyCriterion.absolute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tolerable_loss when criterion is absolute.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.AccuracyCriterion.criterion">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">criterion</span></span><a class="headerlink" href="#neural_compressor.config.AccuracyCriterion.criterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get criterion.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.AccuracyCriterion.tolerable_loss">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tolerable_loss</span></span><a class="headerlink" href="#neural_compressor.config.AccuracyCriterion.tolerable_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tolerable_loss.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.TuningCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">TuningCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'basic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'performance'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.TuningCriterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for Tuning Criterion.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.TuningCriterion.max_trials">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">max_trials</span></span><a class="headerlink" href="#neural_compressor.config.TuningCriterion.max_trials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get max_trials.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.TuningCriterion.timeout">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">timeout</span></span><a class="headerlink" href="#neural_compressor.config.TuningCriterion.timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get timeout.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.TuningCriterion.objective">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">objective</span></span><a class="headerlink" href="#neural_compressor.config.TuningCriterion.objective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get objective.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.TuningCriterion.strategy">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">strategy</span></span><a class="headerlink" href="#neural_compressor.config.TuningCriterion.strategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get strategy.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.TuningCriterion.strategy_kwargs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">strategy_kwargs</span></span><a class="headerlink" href="#neural_compressor.config.TuningCriterion.strategy_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get strategy_kwargs.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.PostTrainingQuantConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">PostTrainingQuantConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approach</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'static'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_sampling_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuning_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.PostTrainingQuantConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">_BaseQuantizationConfig</span></code></p>
+<p>Config Class for Post Training Quantization.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.PostTrainingQuantConfig.approach">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">approach</span></span><a class="headerlink" href="#neural_compressor.config.PostTrainingQuantConfig.approach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get approach.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.PostTrainingQuantConfig.tuning_criterion">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tuning_criterion</span></span><a class="headerlink" href="#neural_compressor.config.PostTrainingQuantConfig.tuning_criterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tuning_criterion.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.QuantizationAwareTrainingConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">QuantizationAwareTrainingConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.QuantizationAwareTrainingConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">_BaseQuantizationConfig</span></code></p>
+<p>Config Class for Quantization Aware Training.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.QuantizationAwareTrainingConfig.approach">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">approach</span></span><a class="headerlink" href="#neural_compressor.config.QuantizationAwareTrainingConfig.approach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get approach.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.WeightPruningConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">WeightPruningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pruning_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[{}]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'snip_momentum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'4x1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_scope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.98</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparsity_decay_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_op_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Conv',</span> <span class="pre">'Linear']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.WeightPruningConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Similiar to torch optimizer’s interface.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.WeightPruningConfig.weight_compression">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">weight_compression</span></span><a class="headerlink" href="#neural_compressor.config.WeightPruningConfig.weight_compression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get weight_compression.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.KnowledgeDistillationLossConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">KnowledgeDistillationLossConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CE',</span> <span class="pre">'CE']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.5,</span> <span class="pre">0.5]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.KnowledgeDistillationLossConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Config Class for Knowledge Distillation Loss.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">IntermediateLayersKnowledgeDistillationLossConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_mappings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_origin_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Config Class for Intermediate Layers Knowledge Distillation Loss.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.SelfKnowledgeDistillationLossConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">SelfKnowledgeDistillationLossConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_mappings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_origin_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.SelfKnowledgeDistillationLossConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Config Class for Self Knowledge Distillation Loss.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.DistillationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">DistillationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">teacher_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'SGD':</span> <span class="pre">{'learning_rate':</span> <span class="pre">0.0001}}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.DistillationConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Config of distillation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>teacher_model</strong> (<em>Callable</em>) – Teacher model for distillation. Defaults to None.</p></li>
+<li><p><strong>features</strong> (<em>optional</em>) – Teacher features for distillation, features and teacher_model are alternative.
+Defaults to None.</p></li>
+<li><p><strong>criterion</strong> (<em>Callable</em><em>, </em><em>optional</em>) – Distillation loss configure.</p></li>
+<li><p><strong>optimizer</strong> (<em>dictionary</em><em>, </em><em>optional</em>) – Optimizer configure.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.DistillationConfig.criterion">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">criterion</span></span><a class="headerlink" href="#neural_compressor.config.DistillationConfig.criterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get criterion.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.DistillationConfig.optimizer">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimizer</span></span><a class="headerlink" href="#neural_compressor.config.DistillationConfig.optimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get optimizer.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.DistillationConfig.teacher_model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">teacher_model</span></span><a class="headerlink" href="#neural_compressor.config.DistillationConfig.teacher_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get teacher_model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.MixedPrecisionConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">MixedPrecisionConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuning_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.MixedPrecisionConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.config.PostTrainingQuantConfig" title="neural_compressor.config.PostTrainingQuantConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code></a></p>
+<p>Config Class for MixedPrecision.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.ExportConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">ExportConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.ExportConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Config Class for Export.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.ExportConfig.dtype">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><a class="headerlink" href="#neural_compressor.config.ExportConfig.dtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get dtype.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.ExportConfig.opset_version">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">opset_version</span></span><a class="headerlink" href="#neural_compressor.config.ExportConfig.opset_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get opset_version.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.ExportConfig.quant_format">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">quant_format</span></span><a class="headerlink" href="#neural_compressor.config.ExportConfig.quant_format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get quant_format.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.ExportConfig.example_inputs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">example_inputs</span></span><a class="headerlink" href="#neural_compressor.config.ExportConfig.example_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get example_inputs.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.ExportConfig.input_names">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_names</span></span><a class="headerlink" href="#neural_compressor.config.ExportConfig.input_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get input_names.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.ExportConfig.output_names">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_names</span></span><a class="headerlink" href="#neural_compressor.config.ExportConfig.output_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get output_names.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.config.ExportConfig.dynamic_axes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dynamic_axes</span></span><a class="headerlink" href="#neural_compressor.config.ExportConfig.dynamic_axes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get dynamic_axes.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.ONNXQlinear2QDQConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">ONNXQlinear2QDQConfig</span></span><a class="headerlink" href="#neural_compressor.config.ONNXQlinear2QDQConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Config Class for ONNXQlinear2QDQ.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.Torch2ONNXConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">Torch2ONNXConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recipe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ_OP_FP32_BIAS'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.Torch2ONNXConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.config.ExportConfig" title="neural_compressor.config.ExportConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExportConfig</span></code></a></p>
+<p>Config Class for Torch2ONNX.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.config.TF2ONNXConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">TF2ONNXConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.TF2ONNXConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.config.ExportConfig" title="neural_compressor.config.ExportConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExportConfig</span></code></a></p>
+<p>Config Class for TF2ONNX.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.config</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.check_value"><code class="docutils literal notranslate"><span class="pre">check_value()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.Options"><code class="docutils literal notranslate"><span class="pre">Options</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.Options.random_seed"><code class="docutils literal notranslate"><span class="pre">Options.random_seed</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.Options.workspace"><code class="docutils literal notranslate"><span class="pre">Options.workspace</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.Options.resume_from"><code class="docutils literal notranslate"><span class="pre">Options.resume_from</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.Options.tensorboard"><code class="docutils literal notranslate"><span class="pre">Options.tensorboard</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig"><code class="docutils literal notranslate"><span class="pre">BenchmarkConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.backend"><code class="docutils literal notranslate"><span class="pre">BenchmarkConfig.backend</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.outputs"><code class="docutils literal notranslate"><span class="pre">BenchmarkConfig.outputs</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.inputs"><code class="docutils literal notranslate"><span class="pre">BenchmarkConfig.inputs</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.warmup"><code class="docutils literal notranslate"><span class="pre">BenchmarkConfig.warmup</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.iteration"><code class="docutils literal notranslate"><span class="pre">BenchmarkConfig.iteration</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.cores_per_instance"><code class="docutils literal notranslate"><span class="pre">BenchmarkConfig.cores_per_instance</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.num_of_instance"><code class="docutils literal notranslate"><span class="pre">BenchmarkConfig.num_of_instance</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.inter_num_of_threads"><code class="docutils literal notranslate"><span class="pre">BenchmarkConfig.inter_num_of_threads</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.intra_num_of_threads"><code class="docutils literal notranslate"><span class="pre">BenchmarkConfig.intra_num_of_threads</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion"><code class="docutils literal notranslate"><span class="pre">AccuracyCriterion</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion.higher_is_better"><code class="docutils literal notranslate"><span class="pre">AccuracyCriterion.higher_is_better</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion.relative"><code class="docutils literal notranslate"><span class="pre">AccuracyCriterion.relative</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion.absolute"><code class="docutils literal notranslate"><span class="pre">AccuracyCriterion.absolute</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion.criterion"><code class="docutils literal notranslate"><span class="pre">AccuracyCriterion.criterion</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion.tolerable_loss"><code class="docutils literal notranslate"><span class="pre">AccuracyCriterion.tolerable_loss</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion"><code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion.max_trials"><code class="docutils literal notranslate"><span class="pre">TuningCriterion.max_trials</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion.timeout"><code class="docutils literal notranslate"><span class="pre">TuningCriterion.timeout</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion.objective"><code class="docutils literal notranslate"><span class="pre">TuningCriterion.objective</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion.strategy"><code class="docutils literal notranslate"><span class="pre">TuningCriterion.strategy</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion.strategy_kwargs"><code class="docutils literal notranslate"><span class="pre">TuningCriterion.strategy_kwargs</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.PostTrainingQuantConfig"><code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.PostTrainingQuantConfig.approach"><code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig.approach</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.PostTrainingQuantConfig.tuning_criterion"><code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig.tuning_criterion</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.QuantizationAwareTrainingConfig"><code class="docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.QuantizationAwareTrainingConfig.approach"><code class="docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig.approach</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.WeightPruningConfig"><code class="docutils literal notranslate"><span class="pre">WeightPruningConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.WeightPruningConfig.weight_compression"><code class="docutils literal notranslate"><span class="pre">WeightPruningConfig.weight_compression</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.KnowledgeDistillationLossConfig"><code class="docutils literal notranslate"><span class="pre">KnowledgeDistillationLossConfig</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig"><code class="docutils literal notranslate"><span class="pre">IntermediateLayersKnowledgeDistillationLossConfig</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.SelfKnowledgeDistillationLossConfig"><code class="docutils literal notranslate"><span class="pre">SelfKnowledgeDistillationLossConfig</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.DistillationConfig"><code class="docutils literal notranslate"><span class="pre">DistillationConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.DistillationConfig.criterion"><code class="docutils literal notranslate"><span class="pre">DistillationConfig.criterion</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.DistillationConfig.optimizer"><code class="docutils literal notranslate"><span class="pre">DistillationConfig.optimizer</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.DistillationConfig.teacher_model"><code class="docutils literal notranslate"><span class="pre">DistillationConfig.teacher_model</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.MixedPrecisionConfig"><code class="docutils literal notranslate"><span class="pre">MixedPrecisionConfig</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig"><code class="docutils literal notranslate"><span class="pre">ExportConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.dtype"><code class="docutils literal notranslate"><span class="pre">ExportConfig.dtype</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.opset_version"><code class="docutils literal notranslate"><span class="pre">ExportConfig.opset_version</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.quant_format"><code class="docutils literal notranslate"><span class="pre">ExportConfig.quant_format</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.example_inputs"><code class="docutils literal notranslate"><span class="pre">ExportConfig.example_inputs</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.input_names"><code class="docutils literal notranslate"><span class="pre">ExportConfig.input_names</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.output_names"><code class="docutils literal notranslate"><span class="pre">ExportConfig.output_names</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.dynamic_axes"><code class="docutils literal notranslate"><span class="pre">ExportConfig.dynamic_axes</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.ONNXQlinear2QDQConfig"><code class="docutils literal notranslate"><span class="pre">ONNXQlinear2QDQConfig</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.Torch2ONNXConfig"><code class="docutils literal notranslate"><span class="pre">Torch2ONNXConfig</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.TF2ONNXConfig"><code class="docutils literal notranslate"><span class="pre">TF2ONNXConfig</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.config.check_value">check_value</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.Options">Options</a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.Options.random_seed">random_seed</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.Options.workspace">workspace</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.Options.resume_from">resume_from</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.Options.tensorboard">tensorboard</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig">BenchmarkConfig</a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.backend">backend</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.outputs">outputs</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.inputs">inputs</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.warmup">warmup</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.iteration">iteration</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.cores_per_instance">cores_per_instance</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.num_of_instance">num_of_instance</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.inter_num_of_threads">inter_num_of_threads</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.BenchmarkConfig.intra_num_of_threads">intra_num_of_threads</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion">AccuracyCriterion</a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion.higher_is_better">higher_is_better</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion.relative">relative</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion.absolute">absolute</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion.criterion">criterion</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.AccuracyCriterion.tolerable_loss">tolerable_loss</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion">TuningCriterion</a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion.max_trials">max_trials</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion.timeout">timeout</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion.objective">objective</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion.strategy">strategy</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.TuningCriterion.strategy_kwargs">strategy_kwargs</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.PostTrainingQuantConfig">PostTrainingQuantConfig</a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.PostTrainingQuantConfig.approach">approach</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.PostTrainingQuantConfig.tuning_criterion">tuning_criterion</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.QuantizationAwareTrainingConfig">QuantizationAwareTrainingConfig</a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.QuantizationAwareTrainingConfig.approach">approach</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.WeightPruningConfig">WeightPruningConfig</a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.WeightPruningConfig.weight_compression">weight_compression</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.KnowledgeDistillationLossConfig">KnowledgeDistillationLossConfig</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig">IntermediateLayersKnowledgeDistillationLossConfig</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.SelfKnowledgeDistillationLossConfig">SelfKnowledgeDistillationLossConfig</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.DistillationConfig">DistillationConfig</a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.DistillationConfig.criterion">criterion</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.DistillationConfig.optimizer">optimizer</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.DistillationConfig.teacher_model">teacher_model</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.MixedPrecisionConfig">MixedPrecisionConfig</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig">ExportConfig</a><ul>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.dtype">dtype</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.opset_version">opset_version</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.quant_format">quant_format</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.example_inputs">example_inputs</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.input_names">input_names</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.output_names">output_names</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.ExportConfig.dynamic_axes">dynamic_axes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.config.ONNXQlinear2QDQConfig">ONNXQlinear2QDQConfig</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.Torch2ONNXConfig">Torch2ONNXConfig</a></li>
+<li><a class="reference internal" href="#neural_compressor.config.TF2ONNXConfig">TF2ONNXConfig</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

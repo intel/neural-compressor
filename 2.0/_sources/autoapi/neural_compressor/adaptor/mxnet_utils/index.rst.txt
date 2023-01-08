@@ -1,0 +1,20 @@
+:py:mod:`neural_compressor.adaptor.mxnet_utils`
+===============================================
+
+.. py:module:: neural_compressor.adaptor.mxnet_utils
+
+.. autoapi-nested-parse::
+
+   mxnet util init.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   util/index.rst
+
+

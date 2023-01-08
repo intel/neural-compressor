@@ -1,0 +1,37 @@
+:py:mod:`neural_compressor.ux.components.model.tensorflow.saved_model`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.model.tensorflow.saved_model
+
+.. autoapi-nested-parse::
+
+   Tensorflow saved_model model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.tensorflow.saved_model.SavedModelModel
+
+
+
+
+.. py:class:: SavedModelModel(path: str)
+
+   Bases: :py:obj:`neural_compressor.ux.components.model.tensorflow.model.TensorflowModel`
+
+   Saved_model model.
+
+   .. py:method:: supports_path(path: str) -> bool
+      :staticmethod:
+
+      Check if given path is of supported model.
+
+
+

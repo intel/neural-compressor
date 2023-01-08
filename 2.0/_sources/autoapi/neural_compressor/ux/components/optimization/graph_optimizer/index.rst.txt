@@ -1,0 +1,21 @@
+:py:mod:`neural_compressor.ux.components.optimization.graph_optimizer`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.graph_optimizer
+
+.. autoapi-nested-parse::
+
+   Package graph_optimizer contains all packages required to optimize model graph.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   graph_optimization/index.rst
+   optimize_model/index.rst
+
+

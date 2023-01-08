@@ -1,0 +1,62 @@
+:py:mod:`neural_compressor.ux.components.names_mapper.names_mapper`
+===================================================================
+
+.. py:module:: neural_compressor.ux.components.names_mapper.names_mapper
+
+.. autoapi-nested-parse::
+
+   Names mapper.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.names_mapper.names_mapper.MappingDirection
+   neural_compressor.ux.components.names_mapper.names_mapper.NamesMapper
+
+
+
+
+.. py:class:: MappingDirection
+
+   Bases: :py:obj:`enum.Enum`
+
+   Mapping directions enumeration.
+
+
+.. py:class:: NamesMapper(direction: MappingDirection)
+
+   Names Mapper class.
+
+   .. py:property:: framework_mappings
+      :type: dict
+
+      Get framework mappings.
+
+   .. py:property:: domain_mappings
+      :type: dict
+
+      Get domain mappings.
+
+   .. py:property:: domain_flavour_mappings
+      :type: dict
+
+      Get domain flavour mappings.
+
+   .. py:property:: precision_mappings
+      :type: dict
+
+      Get precision mappings.
+
+   .. py:method:: map_name(parameter_type: str, value: str) -> str
+
+      Map specified value to correct direction.
+
+
+

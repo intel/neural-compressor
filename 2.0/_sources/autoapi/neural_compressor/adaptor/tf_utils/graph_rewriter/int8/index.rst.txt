@@ -1,0 +1,31 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8`
+================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8
+
+.. autoapi-nested-parse::
+
+   Tensorflow INT8 Graph Rewriters.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   freeze_fake_quant/index.rst
+   freeze_value/index.rst
+   freeze_value_without_calib/index.rst
+   fuse_conv_redundant_dequantize/index.rst
+   fuse_conv_requantize/index.rst
+   fuse_matmul_redundant_dequantize/index.rst
+   fuse_matmul_requantize/index.rst
+   meta_op_optimizer/index.rst
+   post_hostconst_converter/index.rst
+   post_quantized_op_cse/index.rst
+   rnn_convert/index.rst
+   scale_propagation/index.rst
+
+

@@ -1,0 +1,105 @@
+:py:mod:`neural_compressor.pruner.pruner_legacy.pruner`
+=======================================================
+
+.. py:module:: neural_compressor.pruner.pruner_legacy.pruner
+
+.. autoapi-nested-parse::
+
+   Pattern lock pruner.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.pruner.pruner_legacy.pruner.Pruner
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.pruner.pruner_legacy.pruner.pruner_registry
+
+
+
+.. py:function:: pruner_registry(cls)
+
+   The class decorator used to register all Pruners subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: Pruner(model, local_config, global_config)
+
+   The base clase of Pruner.
+
+   :param model: The original model (currently PyTorchModel instance).
+   :type model: object
+   :param local_config: configs specific for this pruning instance.
+   :type local_config: Conf
+   :param global_config: global configs which may be overwritten by local_config.
+   :type global_config: Conf
+
+   .. py:method:: on_epoch_begin(epoch)
+      :abstractmethod:
+
+      Be called on the beginning of epochs.
+
+
+   .. py:method:: on_step_begin(batch_id)
+      :abstractmethod:
+
+      Be called on the beginning of steps.
+
+
+   .. py:method:: on_epoch_end()
+      :abstractmethod:
+
+      Be called on the end of epochs.
+
+
+   .. py:method:: on_step_end()
+      :abstractmethod:
+
+      Be called on the end of steps.
+
+
+   .. py:method:: on_before_optimizer_step()
+
+      Be called before optimizer steps.
+
+
+   .. py:method:: on_train_begin(dataloader=None)
+
+      Be called on the beginning of the training process.
+
+
+   .. py:method:: on_train_end()
+
+      Be called on the end of the training process.
+
+
+   .. py:method:: update_sparsity(epoch)
+
+      Update sparsity goals according to epoch numbers.
+
+      :param epoch: the epoch number
+      :type epoch: int
+
+      :returns: sparsity target in this epoch
+      :rtype: sparsity (float)
+
+
+

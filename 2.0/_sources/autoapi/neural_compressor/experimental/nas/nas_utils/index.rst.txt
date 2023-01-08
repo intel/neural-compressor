@@ -1,0 +1,62 @@
+:py:mod:`neural_compressor.experimental.nas.nas_utils`
+======================================================
+
+.. py:module:: neural_compressor.experimental.nas.nas_utils
+
+.. autoapi-nested-parse::
+
+   Common methods for NAS.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.nas_utils.nas_registry
+   neural_compressor.experimental.nas.nas_utils.create_search_space_pool
+   neural_compressor.experimental.nas.nas_utils.find_pareto_front
+
+
+
+.. py:function:: nas_registry(nas_method)
+
+   Decorate the NAS subclasses.
+
+   The class decorator used to register all NAS subclasses.
+
+   :param nas_method: The string of supported NAS Method.
+   :type nas_method: str
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:function:: create_search_space_pool(search_space, idx=0)
+
+   Create all the samples from the search space.
+
+   :param search_space: A dict defining the search space.
+   :type search_space: dict
+   :param idx: An index for indicating which key of search_space to enumerate.
+   :type idx: int
+
+   :returns: A list of all the samples from the search space.
+
+
+.. py:function:: find_pareto_front(metrics)
+
+   Find the pareto front points, assuming all metrics are "higher is better".
+
+   :param metrics: An (n_points, n_metrics) array.
+   :type metrics: numpy array or list
+
+   :returns: An array of indices of pareto front points.
+             It is a (n_pareto_points, ) integer array of indices.
+
+

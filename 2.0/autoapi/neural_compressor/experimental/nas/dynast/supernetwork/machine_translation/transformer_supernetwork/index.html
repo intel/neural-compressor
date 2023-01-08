@@ -1,0 +1,825 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../../../../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../../../../../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../search.html" /> 
+
+  
+  <script src="../../../../../../../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../../../../../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../../../../../../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../../../../../../../_sources/autoapi/neural_compressor/experimental/nas/dynast/supernetwork/machine_translation/transformer_supernetwork/index.rst.txt" rel="nofollow"><img src="../../../../../../../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork">
+<span id="neural-compressor-experimental-nas-dynast-supernetwork-machine-translation-transformer-supernetwork"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork" title="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork" title="Permalink to this heading">¶</a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerSuperNetwork" title="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerSuperNetwork"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransformerSuperNetwork</span></code></a></p></td>
+<td><p>Transformer model from <cite>&quot;Attention Is All You Need&quot; (Vaswani, et al, 2017)</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder" title="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransformerEncoder</span></code></a></p></td>
+<td><p>Transformer encoder consisting of <em>args.encoder_layers</em> layers.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder" title="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransformerDecoder</span></code></a></p></td>
+<td><p>Transformer decoder consisting of <em>args.decoder_layers</em> layers.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer" title="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransformerEncoderLayer</span></code></a></p></td>
+<td><p>Encoder layer block.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer" title="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TransformerDecoderLayer</span></code></a></p></td>
+<td><p>Decoder layer block.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerSuperNetwork">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.</span></span><span class="sig-name descname"><span class="pre">TransformerSuperNetwork</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerSuperNetwork" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">fairseq</span></code></p>
+<p>Transformer model from <cite>“Attention Is All You Need” (Vaswani, et al, 2017)</cite>.</p>
+<p>&lt;<a class="reference external" href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a>&gt;</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>encoder</strong> (<a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder" title="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder"><em>TransformerEncoder</em></a>) – the encoder</p></li>
+<li><p><strong>decoder</strong> (<a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder" title="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder"><em>TransformerDecoder</em></a>) – the decoder</p></li>
+</ul>
+</dd>
+</dl>
+<p>The Transformer model provides the following named architectures and
+command-line arguments:</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.</span></span><span class="sig-name descname"><span class="pre">TransformerEncoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">encoder_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embed_tokens</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">fairseq</span></code></p>
+<p>Transformer encoder consisting of <em>args.encoder_layers</em> layers.</p>
+<p>Each layer is a <a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer" title="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformerEncoderLayer</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>argparse.Namespace</em>) – parsed command-line arguments</p></li>
+<li><p><strong>dictionary</strong> (<em>Dictionary</em>) – encoding dictionary</p></li>
+<li><p><strong>embed_tokens</strong> (<em>torch.nn.Embedding</em>) – input embedding</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src_lengths</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forward function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src_tokens</strong> (<em>LongTensor</em>) – tokens in the source language of shape
+<cite>(batch, src_len)</cite></p></li>
+<li><p><strong>src_lengths</strong> (<em>torch.LongTensor</em>) – lengths of each source sentence of
+shape <cite>(batch)</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>encoder_out</strong> (Tensor): the last encoder layer’s output of
+shape <cite>(src_len, batch, embed_dim)</cite></p></li>
+<li><p><strong>encoder_padding_mask</strong> (ByteTensor): the positions of
+padding elements of shape <cite>(batch, src_len)</cite></p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.reorder_encoder_out">
+<span class="sig-name descname"><span class="pre">reorder_encoder_out</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">encoder_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_order</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.reorder_encoder_out" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reorder encoder output according to <em>new_order</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>encoder_out</strong> – output from the <code class="docutils literal notranslate"><span class="pre">forward()</span></code> method</p></li>
+<li><p><strong>new_order</strong> (<em>LongTensor</em>) – desired order</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>encoder_out</em> rearranged according to <em>new_order</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.max_positions">
+<span class="sig-name descname"><span class="pre">max_positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.max_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum input length supported by the encoder.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.upgrade_state_dict_named">
+<span class="sig-name descname"><span class="pre">upgrade_state_dict_named</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.upgrade_state_dict_named" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upgrade a (possibly old) state dict for new versions of fairseq.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.</span></span><span class="sig-name descname"><span class="pre">TransformerDecoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decoder_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embed_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_encoder_attn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">fairseq</span></code></p>
+<p>Transformer decoder consisting of <em>args.decoder_layers</em> layers.</p>
+<p>Each layer is a <a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer" title="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformerDecoderLayer</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>argparse.Namespace</em>) – parsed command-line arguments</p></li>
+<li><p><strong>dictionary</strong> (<em>Dictionary</em>) – decoding dictionary</p></li>
+<li><p><strong>embed_tokens</strong> (<em>torch.nn.Embedding</em>) – output embedding</p></li>
+<li><p><strong>no_encoder_attn</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to attend to encoder outputs
+(default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prev_output_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incremental_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">unused</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prev_output_tokens</strong> (<em>LongTensor</em>) – previous decoder outputs of shape
+<cite>(batch, tgt_len)</cite>, for teacher forcing</p></li>
+<li><p><strong>encoder_out</strong> (<em>Tensor</em><em>, </em><em>optional</em>) – output from the encoder, used for
+encoder-side attention</p></li>
+<li><p><strong>incremental_state</strong> (<em>dict</em>) – dictionary used for storing state during
+<span class="xref std std-ref">Incremental decoding</span></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>the decoder’s output of shape <cite>(batch, tgt_len, vocab)</cite></p></li>
+<li><p>a dictionary with any model-specific outputs</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.extract_features">
+<span class="sig-name descname"><span class="pre">extract_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prev_output_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incremental_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">unused</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.extract_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Similar to <em>forward</em> but only return features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p>the decoder’s features of shape <cite>(batch, tgt_len, embed_dim)</cite></p></li>
+<li><p>a dictionary with any model-specific outputs</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.output_layer">
+<span class="sig-name descname"><span class="pre">output_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.output_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Project features to the vocabulary size.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.max_positions">
+<span class="sig-name descname"><span class="pre">max_positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.max_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum output length supported by the decoder.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.upgrade_state_dict_named">
+<span class="sig-name descname"><span class="pre">upgrade_state_dict_named</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.upgrade_state_dict_named" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upgrade a (possibly old) state dict for new versions of fairseq.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.</span></span><span class="sig-name descname"><span class="pre">TransformerEncoderLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">encoder_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></p>
+<p>Encoder layer block.</p>
+<p>In the original paper each operation (multi-head attention or FFN) is
+postprocessed with: <cite>dropout -&gt; add residual -&gt; layernorm</cite>. In the
+tensor2tensor code they suggest that learning is more robust when
+preprocessing each layer with layernorm and postprocessing with:
+<cite>dropout -&gt; add residual</cite>. We default to the approach in the paper, but the
+tensor2tensor approach can be enabled by setting
+<em>args.encoder_normalize_before</em> to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>argparse.Namespace</em>) – parsed command-line arguments</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer.upgrade_state_dict_named">
+<span class="sig-name descname"><span class="pre">upgrade_state_dict_named</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer.upgrade_state_dict_named" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renames keys in state dict.</p>
+<p>Rename layer norm states from <cite>…layer_norms.0.weight</cite> to
+<cite>…self_attn_layer_norm.weight</cite> and <cite>…layer_norms.1.weight</cite> to
+<cite>…final_layer_norm.weight</cite></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder_padding_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attn_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Tensor</em>) – input to the layer of shape <cite>(seq_len, batch, embed_dim)</cite></p></li>
+<li><p><strong>encoder_padding_mask</strong> (<em>ByteTensor</em>) – binary ByteTensor of shape
+<cite>(batch, src_len)</cite> where padding elements are indicated by <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+<li><p><strong>attn_mask</strong> (<em>ByteTensor</em>) – binary tensor of shape (T_tgt, T_src), where</p></li>
+<li><p><strong>query</strong> (<em>T_tgt is the length of</em>) – </p></li>
+<li><p><strong>key</strong> (<em>while T_src is the length of</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<p>:param :
+:param though here both query and key is x here:
+:param :
+:param attn_mask[t_tgt:
+:param t_src] = 1 means when calculating embedding:
+:param for t_tgt:
+:type for t_tgt: or masked out
+:param t_src is excluded:
+:type t_src is excluded: or masked out
+:param included in attention:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>encoded output of shape <cite>(seq_len, batch, embed_dim)</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.</span></span><span class="sig-name descname"><span class="pre">TransformerDecoderLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decoder_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_encoder_attn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_bias_kv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_zero_attn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></p>
+<p>Decoder layer block.</p>
+<p>In the original paper each operation (multi-head attention, encoder
+attention or FFN) is postprocessed with: <cite>dropout -&gt; add residual -&gt;
+layernorm</cite>. In the tensor2tensor code they suggest that learning is more
+robust when preprocessing each layer with layernorm and postprocessing with:
+<cite>dropout -&gt; add residual</cite>. We default to the approach in the paper, but the
+tensor2tensor approach can be enabled by setting
+<em>args.decoder_normalize_before</em> to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>argparse.Namespace</em>) – parsed command-line arguments</p></li>
+<li><p><strong>no_encoder_attn</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to attend to encoder outputs
+(default: False).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder_out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incremental_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_self_attn_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_attn_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_attn_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_attn_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Tensor</em>) – input to the layer of shape <cite>(seq_len, batch, embed_dim)</cite></p></li>
+<li><p><strong>encoder_padding_mask</strong> (<em>ByteTensor</em>) – binary ByteTensor of shape
+<cite>(batch, src_len)</cite> where padding elements are indicated by <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>encoded output of shape <cite>(seq_len, batch, embed_dim)</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerSuperNetwork"><code class="docutils literal notranslate"><span class="pre">TransformerSuperNetwork</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder"><code class="docutils literal notranslate"><span class="pre">TransformerEncoder</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.forward"><code class="docutils literal notranslate"><span class="pre">TransformerEncoder.forward()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.reorder_encoder_out"><code class="docutils literal notranslate"><span class="pre">TransformerEncoder.reorder_encoder_out()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.max_positions"><code class="docutils literal notranslate"><span class="pre">TransformerEncoder.max_positions()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.upgrade_state_dict_named"><code class="docutils literal notranslate"><span class="pre">TransformerEncoder.upgrade_state_dict_named()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder"><code class="docutils literal notranslate"><span class="pre">TransformerDecoder</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.forward"><code class="docutils literal notranslate"><span class="pre">TransformerDecoder.forward()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.extract_features"><code class="docutils literal notranslate"><span class="pre">TransformerDecoder.extract_features()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.output_layer"><code class="docutils literal notranslate"><span class="pre">TransformerDecoder.output_layer()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.max_positions"><code class="docutils literal notranslate"><span class="pre">TransformerDecoder.max_positions()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.upgrade_state_dict_named"><code class="docutils literal notranslate"><span class="pre">TransformerDecoder.upgrade_state_dict_named()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer"><code class="docutils literal notranslate"><span class="pre">TransformerEncoderLayer</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer.upgrade_state_dict_named"><code class="docutils literal notranslate"><span class="pre">TransformerEncoderLayer.upgrade_state_dict_named()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer.forward"><code class="docutils literal notranslate"><span class="pre">TransformerEncoderLayer.forward()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer"><code class="docutils literal notranslate"><span class="pre">TransformerDecoderLayer</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer.forward"><code class="docutils literal notranslate"><span class="pre">TransformerDecoderLayer.forward()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerSuperNetwork">TransformerSuperNetwork</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder">TransformerEncoder</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.forward">forward</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.reorder_encoder_out">reorder_encoder_out</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.max_positions">max_positions</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoder.upgrade_state_dict_named">upgrade_state_dict_named</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder">TransformerDecoder</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.forward">forward</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.extract_features">extract_features</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.output_layer">output_layer</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.max_positions">max_positions</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoder.upgrade_state_dict_named">upgrade_state_dict_named</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer">TransformerEncoderLayer</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer.upgrade_state_dict_named">upgrade_state_dict_named</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerEncoderLayer.forward">forward</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer">TransformerDecoderLayer</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_supernetwork.TransformerDecoderLayer.forward">forward</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../../../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../../../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../../../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../../../../../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../../../../../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../../../../../../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../../../../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../../../../../../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

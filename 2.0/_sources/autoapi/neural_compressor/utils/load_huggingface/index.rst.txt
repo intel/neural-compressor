@@ -1,0 +1,67 @@
+:py:mod:`neural_compressor.utils.load_huggingface`
+==================================================
+
+.. py:module:: neural_compressor.utils.load_huggingface
+
+.. autoapi-nested-parse::
+
+   Huggingface Loader: provides access to Huggingface pretrained models.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.load_huggingface.OptimizedModel
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.load_huggingface.save_for_huggingface_upstream
+
+
+
+.. py:class:: OptimizedModel(*args, **kwargs)
+
+   The class provides a method from_pretrained to access Huggingface models.
+
+   .. py:method:: from_pretrained(model_name_or_path: str, **kwargs) -> torch.nn.Module
+      :classmethod:
+
+      Instantiate a quantized pytorch model from a given Intel Neural Compressor (INC) configuration file.
+
+      :param model_name_or_path: Repository name in the Hugging Face Hub or path to a local directory hosting the model.
+      :type model_name_or_path: :obj:`str`
+      :param cache_dir: Path to a directory in which a downloaded configuration should be cached if the standard cache should
+                        not be used.
+      :type cache_dir: :obj:`str`, `optional`
+      :param force_download: Whether or not to force to (re-)download the configuration files and override the cached versions if
+                             they exist.
+      :type force_download: :obj:`bool`, `optional`, defaults to :obj:`False`
+      :param resume_download: Whether or not to delete incompletely received file. Attempts to resume the download if such a file
+                              exists.
+      :type resume_download: :obj:`bool`, `optional`, defaults to :obj:`False`
+      :param revision: The specific model version to use. It can be a branch name, a tag name, or a commit id, since we use a
+                       git-based system for storing models and other artifacts on huggingface.co, so ``revision`` can be any
+                       identifier allowed by git.
+      :type revision: :obj:`str`, `optional`
+
+      :returns: Quantized model.
+      :rtype: q_model
+
+
+
+.. py:function:: save_for_huggingface_upstream(model, tokenizer, output_dir)
+
+   Save the model and tokenizer in the output directory.
+
+

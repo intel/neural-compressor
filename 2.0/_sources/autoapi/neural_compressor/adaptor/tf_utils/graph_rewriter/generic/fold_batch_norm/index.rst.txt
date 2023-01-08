@@ -1,0 +1,66 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm`
+===================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm
+
+.. autoapi-nested-parse::
+
+   Folding BatchNorm Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer
+
+
+
+
+.. py:class:: FoldBatchNormNodesOptimizer(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Folding BatchNorm nodes into Conv.
+
+   .. py:method:: scale_after_normalization(node)
+
+      Check the scale_after_normalization attribute if the node is BatchNormWithGlobalNormalization.
+
+      :param node: input nodedef object
+      :type node: nodedef
+
+      :returns:
+
+                True if the node op is not BatchNormWithGlobalNormalization else it
+                        depends on the BatchNormWithGlobalNormalization attribute value of
+                        `scale_after_normalization`.
+      :rtype: bool
+
+
+   .. py:method:: do_transformation()
+
+      Removes batch normalization ops by folding them into convolutions.
+
+      Batch normalization during training has multiple dynamic parameters that are
+      updated, but once the graph is finalized these become constants. That means
+      there's an opportunity to reduce the computations down to a scale and
+      addition, rather than the more expensive multiple ops, and even bake the
+      scaling into the convolution weights. This function identifies the typical
+      pattern of batch normalization subgraphs, and performs the transformation to
+      fold the computations down into a simpler form. It currently only spots batch
+      normalization that's performed by the BatchNormWithGlobalNormalization, FusedBatchNorm,
+      FusedBatchNormV3 and _FusedBatchNormEx ops, and will need to be extended in the future to handle the
+      newer style.
+
+      :returns: Modified graph with BN ops removed, and modified weights.
+
+      :raises ValueError: If the graph is badly formed with duplicate node names.
+
+
+

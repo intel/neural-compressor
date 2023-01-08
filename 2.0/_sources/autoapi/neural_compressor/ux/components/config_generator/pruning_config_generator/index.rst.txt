@@ -1,0 +1,46 @@
+:py:mod:`neural_compressor.ux.components.config_generator.pruning_config_generator`
+===================================================================================
+
+.. py:module:: neural_compressor.ux.components.config_generator.pruning_config_generator
+
+.. autoapi-nested-parse::
+
+   Pruning configuration generator class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.config_generator.pruning_config_generator.PruningConfigGenerator
+
+
+
+
+.. py:class:: PruningConfigGenerator(*args: Any, **kwargs: Any)
+
+   Bases: :py:obj:`neural_compressor.ux.components.config_generator.config_generator.ConfigGenerator`
+
+   PruningConfigGenerator class.
+
+   .. py:method:: generate() -> None
+
+      Generate yaml config file.
+
+
+   .. py:method:: generate_evaluation_config() -> neural_compressor.ux.utils.workload.evaluation.Evaluation
+
+      Generate evaluation configuration.
+
+
+   .. py:method:: generate_pruning_config() -> neural_compressor.ux.utils.workload.pruning.Pruning
+
+      Generate graph optimization configuration.
+
+
+

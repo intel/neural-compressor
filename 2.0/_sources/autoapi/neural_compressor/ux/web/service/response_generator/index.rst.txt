@@ -1,0 +1,53 @@
+:py:mod:`neural_compressor.ux.web.service.response_generator`
+=============================================================
+
+.. py:module:: neural_compressor.ux.web.service.response_generator
+
+.. autoapi-nested-parse::
+
+   Response generator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.response_generator.ResponseGenerator
+
+
+
+
+.. py:class:: ResponseGenerator
+
+   Response generator class.
+
+   .. py:method:: serve_from_filesystem(path: str, mimetype: Optional[str] = None, as_attachment: Optional[bool] = False) -> werkzeug.wrappers.Response
+      :staticmethod:
+
+      Serve any file from filesystem.
+
+
+   .. py:method:: add_refresh(response: werkzeug.wrappers.Response, refresh_time: int) -> werkzeug.wrappers.Response
+      :staticmethod:
+
+      Add Refresh header to response.
+
+
+   .. py:method:: from_exception(exception: Exception) -> werkzeug.wrappers.Response
+      :staticmethod:
+
+      Create Response from Exception.
+
+
+   .. py:method:: get_status_code_for_exception(exception: Exception) -> int
+      :staticmethod:
+
+      Get HTTP status code for Exception.
+
+
+

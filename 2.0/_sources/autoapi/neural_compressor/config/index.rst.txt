@@ -1,0 +1,300 @@
+:py:mod:`neural_compressor.config`
+==================================
+
+.. py:module:: neural_compressor.config
+
+.. autoapi-nested-parse::
+
+   Configs for Neural Compressor.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.config.Options
+   neural_compressor.config.BenchmarkConfig
+   neural_compressor.config.AccuracyCriterion
+   neural_compressor.config.TuningCriterion
+   neural_compressor.config.PostTrainingQuantConfig
+   neural_compressor.config.QuantizationAwareTrainingConfig
+   neural_compressor.config.WeightPruningConfig
+   neural_compressor.config.KnowledgeDistillationLossConfig
+   neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig
+   neural_compressor.config.SelfKnowledgeDistillationLossConfig
+   neural_compressor.config.DistillationConfig
+   neural_compressor.config.MixedPrecisionConfig
+   neural_compressor.config.ExportConfig
+   neural_compressor.config.ONNXQlinear2QDQConfig
+   neural_compressor.config.Torch2ONNXConfig
+   neural_compressor.config.TF2ONNXConfig
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.config.check_value
+
+
+
+.. py:function:: check_value(name, src, supported_type, supported_value=[])
+
+   Check if the given object is the given supported type and in the given supported value.
+
+
+.. py:class:: Options(random_seed=1978, workspace=default_workspace, resume_from=None, tensorboard=False)
+
+   Option Class for configs.
+
+   .. py:property:: random_seed
+
+      Get random seed.
+
+   .. py:property:: workspace
+
+      Get workspace.
+
+   .. py:property:: resume_from
+
+      Get resume_from.
+
+   .. py:property:: tensorboard
+
+      Get tensorboard.
+
+
+.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', warmup=5, iteration=-1, cores_per_instance=None, num_of_instance=None, inter_num_of_threads=None, intra_num_of_threads=None)
+
+   Config Class for Benchmark.
+
+   .. py:property:: backend
+
+      Get backend.
+
+   .. py:property:: outputs
+
+      Get outputs.
+
+   .. py:property:: inputs
+
+      Get inputs.
+
+   .. py:property:: warmup
+
+      Get warmup.
+
+   .. py:property:: iteration
+
+      Get iteration.
+
+   .. py:property:: cores_per_instance
+
+      Get cores_per_instance.
+
+   .. py:property:: num_of_instance
+
+      Get num_of_instance.
+
+   .. py:property:: inter_num_of_threads
+
+      Get inter_num_of_threads.
+
+   .. py:property:: intra_num_of_threads
+
+      Get intra_num_of_threads.
+
+
+.. py:class:: AccuracyCriterion(higher_is_better=True, criterion='relative', tolerable_loss=0.01)
+
+   Class of Accuracy Criterion.
+
+   .. py:property:: higher_is_better
+
+      Get higher_is_better.
+
+   .. py:property:: relative
+
+      Get tolerable_loss when criterion is relative.
+
+   .. py:property:: absolute
+
+      Get tolerable_loss when criterion is absolute.
+
+   .. py:property:: criterion
+
+      Get criterion.
+
+   .. py:property:: tolerable_loss
+
+      Get tolerable_loss.
+
+
+.. py:class:: TuningCriterion(strategy='basic', strategy_kwargs=None, timeout=0, max_trials=100, objective='performance')
+
+   Class for Tuning Criterion.
+
+   .. py:property:: max_trials
+
+      Get max_trials.
+
+   .. py:property:: timeout
+
+      Get timeout.
+
+   .. py:property:: objective
+
+      Get objective.
+
+   .. py:property:: strategy
+
+      Get strategy.
+
+   .. py:property:: strategy_kwargs
+
+      Get strategy_kwargs.
+
+
+.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_list=None, op_name_list=None, reduce_range=None, excluded_precisions=[], quant_level=1, tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
+
+   Bases: :py:obj:`_BaseQuantizationConfig`
+
+   Config Class for Post Training Quantization.
+
+   .. py:property:: approach
+
+      Get approach.
+
+   .. py:property:: tuning_criterion
+
+      Get tuning_criterion.
+
+
+.. py:class:: QuantizationAwareTrainingConfig(device='cpu', backend='default', inputs=[], outputs=[], op_type_list=None, op_name_list=None, reduce_range=None, excluded_precisions=[], quant_level=1)
+
+   Bases: :py:obj:`_BaseQuantizationConfig`
+
+   Config Class for Quantization Aware Training.
+
+   .. py:property:: approach
+
+      Get approach.
+
+
+.. py:class:: WeightPruningConfig(pruning_configs=[{}], target_sparsity=0.9, pruning_type='snip_momentum', pattern='4x1', op_names=[], excluded_op_names=[], start_step=0, end_step=0, pruning_scope='global', pruning_frequency=1, min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98, sparsity_decay_type='exp', pruning_op_types=['Conv', 'Linear'], **kwargs)
+
+   Similiar to torch optimizer's interface.
+
+   .. py:property:: weight_compression
+
+      Get weight_compression.
+
+
+.. py:class:: KnowledgeDistillationLossConfig(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5])
+
+   Config Class for Knowledge Distillation Loss.
+
+
+.. py:class:: IntermediateLayersKnowledgeDistillationLossConfig(layer_mappings=[], loss_types=[], loss_weights=[], add_origin_loss=False)
+
+   Config Class for Intermediate Layers Knowledge Distillation Loss.
+
+
+.. py:class:: SelfKnowledgeDistillationLossConfig(layer_mappings=[], temperature=1.0, loss_types=[], loss_weights=[], add_origin_loss=False)
+
+   Config Class for Self Knowledge Distillation Loss.
+
+
+.. py:class:: DistillationConfig(teacher_model=None, criterion=criterion, optimizer={'SGD': {'learning_rate': 0.0001}})
+
+   Config of distillation.
+
+   :param teacher_model: Teacher model for distillation. Defaults to None.
+   :type teacher_model: Callable
+   :param features: Teacher features for distillation, features and teacher_model are alternative.
+                    Defaults to None.
+   :type features: optional
+   :param criterion: Distillation loss configure.
+   :type criterion: Callable, optional
+   :param optimizer: Optimizer configure.
+   :type optimizer: dictionary, optional
+
+   .. py:property:: criterion
+
+      Get criterion.
+
+   .. py:property:: optimizer
+
+      Get optimizer.
+
+   .. py:property:: teacher_model
+
+      Get teacher_model.
+
+
+.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[])
+
+   Bases: :py:obj:`PostTrainingQuantConfig`
+
+   Config Class for MixedPrecision.
+
+
+.. py:class:: ExportConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None)
+
+   Config Class for Export.
+
+   .. py:property:: dtype
+
+      Get dtype.
+
+   .. py:property:: opset_version
+
+      Get opset_version.
+
+   .. py:property:: quant_format
+
+      Get quant_format.
+
+   .. py:property:: example_inputs
+
+      Get example_inputs.
+
+   .. py:property:: input_names
+
+      Get input_names.
+
+   .. py:property:: output_names
+
+      Get output_names.
+
+   .. py:property:: dynamic_axes
+
+      Get dynamic_axes.
+
+
+.. py:class:: ONNXQlinear2QDQConfig
+
+   Config Class for ONNXQlinear2QDQ.
+
+
+.. py:class:: Torch2ONNXConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None, recipe='QDQ_OP_FP32_BIAS', **kwargs)
+
+   Bases: :py:obj:`ExportConfig`
+
+   Config Class for Torch2ONNX.
+
+
+.. py:class:: TF2ONNXConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None, **kwargs)
+
+   Bases: :py:obj:`ExportConfig`
+
+   Config Class for TF2ONNX.
+
+

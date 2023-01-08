@@ -1,0 +1,878 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor.model.torch_model &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.torch_model</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../../../_sources/autoapi/neural_compressor/model/torch_model/index.rst.txt" rel="nofollow"><img src="../../../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor.model.torch_model">
+<span id="neural-compressor-model-torch-model"></span><h1><a class="reference internal" href="#module-neural_compressor.model.torch_model" title="neural_compressor.model.torch_model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.torch_model</span></code></a><a class="headerlink" href="#module-neural_compressor.model.torch_model" title="Permalink to this heading">¶</a></h1>
+<p>Class for PyTorch model.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel" title="neural_compressor.model.torch_model.PyTorchBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchBaseModel</span></code></a></p></td>
+<td><p>Build PyTorch base model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel" title="neural_compressor.model.torch_model.PyTorchModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchModel</span></code></a></p></td>
+<td><p>Build PyTorchModel object.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchFXModel" title="neural_compressor.model.torch_model.PyTorchFXModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchFXModel</span></code></a></p></td>
+<td><p>Build PyTorchFXModel object.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.torch_model.IPEXModel" title="neural_compressor.model.torch_model.IPEXModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IPEXModel</span></code></a></p></td>
+<td><p>Build IPEXModel object.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">PyTorchBaseModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">torch</span></code>, <a class="reference internal" href="../base_model/index.html#neural_compressor.model.base_model.BaseModel" title="neural_compressor.model.base_model.BaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.model.base_model.BaseModel</span></code></a></p>
+<p>Build PyTorch base model.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter to model.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.fp32_model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fp32_model</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.fp32_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter to model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pytorch model forward func.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.register_forward_pre_hook">
+<span class="sig-name descname"><span class="pre">register_forward_pre_hook</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.register_forward_pre_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register forward pre hook.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.remove_hooks">
+<span class="sig-name descname"><span class="pre">remove_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.remove_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.generate_forward_pre_hook">
+<span class="sig-name descname"><span class="pre">generate_forward_pre_hook</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.generate_forward_pre_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate forward pre hook.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.framework">
+<span class="sig-name descname"><span class="pre">framework</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.framework" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return framework.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.get_all_weight_names">
+<span class="sig-name descname"><span class="pre">get_all_weight_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_all_weight_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get weight names.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.get_weight">
+<span class="sig-name descname"><span class="pre">get_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_weight" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get weight value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.update_weights">
+<span class="sig-name descname"><span class="pre">update_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.update_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update weight value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor_name</strong> (<em>string</em>) – weight name.</p></li>
+<li><p><strong>new_tensor</strong> (<em>ndarray</em>) – weight value.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.update_gradient">
+<span class="sig-name descname"><span class="pre">update_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_grad</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.update_gradient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update grad value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grad_name</strong> (<em>str</em>) – grad name.</p></li>
+<li><p><strong>new_grad</strong> (<em>ndarray</em>) – grad value.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.prune_weights_">
+<span class="sig-name descname"><span class="pre">prune_weights_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.prune_weights_" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prune weight in place according to tensor_name with mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor_name</strong> (<em>str</em>) – weight name.</p></li>
+<li><p><strong>mask</strong> (<em>tensor</em>) – pruning mask.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.get_inputs">
+<span class="sig-name descname"><span class="pre">get_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get inputs of model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_name</strong> (<em>str</em><em>, </em><em>optional</em>) – name of input tensor. Defaults to None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>input tensor</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.get_gradient">
+<span class="sig-name descname"><span class="pre">get_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_gradient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get gradients of specific tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_tensor</strong> (<em>string</em><em> or </em><em>tensor</em>) – weight name or a tensor.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>gradient tensor array</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchBaseModel.report_sparsity">
+<span class="sig-name descname"><span class="pre">report_sparsity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchBaseModel.report_sparsity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get sparsity of the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame of sparsity of each weight.
+total_sparsity (float): total sparsity of model.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>df (DataFrame)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">PyTorchModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel" title="neural_compressor.model.torch_model.PyTorchBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchBaseModel</span></code></a></p>
+<p>Build PyTorchModel object.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.workspace_path">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workspace_path</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.workspace_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return workspace path.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.graph_info">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph_info</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.graph_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return graph info.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save configure file and weights.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.quantized_state_dict">
+<span class="sig-name descname"><span class="pre">quantized_state_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.quantized_state_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load quantized state dict.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.load_quantized_state_dict">
+<span class="sig-name descname"><span class="pre">load_quantized_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stat_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.load_quantized_state_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load quantized state with given dict.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_jit">
+<span class="sig-name descname"><span class="pre">export_to_jit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_jit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export JIT model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_fp32_onnx">
+<span class="sig-name descname"><span class="pre">export_to_fp32_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fp32-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_fp32_onnx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export PyTorch FP32 model to ONNX FP32 model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>save_path</strong> (<em>str</em><em>, </em><em>optional</em>) – ONNX model path to save. Defaults to ‘fp32-model.onnx’.</p></li>
+<li><p><strong>example_inputs</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – example inputs for export.
+Defaults to torch.rand([1, 1, 1, 1]).</p></li>
+<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – opset version for exported ONNX model. Defaults to 14.</p></li>
+<li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – specify axes of tensors as dynamic.
+Defaults to {“input”: {0: “batch_size”}, “output”: {0: “batch_size”}}.</p></li>
+<li><p><strong>input_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the input nodes of the graph, in order.
+Defaults to None.</p></li>
+<li><p><strong>output_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the output nodes of the graph, in order.
+Defaults to None.</p></li>
+<li><p><strong>do_constant_folding</strong> (<em>bool</em><em>, </em><em>optional</em>) – Apply the constant-folding optimization.
+Defaults to True.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – if True, prints a description of the model being exported to stdout.
+Defaults to True.</p></li>
+<li><p><strong>fp32_model</strong> (<em>torch.nn.model</em><em>, </em><em>optional</em>) – FP32 PyTorch model. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_bf16_onnx">
+<span class="sig-name descname"><span class="pre">export_to_bf16_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bf16-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_bf16_onnx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export PyTorch bf16 model to ONNX bf16 model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>save_path</strong> (<em>str</em><em>, </em><em>optional</em>) – ONNX model path to save. Defaults to ‘bf16-model.onnx’.</p></li>
+<li><p><strong>example_inputs</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – example inputs for export.
+Defaults to torch.rand([1, 1, 1, 1]).</p></li>
+<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – opset version for exported ONNX model. Defaults to 14.</p></li>
+<li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – specify axes of tensors as dynamic.
+Defaults to {“input”: {0: “batch_size”}, “output”: {0: “batch_size”}}.</p></li>
+<li><p><strong>input_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the input nodes of the graph, in order.
+Defaults to None.</p></li>
+<li><p><strong>output_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the output nodes of the graph, in order.
+Defaults to None.</p></li>
+<li><p><strong>do_constant_folding</strong> (<em>bool</em><em>, </em><em>optional</em>) – Apply the constant-folding optimization.
+Defaults to True.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – if True, prints a description of the model being exported to stdout.
+Defaults to True.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_int8_onnx">
+<span class="sig-name descname"><span class="pre">export_to_int8_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int8-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'S8S8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_int8_onnx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export PyTorch int8 model to ONNX int8 model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>save_path</strong> (<em>str</em><em>, </em><em>optional</em>) – ONNX model path to save. Defaults to ‘int8-model.onnx’.</p></li>
+<li><p><strong>example_inputs</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – example inputs for export.
+Defaults to torch.rand([1, 1, 1, 1]).</p></li>
+<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – opset version for exported ONNX model. Defaults to 14.</p></li>
+<li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – specify axes of tensors as dynamic.
+Defaults to {“input”: {0: “batch_size”}, “output”: {0: “batch_size”}}.</p></li>
+<li><p><strong>input_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the input nodes of the graph, in order.
+Defaults to None.</p></li>
+<li><p><strong>output_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the output nodes of the graph, in order.
+Defaults to None.</p></li>
+<li><p><strong>do_constant_folding</strong> (<em>bool</em><em>, </em><em>optional</em>) – Apply the constant-folding optimization.
+Defaults to True.</p></li>
+<li><p><strong>quant_format</strong> (<em>str</em><em>, </em><em>optional</em>) – format of quantized ONNX model. Defaults to ‘QDQ’.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – type for quantized activation and weight. Defaults to ‘S8S8’.</p></li>
+<li><p><strong>fp32_model</strong> (<em>torch.nn.model</em><em>, </em><em>optional</em>) – FP32 PyTorch model. Defaults to None.</p></li>
+<li><p><strong>calib_dataloader</strong> (<em>object</em><em>, </em><em>optional</em>) – calibration dataloader. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export">
+<span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export PyTorch model to ONNX model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchFXModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">PyTorchFXModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchFXModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel" title="neural_compressor.model.torch_model.PyTorchModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchModel</span></code></a></p>
+<p>Build PyTorchFXModel object.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.IPEXModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.torch_model.</span></span><span class="sig-name descname"><span class="pre">IPEXModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.IPEXModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel" title="neural_compressor.model.torch_model.PyTorchBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchBaseModel</span></code></a></p>
+<p>Build IPEXModel object.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.IPEXModel.workspace_path">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workspace_path</span></span><a class="headerlink" href="#neural_compressor.model.torch_model.IPEXModel.workspace_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return workspace path.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.torch_model.IPEXModel.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.IPEXModel.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save PyTorch IPEX model.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.torch_model</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.model"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.model</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.fp32_model"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.fp32_model</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.forward"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.forward()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.register_forward_pre_hook"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.register_forward_pre_hook()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.remove_hooks"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.remove_hooks()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.generate_forward_pre_hook"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.generate_forward_pre_hook()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.framework"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.framework()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_all_weight_names"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.get_all_weight_names()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_weight"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.get_weight()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.update_weights"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.update_weights()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.update_gradient"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.update_gradient()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.prune_weights_"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.prune_weights_()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_inputs"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.get_inputs()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_gradient"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.get_gradient()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.report_sparsity"><code class="docutils literal notranslate"><span class="pre">PyTorchBaseModel.report_sparsity()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel"><code class="docutils literal notranslate"><span class="pre">PyTorchModel</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.workspace_path"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.workspace_path</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.graph_info"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.graph_info</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.save"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.save()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.quantized_state_dict"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.quantized_state_dict()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.load_quantized_state_dict"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.load_quantized_state_dict()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_jit"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.export_to_jit()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_fp32_onnx"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.export_to_fp32_onnx()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_bf16_onnx"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.export_to_bf16_onnx()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_int8_onnx"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.export_to_int8_onnx()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.export"><code class="docutils literal notranslate"><span class="pre">PyTorchModel.export()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchFXModel"><code class="docutils literal notranslate"><span class="pre">PyTorchFXModel</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.IPEXModel"><code class="docutils literal notranslate"><span class="pre">IPEXModel</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.IPEXModel.workspace_path"><code class="docutils literal notranslate"><span class="pre">IPEXModel.workspace_path</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.IPEXModel.save"><code class="docutils literal notranslate"><span class="pre">IPEXModel.save()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel">PyTorchBaseModel</a><ul>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.model">model</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.fp32_model">fp32_model</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.forward">forward</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.register_forward_pre_hook">register_forward_pre_hook</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.remove_hooks">remove_hooks</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.generate_forward_pre_hook">generate_forward_pre_hook</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.framework">framework</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_all_weight_names">get_all_weight_names</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_weight">get_weight</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.update_weights">update_weights</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.update_gradient">update_gradient</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.prune_weights_">prune_weights_</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_inputs">get_inputs</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.get_gradient">get_gradient</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchBaseModel.report_sparsity">report_sparsity</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel">PyTorchModel</a><ul>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.workspace_path">workspace_path</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.graph_info">graph_info</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.save">save</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.quantized_state_dict">quantized_state_dict</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.load_quantized_state_dict">load_quantized_state_dict</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_jit">export_to_jit</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_fp32_onnx">export_to_fp32_onnx</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_bf16_onnx">export_to_bf16_onnx</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_int8_onnx">export_to_int8_onnx</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchModel.export">export</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.PyTorchFXModel">PyTorchFXModel</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.IPEXModel">IPEXModel</a><ul>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.IPEXModel.workspace_path">workspace_path</a></li>
+<li><a class="reference internal" href="#neural_compressor.model.torch_model.IPEXModel.save">save</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

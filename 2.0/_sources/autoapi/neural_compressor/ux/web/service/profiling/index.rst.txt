@@ -1,0 +1,37 @@
+:py:mod:`neural_compressor.ux.web.service.profiling`
+====================================================
+
+.. py:module:: neural_compressor.ux.web.service.profiling
+
+.. autoapi-nested-parse::
+
+   Profiling service.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.service.profiling.ProfilingService
+
+
+
+
+.. py:class:: ProfilingService
+
+   Bases: :py:obj:`neural_compressor.ux.web.service.workload.WorkloadService`
+
+   Profiling related services.
+
+   .. py:method:: generate_csv(data: dict) -> neural_compressor.ux.web.service.response_generator.Response
+      :classmethod:
+
+      Get config file for requested Workload.
+
+
+

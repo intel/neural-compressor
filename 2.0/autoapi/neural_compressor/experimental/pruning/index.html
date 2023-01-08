@@ -1,0 +1,733 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor.experimental.pruning &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pruning</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../../../_sources/autoapi/neural_compressor/experimental/pruning/index.rst.txt" rel="nofollow"><img src="../../../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor.experimental.pruning">
+<span id="neural-compressor-experimental-pruning"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.pruning" title="neural_compressor.experimental.pruning"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pruning</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.pruning" title="Permalink to this heading">¶</a></h1>
+<p>pruning module.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning" title="neural_compressor.experimental.pruning.Pruning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Pruning</span></code></a></p></td>
+<td><p>This is base class of pruning object.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback" title="neural_compressor.experimental.pruning.TfPruningCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TfPruningCallback</span></code></a></p></td>
+<td><p>Class that contains callback functions.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pruning.</span></span><span class="sig-name descname"><span class="pre">Pruning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_fname_or_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../component/index.html#neural_compressor.experimental.component.Component" title="neural_compressor.experimental.component.Component"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.component.Component</span></code></a></p>
+<p>This is base class of pruning object.</p>
+<blockquote>
+<div><p>Since DL use cases vary in the accuracy metrics (Top-1, MAP, ROC etc.), loss criteria
+(&lt;1% or &lt;0.1% etc.) and pruning objectives (performance, memory footprint etc.).
+Pruning class provides a flexible configuration interface via YAML for users to specify
+these parameters.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>conf_fname_or_obj</strong> (<em>string</em><em> or </em><em>obj</em>) – The path to the YAML configuration file or
+PruningConf class containing accuracy goal, pruning objective and related
+dataloaders etc.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.conf">
+<span class="sig-name descname"><span class="pre">conf</span></span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.conf" title="Permalink to this definition">¶</a></dt>
+<dd><p>A config dict object. Contains pruning setting parameters.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.pruners">
+<span class="sig-name descname"><span class="pre">pruners</span></span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.pruners" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of Pruner object.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.pruning_func">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pruning_func</span></span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.pruning_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>Not support get pruning_func.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.evaluation_distributed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluation_distributed</span></span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.evaluation_distributed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter to know whether need distributed evaluation dataloader.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.train_distributed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train_distributed</span></span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.train_distributed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter to know whether need distributed training dataloader.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.update_items_for_all_pruners">
+<span class="sig-name descname"><span class="pre">update_items_for_all_pruners</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.update_items_for_all_pruners" title="Permalink to this definition">¶</a></dt>
+<dd><p>Functions which add User-defined arguments to the original configurations.</p>
+<p>The original config of pruning is read from a file.
+However, users can still modify configurations by passing key-value arguments in this function.
+Please note that the key-value arguments’ keys are analysable in current configuration.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Functions prepare for generate_hooks, generate_pruners.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.pre_process">
+<span class="sig-name descname"><span class="pre">pre_process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.pre_process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Functions called before pruning begins, usually set up pruners.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Functions that execute the pruning process.</p>
+<p>Follow the working flow: evaluate the dense model -&gt; train/prune the model, evaluate the sparse model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.generate_hooks">
+<span class="sig-name descname"><span class="pre">generate_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.generate_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register hooks for pruning.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.generate_pruners">
+<span class="sig-name descname"><span class="pre">generate_pruners</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.generate_pruners" title="Permalink to this definition">¶</a></dt>
+<dd><p>Functions that generate pruners and set up self.pruners.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.Pruning.get_sparsity_ratio">
+<span class="sig-name descname"><span class="pre">get_sparsity_ratio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.Pruning.get_sparsity_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Functions that calculate a modules/layers sparsity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Three floats.
+elementwise_over_matmul_gemm_conv refers to zero elements’ ratio in pruning layers.
+elementwise_over_all refers to zero elements’ ratio in all layers in the model.
+blockwise_over_matmul_gemm_conv refers to all-zero blocks’ ratio in pruning layers.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pruning.</span></span><span class="sig-name descname"><span class="pre">TfPruningCallback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nc_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class that contains callback functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nc_model</strong> – A neural compression model object.</p></li>
+<li><p><strong>hooks</strong> – A dict. Contains pure-defined hooks.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.on_train_begin">
+<span class="sig-name descname"><span class="pre">on_train_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_train_begin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.on_train_end">
+<span class="sig-name descname"><span class="pre">on_train_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_train_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.pre_epoch_begin">
+<span class="sig-name descname"><span class="pre">pre_epoch_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.pre_epoch_begin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.post_epoch_end">
+<span class="sig-name descname"><span class="pre">post_epoch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.post_epoch_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.on_epoch_begin">
+<span class="sig-name descname"><span class="pre">on_epoch_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_epoch_begin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.on_epoch_end">
+<span class="sig-name descname"><span class="pre">on_epoch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_epoch_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.on_step_begin">
+<span class="sig-name descname"><span class="pre">on_step_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_step_begin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.on_batch_begin">
+<span class="sig-name descname"><span class="pre">on_batch_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_batch_begin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.on_after_compute_loss">
+<span class="sig-name descname"><span class="pre">on_after_compute_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_after_compute_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.on_step_end">
+<span class="sig-name descname"><span class="pre">on_step_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_step_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pruning.TfPruningCallback.on_batch_end">
+<span class="sig-name descname"><span class="pre">on_batch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_batch_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the same-name function from hooks.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.pruning</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning"><code class="docutils literal notranslate"><span class="pre">Pruning</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.conf"><code class="docutils literal notranslate"><span class="pre">Pruning.conf</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.pruners"><code class="docutils literal notranslate"><span class="pre">Pruning.pruners</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.pruning_func"><code class="docutils literal notranslate"><span class="pre">Pruning.pruning_func</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.evaluation_distributed"><code class="docutils literal notranslate"><span class="pre">Pruning.evaluation_distributed</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.train_distributed"><code class="docutils literal notranslate"><span class="pre">Pruning.train_distributed</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.update_items_for_all_pruners"><code class="docutils literal notranslate"><span class="pre">Pruning.update_items_for_all_pruners()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.prepare"><code class="docutils literal notranslate"><span class="pre">Pruning.prepare()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.pre_process"><code class="docutils literal notranslate"><span class="pre">Pruning.pre_process()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.execute"><code class="docutils literal notranslate"><span class="pre">Pruning.execute()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.generate_hooks"><code class="docutils literal notranslate"><span class="pre">Pruning.generate_hooks()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.generate_pruners"><code class="docutils literal notranslate"><span class="pre">Pruning.generate_pruners()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.get_sparsity_ratio"><code class="docutils literal notranslate"><span class="pre">Pruning.get_sparsity_ratio()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_train_begin"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.on_train_begin()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_train_end"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.on_train_end()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.pre_epoch_begin"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.pre_epoch_begin()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.post_epoch_end"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.post_epoch_end()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_epoch_begin"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.on_epoch_begin()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_epoch_end"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.on_epoch_end()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_step_begin"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.on_step_begin()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_batch_begin"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.on_batch_begin()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_after_compute_loss"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.on_after_compute_loss()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_step_end"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.on_step_end()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_batch_end"><code class="docutils literal notranslate"><span class="pre">TfPruningCallback.on_batch_end()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning">Pruning</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.conf">conf</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.pruners">pruners</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.pruning_func">pruning_func</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.evaluation_distributed">evaluation_distributed</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.train_distributed">train_distributed</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.update_items_for_all_pruners">update_items_for_all_pruners</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.prepare">prepare</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.pre_process">pre_process</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.execute">execute</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.generate_hooks">generate_hooks</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.generate_pruners">generate_pruners</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.Pruning.get_sparsity_ratio">get_sparsity_ratio</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback">TfPruningCallback</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_train_begin">on_train_begin</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_train_end">on_train_end</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.pre_epoch_begin">pre_epoch_begin</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.post_epoch_end">post_epoch_end</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_epoch_begin">on_epoch_begin</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_epoch_end">on_epoch_end</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_step_begin">on_step_begin</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_batch_begin">on_batch_begin</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_after_compute_loss">on_after_compute_loss</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_step_end">on_step_end</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.pruning.TfPruningCallback.on_batch_end">on_batch_end</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

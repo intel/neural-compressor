@@ -1,0 +1,57 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.tuning_details`
+=============================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.tuning_details
+
+.. autoapi-nested-parse::
+
+   The TuningDetails class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.tuning_details.TuningDetails
+
+
+
+
+.. py:class:: TuningDetails
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench tuning details' table representation.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, strategy: str, accuracy_criterion_type: str, accuracy_criterion_threshold: float, objective: str, exit_policy: dict, random_seed: int) -> int
+      :staticmethod:
+
+      Add optimization to database.
+
+      returns id of added optimization
+
+
+   .. py:method:: update(db_session: sqlalchemy.orm.session.Session, tuning_details_id: int, tuning_details_data: neural_compressor.ux.components.optimization.tune.tuning.TuningDetails) -> dict
+      :staticmethod:
+
+      Update tuning details.
+
+
+   .. py:method:: delete_tuning_details(db_session: sqlalchemy.orm.session.Session, tuning_details_id: int) -> Optional[int]
+      :staticmethod:
+
+      Remove tuning_details from database.
+
+
+   .. py:method:: update_tuning_history(db_session: sqlalchemy.orm.session.Session, tuning_details_id: int, tuning_history_id: int) -> dict
+      :staticmethod:
+
+      Update status of optimization.
+
+
+

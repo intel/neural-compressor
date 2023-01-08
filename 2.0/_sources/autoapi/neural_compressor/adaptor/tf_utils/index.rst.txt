@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.adaptor.tf_utils`
+============================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils
+
+.. autoapi-nested-parse::
+
+   Tensorflow Adaptor Utils.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   graph_rewriter/index.rst
+   quantize_graph/index.rst
+   transform_graph/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   graph_converter/index.rst
+   graph_converter_without_calib/index.rst
+   graph_util/index.rst
+   quantize_graph_common/index.rst
+   util/index.rst
+
+

@@ -1,0 +1,402 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_util`
+=======================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_util
+
+.. autoapi-nested-parse::
+
+   Tensorflow Graph Utils Helper Classes.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer
+   neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper
+
+
+
+
+.. py:class:: GraphAnalyzer(extend_engine=None)
+
+   Tensorflow Graph Analyzer class which implemented under singleton mode.
+
+   This class provides the following API:
+   * Analyze the graph
+   * Analyze the input/output node names of the specified graph
+
+   .. py:property:: graph
+
+      Getter of the _graph object.
+
+      :returns: current graphdef object
+      :rtype: graph
+
+   .. py:method:: has_positive_input(node_name)
+
+      Check the specified node has positive input data or not.
+
+      :param node_name: node name
+      :type node_name: string
+
+      :returns:
+
+                retrun True if the node has the positive input data,
+                    return False if the node has the negative input data.
+      :rtype: bool
+
+
+   .. py:method:: get_graph_input_output()
+
+      Get the graphdef input/output node names.
+
+      Sometimes, the configuration doesn't specifies the input/output names of the graph,
+      but tensorflow need to know them clearly to run the graph.We implement this function has the similar
+      feature like summarize_graph.py which writtern by Google.
+
+      :returns: (inputs' name list, outputs'name list)
+      :rtype: tuple
+
+
+   .. py:method:: query_fusion_pattern_nodes(patterns=None)
+
+      Public interface for query the nodes aggregation status.
+
+      :param patterns: Please check the _search_patterns definition.
+      :type patterns: string list
+
+      :returns: The matched node names which saved as the string list.
+      :rtype: [string list]
+
+
+   .. py:method:: remove_node_with_single_input_output(node_name)
+
+      Remove node with one input and rebuild internal graph data structure.
+
+      :param node_name: node name
+      :type node_name: string
+
+      :returns:
+
+                True if remove the node without exception,
+                        False if failed to remove it.
+      :rtype: [bool]
+
+
+   .. py:method:: remove_node(node_name)
+
+      Remove the user specified node by its name.
+
+      :param node_name: node name string.
+      :type node_name: string
+
+      :returns:
+
+                True if remove the node without exception.
+                        False if failed to remove it.
+      :rtype: [bool]
+
+
+   .. py:method:: replace_const_node(new_const_node, target_node, old_constant_node_name, replace_all=True)
+
+      Replace the specified const node with another one.
+
+      :param new_const_node: node name string.
+      :type new_const_node: NodeDef
+      :param target_node: the string list that contains name of node that
+                          need to be replaced const node.
+      :type target_node: list
+      :param old_constant_node_name: the outdated const node name.
+      :type old_constant_node_name: string
+      :param replace_all: replace the specified node name once or not.
+      :type replace_all: bool
+
+
+   .. py:method:: replace_constant_graph_with_constant_node(new_node, old_end_node_name)
+
+      Remove sub-graph with a const node.
+
+      :param new_node: the constant node
+      :type new_node: nodedef
+      :param old_end_node_name: the sub-graph end node which will be updated by new node
+      :type old_end_node_name: string
+
+      :returns:
+
+                True if remove the node without exception.
+                        False if failed to remove it.
+      :rtype: [bool]
+
+
+   .. py:method:: replace_single_node(new_node, old_output_node_names, old_output_name, old_input_node_names, old_input_name)
+
+      Insert one node into the graph.
+
+      :param new_node: new nodedef object
+      :type new_node: nodedef
+      :param old_output_node_names: the node names that would be the top node of new
+                                    node.
+      :type old_output_node_names: string list
+      :param old_output_name: the names that need to be updated with new node name
+      :type old_output_name: string list
+      :param old_input_node_names: the node names that would be the bottom node of new
+                                   node.
+      :type old_input_node_names: string list
+      :param old_input_name: the names that need to be updated with new node name
+      :type old_input_name: string list
+
+
+   .. py:method:: replace_node(new_node, old_node_name, output_nodes_name)
+
+      Replace the node into the internal data structure node_name_details.
+
+      :param new_node: the nodedef object.
+      :type new_node: nodedef
+      :param old_node_name: the parent node of input node.
+      :type old_node_name: string
+      :param output_nodes_name: output node names list
+      :type output_nodes_name: string list
+
+
+   .. py:method:: add_node(new_node, start_node_name, end_node_names)
+
+      Add the node into the internal data structure node_name_details.
+
+      :param new_node: the nodedef object.
+      :type new_node: nodedef
+      :param start_node_name: the parent node of input node.
+      :type start_node_name: string
+      :param end_node_names: output node names list
+      :type end_node_names: string list
+
+
+   .. py:method:: dump_graph()
+
+      Dump the current model's graphdef.
+
+      :returns: A graphdef object
+      :rtype: [graphdef]
+
+
+   .. py:method:: get_frame_info()
+
+      Get the frame info of the model.
+
+      :returns: OrderedDict frame info of the graph nodes.
+      :rtype: [parent_frame_details]
+
+
+   .. py:method:: parse_graph(input_graph_def=None)
+
+      Analyze the input graphdef and return the list contains each node's input/outputnode names.
+
+      :param input_graph_def: graphdef object
+      :type input_graph_def: [graphdef]
+
+      :returns: A list contains each node's inputs/outputs info.
+      :rtype: [list]
+
+
+
+.. py:class:: GraphRewriterHelper
+
+   Encapsulates the graph operation into one class.
+
+   .. py:method:: compare_node_attr(node_a, node_b)
+      :staticmethod:
+
+      Compare two node has identical attributes or not.
+
+      :param node_a: Input node.
+      :type node_a: nodedef
+      :param node_b: Another node to be compared.
+      :type node_b: nodedef
+
+      :returns: True if two node have the identical attributes.
+      :rtype: [bool]
+
+
+   .. py:method:: create_node(op, name, inputs)
+      :staticmethod:
+
+      Create a nodedef object.
+
+      :param op: op type
+      :type op: string
+      :param name: op name
+      :type name: string
+      :param inputs: op's inputs name
+      :type inputs: string list
+
+      :returns: the created nodedef object
+      :rtype: nodedef
+
+
+   .. py:method:: create_constant_node(name, value, dtype, shape=None, device='cpu')
+      :staticmethod:
+
+      Create constant node.
+
+      :param name: op name
+      :type name: string
+      :param value: input data
+      :type value: np.array
+      :param dtype: data type of the input value
+      :type dtype: datatype
+      :param shape: the value's shape. Defaults to None.
+      :type shape: int list, optional
+      :param device: the device type, it may be the 'cpu' or 'gpu'.
+                     Defaults to 'cpu'.
+      :type device: str, optional
+
+      :returns: [description]
+      :rtype: [type]
+
+
+   .. py:method:: set_attr_dtype(node, key, value)
+      :staticmethod:
+
+      Set the attribute data type.
+
+
+   .. py:method:: set_attr_tensor(node, key, value, dtype, shape=None)
+      :staticmethod:
+
+      Set the tensor value to specified attribute field.
+
+      :param node: the target nodedef object
+      :type node: nodedef
+      :param key: attribute name
+      :type key: string
+      :param value: the content
+      :type value: np.array
+      :param dtype: data type
+      :type dtype: dtypes
+      :param shape: the input tensor's shape. Defaults to None.
+      :type shape: int list, optional
+
+
+   .. py:method:: set_attr_type_list(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is int list.
+
+
+   .. py:method:: set_attr_string_list(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is int list.
+
+
+   .. py:method:: set_attr_string(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is string.
+
+
+   .. py:method:: set_attr_int_list(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is int list.
+
+
+   .. py:method:: set_attr_int(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is int.
+
+
+   .. py:method:: set_attr_float(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is float.
+
+
+   .. py:method:: set_attr_bool(node, key, value)
+      :staticmethod:
+
+      Set the node's attr which data type is bool.
+
+
+   .. py:method:: node_name_from_input(node_name)
+      :staticmethod:
+
+      Static method that get the valid node name from input name.
+
+      :param node_name: node name defined in the input field.
+      :type node_name: string
+
+      :returns: node's name
+      :rtype: string
+
+
+   .. py:method:: values_from_const(node_def)
+      :staticmethod:
+
+      Extracts the values from a const NodeDef as a numpy ndarray.
+
+      :param node_def: Const NodeDef that has the values we want to access.
+
+      :returns: Numpy ndarray containing the values.
+
+      :raises ValueError: If the node isn't a Const.
+
+
+   .. py:method:: generate_int32_bias_for_conv(bias_tensor, channel_size, max_input, min_input, max_filter_tensor, min_filter_tensor, activation_range, weights_range=127.0)
+      :staticmethod:
+
+      Static method that generate int32 bias for conv op.
+
+      :param bias_tensor: bias node tensor.
+      :param channel_size: channel size.
+      :param max_input: max activation input value.
+      :param min_input: min activation input value.
+      :param max_filter_tensor: max weight input tensor.
+      :param min_filter_tensor: min weight input tensor.
+      :param activation_range: activation range value.
+      :param weights_range: weight range value.
+
+      :returns: int32 bias
+      :rtype: int32_bias
+
+
+   .. py:method:: generate_int32_bias_for_matmul(bias_tensor, weights_tensor, input_range, max_input, min_input, max_filter_value, min_filter_value)
+      :staticmethod:
+
+      Static method that generate int32 bias for matmul op.
+
+      :param bias_tensor: bias node tensor.
+      :param weights_tensor: weights tensor.
+      :param input_range: activation range value.
+      :param max_input: max activation input value.
+      :param min_input: min activation input value.
+      :param max_filter_tensor: max weight input tensor.
+      :param min_filter_tensor: min weight input tensor.
+
+      :returns: int32 bias
+      :rtype: int32_bias
+
+
+   .. py:method:: gen_valid_sampling_log(log_path)
+      :staticmethod:
+
+      Generate the valid sampling log.
+
+      :param log_path: the valid sampling log file path.
+
+      :returns: the sampling min max value.
+
+
+   .. py:method:: analysis_rnn_model(graph_def, bf16_ops=[], fp32_ops=[])
+      :staticmethod:
+
+      Match the RNN and dynamic RNN patterns.
+
+
+

@@ -1,0 +1,65 @@
+:py:mod:`neural_compressor.strategy.conservative`
+=================================================
+
+.. py:module:: neural_compressor.strategy.conservative
+
+.. autoapi-nested-parse::
+
+   The conservative tuning strategy for quantization level 0.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.conservative.ConservativeTuneStrategy
+
+
+
+
+.. py:class:: ConservativeTuneStrategy(model, conf, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None)
+
+   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
+   Tuning strategy with accuracy first, performance second.
+
+   The quantization level O0 is designed for user who want to keep the accuracy
+   of the model after quantization. It starts with the original(fp32) model,
+   and then quantize the OPs to lower precision OP type wisely and OP wisely.
+
+   .. py:method:: next_tune_cfg()
+
+      Generate and yield the next tuning config with below order.
+
+      1. Query all quantifiable ops and save as a list of [(op_name, op_type), ...]
+      2. Classify the op by its op type
+      3. Add op to quant_queue according to the op type priority
+      4. Go through the quant_queue and replace it with the fp32 config in tune_cfg if
+      accuracy meets the requirements else continue
+      5. For bf16 and fp16 operators, do the same as int8 operators.
+
+      :Yields: *tune_config (dict)* -- It's a dict containing the tuning configuration to run.
+
+
+   .. py:method:: traverse()
+
+      Traverse the tuning space.
+
+
+   .. py:method:: stop(trials_count)
+
+      Check whether needed to stop the traverse procedure.
+
+      :param trials_count: current total count of tuning trails.
+      :type trials_count: int
+
+      :returns: whether needed to stop the traverse procedure.
+      :rtype: bool
+
+
+

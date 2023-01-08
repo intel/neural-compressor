@@ -1,0 +1,588 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Neural Architecture Search &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li>Neural Architecture Search</li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="_sources/NAS.md.txt" rel="nofollow"><img src="_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="neural-architecture-search">
+<h1>Neural Architecture Search<a class="headerlink" href="#neural-architecture-search" title="Permalink to this heading">¶</a></h1>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p>
+<p>1.1. <a class="reference external" href="#basic-nas">Basic NAS</a></p>
+<p>1.2. <a class="reference external" href="#dynamic-nas">Dynamic NAS</a></p>
+</li>
+<li><p><a class="reference external" href="#nas-support-matrix">NAS Support Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-nas-api">Get Started with NAS API</a></p>
+<p>3.1. <a class="reference external" href="#basic-usage">Basic Usage</a></p>
+<p>3.2. <a class="reference external" href="#advanced-usage-custom-nas">Advanced Usage (Custom NAS)</a></p>
+</li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<p>Neural Architecture Search (NAS) is the process of automating the design of artificial neural networks (ANN) architecture. NAS has been used to design networks that are on par with or outperform hand-designed architectures. Intel® Neural Compressor has supported two different NAS methods: Basic NAS and Dynamic NAS.</p>
+<section id="basic-nas">
+<h3>Basic NAS<a class="headerlink" href="#basic-nas" title="Permalink to this heading">¶</a></h3>
+<p>Our Basic NAS method leverages a specific search algorithm from built-in search algorithms (grid search, random search and bayesian optimization are supported in Intel® Neural Compressor now) or user defined search algorithms to propose the model architecture based on the given search space, then perform the train evaluation process to evaluate the potential of the proposed model architecture, after several iterations of such procedure, best performing model architectures which lie in pareto front will be returned.</p>
+</section>
+<section id="dynamic-nas">
+<h3>Dynamic NAS<a class="headerlink" href="#dynamic-nas" title="Permalink to this heading">¶</a></h3>
+<p>Dynamic Neural Architecture Search (DyNAS) is a super-network-based NAS approach which use the metric predictors for predicting the metrics of the model architecture, it is &gt;4x more sample efficient than typical one-shot predictor-based NAS approaches.
+<br>
+The flow of the DyNAS approach is shown in the following figure. In the first phase of the search, a small population of sub-networks are randomly sampled from the super-network and evaluated (validation measurement) to provide the initial training set for the inner predictor loop. After the predictors are trained, a multi-objective evolutionary search is performed in the predictor objective space. After this extensive search is performed, the best performing sub-network configurations are selected to be the next iteration’s validation population. The cycle continues until the search concludes when the user defined evaluation count is met.
+<br>
+<img alt="DyNAS Workflow" src="_images/dynas.png" /></p>
+</section>
+</section>
+<section id="nas-support-matrix">
+<h2>NAS Support Matrix<a class="headerlink" href="#nas-support-matrix" title="Permalink to this heading">¶</a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>NAS Algorithm</th>
+<th style="text-align: center;">PyTorch</th>
+<th style="text-align: center;">TensorFlow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Basic NAS</td>
+<td style="text-align: center;">&#10004;</td>
+<td style="text-align: center;">Not supported yet</td>
+</tr>
+<tr>
+<td>Dynamic NAS</td>
+<td style="text-align: center;">&#10004;</td>
+<td style="text-align: center;">Not supported yet</td>
+</tr>
+</tbody>
+</table></section>
+<section id="get-started-with-nas-api">
+<h2>Get Started with NAS API<a class="headerlink" href="#get-started-with-nas-api" title="Permalink to this heading">¶</a></h2>
+<section id="basic-usage">
+<h3>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this heading">¶</a></h3>
+<section id="python-code-yaml">
+<h4>1. Python code + YAML<a class="headerlink" href="#python-code-yaml" title="Permalink to this heading">¶</a></h4>
+<p>Simplest launcher code if NAS configuration is defined in user-defined yaml.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">NAS</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">NAS</span><span class="p">(</span><span class="s1">&#39;/path/to/user/yaml&#39;</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="python-code-only">
+<h4>2. Python code only<a class="headerlink" href="#python-code-only" title="Permalink to this heading">¶</a></h4>
+<p>NAS class also support <code class="docutils literal notranslate"><span class="pre">NASConfig</span></code> class as it’s argument.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.conf.config</span> <span class="kn">import</span> <span class="n">NASConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">NAS</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">NASConfig</span><span class="p">(</span><span class="n">approach</span><span class="o">=</span><span class="s1">&#39;dynas&#39;</span><span class="p">,</span> <span class="n">search_algorithm</span><span class="o">=</span><span class="s1">&#39;nsga2&#39;</span><span class="p">)</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">supernet</span> <span class="o">=</span> <span class="s1">&#39;ofa_mbv3_d234_e346_k357_w1.2&#39;</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;acc&#39;</span><span class="p">,</span> <span class="s1">&#39;macs&#39;</span><span class="p">]</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">population</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">num_evals</span> <span class="o">=</span> <span class="mi">250</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">results_csv_path</span> <span class="o">=</span> <span class="s1">&#39;search_results.csv&#39;</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span>
+<span class="n">config</span><span class="o">.</span><span class="n">dynas</span><span class="o">.</span><span class="n">dataset_path</span> <span class="o">=</span> <span class="s1">&#39;/datasets/imagenet-ilsvrc2012&#39;</span> <span class="c1">#example</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">NAS</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="advanced-usage-custom-nas">
+<h3>Advanced Usage (Custom NAS)<a class="headerlink" href="#advanced-usage-custom-nas" title="Permalink to this heading">¶</a></h3>
+<p>Intel® Neural Compressor NAS API is defined under <code class="docutils literal notranslate"><span class="pre">neural_compressor.experimental.nas</span></code>, which takes a user defined yaml file or a <a class="reference external" href="../../neural_compressor/conf/config.py#NASConfig">NASConfig</a> object as input. The user defined yaml or the <a class="reference external" href="../../neural_compressor/conf/config.py#NASConfig">NASConfig</a> object defines necessary configuration of the NAS process. The <a class="reference external" href="../../neural_compressor/experimental/nas/nas.py#NAS">NAS</a> class aims to create an object according to the defined NAS approach in the configuration, please note this NAS approach should be registered in the Intel® Neural Compressor.</p>
+<p>Currently, Intel® Neural Compressor supported two built-in NAS methods: <a class="reference external" href="../../neural_compressor/experimental/nas/basic_nas.py#BasicNAS">Basic NAS</a> and <a class="reference external" href="../../neural_compressor/experimental/nas/dynas.py#DyNAS">Dynamic NAS</a>. Both methods are inherited from a base class called <a class="reference external" href="../../neural_compressor/experimental/nas/nas.py#NASBase">NASBase</a>. User can also customize their own NAS approach in Intel® Neural Compressor just by decorating their NAS approach class with function <a class="reference external" href="../../neural_compressor/experimental/nas/nas_utils.py#nas_registry">nas_registry</a> as well as following the API in <a class="reference external" href="../../neural_compressor/experimental/nas/nas.py#NASBase">NASBase</a>, like the way used in the two built-in NAS methods.</p>
+</section>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h2>
+<p>Following examples are supported in Intel® Neural Compressor:</p>
+<ul class="simple">
+<li><p>DyNAS MobileNetV3 supernet Example:</p>
+<ul>
+<li><p><a class="reference external" href="../../examples/notebook/dynas/MobileNetV3_Supernet_NAS.ipynb">DyNAS MobileNetV3 supernet Example</a>: DyNAS with MobileNetV3 supernet on ImageNet dataset.</p></li>
+</ul>
+</li>
+<li><p>DyNAS Transformer LT supernet Example:</p>
+<ul>
+<li><p><a class="reference external" href="../../examples/notebook/dynas/Transformer_LT_Supernet_NAS.ipynb">DyNAS Transformer LT supernet Example</a>: DyNAS with Transformer LT supernet on WMT En-De dataset.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">Neural Architecture Search</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li><a class="reference internal" href="#basic-nas">Basic NAS</a></li>
+<li><a class="reference internal" href="#dynamic-nas">Dynamic NAS</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#nas-support-matrix">NAS Support Matrix</a></li>
+<li><a class="reference internal" href="#get-started-with-nas-api">Get Started with NAS API</a><ul>
+<li><a class="reference internal" href="#basic-usage">Basic Usage</a><ul>
+<li><a class="reference internal" href="#python-code-yaml">1. Python code + YAML</a></li>
+<li><a class="reference internal" href="#python-code-only">2. Python code only</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#advanced-usage-custom-nas">Advanced Usage (Custom NAS)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/documentation_options.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_redundant_dequantize`
+=================================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_redundant_dequantize
+
+.. autoapi-nested-parse::
+
+   Fuse QuantizedMatMul with redundant Dequantize Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_redundant_dequantize.FuseMatMulRedundantDequantizeTransformer
+
+
+
+
+.. py:class:: FuseMatMulRedundantDequantizeTransformer(model, device='cpu')
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Fuse _QuantizedMatMul with the successor Dequantize Op.
+
+   .. py:method:: do_transformation()
+
+      Fuse the _QuantizedMatMul with the following Dequantize op.
+
+      The output of _QuantizedMatMul or is fp32 or bf16.
+
+      :returns: the optimized graphdef object
+      :rtype: [graphdef]
+
+
+

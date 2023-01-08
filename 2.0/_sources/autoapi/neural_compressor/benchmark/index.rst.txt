@@ -1,0 +1,97 @@
+:py:mod:`neural_compressor.benchmark`
+=====================================
+
+.. py:module:: neural_compressor.benchmark
+
+.. autoapi-nested-parse::
+
+   Benchmark is used for evaluating the model performance.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.benchmark.Benchmark
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.benchmark.fit
+
+
+
+.. py:class:: Benchmark(conf_fname_or_obj)
+
+   Bases: :py:obj:`object`
+
+   Benchmark class can be used to evaluate the model performance.
+
+   With the objective setting, user can get the data of what they configured in yaml.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             Benchmark_Conf class containing accuracy goal, tuning objective and preferred
+                             calibration & quantization tuning space etc.
+   :type conf_fname_or_obj: string or obj
+
+   .. py:method:: dataloader(dataset, batch_size=1, collate_fn=None, last_batch='rollover', sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+
+      Set dataloader for benchmarking.
+
+
+   .. py:method:: metric(name, metric_cls, **kwargs)
+
+      Set the metric class and Neural Compressor will initialize this class when evaluation.
+
+      Neural Compressor has many built-in metrics, but users can set specific metrics through
+      this api. The metric class should take the outputs of the model or
+      postprocess (if have) as inputs. Neural Compressor built-in metrics always take
+      (predictions, labels) as inputs for update,
+      and user_metric.metric_cls should be a sub_class of neural_compressor.metric.metric
+      or an user-defined metric object
+
+      :param metric_cls: Should be a sub_class of neural_compressor.metric.BaseMetric,
+                         which takes (predictions, labels) as inputs
+      :type metric_cls: cls
+      :param name: Name for metric. Defaults to 'user_metric'.
+      :type name: str, optional
+
+
+   .. py:method:: postprocess(name, postprocess_cls, **kwargs)
+
+      Set postprocess class and neural_compressor will initialize this class when evaluation.
+
+      The postprocess function should take the outputs of the model as inputs, and
+      outputs (predictions, labels) as inputs for metric updates.
+
+      Args:
+      name (str, optional): Name for postprocess.
+      postprocess_cls (cls): Should be a sub_class of neural_compressor.data.transforms.postprocess.
+
+
+
+
+.. py:function:: fit(model, config=None, b_dataloader=None, b_func=None)
+
+   Benchmark the model performance with the configure.
+
+   :param model: The model to be benchmarked.
+   :type model: object
+   :param config: The configuration for benchmark containing accuracy goal,
+                  tuning objective and preferred calibration & quantization
+                  tuning space etc.
+   :type config: BenchmarkConfig
+   :param b_dataloader: The dataloader for frameworks.
+   :param b_func: customized benchmark function. if user passes the dataloader,
+                  then b_func is not needed.
+
+

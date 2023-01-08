@@ -1,0 +1,29 @@
+:py:mod:`neural_compressor.ux.components.model.tensorflow.utils`
+================================================================
+
+.. py:module:: neural_compressor.ux.components.model.tensorflow.utils
+
+.. autoapi-nested-parse::
+
+   TensorFlow model utils.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.model.tensorflow.utils.get_input_shape
+
+
+
+.. py:function:: get_input_shape(graph_def: Any, fix_dynamic_shape: int) -> List[int]
+
+   Get input shape of passed graph.
+
+

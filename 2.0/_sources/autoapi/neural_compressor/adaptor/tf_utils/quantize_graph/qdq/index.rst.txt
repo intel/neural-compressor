@@ -1,0 +1,27 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq`
+===============================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq
+
+.. autoapi-nested-parse::
+
+   Tensorflow QDQ Graph Quantizers.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   fuse_qdq_bn/index.rst
+   fuse_qdq_concatv2/index.rst
+   fuse_qdq_conv/index.rst
+   fuse_qdq_deconv/index.rst
+   fuse_qdq_in/index.rst
+   fuse_qdq_matmul/index.rst
+   fuse_qdq_pooling/index.rst
+   optimize_qdq/index.rst
+
+

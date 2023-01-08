@@ -1,0 +1,167 @@
+:py:mod:`neural_compressor.training`
+====================================
+
+.. py:module:: neural_compressor.training
+
+.. autoapi-nested-parse::
+
+   The configuration of the training loop.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.training.CompressionManager
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.training.prepare_compression
+
+
+
+.. py:class:: CompressionManager(component)
+
+   CompressionManager is uesd in train loop for what user want to deal with additional.
+
+   :param commponent: one instance of Distillation, Quantization, Pruning, Scheduler
+
+   .. rubric:: Examples
+
+   import neural_compressor.training.prepare_compression
+   compression_manager = prepare_compression(conf, model)
+   compression_manager.callbacks.on_train_begin()
+   model = compression_manager.model
+   train_loop:
+       for epoch in range(epochs):
+           compression_manager.callbacks.on_epoch_begin(epoch)
+           for i, batch in enumerate(dataloader):
+               compression_manager.callbacks.on_step_begin(i)
+               ......
+               output = model(batch)
+               loss = ......
+               loss = compression_manager.callbacks.on_after_compute_loss(batch, output, loss)
+               loss.backward()
+               compression_manager.callbacks.on_before_optimizer_step()
+               optimizer.step()
+               compression_manager.callbacks.on_step_end()
+           compression_manager.callbacks.on_epoch_end()
+   compression_manager.callbacks.on_train_end()
+   compression_manager.save("path_to_save")
+
+   .. py:class:: CallBacks(component)
+
+      Define the basic command for the training loop.
+
+      .. py:method:: on_train_begin(dataloader=None)
+
+         Called before the beginning of epochs.
+
+
+      .. py:method:: on_train_end()
+
+         Called after the end of epochs.
+
+
+      .. py:method:: on_epoch_begin(epoch)
+
+         Called on the beginning of epochs.
+
+
+      .. py:method:: on_step_begin(batch_id)
+
+         Called on the beginning of batches.
+
+
+      .. py:method:: on_after_compute_loss(input, student_output, student_loss, teacher_output=None)
+
+         Called on the end of loss computation.
+
+
+      .. py:method:: on_before_optimizer_step()
+
+         Called on the end of backward.
+
+
+      .. py:method:: on_after_optimizer_step()
+
+         Called on the end of backward.
+
+
+      .. py:method:: on_step_end()
+
+         Called on the end of batches.
+
+
+      .. py:method:: on_epoch_end()
+
+         Called on the end of epochs.
+
+
+
+   .. py:method:: save(root=None)
+
+      Save compressed model.
+
+      :param root: path to save the model
+      :type root: str
+
+
+   .. py:method:: export(save_path: str, conf)
+
+      Convert the model to another type model, like `onnx` model and so on.
+
+      :param save_path: The path to save the model
+      :type save_path: str
+      :param conf: The configure for onnx exportation.
+      :type conf: Union[Callable, List]
+
+
+
+.. py:function:: prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
+
+   Summary.
+
+   :param model: The model to optimize.
+   :type model: Callable, optional
+   :param confs: Config of Distillation, Quantization, Pruning,
+                 or list of config for orchestration optimization
+   :type confs: Union[Callable, List]
+   :param options: The configure for random_seed, workspace,
+                   resume path and tensorboard flag.
+   :type options: Options, optional
+
+   :returns: CompressionManager
+
+   .. rubric:: Examples
+
+   import neural_compressor.training.prepare_compression
+   compression_manager = prepare_compression(conf, model)
+   train_loop:
+       compression_manager.on_train_begin()
+       for epoch in range(epochs):
+           compression_manager.on_epoch_begin(epoch)
+           for i, batch in enumerate(dataloader):
+               compression_manager.on_step_begin(i)
+               ......
+               output = model(batch)
+               loss = ......
+               loss = compression_manager.on_after_compute_loss(batch, output, loss)
+               loss.backward()
+               compression_manager.on_before_optimizer_step()
+               optimizer.step()
+               compression_manager.on_step_end()
+           compression_manager.on_epoch_end()
+       compression_manager.on_train_end()
+
+

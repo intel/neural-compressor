@@ -1,0 +1,93 @@
+:py:mod:`neural_compressor.ux.web.configuration`
+================================================
+
+.. py:module:: neural_compressor.ux.web.configuration
+
+.. autoapi-nested-parse::
+
+   Configuration module for UX server.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.configuration.Configuration
+
+
+
+
+.. py:class:: Configuration
+
+   Configuration object for UX server.
+
+   .. py:property:: global_config_directory
+      :type: str
+
+      Get the directory for global config files.
+
+   .. py:method:: set_up() -> None
+
+      Reset variables.
+
+
+   .. py:method:: determine_values_from_environment() -> None
+
+      Set variables based on environment values.
+
+
+   .. py:method:: get_command_line_args() -> Dict
+
+      Return arguments passed in command line.
+
+
+   .. py:method:: determine_server_port(args: Dict) -> int
+
+      Return port to be used by the server.
+
+      Will raise a NotFoundException if port is already in use.
+
+      When port given in command line, only that port will be tried.
+      When no port specified will try self.MAX_PORTS_TRIED times,
+      starting with self.PORT_DEFAULT.
+
+
+   .. py:method:: determine_gui_port(args: Dict) -> int
+
+      Return port to be used by the GUI client.
+
+      Will return self.server_port unless specified in configuration.
+
+
+   .. py:method:: is_port_taken(port: int) -> bool
+
+      Return if given port is already in use.
+
+
+   .. py:method:: determine_log_level(args: Dict) -> int
+
+      Determine log level based on parameters given.
+
+
+   .. py:method:: determine_url_prefix(args: dict) -> str
+      :staticmethod:
+
+      Determine url prefix based on parameters given.
+
+
+   .. py:method:: get_url() -> str
+
+      Return URL to access application.
+
+
+   .. py:method:: dump_token_to_file() -> None
+
+      Dump token to file.
+
+
+

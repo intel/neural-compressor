@@ -1,0 +1,42 @@
+:py:mod:`neural_compressor.strategy.basic`
+==========================================
+
+.. py:module:: neural_compressor.strategy.basic
+
+.. autoapi-nested-parse::
+
+   The basic tuning strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.basic.BasicTuneStrategy
+
+
+
+
+.. py:class:: BasicTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
+
+   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
+   The basic tuning strategy.
+
+   .. py:method:: next_tune_cfg()
+
+      Generate and yield the next tuning config with below order.
+
+          1. OP Type Wise Tuning
+          2. Fallback OP One by One
+          3. Fallback Multiple OPs Accumulated
+
+      :Yields: *tune_config (dict)* -- A dict containing the tuning configuration for quantization.
+
+
+

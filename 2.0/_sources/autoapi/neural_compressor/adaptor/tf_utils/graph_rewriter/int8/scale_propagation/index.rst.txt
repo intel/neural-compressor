@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.scale_propagation`
+==================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.scale_propagation
+
+.. autoapi-nested-parse::
+
+   Scale propagation Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.scale_propagation.ScaleProPagationTransformer
+
+
+
+
+.. py:class:: ScaleProPagationTransformer(model, direction='Up')
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Scale propagation converter.
+
+   .. py:method:: do_transformation()
+
+      Apply the scale propagation algrothim.
+
+
+

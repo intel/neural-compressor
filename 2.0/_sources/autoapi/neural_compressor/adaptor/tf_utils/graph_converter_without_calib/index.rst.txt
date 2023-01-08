@@ -1,0 +1,50 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_converter_without_calib`
+==========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_converter_without_calib
+
+.. autoapi-nested-parse::
+
+   Without calibration Graph Converter Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_converter_without_calib.GraphConverterWithoutCalib
+
+
+
+
+.. py:class:: GraphConverterWithoutCalib(model, data_loader=None, recover_config=None, new_api=False, performance_only=False, use_bf16=False)
+
+   Graph Converter without calibration Class is used to generate the quantization graph without calibration.
+
+   .. py:method:: convert_without_calib()
+
+      Do convertion without calibration.
+
+
+   .. py:method:: quantize_without_calib()
+
+      Quantize graph only (without optimizing fp32 graph).
+
+      Including:
+          1) quantize graph,
+          2) fuse RequantizeOp with fused quantized conv, and so on.
+
+      :return:
+
+
+   .. py:method:: bf16_convert()
+
+      Convert fp32 nodes in bf16_node to bf16 dtype based on FP32 + INT8 mixed precision graph.
+
+
+

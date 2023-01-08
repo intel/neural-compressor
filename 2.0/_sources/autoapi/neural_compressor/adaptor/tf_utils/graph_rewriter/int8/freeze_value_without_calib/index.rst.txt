@@ -1,0 +1,52 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib`
+===========================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib
+
+.. autoapi-nested-parse::
+
+   Freeze Value without calibration Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_value_without_calib.FreezeValueWithoutCalibTransformer
+
+
+
+
+.. py:class:: FreezeValueWithoutCalibTransformer(model, max_min_data, postfix, th=0.95, device='gpu')
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Freeze value without calibration.
+
+   .. py:method:: generate_output_graph(max_name_value)
+
+      Generate transformed graph for freeze_max/freeze_min transformation.
+
+      :param max_name_value: target values
+      :return: transformed graph
+
+
+   .. py:method:: generate_output_graph_ranges(max_name_value)
+
+      Generate transformed graph for freeze_max/freeze_min transformation.
+
+      :param max_name_value: target values
+      :return: transformed graph
+
+
+   .. py:method:: do_transformation_without_calib()
+
+      Apply transformation without calibration.
+
+
+

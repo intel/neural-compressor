@@ -1,0 +1,404 @@
+:py:mod:`neural_compressor.adaptor.tensorflow`
+==============================================
+
+.. py:module:: neural_compressor.adaptor.tensorflow
+
+.. autoapi-nested-parse::
+
+   Tensorflow Adaptor Classes.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tensorflow.TensorFlowAdaptor
+   neural_compressor.adaptor.tensorflow.Tensorflow_ITEXAdaptor
+   neural_compressor.adaptor.tensorflow.TensorflowQuery
+
+
+
+
+.. py:class:: TensorFlowAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`neural_compressor.adaptor.adaptor.Adaptor`
+
+   Adaptor Layer for stock tensorflow and spr-base.
+
+   .. py:method:: train(model, dataloader, optimizer_tuple, criterion_tuple, hooks, postprocess, **kwargs)
+
+      Model training API.
+
+      :param model: The model could be the graph,
+                    graph_def object, the frozen pb or ckpt/savedmodel folder path.
+      :type model: [Graph, GraphDef or Path String]
+      :param dataloader: generate the data and labels.
+      :type dataloader: generator
+      :param optimizer_tuple: optimizers for model training.
+      :type optimizer_tuple: tuple
+      :param criterion_tuple: criterions for model training.
+      :type criterion_tuple: tuple
+      :param hooks: on_epoch_begin hook on_epoch_end hook.
+      :type hooks: callback
+      :param postprocess: process the result from the model.
+      :type postprocess: object
+
+      :returns: None.
+
+
+   .. py:method:: evaluate(model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=False)
+
+      Evaluate the model for specified metric on validation dataset.
+
+      :param model: The model could be the graph,
+                    graph_def object, the frozen pb or ckpt/savedmodel folder path.
+      :type model: [Graph, GraphDef or Path String]
+      :param dataloader: generate the data and labels.
+      :type dataloader: generator
+      :param postprocess: process the result from the model
+      :type postprocess: object, optional
+      :param metrics: Depends on model category. Defaults to None.
+      :type metrics: list, optional
+      :param measurer: for precise benchmark measurement.
+      :type measurer: object, optional
+      :param iteration: control steps of mini-batch
+      :type iteration: int, optional
+      :param tensorboard: for tensorboard inspect tensor.
+      :type tensorboard: boolean, optional
+      :param fp32_baseline: only for compare_label=False pipeline
+      :type fp32_baseline: boolen, optional
+
+      :returns: evaluation result, the larger is better.
+      :rtype: [float]
+
+
+   .. py:method:: quantize(tune_cfg, model, data_loader, q_func=None)
+
+      Execute the quantize process on the specified model.
+
+      :param tune_cfg: quantization configuration
+      :type tune_cfg: dict
+      :param model: fp32 model
+      :type model: tf.compat.v1.GraphDef
+      :param data_loader: generator the data and labels
+      :type data_loader: generator
+      :param q_func: training function for quantization aware training mode,
+                     which not enabled for tensorflow yet.
+      :type q_func: optional
+
+      :returns: the quantized model
+      :rtype: tf.compat.v1.GraphDef
+
+
+   .. py:method:: query_fw_capability(model)
+
+      Collect the model-wise and op-wise configuration for quantization.
+
+      :param model: model definition.
+      :type model: tf.compat.v1.GraphDef
+
+      :returns: model-wise & op-wise configuration for quantization.
+      :rtype: [dict]
+
+
+   .. py:method:: set_tensor(model, tensor_dict)
+
+      Quantize the bias and weight tensors in tensor_dict.
+
+
+   .. py:method:: inspect_weight_and_bias(node_list, graph_def, graph_info, graph_node_name_mapping)
+
+      Inspect the weights and biases.
+
+
+   .. py:method:: fused_node_mapping(node_list, pattern_mapping, graph_info, graph_node_name_mapping)
+
+      Create the mapping between first node and last node in fused sequence.
+
+      :param node_list: node name list
+      :param pattern_mapping: key: node name, val: node pattern mapping
+      :param graph_info: key: node name, val: node details
+      :param graph_node_name_mapping: key: node name, val: node
+
+      :returns: key: first node name in fused seq, val: last node in fused seq
+                fused_mapping_reverse: key: last node in fused seq, val: first node name in fused seq
+      :rtype: fused_mapping
+
+
+   .. py:method:: inspect_activation(node_list, graph_def, graph_node_name_mapping, quantization_cfg, dataloader, iteration_list, graph_info)
+
+      Inspect the activation.
+
+
+   .. py:method:: inspect_tensor(model, dataloader=None, op_list=[], iteration_list=[], inspect_type='activation', save_to_disk=False, save_path=None, quantization_cfg=None)
+
+      Dump the weight and activation(output) to local disk.
+
+      1. create the correspondence between query node name and the actually output node name in graph_def
+      2. get the weight and bias for the given node
+      3. get the activation for the given node
+      4. save the tensor to disk
+      :param model: int8/fp32 graph_def/TensorflowBaseModel
+      :param dataloader: dataloader used during inspect activation
+      :param op_list: op list to inspect
+      :param iteration_list: iteration list to inspect, start from 1
+      :param inspect_type: activation/weight/all
+      :param save_to_disk: dump to disk or not
+      :param save_path: the dump path for inspect tensor
+      :param quantization_cfg: quantization configuration for fused fp32 model and quantized model
+
+      :returns:
+
+                Dict
+                   {
+                     'weight': {
+                       'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
+                       'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
+                       ...
+                     },
+                     'activation': [
+                       # iter 1:
+                           {
+                             'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
+                             'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
+                             ...
+                           },
+                       # iter 2:
+                            {
+                           ...
+                           }
+                     ]
+                   }
+
+
+   .. py:method:: quantize_input(model)
+
+      Quantize the model to be able to take quantized input.
+
+      Remove graph QuantizedV2 op and move its input tensor to QuantizedConv2d
+      and calculate the min-max scale.
+
+      :param model: The model to quantize input
+      :type model: tf.compat.v1.GraphDef
+
+      :returns: The quantized input model
+                scale (float): The scale for dataloader to generate quantized input
+      :rtype: model (tf.compat.v1.GraphDef)
+
+
+   .. py:method:: get_optype_wise_ability()
+
+      Get the op type wise capability by generating the union value of each op type.
+
+      :returns:
+
+                the key is op type while the value is the
+                               detail configurations of activation and weight for this op type.
+      :rtype: [string dict]
+
+
+   .. py:method:: save(model, path)
+
+      Save model to the path.
+
+
+   .. py:method:: convert(model, source, destination)
+
+      The function is used to convert a source model format to another.
+
+      :param model: base model to be converted.
+      :type model: neural_compressor.model
+      :param source: The source model format.
+      :type source: string
+      :param destination: The destination model format.
+      :type destination: string
+
+
+   .. py:method:: qat_convert(model, quantize_recipe=None)
+
+      Convert a fp32 'tf.keras' model to be a int8 one with quantization aware training implementation.
+
+      :param model: The model to be quantized, expected to be a Keras Functional or Sequential model.
+      :type model: tf.keras.Model
+      :param quantize_recipe: A dict that decide whether given layers should be quantized.
+      :type quantize_recipe: dict
+
+      :returns: Quantized model with fake quant nodes inserted.
+      :rtype: converted_model (tf.keras.Model)
+
+
+   .. py:method:: recover_tuned_model(model, q_config)
+
+      Execute the recover process on the specified model.
+
+      :param tune_cfg: quantization configuration
+      :type tune_cfg: dict
+      :param model: fp32 model
+      :type model: tf.compat.v1.GraphDef
+      :param q_config: recover configuration
+      :type q_config: dict
+
+      :returns: the quantized model
+      :rtype: tf.compat.v1.GraphDef
+
+
+   .. py:method:: diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
+
+      Tensorflow diagnosis helper function.
+
+
+   .. py:method:: get_output_op_names(qmodel)
+
+      Get the oupur OPs's names.
+
+
+   .. py:method:: calculate_op_sensitivity(model, dataloader, tune_cfg, output_op_names, confidence_batches, fallback=True, requantize_cfgs=None)
+
+      Compute the op sensitivity.
+
+      The sensitivity metric is the mse between the output of the last quantized op of
+      the quantized model and the output of its corresponding op in the fp32 model.
+
+        1. Backup the tune cfg
+        2. Fallback each int8 op and compute its mse if use fallback (with 'fallback == True'),
+          or re-quantize each fp32 op(fallen back in the previous stage) and compute its MSE if not.
+        3. Sorted op name list according to its MSE
+
+      :param fp32_model: The fp32 model.
+      :param dataloader: the dataloader with full dataset.
+      :param tune_cfg: tuning config
+      :param fallback: denote fallback stage or re-quantize stage
+      :param requantize_cfgs: the dict of tuning configs for all re-quantizable ops
+
+      :returns: A list of op names, sorted by its MSE sensitivity.
+
+
+
+.. py:class:: Tensorflow_ITEXAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`TensorFlowAdaptor`
+
+   Tensorflow ITEX Adaptor Class.
+
+   .. py:method:: quantize(tune_cfg, model, data_loader, q_func=None)
+
+      Execute the quantize process on the specified model.
+
+      :param tune_cfg: quantization configuration
+      :type tune_cfg: dict
+      :param model: fp32 model
+      :type model: tf.compat.v1.GraphDef
+      :param data_loader: generator the data and labels
+      :type data_loader: generator
+      :param q_func: training function for quantization aware training mode,
+                     which not enabled for tensorflow yet.
+      :type q_func: optional
+
+      :returns: the quantized model
+      :rtype: tf.compat.v1.GraphDef
+
+
+
+.. py:class:: TensorflowQuery(local_config_file=None, performance_only=False)
+
+   Bases: :py:obj:`neural_compressor.adaptor.query.QueryBackendCapability`
+
+   Tensorflow Query Capability Class.
+
+   .. py:method:: get_version()
+
+      Get the current backend version infomation.
+
+      :returns: version string.
+      :rtype: [string]
+
+
+   .. py:method:: get_precisions()
+
+      Get supported precisions for current backend.
+
+      :returns: the precisions' name.
+      :rtype: [string list]
+
+
+   .. py:method:: get_op_types()
+
+      Get the supported op types by all precisions.
+
+      :returns: A list composed of dictionary which key is precision
+                and value is the op types.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_fuse_patterns()
+
+      Get supported patterns by low precisions.
+
+      :returns: A list composed of dictionary which key is precision
+                and value is the supported patterns.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_quantization_capability()
+
+      Get the supported op types' quantization capability.
+
+      :returns: A list composed of dictionary which key is precision
+                and value is a dict that describes all op types' quantization capability.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_op_types_by_precision(precision)
+
+      Get op types per precision.
+
+      :param precision: precision name
+      :type precision: string
+
+      :returns: A list composed of op type.
+      :rtype: [string list]
+
+
+   .. py:method:: get_mixed_precision_combination()
+
+      Get the valid mixed precisions.
+
+      :returns: valid precision list.
+      :rtype: [string list]
+
+
+   .. py:method:: get_grappler_optimization_cfg()
+
+      Get grappler optimization configuration.
+
+
+   .. py:method:: get_bf16_patterns()
+
+      Get BF16 pattern list.
+
+      :returns: bf16 patter list.
+      :rtype: [List]
+
+
+   .. py:method:: get_eightbit_patterns(qdq_enabled=False)
+
+      Get eightbit op wise sequences information.
+
+      :returns:
+
+                key is the op type while value is the list of sequences start
+                            with the op type same as key value.
+      :rtype: [dictionary]
+
+
+   .. py:method:: generate_internal_patterns()
+
+      Translate the patterns defined in the yaml to internal pattern expression.
+
+
+

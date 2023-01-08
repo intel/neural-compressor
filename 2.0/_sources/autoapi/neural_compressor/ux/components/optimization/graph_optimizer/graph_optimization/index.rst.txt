@@ -1,0 +1,56 @@
+:py:mod:`neural_compressor.ux.components.optimization.graph_optimizer.graph_optimization`
+=========================================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.graph_optimizer.graph_optimization
+
+.. autoapi-nested-parse::
+
+   Optimization class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.graph_optimizer.graph_optimization.GraphOptimization
+
+
+
+
+.. py:class:: GraphOptimization(optimization_data: dict, project_data: dict, dataset_data: dict)
+
+   Bases: :py:obj:`neural_compressor.ux.components.optimization.optimization.Optimization`
+
+   Optimization class.
+
+   .. py:property:: optimization_script
+      :type: str
+
+      Get optimization script path.
+
+   .. py:property:: parameters
+      :type: List[str]
+
+      Get optimization parameters.
+
+   .. py:property:: configuration_data
+      :type: dict
+
+      Get configuration data for graph optimization config generator.
+
+   .. py:method:: execute() -> None
+
+      Execute graph optimization.
+
+
+   .. py:method:: generate_config() -> None
+
+      Generate yaml config.
+
+
+

@@ -1,0 +1,64 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.split`
+============================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.split
+
+.. autoapi-nested-parse::
+
+   Split Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.split.SplitOperator
+   neural_compressor.adaptor.ox_utils.operators.split.QSplitOperator
+
+
+
+
+.. py:class:: SplitOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   Split Operator.
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+   .. py:method:: cast()
+
+      Cast node.
+
+
+
+.. py:class:: QSplitOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.QOperator`
+
+   QSplit Operator.
+
+   .. py:method:: convert()
+
+      Convert to QDQ format.
+
+
+

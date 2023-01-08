@@ -1,0 +1,33 @@
+:py:mod:`neural_compressor.ux.web`
+==================================
+
+.. py:module:: neural_compressor.ux.web
+
+.. autoapi-nested-parse::
+
+   App package is the application running whole UX system.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   service/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   communication/index.rst
+   configuration/index.rst
+   exceptions/index.rst
+   router/index.rst
+   server/index.rst
+
+

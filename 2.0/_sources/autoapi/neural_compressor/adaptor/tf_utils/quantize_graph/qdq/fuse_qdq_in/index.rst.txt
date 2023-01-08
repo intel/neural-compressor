@@ -1,0 +1,46 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in`
+===========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in
+
+.. autoapi-nested-parse::
+
+   Quantize FusedInstanceNorm.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_in.FuseNodeStartWithFusedInstanceNorm
+
+
+
+
+.. py:class:: FuseNodeStartWithFusedInstanceNorm(**kwargs)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
+
+   Quantize FusedInstanceNorm and apply the fusion.
+
+   .. py:method:: apply_newly_in_relu_fusion(match_node_name)
+
+      Apply FusedInstanceNorm Relu/LeakyRelu fusion.
+
+
+   .. py:method:: get_longest_fuse()
+
+      Get the longest fusion pattern.
+
+
+   .. py:method:: apply_the_transform()
+
+      Quantize FusedInstanceNorm and apply the fusion pattern.
+
+
+

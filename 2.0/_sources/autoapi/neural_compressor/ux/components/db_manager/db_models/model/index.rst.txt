@@ -1,0 +1,63 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.model`
+====================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.model
+
+.. autoapi-nested-parse::
+
+   The Model class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.model.Model
+
+
+
+
+.. py:class:: Model
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench models' table representation.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, project_id: int, name: str, path: str, input_nodes: List[str], output_nodes: List[str], size: float, framework_id: int, precision_id: int, domain_id: int, domain_flavour_id: int, supports_profiling: bool, supports_graph: bool, supports_pruning: bool) -> int
+      :staticmethod:
+
+      Add model to database.
+
+      returns id of added model
+
+
+   .. py:method:: details(db_session: sqlalchemy.orm.session.Session, model_id: int) -> dict
+      :staticmethod:
+
+      Get model details.
+
+
+   .. py:method:: list(db_session: sqlalchemy.orm.session.Session, project_id: int) -> dict
+      :staticmethod:
+
+      Get models list for specified project from database.
+
+
+   .. py:method:: delete_model(db_session: sqlalchemy.orm.session.Session, model_id: int, model_name: str) -> Optional[int]
+      :staticmethod:
+
+      Remove model from database.
+
+
+   .. py:method:: build_info(model: Any) -> dict
+      :staticmethod:
+
+      Get model info.
+
+
+

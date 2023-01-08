@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_reshape_transpose`
+==========================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_reshape_transpose
+
+.. autoapi-nested-parse::
+
+   Fuse Transpose and Reshape Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_reshape_transpose.FuseTransposeReshapeOptimizer
+
+
+
+
+.. py:class:: FuseTransposeReshapeOptimizer(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Fuse Transpose + Reshape + MatMul/Conv ==> MatMul/Conv.
+
+   .. py:method:: do_transformation()
+
+      Execute Transpose + Reshape + MatMul/Conv fusion.
+
+
+

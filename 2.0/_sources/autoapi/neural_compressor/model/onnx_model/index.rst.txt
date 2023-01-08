@@ -1,0 +1,236 @@
+:py:mod:`neural_compressor.model.onnx_model`
+============================================
+
+.. py:module:: neural_compressor.model.onnx_model
+
+.. autoapi-nested-parse::
+
+   Class for ONNX model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.model.onnx_model.ONNXModel
+
+
+
+
+.. py:class:: ONNXModel(model, **kwargs)
+
+   Bases: :py:obj:`neural_compressor.model.base_model.BaseModel`
+
+   Build ONNX model.
+
+   .. py:property:: large_size
+
+      Return large size.
+
+   .. py:property:: model_path
+
+      Return model path.
+
+   .. py:property:: q_config
+
+      Return q_config.
+
+   .. py:property:: model
+
+      Return model itself.
+
+   .. py:property:: graph_info
+
+      Return ORT Graph Info object holding information about backend graph.
+
+   .. py:property:: input_name_to_nodes
+
+      Return input names of nodes.
+
+   .. py:property:: output_name_to_node
+
+      Return output names of nodes.
+
+   .. py:method:: framework()
+
+      Return framework.
+
+
+   .. py:method:: input()
+
+      Return input of model.
+
+
+   .. py:method:: output()
+
+      Return output of model.
+
+
+   .. py:method:: update()
+
+      Update model info.
+
+
+   .. py:method:: save(root)
+
+      Save ONNX model.
+
+
+   .. py:method:: nodes()
+
+      Return model nodes.
+
+
+   .. py:method:: initializer()
+
+      Return model initializer.
+
+
+   .. py:method:: graph()
+
+      Return model graph.
+
+
+   .. py:method:: ir_version()
+
+      Return model ir_version.
+
+
+   .. py:method:: opset_import()
+
+      Return model opset_import.
+
+
+   .. py:method:: remove_node(node)
+
+      Remove a node from model.
+
+
+   .. py:method:: remove_nodes(nodes_to_remove)
+
+      Remove nodes from model.
+
+
+   .. py:method:: add_node(node)
+
+      Add a node to model.
+
+
+   .. py:method:: add_nodes(nodes_to_add)
+
+      Add nodes to model.
+
+
+   .. py:method:: add_initializer(tensor)
+
+      Add a initializer to model.
+
+
+   .. py:method:: add_initializers(tensors)
+
+      Add initializers to model.
+
+
+   .. py:method:: get_initializer(name)
+
+      Get an initializer by name.
+
+
+   .. py:method:: remove_initializer(tensor)
+
+      Remove an initializer from model.
+
+
+   .. py:method:: remove_initializers(init_to_remove)
+
+      Remove initializers from model.
+
+
+   .. py:method:: set_initializer(tensor, array)
+
+      Update initializer.
+
+
+   .. py:method:: get_children(node, input_name_to_nodes=None)
+
+      Get children nodes.
+
+
+   .. py:method:: get_parents(node, output_name_to_node=None)
+
+      Get parents nodes.
+
+
+   .. py:method:: get_parent(node, idx, output_name_to_node=None)
+
+      Get parent node by idx.
+
+
+   .. py:method:: find_node_by_name(node_name, new_nodes_list, graph)
+
+      Find out node by name.
+
+
+   .. py:method:: find_nodes_by_initializer(graph, initializer)
+
+      Find all nodes with given initializer as an input.
+
+
+   .. py:method:: get_scale_zero(tensor)
+
+      Help function to get scale and zero_point.
+
+
+   .. py:method:: save_model_to_file(output_path, use_external_data_format=False)
+
+      Save model to external data, which is needed for model size > 2GB.
+
+
+   .. py:method:: replace_node_input(node, old_input_name, new_input_name)
+      :staticmethod:
+
+      Replace input of a node.
+
+
+   .. py:method:: replace_input_of_all_nodes(old_input_name, new_input_name, white_optype=[], black_optype=[])
+
+      Replace inputs of all nodes.
+
+
+   .. py:method:: replace_node_output(node, old_output_name, new_output_name)
+      :staticmethod:
+
+      Replace output of a node.
+
+
+   .. py:method:: replace_output_of_all_nodes(old_output_name, new_output_name, white_optype=[], black_optype=[])
+
+      Replace outputs of all nodes.
+
+
+   .. py:method:: remove_unused_constant()
+
+      Remove unused constant.
+
+
+   .. py:method:: topological_sort(enable_subgraph=False)
+
+      Topological sort the model.
+
+
+   .. py:method:: get_nodes_chain(start_node, stop_node, result_chain=[])
+
+      Get nodes chain with given start node and stop node.
+
+
+   .. py:method:: export(save_path, conf)
+
+      Export Qlinear to QDQ model.
+
+
+

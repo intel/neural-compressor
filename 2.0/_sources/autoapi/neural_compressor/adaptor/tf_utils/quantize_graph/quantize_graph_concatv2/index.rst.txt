@@ -1,0 +1,41 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_concatv2`
+===================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_concatv2
+
+.. autoapi-nested-parse::
+
+   Quantize ConcatV2 to int8 op.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_concatv2.FuseNodeStartWithConcatV2
+
+
+
+
+.. py:class:: FuseNodeStartWithConcatV2(**kwargs)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
+
+   Quantize ConcatV2 to int8 op QuantizedConcatV2.
+
+   .. py:method:: get_longest_fuse()
+
+      Only single ConcatV2, no fusion pattern.
+
+
+   .. py:method:: apply_the_transform()
+
+      Apply the quantization of ConcatV2.
+
+
+

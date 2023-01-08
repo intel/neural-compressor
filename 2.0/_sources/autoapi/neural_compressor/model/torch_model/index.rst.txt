@@ -1,0 +1,292 @@
+:py:mod:`neural_compressor.model.torch_model`
+=============================================
+
+.. py:module:: neural_compressor.model.torch_model
+
+.. autoapi-nested-parse::
+
+   Class for PyTorch model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.model.torch_model.PyTorchBaseModel
+   neural_compressor.model.torch_model.PyTorchModel
+   neural_compressor.model.torch_model.PyTorchFXModel
+   neural_compressor.model.torch_model.IPEXModel
+
+
+
+
+.. py:class:: PyTorchBaseModel(model, **kwargs)
+
+   Bases: :py:obj:`torch`, :py:obj:`neural_compressor.model.base_model.BaseModel`
+
+   Build PyTorch base model.
+
+   .. py:property:: model
+
+      Getter to model.
+
+   .. py:property:: fp32_model
+
+      Getter to model.
+
+   .. py:method:: forward(*args, **kwargs)
+
+      Pytorch model forward func.
+
+
+   .. py:method:: register_forward_pre_hook()
+
+      Register forward pre hook.
+
+
+   .. py:method:: remove_hooks()
+
+      Remove hooks.
+
+
+   .. py:method:: generate_forward_pre_hook()
+
+      Generate forward pre hook.
+
+
+   .. py:method:: framework()
+
+      Return framework.
+
+
+   .. py:method:: get_all_weight_names()
+
+      Get weight names.
+
+
+   .. py:method:: get_weight(tensor_name)
+
+      Get weight value.
+
+
+   .. py:method:: update_weights(tensor_name, new_tensor)
+
+      Update weight value.
+
+      :param tensor_name: weight name.
+      :type tensor_name: string
+      :param new_tensor: weight value.
+      :type new_tensor: ndarray
+
+
+   .. py:method:: update_gradient(grad_name, new_grad)
+
+      Update grad value.
+
+      :param grad_name: grad name.
+      :type grad_name: str
+      :param new_grad: grad value.
+      :type new_grad: ndarray
+
+
+   .. py:method:: prune_weights_(tensor_name, mask)
+
+      Prune weight in place according to tensor_name with mask.
+
+      :param tensor_name: weight name.
+      :type tensor_name: str
+      :param mask: pruning mask.
+      :type mask: tensor
+
+
+   .. py:method:: get_inputs(input_name=None)
+
+      Get inputs of model.
+
+      :param input_name: name of input tensor. Defaults to None.
+      :type input_name: str, optional
+
+      :returns: input tensor
+      :rtype: tensor
+
+
+   .. py:method:: get_gradient(input_tensor)
+
+      Get gradients of specific tensor.
+
+      :param input_tensor: weight name or a tensor.
+      :type input_tensor: string or tensor
+
+      :returns: gradient tensor array
+      :rtype: ndarray
+
+
+   .. py:method:: report_sparsity()
+
+      Get sparsity of the model.
+
+      :returns: DataFrame of sparsity of each weight.
+                total_sparsity (float): total sparsity of model.
+      :rtype: df (DataFrame)
+
+
+
+.. py:class:: PyTorchModel(model, **kwargs)
+
+   Bases: :py:obj:`PyTorchBaseModel`
+
+   Build PyTorchModel object.
+
+   .. py:property:: workspace_path
+
+      Return workspace path.
+
+   .. py:property:: graph_info
+
+      Return graph info.
+
+   .. py:method:: save(root=None)
+
+      Save configure file and weights.
+
+
+   .. py:method:: quantized_state_dict()
+
+      Load quantized state dict.
+
+
+   .. py:method:: load_quantized_state_dict(stat_dict)
+
+      Load quantized state with given dict.
+
+
+   .. py:method:: export_to_jit(example_inputs=None)
+
+      Export JIT model.
+
+
+   .. py:method:: export_to_fp32_onnx(save_path='fp32-model.onnx', example_inputs=torch.rand([1, 1, 1, 1]), opset_version=14, dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}, input_names=None, output_names=None, do_constant_folding=True, verbose=True, fp32_model=None)
+
+      Export PyTorch FP32 model to ONNX FP32 model.
+
+      :param save_path: ONNX model path to save. Defaults to 'fp32-model.onnx'.
+      :type save_path: str, optional
+      :param example_inputs: example inputs for export.
+                             Defaults to torch.rand([1, 1, 1, 1]).
+      :type example_inputs: torch.Tensor, optional
+      :param opset_version: opset version for exported ONNX model. Defaults to 14.
+      :type opset_version: int, optional
+      :param dynamic_axes: specify axes of tensors as dynamic.
+                           Defaults to {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+      :type dynamic_axes: dict, optional
+      :param input_names: names to assign to the input nodes of the graph, in order.
+                          Defaults to None.
+      :type input_names: list or str, optional
+      :param output_names: names to assign to the output nodes of the graph, in order.
+                           Defaults to None.
+      :type output_names: list or str, optional
+      :param do_constant_folding: Apply the constant-folding optimization.
+                                  Defaults to True.
+      :type do_constant_folding: bool, optional
+      :param verbose: if True, prints a description of the model being exported to stdout.
+                      Defaults to True.
+      :type verbose: bool, optional
+      :param fp32_model: FP32 PyTorch model. Defaults to None.
+      :type fp32_model: torch.nn.model, optional
+
+
+   .. py:method:: export_to_bf16_onnx(save_path='bf16-model.onnx', example_inputs=torch.rand([1, 1, 1, 1]), opset_version=14, dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}, input_names=None, output_names=None, do_constant_folding=True, verbose=True)
+
+      Export PyTorch bf16 model to ONNX bf16 model.
+
+      :param save_path: ONNX model path to save. Defaults to 'bf16-model.onnx'.
+      :type save_path: str, optional
+      :param example_inputs: example inputs for export.
+                             Defaults to torch.rand([1, 1, 1, 1]).
+      :type example_inputs: torch.Tensor, optional
+      :param opset_version: opset version for exported ONNX model. Defaults to 14.
+      :type opset_version: int, optional
+      :param dynamic_axes: specify axes of tensors as dynamic.
+                           Defaults to {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+      :type dynamic_axes: dict, optional
+      :param input_names: names to assign to the input nodes of the graph, in order.
+                          Defaults to None.
+      :type input_names: list or str, optional
+      :param output_names: names to assign to the output nodes of the graph, in order.
+                           Defaults to None.
+      :type output_names: list or str, optional
+      :param do_constant_folding: Apply the constant-folding optimization.
+                                  Defaults to True.
+      :type do_constant_folding: bool, optional
+      :param verbose: if True, prints a description of the model being exported to stdout.
+                      Defaults to True.
+      :type verbose: bool, optional
+
+
+   .. py:method:: export_to_int8_onnx(save_path='int8-model.onnx', example_inputs=torch.rand([1, 1, 1, 1]), opset_version=14, dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}, input_names=None, output_names=None, do_constant_folding=True, quant_format='QDQ', dtype='S8S8', fp32_model=None, calib_dataloader=None)
+
+      Export PyTorch int8 model to ONNX int8 model.
+
+      :param save_path: ONNX model path to save. Defaults to 'int8-model.onnx'.
+      :type save_path: str, optional
+      :param example_inputs: example inputs for export.
+                             Defaults to torch.rand([1, 1, 1, 1]).
+      :type example_inputs: torch.Tensor, optional
+      :param opset_version: opset version for exported ONNX model. Defaults to 14.
+      :type opset_version: int, optional
+      :param dynamic_axes: specify axes of tensors as dynamic.
+                           Defaults to {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+      :type dynamic_axes: dict, optional
+      :param input_names: names to assign to the input nodes of the graph, in order.
+                          Defaults to None.
+      :type input_names: list or str, optional
+      :param output_names: names to assign to the output nodes of the graph, in order.
+                           Defaults to None.
+      :type output_names: list or str, optional
+      :param do_constant_folding: Apply the constant-folding optimization.
+                                  Defaults to True.
+      :type do_constant_folding: bool, optional
+      :param quant_format: format of quantized ONNX model. Defaults to 'QDQ'.
+      :type quant_format: str, optional
+      :param dtype: type for quantized activation and weight. Defaults to 'S8S8'.
+      :type dtype: str, optional
+      :param fp32_model: FP32 PyTorch model. Defaults to None.
+      :type fp32_model: torch.nn.model, optional
+      :param calib_dataloader: calibration dataloader. Defaults to None.
+      :type calib_dataloader: object, optional
+
+
+   .. py:method:: export(save_path: str, conf)
+
+      Export PyTorch model to ONNX model.
+
+
+
+.. py:class:: PyTorchFXModel(model, **kwargs)
+
+   Bases: :py:obj:`PyTorchModel`
+
+   Build PyTorchFXModel object.
+
+
+.. py:class:: IPEXModel(model, **kwargs)
+
+   Bases: :py:obj:`PyTorchBaseModel`
+
+   Build IPEXModel object.
+
+   .. py:property:: workspace_path
+
+      Return workspace path.
+
+   .. py:method:: save(root=None)
+
+      Save PyTorch IPEX model.
+
+
+

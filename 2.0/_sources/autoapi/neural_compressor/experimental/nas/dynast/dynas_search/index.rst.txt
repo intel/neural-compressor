@@ -1,0 +1,68 @@
+:py:mod:`neural_compressor.experimental.nas.dynast.dynas_search`
+================================================================
+
+.. py:module:: neural_compressor.experimental.nas.dynast.dynas_search
+
+.. autoapi-nested-parse::
+
+   DyNAS search algorithm class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.dynast.dynas_search.SearchAlgoManager
+   neural_compressor.experimental.nas.dynast.dynas_search.ProblemMultiObjective
+
+
+
+
+.. py:class:: SearchAlgoManager(algorithm: str = 'nsga2', seed: int = 0, verbose: bool = False, engine: str = 'pymoo')
+
+   Manage the search parameters for the DyNAS-T single/multi-objective search.
+
+   :param algorithm: Define a multi-objective search algorithm.
+   :type algorithm: string
+   :param seed: Seed value for pymoo search.
+   :type seed: int
+   :param verbose: Verbosity option.
+   :type verbose: Boolean
+   :param engine: Support different engine types (e.g. pymoo, optuna, etc.).
+   :type engine: string
+
+   .. py:method:: configure_nsga2(population: int = 50, num_evals: int = 1000, warm_pop: numpy.ndarray = None, crossover_prob: float = 0.9, crossover_eta: float = 15.0, mutation_prob: float = 0.02, mutation_eta: float = 20.0) -> None
+
+      Configure the NSGA2 algorithm.
+
+
+   .. py:method:: configure_age(population: int = 50, num_evals: int = 1000, warm_pop: numpy.ndarray = None, crossover_prob: float = 0.9, crossover_eta: float = 15.0, mutation_prob: float = 0.02, mutation_eta: float = 20.0) -> None
+
+      Configure the AGE algorithm.
+
+
+   .. py:method:: run_search(problem: pymoo.core.problem.Problem, save_history=False) -> pymoo.core.result.Result
+
+      Start the search process for the algorithm and problem class that have been previously defined.
+
+
+
+.. py:class:: ProblemMultiObjective(evaluation_interface: neural_compressor.experimental.nas.dynast.dynas_utils.EvaluationInterface, param_count: int, param_upperbound: list)
+
+   Bases: :py:obj:`pymoo.core.problem.Problem`
+
+   Interface between the user-defined evaluation interface and the SearchAlgoManager.
+
+   :param evaluation_interface: Class that handles the objective measurement call from the supernet.
+   :type evaluation_interface: Class
+   :param param_count: Number variables in the search space (e.g., OFA MobileNetV3 has 45).
+   :type param_count: int
+   :param param_upperbound: The upper int array that defines how many options each design variable has.
+   :type param_upperbound: array
+
+

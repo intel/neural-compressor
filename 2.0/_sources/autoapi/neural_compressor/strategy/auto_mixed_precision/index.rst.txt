@@ -1,0 +1,48 @@
+:py:mod:`neural_compressor.strategy.auto_mixed_precision`
+=========================================================
+
+.. py:module:: neural_compressor.strategy.auto_mixed_precision
+
+.. autoapi-nested-parse::
+
+   The auto-mixed precision strategy.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.strategy.auto_mixed_precision.AutoMixedPrecisionTuneStrategy
+
+
+
+
+.. py:class:: AutoMixedPrecisionTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
+
+   Bases: :py:obj:`neural_compressor.strategy.strategy.TuneStrategy`
+
+   Tuning strategy for auto mixed precision.
+
+   .. py:method:: next_tune_cfg()
+
+      Generate the next tuning config.
+
+      Tuning configurations are generated according to the following rules:
+      1. First, it tries to convert all ops into target date type as many as possible.
+      2. If the accuracy does  not meets the requirements, it starts the stage of fallback
+          which converts ops into higher precision.
+
+      :Yields: *tune_config (dict)* -- A dict containing the tuning configuration.
+
+
+   .. py:method:: traverse()
+
+      Traverse the tuning space according to auto-mixed precision strategy.
+
+
+

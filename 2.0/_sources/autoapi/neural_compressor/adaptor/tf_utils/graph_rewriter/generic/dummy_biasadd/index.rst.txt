@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dummy_biasadd`
+=================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dummy_biasadd
+
+.. autoapi-nested-parse::
+
+   Inject dummy BiasAdd Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dummy_biasadd.InjectDummyBiasAddOptimizer
+
+
+
+
+.. py:class:: InjectDummyBiasAddOptimizer(model, outputs)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Inject dummy BiasAdd for MatMul, Conv2D for pattern fusion.
+
+   .. py:method:: do_transformation()
+
+      Inject dummy BiasAdd if MatMul, Conv2D missing the valid add ops behind them.
+
+
+

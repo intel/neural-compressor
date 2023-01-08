@@ -1,0 +1,697 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor.experimental.distillation &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.distillation</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../../../_sources/autoapi/neural_compressor/experimental/distillation/index.rst.txt" rel="nofollow"><img src="../../../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor.experimental.distillation">
+<span id="neural-compressor-experimental-distillation"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.distillation" title="neural_compressor.experimental.distillation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.distillation</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.distillation" title="Permalink to this heading">¶</a></h1>
+<p>Distillation class.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation" title="neural_compressor.experimental.distillation.Distillation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Distillation</span></code></a></p></td>
+<td><p>Distillation class derived from Component class.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.distillation.</span></span><span class="sig-name descname"><span class="pre">Distillation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_fname_or_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../component/index.html#neural_compressor.experimental.component.Component" title="neural_compressor.experimental.component.Component"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.component.Component</span></code></a></p>
+<p>Distillation class derived from Component class.</p>
+<p>Distillation class abstracted the pipeline of knowledge distillation,
+transfer the knowledge of the teacher model to the student model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>conf_fname_or_obj</strong> (<em>string</em><em> or </em><em>obj</em>) – The path to the YAML configuration file or
+Distillation_Conf containing accuracy goal, distillation objective and related
+dataloaders etc.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation._epoch_ran">
+<span class="sig-name descname"><span class="pre">_epoch_ran</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation._epoch_ran" title="Permalink to this definition">¶</a></dt>
+<dd><p>A integer indicating how much epochs ran.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.eval_frequency">
+<span class="sig-name descname"><span class="pre">eval_frequency</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.eval_frequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>The frequency for doing evaluation of the student model
+in terms of epoch.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.best_score">
+<span class="sig-name descname"><span class="pre">best_score</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.best_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>The best metric of the student model in the training.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.best_model">
+<span class="sig-name descname"><span class="pre">best_model</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.best_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>The best student model found in the training.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.criterion">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">criterion</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.criterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter of criterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The criterion used in the distillation process.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.optimizer">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimizer</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.optimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter of optimizer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The optimizer used in the distillation process.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.teacher_model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">teacher_model</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.teacher_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter of the teacher model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The teacher model used in the distillation process.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.student_model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">student_model</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.student_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter of the student model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The student model used in the distillation process.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.train_cfg">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train_cfg</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.train_cfg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter of the train configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The train configuration used in the distillation process.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.evaluation_distributed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluation_distributed</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.evaluation_distributed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter to know whether need distributed evaluation dataloader.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.train_distributed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train_distributed</span></span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.train_distributed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter to know whether need distributed training dataloader.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.on_post_forward">
+<span class="sig-name descname"><span class="pre">on_post_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teacher_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.on_post_forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set or compute output of teacher model.</p>
+<p>Deprecated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.init_train_cfg">
+<span class="sig-name descname"><span class="pre">init_train_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.init_train_cfg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the training configuration.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.create_criterion">
+<span class="sig-name descname"><span class="pre">create_criterion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.create_criterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the criterion for training.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.create_optimizer">
+<span class="sig-name descname"><span class="pre">create_optimizer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.create_optimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the optimizer for training.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare hooks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.pre_process">
+<span class="sig-name descname"><span class="pre">pre_process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.pre_process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preprocessing before the disillation pipeline.</p>
+<p>Initialize necessary parts for distillation pipeline.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do distillation pipeline.</p>
+<p>First train the student model with the teacher model, after training,
+evaluating the best student model if any.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Best distilled model found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.distillation.Distillation.generate_hooks">
+<span class="sig-name descname"><span class="pre">generate_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.distillation.Distillation.generate_hooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register hooks for distillation.</p>
+<p>Register necessary hooks for distillation pipeline.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.distillation</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation"><code class="docutils literal notranslate"><span class="pre">Distillation</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation._epoch_ran"><code class="docutils literal notranslate"><span class="pre">Distillation._epoch_ran</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.eval_frequency"><code class="docutils literal notranslate"><span class="pre">Distillation.eval_frequency</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.best_score"><code class="docutils literal notranslate"><span class="pre">Distillation.best_score</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.best_model"><code class="docutils literal notranslate"><span class="pre">Distillation.best_model</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.criterion"><code class="docutils literal notranslate"><span class="pre">Distillation.criterion</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.optimizer"><code class="docutils literal notranslate"><span class="pre">Distillation.optimizer</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.teacher_model"><code class="docutils literal notranslate"><span class="pre">Distillation.teacher_model</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.student_model"><code class="docutils literal notranslate"><span class="pre">Distillation.student_model</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.train_cfg"><code class="docutils literal notranslate"><span class="pre">Distillation.train_cfg</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.evaluation_distributed"><code class="docutils literal notranslate"><span class="pre">Distillation.evaluation_distributed</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.train_distributed"><code class="docutils literal notranslate"><span class="pre">Distillation.train_distributed</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.on_post_forward"><code class="docutils literal notranslate"><span class="pre">Distillation.on_post_forward()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.init_train_cfg"><code class="docutils literal notranslate"><span class="pre">Distillation.init_train_cfg()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.create_criterion"><code class="docutils literal notranslate"><span class="pre">Distillation.create_criterion()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.create_optimizer"><code class="docutils literal notranslate"><span class="pre">Distillation.create_optimizer()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.prepare"><code class="docutils literal notranslate"><span class="pre">Distillation.prepare()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.pre_process"><code class="docutils literal notranslate"><span class="pre">Distillation.pre_process()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.execute"><code class="docutils literal notranslate"><span class="pre">Distillation.execute()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.generate_hooks"><code class="docutils literal notranslate"><span class="pre">Distillation.generate_hooks()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation">Distillation</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation._epoch_ran">_epoch_ran</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.eval_frequency">eval_frequency</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.best_score">best_score</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.best_model">best_model</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.criterion">criterion</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.optimizer">optimizer</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.teacher_model">teacher_model</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.student_model">student_model</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.train_cfg">train_cfg</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.evaluation_distributed">evaluation_distributed</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.train_distributed">train_distributed</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.on_post_forward">on_post_forward</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.init_train_cfg">init_train_cfg</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.create_criterion">create_criterion</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.create_optimizer">create_optimizer</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.prepare">prepare</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.pre_process">pre_process</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.execute">execute</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.distillation.Distillation.generate_hooks">generate_hooks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

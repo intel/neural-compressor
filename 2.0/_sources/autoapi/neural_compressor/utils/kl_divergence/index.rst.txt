@@ -1,0 +1,46 @@
+:py:mod:`neural_compressor.utils.kl_divergence`
+===============================================
+
+.. py:module:: neural_compressor.utils.kl_divergence
+
+.. autoapi-nested-parse::
+
+   KL Divergence: measure probability distribution difference to determine the thresholds per quantized op.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.utils.kl_divergence.KL_Divergence
+
+
+
+
+.. py:class:: KL_Divergence
+
+   Bases: :py:obj:`object`
+
+   The class of supporting KL divergence calibration algorithm.
+
+   .. py:method:: expand_quantized_bins(quantized_bins, reference_bins)
+
+      Expand quantized bins.
+
+
+   .. py:method:: safe_entropy(reference_distr_P, P_sum, candidate_distr_Q, Q_sum)
+
+      Safe entropy.
+
+
+   .. py:method:: get_threshold(hist, hist_edges, min_val, max_val, num_bins, quantized_type, num_quantized_bins=255)
+
+      The interface of getting threshold per op using KL divergency algorithm.
+
+
+

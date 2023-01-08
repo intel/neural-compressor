@@ -1,0 +1,866 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor.objective &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.objective</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/autoapi/neural_compressor/objective/index.rst.txt" rel="nofollow"><img src="../../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor.objective">
+<span id="neural-compressor-objective"></span><h1><a class="reference internal" href="#module-neural_compressor.objective" title="neural_compressor.objective"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.objective</span></code></a><a class="headerlink" href="#module-neural_compressor.objective" title="Permalink to this heading">¶</a></h1>
+<p>The objectives supported by neural_compressor, which is driven by accuracy.</p>
+<p>To support new objective, developers just need implement a new subclass in this file.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.objective.Objective" title="neural_compressor.objective.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p></td>
+<td><p>The base class for precise benchmark supported by neural_compressor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.objective.Accuracy" title="neural_compressor.objective.Accuracy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Accuracy</span></code></a></p></td>
+<td><p>Configuration Accuracy class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.objective.Performance" title="neural_compressor.objective.Performance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Performance</span></code></a></p></td>
+<td><p>Configuration Performance class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.objective.Footprint" title="neural_compressor.objective.Footprint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Footprint</span></code></a></p></td>
+<td><p>Configuration Footprint class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.objective.ModelSize" title="neural_compressor.objective.ModelSize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelSize</span></code></a></p></td>
+<td><p>Configuration ModelSize class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.objective.MultiObjective" title="neural_compressor.objective.MultiObjective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MultiObjective</span></code></a></p></td>
+<td><p>The base class for multiple benchmarks supported by neural_compressor.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.objective.objective_registry" title="neural_compressor.objective.objective_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">objective_registry</span></code></a>(cls)</p></td>
+<td><p>The class decorator used to register all Objective subclasses.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.objective.objective_custom_registry" title="neural_compressor.objective.objective_custom_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">objective_custom_registry</span></code></a>(name, obj_cls)</p></td>
+<td><p>Register a customized objective.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.objective.objective_registry">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">objective_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.objective_registry" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class decorator used to register all Objective subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cls</strong> (<em>object</em>) – The class of register.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The class of register.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>cls (object)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.objective.objective_custom_registry">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">objective_custom_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.objective_custom_registry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a customized objective.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.Objective">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Objective</span></span><a class="headerlink" href="#neural_compressor.objective.Objective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The base class for precise benchmark supported by neural_compressor.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.objective.Objective.model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.objective.Objective.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interface benchmark model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Objective.reset">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Objective.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interface reset benchmark measuring.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Objective.start">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Objective.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interface start benchmark measuring.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Objective.end">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Objective.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interface end benchmark measuring.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Objective.result">
+<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Objective.result" title="Permalink to this definition">¶</a></dt>
+<dd><p>The result will return the total mean of the result.</p>
+<p>The interface to get benchmark measuring result measurer may sart and end many times,
+can set the start and end index of the result list to calculate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> (<em>int</em>) – start point to calculate result from result list
+used to skip steps for warm up</p></li>
+<li><p><strong>end</strong> (<em>int</em>) – end point to calculate result from result list</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Objective.result_list">
+<span class="sig-name descname"><span class="pre">result_list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Objective.result_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interface to get benchmark measuring result list.</p>
+<p>This interface will return a list of each start-end loop measure value.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.Accuracy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Accuracy</span></span><a class="headerlink" href="#neural_compressor.objective.Accuracy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.objective.Objective" title="neural_compressor.objective.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p>
+<p>Configuration Accuracy class.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Accuracy.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Accuracy.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interface start the measuring.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Accuracy.end">
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Accuracy.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interface end the measuring.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.Performance">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Performance</span></span><a class="headerlink" href="#neural_compressor.objective.Performance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.objective.Objective" title="neural_compressor.objective.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p>
+<p>Configuration Performance class.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Performance.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Performance.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record the start time.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Performance.end">
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Performance.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record the duration time.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.Footprint">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Footprint</span></span><a class="headerlink" href="#neural_compressor.objective.Footprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.objective.Objective" title="neural_compressor.objective.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p>
+<p>Configuration Footprint class.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Footprint.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Footprint.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record the space allocation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.Footprint.end">
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.Footprint.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the space usage.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.ModelSize">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">ModelSize</span></span><a class="headerlink" href="#neural_compressor.objective.ModelSize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.objective.Objective" title="neural_compressor.objective.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p>
+<p>Configuration ModelSize class.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.ModelSize.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.ModelSize.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start to calculate the model size.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.ModelSize.end">
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.ModelSize.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the actual model size.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">MultiObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objectives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[True]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_measure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>The base class for multiple benchmarks supported by neural_compressor.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.baseline">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">baseline</span></span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.baseline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the actual model performance.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.accuracy_target">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">accuracy_target</span></span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.accuracy_target" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the accuracy target.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.compare">
+<span class="sig-name descname"><span class="pre">compare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">last</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.compare" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interface of comparing if metric reaches the goal with acceptable accuracy loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>last</strong> (<em>tuple</em>) – The tuple of last metric.</p></li>
+<li><p><strong>baseline</strong> (<em>tuple</em>) – The tuple saving FP32 baseline.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.accuracy_meets">
+<span class="sig-name descname"><span class="pre">accuracy_meets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.accuracy_meets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify the new model performance is better than the previous model performance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eval_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>The interface of calculating the objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eval_func</strong> (<em>function</em>) – function to do evaluation.</p></li>
+<li><p><strong>model</strong> (<em>object</em>) – model to do evaluation.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the objective value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start to measure the objective value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.end">
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the objective value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.result">
+<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the results.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.set_model">
+<span class="sig-name descname"><span class="pre">set_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.set_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the objective model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective.best_result">
+<span class="sig-name descname"><span class="pre">best_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.objective.MultiObjective.best_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the best results.</p>
+<dl>
+<dt>metric + multi-objectives case:</dt><dd><dl class="simple">
+<dt>tune_data = [</dt><dd><p>[acc1, [obj1, obj2, …]],
+[acc2, [obj1, obj2, …]],
+…</p>
+</dd>
+</dl>
+<p>]
+multi-metrics + multi-objectives case:
+tune_data = [</p>
+<blockquote>
+<div><p>[[acc1, acc2], [[acc1, acc2], obj1, obj2]],
+[[acc1, acc2], [[acc1, acc2], obj1, obj2]]</p>
+</div></blockquote>
+<p>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.objective</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.objective_registry"><code class="docutils literal notranslate"><span class="pre">objective_registry()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.objective_custom_registry"><code class="docutils literal notranslate"><span class="pre">objective_custom_registry()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective"><code class="docutils literal notranslate"><span class="pre">Objective</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.model"><code class="docutils literal notranslate"><span class="pre">Objective.model</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.reset"><code class="docutils literal notranslate"><span class="pre">Objective.reset()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.start"><code class="docutils literal notranslate"><span class="pre">Objective.start()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.end"><code class="docutils literal notranslate"><span class="pre">Objective.end()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.result"><code class="docutils literal notranslate"><span class="pre">Objective.result()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.result_list"><code class="docutils literal notranslate"><span class="pre">Objective.result_list()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.Accuracy"><code class="docutils literal notranslate"><span class="pre">Accuracy</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.Accuracy.start"><code class="docutils literal notranslate"><span class="pre">Accuracy.start()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Accuracy.end"><code class="docutils literal notranslate"><span class="pre">Accuracy.end()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.Performance"><code class="docutils literal notranslate"><span class="pre">Performance</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.Performance.start"><code class="docutils literal notranslate"><span class="pre">Performance.start()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Performance.end"><code class="docutils literal notranslate"><span class="pre">Performance.end()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.Footprint"><code class="docutils literal notranslate"><span class="pre">Footprint</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.Footprint.start"><code class="docutils literal notranslate"><span class="pre">Footprint.start()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Footprint.end"><code class="docutils literal notranslate"><span class="pre">Footprint.end()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.ModelSize"><code class="docutils literal notranslate"><span class="pre">ModelSize</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.ModelSize.start"><code class="docutils literal notranslate"><span class="pre">ModelSize.start()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.ModelSize.end"><code class="docutils literal notranslate"><span class="pre">ModelSize.end()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective"><code class="docutils literal notranslate"><span class="pre">MultiObjective</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.baseline"><code class="docutils literal notranslate"><span class="pre">MultiObjective.baseline</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.accuracy_target"><code class="docutils literal notranslate"><span class="pre">MultiObjective.accuracy_target</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.compare"><code class="docutils literal notranslate"><span class="pre">MultiObjective.compare()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.accuracy_meets"><code class="docutils literal notranslate"><span class="pre">MultiObjective.accuracy_meets()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.evaluate"><code class="docutils literal notranslate"><span class="pre">MultiObjective.evaluate()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.reset"><code class="docutils literal notranslate"><span class="pre">MultiObjective.reset()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.start"><code class="docutils literal notranslate"><span class="pre">MultiObjective.start()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.end"><code class="docutils literal notranslate"><span class="pre">MultiObjective.end()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.result"><code class="docutils literal notranslate"><span class="pre">MultiObjective.result()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.set_model"><code class="docutils literal notranslate"><span class="pre">MultiObjective.set_model()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.best_result"><code class="docutils literal notranslate"><span class="pre">MultiObjective.best_result()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.objective_registry">objective_registry</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.objective_custom_registry">objective_custom_registry</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective">Objective</a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.model">model</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.reset">reset</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.start">start</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.end">end</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.result">result</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Objective.result_list">result_list</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.Accuracy">Accuracy</a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.Accuracy.start">start</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Accuracy.end">end</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.Performance">Performance</a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.Performance.start">start</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Performance.end">end</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.Footprint">Footprint</a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.Footprint.start">start</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.Footprint.end">end</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.ModelSize">ModelSize</a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.ModelSize.start">start</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.ModelSize.end">end</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective">MultiObjective</a><ul>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.baseline">baseline</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.accuracy_target">accuracy_target</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.compare">compare</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.accuracy_meets">accuracy_meets</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.evaluate">evaluate</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.reset">reset</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.start">start</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.end">end</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.result">result</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.set_model">set_model</a></li>
+<li><a class="reference internal" href="#neural_compressor.objective.MultiObjective.best_result">best_result</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

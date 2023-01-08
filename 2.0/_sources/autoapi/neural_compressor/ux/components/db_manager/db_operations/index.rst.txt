@@ -1,0 +1,713 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_operations`
+==================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_operations
+
+.. autoapi-nested-parse::
+
+   The db_operation package contains interfaces used to control local database.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   benchmark_api_interface/index.rst
+   dataset_api_interface/index.rst
+   db_operations/index.rst
+   diagnosis_api_interface/index.rst
+   dictionaries_api_interface/index.rst
+   examples_api_interface/index.rst
+   model_api_interface/index.rst
+   optimization_api_interface/index.rst
+   profiling_api_interface/index.rst
+   project_api_interface/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_operations.BenchmarkAPIInterface
+   neural_compressor.ux.components.db_manager.db_operations.DatasetAPIInterface
+   neural_compressor.ux.components.db_manager.db_operations.DiagnosisAPIInterface
+   neural_compressor.ux.components.db_manager.db_operations.DictionariesAPIInterface
+   neural_compressor.ux.components.db_manager.db_operations.ExamplesAPIInterface
+   neural_compressor.ux.components.db_manager.db_operations.ModelAPIInterface
+   neural_compressor.ux.components.db_manager.db_operations.OptimizationAPIInterface
+   neural_compressor.ux.components.db_manager.db_operations.ProfilingAPIInterface
+   neural_compressor.ux.components.db_manager.db_operations.ProjectAPIInterface
+
+
+
+
+.. py:class:: BenchmarkAPIInterface
+
+   Interface for queries connected with benchmark.
+
+   .. py:method:: delete_benchmark(data: dict) -> dict
+      :staticmethod:
+
+      Delete benchmark from database and clean workspace.
+
+
+   .. py:method:: get_benchmark_details(data: dict) -> dict
+      :staticmethod:
+
+      Parse input data and get benchmark details.
+
+
+   .. py:method:: list_benchmarks(data: dict) -> dict
+      :staticmethod:
+
+      List benchmarks assigned to project.
+
+
+   .. py:method:: update_benchmark_accuracy(data: dict) -> dict
+      :staticmethod:
+
+      Update benchmark accuracy.
+
+
+   .. py:method:: update_benchmark_performance(data: dict) -> dict
+      :staticmethod:
+
+      Update benchmark performance.
+
+
+   .. py:method:: update_benchmark_status(data: dict) -> dict
+      :staticmethod:
+
+      Update benchmark status.
+
+
+   .. py:method:: update_benchmark_duration(data: dict) -> dict
+      :staticmethod:
+
+      Update duration of benchmark.
+
+
+   .. py:method:: update_paths(data: dict) -> dict
+      :staticmethod:
+
+      Update config path and output log path.
+
+
+   .. py:method:: update_execution_command(data: dict) -> dict
+      :staticmethod:
+
+      Update benchmark execution command.
+
+
+   .. py:method:: add_benchmark(data: dict) -> dict
+      :staticmethod:
+
+      Add benchmark to database.
+
+
+   .. py:method:: add_result(data: dict) -> None
+      :staticmethod:
+
+      Add benchmark result to database.
+
+
+   .. py:method:: edit_benchmark(data: dict) -> dict
+      :staticmethod:
+
+      Edit existing benchmark.
+
+
+   .. py:method:: parse_benchmark_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.BenchmarkAddParamsInterface
+      :staticmethod:
+
+      Parse input data for benchmark.
+
+
+   .. py:method:: parse_benchmark_edit_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.BenchmarkEditParamsInterface
+      :staticmethod:
+
+      Parse data for editing benchmark.
+
+
+   .. py:method:: clean_status(status_to_clean: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Clean specified optimization status.
+
+
+
+.. py:class:: DatasetAPIInterface
+
+   Interface for queries connected with datasets.
+
+   .. py:method:: delete_dataset(data: dict) -> dict
+      :staticmethod:
+
+      Delete dataset from database and clean workspace.
+
+
+   .. py:method:: get_dataset_details(data: dict) -> dict
+      :staticmethod:
+
+      Parse input data and get dataset details.
+
+
+   .. py:method:: list_datasets(data: dict) -> dict
+      :staticmethod:
+
+      List datasets assigned to project.
+
+
+   .. py:method:: add_dataset(data: dict) -> dict
+      :staticmethod:
+
+      Add dataset to database.
+
+
+   .. py:method:: set_template_path(dataset_id: int, parsed_dataset_data: neural_compressor.ux.components.db_manager.params_interfaces.DatasetAddParamsInterface) -> None
+      :staticmethod:
+
+      Set template path for dataset.
+
+
+   .. py:method:: check_if_custom_metric_or_dataloader(dataset_data: neural_compressor.ux.components.db_manager.params_interfaces.DatasetAddParamsInterface) -> dict
+      :staticmethod:
+
+      Check if dataset contains custom dataloader or metric.
+
+
+   .. py:method:: generate_custom_template(dataloader_path: str, custom: dict) -> Optional[str]
+      :staticmethod:
+
+      Generate template for custom dataloader or metric.
+
+
+   .. py:method:: generate_template(dataloader_path: str, template_type: str) -> str
+      :staticmethod:
+
+      Generate code templates.
+
+
+   .. py:method:: dataloader_path(project_name: str, project_id: int, dataset_name: str, dataset_id: int) -> str
+      :staticmethod:
+
+      Get path for dataset templates.
+
+
+   .. py:method:: parse_dataset_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.DatasetAddParamsInterface
+      :staticmethod:
+
+      Parse input data for dataset.
+
+
+   .. py:method:: get_predefined_dataset(data: dict) -> dict
+      :staticmethod:
+
+      Get predefined dataset for specified configuration.
+
+
+   .. py:method:: prepare_predefined_dataloader(dataloader_data: neural_compressor.ux.utils.workload.dataloader.Dataset) -> dict
+      :staticmethod:
+
+      Prepare predefined transform data.
+
+
+   .. py:method:: prepare_predefined_transform(transforms_data: OrderedDict[str, neural_compressor.ux.utils.workload.dataloader.Transform]) -> List[dict]
+      :staticmethod:
+
+      Prepare predefined transform data.
+
+
+
+.. py:class:: DiagnosisAPIInterface
+
+   Interface for queries connected with diagnosis of models.
+
+   .. py:method:: get_op_list(data: dict) -> List[dict]
+      :staticmethod:
+
+      Get OP list for model.
+
+
+   .. py:method:: get_op_details(data: dict) -> dict
+      :staticmethod:
+
+      Get OP details for specific OP in model.
+
+
+   .. py:method:: histogram(data: dict) -> list
+      :staticmethod:
+
+      Get histogram of specific tensor in model.
+
+
+   .. py:method:: generate_optimization(data: dict) -> int
+      :staticmethod:
+
+      Parse input data and get optimization details.
+
+
+   .. py:method:: model_wise_params(data: dict) -> dict
+      :staticmethod:
+
+      Get model wise parameters for specified optimization.
+
+
+   .. py:method:: parse_optimization_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.DiagnosisOptimizationParamsInterface
+      :staticmethod:
+
+      Parse optimization parameters from diagnosis tab.
+
+
+   .. py:method:: parse_op_wise_config(op_wise_params: dict) -> dict
+      :staticmethod:
+
+      Parse OP wise configuration.
+
+
+   .. py:method:: parse_wise_parameters(params_per_type: dict) -> dict
+      :staticmethod:
+
+      Parse model or OP wise parameters.
+
+
+   .. py:method:: set_op_wise_pattern_precision(op_wise_params: dict, precision: str) -> dict
+      :staticmethod:
+
+      Set precision from op wise pattern setting.
+
+
+   .. py:method:: parse_model_wise_config(data: dict) -> dict
+      :staticmethod:
+
+      Parse Model wise configuration.
+
+
+
+.. py:class:: DictionariesAPIInterface
+
+   Interface for queries connected with dictonaries.
+
+   .. py:method:: list_domains(data: dict) -> dict
+      :staticmethod:
+
+      List model domains.
+
+
+   .. py:method:: list_domain_flavours(data: dict) -> dict
+      :staticmethod:
+
+      List model domain flavours.
+
+
+   .. py:method:: list_optimization_types(data: dict) -> dict
+      :staticmethod:
+
+      List optimization types.
+
+
+   .. py:method:: list_optimization_types_for_precision(data: dict) -> dict
+      :staticmethod:
+
+      List optimization types.
+
+
+   .. py:method:: list_precisions(data: dict) -> dict
+      :staticmethod:
+
+      List precisions.
+
+
+   .. py:method:: list_dataloaders(data: dict) -> dict
+      :staticmethod:
+
+      List all dataloaders.
+
+
+   .. py:method:: list_dataloaders_by_framework(data: dict) -> dict
+      :staticmethod:
+
+      List dataloaders for specified framework.
+
+
+   .. py:method:: list_transforms(data: dict) -> dict
+      :staticmethod:
+
+      List all transforms.
+
+
+   .. py:method:: list_transforms_by_framework(data: dict) -> dict
+      :staticmethod:
+
+      List transforms for specified framework.
+
+
+   .. py:method:: list_transforms_by_domain(data: dict) -> dict
+      :staticmethod:
+
+      List transforms for specified domain.
+
+
+   .. py:method:: list_metrics(data: dict) -> dict
+      :staticmethod:
+
+      List all metrics.
+
+
+   .. py:method:: list_metrics_by_framework(data: dict) -> dict
+      :staticmethod:
+
+      List metrics for specified framework.
+
+
+
+.. py:class:: ExamplesAPIInterface
+
+   Interface for queries connected with predefined models.
+
+   .. py:method:: create_project(data: dict) -> None
+      :staticmethod:
+
+      Create new project for predefined model.
+
+
+   .. py:method:: get_optimization_data(db_session: sqlalchemy.orm.session.Session, project_id: int, dataset_id: int, optimization_name: str, precision: str, optimization: str) -> neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface
+      :staticmethod:
+
+      Get data to add optimization.
+
+
+
+.. py:class:: ModelAPIInterface
+
+   Interface for queries connected with models.
+
+   .. py:method:: add_model(data: dict) -> int
+      :staticmethod:
+
+      Add model details.
+
+
+   .. py:method:: get_model_details(data: dict) -> dict
+      :staticmethod:
+
+      Parse input data and get model details.
+
+
+   .. py:method:: list_models(data: dict) -> dict
+      :staticmethod:
+
+      List models assigned to project.
+
+
+   .. py:method:: delete_model(data: dict) -> dict
+      :staticmethod:
+
+      Delete model from database.
+
+
+   .. py:method:: parse_model_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.ModelAddParamsInterface
+      :staticmethod:
+
+      Parse input data for model.
+
+
+
+.. py:class:: OptimizationAPIInterface
+
+   Interface for queries connected with optimizations.
+
+   .. py:method:: delete_optimization(data: dict) -> dict
+      :staticmethod:
+
+      Delete optimization from database and clean workspace.
+
+
+   .. py:method:: get_optimization_details(data: dict) -> dict
+      :staticmethod:
+
+      Parse input data and get optimization details.
+
+
+   .. py:method:: list_optimizations(data: dict) -> dict
+      :staticmethod:
+
+      List optimizations assigned to project.
+
+
+   .. py:method:: update_optimization_status(data: dict) -> dict
+      :staticmethod:
+
+      Update optimization status.
+
+
+   .. py:method:: update_optimized_model(data: dict) -> dict
+      :staticmethod:
+
+      Update optimized model.
+
+
+   .. py:method:: update_optimization_duration(data: dict) -> dict
+      :staticmethod:
+
+      Update duration of optimization.
+
+
+   .. py:method:: update_paths(data: dict) -> dict
+      :staticmethod:
+
+      Update config path and output log path.
+
+
+   .. py:method:: update_execution_command(data: dict) -> dict
+      :staticmethod:
+
+      Update optimization execution command.
+
+
+   .. py:method:: pin_accuracy_benchmark(data: dict) -> dict
+      :staticmethod:
+
+      Pin accuracy benchmark to optimization.
+
+
+   .. py:method:: pin_performance_benchmark(data: dict) -> dict
+      :staticmethod:
+
+      Pin performance benchmark to optimization.
+
+
+   .. py:method:: add_optimization(data: dict) -> dict
+      :staticmethod:
+
+      Add optimization to database.
+
+
+   .. py:method:: add_quantization_optimization(db_session: sqlalchemy.orm.session.Session, optimization_data: neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface) -> int
+      :staticmethod:
+
+      Add quantization optimization to database.
+
+
+   .. py:method:: add_pruning_optimization(db_session: sqlalchemy.orm.session.Session, optimization_data: neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface) -> int
+      :staticmethod:
+
+      Add quantization optimization to database.
+
+
+   .. py:method:: add_standard_optimization(db_session: sqlalchemy.orm.session.Session, optimization_data: neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface) -> int
+      :staticmethod:
+
+      Add optimization to database.
+
+
+   .. py:method:: edit_optimization(data: dict) -> dict
+      :staticmethod:
+
+      Edit existing optimization.
+
+
+   .. py:method:: get_pruning_details(data: dict) -> dict
+      :staticmethod:
+
+      Gat pruning details in a form of tree.
+
+
+   .. py:method:: edit_tuning_details(db_session: sqlalchemy.orm.session.Session, optimization: dict, parsed_optimization_data: neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface) -> dict
+      :staticmethod:
+
+      Edit tuning details.
+
+
+   .. py:method:: edit_pruning_details(db_session: sqlalchemy.orm.session.Session, optimization: dict, pruning_data: dict) -> dict
+      :staticmethod:
+
+      Edit pruning details.
+
+
+   .. py:method:: add_tuning_history(optimization_id: int, tuning_history: dict) -> int
+      :staticmethod:
+
+      Add tuning history to database.
+
+
+   .. py:method:: parse_tuning_history(tuning_history: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.TuningHistoryInterface
+      :staticmethod:
+
+      Parse input data for tuning history.
+
+
+   .. py:method:: parse_optimization_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.OptimizationAddParamsInterface
+      :staticmethod:
+
+      Parse input data for optimization.
+
+
+   .. py:method:: parse_optimization_edit_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.OptimizationEditParamsInterface
+      :staticmethod:
+
+      Parse data for editing optimization.
+
+
+   .. py:method:: load_pruning_details_config(data: dict) -> List[dict]
+      :staticmethod:
+
+      Load pruning details config.
+
+
+   .. py:method:: clean_status(status_to_clean: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Clean specified optimization status.
+
+
+
+.. py:class:: ProfilingAPIInterface
+
+   Interface for queries connected with profiling.
+
+   .. py:method:: get_profiling_details(data: dict) -> dict
+      :staticmethod:
+
+      Parse input data and get profiling details.
+
+
+   .. py:method:: delete_profiling(data: dict) -> dict
+      :staticmethod:
+
+      Delete profiling from database and clean workspace.
+
+
+   .. py:method:: list_profilings(data: dict) -> dict
+      :staticmethod:
+
+      List profilings assigned to project.
+
+
+   .. py:method:: update_profiling_status(data: dict) -> dict
+      :staticmethod:
+
+      Update profiling status.
+
+
+   .. py:method:: update_profiling_duration(data: dict) -> dict
+      :staticmethod:
+
+      Update duration of profiling.
+
+
+   .. py:method:: update_log_path(data: dict) -> dict
+      :staticmethod:
+
+      Update config path and output log path.
+
+
+   .. py:method:: update_execution_command(data: dict) -> dict
+      :staticmethod:
+
+      Update profiling execution command.
+
+
+   .. py:method:: add_profiling(data: dict) -> dict
+      :staticmethod:
+
+      Add profiling to database.
+
+
+   .. py:method:: edit_profiling(data: dict) -> dict
+      :staticmethod:
+
+      Edit existing profiling.
+
+
+   .. py:method:: add_result(profiling_id: int, data: dict) -> None
+      :staticmethod:
+
+      Add profiling result to database.
+
+
+   .. py:method:: bulk_add_results(profiling_id: int, results: List[dict]) -> None
+      :staticmethod:
+
+      Bulk add profiling results to database.
+
+
+   .. py:method:: parse_profiling_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.ProfilingAddParamsInterface
+      :staticmethod:
+
+      Parse input data for profiling.
+
+
+   .. py:method:: parse_profiling_result_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.ProfilingResultAddParamsInterface
+      :staticmethod:
+
+      Parse input data for profiling result.
+
+
+   .. py:method:: parse_profiling_edit_data(data: dict) -> neural_compressor.ux.components.db_manager.params_interfaces.ProfilingEditParamsInterface
+      :staticmethod:
+
+      Parse data for editing profiling.
+
+
+   .. py:method:: clean_status(status_to_clean: neural_compressor.ux.utils.consts.ExecutionStatus) -> dict
+      :staticmethod:
+
+      Clean specified optimization status.
+
+
+
+.. py:class:: ProjectAPIInterface
+
+   Interface for queries connected with project.
+
+   .. py:method:: get_project_details(data: dict) -> dict
+      :staticmethod:
+
+      Get project details from database.
+
+
+   .. py:method:: list_projects(data: dict) -> dict
+      :staticmethod:
+
+      List projects from database.
+
+
+   .. py:method:: create_project(data: dict) -> dict
+      :staticmethod:
+
+      Create new project and add input model.
+
+
+   .. py:method:: delete_project(data: dict) -> dict
+      :staticmethod:
+
+      Delete project details from database and clean workspace.
+
+
+   .. py:method:: add_model(db_session: sqlalchemy.orm.session.Session, data: dict) -> int
+      :staticmethod:
+
+      Create new project with input model.
+
+
+   .. py:method:: add_dummy_dataset(db_session: sqlalchemy.orm.session.Session, data: dict) -> int
+      :staticmethod:
+
+      Add dummy dataset to project.
+
+
+   .. py:method:: update_project_notes(data: dict) -> dict
+      :staticmethod:
+
+      Update project notes.
+
+
+

@@ -1,0 +1,65 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize`
+=============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize
+
+.. autoapi-nested-parse::
+
+   QAT Fake Quantize Graph Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize
+
+
+
+
+.. py:class:: FakeQuantizeBase
+
+   Bases: :py:obj:`object`
+
+   ABC interface class for applying fake quantization by insert qdq.
+
+   .. py:method:: get_config()
+      :abstractmethod:
+
+      Returns the config used to serialize the 'FakeQuantize'.
+
+
+   .. py:method:: from_config(config)
+      :classmethod:
+
+      Instantiates a 'FakeQuantize' from its config.
+
+      :param config: A dict containing required information.
+      :type config: dict
+
+      :returns: A 'FakeQuantize' instance.
+      :rtype: output (FakeQuantize)
+
+
+
+.. py:class:: FakeQuantize(per_channel=False, num_bits=8, channel_axis=-1, symmetric=True, narrow_range=True)
+
+   Bases: :py:obj:`FakeQuantizeBase`
+
+   The class that applies fake quantization.
+
+   .. py:method:: get_config()
+
+      Returns the config used to serialize the 'FakeQuantize'.
+
+      :returns: A dict containing required information.
+      :rtype: config (dict)
+
+
+

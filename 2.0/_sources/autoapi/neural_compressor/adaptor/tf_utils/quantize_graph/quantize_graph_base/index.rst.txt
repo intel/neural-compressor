@@ -1,0 +1,86 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base`
+===============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base
+
+.. autoapi-nested-parse::
+
+   QuantizeGraph Base Class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeGraphBase
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase
+
+
+
+
+.. py:class:: QuantizeGraphBase(output_node_names)
+
+   This is the base class for quantize graph.
+
+   .. py:method:: register_transformer(node_name, entry)
+
+      Register transformers API.
+
+
+   .. py:method:: do_transform()
+
+      This is the virtual interface need to be implemented by derived class.
+
+      :return:
+
+
+   .. py:method:: remove_dead_nodes(input_graph, output_names)
+
+      Removes nodes that are no longer needed for inference from the graph.
+
+
+
+.. py:class:: QuantizeNodeBase(**kwargs)
+
+   This is the base class for nodes fusion.
+
+   :param object {[type]} -- [description]:
+
+   .. py:method:: apply_the_transform()
+
+      This is the virtual interface to be implemented by derived class.
+
+      :return: transformed graphdef
+
+
+   .. py:method:: get_longest_fuse()
+
+      This is the virtual interface to be implemented by derived class.
+
+
+   .. py:method:: eightbitize_single_input_tensor_node(original_node, add_op_function)
+
+      Quantize the single input tensor node.
+
+
+   .. py:method:: add_output_graph_node(output_node)
+
+      Inserts one node into the new graph.
+
+
+   .. py:method:: remove_redundant_quantization(old_graph)
+
+      Remove the redundant Quantize/QuantizeV2 nodes.
+
+
+   .. py:method:: create_nodes_map(graph)
+
+      Builds a mapping of node names to their defs from the graph.
+
+
+

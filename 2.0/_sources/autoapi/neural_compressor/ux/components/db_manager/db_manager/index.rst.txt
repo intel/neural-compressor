@@ -1,0 +1,49 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_manager`
+===============================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_manager
+
+.. autoapi-nested-parse::
+
+   INC Bench database manager.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_manager.DBManager
+
+
+
+
+.. py:class:: DBManager(database_location: Optional[str] = None, log_level: Optional[int] = None)
+
+   Database manager class.
+
+   .. py:property:: engine
+      :type: sqlalchemy.engine.Engine
+
+      Ensure that SQLAlchemy engine is created.
+
+   .. py:method:: initialize_database() -> None
+
+      Initialize database by creating engine and session.
+
+
+   .. py:method:: create_sqlalchemy_engine() -> sqlalchemy.engine.Engine
+
+      Create SQLAlchemy engine.
+
+
+   .. py:method:: create_all() -> None
+
+      Make a call to database to create all tables.
+
+
+

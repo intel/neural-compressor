@@ -1,0 +1,21 @@
+:py:mod:`neural_compressor.ux.components.optimization.mixed_precision`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.mixed_precision
+
+.. autoapi-nested-parse::
+
+   Package mixed_precision contains packages required to optimize model with mixed precision.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   mixed_precision/index.rst
+   optimize_model/index.rst
+
+

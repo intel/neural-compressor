@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.ux.components.optimization.factory`
+==============================================================
+
+.. py:module:: neural_compressor.ux.components.optimization.factory
+
+.. autoapi-nested-parse::
+
+   Optimization class factory.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.optimization.factory.OptimizationFactory
+
+
+
+
+.. py:class:: OptimizationFactory
+
+   Optimization factory.
+
+   .. py:method:: get_optimization(optimization_data: dict, project_data: dict, dataset_data: dict) -> neural_compressor.ux.components.optimization.optimization.Optimization
+      :staticmethod:
+
+      Get optimization for specified workload.
+
+
+

@@ -1,0 +1,33 @@
+:py:mod:`neural_compressor.ux.components.profiling`
+===================================================
+
+.. py:module:: neural_compressor.ux.components.profiling
+
+.. autoapi-nested-parse::
+
+   Package profiling contains all packages required to profile model.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   tensorflow_profiler/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   execute_profiling/index.rst
+   factory/index.rst
+   profile_model/index.rst
+   profiler/index.rst
+   profiling/index.rst
+
+

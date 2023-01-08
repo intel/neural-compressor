@@ -1,0 +1,95 @@
+:py:mod:`neural_compressor.ux.web.server`
+=========================================
+
+.. py:module:: neural_compressor.ux.web.server
+
+.. autoapi-nested-parse::
+
+   Main endpoint for GUI.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.web.server.run_server
+   neural_compressor.ux.web.server.get_tls_args
+   neural_compressor.ux.web.server.block_iframe
+   neural_compressor.ux.web.server.block_sniffing
+   neural_compressor.ux.web.server.require_api_token
+   neural_compressor.ux.web.server.root
+   neural_compressor.ux.web.server.handle_api_call
+   neural_compressor.ux.web.server.allow_api_call
+   neural_compressor.ux.web.server.page_not_found
+   neural_compressor.ux.web.server.disable_cache
+   neural_compressor.ux.web.server.build_parameters
+   neural_compressor.ux.web.server.web_socket_publisher
+
+
+
+.. py:function:: run_server(configuration: neural_compressor.ux.web.configuration.Configuration) -> None
+
+   Run webserver on specified scheme, address and port.
+
+
+.. py:function:: get_tls_args(configuration: neural_compressor.ux.web.configuration.Configuration) -> dict
+
+   Get TLS configuration.
+
+
+.. py:function:: block_iframe(response: werkzeug.wrappers.Response) -> werkzeug.wrappers.Response
+
+   Block iframe and set others CSP.
+
+
+.. py:function:: block_sniffing(response: werkzeug.wrappers.Response) -> werkzeug.wrappers.Response
+
+   Block MIME sniffing.
+
+
+.. py:function:: require_api_token(func: Callable) -> Any
+
+   Validate authorization token.
+
+
+.. py:function:: root() -> Any
+
+   Serve JS application index.
+
+
+.. py:function:: handle_api_call(subpath: str) -> Any
+
+   Handle API access.
+
+
+.. py:function:: allow_api_call(subpath: str) -> Any
+
+   Allow for API access.
+
+
+.. py:function:: page_not_found(e: Any) -> Any
+
+   Serve JS application index when no static file found.
+
+
+.. py:function:: disable_cache(response: werkzeug.wrappers.Response) -> werkzeug.wrappers.Response
+
+   Disable cache on all requests.
+
+
+.. py:function:: build_parameters(endpoint: str, request: flask.Request) -> neural_compressor.ux.web.communication.Request
+
+   Build domain object from flask request.
+
+
+.. py:function:: web_socket_publisher(web_socket: flask_socketio.SocketIO) -> None
+
+   Send messages from queue via web-socket to GUI.
+
+

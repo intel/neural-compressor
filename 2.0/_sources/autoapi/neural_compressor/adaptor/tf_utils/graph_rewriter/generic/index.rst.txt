@@ -1,0 +1,53 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic`
+===================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic
+
+.. autoapi-nested-parse::
+
+   Tensorflow Generic Graph Rewriters.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   convert_add_to_biasadd/index.rst
+   convert_layout/index.rst
+   convert_leakyrelu/index.rst
+   convert_nan_to_random/index.rst
+   convert_placeholder_to_const/index.rst
+   dequantize_cast_optimizer/index.rst
+   dilated_contraction/index.rst
+   dummy_biasadd/index.rst
+   expanddims_optimizer/index.rst
+   fetch_weight_from_reshape/index.rst
+   fold_batch_norm/index.rst
+   fold_constant/index.rst
+   fuse_biasadd_add/index.rst
+   fuse_column_wise_mul/index.rst
+   fuse_conv_with_math/index.rst
+   fuse_decomposed_bn/index.rst
+   fuse_decomposed_in/index.rst
+   fuse_gelu/index.rst
+   fuse_layer_norm/index.rst
+   fuse_pad_with_conv/index.rst
+   fuse_pad_with_fp32_conv/index.rst
+   fuse_reshape_transpose/index.rst
+   graph_cse_optimizer/index.rst
+   grappler_pass/index.rst
+   insert_print_node/index.rst
+   move_squeeze_after_relu/index.rst
+   pre_optimize/index.rst
+   remove_training_nodes/index.rst
+   rename_batch_norm/index.rst
+   split_shared_input/index.rst
+   strip_equivalent_nodes/index.rst
+   strip_unused_nodes/index.rst
+   switch_optimizer/index.rst
+   update_enter/index.rst
+
+

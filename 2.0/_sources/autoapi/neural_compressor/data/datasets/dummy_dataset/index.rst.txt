@@ -1,0 +1,35 @@
+:py:mod:`neural_compressor.data.datasets.dummy_dataset`
+=======================================================
+
+.. py:module:: neural_compressor.data.datasets.dummy_dataset
+
+.. autoapi-nested-parse::
+
+   Dummy dataset for dummy data generation on multiple framework backends.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.data.datasets.dummy_dataset.DummyDataset
+
+
+
+
+.. py:class:: DummyDataset(shape, low=-128.0, high=127.0, dtype='float32', label=True, transform=None, filter=None)
+
+   Bases: :py:obj:`neural_compressor.data.datasets.dataset.Dataset`
+
+   Dataset used for dummy data generation.
+
+   This Dataset is to construct a dataset from a specific shape.
+   The value range is calculated from: low * stand_normal(0, 1) + high.
+   (TODO) construct dummy data from real dataset or iteration of data.
+
+

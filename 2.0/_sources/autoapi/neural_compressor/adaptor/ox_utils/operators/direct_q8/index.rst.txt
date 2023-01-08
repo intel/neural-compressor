@@ -1,0 +1,77 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.direct_q8`
+================================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.direct_q8
+
+.. autoapi-nested-parse::
+
+   Direct8Bit Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.direct_q8.Direct8BitOperator
+   neural_compressor.adaptor.ox_utils.operators.direct_q8.DirectCastOperator
+   neural_compressor.adaptor.ox_utils.operators.direct_q8.QDirectOperator
+
+
+
+
+.. py:class:: Direct8BitOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   Direct8Bit Operator.
+
+   .. py:method:: quantize_check()
+
+      Check if quantizaion can be done.
+
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+   .. py:method:: cast()
+
+      Cast node.
+
+
+
+.. py:class:: DirectCastOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   Direct8bit Operator Cast.
+
+   .. py:method:: cast()
+
+      Cast node.
+
+
+
+.. py:class:: QDirectOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.QOperator`
+
+   QDirect Operator.
+
+

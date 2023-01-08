@@ -1,0 +1,720 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor.adaptor.adaptor &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.adaptor</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../../../_sources/autoapi/neural_compressor/adaptor/adaptor/index.rst.txt" rel="nofollow"><img src="../../../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor.adaptor.adaptor">
+<span id="neural-compressor-adaptor-adaptor"></span><h1><a class="reference internal" href="#module-neural_compressor.adaptor.adaptor" title="neural_compressor.adaptor.adaptor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.adaptor</span></code></a><a class="headerlink" href="#module-neural_compressor.adaptor.adaptor" title="Permalink to this heading">¶</a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor" title="neural_compressor.adaptor.adaptor.Adaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Adaptor</span></code></a></p></td>
+<td><p>The base class of framework adaptor layer.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.adaptor.adaptor_registry" title="neural_compressor.adaptor.adaptor.adaptor_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptor_registry</span></code></a>(cls)</p></td>
+<td><p>The class decorator used to register all Adaptor subclasses.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.adaptor_registry">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.adaptor.</span></span><span class="sig-name descname"><span class="pre">adaptor_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.adaptor_registry" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class decorator used to register all Adaptor subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cls</strong> (<em>class</em>) – The class of register.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.Adaptor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.adaptor.</span></span><span class="sig-name descname"><span class="pre">Adaptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework_specific_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.Adaptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The base class of framework adaptor layer.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.Adaptor.quantize">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.Adaptor.quantize" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used to do calibration and quanitization in post-training quantization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tune_cfg</strong> (<em>dict</em>) – The chosen tuning configuration.</p></li>
+<li><p><strong>model</strong> (<em>object</em>) – The model to do calibration.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – The dataloader used to load calibration dataset.</p></li>
+<li><p><strong>q_func</strong> (<em>optional</em>) – training function for quantization aware training mode.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.Adaptor.evaluate">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postprocess</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measurer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.Adaptor.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used to run evaluation on validation dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – The model to do calibration.</p></li>
+<li><p><strong>dataloader</strong> (<em>generator</em>) – generate the data and labels.</p></li>
+<li><p><strong>postprocess</strong> (<em>object</em><em>, </em><em>optional</em>) – process the result from the model</p></li>
+<li><p><strong>metric</strong> (<em>object</em><em>, </em><em>optional</em>) – Depends on model category. Defaults to None.</p></li>
+<li><p><strong>measurer</strong> (<em>object</em><em>, </em><em>optional</em>) – for precise benchmark measurement.</p></li>
+<li><p><strong>iteration</strong> (<em>int</em><em>, </em><em>optional</em>) – control steps of mini-batch</p></li>
+<li><p><strong>tensorboard</strong> (<em>boolean</em><em>, </em><em>optional</em>) – for tensorboard inspect tensor.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.Adaptor.query_fw_capability">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">query_fw_capability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.Adaptor.query_fw_capability" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used to return framework tuning capability.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>object</em>) – The model to query quantization tuning capability.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.Adaptor.query_fused_patterns">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">query_fused_patterns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.Adaptor.query_fused_patterns" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used to run fused patterns in framework.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>object</em>) – The model to do calibration.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>[[‘conv’, ‘relu’], [‘conv’, ‘relu’, ‘bn’]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.Adaptor.inspect_tensor">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inspect_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inspect_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'activation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_to_disk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.Adaptor.inspect_tensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used by tune strategy class for dumping tensor info.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – The model to inspect.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – The dataloader used to feed into.</p></li>
+<li><p><strong>op_list</strong> (<em>list</em>) – The op name in the fp32 model for dumpping.</p></li>
+<li><p><strong>iteration_list</strong> (<em>list</em>) – The iteration list containing iterations to dump.</p></li>
+<li><p><strong>inspect_type</strong> (<em>str</em>) – The valid value are ‘weight’, ‘activation’, ‘all’.</p></li>
+<li><p><strong>save_to_disk</strong> (<em>bool</em>) – Save to disk or memory.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Numpy Array Dict
+{</p>
+<blockquote>
+<div><dl class="simple">
+<dt>’weight’: {</dt><dd><p>‘node0_name’: {‘weight0_name’: numpy.array, ‘bias0_name’: numpy.array, …},
+‘node1_name’: {‘weight1_name’: numpy.array, ‘bias1_name’: numpy.array, …},
+…</p>
+</dd>
+</dl>
+<p>},
+‘activation’: [</p>
+<blockquote>
+<div><p># iter 0
+{</p>
+<blockquote>
+<div><p>’node0_name’: {‘output0_name’: numpy.array, ‘output1_name’: numpy.array, …}
+‘node1_name’: {‘output1_name’: numpy.array, ‘output1_name’: numpy.array, …}
+…</p>
+</div></blockquote>
+<p>},
+# iter 1
+…</p>
+</div></blockquote>
+<p>]</p>
+</div></blockquote>
+<p>}</p>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.Adaptor.set_tensor">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">set_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.Adaptor.set_tensor" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used by tune strategy class for setting tensor back to model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – The model to set tensor. Usually it is quantized model.</p></li>
+<li><p><strong>tensor_dict</strong> (<em>dict</em>) – <p>The tensor dict to set. Note the numpy array contains float
+value, adaptor layer has the responsibility to quantize to
+int8 or int32 to set into the quantized model if needed.
+The dict format is something like:
+{</p>
+<blockquote>
+<div><p>’weight0_name’: numpy.array,
+‘bias0_name’: numpy.array,
+…</p>
+</div></blockquote>
+<p>}</p>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.Adaptor.quantize_input">
+<span class="sig-name descname"><span class="pre">quantize_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.Adaptor.quantize_input" title="Permalink to this definition">¶</a></dt>
+<dd><p>quantize the model to be able to take quantized input</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>object</em>) – The model to quantize input</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The quantized input model
+scale (float): The scale for dataloader to generate quantized input</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>model (object)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.Adaptor.save">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.Adaptor.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used by tune strategy class for saving model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – The model to saved.</p></li>
+<li><p><strong>path</strong> (<em>string</em>) – The path where to save.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.adaptor.Adaptor.convert">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destinatin</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.adaptor.Adaptor.convert" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function is used to convert a source model format to another.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>neural_compressor.model</em>) – base model to be converted.</p></li>
+<li><p><strong>source</strong> (<em>string</em>) – The source model format.</p></li>
+<li><p><strong>destination</strong> (<em>string</em>) – The destination model format.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.adaptor.adaptor</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a><ul>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.adaptor_registry"><code class="docutils literal notranslate"><span class="pre">adaptor_registry()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor"><code class="docutils literal notranslate"><span class="pre">Adaptor</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.quantize"><code class="docutils literal notranslate"><span class="pre">Adaptor.quantize()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.evaluate"><code class="docutils literal notranslate"><span class="pre">Adaptor.evaluate()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.query_fw_capability"><code class="docutils literal notranslate"><span class="pre">Adaptor.query_fw_capability()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.query_fused_patterns"><code class="docutils literal notranslate"><span class="pre">Adaptor.query_fused_patterns()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.inspect_tensor"><code class="docutils literal notranslate"><span class="pre">Adaptor.inspect_tensor()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.set_tensor"><code class="docutils literal notranslate"><span class="pre">Adaptor.set_tensor()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.quantize_input"><code class="docutils literal notranslate"><span class="pre">Adaptor.quantize_input()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.save"><code class="docutils literal notranslate"><span class="pre">Adaptor.save()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.convert"><code class="docutils literal notranslate"><span class="pre">Adaptor.convert()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.adaptor_registry">adaptor_registry</a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor">Adaptor</a><ul>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.quantize">quantize</a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.evaluate">evaluate</a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.query_fw_capability">query_fw_capability</a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.query_fused_patterns">query_fused_patterns</a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.inspect_tensor">inspect_tensor</a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.set_tensor">set_tensor</a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.quantize_input">quantize_input</a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.save">save</a></li>
+<li><a class="reference internal" href="#neural_compressor.adaptor.adaptor.Adaptor.convert">convert</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

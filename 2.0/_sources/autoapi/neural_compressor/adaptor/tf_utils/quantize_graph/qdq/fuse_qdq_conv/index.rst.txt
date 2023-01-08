@@ -1,0 +1,178 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv`
+=============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv
+
+.. autoapi-nested-parse::
+
+   Quantize Conv2D/Conv3D/DepthwiseConv2dNative.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_conv.FuseNodeStartWithConv2d
+
+
+
+
+.. py:class:: FuseNodeStartWithConv2d(**kwargs)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
+
+   Quantize Conv2D/Conv3D/DepthwiseConv2dNative to int8 op.
+
+   .. py:method:: apply_conv3d_add_addn_relu_fusion(match_node_name)
+
+      Apply Conv3D Add Addn Relu fusion.
+
+      Dequantize + Conv3D + AddV2+ AddV2 + Relu + QuantizeV2
+
+
+   .. py:method:: apply_conv3d_add_addn_fusion(match_node_name)
+
+      Apply Conv3D Add Addn fusion.
+
+      Dequantize + Conv3D + BiasAdd + Add + QuantizeV2
+      Dequantize + Conv3D + BiasAdd + AddV2 + QuantizeV2
+      Dequantize + Conv3D + AddV2 + AddV2 + QuantizeV2
+
+
+   .. py:method:: apply_conv3d_add_relu_fusion(match_node_name)
+
+      Apply Conv3D Add Relu fusion.
+
+      Dequantize + Conv3D + Add + Relu + QuantizeV2
+      Dequantize + Conv3D + AddV2 + Relu + QuantizeV2
+
+
+   .. py:method:: apply_conv3d_add_fusion(match_node_name)
+
+      Apply Conv3D Add fusion.
+
+      Dequantize + Conv3D + BiasAdd + QuantizeV2
+      Dequantize + Conv3D + Add + QuantizeV2
+      Dequantize + Conv3D + AddV2 + QuantizeV2
+
+
+   .. py:method:: apply_conv3d_single_fusion(match_node_name)
+
+      Apply Conv3D single fusion.
+
+      Dequantize + Conv3D + QuantizeV2
+
+
+   .. py:method:: apply_newly_conv_biasadd_relu_fusion(match_node_name)
+
+      Apply Conv2D BiasAdd Relu fusion.
+
+      Dequantize + Conv2D + AddN + Relu + QuantizeV2
+      Dequantize + Conv2D + AddN + Relu6 + QuantizeV2
+      Dequantize + Conv2D + AddV2 + Relu + QuantizeV2
+      Dequantize + Conv2D + AddV2 + Relu6 + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + Relu6 + QuantizeV2
+      Dequantize + Conv2D + Relu6 + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + Relu + QuantizeV2
+      Dequantize + Conv2D + Relu + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + Elu + QuantizeV2
+      Dequantize + Conv2D + Elu + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + LeakyRelu + QuantizeV2
+      Dequantize + Conv2D + LeakyRelu + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + Sigmoid + QuantizeV2
+      Dequantize + Conv2D + Sigmoid + QuantizeV2
+      Dequantize + Conv2D + Add + Relu6 + QuantizeV2
+      Dequantize + Conv2D + Add + Relu + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + Add + Relu6 + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + BiasAdd + Relu + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + Relu + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + Relu6 + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + BiasAdd + LeakyRelu + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + LeakyRelu + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + BiasAdd + Relu6 + QuantizeV2
+
+
+   .. py:method:: apply_newly_conv_biasadd_fusion(match_node_name)
+
+      Apply Conv2D BiasAdd fusion.
+
+      Dequantize + Conv2D + Biasadd + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + BiasAdd + QuantizeV2
+      Dequantize + Conv2D + Add + QuantizeV2
+      Dequantize + Conv2D + AddV2 + QuantizeV2
+
+
+   .. py:method:: apply_newly_conv_single_fusion(match_node_name)
+
+      Apply Conv2D single fusion.
+
+      Dequantize + Conv2D + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + QuantizeV2
+
+
+   .. py:method:: apply_newly_conv_biasadd_addn_relu_fusion(match_node_name)
+
+      Apply Conv2D BiasAdd AddN Relu fusion.
+
+      Dequantize + Conv2D + BiasAdd + AddN + Relu + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + AddN + Relu6 + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + AddV2 + Relu + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + AddV2 + Relu6 + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + LeakyRelu + AddV2 + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + Relu + AddV2(Add) + QuantizeV2
+      Dequantize + Conv2D + LeakyRelu + AddV2 + QuantizeV2
+      Dequantize + Conv2D + Relu + AddV2(Add) + QuantizeV2
+      Dequantize + Conv2D + Add + Add + Relu + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + Add + Relu + QuantizeV2
+
+
+   .. py:method:: apply_conv_biasadd_hardswish_fusion(match_node_name)
+
+      Apply Conv2D BiasAdd hardswish fusion.
+
+      Dequantize + Conv2D + BiasAdd + Add + Relu6 + Mul + Mul + QuantizeV2
+      Dequantize + Conv2D + Add + Relu6 + Mul + Mul + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + BiasAdd + Add + Relu6 + Mul + Mul + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + Add + Relu6 + Mul + Mul + QuantizeV2
+
+
+   .. py:method:: apply_newly_conv_biasadd_swishf32_fusion(match_node_name)
+
+      Apply Conv2D BiasAdd swishf32 fusion.
+
+      Dequantize + Conv2D + BiasAdd + swish_f32 + QuantizeV2
+      Dequantize + Conv2D + Add + swish_f32 + QuantizeV2
+      Dequantize + Conv2D + AddV2 + swish_f32 + QuantizeV2
+      Dequantize + Conv2D + swish_f32 + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + BiasAdd + swish_f32 + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + Add + swish_f32 + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + AddV2 + swish_f32 + QuantizeV2
+      Dequantize + DepthwiseConv2dNative + swish_f32 + QuantizeV2
+
+
+   .. py:method:: apply_newly_conv_biasadd_addn_fusion(match_node_name)
+
+      Apply Conv2D BiasAdd AddN fusion.
+
+      Dequantize + Conv2D + Add + Add + QuantizeV2
+      Dequantize + Conv2D + AddV2 + Add + QuantizeV2
+      Dequantize + Conv2D + BiasAdd + Add + QuantizeV2
+
+
+   .. py:method:: get_longest_fuse()
+
+      Get the longest fusion patter.
+
+
+   .. py:method:: apply_the_transform()
+
+      Quantize Conv and apply the fusion.
+
+
+

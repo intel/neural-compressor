@@ -1,0 +1,59 @@
+:py:mod:`neural_compressor.adaptor.ox_utils.operators.matmul`
+=============================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.matmul
+
+.. autoapi-nested-parse::
+
+   MatMul Operator.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.matmul.MatMulOperator
+   neural_compressor.adaptor.ox_utils.operators.matmul.QMatMulOperator
+
+
+
+
+.. py:class:: MatMulOperator(onnx_quantizer, onnx_node)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
+
+   MatMul Operator.
+
+   .. py:method:: quantize()
+
+      Do quantizaion.
+
+
+   .. py:method:: convert_check(convert_format)
+
+      Check if conversion can be done.
+
+
+   .. py:method:: convert(convert_format)
+
+      Convert to QOperator format.
+
+
+
+.. py:class:: QMatMulOperator(onnx_node, children, initializers)
+
+   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.QOperator`
+
+   QLinearMatMul Operator.
+
+   .. py:method:: convert()
+
+      Convert to QDQ format.
+
+
+

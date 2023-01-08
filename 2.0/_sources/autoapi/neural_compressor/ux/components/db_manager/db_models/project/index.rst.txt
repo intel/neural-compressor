@@ -1,0 +1,69 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.project`
+======================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.project
+
+.. autoapi-nested-parse::
+
+   Project package contains project class representing single project.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.project.Project
+
+
+
+
+.. py:class:: Project
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench Project class.
+
+   .. py:method:: create_project(db_session: sqlalchemy.orm.session.Session, name: str) -> int
+      :staticmethod:
+
+      Create project object.
+
+      returns id of created project
+
+
+   .. py:method:: delete_project(db_session: sqlalchemy.orm.session.Session, project_id: int, project_name: str) -> Optional[int]
+      :staticmethod:
+
+      Remove project from database.
+
+
+   .. py:method:: project_details(db_session: sqlalchemy.orm.session.Session, project_id: int) -> dict
+      :staticmethod:
+
+      Get project details from database.
+
+
+   .. py:method:: get_model_by_name(db_session: sqlalchemy.orm.session.Session, project_id: int, model_name: str) -> dict
+      :staticmethod:
+
+      Get input model details for specified project.
+
+
+   .. py:method:: list_projects(db_session: sqlalchemy.orm.session.Session) -> dict
+      :staticmethod:
+
+      Get project list from database.
+
+
+   .. py:method:: update_notes(db_session: sqlalchemy.orm.session.Session, project_id: int, notes: str) -> dict
+      :staticmethod:
+
+      Update project notes.
+
+
+

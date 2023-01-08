@@ -1,0 +1,88 @@
+:py:mod:`neural_compressor.ux.components.db_manager.db_models.optimization_type`
+================================================================================
+
+.. py:module:: neural_compressor.ux.components.db_manager.db_models.optimization_type
+
+.. autoapi-nested-parse::
+
+   Optimization_type package contains class representing optimization_type table in database.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.optimization_type.OptimizationType
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.ux.components.db_manager.db_models.optimization_type.fill_dictionary
+
+
+
+.. py:class:: OptimizationType
+
+   Bases: :py:obj:`neural_compressor.ux.components.db_manager.db_manager.Base`
+
+   INC Bench OptimizationType table class.
+
+   .. py:method:: add(db_session: sqlalchemy.orm.session.Session, name: str) -> int
+      :staticmethod:
+
+      Add optimization type to DB.
+
+      returns id of added optimization type
+
+
+   .. py:method:: list(db_session: sqlalchemy.orm.session.Session) -> dict
+      :staticmethod:
+
+      List available types of optimization.
+
+
+   .. py:method:: list_for_precision(db_session: sqlalchemy.orm.session.Session, precision_name: str) -> dict
+      :staticmethod:
+
+      List available types of optimization.
+
+
+   .. py:method:: get_optimization_type_for_precision(db_session: sqlalchemy.orm.session.Session, precision_id: int) -> List[dict]
+      :staticmethod:
+
+      Get optimization types for specified precision.
+
+
+   .. py:method:: get_optimization_type_id(db_session: sqlalchemy.orm.session.Session, optimization_name: str) -> int
+      :staticmethod:
+
+      Get optimization type id from name.
+
+
+   .. py:method:: get_optimization_type_by_name(db_session: sqlalchemy.orm.session.Session, optimization_name: str) -> Any
+      :staticmethod:
+
+      Get optimization type object from name.
+
+
+   .. py:method:: get_optimization_type_by_id(db_session: sqlalchemy.orm.session.Session, optimization_id: int) -> Any
+      :staticmethod:
+
+      Get optimization type object by id.
+
+
+
+.. py:function:: fill_dictionary(*args: list, **kwargs: dict) -> None
+
+   Fill dictionary with default values.
+
+

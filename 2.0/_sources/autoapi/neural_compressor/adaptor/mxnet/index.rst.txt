@@ -1,0 +1,194 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.mxnet`
+=========================================
+
+.. py:module:: neural_compressor.adaptor.mxnet
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.mxnet.MxNetAdaptor
+   neural_compressor.adaptor.mxnet.MXNetQuery
+
+
+
+
+.. py:class:: MxNetAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`neural_compressor.adaptor.adaptor.Adaptor`
+
+   The MXNet adaptor layer, do MXNet quantization, calibration, inspect layer tensors.
+
+   :param framework_specific_info: framework specific configuration for quantization.
+   :type framework_specific_info: dict
+
+   .. py:method:: quantize(tune_cfg, nc_model, dataloader, q_func=None)
+
+      The function is used to do MXNet calibration and quanitization in post-training
+         quantization.
+
+      :param tune_cfg: quantization config.
+      :type tune_cfg: dict
+      :param nc_model: neural_compressor fp32 model to be quantized.
+      :type nc_model: object
+      :param dataloader: calibration dataset.
+      :type dataloader: object
+      :param q_func: training function for quantization aware training mode,
+                     unimplement yet for MXNet.
+      :type q_func: optional
+
+      :returns: quantized model
+      :rtype: (MXNetModel)
+
+
+   .. py:method:: evaluate(nc_model, data_x, postprocess=None, metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=False)
+
+      The function is used to run evaluation on validation dataset.
+
+      :param nc_model: model to evaluate.
+      :type nc_model: object
+      :param data_x: data iterator/loader.
+      :type data_x: object
+      :param postprocess: process the result from the model
+      :type postprocess: object, optional
+      :param metrics: list of evaluate metric.
+      :type metrics: list
+      :param measurer: for precise benchmark measurement.
+      :type measurer: object, optional
+      :param iteration: control steps of mini-batch
+      :type iteration: int, optional
+      :param tensorboard: for tensorboard inspect tensor.
+      :type tensorboard: boolean, optional
+      :param fp32_baseline: only for compare_label=False pipeline
+      :type fp32_baseline: boolean, optional
+
+      :returns: evaluate result.
+      :rtype: acc
+
+
+   .. py:method:: query_fw_capability(nc_model)
+
+      Query MXNet quantization capability on the model/op level with the specific model.
+
+      :param nc_model: model to query.
+      :type nc_model: object
+
+      :returns: modelwise and opwise config.
+      :rtype: dict
+
+
+   .. py:method:: inspect_tensor(nc_model, data_x, op_list=[], iteration_list=[], inspect_type='activation', save_to_disk=False, save_path=None, quantization_cfg=None)
+
+      The function is used by tune strategy class for dumping tensor info.
+
+      :param nc_model: The model to do calibration.
+      :type nc_model: object
+      :param data_x: Data iterator/loader.
+      :type data_x: object
+      :param op_list: list of inspect tensors.
+      :type op_list: list
+      :param iteration_list: list of inspect iterations.
+      :type iteration_list: list
+
+      :returns: includes tensor dicts
+      :rtype: dict
+
+
+   .. py:method:: recover_tuned_model(nc_model, q_config)
+
+      Execute the recover process on the specified model.
+
+      :param tune_cfg: quantization configuration
+      :type tune_cfg: dict
+      :param nc_model: fp32 model
+      :type nc_model: object
+      :param q_config: recover configuration
+      :type q_config: dict
+
+      :returns: the quantized model
+      :rtype: MXNetModel
+
+
+   .. py:method:: set_tensor(model, tensor_dict)
+      :abstractmethod:
+
+      The function is used by tune strategy class for setting tensor back to model.
+
+      :param model: The model to set tensor. Usually it is quantized model.
+      :type model: object
+      :param tensor_dict: The tensor dict to set. Note the numpy array contains float
+                          value, adaptor layer has the responsibility to quantize to
+                          int8 or int32 to set into the quantized model if needed.
+                          The dict format is something like:
+                          {
+                            'weight0_name': numpy.array,
+                            'bias0_name': numpy.array,
+                            ...
+                          }
+      :type tensor_dict: dict
+
+
+   .. py:method:: save(model, path)
+
+      The function is used by tune strategy class for saving model.
+
+      :param model: The model to saved.
+      :type model: object
+      :param path: The path where to save.
+      :type path: string
+
+
+
+.. py:class:: MXNetQuery(local_config_file)
+
+   Bases: :py:obj:`neural_compressor.adaptor.query.QueryBackendCapability`
+
+   Base class that defines Query Interface.
+   Each adaption layer should implement the inherited class for specific backend on their own.
+
+   .. py:method:: get_version()
+
+      Get the current backend's version string.
+
+
+
+   .. py:method:: get_precisions()
+
+      Get the supported low precisions, e.g ['int8', 'bf16']
+
+
+
+   .. py:method:: get_op_types()
+
+      Get the op types for specific backend per low precision.
+      e.g {'1.6.0': {'int8': ['Conv2D', 'fully_connected']}}
+
+
+   .. py:method:: get_fuse_patterns()
+
+      Get the fusion patterns for specified op type for every specific precision
+
+
+
+
+   .. py:method:: get_quantization_capability()
+
+      Get the quantization capability of low precision op types.
+      e.g, granularity, scheme and etc.
+
+
+
+   .. py:method:: get_mixed_precision_combination()
+
+      Get the valid precision combination base on hardware and user' config.
+      e.g['fp32', 'bf16', 'int8']
+
+
+

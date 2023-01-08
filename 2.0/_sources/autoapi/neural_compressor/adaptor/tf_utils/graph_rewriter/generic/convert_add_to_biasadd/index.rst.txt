@@ -1,0 +1,36 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd`
+==========================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd
+
+.. autoapi-nested-parse::
+
+   Convert Add OP to BiasAdd OP Graph Rewriter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd.ConvertAddToBiasAddOptimizer
+
+
+
+
+.. py:class:: ConvertAddToBiasAddOptimizer(model)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase`
+
+   Convert MatMul + Add(AddV2) to MatMul + BiasAdd.
+
+   .. py:method:: do_transformation()
+
+      Execute convertion Add to BiasAdd.
+
+
+

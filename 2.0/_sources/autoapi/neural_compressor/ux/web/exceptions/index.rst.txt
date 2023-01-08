@@ -1,0 +1,21 @@
+:py:mod:`neural_compressor.ux.web.exceptions`
+=============================================
+
+.. py:module:: neural_compressor.ux.web.exceptions
+
+.. autoapi-nested-parse::
+
+   Web Exceptions.
+
+
+
+Module Contents
+---------------
+
+.. py:exception:: ServiceNotFoundException
+
+   Bases: :py:obj:`neural_compressor.ux.utils.exceptions.NotFoundException`
+
+   Unknown Service requested.
+
+

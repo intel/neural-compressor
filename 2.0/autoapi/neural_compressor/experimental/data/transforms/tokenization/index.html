@@ -1,0 +1,640 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neural_compressor.experimental.data.transforms.tokenization &mdash; Intel® Neural Compressor  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="../../../../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../_static/graphviz.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+
+  
+  <script src="../../../../../../_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+  
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <div class="navbar-logo">
+          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
+            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          </a>
+        <div class="version">
+              <a href="../../../../../../../versions.html">2.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+    </div>
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+  <div>
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+   
+
+          </div>
+
+          
+
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../Welcome.html">Intel® Neural Compressor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../api-documentation/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor repository</a></li>
+</ul>
+
+            
+          
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+
+      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
+        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+          <div class="pytorch-breadcrumbs-wrapper">
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="../../../../../../index.html">
+          
+            Docs
+          
+        </a> &gt;
+      </li>
+
+        
+      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.tokenization</span></code></li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+            <a href="../../../../../../_sources/autoapi/neural_compressor/experimental/data/transforms/tokenization/index.rst.txt" rel="nofollow"><img src="../../../../../../_static/images/view-page-source-icon.svg"></a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+          </div>
+
+          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+            Shortcuts
+          </div>
+        </div>
+
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" class="pytorch-article">
+              
+  <section id="module-neural_compressor.experimental.data.transforms.tokenization">
+<span id="neural-compressor-experimental-data-transforms-tokenization"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.data.transforms.tokenization" title="neural_compressor.experimental.data.transforms.tokenization"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.tokenization</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.data.transforms.tokenization" title="Permalink to this heading">¶</a></h1>
+<p>Tokenization helper classes.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer" title="neural_compressor.experimental.data.transforms.tokenization.FullTokenizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FullTokenizer</span></code></a></p></td>
+<td><p>Run end-to-end tokenziation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer" title="neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BasicTokenizer</span></code></a></p></td>
+<td><p>Run basic tokenization (punctuation splitting, lower casing, etc.).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer" title="neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WordpieceTokenizer</span></code></a></p></td>
+<td><p>Run WordPiece tokenziation.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.convert_to_unicode" title="neural_compressor.experimental.data.transforms.tokenization.convert_to_unicode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_to_unicode</span></code></a>(text)</p></td>
+<td><p>Convert <cite>text</cite> to Unicode (if it's not already), assuming utf-8 input.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.load_vocab" title="neural_compressor.experimental.data.transforms.tokenization.load_vocab"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_vocab</span></code></a>(vocab_file)</p></td>
+<td><p>Load a vocabulary file into a dictionary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.convert_by_vocab" title="neural_compressor.experimental.data.transforms.tokenization.convert_by_vocab"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_by_vocab</span></code></a>(vocab, items)</p></td>
+<td><p>Convert a sequence of [tokens|ids] using the vocab.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.whitespace_tokenize" title="neural_compressor.experimental.data.transforms.tokenization.whitespace_tokenize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">whitespace_tokenize</span></code></a>(text)</p></td>
+<td><p>Run basic whitespace cleaning and splitting on a piece of text.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.convert_to_unicode">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.tokenization.</span></span><span class="sig-name descname"><span class="pre">convert_to_unicode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.convert_to_unicode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert <cite>text</cite> to Unicode (if it’s not already), assuming utf-8 input.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.load_vocab">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.tokenization.</span></span><span class="sig-name descname"><span class="pre">load_vocab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vocab_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.load_vocab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a vocabulary file into a dictionary.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.convert_by_vocab">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.tokenization.</span></span><span class="sig-name descname"><span class="pre">convert_by_vocab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.convert_by_vocab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a sequence of [tokens|ids] using the vocab.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.whitespace_tokenize">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.tokenization.</span></span><span class="sig-name descname"><span class="pre">whitespace_tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.whitespace_tokenize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run basic whitespace cleaning and splitting on a piece of text.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.FullTokenizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.tokenization.</span></span><span class="sig-name descname"><span class="pre">FullTokenizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vocab_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_lower_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Run end-to-end tokenziation.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.tokenize">
+<span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.tokenize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tokenize text.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.convert_tokens_to_ids">
+<span class="sig-name descname"><span class="pre">convert_tokens_to_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tokens</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.convert_tokens_to_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert tokens to ids.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.convert_ids_to_tokens">
+<span class="sig-name descname"><span class="pre">convert_ids_to_tokens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.convert_ids_to_tokens" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert ids to tokens.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.tokenization.</span></span><span class="sig-name descname"><span class="pre">BasicTokenizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">do_lower_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Run basic tokenization (punctuation splitting, lower casing, etc.).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer.tokenize">
+<span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer.tokenize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tokenizes a piece of text.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.tokenization.</span></span><span class="sig-name descname"><span class="pre">WordpieceTokenizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vocab</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unk_token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'[UNK]'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_input_chars_per_word</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Run WordPiece tokenziation.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer.tokenize">
+<span class="sig-name descname"><span class="pre">tokenize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer.tokenize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tokenize a piece of text into its word pieces.</p>
+<p>This uses a greedy longest-match-first algorithm to perform tokenization
+using the given vocabulary.
+For example:</p>
+<blockquote>
+<div><p>input = “unaffable”
+output = [“un”, “##aff”, “##able”]</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> – A single token or whitespace separated tokens. This should have
+already been passed through <a href="#id1"><span class="problematic" id="id2">`</span></a>BasicTokenizer.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of wordpiece tokens.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Intel® Neural Compressor.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.tokenization</span></code></a><ul>
+<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.convert_to_unicode"><code class="docutils literal notranslate"><span class="pre">convert_to_unicode()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.load_vocab"><code class="docutils literal notranslate"><span class="pre">load_vocab()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.convert_by_vocab"><code class="docutils literal notranslate"><span class="pre">convert_by_vocab()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.whitespace_tokenize"><code class="docutils literal notranslate"><span class="pre">whitespace_tokenize()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer"><code class="docutils literal notranslate"><span class="pre">FullTokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">FullTokenizer.tokenize()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.convert_tokens_to_ids"><code class="docutils literal notranslate"><span class="pre">FullTokenizer.convert_tokens_to_ids()</span></code></a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.convert_ids_to_tokens"><code class="docutils literal notranslate"><span class="pre">FullTokenizer.convert_ids_to_tokens()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer"><code class="docutils literal notranslate"><span class="pre">BasicTokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">BasicTokenizer.tokenize()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer"><code class="docutils literal notranslate"><span class="pre">WordpieceTokenizer</span></code></a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer.tokenize"><code class="docutils literal notranslate"><span class="pre">WordpieceTokenizer.tokenize()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.convert_to_unicode">convert_to_unicode</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.load_vocab">load_vocab</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.convert_by_vocab">convert_by_vocab</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.whitespace_tokenize">whitespace_tokenize</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer">FullTokenizer</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.tokenize">tokenize</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.convert_tokens_to_ids">convert_tokens_to_ids</a></li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.FullTokenizer.convert_ids_to_tokens">convert_ids_to_tokens</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer">BasicTokenizer</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.BasicTokenizer.tokenize">tokenize</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer">WordpieceTokenizer</a><ul>
+<li><a class="reference internal" href="#neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer.tokenize">tokenize</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../../../',
+            VERSION:'',
+            LANGUAGE:'en',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../../../_static/documentation_options.js"></script>
+      <script type="text/javascript" src="../../../../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../../../../_static/sphinx_highlight.js"></script>
+
+  
+
+  <script type="text/javascript" src="../../../../../../_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="../../../../../../_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="../../../../../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+<script script type="text/javascript">
+  var collapsedSections = ['start', 'autoapi', 'info'];
+</script>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Lorem ipsum dolor sit amet, consectetur</p>
+          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
+            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
+            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/tutorials">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../../../../../_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    mobileMenu.bind();
+    mobileTOC.bind();
+    pytorchAnchors.bind();
+
+    $(window).on("load", function() {
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+    })
+
+    // Add class to links that have code blocks, since we cannot create links in code blocks
+    $("article.pytorch-article a span.pre").each(function(e) {
+      $(this).closest("a").addClass("has-code");
+    });
+  </script>
+</body>
+</html>

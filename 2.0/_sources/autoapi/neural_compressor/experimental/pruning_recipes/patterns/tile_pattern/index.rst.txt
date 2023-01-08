@@ -1,0 +1,81 @@
+:py:mod:`neural_compressor.experimental.pruning_recipes.patterns.tile_pattern`
+==============================================================================
+
+.. py:module:: neural_compressor.experimental.pruning_recipes.patterns.tile_pattern
+
+.. autoapi-nested-parse::
+
+   Tile pattern classes.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePatternBase
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_1x1
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_2x2
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_1x16
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_4x1
+   neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_1x2
+
+
+
+
+.. py:class:: TilePatternBase(mask_shape)
+
+   Bases: :py:obj:`neural_compressor.experimental.pruning_recipes.patterns.pattern.PatternBase`
+
+   Parent class for all NxM tile patterns.
+
+   .. py:method:: compute_sparsity(tensor)
+
+      Calculate the sparsity of a tensor (weight matrix).
+
+
+   .. py:method:: repeat_mask(mask, ori_shape=None)
+
+      Repeat mask in 2 dimensions.
+
+
+
+.. py:class:: TilePattern_1x1
+
+   Bases: :py:obj:`TilePatternBase`
+
+   1x1 tile pattern (unstructured).
+
+
+.. py:class:: TilePattern_2x2
+
+   Bases: :py:obj:`TilePatternBase`
+
+   2x2 tile pattern (unstructured).
+
+
+.. py:class:: TilePattern_1x16
+
+   Bases: :py:obj:`TilePatternBase`
+
+   1x16 tile pattern (unstructured).
+
+
+.. py:class:: TilePattern_4x1
+
+   Bases: :py:obj:`TilePatternBase`
+
+   4x1 tile pattern (unstructured).
+
+
+.. py:class:: TilePattern_1x2
+
+   Bases: :py:obj:`TilePatternBase`
+
+   1x2 tile pattern (unstructured).
+
+

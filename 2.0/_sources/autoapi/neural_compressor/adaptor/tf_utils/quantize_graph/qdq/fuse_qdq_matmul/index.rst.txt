@@ -1,0 +1,91 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_matmul`
+===============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_matmul
+
+.. autoapi-nested-parse::
+
+   Quantize MatMul/BatchMatMul/BatchMatMulV2.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_matmul.FuseNodeStartWithMatmul
+
+
+
+
+.. py:class:: FuseNodeStartWithMatmul(**kwargs)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
+
+   Quantize MatMul/BatchMatMul/BatchMatMulV2 and apply the fusion.
+
+   .. py:method:: apply_matmul_biasadd_relu_fusion(match_node_name)
+
+      Apply dequantize + matmul + biasadd + activation + quantizev2 fusion.
+
+      Dequantize + MatMul + BiasAdd + Relu + QuantizeV2
+      Dequantize + MatMul + Relu + QuantizeV2
+      Dequantize + MatMul + BiasAdd + Relu6 + QuantizeV2
+      Dequantize + MatMul + Relu6 + QuantizeV2
+      Dequantize + MatMul + BiasAdd + LeakyRelu + QuantizeV2
+      Dequantize + MatMul + LeakyRelu + QuantizeV2
+      Dequantize + MatMul + BiasAdd + Gelu + QuantizeV2
+      Dequantize + MatMul + Gelu + QuantizeV2
+      Dequantize + MatMul + BiasAdd + Elu + QuantizeV2
+      Dequantize + MatMul + Elu + QuantizeV2
+      Dequantize + MatMul + BiasAdd + Tanh + QuantizeV2
+      Dequantize + MatMul + Tanh + QuantizeV2
+      Dequantize + MatMul + BiasAdd + Sigmoid + QuantizeV2
+      Dequantize + MatMul + Sigmoid + QuantizeV2
+
+
+   .. py:method:: apply_matmul_biasadd_fusion(match_node_name)
+
+      Apply dequantize + matmul + biasadd + quantizev2 fusion.
+
+      Dequantize + MatMul + QuantizeV2
+      Dequantize + MatMul + BiasAdd + QuantizeV2
+      Dequantize + MatMul + Add + QuantizeV2
+      Dequantize + MatMul + BiasAdd + Add + QuantizeV2
+      Dequantize + MatMul + AddV2 + QuantizeV2
+      Dequantize + MatMul + BiasAdd + AddV2 + QuantizeV2
+
+
+   .. py:method:: apply_batchmatmulv2_fusion(match_node_name)
+
+      Apply dequantize + batchmatmul/batchmatmulv2 + quantizev2 fusion.
+
+      Dequantize + BatchMatMulV2 + QuantizeV2
+
+
+   .. py:method:: apply_batchmatmulv2_mul_add_fusion(match_node_name)
+
+      Apply dequantize + batchmatmul/batchmatmulv2 + mul + add + quantizev2 fusion.
+
+      Dequantize + BatchMatMulV2 + Mul + QuantizeV2
+      Dequantize + BatchMatMulV2 + Add + QuantizeV2
+      Dequantize + BatchMatMulV2 + AddV2 + QuantizeV2
+      Dequantize + BatchMatMulV2 + Mul + Add + QuantizeV2
+      Dequantize + BatchMatMulV2 + Mul + AddV2 + QuantizeV2
+
+
+   .. py:method:: get_longest_fuse()
+
+      Get the longest fusion pattern.
+
+
+   .. py:method:: apply_the_transform()
+
+      Quantize MatMul/BatchMatMul/BatchMatMulV2 and apply the fusion pattern.
+
+
+

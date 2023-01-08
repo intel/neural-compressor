@@ -1,0 +1,51 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul`
+=================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul
+
+.. autoapi-nested-parse::
+
+   Quantize MatMul.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_matmul.FuseNodeStartWithMatmul
+
+
+
+
+.. py:class:: FuseNodeStartWithMatmul(**kwargs)
+
+   Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
+
+   Quantize MatMul and apply the fusion.
+
+   .. py:method:: apply_matmul_biasadd_relu_fusion(match_node_name)
+
+      Apply the MatMul BiasAdd Relu fusion.
+
+
+   .. py:method:: apply_matmul_biasadd_fusion(match_node_name)
+
+      Apply MatMul BiasAdd fusion.
+
+
+   .. py:method:: get_longest_fuse()
+
+      Get the longest fusion pattern.
+
+
+   .. py:method:: apply_the_transform()
+
+      Quantize MatMul and apply the fusion pattern.
+
+
+

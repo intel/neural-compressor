@@ -1,0 +1,569 @@
+:orphan:
+
+:py:mod:`neural_compressor.adaptor.pytorch`
+===========================================
+
+.. py:module:: neural_compressor.adaptor.pytorch
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.pytorch.TemplateAdaptor
+   neural_compressor.adaptor.pytorch.PyTorchAdaptor
+   neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor
+   neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor
+   neural_compressor.adaptor.pytorch.PyTorchQuery
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.pytorch.get_ops_recursively
+
+
+
+.. py:function:: get_ops_recursively(model, prefix, ops={})
+
+   This is a helper function for `graph_info`,
+       and it will get all ops from model.
+   :param model: input model
+   :type model: object
+   :param prefix: prefix of op name
+   :type prefix: string
+   :param ops: dict of ops from model {op name: type}.
+   :type ops: dict
+
+   :returns: None
+
+
+.. py:class:: TemplateAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`neural_compressor.adaptor.adaptor.Adaptor`
+
+   Tample adaptor of PyTorch framework.
+
+   :param framework_specific_info: dictionary of tuning configure from yaml file.
+   :type framework_specific_info: dict
+
+   .. py:method:: is_fused_module(module)
+
+      This is a helper function for `_propagate_qconfig_helper` to detecte
+         if this module is fused.
+
+      :param module: input module
+      :type module: object
+
+      :returns: is fused or not
+      :rtype: (bool)
+
+
+   .. py:method:: calculate_hessian_trace(fp32_model, dataloader, q_model, criterion, enable_act=False)
+
+      Calculate hessian trace.
+
+      :param fp32_model: The original fp32 model.
+      :param criterion: The loss function for calculate the hessian trace. # loss = criterion(output, target)
+      :param dataloader: The dataloader for calculate the gradient.
+      :param q_model: The INT8 AMAP model.
+      :param enable_act: Enabling quantization error or not.
+
+      :returns: (op_name, op_type); value: hessian trace.
+      :rtype: hessian_trace(Dict[Tuple, float]), key
+
+
+
+.. py:class:: PyTorchAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`TemplateAdaptor`
+
+   Adaptor of PyTorch framework, all PyTorch API is in this class.
+
+   :param framework_specific_info: dictionary of tuning configure from yaml file.
+   :type framework_specific_info: dict
+
+   .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
+
+      Execute the quantize process on the specified model.
+
+      :param tune_cfg: quantization config.
+      :type tune_cfg: dict
+      :param model: model need to do quantization.
+      :type model: object
+      :param dataloader: calibration dataset.
+      :type dataloader: object
+      :param q_func: training function for quantization aware training mode.
+      :type q_func: objext, optional
+
+      :returns: quantized model
+      :rtype: (object)
+
+
+   .. py:method:: evaluate(model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=False)
+
+      Execute the evaluate process on the specified model.
+
+      :param model: model to run evaluation.
+      :type model: object
+      :param dataloader: evaluation dataset.
+      :type dataloader: object
+      :param postprocess: process function after evaluation.
+      :type postprocess: object, optional
+      :param metrics: list of metric function.
+      :type metrics: list, optional
+      :param measurer: measurer function.
+      :type measurer: object, optional
+      :param iteration: number of iterations to evaluate.
+      :type iteration: int, optional
+      :param tensorboard: dump output tensor to tensorboard summary files.
+      :type tensorboard: bool, optional
+      :param fp32_baseline: only for compare_label=False pipeline
+      :type fp32_baseline: boolen, optional
+
+      :returns: accuracy
+      :rtype: (object)
+
+
+   .. py:method:: train(model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs)
+
+      Execute the train process on the specified model.
+
+      :param model: model to run evaluation.
+      :type model: object
+      :param dataloader: training dataset.
+      :type dataloader: object
+      :param optimizer: It is a tuple of (cls, parameters) for optimizer.
+      :type optimizer: tuple
+      :param criterion: It is a tuple of (cls, parameters) for criterion.
+      :type criterion: tuple
+      :param kwargs: other parameters.
+      :type kwargs: dict, optional
+
+      :returns: None
+
+
+   .. py:method:: is_fused_child(op_name)
+
+      This is a helper function for `_post_eval_hook`
+
+      :param op_name: op name
+      :type op_name: string
+
+      :returns: if this op is fused
+      :rtype: (bool)
+
+
+   .. py:method:: is_fused_op(op_name)
+
+      This is a helper function for `_post_eval_hook`
+
+      :param op_name: op name
+      :type op_name: string
+
+      :returns: if this op is fused
+      :rtype: (bool)
+
+
+   .. py:method:: is_last_fused_child(op_name)
+
+      This is a helper function for `_post_eval_hook`
+
+      :param op_name: op name
+      :type op_name: string
+
+      :returns: if this op is last fused op
+      :rtype: (bool)
+
+
+   .. py:method:: save(model, path=None)
+
+      The function is used by tune strategy class for saving model.
+
+      :param model: The model to saved.
+      :type model: object
+      :param path: The path where to save.
+      :type path: string
+
+
+   .. py:method:: inspect_tensor(model, dataloader, op_list=None, iteration_list=None, inspect_type='activation', save_to_disk=False)
+
+      The function is used by tune strategy class for dumping tensor info.
+
+      :param model: The model to inspect.
+      :type model: object
+      :param dataloader: The dataloader used to feed into.
+      :type dataloader: object
+      :param op_list: The op name in the fp32 model for dumpping.
+      :type op_list: list
+      :param iteration_list: The iteration list containing iterations to dump.
+      :type iteration_list: list
+      :param inspect_type: The valid value are 'weight', 'activation', 'all'.
+      :type inspect_type: str
+      :param save_to_disk: Save to disk or memory.
+      :type save_to_disk: bool
+
+      :returns: Numpy Array Dict
+                {
+                  'weight': {
+                    'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
+                    'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
+                    ...
+                  },
+                  'activation': [
+                    # iter 0
+                    {
+                      'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
+                      'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
+                      ...
+                    },
+                    # iter 1
+                    ...
+                  ]
+                }
+
+
+   .. py:method:: set_tensor(model, tensor_dict)
+
+      The function is used by tune strategy class for setting tensor back to model.
+
+      :param model: The model to set tensor. Usually it is quantized model.
+      :type model: object
+      :param tensor_dict: The tensor dict to set. Note the numpy array contains float
+                          value, adaptor layer has the responsibility to quantize to
+                          int8 or int32 to set into the quantized model if needed.
+                          The dict format is something like:
+                          {
+                            'weight0_name': numpy.array,
+                            'bias0_name': numpy.array,
+                            ...
+                          }
+      :type tensor_dict: dict
+
+
+   .. py:method:: query_fw_capability(model)
+
+      This is a helper function to get all quantizable ops from model.
+
+      :param model: input model which is Neural Compressor model
+      :type model: object
+
+      :returns: tuning capability for each op from model.
+      :rtype: q_capability (dictionary)
+
+
+   .. py:method:: get_non_quant_modules(model_kwargs)
+
+      This is a helper function to get all non_quant_modules from customer and default.
+
+      :param model_kwargs: keyword args from Neural Compressor model
+      :type model_kwargs: dictionary
+
+      :returns: non_quant_modules for model.
+      :rtype: custom_non_quant_dict (dictionary)
+
+
+
+.. py:class:: PyTorch_IPEXAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`TemplateAdaptor`
+
+   Adaptor of PyTorch framework with Intel PyTorch Extension,
+      all PyTorch IPEX API is in this class.
+
+   :param framework_specific_info: dictionary of tuning configure from yaml file.
+   :type framework_specific_info: dict
+
+   .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
+
+      Execute the quantize process on the specified model.
+
+      :param tune_cfg: quantization config.
+      :type tune_cfg: dict
+      :param model: model need to do quantization, it is Neural Compressor model.
+      :type model: object
+      :param dataloader: calibration dataset.
+      :type dataloader: object
+      :param q_func: training function for quantization aware training mode.
+      :type q_func: objext, optional
+
+      :returns: quantized model
+      :rtype: (dict)
+
+
+   .. py:method:: evaluate(model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=False)
+
+      Execute the evaluate process on the specified model.
+
+      :param model: Neural Compressor model to run evaluation.
+      :type model: object
+      :param dataloader: evaluation dataset.
+      :type dataloader: object
+      :param postprocess: process function after evaluation.
+      :type postprocess: object, optional
+      :param metrics: list of metric function.
+      :type metrics: list, optional
+      :param measurer: measurer function.
+      :type measurer: object, optional
+      :param iteration: number of iterations to evaluate.
+      :type iteration: int, optional
+      :param tensorboard: dump output tensor to tensorboard summary
+                          files(IPEX unspport).
+      :type tensorboard: bool, optional
+      :param fp32_baseline: only for compare_label=False pipeline
+      :type fp32_baseline: boolen, optional
+
+      :returns: quantized model
+      :rtype: (dict)
+
+
+   .. py:method:: query_fw_capability(model)
+
+      This is a helper function to get all quantizable ops from model.
+
+      :param model: input model which is Neural Compressor model
+      :type model: object
+
+      :returns: tuning capability for each op from model.
+      :rtype: q_capability (dictionary)
+
+
+   .. py:method:: save(model, path=None)
+
+      The function is used by tune strategy class for set best configure in Neural Compressor model.
+
+         Args:
+             model (object): The Neural Compressor model which is best results.
+             path (string): No used.
+
+      :returns: None
+
+
+   .. py:method:: inspect_tensor(model, dataloader, op_list=None, iteration_list=None, inspect_type='activation', save_to_disk=False)
+
+      The function is used by tune strategy class for dumping tensor info.
+
+      :param model: The model to inspect.
+      :type model: object
+      :param dataloader: The dataloader used to feed into.
+      :type dataloader: object
+      :param op_list: The op name in the fp32 model for dumpping.
+      :type op_list: list
+      :param iteration_list: The iteration list containing iterations to dump.
+      :type iteration_list: list
+      :param inspect_type: The valid value are 'weight', 'activation', 'all'.
+      :type inspect_type: str
+      :param save_to_disk: Save to disk or memory.
+      :type save_to_disk: bool
+
+      :returns: Numpy Array Dict
+                {
+                  'weight': {
+                    'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
+                    'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
+                    ...
+                  },
+                  'activation': [
+                    # iter 0
+                    {
+                      'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
+                      'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
+                      ...
+                    },
+                    # iter 1
+                    ...
+                  ]
+                }
+
+
+
+.. py:class:: PyTorch_FXAdaptor(framework_specific_info)
+
+   Bases: :py:obj:`TemplateAdaptor`
+
+   Adaptor of PyTorch framework with FX graph mode, all PyTorch API is in this class.
+
+   :param framework_specific_info: dictionary of tuning configure from yaml file.
+   :type framework_specific_info: dict
+
+   .. py:method:: quantize(tune_cfg, model, dataloader, q_func=None)
+
+      Execute the quantize process on the specified model.
+
+      :param tune_cfg: quantization config.
+      :type tune_cfg: dict
+      :param model: model need to do quantization.
+      :type model: object
+      :param dataloader: calibration dataset.
+      :type dataloader: object
+      :param q_func: training function for quantization aware training mode.
+      :type q_func: objext, optional
+
+      :returns: quantized model
+      :rtype: (object)
+
+
+   .. py:method:: evaluate(model, dataloader, postprocess=None, metrics=None, measurer=None, iteration=-1, tensorboard=False, fp32_baseline=False)
+
+      Execute the evaluate process on the specified model.
+
+      :param model: model to run evaluation.
+      :type model: object
+      :param dataloader: evaluation dataset.
+      :type dataloader: object
+      :param postprocess: process function after evaluation.
+      :type postprocess: object, optional
+      :param metric: metric function.
+      :type metric: object, optional
+      :param measurer: measurer function.
+      :type measurer: object, optional
+      :param iteration: number of iterations to evaluate.
+      :type iteration: int, optional
+      :param tensorboard: dump output tensor to tensorboard summary files.
+      :type tensorboard: bool, optional
+      :param fp32_baseline: only for compare_label=False pipeline
+      :type fp32_baseline: boolen, optional
+
+      :returns: accuracy
+      :rtype: (object)
+
+
+   .. py:method:: train(model, dataloader, optimizer_tuple, criterion_tuple, hooks, **kwargs)
+
+      Execute the train process on the specified model.
+
+      :param model: model to run evaluation.
+      :type model: object
+      :param dataloader: training dataset.
+      :type dataloader: object
+      :param optimizer: It is a tuple of (cls, parameters) for optimizer.
+      :type optimizer: tuple
+      :param criterion: It is a tuple of (cls, parameters) for criterion.
+      :type criterion: tuple
+      :param kwargs: other parameters.
+      :type kwargs: dict, optional
+
+      :returns: None
+
+
+   .. py:method:: prepare_sub_graph(sub_module_list, fx_op_cfgs, model, prefix, is_qat=False, example_inputs=None)
+      :staticmethod:
+
+      Static method to prepare sub modules recursively.
+
+      :param sub_module_list: contains the name of traceable sub modules
+      :type sub_module_list: list
+      :param fx_op_cfgs: the configuration for prepare_fx quantization.
+      :type fx_op_cfgs: dict, QConfigMapping
+      :param model: input model which is PyTorch model.
+      :type model: dir
+      :param prefix: prefix of op name
+      :type prefix: string
+      :param is_qat: whether it is a qat quantization
+      :type is_qat: bool
+
+      :returns: output model which is a prepared PyTorch model.
+      :rtype: model (dir)
+
+
+   .. py:method:: convert_sub_graph(sub_module_list, model, prefix)
+      :staticmethod:
+
+      Static method to convert sub modules recursively.
+
+      :param sub_module_list: contains the name of traceable sub modules
+      :type sub_module_list: list
+      :param model: input model which is prepared PyTorch model.
+      :type model: dir
+      :param prefix: prefix of op name
+      :type prefix: string
+
+      :returns: output model which is a converted PyTorch int8 model.
+      :rtype: model (dir)
+
+
+   .. py:method:: query_fw_capability(model)
+
+      This is a helper function to get all quantizable ops from model.
+
+      :param model: input model which is Neural Compressor model
+      :type model: object
+
+      :returns: tuning capability for each op from model.
+      :rtype: q_capability (dictionary)
+
+
+   .. py:method:: fuse_fx_model(model, is_qat)
+
+      This is a helper function to get fused fx model for PyTorch_FXAdaptor.
+
+      :param model: input model which is Neural Compressor model.
+      :type model: object
+      :param is_qat: check quantization approach is qat or not.
+      :type is_qat: bool
+
+      :returns: fused GraphModule model from torch.fx.
+      :rtype: fused_model (GraphModule)
+
+
+   .. py:method:: calculate_op_sensitivity(model, dataloader, tune_cfg, output_op_names, confidence_batches, fallback=True, requantize_cfgs=None)
+
+      This is a helper function for `query_fw_capability`,
+         and it will get all quantizable ops from model.
+
+      :param model: INC model containing fp32 model
+      :type model: object
+      :param dataloader: dataloader contains real data.
+      :type dataloader: string
+      :param tune_cfg: dictionary of tune configure for each op.
+      :type tune_cfg: dict
+      :param fallback: switch method in fallback stage and re-quantize stage
+      :type fallback: bool
+
+      :returns: sorted op list by sensitivity
+      :rtype: ops_lst (list)
+
+
+
+.. py:class:: PyTorchQuery(local_config_file=None)
+
+   Bases: :py:obj:`neural_compressor.adaptor.query.QueryBackendCapability`
+
+   Base class that defines Query Interface.
+   Each adaption layer should implement the inherited class for specific backend on their own.
+
+   .. py:method:: get_quantization_capability()
+
+      Get the supported op types' quantization capability.
+
+      :returns: A list composed of dictionary which key is precision
+                and value is a dict that describes all op types' quantization capability.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_op_types()
+
+      Get the supported op types by all precisions.
+      :returns: A list composed of dictionary which key is precision
+                and value is the op types.
+      :rtype: [dictionary list]
+
+
+   .. py:method:: get_op_types_by_precision(precision)
+
+      Get op types per precision
+      :param precision: precision name
+      :type precision: string
+
+      :returns: A list composed of op type.
+      :rtype: [string list]
+
+
+
