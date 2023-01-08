@@ -770,7 +770,22 @@ def quantize_tensor(tensor, qtconfig, scale=None, inplace=False):
         mode += "_"+qtconfig.scheme.upper()
 
     from mpemu.pytquant.cpp import fpemu_cpp
-    tensor_q = fpemu_cpp.FPEmuOp.apply(tensor, mode, inplace, scale)
+    try:
+        tensor_q = fpemu_cpp.FPEmuOp.apply(tensor, mode, inplace, scale)
+    except:
+        # for dlrm, tensor is too large
+        split_parts = 10
+        tensor_q = None
+        num = int(tensor.shape[0] / split_parts)
+        for i in range(split_parts):
+            if i ==0:
+                tensor_q = fpemu_cpp.FPEmuOp.apply(tensor[:num], mode, True, scale)
+            elif i == split_parts - 1:
+                tensor_q = torch.cat((tensor_q, fpemu_cpp.FPEmuOp.apply(tensor[i*num:], mode, True, scale)), 0)
+            else:
+                tensor_q = torch.cat((tensor_q, fpemu_cpp.FPEmuOp.apply(tensor[i*num:(i+1)*num], mode, True, scale)), 0)
+
+
 
     return tensor_q
 
