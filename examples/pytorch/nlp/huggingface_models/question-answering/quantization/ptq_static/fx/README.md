@@ -5,7 +5,7 @@ This document is used to list steps of reproducing Huggingface models tuning zoo
 
 # Prerequisite
 
-## 1. Environment
+## Environment
 Recommend python 3.6 or higher version.
 ```shell
 cd examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx
