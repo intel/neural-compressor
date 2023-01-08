@@ -8,7 +8,7 @@ Our example comes from MLPerf Inference Benchmark Suite
 
 # Prerequisite
 
-## 1. Installation
+## 1. Environment
 
 PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to use Python 3.8.
 
@@ -49,7 +49,7 @@ GCC5 or above is needed.
   wget https://zenodo.org/record/3236545/files/resnet34-ssd1200.pytorch
   ```
 
-# Run
+# Quantization
 
 ## 1. Enable ssd_resnet34 example with the auto dynamic quantization strategy of Neural Compressor.
 
