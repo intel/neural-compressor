@@ -3794,7 +3794,8 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
             hook_map = module._forward_pre_hooks
             handle_ids_to_remove = set()
             for handle_id, hook_fn in hook_map.items():
-                if hook_fn.__name__ == 'input_observer_forward_pre_hook':
+                if hasattr(hook_fn, '__name__') and \
+                  hook_fn.__name__ == 'input_observer_forward_pre_hook':
                     handle_ids_to_remove.add(handle_id)
             for handle_id in handle_ids_to_remove:
                 hook_map.pop(handle_id)
