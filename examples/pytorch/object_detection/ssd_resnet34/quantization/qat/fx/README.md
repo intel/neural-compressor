@@ -8,7 +8,7 @@ Our example comes from MLPerf Training Inference Suite
 
 # Prerequisite
 
-## 1. Installation
+## 1. Environment
 
 PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to use Python 3.10.
 
@@ -28,7 +28,7 @@ PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to
 
 Follow the instructions on https://github.com/mlcommons/training/tree/master/single_stage_detector/ssd to train the model.
 
-# Run
+# Quantization
 
 ## 1. Enable ssd_resnet34 example with quant aware training strategy of Neural Compressor.
 
