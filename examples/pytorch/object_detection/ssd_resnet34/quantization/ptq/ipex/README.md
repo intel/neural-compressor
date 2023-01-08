@@ -5,19 +5,28 @@ Step-by-Step
 
 # Prerequisite
 
-## 1. Model Specific Setup
-- Install dependencies
-
+## 1. Environment
 ```
     pip install -r requirements.txt
 ```
 
-- Download pretrained model
+## 2. Prepare Model
 
 ```
     cd <path to your clone of the model zoo>/examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/ipex
     bash download_model.sh
 ```
+
+## 3. Prepare Dataset
+Download the 2017 COCO dataset using the `download_dataset.sh` script. 
+
+```
+    cd <path to your clone of the model zoo>/examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/ipex
+
+    bash download_dataset.sh
+```
+
+## 4. Setting of Tuning Performence
 - Set Jemalloc Preload for better performance. The jemalloc should be built from the General setup section.
 
 ```
@@ -35,16 +44,7 @@ Step-by-Step
     export DNNL_MAX_CPU_ISA=AVX512_CORE_AMX
 ```
 
-## 2. Prepare Dataset
-Download the 2017 COCO dataset using the `download_dataset.sh` script. 
-
-```
-    cd <path to your clone of the model zoo>/examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/ipex
-
-    bash download_dataset.sh
-```
-
-# Run
+# Quantization
 
 
 ```
