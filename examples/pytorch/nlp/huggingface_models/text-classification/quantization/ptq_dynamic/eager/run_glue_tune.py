@@ -436,6 +436,7 @@ def main():
         quantizer = Quantization("./conf.yaml")
         quantizer.model = common.Model(model)
         quantizer.eval_func = eval_func_for_nc
+        quantizer.calib_dataloader = trainer.get_eval_dataloader()
         q_model = quantizer.fit()
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
         save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
