@@ -26,7 +26,7 @@ Download the 2017 COCO dataset using the `download_dataset.sh` script.
     bash download_dataset.sh
 ```
 
-## 4. Setting of Tuning Performence
+## 4. Setting of Tuning Performance
 - Set Jemalloc Preload for better performance. The jemalloc should be built from the General setup section.
 
 ```
