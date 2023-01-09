@@ -214,7 +214,7 @@ def input2tuple(input):
     return output
 
 
-def append_attr(fx_model, model, fx_white_list):
+def append_attr(fx_model, model, fx_white_list=[]):
     """This is a helper method to append attributes for the symbolic traced model.
 
     Args:
@@ -237,10 +237,10 @@ def append_attr(fx_model, model, fx_white_list):
         if type(model) in fx_white_list and type(model) != torch.nn.Sequential \
           and any([re.search(p, i) for p in add_special_patterns]):
             continue
-        if (i not in fx_attr or (isinstance(getattr(fx_model, i), OrderedDict) and len(getattr(fx_model, i))) < 1) \
-            and (any([re.search(p, i) for p in add_special_patterns]) or \
-                 not any([re.match(p, i) for p in ignore_match_patterns]) and \
-                 not any([re.search(p, i) for p in ignore_search_patterns])) :
+        if any([re.search(p, i) for p in add_special_patterns]) \
+          or (i not in fx_attr \
+              and not any([re.match(p, i) for p in ignore_match_patterns]) \
+              and not any([re.search(p, i) for p in ignore_search_patterns])) :
             attr_names.append(i)
     for name in attr_names:
         attr = getattr(model, name)
