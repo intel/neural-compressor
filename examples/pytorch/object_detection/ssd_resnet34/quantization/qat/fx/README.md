@@ -1,14 +1,14 @@
 Step-by-Step
 ============
 
-This document list steps of reproducing Intel Optimized PyTorch ssd_resnet34 300*300 models tuning results via Neural Compressor.
+This document lists steps of reproducing Intel Optimized PyTorch ssd_resnet34 300*300 models tuning results via Neural Compressor.
 
 Our example comes from MLPerf Training Inference Suite
 
 
 # Prerequisite
 
-### 1. Installation
+## 1. Environment
 
 PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to use Python 3.10.
 
@@ -18,18 +18,19 @@ PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to
   pip install "git+https://github.com/mlperf/logging.git"
   ```
 
-### 2. Download Dataset
+## 2. Download Dataset
 
   ```shell
   sh download_dataset.sh
   ```
 
-### 3. Train the Model
+## 3. Train the Model
+
 Follow the instructions on https://github.com/mlcommons/training/tree/master/single_stage_detector/ssd to train the model.
 
-# Run
+# Quantization
 
-### 1. Enable ssd_resnet34 example with quant aware training strategy of Neural Compressor.
+## 1. Enable ssd_resnet34 example with quant aware training strategy of Neural Compressor.
 
   The changes made are as follows:
   1. add ssd/main.py:\
@@ -39,11 +40,11 @@ Follow the instructions on https://github.com/mlcommons/training/tree/master/sin
   2. edit ssd/ssd300.py:
     we replace view() with reshape() in function bbox_view().
 
-### 2. To get the tuned model and its accuracy: 
+## 2. To get the tuned model and its accuracy:
 
     bash run_tuning.sh  --topology=resnet34 --dataset_location=coco/ --input_model=$trained model path$  --output_model=saved_results
 
-### 3. To get the benchmark of tuned model, includes Batch_size and Throughput: 
+## 3. To get the benchmark of tuned model, includes Batch_size and Throughput:
 
     bash run_benchmark.sh --topology=resnet34 --dataset_location=coco/ --input_model=$trained model path$ --mode=performance --int8=true/false
 
