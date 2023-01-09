@@ -223,6 +223,8 @@ class FuseNodeStartWithConcatV2(QuantizeNodeBase):
                                 if self._get_node_from_name(q_input).op == 'QuantizeV2':
                                     pre_input = self._get_first_input_from_name(q_input)
                                     new_inputs.append(pre_input)
+                                elif self._get_node_from_name(q_input).op == 'Requantize':
+                                    new_inputs.append(each_input)
                             else:
                                 new_inputs.append(each_input)
                         new_inputs.append(normal_inputs[-1])
