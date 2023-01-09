@@ -42,6 +42,7 @@ args = arg_parser.parse_args()
 
 def evaluate(model):
     """Custom evaluate function to estimate the accuracy of the model.
+
     Args:
         model (tf.Graph_def): The input model graph
         
@@ -62,7 +63,7 @@ def evaluate(model):
             iteration = 100
         for idx, (inputs, labels) in enumerate(dataloader):
             inputs = np.array(inputs)
-            input_tensor = tf.constant(inputs)
+            input_tensor = tf.constant(inputs, dtype=tf.float32)
             start = time.time()
             predictions = infer(input_tensor)[output_name]
             end = time.time()
@@ -81,8 +82,8 @@ def evaluate(model):
         'batch_size': args.batch_size,
         'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
         'transform': {'PaddedCenterCrop': {'size': 224, 'crop_padding': 32},
-                        'Resize': {'size': 224, 'interpolation': 'bicubic'},
-                        'Normalize': {'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375]}
+                      'Resize': {'size': 224, 'interpolation': 'bicubic'},
+                      'Normalize': {'mean': [123.675, 116.28, 103.53], 'std': [58.395, 57.12, 57.375]}
         },
         'filter': None
     }

@@ -57,6 +57,6 @@ ILSVRC2012_img_val  val.txt
 
 ### 2. Benchmark
   ```shell
-  bash run_benchmark.sh --input_model=./SavedModel --mode=accuracy --dataset_location=/path/to/ImageNet/
-  bash run_benchmark.sh --input_model=./SavedModel --mode=performance --dataset_location=/path/to/ImageNet/
+  bash run_benchmark.sh --input_model=./SavedModel --mode=accuracy --dataset_location=/path/to/ImageNet/ --batch_size=32
+  bash run_benchmark.sh --input_model=./SavedModel --mode=performance --dataset_location=/path/to/ImageNet/ --batch_size=1
   ```

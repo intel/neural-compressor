@@ -367,22 +367,18 @@
       "new_benchmark": true
     },
     "mobilenetv1_saved": {
-      "model_src_dir": "image_recognition/SavedModel/quantization/ptq",
+      "model_src_dir": "image_recognition/SavedModel/mobilenet_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/tensorflow/saved_model/mobilenet_v1",
-      "yaml": "mobilenet_v1.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "mobilenetv2_saved": {
-      "model_src_dir": "image_recognition/SavedModel/quantization/ptq",
+      "model_src_dir": "image_recognition/SavedModel/mobilenet_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/tensorflow/saved_model/mobilenet_v2",
-      "yaml": "mobilenet_v2.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "nasnet_mobile": {
       "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
@@ -403,13 +399,11 @@
       "new_benchmark": true
     },
     "efficientnet_v2_b0": {
-      "model_src_dir": "image_recognition/SavedModel/quantization/ptq",
+      "model_src_dir": "image_recognition/SavedModel/efficientnet_v2_b0/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset/tensorflow/saved_model/efficientnet_v2",
-      "yaml": "efficientnet_v2_b0.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "ssd_resnet50_v1": {
       "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",

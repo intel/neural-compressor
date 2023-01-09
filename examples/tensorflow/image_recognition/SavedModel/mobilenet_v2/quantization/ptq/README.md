@@ -52,6 +52,6 @@ We also prepared related scripts in [TF image_recognition example](../../tensorf
 
 ### 2. Benchmark
   ```shell
-  bash run_benchmark.sh --input_model=./SavedModel --mode=accuracy --dataset_location=/path/to/imagenet/
-  bash run_benchmark.sh --input_model=./SavedModel --mode=performance --dataset_location=/path/to/imagenet/
+  bash run_benchmark.sh --input_model=./SavedModel --mode=accuracy --dataset_location=/path/to/imagenet/ --batch_size=32
+  bash run_benchmark.sh --input_model=./SavedModel --mode=performance --dataset_location=/path/to/imagenet/ --batch_size=1
   ```

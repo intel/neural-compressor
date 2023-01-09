@@ -204,7 +204,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>EfficientNet V2 B0</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/SavedModel/quantization/ptq">SavedModel</a></td>
+    <td><a href="./tensorflow/image_recognition/SavedModel/efficientnet_v2_b0/quantization/ptq">SavedModel</a></td>
+  </tr>
+  <tr>
+    <td>MobileNetV1_Saved</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/SavedModel/mobilenet_v1/quantization/ptq">SavedModel</a></td>
+  </tr>
+  <tr>
+    <td>MobileNetV2_Saved</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/SavedModel/mobilenet_v2/quantization/ptq">SavedModel</a></td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
