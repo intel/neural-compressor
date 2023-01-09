@@ -1,16 +1,16 @@
-# Evaluate performance of ONNX Runtime(Huggingface Question Answering) 
->ONNX runtime quantization is under active development. please use 1.6.0+ to get more quantization support. 
+Step-by-Step
+============
 
-This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task. 
+This example load a language translation model and confirm its accuracy and speed based on [SQuAD]((https://rajpurkar.github.io/SQuAD-explorer/)) task.
 
-### Environment
-Please use latest onnx and onnxruntime version.
+# Prerequisite
 
-### Prepare dataset
-You should download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
+## 1. Environment
+onnx: 1.12.0  
+onnxruntime: 1.13.1
+> Validated framework versions can be found in main readme.
 
-### Prepare model
-
+## 2. Prepare Model
 Supported model identifier from [huggingface.co](https://huggingface.co/):
 
 |                 Model Identifier                |
@@ -23,20 +23,25 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 python export.py --model_name_or_path=mrm8488/spanbert-finetuned-squadv1 \ # or other supported model identifier
 ```
 
-### Quantization
+## 3. Prepare Dataset
+Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
 
-Dynamic quantize:
+# Run
+
+## 1. Quantization
+
+Quantize model with dynamic quantization:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune 
 ```
 
-### Benchmark
+
+## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=/path/to/model \ # model path as *.onnx
                       --batch_size=batch_size \
                       --mode=performance # or accuracy
 ```
-
