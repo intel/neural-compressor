@@ -23,6 +23,10 @@ model:                                               # mandatory. used to specif
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
   approach: post_training_static_quant
+  precision: fp8_e3m4
+  calibration:
+    batchnorm_sampling_size: 3000
+    sampling_size: 300
 
 tuning:
   accuracy_criterion:
