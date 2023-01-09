@@ -72,7 +72,6 @@ class ONNXRTBertDataset:
         return len(self.dataset)
 
     def __getitem__(self, index):
-        # return self.dataset[index]
         batch = tuple(t.detach().cpu().numpy() if not isinstance(t, np.ndarray) else t for t in self.dataset[index])
         return batch[:len(self.inputs)], batch[-1]
 

@@ -266,7 +266,6 @@ class SquadDataset(Dataset):
             self.attention_mask.append(np.array(inputs['attention_mask'], dtype=np.int64))
     
     def __getitem__(self, index):
-        # return (self.input_ids[index:index + self.bs][0][0], self.token_type_ids[index:index + self.bs][0][0], self.attention_mask[index:index + self.bs][0][0]), 0
         return (self.input_ids[index:index + self.bs][0][0], self.attention_mask[index:index + self.bs][0][0], self.token_type_ids[index:index + self.bs][0][0]), 0
 
     def __len__(self):
