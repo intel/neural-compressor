@@ -89,14 +89,13 @@ function run_tuning {
     sed -i "/approach:/s|approach:.*|approach: $approach|g" conf.yaml
 
     python -u ./run_glue_tune.py \
-        --tuned_checkpoint ${tuned_checkpoint} \
         --model_name_or_path ${model_name_or_path} \
         --task_name ${TASK_NAME} \
         --do_eval \
         --max_seq_length ${MAX_SEQ_LENGTH} \
         --per_gpu_eval_batch_size ${batch_size} \
         --no_cuda \
-        --output_dir ${input_model} \
+        --output_dir ${tuned_checkpoint} \
         --tune \
         ${extra_cmd}
 }

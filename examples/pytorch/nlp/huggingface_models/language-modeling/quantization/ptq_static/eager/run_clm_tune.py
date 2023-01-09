@@ -44,7 +44,6 @@ from transformers import (
     set_seed,
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
-from transformers.data.data_collator import default_data_collator_nc
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +93,18 @@ class ModelArguments:
             "help": "Will use the token generated when running `transformers-cli login` (necessary to use this script "
             "with private models)."
         },
+    )
+    tune: bool = field(
+        default=False, metadata={"help": "tune quantized model with Neural Compressor"}
+    )
+    int8: bool = field(
+        default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
+    )
+    benchmark: bool = field(
+        default=False, metadata={"help": "get benchmark instead of accuracy"}
+    )
+    accuracy_only: bool = field(
+        default=False, metadata={"help": "get accuracy"}
     )
 
 
@@ -365,7 +376,7 @@ def main():
     )
     train_dataset = lm_datasets["train"]
     eval_dataset = lm_datasets["validation"]
-    if training_args.tune:
+    if model_args.tune:
         def eval_func_for_nc(model_tuned):
             trainer.model = model_tuned
             eval_output = trainer.evaluate(eval_dataset=eval_dataset)
@@ -387,14 +398,14 @@ def main():
         quantizer.calib_dataloader = trainer.get_eval_dataloader()
         quantizer.eval_func = eval_func_for_nc
         q_model = quantizer.fit()
-        q_model.save(training_args.tuned_checkpoint)
+        q_model.save(training_args.output_dir)
         exit(0)
 
-    if training_args.accuracy_only:
-        if training_args.int8:
+    if model_args.accuracy_only:
+        if model_args.int8:
             from neural_compressor.utils.pytorch import load
             new_model = load(
-                    os.path.abspath(os.path.expanduser(training_args.tuned_checkpoint)), model)
+                    os.path.abspath(os.path.expanduser(training_args.output_dir)), model)
         else:
             new_model = model
         trainer.model = new_model
@@ -413,11 +424,11 @@ def main():
         print('Batch size = %d' % training_args.per_device_eval_batch_size)
         exit(0)
 
-    if training_args.benchmark:
-        if training_args.int8:
+    if model_args.benchmark:
+        if model_args.int8:
             from neural_compressor.utils.pytorch import load
             new_model = load(
-                    os.path.abspath(os.path.expanduser(training_args.tuned_checkpoint)), model)
+                    os.path.abspath(os.path.expanduser(training_args.output_dir)), model)
         else:
             new_model = model
         trainer.model = new_model

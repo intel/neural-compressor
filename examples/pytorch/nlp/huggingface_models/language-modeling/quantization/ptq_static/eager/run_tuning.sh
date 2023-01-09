@@ -63,7 +63,6 @@ function run_tuning {
     sed -i "/approach:/s|approach:.*|approach: $approach|g" conf.yaml
 
     python -u run_clm_tune.py \
-        --tuned_checkpoint ${tuned_checkpoint} \
         --model_name_or_path ${model_name_or_path} \
         --dataset_name ${TASK_NAME} \
         --do_eval \

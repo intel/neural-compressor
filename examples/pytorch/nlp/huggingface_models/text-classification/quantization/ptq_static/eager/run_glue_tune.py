@@ -147,6 +147,18 @@ class ModelArguments:
             "with private models)."
         },
     )
+    tune: bool = field(
+        default=False, metadata={"help": "tune quantized model with Neural Compressor"}
+    )
+    int8: bool = field(
+        default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
+    )
+    benchmark: bool = field(
+        default=False, metadata={"help": "get benchmark instead of accuracy"}
+    )
+    accuracy_only: bool = field(
+        default=False, metadata={"help": "get accuracy"}
+    )
 
 
 def main():
@@ -277,13 +289,22 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
-        cache_dir=model_args.cache_dir,
-        use_fast=model_args.use_fast_tokenizer,
-        revision=model_args.model_revision,
-        use_auth_token=True if model_args.use_auth_token else None,
-    )
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+            cache_dir=model_args.cache_dir,
+            use_fast=model_args.use_fast_tokenizer,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
+    except:
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+            cache_dir=model_args.cache_dir,
+            use_fast=False,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
     model = AutoModelForSequenceClassification.from_pretrained(
         model_args.model_name_or_path,
         from_tf=bool(".ckpt" in model_args.model_name_or_path),
@@ -403,7 +424,7 @@ def main():
         data_collator=data_collator,
     )
 
-    if training_args.tune:
+    if model_args.tune:
         def eval_func_for_nc(model_tuned):
             trainer.model = model_tuned
             result = trainer.evaluate(eval_dataset=eval_dataset)
@@ -420,14 +441,14 @@ def main():
         quantizer.calib_dataloader = trainer.get_eval_dataloader()
         quantizer.eval_func = eval_func_for_nc
         q_model = quantizer()
-        q_model.save(training_args.tuned_checkpoint)
+        q_model.save(training_args.output_dir)
         exit(0)
 
-    if training_args.accuracy_only:
-        if training_args.int8:
+    if model_args.accuracy_only:
+        if model_args.int8:
             from neural_compressor.utils.pytorch import load
             new_model = load(
-                    os.path.abspath(os.path.expanduser(training_args.tuned_checkpoint)), model)
+                    os.path.abspath(os.path.expanduser(training_args.output_dir)), model)
         else:
             new_model = model
         trainer.model = new_model
@@ -443,8 +464,8 @@ def main():
         print('Batch size = %d' % training_args.per_gpu_eval_batch_size)
         exit(0)
 
-    if training_args.benchmark:
-        if training_args.int8:
+    if model_args.benchmark:
+        if model_args.int8:
             from neural_compressor.utils.pytorch import load
             new_model = load(
                     os.path.abspath(os.path.expanduser(training_args.tuned_checkpoint)), model)
