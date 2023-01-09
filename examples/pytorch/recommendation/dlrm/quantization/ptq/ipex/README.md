@@ -80,12 +80,9 @@ class DLRM_DataLoader(object):
 				trace=args.int8
 			)
 
-	assert args.inference_only, "Please set inference_only in arguments"
 	eval_dataloader = DLRM_DataLoader(train_ld)
 	from neural_compressor import PostTrainingQuantConfig, quantization
-	conf = PostTrainingQuantConfig(approach="static",
-								   backend="ipex"
-								   )
+	conf = PostTrainingQuantConfig(backend="ipex")
 	q_model = quantization.fit(
 						dlrm,
 						conf=conf,

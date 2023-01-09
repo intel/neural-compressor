@@ -81,16 +81,13 @@ class DLRM_DataLoader(object):
         scores = np.concatenate(scores, axis=0)
         targets = np.concatenate(targets, axis=0)
         roc_auc = sklearn.metrics.roc_auc_score(targets, scores)
-        print('Batch size = %d' % args.test_mini_batch_size)
-        print('Latency: %.3f ms' % (batch_time.avg / args.test_mini_batch_size * 1000))
-        print('Throughput: %.3f images/sec' % (args.test_mini_batch_size / batch_time.avg))
-        print('Accuracy: {roc_auc:.5f}'.format(roc_auc=roc_auc))
+
         return roc_auc
 
     eval_dataloader = DLRM_DataLoader(test_ld)
 	dlrm.eval()
 	from neural_compressor import PostTrainingQuantConfig, quantization
-	conf = PostTrainingQuantConfig(approach="static")
+	conf = PostTrainingQuantConfig()
 	q_model = quantization.fit(
 						dlrm,
 						conf=conf,
