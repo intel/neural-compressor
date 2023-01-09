@@ -1,4 +1,5 @@
-# Step-by-Step
+Step-by-Step
+============
 
 This is an example to show the usage of distillation.
 

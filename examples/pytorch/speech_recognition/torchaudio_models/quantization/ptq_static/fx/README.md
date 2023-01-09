@@ -5,7 +5,7 @@ This document describes the step-by-step instructions for reproducing torchaudio
 
 ## Prerequisite
 
-### 1. Installation
+### 1. Environment
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
