@@ -43,7 +43,7 @@ Intel® Neural Compressor aims to help users quickly deploy
 the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several strategies, including `O0`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `SigOpt`, `TPE`, etc are supported. By default, the `Basic` strategy is used for tuning.
 
 ## Strategy Design
-Before tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse logic and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
+Before tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse process and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
 below:
 
 ![Tuning Strategy](./_static/imgs/strategy.png "Strategy Framework")
@@ -84,14 +84,14 @@ accuracy_criterion = AccuracyCriterion(
 ```
 
 ### Tuning Process 
-Once the `tuning space` was constructed, user can specify the traverse logic by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig`, or the `strategy` field with the strategy name in the `TuningCriterion`. If user specifies the `quant_level` with 0, it will execute the conservative tuning, the detail can be found [here](./tuning_strategies.md#conservative-tuning). When user selects `quant_level` with `1`, it will execute the tuning process according to the strategy name. By default, the value of `quant_level` is `1`. Please note that the priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the traverse logic by strategy name. The design and usage of each traverse logic are introduced in the following session.
+Once the `tuning space` was constructed, user can specify the tuning process by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig`, or the `strategy` field with the strategy name in the `TuningCriterion`. If user specifies the `quant_level` with 0, it will execute the conservative tuning, the detail can be found [here](./tuning_strategies.md#conservative-tuning). When user selects `quant_level` with `1`, it will execute the tuning process according to the strategy name. By default, the value of `quant_level` is `1`. Please note that the priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the tuning process by strategy name. The design and usage of each tuning process are introduced in the following session.
 
 ## Tuning Algorithms
 
 ### Conservative Tuning
 
 #### Design
-The conservative tuning (`quant_level` = `0`) is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model, and then quantize the OPs to lower precision OP type wisely and OP wisely.
+The conservative tuning (`quant_level` = `0`) is designed for user who wants to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model, and then quantize the OPs to lower precision OP type wisely and OP name wisely.
 #### Usage
 
 To use conservative tuning, the `quant_level` field should be set to `0` in `PostTrainingQuantConfig`.
@@ -406,6 +406,6 @@ class AbcTuneStrategy(TuneStrategy):
 
 The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.
 
-The `traverse` function can be overridden optionally if the traverse logic required by the new strategy is different from the one `TuneStrategy` base class implemented.
+The `traverse` function can be overridden optionally if the traverse process required by the new strategy is different from the one `TuneStrategy` base class implemented.
 
 An example of customizing a new tuning strategy can be reached at [TPE Strategy](../../neural_compressor/contrib/strategy/tpe.py).
