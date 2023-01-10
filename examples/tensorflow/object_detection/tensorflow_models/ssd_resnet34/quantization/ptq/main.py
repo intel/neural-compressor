@@ -55,8 +55,7 @@ def evaluate(model):
     from neural_compressor.model import Model
     model = Model(model)
     model.input_tensor_names = ["image"]
-    model.output_tensor_names = ["num_detections:0", "detection_boxes:0", \
-                                    "detection_scores:0", "detection_classes:0"]
+    model.output_tensor_names = ["detection_bboxes:0", "detection_scores:0", "detection_classes:0"]
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
@@ -84,7 +83,7 @@ def evaluate(model):
         return latency
 
     eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
-        transform=ComposeTransform(transform_list=[RescaleTFTransform({}), NormalizeTFTransform( \
+        transform=ComposeTransform(transform_list=[RescaleTFTransform(), NormalizeTFTransform( \
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), ResizeTFTransform(size=1200)]))
     eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
 
@@ -98,7 +97,7 @@ def evaluate(model):
 
 def main(_):
     calib_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
-        transform=ComposeTransform(transform_list=[RescaleTFTransform({}), NormalizeTFTransform( \
+        transform=ComposeTransform(transform_list=[RescaleTFTransform(), NormalizeTFTransform( \
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), ResizeTFTransform(size=1200)]))
     calib_dataloader=DataLoader(framework='tensorflow', dataset=calib_dataset, batch_size=args.batch_size)
 

@@ -19,6 +19,7 @@
 
 from .transform import TRANSFORMS, BaseTransform, ComposeTransform, transform_registry, \
 ResizeTFTransform, TensorflowResizeWithRatio, RescaleTFTransform, NormalizeTFTransform
+from .coco_transform import ParseDecodeCocoTransform
 from .postprocess import Postprocess
 from .imagenet_transform import LabelShift, BilinearImagenetTransform, TensorflowResizeCropImagenetTransform
 from os.path import dirname, basename, isfile, join
@@ -33,4 +34,4 @@ for f in modules:
 
 __all__ = ["TRANSFORMS", "BaseTransform", "ComposeTransform", "transform_registry", "ResizeTFTransform", 
            "Postprocess", "LabelShift", "BilinearImagenetTransform", "TensorflowResizeCropImagenetTransform",
-           "RescaleTFTransform", "NormalizeTFTransform"]
+           "RescaleTFTransform", "NormalizeTFTransform", "ParseDecodeCocoTransform"]

@@ -25,7 +25,8 @@ from .dataloaders import DATALOADERS, DataLoader
 from .dataloaders.default_dataloader import DefaultDataLoader
 from .transforms import TRANSFORMS, BaseTransform, ComposeTransform, transform_registry, Postprocess
 from .transforms import LabelShift, BilinearImagenetTransform, TensorflowResizeCropImagenetTransform
-from .transforms import TensorflowResizeWithRatio, RescaleTFTransform, NormalizeTFTransform
+from .transforms import TensorflowResizeWithRatio, ResizeTFTransform, RescaleTFTransform, NormalizeTFTransform
+from .transforms import ParseDecodeCocoTransform
 
 from .filters import FILTERS, Filter, filter_registry, LabelBalanceCOCORecordFilter
 
@@ -45,8 +46,10 @@ __all__ = [
     "transform_registry",
     "Postprocess",
     'LabelShift',
+    "ResizeTFTransform", 
     "RescaleTFTransform",
     "NormalizeTFTransform",
+    "ParseDecodeCocoTransform",
     'BilinearImagenetTransform',
     "TensorflowResizeWithRatio",
     'TensorflowResizeCropImagenetTransform',

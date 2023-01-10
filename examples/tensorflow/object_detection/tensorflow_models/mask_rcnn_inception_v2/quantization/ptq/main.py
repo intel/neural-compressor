@@ -89,12 +89,12 @@ def evaluate(model):
         eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
             transform=ComposeTransform(transform_list=[TensorflowResizeWithRatio(
                                         min_dim=800, max_dim=1356, padding=False)]))
-        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
+        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=1)
     else:
         eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
             transform=ComposeTransform(transform_list=[TensorflowResizeWithRatio(
                                         min_dim=800, max_dim=1356, padding=True)]))
-        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=1)
+        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
 
     latency = eval_func(eval_dataloader)
     if args.benchmark and args.mode == 'performance':
@@ -106,7 +106,7 @@ def evaluate(model):
 
 def main(_):
     calib_dataset = COCORecordDataset(root=args.dataset_location, filter=LabelBalanceCOCORecordFilter(size=1))
-    calib_dataloader = DataLoader(framework='tensorflow', dataset=calib_dataset, batch_size=args.batch_size)
+    calib_dataloader = DataLoader(framework='tensorflow', dataset=calib_dataset, batch_size=1)
 
     if args.tune:
         from neural_compressor import quantization

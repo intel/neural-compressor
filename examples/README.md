@@ -246,49 +246,49 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>SSD ResNet50 V1</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">ckpt</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq">ckpt</a></td>
   </tr>
   <tr>
     <td>SSD MobileNet V1</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">ckpt</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/ssd_mobilenet_v1/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/ssd_mobilenet_v1/quantization/ptq">ckpt</a></td>
   </tr>
   <tr>
     <td>Faster R-CNN Inception ResNet V2</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">SavedModel</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/faster_rcnn_inception_resnet_v2/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/faster_rcnn_inception_resnet_v2/quantization/ptq">SavedModel</a></td>
   </tr>
   <tr>
     <td>Faster R-CNN ResNet101</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">SavedModel</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet101/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet101/quantization/ptq">SavedModel</a></td>
   </tr>
   <tr>
     <td>Faster R-CNN ResNet50</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet50/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>Mask R-CNN Inception V2</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">ckpt</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/mask_rcnn_inception_v2/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/mask_rcnn_inception_v2/quantization/ptq">ckpt</a></td>
   </tr>
   <tr>
     <td>SSD ResNet34</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/tensorflow_models/ssd_resnet34/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>YOLOv3</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/object_detection/yolo_v3/quantization/ptq">pb</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/master/examples/tensorflow/object_detection/yolo_v3/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>Wide & Deep</td>

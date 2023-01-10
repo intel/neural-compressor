@@ -3,7 +3,9 @@ import numpy as np
 import tensorflow as tf
 
 from absl import app, flags
-
+from neural_compressor.metric import COCOmAPv2
+from neural_compressor.data import TensorflowResizeWithRatio, ParseDecodeCocoTransform
+from neural_compressor.data import Postprocess, LabelBalanceCOCORecordFilter
 from tensorflow.python.client import timeline
 from coco_constants import LABEL_MAP
 from utils import read_graph, non_max_suppression
@@ -17,6 +19,8 @@ flags.DEFINE_string("input_graph", None, "input graph")
 flags.DEFINE_string("output_graph", None, "input graph")
 
 flags.DEFINE_string("config", None, "Neural Compressor config file")
+
+flags.DEFINE_string("dataset_location", None, "Location of Dataset")
 
 flags.DEFINE_float("conf_threshold", 0.5, "confidence threshold")
 
@@ -134,19 +138,85 @@ def run_benchmark():
     print("Latency: {} ms".format(1 / throughput * 1000))
     print("Throughput: {} samples/sec".format(throughput))
 
+def evaluate(model):
+    """Custom evaluate function to estimate the accuracy of the model.
+
+    Args:
+        model (tf.Graph_def): The input model graph
+        
+    Returns:
+        accuracy (float): evaluation result, the larger is better.
+    """
+    from neural_compressor.model import Model
+    model = Model(model)
+    model.input_tensor_names = ["inputs"]
+    model.output_tensor_names = ["output_boxes:0"]
+    input_tensor = model.input_tensor
+    output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
+                        model.output_tensor[0]
+    iteration = -1
+    if args.benchmark and args.mode == 'performance':
+        iteration = 100
+    kwargs = {'conf_threshold': FLAGS.conf_threshold,
+                  'iou_threshold': FLAGS.iou_threshold}
+    postprocess = Postprocess(NMS, 'NMS', **kwargs)
+    metric = COCOmAPv2(map_key='DetectionBoxes_Precision/mAP@.50IOU')
+
+    def eval_func(dataloader):
+        latency_list = []
+        for idx, (inputs, labels) in enumerate(dataloader):
+            # dataloader should keep the order and len of inputs same with input_tensor
+            inputs = np.array([inputs])
+            feed_dict = dict(zip(input_tensor, inputs))
+
+            start = time.time()
+            predictions = model.sess.run(output_tensor, feed_dict)
+            end = time.time()
+
+            predictions, labels = postprocess((predictions, labels))
+            metric.update(predictions, labels)
+            latency_list.append(end-start)
+            if idx + 1 == iteration:
+                break
+        latency = np.array(latency_list).mean() / args.batch_size
+        return latency
+
+    eval_dataset = COCORecordDataset(root=FLAGS.dataset_location, filter=LabelBalanceCOCORecordFilter(size=1), \
+        transform=ComposeTransform(transform_list=[ParseDecodeCocoTransform(), 
+            TensorflowResizeWithRatio(min_dim=416, max_dim=416, padding=True, constant_value=128)]))
+    eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
+
+    latency = eval_func(eval_dataloader)
+    if args.benchmark and args.mode == 'performance':
+        print("Batch size = {}".format(args.batch_size))
+        print("Latency: {:.3f} ms".format(latency * 1000))
+        print("Throughput: {:.3f} images/sec".format(1. / latency))
+    acc = metric.result()
+    return acc 
 
 def main(_):
+    calib_dataset = COCORecordDataset(root=FLAGS.dataset_location, filter=LabelBalanceCOCORecordFilter(size=1), \
+        transform=ComposeTransform(transform_list=[ParseDecodeCocoTransform(), 
+                            TensorflowResizeWithRatio(min_dim=416, max_dim=416, padding=True)]))
+    calib_dataloader = DataLoader(framework='tensorflow', dataset=calib_dataset, batch_size=FLAGS.batch_size)
+
     if FLAGS.benchmark:
         run_benchmark()
     else:
-        FLAGS.batch_size = 1
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization(FLAGS.config)
-        quantizer.model = common.Model(FLAGS.input_graph)
-        kwargs = {'conf_threshold': FLAGS.conf_threshold,
-                  'iou_threshold': FLAGS.iou_threshold}
-        quantizer.postprocess = common.Postprocess(NMS, 'NMS', **kwargs)
-        q_model = quantizer.fit()
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig
+        op_name_list={
+            'detector/yolo-v3/Conv_6/Conv2D': {'activation':  {'dtype': ['fp32']}},
+            'detector/yolo-v3/Conv_14/Conv2D': {'activation':  {'dtype': ['fp32']}},
+            'detector/yolo-v3/Conv_22/Conv2D': {'activation':  {'dtype': ['fp32']}}
+            }
+        config = PostTrainingQuantConfig(
+            inputs=["inputs"],
+            outputs=["output_boxes"],
+            calibration_sampling_size=[2],
+            op_name_list=op_name_list)
+        q_model = quantization.fit(model=FLAGS.input_graph, conf=config, 
+                                    calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(FLAGS.output_graph)
 
 
