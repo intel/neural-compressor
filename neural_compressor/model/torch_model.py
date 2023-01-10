@@ -162,7 +162,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         """
         # TODO: copy tensor option to new tensor is better
         device = next(self._model.parameters()).device 
-        new_tensor = torch.tensor(new_tensor).float()
+        new_tensor = torch.tensor(new_tensor).float().to(device)
         module_index = '.'.join(tensor_name.split('.')[:-1])
         module = dict(self._model.named_modules())[module_index]
         getattr(module, tensor_name.split('.')[-1]).data = new_tensor.data
