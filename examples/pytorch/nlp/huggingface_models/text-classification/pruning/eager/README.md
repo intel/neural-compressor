@@ -1,9 +1,11 @@
 ## Examples
 Several pruning examples are provided, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
 
-MPRC and SST2 sparse models can be trained by modifying "target_sparsity" and "pruning_pattern" parameters, there are pruning scripts for different models(Bert-mini, Distilbert-base-uncased, etc) and patterns("4x1", "2:4", "1xchannel", etc).[Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/).
+MPRC and SST2 sparse models can be trained by modifying "target_sparsity" and "pruning_pattern" parameters, there are pruning scripts for different models (Bert-mini, Distilbert-base-uncased, etc) and patterns ("4x1", "2:4", "1xchannel", etc) [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/).
 
-To try to train a sparse model in mixed pattern[Mixed-pattern Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/run_glue_no_trainer_mixed.py), local pruning config can be set as follows:
+Dense model can also be trained on glue datasets [Bert-mini MRPC](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/bertmini_mrpc_dense_finetune.sh) (by setting --do_prune to False)
+
+To try to train a sparse model in mixed pattern [Mixed-pattern Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/run_glue_no_trainer_mixed.py), local pruning config can be set as follows:
 ```python
 pruning_configs=[
         {
@@ -29,7 +31,7 @@ pruning_configs=[
 ```
 Please be aware that when the keywords appear in both global and local settings, the **local** settings are given priority.
 
-Dense model can also be trained on glue datasets [Bert-mini MRPC](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/bertmini_mrpc_dense_finetune.sh) (by setting --do_prune to False) 
+
 ### Results
 The snip-momentum pruning method is used by default, and the initial dense model is fine-tuned.
 #### MRPC
