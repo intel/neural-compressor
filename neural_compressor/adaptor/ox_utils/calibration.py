@@ -36,6 +36,7 @@ from importlib.util import find_spec
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed, \
     _get_qrange_for_qType, calculate_scale_zp
+import itertools
 
 logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
@@ -205,20 +206,25 @@ class ONNXRTAugment:
                             location="weights.pb",
                             convert_attribute=False)
 
-    def get_intermediate_outputs(self, calib_mode=None):
+    def get_intermediate_outputs(self, calib_mode=None, model=None, model_path=None):
         """Gather intermediate model outputs after running inference."""
         # conduct inference session and get intermediate outputs
         so = onnxruntime.SessionOptions()
         if sys.version_info < (3, 10) and find_spec('onnxruntime_extensions'):  # pragma: no cover
             from onnxruntime_extensions import get_library_path
             so.register_custom_ops_library(get_library_path())
-
-        session = onnxruntime.InferenceSession(
-            self.augmented_model.SerializeToString(),
-            so,
-            provider=self.backend) if not self.model_wrapper.large_size else \
-            onnxruntime.InferenceSession(
-                self.model_wrapper.model_path + '_augment.onnx',
+        if model == None:
+            model = self.augmented_model
+        if model_path == None:
+            model_path = self.model_wrapper.model_path + '_augment.onnx'
+        if self.model_wrapper.large_size:
+            session = onnxruntime.InferenceSession(
+                model_path,
+                so,
+                provider=self.backend)
+        else:
+            session = onnxruntime.InferenceSession(
+                model.SerializeToString(),
                 so,
                 provider=self.backend)
 
@@ -537,3 +543,298 @@ class ONNXRTAugment:
         zp_and_scale.append(np.float32(scale))
 
         return zp_and_scale
+
+    def create_initializer_tensor(self,
+                                  name: str,
+                                  tensor_array: np.ndarray,
+                                  data_type: onnx.TensorProto = onnx.TensorProto.FLOAT
+                                  ) -> onnx.TensorProto:
+
+        # (TensorProto)
+        initializer_tensor = onnx.helper.make_tensor(
+            name=name,
+            data_type=data_type,
+            dims=tensor_array.shape,
+            vals=tensor_array.flatten().tolist())
+
+        return initializer_tensor
+
+    def _check_is_group_conv(self, node, model):
+        """
+        check the node is group wised or not(depthwise conv is excluded,return false)
+        """
+        name_to_indices = {}
+        for index, i in enumerate(model.graph.initializer):
+            name_to_indices[i.name] = index
+
+        if node.op_type == "Conv":
+            group = 1
+            for attr in node.attribute:
+                if hasattr(attr, 'name'):
+                    if attr.name == "group":
+                        group = attr.i
+                        break
+            ##currently only normal conv and depthwise conv are supported
+            if group > 1:  ##group conv, need to check depthwise or not\
+                weight_name = node.input[1]
+                weight_shape = numpy_helper.to_array(
+                    model.graph.initializer[name_to_indices[weight_name]]).shape
+                input_channel = weight_shape.shape[1]
+                if input_channel != 1:  ##TODO need to double check
+                    return True
+        return False
+
+    def _get_input_tensor_of_ops(self, op_types=['MatMul', 'Linear', 'Conv']):
+        """
+        traverse the graph and get all the data tensors flowing into layers like Matmul/Linear/Conv, group conv is excluded
+        TODO the tensors could be set/filtered in configuration
+        """
+        tensors_to_dump = set()
+        ##model = copy.deepcopy(self.model)
+        model = self.model
+        initializers = {i.name: i for i in model.graph.initializer}
+
+        for node in model.graph.node:
+            if len(op_types) == 0 or node.op_type in op_types:
+                if node.op_type == "Conv" and self._check_is_group_conv(node, model):
+                    continue
+                ##also need to check whether the layer has weight
+                if len(node.input) >= 2 and node.input[1] in initializers.keys():
+                    tensors_to_dump.add(node.input[0])
+        return tensors_to_dump
+
+    def _add_tensors_to_outputs(self, tensors, model):
+        """
+        add the tensors to the model outputs to gets its values
+        """
+        ##model_inputs = [i.name for i in model.graph.input]
+        added_outputs = []
+        for tensor in tensors:
+            if tensor not in [t.name for t in model.graph.output]:
+                added_tensor = helper.ValueInfoProto()
+                added_tensor.name = tensor
+                added_outputs.append(added_tensor)
+        model.graph.output.extend(added_outputs)  # pylint: disable=no-member
+
+    def _save_large_onnx_model(self, model, model_path, weights_name):
+        onnx.save_model(model,
+                        model_path,
+                        save_as_external_data=True,
+                        all_tensors_to_one_file=True,
+                        location=weights_name,
+                        convert_attribute=False)
+
+    def _is_large_model(self):
+        return self.model_wrapper.large_size
+
+    def _get_max_per_channel(self, datas: list, percentile):
+        permute_datas = []
+        for data in datas:
+            if len(data.shape) == 3:  ##TODO  mammul batchsize*seq*inchannel, conv:batchsize*inchannle*f*f
+                tensor = np.abs(np.reshape(data, (-1, data.shape[-1])))
+                permute_datas.append(tensor)
+            elif len(data.shape) == 4:
+                tensor = np.swapaxes(data, 1, -1)
+                tensor = np.abs(np.reshape(tensor, (-1, tensor.shape[-1])))
+                permute_datas.append(tensor)
+            elif len(data.shape) == 2:
+                permute_datas.append(np.abs(data))
+            else:
+                assert False, "not supported"
+        permute_datas = np.stack(permute_datas, axis=0)
+        permute_datas = permute_datas.reshape(-1, permute_datas.shape[-1])
+        max_per_channels = np.percentile(permute_datas, percentile, axis=0)
+        max_per_channels = max_per_channels.astype(np.single)
+        # max_per_channels = np.amax(permute_datas, axis=0)
+        return max_per_channels
+
+
+    def _augment_smooth_calib_graph(self, op_types=['MatMul', 'Linear', 'Conv']):
+        """
+        link the tensor of ops
+        """
+        model = copy.deepcopy(self.model)
+
+        tensors_to_dump = self._get_input_tensor_of_ops(op_types)
+        self._add_tensors_to_outputs(tensors_to_dump, model)
+
+        self.smooth_calib_augmented_model = model
+        large_model_path = None
+        if self._is_large_model():  # pragma: no cover
+            large_model_path = self.model_wrapper.model_path + '_smooth_calib_augment.onnx'
+            self._save_large_onnx_model(model, large_model_path, "smooth_weights.pb")
+
+        # tensor_2_absorb_nodes = {}
+        # for key in tensors_to_dump:
+        #     tensor_2_absorb_nodes[key] = []
+        #
+        # for node in model.graph.node:  ##get children
+        #     for tensor_name in itertools.chain(node.input):
+        #         if tensor_name in tensors_to_dump:
+        #             tensor_2_absorb_nodes[tensor_name].append(node)
+        #             break
+
+        return tensors_to_dump, model, large_model_path
+
+    def _adjust_weights(self, model, nodes, scales):
+        name_to_indices = {}
+        for index, i in enumerate(model.model.graph.initializer):
+            name_to_indices[i.name] = index
+
+        for key in nodes.keys():
+            curr_nodes = nodes[key]
+            for node in curr_nodes:
+                input = node.input[1]  ##TODO
+                if input in name_to_indices.keys():
+                    weight = numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]])
+                    if len(weight.shape) == 2:
+                        scale = np.expand_dims(scales[key],
+                                               axis=-1)  ##TODO, to support conv
+                        new_weight = weight * scale
+                    elif len(weight.shape) == 4:  ##TODO need to check conv
+                        scale = np.reshape(scales[key], (1, -1, 1, 1))
+                        new_weight = weight * scale
+                    else:
+                        assert False, "not support"
+                    new_tensor = numpy_helper.from_array(new_weight, input)
+                    model.model.graph.initializer[name_to_indices[input]].CopyFrom(new_tensor)
+
+    def _calib_smooth(self, percentile, op_types):
+        tensors_to_dump, model, large_model_path = self._augment_smooth_calib_graph(op_types)
+        _, output_dicts = self.get_intermediate_outputs(None, model, large_model_path)
+        max_vals_per_channel = {}
+        shape_infos = {}
+        for key in tensors_to_dump:
+            max_val_per_channel = self._get_max_per_channel(output_dicts[key], percentile=percentile)
+            max_vals_per_channel[key] = max_val_per_channel
+            shape_infos[key] = output_dicts[key][0].shape
+        return max_vals_per_channel, shape_infos
+
+    def _input_tensor_2_weights(self, model, tensor_names, op_types):
+        tensor_to_absorbed_nodes = {}
+        for key in tensor_names:
+            tensor_to_absorbed_nodes[key] = []
+        for node in model.model.graph.node:
+            for item in node.input:
+                if item in tensor_names:
+                    tensor_to_absorbed_nodes[item].append(node)
+
+        input_tensors_2_weights = {}
+        input_tensors_2_weights_nodes = {}
+        weight_name_to_init_index = {}
+        for index, i in enumerate(model.model.graph.initializer):
+            weight_name_to_init_index[i.name] = index
+        for key in tensor_to_absorbed_nodes.keys():
+            curr_tensor_to_weight = []
+            curr_tensor_to_weight_nodes = []
+            nodes = tensor_to_absorbed_nodes[key]
+
+            for node in nodes:
+                if node.op_type not in op_types:
+                    continue
+                if len(node.input) >= 2:
+                    input = node.input[1]  ##TODO always dump the index 1 to get the weight
+                    if input in weight_name_to_init_index.keys():
+                        weight = numpy_helper.to_array(model.model.graph.initializer[weight_name_to_init_index[input]])
+                        curr_tensor_to_weight.append(weight)
+                        curr_tensor_to_weight_nodes.append(node)
+
+            input_tensors_2_weights[key] = curr_tensor_to_weight
+            input_tensors_2_weights_nodes[key] = curr_tensor_to_weight_nodes
+        return input_tensors_2_weights, input_tensors_2_weights_nodes
+
+    def _get_smooth_scales(self, max_vals_per_channel, input_tensors_2_weights, alpha):
+        scales = {}
+        for key in input_tensors_2_weights.keys():
+            weights = input_tensors_2_weights[key]
+            weights_in_channel_max = []
+            for weight in weights:  ##mamul ic*oc, conv oc*ic*k*k
+                if len(weight.shape) == 4:  ##conv
+                    if weight.shape[1] == 1:  ##depthwise conv
+                        pass
+                    else:
+                        weight = np.moveaxis(weight, 0, 1)
+
+                weight = weight.reshape(weight.shape[0], -1)
+                cur_max = np.amax(weight, axis=-1)
+                weights_in_channel_max.append(cur_max)
+
+            weigths_stack = np.stack(weights_in_channel_max, axis=-1)
+            weigths_stack = np.abs(weigths_stack.reshape(weigths_stack.shape[0], -1))
+            weights_max = np.amax(weigths_stack, axis=-1)
+            input_power = np.power(max_vals_per_channel[key], alpha)
+            weight_power = np.power(weights_max, 1 - alpha)
+            scale = np.clip(input_power / weight_power, a_min=1e-5, a_max=None)
+            scales[key] = scale
+        return scales
+
+    def _insert_smooth_mul_op(self, scales, shape_infos, input_tensors_2_weights_nodes):
+        new_added_mul_nodes = []
+        new_init_tensors = []  ##scales_tensor
+        for key in scales.keys():
+            scale_factor = 1.0 / scales[key]
+            shape_info = shape_infos[key]
+            if len(shape_info) == 3 or len(shape_info) == 2:  ##the last dim is input channel
+                pass
+            elif len(shape_info) == 4:
+                scale_factor = np.reshape(scale_factor, (1, -1, 1, 1))
+            else:
+                assert False, "not support"
+            name = key + "_" + "smooth_scale"
+            scale_tensor = self.create_initializer_tensor(
+                name, scale_factor
+            )
+            new_init_tensors.append(scale_tensor)
+            mul_output_name = key + "_smooth_output"
+            mul_node = onnx.helper.make_node(
+                "Mul",
+                inputs=[key, key + "_" + "smooth_scale"],
+                outputs=[mul_output_name],
+                name=key + "_smooth_mul"
+            )
+            new_added_mul_nodes.append(mul_node)
+
+            for node in input_tensors_2_weights_nodes[key]:
+                for index, input in enumerate(node.input):
+                    if input == key:
+                        node.input[index] = mul_output_name
+        return new_added_mul_nodes, new_init_tensors
+
+    def augment_smooth_graph(self, alpha=1.0, percentile=99.999, op_types=['MatMul', 'Linear', 'Conv']):
+        """
+
+        Args:
+            alpha:
+            percentile:
+            op_types:
+
+        Returns:
+
+        """
+        """
+        fake input channel quantization, for more details please refer to
+        [1] SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models
+        [2] SPIQ: Data-Free Per-Channel Static Input Quantization
+        inert Mul op before each conv/matmul with adjusted weights
+        """
+
+        max_vals_per_channel, shape_infos = self._calib_smooth(percentile, op_types)
+
+        model = copy.deepcopy(self.model_wrapper)
+        tensor_names = [key for key in max_vals_per_channel.keys()]
+        input_tensors_2_weights, input_tensors_2_weights_nodes = self._input_tensor_2_weights(model, tensor_names,
+                                                                                              op_types)
+        scales = self._get_smooth_scales(max_vals_per_channel, input_tensors_2_weights, alpha)
+        new_added_mul_nodes, new_init_tensors = self._insert_smooth_mul_op(scales, shape_infos,
+                                                                           input_tensors_2_weights_nodes)
+        self._adjust_weights(model, input_tensors_2_weights_nodes, scales)
+
+        ##TODO change the weight
+        model.model.graph.node.extend(new_added_mul_nodes)
+        model.model.graph.initializer.extend(new_init_tensors)
+        model.update()
+        model.topological_sort()
+        model.remove_unused_constant()
+        return model
+
+

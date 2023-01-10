@@ -159,9 +159,26 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             format = QuantizationMode.IntegerOps
 
         self.quantizable_ops = self._query_quantizable_ops(model.model)
+        quantize_config = self._cfg_to_quantize_config(tune_cfg)
+        smooth_quant = True
+        if smooth_quant:
+            from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
+            from neural_compressor.model.onnx_model import ONNXModel
+            if not isinstance(model, ONNXModel):
+                model = ONNXModel(model)
+            black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
+            white_nodes = [node for node in quantize_config if quantize_config[node] != 'fp32']
+
+            augment = ONNXRTAugment(model, \
+                                    data_loader, self.quantizable_op_types, \
+                                    black_nodes=black_nodes, white_nodes=white_nodes,
+                                    iterations=list(range(0, quantize_config['calib_iteration'])),
+                                    backend=self.backend, reduce_range=self.reduce_range)
+            smooth_model = augment.augment_smooth_graph(alpha=0.5,  percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'])
+            model = copy.deepcopy(smooth_model)
+
         tmp_model = copy.deepcopy(model)
 
-        quantize_config = self._cfg_to_quantize_config(tune_cfg)
         iterations = tune_cfg.get('calib_iteration', 1)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if not self.dynamic:
