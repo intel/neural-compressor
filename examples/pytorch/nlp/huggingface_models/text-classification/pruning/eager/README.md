@@ -5,7 +5,7 @@ MPRC and SST2 sparse models can be trained by modifying "target_sparsity" and "p
 
 Dense model can also be trained on glue datasets [Bert-mini MRPC](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/bertmini_mrpc_dense_finetune.sh) (by setting --do_prune to False)
 
-To try to train a sparse model in mixed pattern [Mixed-patterns Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/run_glue_no_trainer_mixed.py), local pruning config can be set as follows:
+To try to train a sparse model in mixed patterns [Mixed-patterns Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/run_glue_no_trainer_mixed.py), local pruning config can be set as follows:
 ```python
 pruning_configs=[
         {
