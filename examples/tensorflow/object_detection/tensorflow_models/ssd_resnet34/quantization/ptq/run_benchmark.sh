@@ -10,6 +10,7 @@ function main {
 
 # init params
 function init_params {
+  anno_path="./label_map.yaml"
   for var in "$@"
   do
     case $var in

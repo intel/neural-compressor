@@ -6,6 +6,7 @@ from absl import app, flags
 from neural_compressor.metric import COCOmAPv2
 from neural_compressor.data import TensorflowResizeWithRatio, ParseDecodeCocoTransform
 from neural_compressor.data import Postprocess, LabelBalanceCOCORecordFilter
+from neural_compressor.data import ComposeTransform, COCORecordDataset, DataLoader
 from tensorflow.python.client import timeline
 from coco_constants import LABEL_MAP
 from utils import read_graph, non_max_suppression
