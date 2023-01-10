@@ -2,7 +2,14 @@ Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow Object Detection models tuning results. This example can run on Intel CPUs and GPUs.
-
+Currently, we've enabled below models.
+ * ssd_resnet50_v1
+ * ssd_resnet34
+ * ssd_mobilenet_v1
+ * fastrcnn_inception_resnet_v2
+ * fastrcnn_resnet101
+ * fastrcnn_resnet50
+ * maskrcnn_inception_v2
 ## Prerequisite
 
 
@@ -22,9 +29,8 @@ pip install intel-tensorflow
 
 ### 3. Installation Dependency packages
 ```shell
-cd examples/tensorflow/object_detection/tensorflow_models/
+cd examples/tensorflow/object_detection/tensorflow_models/quantization/ptq
 pip install -r requirements.txt
-cd ssd_resnet50_v1/quantization/ptq
 ```
 
 ### 4. Install Protocol Buffer Compiler
@@ -55,13 +61,12 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 
 > **_Note: `prepare_dataset.sh` script works with TF version 1.x._**
 
-Run the `prepare_dataset.sh` script located in `examples/tensorflow/object_detection/tensorflow_models/quantization/ptq`.
+Run the `prepare_dataset.sh` script located in `examples/tensorflow/object_detection/tensorflow_models/`.
 
 Usage:
 ```shell
 cd examples/tensorflow/object_detection/tensorflow_models/
 . prepare_dataset.sh
-cd ssd_resnet50_v1/quantization/ptq
 ```
 
 This script will download the *train*, *validation* and *test* COCO datasets. Furthermore it will convert them to
@@ -73,7 +78,7 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
 ### 7. Download Model
 
 #### Automated approach
-Run the `prepare_model.py` script located in `examples/tensorflow/object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq`.
+Run the `prepare_model.py` script located in `examples/tensorflow/object_detection/tensorflow_models/`.
 
 ```
 usage: prepare_model.py [-h] [--model_name {ssd_resnet50_v1,ssd_mobilenet_v1}]
@@ -97,9 +102,50 @@ wget http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_
 tar -xvzf ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz
 ```
 
+##### ssd_mobilenet_V1
+
+```shell
+wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2018_01_28.tar.gz
+tar -xvzf ssd_mobilenet_v1_coco_2018_01_28.tar.gz
+```
+
+##### faster_rcnn_inception_resnet_v2
+
+```shell
+wget http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
+tar -xvzf faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
+```
+
+##### faster_rcnn_resnet101
+
+```shell
+wget http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz
+tar -xvzf faster_rcnn_resnet101_coco_2018_01_28.tar.gz
+```
+
+##### faster_rcnn_resnet50
+
+```shell
+wget https://storage.googleapis.com/intel-optimized-tensorflow/models/faster_rcnn_resnet50_fp32_coco_pretrained_model.tar.gz
+tar -xvf faster_rcnn_resnet50_fp32_coco_pretrained_model.tar.gz
+```
+
+##### mask_rcnn_inception_v2
+
+```shell
+wget http://download.tensorflow.org/models/object_detection/mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
+tar -xvzf mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
+```
+
+##### ssd_resnet34
+```shell
+wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/ssd_resnet34_fp32_1200x1200_pretrained_model.pb
+```
+You need to install intel-tensorflow==2.4.0 to enable ssd_resnet34 model.
+
 ## Run Command
 
-Now we support both pb and ckpt formats.
+Now we support both pb, saved_model and ckpt formats.
 
 ### For PB model
   
@@ -115,40 +161,12 @@ Now we support both pb and ckpt formats.
   bash run_tuning.sh --input_model=./ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/ --output_model=./tensorflow-ssd_resnet50_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
-Details of enabling Intel® Neural Compressor on ssd_resnet50_v1 for Tensorflow.
-=========================
+### For saved_model model
+  
+  ```shell
+  # The cmd of running faster_rcnn_resnet101
+  bash run_tuning.sh --input_model=./faster_rcnn_resnet101_coco_2018_01_28/saved_model/ --output_model=./tensorflow-faster_rcnn_resnet101-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  ```
 
-This is a tutorial of how to enable ssd_resnet50_v1 model with Intel® Neural Compressor.
-## User Code Analysis
-User specifies fp32 *model*, calibration dataset *q_dataloader* and a custom *eval_func* which encapsulates the evaluation dataset and metric by itself.
-
-For ssd_resnet50_v1, we applied the latter one because our philosophy is to enable the model with minimal changes. Hence we need to make two changes on the original code. The first one is to implement the q_dataloader and make necessary changes to *eval_func*.
-
-### Code update
-
-After prepare step is done, we just need update main.py like below.
-```python
-    if args.tune:
-        from neural_compressor import quantization
-        from neural_compressor.config import PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(
-            inputs=["image_tensor"],
-            outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
-            calibration_sampling_size=[10, 50, 100, 200])
-        q_model = quantization.fit(model=args.input_graph, conf=config, 
-                                    calib_dataloader=calib_dataloader, eval_func=evaluate)
-        q_model.save(args.output_model)
-            
-    if args.benchmark:
-        from neural_compressor.benchmark import fit
-        from neural_compressor.config import BenchmarkConfig
-        if args.mode == 'performance':
-            conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
-            fit(args.input_graph, conf, b_func=evaluate)
-        else:
-            accuracy = evaluate(args.input_graph)
-            print('Batch size = %d' % args.batch_size)
-            print("Accuracy: %.5f" % accuracy)
-```
-
-The quantization.fit() function will return a best quantized model during timeout constrain.
+> Note
+> For ssd_resnet34 model, anno_path of evaluation/accuracy/metric/COCOmAP in args should be "label_map.yaml"

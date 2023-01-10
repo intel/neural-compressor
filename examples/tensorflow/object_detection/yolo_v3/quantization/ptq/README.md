@@ -93,7 +93,7 @@ Usage
 cd examples/tensorflow/object_detection/yolo_v3/quantization/ptq
 ```
 ```python
-python infer_detections.py --input_graph /path/to/yolov3_fp32.pb --config ./yolo_v3.yaml --output_graph /path/to/save/yolov3_tuned3.pb
+python infer_detections.py --input_graph /path/to/yolov3_fp32.pb --output_graph /path/to/save/yolov3_tuned3.pb --dataset_location /path/to/dataset
 ```
 
 Finally, the program will generate the quantized Yolo-v3 model with relative 1% loss.
