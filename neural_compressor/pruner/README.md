@@ -71,7 +71,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 <div align=center>
 <a target="_blank" href="../../docs/source/imgs/pruning/Pruning_patterns.JPG">
-    <img src="../../docs/source/imgs/pruning/pruning_patterns.JPG" width=700 height=145 alt="Sparsity Pattern">
+    <img src="../../docs/source/imgs/pruning/pruning_patterns.JPG" width=695 height=145 alt="Sparsity Pattern">
 </a>
 </div>
 
@@ -122,7 +122,7 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 <div align=center>
 <a target="_blank" href="../../docs/source/imgs/pruning/Pruning_schedule.JPG">
-    <img src="./../../docs/source/imgs/pruning/Pruning_schedule.JPG" width=950 height=170 alt="Pruning schedule">
+    <img src="./../../docs/source/imgs/pruning/Pruning_schedule.JPG" width=940 height=170 alt="Pruning schedule">
 </a>
 </div>
 
@@ -147,10 +147,10 @@ Pruning type defines how the masks are generated and applied to a neural network
           <img src="../../docs/source/imgs/pruning/progressive_pruning.png" alt="Architecture" width=420 height=290>
       </a>
   </div>
-      (a) refers to the traditional structured iterative pruning; (b, c, d) demonstrates some typical implementations of mask interpolation.  <Br/>
-      (b) uses masks with smaller structured blocks during every pruning step.  <Br/>
-      (c) inserts masks with smaller structured blocks between every pruning steps.  <Br/>
-      (d) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
+  &emsp;&emsp;(a) refers to the traditional structured iterative pruning;(b, c, d) demonstrates some typical implementations of mask interpolation.  <Br/>
+  &emsp;&emsp;(b) uses masks with smaller structured blocks during every pruning step.  <Br/>
+  &emsp;&emsp;(c) inserts masks with smaller structured blocks between every pruning steps.  <Br/>
+  &emsp;&emsp;(d) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
 
   (d) is adopted in progressive pruning implementation. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. these partial-zero unstructured masks are added to the previous structured masks and  pruning continues. After training the model with these interpolating masks and masking more elements in these blocks, the mask interpolation process is returned. After several steps of mask interpolation, All weights in the blocks are finally masked and the model is trained as pure block-wise sparsity.
 
