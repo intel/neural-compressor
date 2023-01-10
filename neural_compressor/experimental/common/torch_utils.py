@@ -63,5 +63,6 @@ def get_activation(name, output_process='', student=False):
 
 
 def set_record(enabled: bool):
+    """Set the flag to record student and teacher features for distillation."""
     global ENABLED_RECORD
     ENABLED_RECORD = enabled
