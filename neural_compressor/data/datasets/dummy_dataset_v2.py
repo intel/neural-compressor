@@ -56,13 +56,13 @@ class DummyDataset(IterableDataset):    # pragma: no cover
             dtype (list or str, default='float32'): Support multi tensor dtype setting.
                 If list, length of list should be same with shape list.
                 If str, all tensors will use same dtype.
-                dtype supports 'float32', 'float16', 'uint8', 'int8','int32', 'int64'.
+                dtype supports 'float32', 'float16', 'uint8', 'int8','int32', 'int64', 'bool'.
             transform (transform object, default=None): dummy_v2 dataset does not need transform.
                 If transform is not None, it will ignore it.
             filter (Filter objects, default=None): Filter out examples according to specific conditions.
         """
         self.dtype_map = {'float32':np.float32, 'float16':np.float16, 'uint8':np.uint8, \
-                     'int8':np.int8, 'int32':np.int32, 'int64':np.int64}
+                     'int8':np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':np.bool_}
 
         np.random.seed(9527)
         self.transform = transform
@@ -179,7 +179,7 @@ class SparseDummyDataset(IterableDataset):    # pragma: no cover
             filter (Filter objects, default=None): Filter out examples according to specific conditions.
         """
         self.dtype_map = {'float32':np.float32, 'float16':np.float16, 'uint8':np.uint8, \
-                     'int8':np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':np.bool}
+                     'int8':np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':np.bool_}
 
         np.random.seed(9527)
         self.transform = transform
