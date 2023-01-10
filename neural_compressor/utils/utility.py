@@ -553,3 +553,9 @@ def set_tensorboard(tensorboard: bool):
     """Set the tensorboard in config."""
     from neural_compressor.config import options
     options.tensorboard = tensorboard
+
+
+def set_distillation_record(enabled_record: bool):
+    """Set the flag to record student and teacher features for distillation."""
+    from neural_compressor.experimental.common.torch_utils import set_record
+    set_record(enabled_record)
