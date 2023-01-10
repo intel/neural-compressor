@@ -3814,6 +3814,8 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                     if i == 1 and hasattr(self, 'scale1'):
                         scale = self.scale1
                     tensor = input[i]
+                    if scale and torch.isinf(scale):
+                        scale = torch.tensor(3.4E38)
                     tensor_q = quantize_tensor(tensor, self.qconfig.iact_qconfig, scale=scale)
                     input_q.append(tensor_q)
 

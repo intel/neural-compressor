@@ -784,9 +784,6 @@ def quantize_tensor(tensor, qtconfig, scale=None, inplace=False):
                 tensor_q = torch.cat((tensor_q, fpemu_cpp.FPEmuOp.apply(tensor[i*num:], mode, True, scale)), 0)
             else:
                 tensor_q = torch.cat((tensor_q, fpemu_cpp.FPEmuOp.apply(tensor[i*num:(i+1)*num], mode, True, scale)), 0)
-
-
-
     return tensor_q
 
 def get_first_and_last(model):
