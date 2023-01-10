@@ -173,10 +173,10 @@
 <p>2.1. <a class="reference external" href="#tuning-space">Tuning Space</a></p>
 <p>2.2. <a class="reference external" href="#exit-policy">Exit Policy</a></p>
 <p>2.3. <a class="reference external" href="#accuracy-criteria">Accuracy Criteria</a></p>
-<p>2.4. <a class="reference external" href="#traverse">Traverse</a></p>
+<p>2.4. <a class="reference external" href="#tuning-process">Tuning Process</a></p>
 </li>
-<li><p><a class="reference external" href="#traverse-logic">Traverse Logic</a></p>
-<p>3.1. <a class="reference external" href="#o0">O0</a></p>
+<li><p><a class="reference external" href="#tuning-algorithms">Tuning Algorithms</a></p>
+<p>3.1. <a class="reference external" href="#conservative-tuning">Conservative Tuning</a></p>
 <p>3.2. <a class="reference external" href="#basic">Basic</a></p>
 <p>3.3. <a class="reference external" href="#mse">MSE</a></p>
 <p>3.4. <a class="reference external" href="#mse_v2">MSE_V2</a></p>
@@ -196,7 +196,7 @@ the low-precision inference solution on popular Deep Learning frameworks such as
 </section>
 <section id="strategy-design">
 <h2>Strategy Design<a class="headerlink" href="#strategy-design" title="Permalink to this heading">¶</a></h2>
-<p>Before tuning, the <code class="docutils literal notranslate"><span class="pre">tuning</span> <span class="pre">space</span></code> was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse logic and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
+<p>Before tuning, the <code class="docutils literal notranslate"><span class="pre">tuning</span> <span class="pre">space</span></code> was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse process and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
 below:</p>
 <p><img alt="Tuning Strategy" src="../../_images/strategy.png" /></p>
 <section id="tuning-space">
@@ -224,37 +224,37 @@ below:</p>
 <p>User can set the accuracy criteria by specifying the <code class="docutils literal notranslate"><span class="pre">higher_is_better</span></code>, <code class="docutils literal notranslate"><span class="pre">criterion</span></code>, and <code class="docutils literal notranslate"><span class="pre">tolerable_loss</span></code> fields in the <code class="docutils literal notranslate"><span class="pre">AccuracyCriterion</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">AccuracyCriterion</span>
 
-<span class="n">accuracy_criterion</span><span class="o">=</span><span class="n">AccuracyCriterion</span><span class="p">(</span>
-    <span class="n">higher_is_better</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># optional. </span>
-    <span class="n">criterion</span><span class="o">=</span><span class="s1">&#39;relative&#39;</span><span class="p">,</span> <span class="c1"># optional. Available values are &#39;relative&#39; and &#39;absolute&#39;.</span>
-    <span class="n">tolerable_loss</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="c1"># optional.</span>
+<span class="n">accuracy_criterion</span> <span class="o">=</span> <span class="n">AccuracyCriterion</span><span class="p">(</span>
+    <span class="n">higher_is_better</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># optional. </span>
+    <span class="n">criterion</span><span class="o">=</span><span class="s1">&#39;relative&#39;</span><span class="p">,</span>  <span class="c1"># optional. Available values are &#39;relative&#39; and &#39;absolute&#39;.</span>
+    <span class="n">tolerable_loss</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># optional.</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="traverse">
-<h3>Traverse<a class="headerlink" href="#traverse" title="Permalink to this heading">¶</a></h3>
-<p>Once the <code class="docutils literal notranslate"><span class="pre">tuning</span> <span class="pre">space</span></code> was constructed, user can specify the traverse logic by setting the <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> field with <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">1</span></code> in the <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code> (<code class="docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig</span></code>), or the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field with strategy name in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>. The priority of <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> is higher than <code class="docutils literal notranslate"><span class="pre">strategy</span></code>, which means the <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> should be set to <code class="docutils literal notranslate"><span class="pre">1</span></code> if user wants to specify the traverse logic by strategy name. The design and usage of each traverse logic is introduced in the following session.</p>
+<section id="tuning-process">
+<h3>Tuning Process<a class="headerlink" href="#tuning-process" title="Permalink to this heading">¶</a></h3>
+<p>Once the <code class="docutils literal notranslate"><span class="pre">tuning</span> <span class="pre">space</span></code> was constructed, user can specify the tuning process by setting the <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> field with <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">1</span></code> in the <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code>, or the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field with the strategy name in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>. If user specifies the <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> with 0, it will execute the conservative tuning, the detail can be found <a class="reference external" href="./tuning_strategies.md#conservative-tuning">here</a>. When user selects <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> with <code class="docutils literal notranslate"><span class="pre">1</span></code>, it will execute the tuning process according to the strategy name. By default, the value of <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> is <code class="docutils literal notranslate"><span class="pre">1</span></code>. Please note that the priority of <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> is higher than <code class="docutils literal notranslate"><span class="pre">strategy</span></code>, which means the <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> should be set to <code class="docutils literal notranslate"><span class="pre">1</span></code> if user wants to specify the tuning process by strategy name. The design and usage of each tuning process are introduced in the following session.</p>
 </section>
 </section>
-<section id="traverse-logic">
-<h2>Traverse Logic<a class="headerlink" href="#traverse-logic" title="Permalink to this heading">¶</a></h2>
-<section id="o0">
-<h3>O0<a class="headerlink" href="#o0" title="Permalink to this heading">¶</a></h3>
+<section id="tuning-algorithms">
+<h2>Tuning Algorithms<a class="headerlink" href="#tuning-algorithms" title="Permalink to this heading">¶</a></h2>
+<section id="conservative-tuning">
+<h3>Conservative Tuning<a class="headerlink" href="#conservative-tuning" title="Permalink to this heading">¶</a></h3>
 <section id="design">
 <h4>Design<a class="headerlink" href="#design" title="Permalink to this heading">¶</a></h4>
-<p>The quantization level <code class="docutils literal notranslate"><span class="pre">O0</span></code> is designed for user who want to keep the accuracy of the model after quantization. It starts with the original(<code class="docutils literal notranslate"><span class="pre">fp32</span></code>) model, and then quantize the OPs to lower precision OP type wisely and OP wisely.</p>
+<p>The conservative tuning (<code class="docutils literal notranslate"><span class="pre">quant_level</span></code> = <code class="docutils literal notranslate"><span class="pre">0</span></code>) is designed for user who wants to keep the accuracy of the model after quantization. It starts with the original(<code class="docutils literal notranslate"><span class="pre">fp32</span></code>) model, and then quantize the OPs to lower precision OP type wisely and OP name wisely.</p>
 </section>
 <section id="usage">
 <h4>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h4>
-<p>To use <code class="docutils literal notranslate"><span class="pre">O0</span></code>, the <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> field should be set to <code class="docutils literal notranslate"><span class="pre">0</span></code> in <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code> (or <code class="docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig</span></code>).</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<p>To use conservative tuning, the <code class="docutils literal notranslate"><span class="pre">quant_level</span></code> field should be set to <code class="docutils literal notranslate"><span class="pre">0</span></code> in <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">quant_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="c1"># the quantization level.</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
-        <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="c1"># optional. tuning timeout (seconds). When set to 0, early stopping is enabled.</span>
-        <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="c1"># optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">quant_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># the quantization level.</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># optional. tuning timeout (seconds). When set to 0, early stopping is enabled.</span>
+        <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.</span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -285,11 +285,11 @@ below:</p>
 <section id="id2">
 <h3>Usage<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">Basic</span></code> is the default strategy. It can be used by default with nothing changed in the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field of <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>. Classical settings are shown below:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
-        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;basic&quot;</span><span class="p">,</span> <span class="c1"># optional. name of tuning strategy. </span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
+        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;basic&quot;</span>  <span class="c1"># optional. name of tuning strategy. </span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -309,11 +309,11 @@ the op-wise fallback in this order.</p>
 <section id="id4">
 <h4>Usage<a class="headerlink" href="#id4" title="Permalink to this heading">¶</a></h4>
 <p>The usage of <code class="docutils literal notranslate"><span class="pre">MSE</span></code> is similar to <code class="docutils literal notranslate"><span class="pre">Basic</span></code>. To use <code class="docutils literal notranslate"><span class="pre">MSE</span></code> strategy, the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field of the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code> should be specified with <code class="docutils literal notranslate"><span class="pre">mse</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
-        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;mse&quot;</span><span class="p">,</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
+        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;mse&quot;</span> 
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -329,12 +329,12 @@ the op-wise fallback in this order.</p>
 <section id="id6">
 <h4>Usage<a class="headerlink" href="#id6" title="Permalink to this heading">¶</a></h4>
 <p>To use the <code class="docutils literal notranslate"><span class="pre">MSE_V2</span></code> tuning strategy, the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code> should be specified with <code class="docutils literal notranslate"><span class="pre">mse_v2</span></code>. Also, the <code class="docutils literal notranslate"><span class="pre">confidence_batches</span></code> can be specified optionally inside the <code class="docutils literal notranslate"><span class="pre">strategy_kwargs</span></code> for the number of batches to score the op impact. Increasing <code class="docutils literal notranslate"><span class="pre">confidence_batches</span></code> will generally improve the accuracy of the scoring with more time spent in tuning process.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
         <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;mse_v2&quot;</span><span class="p">,</span>
-        <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;confidence_batches&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">},</span>
+        <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;confidence_batches&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>  <span class="c1"># optional. the number of batches to score the op impact.</span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -350,15 +350,17 @@ the op-wise fallback in this order.</p>
 <section id="id8">
 <h4>Usage<a class="headerlink" href="#id8" title="Permalink to this heading">¶</a></h4>
 <p>To use the <code class="docutils literal notranslate"><span class="pre">HAWQ_V2</span></code> tuning strategy, the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code> should be specified with <code class="docutils literal notranslate"><span class="pre">hawq_v2</span></code>, and the loss function for calculating the hessian trace of model should be provided. The loss function should be set in the field of <code class="docutils literal notranslate"><span class="pre">hawq_v2_loss</span></code> in the <code class="docutils literal notranslate"><span class="pre">strategy_kwargs</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
+
 
 <span class="k">def</span> <span class="nf">model_loss</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">criterion</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
         <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;hawq_v2&quot;</span><span class="p">,</span>
-        <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;hawq_v2_loss&quot;</span><span class="p">:</span> <span class="n">model_loss</span><span class="p">},</span>
+        <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;hawq_v2_loss&quot;</span><span class="p">:</span> <span class="n">model_loss</span><span class="p">}</span>  <span class="c1"># required. the loss function for calculating the hessian trace.</span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -385,13 +387,13 @@ parameter into <code class="docutils literal notranslate"><span class="pre">Baye
 <h4>Usage<a class="headerlink" href="#id10" title="Permalink to this heading">¶</a></h4>
 <p>For the <code class="docutils literal notranslate"><span class="pre">Bayesian</span></code> strategy, it is recommended to set <code class="docutils literal notranslate"><span class="pre">timeout</span></code> or <code class="docutils literal notranslate"><span class="pre">max_trials</span></code> to a non-zero
 value as shown in below example, because the param space for <code class="docutils literal notranslate"><span class="pre">bayesian</span></code> can be very small and the accuracy goal might not be reached, which can make the tuning end never. Additionally, if the log level is set to <code class="docutils literal notranslate"><span class="pre">debug</span></code> by <code class="docutils literal notranslate"><span class="pre">LOGLEVEL=DEBUG</span></code> in the environment variable, the message <code class="docutils literal notranslate"><span class="pre">[DEBUG]</span> <span class="pre">Tuning</span> <span class="pre">config</span> <span class="pre">was</span> <span class="pre">evaluated,</span> <span class="pre">skip!</span></code> will print endlessly. If the <code class="docutils literal notranslate"><span class="pre">timeout</span></code> is changed from 0 to an integer, <code class="docutils literal notranslate"><span class="pre">Bayesian</span></code> ends after the timeout is reached.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
-        <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="c1"># optional. tuning timeout (seconds). When set to 0, early stopping is enabled.</span>
-        <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="c1"># optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.</span>
-        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;bayesian&quot;</span><span class="p">,</span> <span class="c1"># optional. name of the tuning strategy. </span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># optional. tuning timeout (seconds). When set to 0, early stopping is enabled.</span>
+        <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.</span>
+        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;bayesian&quot;</span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -410,10 +412,10 @@ configs. Same reason as <code class="docutils literal notranslate"><span class="
 <section id="id12">
 <h4>Usage<a class="headerlink" href="#id12" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">Exhaustive</span></code> usage is similar to <code class="docutils literal notranslate"><span class="pre">basic</span></code>, with <code class="docutils literal notranslate"><span class="pre">exhaustive</span></code> specified to <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
         <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;exhaustive&quot;</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">)</span>
@@ -432,10 +434,10 @@ tuning configs to generate a better-performance quantized model.</p>
 <section id="id14">
 <h4>Usage<a class="headerlink" href="#id14" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">Random</span></code> usage is similar to <code class="docutils literal notranslate"><span class="pre">basic</span></code>, with <code class="docutils literal notranslate"><span class="pre">random</span></code> specified to <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
         <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;random&quot;</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">)</span>
@@ -454,15 +456,15 @@ tuning configs to generate a better-performance quantized model.</p>
 <p>Compared to <code class="docutils literal notranslate"><span class="pre">Basic</span></code>, <code class="docutils literal notranslate"><span class="pre">sigopt_api_token</span></code> and <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code> are necessary for <code class="docutils literal notranslate"><span class="pre">SigOpt</span></code>.
 For details, <a class="reference internal" href="sigopt_strategy.html"><span class="doc">how to use sigopt strategy in neural_compressor</span></a> is available.</p>
 <p>Note that the <code class="docutils literal notranslate"><span class="pre">sigopt_api_token</span></code>, <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code>, and <code class="docutils literal notranslate"><span class="pre">sigopt_experiment_name</span></code> should be set inside the <code class="docutils literal notranslate"><span class="pre">strategy_kwargs</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
         <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;sigopt&quot;</span><span class="p">,</span>
         <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span>
-          <span class="s2">&quot;sigopt_api_token&quot;</span><span class="p">:</span> <span class="s2">&quot;YOUR-ACCOUNT-API-TOKEN&quot;</span><span class="p">,</span>
-          <span class="s2">&quot;sigopt_project_id&quot;</span><span class="p">:</span> <span class="s2">&quot;PROJECT-ID&quot;</span><span class="p">,</span>
-          <span class="s2">&quot;sigopt_experiment_name&quot;</span><span class="p">:</span> <span class="s2">&quot;nc-tune&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sigopt_api_token&quot;</span><span class="p">:</span> <span class="s2">&quot;YOUR-ACCOUNT-API-TOKEN&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sigopt_project_id&quot;</span><span class="p">:</span> <span class="s2">&quot;PROJECT-ID&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sigopt_experiment_name&quot;</span><span class="p">:</span> <span class="s2">&quot;nc-tune&quot;</span><span class="p">,</span>
         <span class="p">},</span>
     <span class="p">),</span>
 <span class="p">)</span>
@@ -516,12 +518,12 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 <section id="id18">
 <h4>Usage<a class="headerlink" href="#id18" title="Permalink to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">TPE</span></code> usage is similar to <code class="docutils literal notranslate"><span class="pre">basic</span></code> with <code class="docutils literal notranslate"><span class="pre">tpe</span></code> specified to <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
-        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;tpe&quot;</span><span class="p">,</span>
-    <span class="p">),</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
+        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;tpe&quot;</span>
+    <span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -549,7 +551,7 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">next_tune_cfg</span></code> function is used to yield the next tune configuration according to some algorithm or strategy. <code class="docutils literal notranslate"><span class="pre">TuneStrategy</span></code> base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">traverse</span></code> function can be overridden optionally if the traverse logic required by the new strategy is different from the one <code class="docutils literal notranslate"><span class="pre">TuneStrategy</span></code> base class implemented.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">traverse</span></code> function can be overridden optionally if the traverse process required by the new strategy is different from the one <code class="docutils literal notranslate"><span class="pre">TuneStrategy</span></code> base class implemented.</p>
 <p>An example of customizing a new tuning strategy can be reached at <a class="reference external" href="../../neural_compressor/contrib/strategy/tpe.py">TPE Strategy</a>.</p>
 </section>
 </section>

@@ -205,15 +205,15 @@
 <section id="neural-compressor-configuration">
 <h3>Neural Compressor Configuration<a class="headerlink" href="#neural-compressor-configuration" title="Permalink to this heading">¶</a></h3>
 <p>Compare to <code class="docutils literal notranslate"><span class="pre">Basic</span></code> strategy, <code class="docutils literal notranslate"><span class="pre">sigopt_api_token</span></code> and <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code> is necessary for <code class="docutils literal notranslate"><span class="pre">SigOpt</span></code> strategy. Before using the strategy, it is required to create the project corresponding to <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code> in your account.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
-<span class="n">conf</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">TuningCriterion</span><span class="p">(</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
         <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;sigopt&quot;</span><span class="p">,</span>
         <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span>
-          <span class="s2">&quot;sigopt_api_token&quot;</span><span class="p">:</span> <span class="s2">&quot;YOUR-ACCOUNT-API-TOKEN&quot;</span><span class="p">,</span>
-          <span class="s2">&quot;sigopt_project_id&quot;</span><span class="p">:</span> <span class="s2">&quot;PROJECT-ID&quot;</span><span class="p">,</span>
-          <span class="s2">&quot;sigopt_experiment_name&quot;</span><span class="p">:</span> <span class="s2">&quot;nc-tune&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sigopt_api_token&quot;</span><span class="p">:</span> <span class="s2">&quot;YOUR-ACCOUNT-API-TOKEN&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sigopt_project_id&quot;</span><span class="p">:</span> <span class="s2">&quot;PROJECT-ID&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sigopt_experiment_name&quot;</span><span class="p">:</span> <span class="s2">&quot;nc-tune&quot;</span><span class="p">,</span>
         <span class="p">},</span>
     <span class="p">),</span>
 <span class="p">)</span>
