@@ -117,6 +117,7 @@ def get_imports_path(user_code_path: List) -> List:
         "intel_extension_for_pytorch",
         "itertools",
         "jax",
+        "joblib",
         "json",
         "keras",
         "libcst",
@@ -158,6 +159,13 @@ def get_imports_path(user_code_path: List) -> List:
         "packaging",
         "pytorch_lightning",
         "__future__",
+        "matplotlib",
+        "progress",
+        "tensorboard",
+        "onnx",
+        "coloredlogs",
+        "cpuinfo",
+        "rsa",
     ]
 
     if globals.cache_load_transformers:
