@@ -122,7 +122,7 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 <div align=center>
 <a target="_blank" href="../../docs/source/imgs/pruning/Pruning_schedule.JPG">
-    <img src="./../../docs/source/imgs/pruning/Pruning_schedule.JPG" width=935 height=170 alt="Pruning schedule">
+    <img src="./../../docs/source/imgs/pruning/Pruning_schedule.JPG" width=930 height=170 alt="Pruning schedule">
 </a>
 </div>
 

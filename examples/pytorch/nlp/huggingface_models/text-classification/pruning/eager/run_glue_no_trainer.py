@@ -187,6 +187,11 @@ def parse_args():
         type=int, default=-1,
         help="Sparse step frequency for iterative pruning, default to a quarter of pruning steps."
     )
+    parser.add_argument(
+        "--pruning_type",
+        type=str, default="snip_momentum",
+        help="Pruning type determines how should the weights of a neural network are scored and pruned."
+    )
     args = parser.parse_args()
 
     # Sanity checks
@@ -511,7 +516,8 @@ def main():
         pattern=args.pruning_pattern,
         pruning_frequency=frequency,
         start_step=pruning_start,
-        end_step=pruning_end
+        end_step=pruning_end,
+        pruning_type=args.pruning_type,
     )
     # pruner = Pruning(config)
     # pruner.model = model
@@ -626,4 +632,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
