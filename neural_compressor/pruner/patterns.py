@@ -659,9 +659,6 @@ class PatternNxM(BasePattern):
                                                               self.target_sparsity_ratio)
                 if need_adjust:
                     # uptade status
-                    print(key)
-                    #if "1.1" in key:
-                    #    import pdb;pdb.set_trace()
                     self.keep_mask_layers[key] = True
                     masks[key] = self.get_single_mask_per_target_ratio(new_scores[key], adjust_ratio)
                     masks[key] = masks[key].repeat_interleave(block_size[0], 0).repeat_interleave(block_size[1], -1)
