@@ -220,15 +220,15 @@ class BasicTuneStrategy(TuneStrategy):
                 op_tuning_cfg['bn_calib_sampling_size'] = self.bn_calib_sampling_size
                 yield op_tuning_cfg
 
-            if self.objectives.compare(self.last_tune_result, self.baseline):
-                all_op_type = set()
-                for k ,v in op_tuning_cfg.items():
-                    if len(k) != 2:
-                        continue
-                    op_name, op_type = k
-                    all_op_type.add(op_type)
-                logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(list(all_op_type), self.last_tune_result[0]))
-                return
+                if self.objectives.compare(self.last_tune_result, self.baseline):
+                    all_op_type = set()
+                    for k ,v in op_tuning_cfg.items():
+                        if len(k) != 2:
+                            continue
+                        op_name, op_type = k
+                        all_op_type.add(op_type)
+                    logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(list(all_op_type), self.last_tune_result[0]))
+                    return
 
         all_op_type = set()
         for k ,v in op_tuning_cfg.items():
