@@ -224,10 +224,10 @@ def save_checkpoint(state, is_best, save_dir):
     """Saves checkpoint to disk"""
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    filename = save_dir + "checkpoint.pth"
+    filename = save_dir + "/checkpoint.pth"
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, save_dir + 'model_best.pth')
+        shutil.copyfile(filename, save_dir + '/model_best.pth')
 
 
 def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_manager, accelerator, eval_dataloader, metric):

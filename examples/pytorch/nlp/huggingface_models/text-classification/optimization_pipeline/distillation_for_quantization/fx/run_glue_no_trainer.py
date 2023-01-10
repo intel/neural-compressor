@@ -21,7 +21,7 @@ import os
 import random
 import datasets
 from datasets import load_dataset, load_metric
-from neural_compressor import set_distillation_record
+# from neural_compressor import set_distillation_record
 import torch
 from torch.utils.data import DataLoader
 import torch.distributed as dist
@@ -189,8 +189,6 @@ def gather_results(predictions, gt):
 def evaluation(model, eval_dataloader, metric):
     logger.info("***** Running eval *****")
     logger.info(f"  Num examples = {len(eval_dataloader) }")
-    # Set flag of recording features to Flase, otherwise, memory will be overflow
-    set_distillation_record(False)
     model.eval()
     eval_dataloader = tqdm(eval_dataloader, desc="Evaluating")
     model_device = next(model.parameters()).device
@@ -205,18 +203,16 @@ def evaluation(model, eval_dataloader, metric):
 
     eval_metric = metric.compute()
     logger.info(f"eval_metric : {eval_metric}")
-    # Set flag of recording features to True
-    set_distillation_record(True)
     return eval_metric['accuracy']
 
 def save_checkpoint(state, is_best, save_dir):
     """Saves checkpoint to disk"""
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    filename = save_dir + "checkpoint.pth"
+    filename = save_dir + "/checkpoint.pth"
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, save_dir + 'model_best.pth')
+        shutil.copyfile(filename, save_dir + '/model_best.pth')
 
 def train(args, model, train_dataloader, lr_scheduler, compression_manager, optimizer, eval_dataloader,
           metric):

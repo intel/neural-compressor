@@ -23,7 +23,7 @@ torch = LazyImport('torch')
 
 STUDENT_FEATURES = {}
 TEACHER_FEATURES = {}
-ENABLED_RECORD = True
+ENABLED_RECORD = False
 
 
 # for adapting fx model
@@ -33,8 +33,6 @@ def record_output(output, name, output_process, student=False):
 
     It is a help function.
     """
-    if not ENABLED_RECORD:
-        return output
     recorded_output = output
     if output_process != '':
         if isinstance(output, dict) and output_process in output:
@@ -58,7 +56,10 @@ def record_output(output, name, output_process, student=False):
 def get_activation(name, output_process='', student=False):
     """Get a hook for getting activation."""
     def hook(model, input, output):
-        return record_output(output, name, output_process, student=student)
+        if model.training or ENABLED_RECORD:
+            return record_output(output, name, output_process, student=student)
+        else:
+            return output
     return hook
 
 
