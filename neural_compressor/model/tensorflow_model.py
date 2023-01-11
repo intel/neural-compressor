@@ -998,8 +998,10 @@ class TensorflowQATModel(TensorflowSavedModelModel):
         """Initialize a Tensorflow QAT model.
 
         Args:
-            model (string or tensorflow model object): model path or model object.
+            model (string or  tf.keras.Model object): model path or model object.
         """
+        assert isinstance(model, tf.keras.Model) or isinstance(model, str), \
+        "The TensorflowQATModel should be initialized either by a string or a tf.keras.Model."
         super(TensorflowQATModel, self).__init__(model)
         self.keras_model = None
         self.model_type = 'keras'
@@ -1008,7 +1010,11 @@ class TensorflowQATModel(TensorflowSavedModelModel):
     def model(self):
         """Return model itself."""
         if self.keras_model == None:
-            self.keras_model = tf.keras.models.load_model(self._model)
+            if isinstance(self._model, tf.keras.Model):
+                self.keras_model = self._model
+            else:
+                self.keras_model = tf.keras.models.load_model(self._model)
+                
         return self.keras_model
 
     @model.setter
