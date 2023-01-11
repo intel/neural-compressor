@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Neural Compressor.
+This document describes the step-by-step instructions for reproducing PyTorch tuning results with Intel® Neural Compressor.
 
 # Prerequisite
 
@@ -95,7 +95,6 @@ or
 bash run_tuning.sh --topology=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet
 bash run_benchmark.sh --topology=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet --mode=benchmark/accuracy --int8=true/false
 ```
-
 
 # Saving and Loading Model
 

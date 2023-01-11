@@ -52,7 +52,7 @@ def enable(
     save_patch_path="",
     patch_suffix=".diff",
     remove_copy=True,
-    consider_imports=True,
+    consider_imports=False,
     patch_imports=False,
     logging_level="info",
     run_bench=False,
@@ -196,6 +196,7 @@ def enable(
         "pytorch_cuda_to_cpu",
         "pytorch_lightning_bf16_cpu",
         "tensorflow_mixed_precision",
+        "tensorflow_inc",
         "change_trainer_to_nlptrainer",
     ]
     
@@ -374,7 +375,7 @@ def enable(
                 if "tensorflow_mixed_precision" in features:
                     from .coders.tensorflow.amp import TensorFlowKerasAMP
                     list_transformed_code[i] = TensorFlowKerasAMP(list_transformed_code[i]).transform()
-                if "tensorflow_inc" in features:
+                if feature == "tensorflow_inc":
                     from .coders.tensorflow.inc import TensorFlowKerasINC
                     list_transformed_code[i] = TensorFlowKerasINC(list_transformed_code[i]).transform()
                 # Change Trainer to NLPTrainer (only for intel_extension_for_pytorch)

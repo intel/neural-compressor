@@ -237,7 +237,8 @@ def append_attr(fx_model, model):
           not any([re.search(p, i) for p in ignore_search_patterns]) :
             attr_names.append(i)
     for name in attr_names:
-        attr = getattr(model, name)
+        attr = getattr(model, name, None)
+
         if isinstance(attr, torch.nn.Module) or \
           isinstance(attr, torch.quantization.qconfig.QConfig):
             continue

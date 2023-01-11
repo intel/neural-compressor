@@ -2,12 +2,16 @@ horovodrun -np 2 python -u main.py \
     /path/to/imagenet/ \
     --topology resnet18 \
     --prune \
-    --config conf.yaml \
     --pretrained \
-    --output-model model_final.pth \
+    --pruning_type magnitude \
+    --initial_sparsity 0.0 \
+    --target_sparsity 0.40 \
+    --start_epoch 0 \
+    --end_epoch 9 \
+    --epochs 10 \
+    --output-model saved_results \
     --world-size 1 \
     --num-per-node 2 \
     --batch-size 256 \
     --keep-batch-size \
-    --lr 0.001 \
-    --iteration 30 \
+    --lr 0.001

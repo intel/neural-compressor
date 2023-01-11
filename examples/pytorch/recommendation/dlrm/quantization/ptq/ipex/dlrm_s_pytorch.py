@@ -828,8 +828,6 @@ def run():
     print("time/loss/accuracy (if enabled):")
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-
         def eval_func(model):
             args.int8 = False if model.ipex_config_path is None else True
             args.int8_configure = "" \
@@ -847,9 +845,7 @@ def run():
         assert args.inference_only, "Please set inference_only in arguments"
         eval_dataloader = DLRM_DataLoader(train_ld)
         from neural_compressor import PostTrainingQuantConfig, quantization
-        conf = PostTrainingQuantConfig(approach="static",
-                                       backend="ipex"
-                                       )
+        conf = PostTrainingQuantConfig(backend="ipex")
         q_model = quantization.fit(
                             dlrm,
                             conf=conf,

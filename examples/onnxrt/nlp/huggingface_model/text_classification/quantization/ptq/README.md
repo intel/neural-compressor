@@ -1,22 +1,16 @@
-# Evaluate performance of ONNX Runtime(Huggingface Text Classification) 
->ONNX runtime quantization is under active development. please use 1.6.0+ to get more quantization support. 
+Step-by-Step
+============
 
-This example load a language translation model and confirm its accuracy and speed based on [GLUE data](https://gluebenchmark.com/). 
+This example load a language translation model and confirm its accuracy and speed based on [GLUE data](https://gluebenchmark.com/).
 
-### Environment
-Please use latest onnx and onnxruntime version.
+# Prerequisite
 
-### Prepare dataset
-download the GLUE data with `prepare_data.sh` script.
+## 1. Environment
+onnx: 1.12.0  
+onnxruntime: 1.13.1
+> Validated framework versions can be found in main readme.
 
-```shell
-export GLUE_DIR=/path/to/glue_data
-export TASK_NAME=MRPC # or SST
-
-bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
-```
-
-### Prepare model
+## 2. Prepare Model
 
 Supported model identifier from [huggingface.co](https://huggingface.co/):
 
@@ -35,7 +29,19 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 python export.py --model_name_or_path=Intel/bert-base-uncased-mrpc \ # or other supported model identifier
 ```
 
-### Quantization
+## 3. Prepare Dataset
+Download the GLUE data with `prepare_data.sh` script.
+
+```shell
+export GLUE_DIR=/path/to/glue_data
+export TASK_NAME=MRPC # or SST
+
+bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
+```
+
+# Run
+
+## 1. Quantization
 
 Quantize model with dynamic quantization:
 
@@ -45,7 +51,8 @@ bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
                    --dataset_location=path/to/glue/data
 ```
 
-### Benchmark
+
+## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
