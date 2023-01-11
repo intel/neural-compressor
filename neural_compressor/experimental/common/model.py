@@ -20,10 +20,11 @@
 from neural_compressor.model.model import get_model_fwk_name, MODELS
 from neural_compressor.model.tensorflow_model import get_model_type
 from neural_compressor.utils import logger
+BACKEND = 'default'
 
 class Model(object):
     """A wrapper of the information needed to construct a Model."""
-    
+
     def __new__(cls, root, **kwargs):
         """Create a new instance object of Model.
 
@@ -50,8 +51,15 @@ class Model(object):
         elif framework == 'keras':
             model = MODELS['keras'](root, **kwargs)
         elif framework == 'pytorch':
+            if BACKEND != "default":
+                framework = BACKEND
             model = MODELS[framework](root, **kwargs)
         else:
             model = MODELS[framework](root, **kwargs)
         return model
 
+
+def set_backend(backend: str):
+    """Set backed from configure file."""
+    global BACKEND
+    BACKEND = backend

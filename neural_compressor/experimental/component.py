@@ -102,6 +102,8 @@ class Component(object):
         self.cfg = self.conf.usr_cfg
         if self.cfg.model.framework != 'NA':
             self.framework = self.cfg.model.framework.lower()
+            from neural_compressor.experimental.common.model import set_backend
+            set_backend(self.framework)
             if self.framework in required_libs:
                 for lib in required_libs[self.framework]:
                     try:
