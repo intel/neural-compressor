@@ -94,7 +94,7 @@ class CompressionManager:
         def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
             """Called on the end of loss computation."""
             return self.callbacks.on_after_compute_loss(
-                input, student_output, student_loss, teacher_output=None
+                input, student_output, student_loss, teacher_output=teacher_output
             )
 
         def on_before_optimizer_step(self):

@@ -700,7 +700,7 @@ class PatternNxM(BasePattern):
             ori_shape = weight.shape
             if key in self.invalid_layers:
                 mask = torch.ones(weight.shape, device=weight.device)
-                pattern_lock_masks[mask] = mask
+                pattern_lock_masks[key] = mask
                 continue
             reduced_mask = self.get_reduced_masks_from_data(weight, key)
             mask = self.reshape_reduced_to_orig(reduced_mask, key, ori_shape)

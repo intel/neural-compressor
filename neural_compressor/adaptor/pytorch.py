@@ -3435,7 +3435,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         tmp_module,
                         fx_sub_op_cfgs) if version <= Version("1.12.1") else prepare_fx(
                             tmp_module, fx_sub_op_cfgs, example_inputs=example_inputs)
-                torch_utils.util.append_attr(module_pre, module)
+                torch_utils.util.append_attr(module_pre, module, fx_white_list)
                 setattr(model, name, module_pre)
             else:
                 PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list,
