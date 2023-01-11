@@ -31,24 +31,24 @@ def set_seed(seed: int = 42) -> None:
 set_seed()
 
 
-# from diffusers import StableDiffusionOnnxPipeline,OnnxRuntimeModel
-#
-# pipe = StableDiffusionOnnxPipeline.from_pretrained(
-#     "runwayml/stable-diffusion-v1-5",
-#     revision="onnx",
-#     provider="CPUExecutionProvider",
-#     ##provider="CUDAExecutionProvider",
-# )
-#
-# unet = pipe.unet
-# pipe.unet = OnnxRuntimeModel.from_pretrained("unet_quant_smooth1.0")
-# # unet.save_pretrained("sd_unet/")
-#
-# prompt = "a photo of an astronaut riding a horse on mars"
-# image = pipe(prompt).images[0]
-# image.save("test_quant.png")
-# tmp = 1
-# exit()
+from diffusers import StableDiffusionOnnxPipeline,OnnxRuntimeModel
+
+pipe = StableDiffusionOnnxPipeline.from_pretrained(
+    "runwayml/stable-diffusion-v1-5",
+    revision="onnx",
+    provider="CPUExecutionProvider",
+    ##provider="CUDAExecutionProvider",
+)
+
+unet = pipe.unet
+pipe.unet = OnnxRuntimeModel.from_pretrained("unet_quant_smooth0.5")
+# unet.save_pretrained("sd_unet/")
+
+prompt = "a photo of an astronaut riding a horse on mars"
+image = pipe(prompt).images[0]
+image.save("test_quant.png")
+tmp = 1
+exit()
 
 
 
