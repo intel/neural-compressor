@@ -33,7 +33,8 @@ function run_benchmark {
     python infer_detections.py \
         --input_graph ${input_model} \
         --output_graph ${output_model} \
-        --dataset_location ${dataset_location}
+        --dataset_location ${dataset_location} \
+        --tune
 }
 
 main "$@"

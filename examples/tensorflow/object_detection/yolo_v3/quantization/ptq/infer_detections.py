@@ -1,15 +1,31 @@
+#
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2022 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import time
 import numpy as np
 import tensorflow as tf
-
 from absl import app, flags
 from neural_compressor.metric import COCOmAPv2
 from neural_compressor.data import TensorflowResizeWithRatio, ParseDecodeCocoTransform
-from neural_compressor.data import Postprocess, LabelBalanceCOCORecordFilter
+from neural_compressor.data import LabelBalanceCOCORecordFilter
 from neural_compressor.data import ComposeTransform, COCORecordDataset, DataLoader
-from tensorflow.python.client import timeline
 from coco_constants import LABEL_MAP
-from utils import read_graph, non_max_suppression
+from utils import non_max_suppression
 
 flags.DEFINE_integer('batch_size', 1, "batch size")
 
@@ -31,7 +47,11 @@ flags.DEFINE_integer("num_intra_threads", 0, "number of intra threads")
 
 flags.DEFINE_integer("num_inter_threads", 1, "number of inter threads")
 
-flags.DEFINE_boolean("benchmark", False, "benchmark mode")
+flags.DEFINE_boolean("tune", False, "whether to run quantization")
+
+flags.DEFINE_boolean("benchmark", False, "whether to run benchmark")
+
+flags.DEFINE_string("mode", 'accuracy', "mode of benchmark")
 
 flags.DEFINE_boolean("profiling", False, "Signal of profiling")
 
@@ -50,7 +70,7 @@ class NMS():
         filtered_boxes = non_max_suppression(preds,
                                              self.conf_threshold,
                                              self.iou_threshold)
-
+        breakpoint()
         det_boxes = []
         det_scores = []
         det_classes = []
@@ -72,73 +92,6 @@ class NMS():
 
         return [np.array([det_boxes]), np.array([det_scores]), np.array([det_classes])], labels
 
-
-def create_tf_config():
-    config = tf.compat.v1.ConfigProto()
-    config.intra_op_parallelism_threads = FLAGS.num_intra_threads
-    config.inter_op_parallelism_threads = FLAGS.num_inter_threads
-    return config
-
-
-def run_benchmark():
-    config = create_tf_config()
-
-    graph_def = read_graph(FLAGS.input_graph)
-
-    tf.import_graph_def(graph_def, name='')
-
-    input_tensor = tf.compat.v1.get_default_graph().get_tensor_by_name('inputs:0')
-    output_tensor = tf.compat.v1.get_default_graph().get_tensor_by_name('output_boxes:0')
-
-    dummy_data_shape = list(input_tensor.shape)
-    dummy_data_shape[0] = FLAGS.batch_size
-    dummy_data = np.random.random(dummy_data_shape).astype(np.float32)
-
-    if FLAGS.profiling != True:
-        num_warmup = 200
-        total_iter = 1000
-    else:
-        num_warmup = 20
-        total_iter = 100
-
-    total_time = 0.0
-
-    with tf.compat.v1.Session(config=config) as sess:
-        print("Running warm-up")
-        for i in range(num_warmup):
-            sess.run(output_tensor, {input_tensor: dummy_data})
-        print("Warm-up complete")
-
-        for i in range(1, total_iter + 1):
-            start_time = time.time()
-            sess.run(output_tensor, {input_tensor: dummy_data})
-            end_time = time.time()
-
-            if i % 10 == 0:
-                print(
-                    "Steps = {0}, {1:10.6f} samples/sec".format(i, FLAGS.batch_size / duration))
-
-            duration = end_time - start_time
-            total_time += duration
-
-        if FLAGS.profiling:
-            options = tf.compat.v1.RunOptions(
-                trace_level=tf.compat.v1.RunOptions.FULL_TRACE)
-            run_metadata = tf.compat.v1.RunMetadata()
-
-            sess.run(output_tensor, {input_tensor: dummy_data},
-                     options=options, run_metadata=run_metadata)
-
-            fetched_timeline = timeline.Timeline(run_metadata.step_stats)
-            chrome_trace = fetched_timeline.generate_chrome_trace_format()
-            with open("timeline_%s.json" % (time.time()), 'w') as f:
-                f.write(chrome_trace)
-
-    throughput = total_iter * FLAGS.batch_size / total_time
-    print("Batch size = {}".format(FLAGS.batch_size))
-    print("Latency: {} ms".format(1 / throughput * 1000))
-    print("Throughput: {} samples/sec".format(throughput))
-
 def evaluate(model):
     """Custom evaluate function to estimate the accuracy of the model.
 
@@ -156,11 +109,9 @@ def evaluate(model):
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
     iteration = -1
-    if args.benchmark and args.mode == 'performance':
+    if FLAGS.benchmark and FLAGS.mode == 'performance':
         iteration = 100
-    kwargs = {'conf_threshold': FLAGS.conf_threshold,
-                  'iou_threshold': FLAGS.iou_threshold}
-    postprocess = Postprocess(NMS, 'NMS', **kwargs)
+    postprocess = NMS(FLAGS.conf_threshold, FLAGS.iou_threshold)
     metric = COCOmAPv2(map_key='DetectionBoxes_Precision/mAP@.50IOU')
 
     def eval_func(dataloader):
@@ -174,22 +125,26 @@ def evaluate(model):
             predictions = model.sess.run(output_tensor, feed_dict)
             end = time.time()
 
-            predictions, labels = postprocess((predictions, labels))
-            metric.update(predictions, labels)
+            if FLAGS.mode == 'accuracy':
+                predictions, labels = postprocess((predictions, labels))
+                metric.update(predictions, labels)
             latency_list.append(end-start)
             if idx + 1 == iteration:
                 break
-        latency = np.array(latency_list).mean() / args.batch_size
+        latency = np.array(latency_list).mean() / FLAGS.batch_size
         return latency
 
     eval_dataset = COCORecordDataset(root=FLAGS.dataset_location, filter=LabelBalanceCOCORecordFilter(size=1), \
         transform=ComposeTransform(transform_list=[ParseDecodeCocoTransform(), 
             TensorflowResizeWithRatio(min_dim=416, max_dim=416, padding=True, constant_value=128)]))
-    eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
+    if FLAGS.mode == 'accuracy':
+        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=FLAGS.batch_size)
+    else:
+        eval_dataloader=DataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=10)
 
     latency = eval_func(eval_dataloader)
-    if args.benchmark and args.mode == 'performance':
-        print("Batch size = {}".format(args.batch_size))
+    if FLAGS.benchmark and FLAGS.mode == 'performance':
+        print("Batch size = {}".format(10))
         print("Latency: {:.3f} ms".format(latency * 1000))
         print("Throughput: {:.3f} images/sec".format(1. / latency))
     acc = metric.result()
@@ -201,9 +156,7 @@ def main(_):
                             TensorflowResizeWithRatio(min_dim=416, max_dim=416, padding=True)]))
     calib_dataloader = DataLoader(framework='tensorflow', dataset=calib_dataset, batch_size=FLAGS.batch_size)
 
-    if FLAGS.benchmark:
-        run_benchmark()
-    else:
+    if FLAGS.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
         op_name_list={
@@ -219,6 +172,16 @@ def main(_):
         q_model = quantization.fit(model=FLAGS.input_graph, conf=config, 
                                     calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(FLAGS.output_graph)
+    elif FLAGS.benchmark:
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
+        if FLAGS.mode == 'performance':
+            conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
+            fit(FLAGS.input_graph, conf, b_func=evaluate)
+        else:
+            accuracy = evaluate(FLAGS.input_graph)
+            print('Batch size = %d' % FLAGS.batch_size)
+            print("Accuracy: %.5f" % accuracy)
 
 
 if __name__ == '__main__':
