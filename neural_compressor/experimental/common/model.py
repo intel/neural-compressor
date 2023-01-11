@@ -24,7 +24,7 @@ BACKEND = 'default'
 
 class Model(object):
     """A wrapper of the information needed to construct a Model."""
-    
+
     def __new__(cls, root, **kwargs):
         """Create a new instance object of Model.
 
@@ -60,5 +60,6 @@ class Model(object):
 
 
 def set_backend(backend: str):
-     global BACKEND
-     BACKEND = backend
+    """Set backed from configure file."""
+    global BACKEND
+    BACKEND = backend
