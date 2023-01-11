@@ -8,8 +8,8 @@ cwd = os.path.dirname(os.path.abspath(__file__))
 
 try:
     filepath = './neural_compressor/version.py'
-    with open( filepath ) as version_file:
-        __version__ ,= re.findall( '__version__ = "(.*)"', version_file.read() )
+    with open(filepath) as version_file:
+        __version__, = re.findall('__version__ = "(.*)"', version_file.read())
 except Exception as error:
     assert False,  "Error: Could not open '%s' due %s\n" % (filepath, error)
 
@@ -69,8 +69,8 @@ if __name__ == '__main__':
         keywords='quantization, auto-tuning, post-training static quantization, post-training dynamic quantization, quantization-aware training, tuning strategy',
         license='Apache 2.0',
         url="https://github.com/intel/neural-compressor",
-        packages = packages_exclude,
-        include_package_data = True,
+        packages=packages_exclude,
+        include_package_data=True,
         package_data=package_data,
         install_requires=install_requires_list,
         scripts=scripts_list,
