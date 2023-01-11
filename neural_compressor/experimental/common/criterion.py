@@ -24,7 +24,6 @@ Classes includes:
 """
 
 from collections import Counter
-from neural_compressor.experimental.common.torch_utils import set_record
 from neural_compressor.utils.utility import LazyImport, singleton
 from neural_compressor.utils import logger
 from neural_compressor.adaptor.pytorch import pytorch_forward_wrapper
@@ -1085,6 +1084,8 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         Raises:
             NotImplementedError: NotImplementedError
         """
+        from neural_compressor.experimental.common.torch_utils import set_record
+
         model = self.teacher_model if teacher_model is None else teacher_model
         assert isinstance(model, torch.nn.Module), \
             'Teacher model should be a torch Module instead of {}'.format(type(model))
