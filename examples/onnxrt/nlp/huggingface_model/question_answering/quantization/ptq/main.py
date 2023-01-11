@@ -583,8 +583,18 @@ def main():
         if model_args.quant_format == 'default':
             config = PostTrainingQuantConfig(quant_format=model_args.quant_format)
         else:
-            config = PostTrainingQuantConfig(quant_format=model_args.quant_format,
-                                             quant_level=0,)
+            if model_args.model_name_or_path == 'mrm8488/spanbert-finetuned-squadv1':
+                op_name_list={'Gather_94': {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+                              'MatMul_660':{'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}}, 
+                              'MatMul_754':{'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+                              'MatMul_848':{'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},
+                              'MatMul_1036':{'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}},}
+                config = PostTrainingQuantConfig(quant_format=model_args.quant_format,
+                                                 quant_level=0,
+                                                 op_name_list=op_name_list)
+            else:
+                config = PostTrainingQuantConfig(quant_format=model_args.quant_format,
+                                                 quant_level=0,)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
