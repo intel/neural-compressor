@@ -311,10 +311,16 @@ def main_worker(gpu, ngpus_per_node, args):
         model.eval()
         if args.int8:
             from neural_compressor.utils.pytorch import load
-            q_model = load(os.path.expanduser(args.tuned_checkpoint), model, dataloader=val_loader)
+            q_model = load(os.path.expanduser(args.tuned_checkpoint), model)
             model = q_model
         else:
-            model = model
+            from neural_compressor.adaptor.adaptor import get_example_inputs
+            example_inputs = get_example_inputs(model, val_loader)
+            model = ipex.optimize(model)
+            with torch.no_grad():
+                model = torch.jit.trace(model, example_inputs)
+                model = torch.jit.freeze(model)
+
         if args.performance:
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor import benchmark

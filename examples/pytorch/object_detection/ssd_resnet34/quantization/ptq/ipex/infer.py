@@ -647,7 +647,14 @@ def eval_ssd_r34_mlperf_coco(args):
             config_file = os.path.join(args.tuned_checkpoint, "best_model.pt")
             assert os.path.exists(config_file), "there is no ipex model file, Please tune with Neural Compressor first!"
             from neural_compressor.utils.pytorch import load
-            ssd_r34 = load(args.tuned_checkpoint, ssd_r34, dataloader=val_dataloader)
+            ssd_r34 = load(args.tuned_checkpoint, ssd_r34)
+        else:
+            from neural_compressor.adaptor.adaptor import get_example_inputs
+            example_inputs = get_example_inputs(model, val_dataloader)
+            model = ipex.optimize(model)
+            with torch.no_grad():
+                model = torch.jit.trace(model, example_inputs)
+                model = torch.jit.freeze(model)
         from neural_compressor.config import BenchmarkConfig
         from neural_compressor import benchmark
         b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
