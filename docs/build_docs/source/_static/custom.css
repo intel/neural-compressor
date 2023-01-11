@@ -11,3 +11,10 @@
 .rst-content tt.literal, .rst-content code.literal {
     color: #000000;
 }
+
+div.version a:link {
+  color: #ffffff;
+}
+div.version a:visited {
+  color: #dddddd;
+}
