@@ -1084,13 +1084,10 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         Raises:
             NotImplementedError: NotImplementedError
         """
-        from neural_compressor.experimental.common.torch_utils import set_record
-
         model = self.teacher_model if teacher_model is None else teacher_model
         assert isinstance(model, torch.nn.Module), \
             'Teacher model should be a torch Module instead of {}'.format(type(model))
         model.eval()
-        set_record(True)
         try:
             model_device = next(model.parameters()).device
         except:
@@ -1101,7 +1098,6 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
             model.to(device)
         with torch.no_grad():
             outputs = pytorch_forward_wrapper(model, input, device=device)
-        set_record(False)
         return outputs
 
     def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
