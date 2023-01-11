@@ -1,132 +1,92 @@
 
 
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>neural_compressor.experimental.metric.metric &mdash; Intel® Neural Compressor  documentation</title>
   
 
   
-  
-  
-  
-
-  
-
-  
-  
-    
-
-  
-
   <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
-  <!-- <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
   <link rel="stylesheet" href="../../../../../_static/custom.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../../search.html" /> 
-
-  
-  <script src="../../../../../_static/js/modernizr.min.js"></script>
 </head>
 
-<div class="container-fluid header-holder tutorials-header" id="header-holder">
-  <div class="container">
-    <div class="header-container">
-      <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
+<body class="wy-body-for-nav">
 
-      <div class="main-menu">
-        <ul>
-          <li>
-            <a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a>
-          </li>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-          <li>
-            <a href="https://shiftlab.github.io/pytorch/features">Features</a>
-          </li>
+          
+            <a href="../../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
+          
 
-          <li>
-            <a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a>
-          </li>
-
-          <li>
-            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
-          </li>
-
-          <li>
-            <a href="https://pytorch.org/tutorials">Tutorials</a>
-          </li>
-
-          <li>
-            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
-          </li>
-
-          <li>
-            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
-          </li>
-
-          <li>
-            <a href="https://github.com/pytorch/pytorch">Github</a>
-          </li>
-        </ul>
-      </div>
-
-      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
-    </div>
-
-  </div>
-</div>
-
-
-<body class="pytorch-body">
-
-  
-<div class="container-fluid header-holder tutorials-header" id="header-holder">
-  <div class="container">
-    <div class="header-container">
-      <div class="navbar-logo">
-          <a href="https://intel.github.io/neural-compressor/Welcome.html" alt="Intel homepage" class="intel-logo-rebrand">
-            <span class="headTitleStyle"> Intel® Neural Compressor</span> 
+          
           </a>
-        <div class="version">
+
+          
+            
+            
+            <div class="version">
               <a href="../../../../../../versions.html">2.0▼</a>
               <p>Click link above to switch version</p>
             </div>
-    </div>
-      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
-    </div>
-  </div>
-</div>
-
-  <div>
-
-    
-
-    <div class="table-of-contents-link-wrapper">
-      <span>Table of Contents</span>
-      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
-    </div>
-
-    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
-      <div class="pytorch-side-scroll">
-        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          <div class="pytorch-left-menu-search">
             
-   
-
-          </div>
-
           
 
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
             
             
               
@@ -143,17 +103,29 @@
 
             
           
-
         </div>
+        
       </div>
     </nav>
 
-    <div class="pytorch-container">
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
-      <section data-toggle="wy-nav-shift" class="pytorch-content-wrap">
-        <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
-          <div class="pytorch-breadcrumbs-wrapper">
-            
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
 
 
 
@@ -171,24 +143,17 @@
 
 <div role="navigation" aria-label="breadcrumbs navigation">
 
-  <ul class="pytorch-breadcrumbs">
+  <ul class="wy-breadcrumbs">
     
-      <li>
-        <a href="../../../../../index.html">
-          
-            Docs
-          
-        </a> &gt;
-      </li>
-
+      <li><a href="../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.metric</span></code></li>
     
     
-      <li class="pytorch-breadcrumbs-aside">
+      <li class="wy-breadcrumbs-aside">
         
-            
-            <a href="../../../../../_sources/autoapi/neural_compressor/experimental/metric/metric/index.rst.txt" rel="nofollow"><img src="../../../../../_static/images/view-page-source-icon.svg"></a>
+          
+            <a href="../../../../../_sources/autoapi/neural_compressor/experimental/metric/metric/index.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -196,21 +161,11 @@
   </ul>
 
   
+  <hr/>
 </div>
-          </div>
-
-          <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
-            Shortcuts
-          </div>
-        </div>
-
-        <div class="pytorch-content-left">
-          
-          <div class="rst-content">
-          
-            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
-             <article itemprop="articleBody" class="pytorch-article">
-              
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <section id="module-neural_compressor.experimental.metric.metric">
 <span id="neural-compressor-experimental-metric-metric"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.metric.metric" title="neural_compressor.experimental.metric.metric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.metric</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.metric.metric" title="Permalink to this heading">¶</a></h1>
 <p>Neural Compressor metrics.</p>
@@ -1333,583 +1288,47 @@ the top k labels predicted.</p>
 </section>
 
 
-             </article>
-             
-            </div>
-            <footer>
-  
+           </div>
+           
+          </div>
+          <footer>
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2022, Intel® Neural Compressor.
+        &#169; Copyright 2022, Intel® Neural Compressor.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
-          </div>
         </div>
+      </div>
 
-        <div class="pytorch-content-right" id="pytorch-content-right">
-          <div class="pytorch-right-menu" id="pytorch-right-menu">
-            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
-              <ul>
-<li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.metric.metric</span></code></a><ul>
-<li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
-<li><a class="reference internal" href="#classes">Classes</a></li>
-<li><a class="reference internal" href="#functions">Functions</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMetrics"><code class="docutils literal notranslate"><span class="pre">TensorflowMetrics</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMetrics.metrics"><code class="docutils literal notranslate"><span class="pre">TensorflowMetrics.metrics</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchMetrics"><code class="docutils literal notranslate"><span class="pre">PyTorchMetrics</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchMetrics.metrics"><code class="docutils literal notranslate"><span class="pre">PyTorchMetrics.metrics</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MXNetMetrics"><code class="docutils literal notranslate"><span class="pre">MXNetMetrics</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MXNetMetrics.metrics"><code class="docutils literal notranslate"><span class="pre">MXNetMetrics.metrics</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTQLMetrics"><code class="docutils literal notranslate"><span class="pre">ONNXRTQLMetrics</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTQLMetrics.metrics"><code class="docutils literal notranslate"><span class="pre">ONNXRTQLMetrics.metrics</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTITMetrics"><code class="docutils literal notranslate"><span class="pre">ONNXRTITMetrics</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTITMetrics.metrics"><code class="docutils literal notranslate"><span class="pre">ONNXRTITMetrics.metrics</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.METRICS"><code class="docutils literal notranslate"><span class="pre">METRICS</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.METRICS.metrics"><code class="docutils literal notranslate"><span class="pre">METRICS.metrics</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.METRICS.register"><code class="docutils literal notranslate"><span class="pre">METRICS.register()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.metric_registry"><code class="docutils literal notranslate"><span class="pre">metric_registry()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric"><code class="docutils literal notranslate"><span class="pre">BaseMetric</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric.metric"><code class="docutils literal notranslate"><span class="pre">BaseMetric.metric</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric.hvd"><code class="docutils literal notranslate"><span class="pre">BaseMetric.hvd</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric.update"><code class="docutils literal notranslate"><span class="pre">BaseMetric.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric.reset"><code class="docutils literal notranslate"><span class="pre">BaseMetric.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric.result"><code class="docutils literal notranslate"><span class="pre">BaseMetric.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapPyTorchMetric"><code class="docutils literal notranslate"><span class="pre">WrapPyTorchMetric</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapPyTorchMetric.update"><code class="docutils literal notranslate"><span class="pre">WrapPyTorchMetric.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapPyTorchMetric.reset"><code class="docutils literal notranslate"><span class="pre">WrapPyTorchMetric.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapPyTorchMetric.result"><code class="docutils literal notranslate"><span class="pre">WrapPyTorchMetric.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapMXNetMetric"><code class="docutils literal notranslate"><span class="pre">WrapMXNetMetric</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapMXNetMetric.update"><code class="docutils literal notranslate"><span class="pre">WrapMXNetMetric.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapMXNetMetric.reset"><code class="docutils literal notranslate"><span class="pre">WrapMXNetMetric.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapMXNetMetric.result"><code class="docutils literal notranslate"><span class="pre">WrapMXNetMetric.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapONNXRTMetric"><code class="docutils literal notranslate"><span class="pre">WrapONNXRTMetric</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapONNXRTMetric.update"><code class="docutils literal notranslate"><span class="pre">WrapONNXRTMetric.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapONNXRTMetric.reset"><code class="docutils literal notranslate"><span class="pre">WrapONNXRTMetric.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapONNXRTMetric.result"><code class="docutils literal notranslate"><span class="pre">WrapONNXRTMetric.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.F1"><code class="docutils literal notranslate"><span class="pre">F1</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.F1.update"><code class="docutils literal notranslate"><span class="pre">F1.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.F1.reset"><code class="docutils literal notranslate"><span class="pre">F1.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.F1.result"><code class="docutils literal notranslate"><span class="pre">F1.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy"><code class="docutils literal notranslate"><span class="pre">Accuracy</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.pred_list"><code class="docutils literal notranslate"><span class="pre">Accuracy.pred_list</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.label_list"><code class="docutils literal notranslate"><span class="pre">Accuracy.label_list</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.sample"><code class="docutils literal notranslate"><span class="pre">Accuracy.sample</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.update"><code class="docutils literal notranslate"><span class="pre">Accuracy.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.reset"><code class="docutils literal notranslate"><span class="pre">Accuracy.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.result"><code class="docutils literal notranslate"><span class="pre">Accuracy.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchLoss"><code class="docutils literal notranslate"><span class="pre">PyTorchLoss</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchLoss.reset"><code class="docutils literal notranslate"><span class="pre">PyTorchLoss.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchLoss.update"><code class="docutils literal notranslate"><span class="pre">PyTorchLoss.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchLoss.compute"><code class="docutils literal notranslate"><span class="pre">PyTorchLoss.compute()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss"><code class="docutils literal notranslate"><span class="pre">Loss</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss.sample"><code class="docutils literal notranslate"><span class="pre">Loss.sample</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss.sum"><code class="docutils literal notranslate"><span class="pre">Loss.sum</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss.update"><code class="docutils literal notranslate"><span class="pre">Loss.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss.reset"><code class="docutils literal notranslate"><span class="pre">Loss.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss.result"><code class="docutils literal notranslate"><span class="pre">Loss.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE"><code class="docutils literal notranslate"><span class="pre">MAE</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.pred_list"><code class="docutils literal notranslate"><span class="pre">MAE.pred_list</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.label_list"><code class="docutils literal notranslate"><span class="pre">MAE.label_list</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.compare_label"><code class="docutils literal notranslate"><span class="pre">MAE.compare_label</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.update"><code class="docutils literal notranslate"><span class="pre">MAE.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.reset"><code class="docutils literal notranslate"><span class="pre">MAE.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.result"><code class="docutils literal notranslate"><span class="pre">MAE.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE"><code class="docutils literal notranslate"><span class="pre">RMSE</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE.mse"><code class="docutils literal notranslate"><span class="pre">RMSE.mse</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE.update"><code class="docutils literal notranslate"><span class="pre">RMSE.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE.reset"><code class="docutils literal notranslate"><span class="pre">RMSE.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE.result"><code class="docutils literal notranslate"><span class="pre">RMSE.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE"><code class="docutils literal notranslate"><span class="pre">MSE</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.pred_list"><code class="docutils literal notranslate"><span class="pre">MSE.pred_list</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.label_list"><code class="docutils literal notranslate"><span class="pre">MSE.label_list</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.compare_label"><code class="docutils literal notranslate"><span class="pre">MSE.compare_label</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.update"><code class="docutils literal notranslate"><span class="pre">MSE.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.reset"><code class="docutils literal notranslate"><span class="pre">MSE.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.result"><code class="docutils literal notranslate"><span class="pre">MSE.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK"><code class="docutils literal notranslate"><span class="pre">TensorflowTopK</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.k"><code class="docutils literal notranslate"><span class="pre">TensorflowTopK.k</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.num_correct"><code class="docutils literal notranslate"><span class="pre">TensorflowTopK.num_correct</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.num_sample"><code class="docutils literal notranslate"><span class="pre">TensorflowTopK.num_sample</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.update"><code class="docutils literal notranslate"><span class="pre">TensorflowTopK.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.reset"><code class="docutils literal notranslate"><span class="pre">TensorflowTopK.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.result"><code class="docutils literal notranslate"><span class="pre">TensorflowTopK.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK"><code class="docutils literal notranslate"><span class="pre">GeneralTopK</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.k"><code class="docutils literal notranslate"><span class="pre">GeneralTopK.k</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.num_correct"><code class="docutils literal notranslate"><span class="pre">GeneralTopK.num_correct</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.num_sample"><code class="docutils literal notranslate"><span class="pre">GeneralTopK.num_sample</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.update"><code class="docutils literal notranslate"><span class="pre">GeneralTopK.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.reset"><code class="docutils literal notranslate"><span class="pre">GeneralTopK.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.result"><code class="docutils literal notranslate"><span class="pre">GeneralTopK.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.COCOmAPv2"><code class="docutils literal notranslate"><span class="pre">COCOmAPv2</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.COCOmAPv2.update"><code class="docutils literal notranslate"><span class="pre">COCOmAPv2.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.COCOmAPv2.reset"><code class="docutils literal notranslate"><span class="pre">COCOmAPv2.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.COCOmAPv2.result"><code class="docutils literal notranslate"><span class="pre">COCOmAPv2.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMAP"><code class="docutils literal notranslate"><span class="pre">TensorflowMAP</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMAP.update"><code class="docutils literal notranslate"><span class="pre">TensorflowMAP.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMAP.reset"><code class="docutils literal notranslate"><span class="pre">TensorflowMAP.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMAP.result"><code class="docutils literal notranslate"><span class="pre">TensorflowMAP.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowCOCOMAP"><code class="docutils literal notranslate"><span class="pre">TensorflowCOCOMAP</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowVOCMAP"><code class="docutils literal notranslate"><span class="pre">TensorflowVOCMAP</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.SquadF1"><code class="docutils literal notranslate"><span class="pre">SquadF1</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.SquadF1.update"><code class="docutils literal notranslate"><span class="pre">SquadF1.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.SquadF1.reset"><code class="docutils literal notranslate"><span class="pre">SquadF1.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.SquadF1.result"><code class="docutils literal notranslate"><span class="pre">SquadF1.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.mIOU"><code class="docutils literal notranslate"><span class="pre">mIOU</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.mIOU.update"><code class="docutils literal notranslate"><span class="pre">mIOU.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.mIOU.reset"><code class="docutils literal notranslate"><span class="pre">mIOU.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.mIOU.result"><code class="docutils literal notranslate"><span class="pre">mIOU.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTGLUE"><code class="docutils literal notranslate"><span class="pre">ONNXRTGLUE</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTGLUE.update"><code class="docutils literal notranslate"><span class="pre">ONNXRTGLUE.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTGLUE.reset"><code class="docutils literal notranslate"><span class="pre">ONNXRTGLUE.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTGLUE.result"><code class="docutils literal notranslate"><span class="pre">ONNXRTGLUE.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ROC"><code class="docutils literal notranslate"><span class="pre">ROC</span></code></a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ROC.update"><code class="docutils literal notranslate"><span class="pre">ROC.update()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ROC.reset"><code class="docutils literal notranslate"><span class="pre">ROC.reset()</span></code></a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ROC.result"><code class="docutils literal notranslate"><span class="pre">ROC.result()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMetrics">TensorflowMetrics</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMetrics.metrics">metrics</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchMetrics">PyTorchMetrics</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchMetrics.metrics">metrics</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MXNetMetrics">MXNetMetrics</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MXNetMetrics.metrics">metrics</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTQLMetrics">ONNXRTQLMetrics</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTQLMetrics.metrics">metrics</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTITMetrics">ONNXRTITMetrics</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTITMetrics.metrics">metrics</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.METRICS">METRICS</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.METRICS.metrics">metrics</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.METRICS.register">register</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.metric_registry">metric_registry</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric">BaseMetric</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric.metric">metric</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric.hvd">hvd</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapPyTorchMetric">WrapPyTorchMetric</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapPyTorchMetric.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapPyTorchMetric.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapPyTorchMetric.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapMXNetMetric">WrapMXNetMetric</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapMXNetMetric.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapMXNetMetric.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapMXNetMetric.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapONNXRTMetric">WrapONNXRTMetric</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapONNXRTMetric.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapONNXRTMetric.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapONNXRTMetric.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.F1">F1</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.F1.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.F1.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.F1.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy">Accuracy</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.pred_list">pred_list</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.label_list">label_list</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.sample">sample</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchLoss">PyTorchLoss</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchLoss.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchLoss.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchLoss.compute">compute</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss">Loss</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss.sample">sample</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss.sum">sum</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE">MAE</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.pred_list">pred_list</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.label_list">label_list</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.compare_label">compare_label</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE">RMSE</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE.mse">mse</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE">MSE</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.pred_list">pred_list</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.label_list">label_list</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.compare_label">compare_label</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK">TensorflowTopK</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.k">k</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.num_correct">num_correct</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.num_sample">num_sample</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK">GeneralTopK</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.k">k</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.num_correct">num_correct</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.num_sample">num_sample</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.COCOmAPv2">COCOmAPv2</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.COCOmAPv2.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.COCOmAPv2.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.COCOmAPv2.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMAP">TensorflowMAP</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMAP.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMAP.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMAP.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowCOCOMAP">TensorflowCOCOMAP</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowVOCMAP">TensorflowVOCMAP</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.SquadF1">SquadF1</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.SquadF1.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.SquadF1.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.SquadF1.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.mIOU">mIOU</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.mIOU.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.mIOU.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.mIOU.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTGLUE">ONNXRTGLUE</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTGLUE.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTGLUE.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTGLUE.result">result</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ROC">ROC</a><ul>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ROC.update">update</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ROC.reset">reset</a></li>
-<li><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ROC.result">result</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
+    </section>
 
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
   </div>
   
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../../../../',
-            VERSION:'',
-            LANGUAGE:'en',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../../../../_static/documentation_options.js"></script>
-      <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
-      <script type="text/javascript" src="../../../../../_static/sphinx_highlight.js"></script>
-
-  
-
-  <script type="text/javascript" src="../../../../../_static/js/vendor/popper.min.js"></script>
-  <script type="text/javascript" src="../../../../../_static/js/vendor/bootstrap.min.js"></script>
-  <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
-<script script type="text/javascript">
-  var collapsedSections = ['start', 'autoapi', 'info'];
-</script>
-
-
-
-  <!-- Begin Footer -->
-
-  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-4 text-center">
-          <h2>Docs</h2>
-          <p>Lorem ipsum dolor sit amet, consectetur</p>
-          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
-        </div>
-
-        <div class="col-md-4 text-center">
-          <h2>Tutorials</h2>
-          <p>Lorem ipsum dolor sit amet, consectetur</p>
-          <a class="with-right-arrow" href="https://pytorch.org/tutorials">View Tutorials</a>
-        </div>
-
-        <div class="col-md-4 text-center">
-          <h2>Resources</h2>
-          <p>Lorem ipsum dolor sit amet, consectetur</p>
-          <a class="with-right-arrow" href="https://shiftlab.github.io/pytorch/resources">View Resources</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer class="site-footer">
-    <div class="container footer-container">
-      <div class="footer-logo-wrapper">
-        <a href="https://shiftlab.github.io/pytorch/" class="footer-logo"></a>
-      </div>
-
-      <div class="footer-links-wrapper">
-        <div class="footer-links-col">
-          <ul>
-            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/">PyTorch</a></li>
-            <li><a href="https://shiftlab.github.io/pytorch/get-started">Get Started</a></li>
-            <li><a href="https://shiftlab.github.io/pytorch/features">Features</a></li>
-            <li><a href="https://shiftlab.github.io/pytorch/ecosystem">Ecosystem</a></li>
-            <li><a href="https://shiftlab.github.io/pytorch/blog/">Blog</a></li>
-            <li><a href="https://shiftlab.github.io/pytorch/resources">Resources</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-links-col">
-          <ul>
-            <li class="list-title"><a href="https://shiftlab.github.io/pytorch/support">Support</a></li>
-            <li><a href="https://pytorch.org/tutorials">Tutorials</a></li>
-            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
-            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
-            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
-            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
-            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-links-col follow-us-col">
-          <ul>
-            <li class="list-title">Follow Us</li>
-            <li>
-              <div id="mc_embed_signup">
-                <form
-                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
-                  method="post"
-                  id="mc-embedded-subscribe-form"
-                  name="mc-embedded-subscribe-form"
-                  class="email-subscribe-form validate"
-                  target="_blank"
-                  novalidate>
-                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
-                    <div class="mc-field-group">
-                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
-                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
-                    </div>
-
-                    <div id="mce-responses" class="clear">
-                      <div class="response" id="mce-error-response" style="display:none"></div>
-                      <div class="response" id="mce-success-response" style="display:none"></div>
-                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
-
-                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
-
-                    <div class="clear">
-                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
-                    </div>
-                  </div>
-                </form>
-              </div>
-
-            </li>
-          </ul>
-
-          <div class="footer-social-icons">
-            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
-            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <!-- End Footer -->
-
-  <!-- Begin Mobile Menu -->
-
-  <div class="mobile-main-menu">
-    <div class="container-fluid">
-      <div class="container">
-        <div class="mobile-main-menu-header-container">
-          <a class="header-logo" href="https://shiftlab.github.io/pytorch/" aria-label="PyTorch"></a>
-          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
-        </div>
-      </div>
-    </div>
-
-    <div class="mobile-main-menu-links-container">
-      <div class="main-menu">
-        <ul>
-          <li>
-            <a href="#">Get Started</a>
-          </li>
-
-          <li>
-            <a href="#">Features</a>
-          </li>
-
-          <li>
-            <a href="#">Ecosystem</a>
-          </li>
-
-          <li>
-            <a href="https://shiftlab.github.io/pytorch/blog/">Blog</a>
-          </li>
-
-          <li>
-            <a href="https://pytorch.org/tutorials">Tutorials</a>
-          </li>
-
-          <li>
-            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
-          </li>
-
-          <li>
-            <a href="https://shiftlab.github.io/pytorch/resources">Resources</a>
-          </li>
-
-          <li>
-            <a href="https://github.com/pytorch/pytorch">Github</a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- End Mobile Menu -->
-
-  <script type="text/javascript" src="../../../../../_static/js/vendor/anchor.min.js"></script>
-
-  <script type="text/javascript">
-    mobileMenu.bind();
-    mobileTOC.bind();
-    pytorchAnchors.bind();
-
-    $(window).on("load", function() {
-      sideMenus.bind();
-      scrollToAnchor.bind();
-      highlightNavigation.bind();
-    })
-
-    // Add class to links that have code blocks, since we cannot create links in code blocks
-    $("article.pytorch-article a span.pre").each(function(e) {
-      $(this).closest("a").addClass("has-code");
-    });
   </script>
+
+  
+  
+    
+   
+
 </body>
 </html>

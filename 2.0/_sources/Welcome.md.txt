@@ -113,14 +113,14 @@ inc_bench
 
 <table class="docutils">
 <thead>
-  <tr>
+  <tr style="vertical-align: middle; text-align: center;">
     <th>Framework</th>
     <th>TensorFlow</th>
-    <th>Intel TensorFlow</th>
-    <th>Intel® Extension for TensorFlow*</th>
+    <th>Intel<br>TensorFlow</th>
+    <th>Intel®<br>Extension for<br>TensorFlow*</th>
     <th>PyTorch</th>
-    <th>Intel® Extension for PyTorch*</th>
-    <th>ONNX Runtime</th>
+    <th>Intel®<br>Extension for<br>PyTorch*</th>
+    <th>ONNX<br>Runtime</th>
     <th>MXNet</th>
   </tr>
 </thead>
