@@ -3320,7 +3320,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     sub_name = prefix + '--' + node.target
                 else:
                     sub_name = node.target
-                if not hasattr(model, node.target):
+                if not hasattr(model, sub_name):
                     continue 
                 if 'scale' in node.target:
                     tune_cfg['get_attr'][sub_name] = float(getattr(model, node.target))
