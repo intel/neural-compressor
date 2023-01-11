@@ -1,11 +1,11 @@
 ## Examples
 Several pruning examples are provided, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
 
-MPRC and SST2 sparse models can be trained by modifying "target_sparsity" and "pruning_pattern" parameters, there are pruning scripts for different models (Bert-mini, Distilbert-base-uncased, etc) and patterns ("4x1", "2:4", "1xchannel", etc) [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/).
+There are pruning scripts for MPRC and SST2 sparse models (Bert-mini, Distilbert-base-uncased, etc). The sparse model with different patterns ("4x1", "2:4", "1xchannel", etc) can be obtained by modifying "target_sparsity" and "pruning_pattern" parameters. [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/).
 
-Dense model can also be trained on glue datasets [Bert-mini MRPC](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/bertmini_mrpc_dense_finetune.sh) (by setting --do_prune to False)
+Dense model can also be fine-tuned on glue datasets (by setting --do_prune to False) [Bert-mini MRPC](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/bertmini_mrpc_dense_finetune.sh) 
 
-To try to train a sparse model in mixed patterns [Mixed-patterns Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/run_glue_no_trainer_mixed.py), local pruning config can be set as follows:
+To try to train a sparse model in mixed pattern [Mixed-patterns Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/run_glue_no_trainer_mixed.py), local pruning config can be set as follows:
 ```python
 pruning_configs=[
         {
