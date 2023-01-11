@@ -187,7 +187,7 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.input2tuple" title="neural_compressor.adaptor.torch_utils.util.input2tuple"><code class="xref py py-obj docutils literal notranslate"><span class="pre">input2tuple</span></code></a>(input)</p></td>
 <td><p>This is a helper function to converting a inputting dict values or a list to a tuple.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.append_attr" title="neural_compressor.adaptor.torch_utils.util.append_attr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append_attr</span></code></a>(fx_model, model)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.append_attr" title="neural_compressor.adaptor.torch_utils.util.append_attr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append_attr</span></code></a>(fx_model, model[, fx_white_list])</p></td>
 <td><p>This is a helper method to append attributes for the symbolic traced model.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.util.generate_activation_observer" title="neural_compressor.adaptor.torch_utils.util.generate_activation_observer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_activation_observer</span></code></a>(scheme, algorithm)</p></td>
@@ -295,7 +295,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.util.append_attr">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">append_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.append_attr" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.util.</span></span><span class="sig-name descname"><span class="pre">append_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fx_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fx_white_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.util.append_attr" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is a helper method to append attributes for the symbolic traced model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

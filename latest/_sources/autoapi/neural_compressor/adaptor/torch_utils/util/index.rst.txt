@@ -81,7 +81,7 @@ Functions
    :returns: A tuple.
 
 
-.. py:function:: append_attr(fx_model, model)
+.. py:function:: append_attr(fx_model, model, fx_white_list=[])
 
    This is a helper method to append attributes for the symbolic traced model.
 
