@@ -37,10 +37,12 @@ function run_benchmark {
     fi
 
     python main.py \
-            --model_path=${input_model} \
+            --input_model=${input_model} \
             --mode=${mode} \
             --model_name_or_path=${model_name_or_path} \
             --output_dir='./output' \
+            --overwrite_output_dir \
+            --dataset_name=squad \
             --batch_size=${batch_size} \
             --benchmark
             

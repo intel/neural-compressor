@@ -39,9 +39,11 @@ function run_tuning {
     fi
 
     python main.py \
-            --model_path ${input_model} \
+            --input_model ${input_model} \
+            --dataset_name squad \
             --save_path ${output_model} \
             --output_dir './output' \
+            --overwrite_output_dir \
             --model_name_or_path=${model_name_or_path} \
             --num_heads ${num_heads} \
             --hidden_size ${hidden_size} \
