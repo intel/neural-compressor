@@ -314,7 +314,7 @@ def main_worker(gpu, ngpus_per_node, args):
             q_model = load(os.path.expanduser(args.tuned_checkpoint), model)
             model = q_model
         else:
-            from neural_compressor.adaptor.adaptor import get_example_inputs
+            from neural_compressor.adaptor.pytorch import get_example_inputs
             example_inputs = get_example_inputs(model, val_loader)
             model = ipex.optimize(model)
             with torch.no_grad():

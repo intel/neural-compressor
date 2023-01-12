@@ -652,7 +652,7 @@ def main():
         from neural_compressor.utils.pytorch import load
         model = load(training_args.output_dir, model)
     else:
-        from neural_compressor.adaptor.adaptor import get_example_inputs
+        from neural_compressor.adaptor.pytorch import get_example_inputs
         example_inputs = get_example_inputs(model, eval_dataloader)
         model = ipex.optimize(model)
         with torch.no_grad():
