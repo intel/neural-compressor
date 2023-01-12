@@ -70,24 +70,6 @@ Classes
 
 
 
-   .. py:method:: set_tensor(model, tensor_dict)
-
-      The function is used by tune strategy class for setting tensor back to model.
-
-      :param model: The model to set tensor. Usually it is quantized model.
-      :type model: object
-      :param tensor_dict: The tensor dict to set. Note the numpy array contains float
-                          value, adaptor layer has the responsibility to quantize to
-                          int8 or int32 to set into the quantized model if needed.
-                          The dict format is something like:
-                          {
-                            'weight0_name': numpy.array,
-                            'bias0_name': numpy.array,
-                            ...
-                          }
-      :type tensor_dict: dict
-
-
    .. py:method:: query_fw_capability(model)
 
       The function is used to query framework capability.

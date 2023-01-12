@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: FuseNodeStartWithPooling(**kwargs)
+.. py:class:: FuseNodeStartWithPooling
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
 
