@@ -177,9 +177,6 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet.MxNetAdaptor" title="neural_compressor.adaptor.mxnet.MxNetAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MxNetAdaptor</span></code></a></p></td>
 <td><p>The MXNet adaptor layer, do MXNet quantization, calibration, inspect layer tensors.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.mxnet.MXNetQuery" title="neural_compressor.adaptor.mxnet.MXNetQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetQuery</span></code></a></p></td>
-<td><p>Base class that defines Query Interface.</p></td>
-</tr>
 </tbody>
 </table>
 <dl class="py class">
@@ -327,67 +324,6 @@ The dict format is something like:
 </ul>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet.MxNetAdaptor.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet.MxNetAdaptor.save" title="Permalink to this definition">¶</a></dt>
-<dd><p>The function is used by tune strategy class for saving model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>object</em>) – The model to saved.</p></li>
-<li><p><strong>path</strong> (<em>string</em>) – The path where to save.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet.MXNetQuery">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.mxnet.</span></span><span class="sig-name descname"><span class="pre">MXNetQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_config_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet.MXNetQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="../query/index.html#neural_compressor.adaptor.query.QueryBackendCapability" title="neural_compressor.adaptor.query.QueryBackendCapability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.query.QueryBackendCapability</span></code></a></p>
-<p>Base class that defines Query Interface.
-Each adaption layer should implement the inherited class for specific backend on their own.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet.MXNetQuery.get_version">
-<span class="sig-name descname"><span class="pre">get_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet.MXNetQuery.get_version" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the current backend’s version string.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet.MXNetQuery.get_precisions">
-<span class="sig-name descname"><span class="pre">get_precisions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet.MXNetQuery.get_precisions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the supported low precisions, e.g [‘int8’, ‘bf16’]</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet.MXNetQuery.get_op_types">
-<span class="sig-name descname"><span class="pre">get_op_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet.MXNetQuery.get_op_types" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the op types for specific backend per low precision.
-e.g {‘1.6.0’: {‘int8’: [‘Conv2D’, ‘fully_connected’]}}</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet.MXNetQuery.get_fuse_patterns">
-<span class="sig-name descname"><span class="pre">get_fuse_patterns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet.MXNetQuery.get_fuse_patterns" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the fusion patterns for specified op type for every specific precision</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet.MXNetQuery.get_quantization_capability">
-<span class="sig-name descname"><span class="pre">get_quantization_capability</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet.MXNetQuery.get_quantization_capability" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the quantization capability of low precision op types.
-e.g, granularity, scheme and etc.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.mxnet.MXNetQuery.get_mixed_precision_combination">
-<span class="sig-name descname"><span class="pre">get_mixed_precision_combination</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.mxnet.MXNetQuery.get_mixed_precision_combination" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the valid precision combination base on hardware and user’ config.
-e.g[‘fp32’, ‘bf16’, ‘int8’]</p>
 </dd></dl>
 
 </dd></dl>
