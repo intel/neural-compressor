@@ -174,7 +174,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                     black_nodes=black_nodes, white_nodes=white_nodes,
                                     iterations=list(range(0, quantize_config['calib_iteration'])),
                                     backend=self.backend, reduce_range=self.reduce_range)
-            smooth_model = augment.augment_smooth_graph(alpha=0.5,  percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'])
+            smooth_model = augment.augment_smooth_graph(alpha=1.0,  percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'], scales_per_op=True)
             model = copy.deepcopy(smooth_model)
 
         tmp_model = copy.deepcopy(model)
