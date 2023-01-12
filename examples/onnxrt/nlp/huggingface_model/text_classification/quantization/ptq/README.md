@@ -51,6 +51,13 @@ bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
                    --dataset_location=path/to/glue/data
 ```
 
+Quantize model with QLinearOps:
+
+```bash
+bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
+                   --output_model=/path/to/model_tune 
+                   --quant_format=QOperator
+```
 
 ## 2. Benchmark
 
