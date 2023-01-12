@@ -793,7 +793,7 @@
       "new_benchmark": false
     },
     "runwayml_stable-diffusion-v1-5": {
-      "model_src_dir":"nlp/huggingface_models/text_to_image/quantization/ptq_dynamic/eager",
+      "model_src_dir":"text_to_image/quantization/ptq_dynamic/eager",
       "dataset_location": "",
       "input_model": "runwayml/stable-diffusion-v1-5",
       "yaml": "conf.yaml",
@@ -811,7 +811,7 @@
       "new_benchmark": false
     },
     "runwayml_stable-diffusion-v1-5_fx": {
-      "model_src_dir":"nlp/huggingface_models/text_to_image/quantization/ptq_static/fx",
+      "model_src_dir":"text_to_image/quantization/ptq_static/fx",
       "dataset_location": "",
       "input_model": "runwayml/stable-diffusion-v1-5",
       "yaml": "conf.yaml",
