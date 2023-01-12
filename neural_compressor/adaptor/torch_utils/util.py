@@ -73,31 +73,35 @@ def _set_input_scale_hook(model, op_cfgs):
         hook_list (list): the input observer hooks
     """
     def input_scale_hook(module, input):
-        module.input_observer = module.qconfig.activation().to(next(module.parameters()).device)
+        assert hasattr(module, 'input_observer'), \
+            'Expect input_observer attribute already attached to the module'
         module.input_observer(input[0])
         return input
 
     def output_scale_hook(module, input, output):
-        module.output_observer = module.qconfig.activation().to(next(module.parameters()).device)
+        assert hasattr(module, 'output_observer'), \
+            'Expect output_observer attribute already attached to the module'
         module.output_observer(output)
         return output
 
     def ConvReLU2d_scale_hook(module, input):
-        device = next(module.parameters()).device
-        module.input_observer = module.qconfig.activation().to(device)
+        assert hasattr(module, 'input_observer'), \
+            'Expect input_observer attribute already attached to the module'
+        assert hasattr(module, 'output_observer'), \
+            'Expect output_observer attribute already attached to the module'
         module.input_observer(input[0])
         output = module._conv_forward(input[0], module.weight_fake_quant(module.weight), module.bias)
-        module.output_observer = module.qconfig.activation().to(device)
         module.output_observer(output)
         return input
 
     def LinearReLU_scale_hook(module, input):
         import torch.nn.functional as F
-        device = next(module.parameters()).device
-        module.input_observer = module.qconfig.activation().to(device)
+        assert hasattr(module, 'input_observer'), \
+            'Expect input_observer attribute already attached to the module'
+        assert hasattr(module, 'output_observer'), \
+            'Expect output_observer attribute already attached to the module'
         module.input_observer(input[0])
         output = F.linear(input[0], module.weight_fake_quant(module.weight), module.bias)
-        module.output_observer = module.qconfig.activation().to(device)
         module.output_observer(output)
         return input
 
@@ -107,22 +111,27 @@ def _set_input_scale_hook(model, op_cfgs):
           'Linear' in str(module.__class__.__name__):
             if not hasattr(module, 'qconfig') or not module.qconfig:
                 continue
+            device = next(module.parameters()).device
             from torch.nn.intrinsic.qat import ConvBn2d, ConvReLU2d, ConvBnReLU2d, LinearReLU
             if type(module) in [ConvBn2d, ConvBnReLU2d]:
+                module.input_observer = module.qconfig.activation().to(device)
                 handle_in = module.register_forward_pre_hook(input_scale_hook)
                 # module[0] == torch.nn.BatchNorm2d
                 module[0].qconfig = module.qconfig
+                module[0].output_observer = module[0].qconfig.activation().to(device)
                 handle_out = module[0].register_forward_hook(output_scale_hook)
                 hook_list.extend([handle_in, handle_out])
-            elif type(module) in [ConvReLU2d]:
-                handle_in_out = module.register_forward_pre_hook(ConvReLU2d_scale_hook)
-                hook_list.extend([handle_in_out])
-            elif type(module) in [LinearReLU]:
-                handle_in_out = module.register_forward_pre_hook(LinearReLU_scale_hook)
+            elif type(module) in [ConvReLU2d, LinearReLU]:
+                module.input_observer = module.qconfig.activation().to(device)
+                module.output_observer = module.qconfig.activation().to(device)
+                handle_in_out = module.register_forward_pre_hook(ConvReLU2d_scale_hook if \
+                                        type(module) == ConvReLU2d else LinearReLU_scale_hook)
                 hook_list.extend([handle_in_out])
             else:
                 if is_fused_module(module):
                     continue
+                module.input_observer = module.qconfig.activation().to(device)
+                module.output_observer = module.qconfig.activation().to(device)
                 handle_in = module.register_forward_pre_hook(input_scale_hook)
                 handle_out = module.register_forward_hook(output_scale_hook)
                 hook_list.extend([handle_in, handle_out])
