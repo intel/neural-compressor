@@ -422,10 +422,11 @@ if __name__ == "__main__":
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         if args.quant_format == 'default':
-            config = PostTrainingQuantConfig(quant_format=args.quant_format)
+            config = PostTrainingQuantConfig(approach='dynamic')
         else:
-            config = PostTrainingQuantConfig(quant_format=args.quant_format,
-                                             quant_level=0,)
+            config = PostTrainingQuantConfig(approach='static',
+                                             quant_format=args.quant_format,
+                                             quant_level=0)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
