@@ -70,9 +70,9 @@ def main():
 
     if args.augment:
         transform_train = transforms.Compose([
-        	transforms.ToTensor(),
-        	transforms.Lambda(lambda x: F.pad(x.unsqueeze(0),
-        						(4,4,4,4),mode='reflect').squeeze()),
+            transforms.ToTensor(),
+            transforms.Lambda(lambda x: F.pad(x.unsqueeze(0),
+                              (4, 4, 4, 4),mode='reflect').squeeze()),
             transforms.ToPILImage(),
             transforms.RandomCrop(32),
             transforms.RandomHorizontalFlip(),
@@ -93,7 +93,7 @@ def main():
     assert(args.dataset == 'cifar100')
     train_loader = torch.utils.data.DataLoader(
         datasets.__dict__[args.dataset.upper()]('../data', train=True, download=True,
-                         transform=transform_train),
+                                                transform=transform_train),
         batch_size=args.batch_size, shuffle=True, **kwargs)
     val_loader = torch.utils.data.DataLoader(
         datasets.__dict__[args.dataset.upper()]('../data', train=False, transform=transform_test),

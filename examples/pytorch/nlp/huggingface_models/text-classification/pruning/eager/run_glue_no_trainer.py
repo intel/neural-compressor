@@ -524,10 +524,10 @@ def main():
     # pruner.on_train_begin()
     compression_manager = prepare_compression(model=model, confs=configs)
     compression_manager.callbacks.on_train_begin()
-    
+
     for epoch in range(args.num_train_epochs):
         model.train()
-        
+
         for step, batch in enumerate(train_dataloader):
             # pruner.on_step_begin(local_step=step)
             compression_manager.callbacks.on_step_begin(step)
@@ -544,7 +544,7 @@ def main():
                                                      teacher_outputs['hidden_states'][-1])  ##variant 3
 
             accelerator.backward(loss)
-            
+
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
                 # pruner.on_before_optimizer_step()
                 compression_manager.callbacks.on_before_optimizer_step()
