@@ -1,8 +1,27 @@
-## YOLOv5's Version
+Step-by-Step
+============
+
+This document presents step-by-step instructions for pruning PyTorch models using the Intel® Neural Compressor.
+
+# Prerequisite
+
+## 1. Environment
+
+PyTorch 1.8 or higher version is needed with pytorch_fx backend.
+
+```shell
+pip install -r examples/pytorch/object_detection/yolo_v5/pruning/eager/requirements.txt
+```
+
+## 2. Prepare Dataset
+
+Download [COCO](url=http://images.cocodataset.org/zips/) and unzip the COCO dataset to the path specified in coco.yaml, the default path is "../datasets/coco"
+
+## 3. YOLOv5's Version
+
 YOLOv5 pruned example is developed based on Version 6.2[YOLOv5]https://github.com/ultralytics/yolov5/releases/tag/v6.2
 
-
-## Examples
+# Run Examples
 Several pruning examples are provided, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
 
 There are pruning scripts for YOLOv5s sparse model. The sparse model with different patterns ("4x1", "1x1", etc) can be obtained by modifying "target_sparsity" and "pruning_pattern" parameters. [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/object_detection/yolo_v5/pruning/eager/scripts/).
