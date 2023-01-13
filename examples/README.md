@@ -206,19 +206,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/image_recognition/SavedModel/efficientnet_v2_b0/quantization/ptq">SavedModel</a></td>
   </tr>
-  <tr>
-    <td>MobileNetV1_Saved</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/SavedModel/mobilenet_v1/quantization/ptq">SavedModel</a></td>
-  </tr>
-  <tr>
-    <td>MobileNetV2_Saved</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/SavedModel/mobilenet_v2/quantization/ptq">SavedModel</a></td>
-  </tr>
-  <tr>
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
