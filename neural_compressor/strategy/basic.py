@@ -232,7 +232,8 @@ class BasicTuneStrategy(TuneStrategy):
                         if hasattr(v, 'kwargs') and tuple_name in v.kwargs:
                             if v.kwargs[tuple_name] == 'kl':
                                 kl_op_type.add(op_type)
-                    logger.info("Suggested op types with KL algorithm are: {}".format(list(kl_op_type)))
+                    if kl_op_type:
+                        logger.info("Suggested op types with KL algorithm are: {}".format(list(kl_op_type)))
                     logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(list(all_op_type), self.last_tune_result[0]))
                     return
 
@@ -248,7 +249,8 @@ class BasicTuneStrategy(TuneStrategy):
             if hasattr(v, 'kwargs') and tuple_name in v.kwargs:
                 if v.kwargs[tuple_name] == 'kl':
                     kl_op_type.add(op_type)
-        logger.info("Suggested op types with KL algorithm are: {}".format(list(kl_op_type)))
+        if kl_op_type:
+            logger.info("Suggested op types with KL algorithm are: {}".format(list(kl_op_type)))
         tuning_op_types = copy.deepcopy(all_op_type)
         log_op_types = []
         if 'Conv2d' in all_op_type:
