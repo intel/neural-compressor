@@ -6,35 +6,35 @@ This document is used to list steps of reproducing TensorFlow Object Detection m
 ## Prerequisite
 
 
-### 1. Installation
+### 1. Environment
 Recommend python 3.6 or higher version.
 
+#### 1. Install Intel® Neural Compressor
 ```shell
-# Install Intel® Neural Compressor
 pip install neural-compressor
 ```
 
-### 2. Install Intel Tensorflow
+#### 2. Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
 
-### 3. Installation Dependency packages
+#### 3. Installation Dependency packages
 ```shell
 cd examples/tensorflow/object_detection/tensorflow_models/
 pip install -r requirements.txt
 cd faster_rcnn_inception_resnet_v2/quantization/ptq
 ```
 
-### 4. Install Protocol Buffer Compiler
+#### 4. Install Protocol Buffer Compiler
 
 `Protocol Buffer Compiler` in version higher than 3.0.0 is necessary ingredient for automatic COCO dataset preparation. To install please follow
 [Protobuf installation instructions](https://grpc.io/docs/protoc-installation/#install-using-a-package-manager).
 
-### 5. Install Intel Extension for Tensorflow
+#### 5. Install Intel Extension for Tensorflow
 
-#### Quantizing the model on Intel GPU
+##### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
@@ -42,14 +42,21 @@ pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
 For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
 
-#### Quantizing the model on Intel CPU(Experimental)
+##### Quantizing the model on Intel CPU(Experimental)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-### 6. Prepare Dataset
+### 2. Prepare Model
+
+```shell
+wget http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
+tar -xvzf faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
+```
+
+### 3. Prepare Dataset
 
 #### Automatic dataset download
 
@@ -70,33 +77,29 @@ tensorflow records using the `https://github.com/tensorflow/models.git` dedicate
 #### Manual dataset download
 Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
 
-### 7. Download Model
-
-#### Manual approach
-
-##### faster_rcnn_inception_resnet_v2
-
-```shell
-wget http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
-tar -xvzf faster_rcnn_inception_v2_coco_2018_01_28.tar.gz
-```
 
 ## Run Command
 
+### Tune
 Now we support both pb and saved_model formats.
 
-### For PB model
+#### For PB model
   
   ```shell
   # The cmd of running faster_rcnn_inception_resnet_v2
   bash run_tuning.sh --input_model=./faster_rcnn_inception_v2_coco_2018_01_28/frozen_inference_graph.pb --output_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
-### For saved_model model
+#### For saved_model model
   
   ```shell
   # The cmd of running faster_rcnn_inception_resnet_v2
   bash run_tuning.sh --input_model=./faster_rcnn_inception_v2_coco_2018_01_28/saved_model/ --output_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  ```
+
+### Bencharmk
+  ```shell
+  bash run_benchmark.sh --input_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
   ```
 
 Details of enabling Intel® Neural Compressor on faster_rcnn_inception_resnet_v2 for Tensorflow.
