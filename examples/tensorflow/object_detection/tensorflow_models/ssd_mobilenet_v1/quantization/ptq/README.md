@@ -55,8 +55,7 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 Run the `prepare_model.py` script located in `examples/tensorflow/object_detection/tensorflow_models/ssd_mobilenet_v1/quantization/ptq`.
 
 ```
-usage: prepare_model.py [-h] [--model_name {ssd_resnet50_v1,ssd_mobilenet_v1}]
-                        [--model_path MODEL_PATH]
+python prepare_model.py --model_name=ssd_mobilenet_v1 --model_path=./
 
 Prepare pre-trained model for COCO object detection
 
@@ -116,7 +115,7 @@ Now we support both pb and ckpt formats.
   bash run_tuning.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28/ --output_model=./tensorflow-ssd_mobilenet_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
-### Bencharmk
+### Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./tensorflow-ssd_mobilenet_v1-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
   ```

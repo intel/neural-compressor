@@ -87,7 +87,7 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
   bash run_tuning.sh --input_model=./faster_rcnn_resnet50_fp32_coco_pretrained_model/frozen_inference_graph.pb --output_model=./tensorflow-faster_rcnn_resnet50-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
-### Bencharmk
+### Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./tensorflow-faster_rcnn_resnet50-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
   ```

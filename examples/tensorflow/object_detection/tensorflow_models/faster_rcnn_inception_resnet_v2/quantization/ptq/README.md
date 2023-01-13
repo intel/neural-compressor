@@ -97,7 +97,7 @@ Now we support both pb and saved_model formats.
   bash run_tuning.sh --input_model=./faster_rcnn_inception_v2_coco_2018_01_28/saved_model/ --output_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
-### Bencharmk
+### Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
   ```

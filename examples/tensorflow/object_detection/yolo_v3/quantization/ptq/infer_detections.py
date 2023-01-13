@@ -70,7 +70,7 @@ class NMS():
         filtered_boxes = non_max_suppression(preds,
                                              self.conf_threshold,
                                              self.iou_threshold)
-        breakpoint()
+
         det_boxes = []
         det_scores = []
         det_classes = []

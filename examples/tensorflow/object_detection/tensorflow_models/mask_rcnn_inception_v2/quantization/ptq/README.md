@@ -97,7 +97,7 @@ Now we support both pb and ckpt formats.
   bash run_tuning.sh --input_model=./mask_rcnn_inception_v2_coco_2018_01_28/ --output_model=./tensorflow-mask_rcnn_inception_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
-### Bencharmk
+### Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./tensorflow-mask_rcnn_inception_v2-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
   ```

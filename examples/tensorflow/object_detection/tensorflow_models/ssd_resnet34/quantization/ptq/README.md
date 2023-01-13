@@ -86,7 +86,7 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
   bash run_tuning.sh --input_model=./ssd_resnet34_fp32_1200x1200_pretrained_model/frozen_inference_graph.pb --output_model=./tensorflow-ssd_resnet34-tune.pb --dataset_location=/path/to/dataset/coco_val.record --anno_path=./label_map.yaml
   ```
 
-### Bencharmk
+### Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./tensorflow-ssd_resnet34-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
   ```
