@@ -222,11 +222,17 @@ class BasicTuneStrategy(TuneStrategy):
 
                 if self.objectives.compare(self.last_tune_result, self.baseline):
                     all_op_type = set()
+                    kl_op_type = set()
                     for k ,v in op_tuning_cfg.items():
                         if len(k) != 2:
                             continue
                         op_name, op_type = k
                         all_op_type.add(op_type)
+                        tuple_name = ('activation', 'algorithm')
+                        if hasattr(v, 'kwargs') and tuple_name in v.kwargs:
+                            if v.kwargs[tuple_name] == 'kl':
+                                kl_op_type.add(op_type)
+                    logger.info("Op types with KL algorithm are: {}".format(list(kl_op_type)))
                     logger.info("Suggested FP8 op types are: {}; Accuracy is {}".format(list(all_op_type), self.last_tune_result[0]))
                     return
 
