@@ -1,30 +1,9 @@
-Step-by-Step
-============
-
-This document presents step-by-step instructions for pruning PyTorch models using the Intel® Neural Compressor.
-
-# Prerequisite
-
-## 1. Environment
-
-PyTorch 1.8 or higher version is needed with pytorch_fx backend.
-
-```shell
-pip install -r examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/requirements.txt
-```
-
-## 2. Prepare Dataset
-
-The dataset will be downloaded automatically from the datasets Hub.
-See more about loading dataset:https://huggingface.co/docs/datasets/loading_datasets.html
-
-
-# Run Examples
+## Examples
 Several pruning examples are provided, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
 
 There are pruning scripts for MPRC and SST2 sparse models (Bert-mini, Distilbert-base-uncased, etc). The sparse model with different patterns ("4x1", "2:4", "1xchannel", etc) can be obtained by modifying "target_sparsity" and "pruning_pattern" parameters. [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/).
 
-Dense model can also be fine-tuned on glue datasets (by setting --do_prune to False) [Bert-mini MRPC](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/bertmini_mrpc_dense_finetune.sh)
+Dense model can also be fine-tuned on glue datasets (by setting --do_prune to False) [Bert-mini MRPC](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/bertmini_mrpc_dense_finetune.sh) 
 
 To try to train a sparse model in mixed pattern [Mixed-patterns Example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/run_glue_no_trainer_mixed.py), local pruning config can be set as follows:
 ```python
