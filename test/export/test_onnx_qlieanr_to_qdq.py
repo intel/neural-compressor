@@ -12,6 +12,9 @@ from neural_compressor import options
 from neural_compressor.config import ONNXQlinear2QDQConfig
 from neural_compressor.experimental.common import Model
 
+OPSET = onnx.OperatorSetIdProto()
+OPSET.version = 17
+
 def build_model():
     initializers = []
     input = helper.make_tensor_value_info('input', TensorProto.FLOAT, [1, 3, 15, 15])
@@ -375,7 +378,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                               kernel_shape=[3, 3], 
                                               pads=[1, 1, 1, 1])
             graph = helper.make_graph([conv_node], 'test_graph_1', [A, B, C], [D])
-            model = helper.make_model(graph)
+            model = helper.make_model(graph, opset_imports=[OPSET])
             q_config = {op: self.static_q_config},
             quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                                "B": [np.uint8(10.), np.float32(0)],
@@ -391,7 +394,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 1, 5, 1])
         matmul_node = onnx.helper.make_node('MatMul', ['A', 'B'], ['C'], name='Matmul')
         graph = helper.make_graph([matmul_node], 'test_graph_1', [A, B], [C])
-        model = helper.make_model(graph)
+        model = helper.make_model(graph, opset_imports=[OPSET])
         q_config = {"Matmul": self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                            "B": [np.uint8(10.), np.float32(0)],
@@ -451,7 +454,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 10, 4])
         node = onnx.helper.make_node('Gather', ['A', 'B'], ['C'], name='Gather')
         graph = helper.make_graph([node], 'test_graph_1', [A, B], [C], [A_init, B_init])
-        model = helper.make_model(graph)
+        model = helper.make_model(graph, opset_imports=[OPSET])
         q_config = {'Gather': {"weight":{'dtype': 2,
                                          'algorithm': 'minmax',
                                          'scheme':'asym',
@@ -480,7 +483,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
         q_model.export('./test.onnx', self.config)
         graph = helper.make_graph([node], 'test_graph_1', [A, B], [C])
-        model = helper.make_model(graph)
+        model = helper.make_model(graph, opset_imports=[OPSET])
         q_config = {'Gather': {"weight":{'dtype': 3,
                                          'algorithm': 'minmax',
                                          'scheme':'sym',
@@ -502,7 +505,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [1, 10])
             node = onnx.helper.make_node(op, ['A', 'B'], ['C'], name=op)
             graph = helper.make_graph([node], 'test_graph_1', [A, B], [C])
-            model = helper.make_model(graph)
+            model = helper.make_model(graph, opset_imports=[OPSET])
             q_config = {op: self.static_q_config}
             quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                                "B": [np.uint8(10.), np.float32(0)],
@@ -530,7 +533,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [1, 10])
             node = onnx.helper.make_node(op, ['A'], ['B'], name=op)
             graph = helper.make_graph([node], 'test_graph_1', [A], [B])
-            model = helper.make_model(graph)
+            model = helper.make_model(graph, opset_imports=[OPSET])
             q_config = {op: config}
             quantize_params = {"A": [np.uint8(10.), np.float32(0)],
                                "B": [np.uint8(10.), np.float32(0)]}
@@ -542,7 +545,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             A_init = helper.make_tensor('A', TensorProto.FLOAT, [1, 10],
                                         a_value.reshape(10).tolist())
             graph = helper.make_graph([node], 'test_graph_1', [A], [B], [A_init])
-            model = helper.make_model(graph)
+            model = helper.make_model(graph, opset_imports=[OPSET])
             q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
             q_model.export('./test.onnx', self.config)
 
@@ -575,7 +578,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                           pads=[1, 1, 1, 1])
         pool_node = onnx.helper.make_node(op, ['C'], ['D'], name=op, kernel_shape=[1, 1])
         graph = helper.make_graph([conv_node, pool_node], 'test_graph_1', [A, B], [D])
-        model = helper.make_model(graph)
+        model = helper.make_model(graph, opset_imports=[OPSET])
  
         q_config = {"Conv": self.static_q_config, op: self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
@@ -612,7 +615,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                           pads=[1, 1, 1, 1])
         pool_node = onnx.helper.make_node(op, ['C'], ['D'], name=op)
         graph = helper.make_graph([conv_node, pool_node], 'test_graph_1', [A, B], [D])
-        model = helper.make_model(graph)
+        model = helper.make_model(graph, opset_imports=[OPSET])
  
         q_config = {"Conv": self.static_q_config, op: self.static_q_config}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],
@@ -634,7 +637,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                           pads=[1, 1, 1, 1])
         pool_node = onnx.helper.make_node("MaxPool", ['C'], ['D'], name="MaxPool", kernel_shape=[1, 1])
         graph = helper.make_graph([conv_node, pool_node], 'test_graph_1', [A, B], [D])
-        model = helper.make_model(graph)
+        model = helper.make_model(graph, opset_imports=[OPSET])
 
         q_config = {"Conv": self.static_q_config, "MaxPool": "fp32"}
         quantize_params = {"A": [np.uint8(10.), np.float32(0)],

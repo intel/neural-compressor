@@ -5,26 +5,24 @@ This document describes the step-by-step instructions for reproducing PyTorch Bl
 
 # Prerequisite
 
-## 1. Installation
+## 1. Environment
 
 ```Shell
 cd examples/pytorch/nlp/blendcnn/distillation/eager
 pip install torch==1.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
-## 2. Prepare model and Dataset
-
-Download [BERT-Base, Uncased](https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip) and
-[GLUE MRPC Benchmark Datasets](https://github.com/nyu-mll/GLUE-baselines)
-
-### model
+## 2. Prepare model
+Download [BERT-Base, Uncased](https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip) 
 
 ```Shell
 mkdir models/ && mv uncased_L-12_H-768_A-12.zip models/
 cd models/ && unzip uncased_L-12_H-768_A-12.zip
+```
 
-### dataset
-
+## 3. Prepare Datasets
+Download 
+[GLUE MRPC Benchmark Datasets](https://github.com/nyu-mll/GLUE-baselines), 
 After downloads dataset, you need to put dataset at `./MRPC/`, list this:
 
 ```Shell
@@ -32,19 +30,16 @@ ls MRPC/
 dev_ids.tsv  dev.tsv  test.tsv  train.tsv
 ```
 
-## 3. Distillation of BlendCNN with BERT-Base as Teacher
-
-### 3.1 Fine-tune the pretrained BERT-Base model on MRPC dataset
-
-After preparation of step 2, you can fine-tune the pretrained BERT-Base model on MRPC dataset with below steps.
+# Distillation
+## 1 Fine-tune the pretrained BERT-Base model on MRPC dataset
 ```Shell
 mkdir -p models/bert/mrpc
 # fine-tune the pretrained BERT-Base model
 python finetune.py config/finetune/mrpc/train.json
 ```
-When finished, you can find the fine-tuned BERT-Base model weights model_final.pt at `./models/bert/mrpc/`.
 
-### 3.2 Distilling the BlendCNN with BERT-Base
+## 2 Distilling the BlendCNN with BERT-Base
+Now BERT-Base model weights model_final.pt at `./models/bert/mrpc/`.
 
 ```Shell
 mkdir -p models/blendcnn/

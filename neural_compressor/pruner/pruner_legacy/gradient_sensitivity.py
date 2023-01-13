@@ -120,6 +120,11 @@ class GradientSensitivityPruner(Pruner):
                 self.update_importance_elementwise(self.model,
                                                    self.importance,
                                                    weight_name)
+                if weight_name in self.masks:
+                    new_weight = self.masks[weight_name].reshape(\
+                            np.array(self.model.get_weight(weight_name).shape)) * \
+                            np.array(self.model.get_weight(weight_name))
+                    self.model.update_weights(weight_name, new_weight)
         else:
             for weight_name_raw in self.weights:
                 for weight_name in self.parse_weight_name(weight_name_raw):

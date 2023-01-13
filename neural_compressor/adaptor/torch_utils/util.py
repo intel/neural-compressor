@@ -73,31 +73,35 @@ def _set_input_scale_hook(model, op_cfgs):
         hook_list (list): the input observer hooks
     """
     def input_scale_hook(module, input):
-        module.input_observer = module.qconfig.activation().to(next(module.parameters()).device)
+        assert hasattr(module, 'input_observer'), \
+            'Expect input_observer attribute already attached to the module'
         module.input_observer(input[0])
         return input
 
     def output_scale_hook(module, input, output):
-        module.output_observer = module.qconfig.activation().to(next(module.parameters()).device)
+        assert hasattr(module, 'output_observer'), \
+            'Expect output_observer attribute already attached to the module'
         module.output_observer(output)
         return output
 
     def ConvReLU2d_scale_hook(module, input):
-        device = next(module.parameters()).device
-        module.input_observer = module.qconfig.activation().to(device)
+        assert hasattr(module, 'input_observer'), \
+            'Expect input_observer attribute already attached to the module'
+        assert hasattr(module, 'output_observer'), \
+            'Expect output_observer attribute already attached to the module'
         module.input_observer(input[0])
         output = module._conv_forward(input[0], module.weight_fake_quant(module.weight), module.bias)
-        module.output_observer = module.qconfig.activation().to(device)
         module.output_observer(output)
         return input
 
     def LinearReLU_scale_hook(module, input):
         import torch.nn.functional as F
-        device = next(module.parameters()).device
-        module.input_observer = module.qconfig.activation().to(device)
+        assert hasattr(module, 'input_observer'), \
+            'Expect input_observer attribute already attached to the module'
+        assert hasattr(module, 'output_observer'), \
+            'Expect output_observer attribute already attached to the module'
         module.input_observer(input[0])
         output = F.linear(input[0], module.weight_fake_quant(module.weight), module.bias)
-        module.output_observer = module.qconfig.activation().to(device)
         module.output_observer(output)
         return input
 
@@ -107,22 +111,27 @@ def _set_input_scale_hook(model, op_cfgs):
           'Linear' in str(module.__class__.__name__):
             if not hasattr(module, 'qconfig') or not module.qconfig:
                 continue
+            device = next(module.parameters()).device
             from torch.nn.intrinsic.qat import ConvBn2d, ConvReLU2d, ConvBnReLU2d, LinearReLU
             if type(module) in [ConvBn2d, ConvBnReLU2d]:
+                module.input_observer = module.qconfig.activation().to(device)
                 handle_in = module.register_forward_pre_hook(input_scale_hook)
                 # module[0] == torch.nn.BatchNorm2d
                 module[0].qconfig = module.qconfig
+                module[0].output_observer = module[0].qconfig.activation().to(device)
                 handle_out = module[0].register_forward_hook(output_scale_hook)
                 hook_list.extend([handle_in, handle_out])
-            elif type(module) in [ConvReLU2d]:
-                handle_in_out = module.register_forward_pre_hook(ConvReLU2d_scale_hook)
-                hook_list.extend([handle_in_out])
-            elif type(module) in [LinearReLU]:
-                handle_in_out = module.register_forward_pre_hook(LinearReLU_scale_hook)
+            elif type(module) in [ConvReLU2d, LinearReLU]:
+                module.input_observer = module.qconfig.activation().to(device)
+                module.output_observer = module.qconfig.activation().to(device)
+                handle_in_out = module.register_forward_pre_hook(ConvReLU2d_scale_hook if \
+                                        type(module) == ConvReLU2d else LinearReLU_scale_hook)
                 hook_list.extend([handle_in_out])
             else:
                 if is_fused_module(module):
                     continue
+                module.input_observer = module.qconfig.activation().to(device)
+                module.output_observer = module.qconfig.activation().to(device)
                 handle_in = module.register_forward_pre_hook(input_scale_hook)
                 handle_out = module.register_forward_hook(output_scale_hook)
                 hook_list.extend([handle_in, handle_out])
@@ -214,7 +223,7 @@ def input2tuple(input):
     return output
 
 
-def append_attr(fx_model, model):
+def append_attr(fx_model, model, fx_white_list=[]):
     """This is a helper method to append attributes for the symbolic traced model.
 
     Args:
@@ -226,18 +235,24 @@ def append_attr(fx_model, model):
     """
     fx_attr = dir(fx_model)
     org_attr = dir(model)
-    ignore_match_patterns = [r"_", r"quant", r"dequant", r"weight", 
+    ignore_match_patterns = [r"_", r"quant", r"dequant", r"weight",
                             r"bias", r'activation_post_process']
-    ignore_search_patterns = [r"_scale_", r"_zero_point_", 
+    ignore_search_patterns = [r"_scale_", r"_zero_point_",
                             r'_activation_post_process_']
+    add_special_patterns = [r"_forward_hooks", r"_forward_pre_hooks", r"_backward_hooks"]
     attr_names = []
     for i in org_attr:
-        if i not in fx_attr and \
-          not any([re.match(p, i) for p in ignore_match_patterns]) and \
-          not any([re.search(p, i) for p in ignore_search_patterns]) :
+        if type(model) in fx_white_list and type(model) != torch.nn.Sequential \
+          and any([re.search(p, i) for p in add_special_patterns]):
+            continue
+        if any([re.search(p, i) for p in add_special_patterns]) \
+          or (i not in fx_attr \
+              and not any([re.match(p, i) for p in ignore_match_patterns]) \
+              and not any([re.search(p, i) for p in ignore_search_patterns])) :
             attr_names.append(i)
     for name in attr_names:
-        attr = getattr(model, name)
+        attr = getattr(model, name, None)
+
         if isinstance(attr, torch.nn.Module) or \
           isinstance(attr, torch.quantization.qconfig.QConfig):
             continue
@@ -256,7 +271,7 @@ def generate_activation_observer(scheme, algorithm): # pragma: no cover
         An observer.
     """
     kl_activation_observer = {
-                    'name': 'HistogramObserver', 
+                    'name': 'HistogramObserver',
                     'bins': 2048,
                     'upsample_rate': 128,
                     'dtype': 'torch.quint8',
@@ -334,7 +349,7 @@ def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                             pre_op_module = pre_op_name[0][0]
                             pre_op_state = pre_op_name[0][1]
                             pre_op_index = pre_op_name[0][2]
-                            pre_op_infos = cfgs[pre_op_module][pre_op_state][pre_op_index] 
+                            pre_op_infos = cfgs[pre_op_module][pre_op_state][pre_op_index]
                             pre_op_output_infos = pre_op_infos['output_tensor_infos']
                             for index, pre_op_output in enumerate(pre_op_output_infos):
                                 if pre_op_output['id'] == input_tensor_id:
@@ -364,7 +379,7 @@ def paser_cfgs(cfgs): # pragma: no cover
     ops_name = []
     layer_output_infos_ids = []
     op_infos_from_cfgs = {}
-    # record input_tensor_id and op_name 
+    # record input_tensor_id and op_name
     #{"0": [(" ", "q_op_infos", "0"), (" ", "q_op_infos", "1")]}
     input_tensor_ids_op_name = {}
     output_tensor_ids_op_name = {}
@@ -646,7 +661,7 @@ def get_example_input(dataloader, i=1):
     return example_inp
 
 
-def get_fallback_order(adaptor, fp32_model, dataloader, tune_cfg, 
+def get_fallback_order(adaptor, fp32_model, dataloader, tune_cfg,
                        confidence_batches, fallback=False, requantize_cfgs=None):
     """Get the fall back order for strategy.
 

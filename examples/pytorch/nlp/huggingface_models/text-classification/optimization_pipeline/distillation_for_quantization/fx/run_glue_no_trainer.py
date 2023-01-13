@@ -21,6 +21,7 @@ import os
 import random
 import datasets
 from datasets import load_dataset, load_metric
+# from neural_compressor import set_distillation_record
 import torch
 from torch.utils.data import DataLoader
 import torch.distributed as dist
@@ -208,10 +209,10 @@ def save_checkpoint(state, is_best, save_dir):
     """Saves checkpoint to disk"""
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    filename = save_dir + "checkpoint.pth"
+    filename = save_dir + "/checkpoint.pth"
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, save_dir + 'model_best.pth')
+        shutil.copyfile(filename, save_dir + '/model_best.pth')
 
 def train(args, model, train_dataloader, lr_scheduler, compression_manager, optimizer, eval_dataloader,
           metric):
@@ -538,13 +539,6 @@ def main():
     if args.do_quantization:
         from neural_compressor import QuantizationAwareTrainingConfig
         q_conf = QuantizationAwareTrainingConfig()
-
-        from transformers.utils.fx import symbolic_trace
-        for input in eval_dataloader:
-            input_names = input.keys()
-            break
-        model = symbolic_trace(model, input_names=input_names)
-
         combs.append(q_conf)
 
     if len(combs) == 0:

@@ -296,7 +296,6 @@ def main():
                 conf=quantization_config,
                 eval_func=eval_func,
                 calib_func=calibration_func,
-                calib_dataloader=DataLoader(CalibDataset(), batch_size=1),
             )
             setattr(pipe, name, model)
             model.save(args.output_dir)
