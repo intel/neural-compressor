@@ -198,7 +198,7 @@ class TuneStrategy(object):
                 tag=tune_cfg_id # tag, the index of tune cfg 0,1,2,3
             )
 
-        self.cur_cfg_id = size + 1   # 4 master should be aware of the next config id to send
+        self.cur_cfg_id = min(len(self.tune_cfg_lst) + 1, size)   # 4 master should be aware of the next config id to send
         self.eval_results = []  # all results
         self.num_acks = 0 # number of all response acks, break when it equals to len()
         status = MPI.Status() # used to obtain the source and the tag for each received message
