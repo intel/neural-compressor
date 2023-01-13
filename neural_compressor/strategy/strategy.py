@@ -183,6 +183,170 @@ class TuneStrategy(object):
         """
         raise NotImplementedError
 
+    def _collect_eval_result(eval_res): # may need reducing to best result later
+        self.eval_results.append(eval_res)
+
+    def master_worker_handle(self, comm):
+        # send all task ids to all free nodes, and wait until any result
+        # when receving any result, directly send a new task id to the sender (it's free)
+        size = comm.Get_size()
+        for process_id in range(1, min(len(self.tune_cfg_lst) + 1, size)):
+            tune_cfg_id = process_id - 1
+            comm.send(
+                obj=tune_cfg_id, # tune cfg ? do we need that?
+                dest=process_id, # rank 0 send to rank 1, 2, ...
+                tag=tune_cfg_id # tag, the index of tune cfg 0,1,2,3
+            )
+
+        self.cur_cfg_id = size + 1   # 4 master should be aware of the next config id to send
+        self.eval_results = []  # all results
+        self.num_acks = 0 # number of all response acks, break when it equals to len()
+        status = MPI.Status() # used to obtain the source and the tag for each received message
+
+        # stuck here to receive any result
+        while True:
+            eval_res = comm.recv(
+                source=MPI.ANY_SOURCE,
+                tag=MPI.ANY_TAG,
+                status=status   # get MPI status object
+            )
+            sender_rank = status.Get_source() # sender rank
+            tag = status.Get_tag() # the task id that is finished
+
+            # collect the result and send a new task to the sender
+            self._collect_eval_result(eval_res)
+            if cur_cfg_id <= len(self.tune_cfg_lst):
+                comm.send(dest=sender_rank, tag=self.cur_cfg_id)
+                self.cur_cfg_id += 1
+            else:
+                print("all tune configs are sent, no more sending, just collecting...")
+
+            if len(self.tune_cfg_lst) == self.num_acks:    # all collected (ack should collected == acks)
+                break
+
+        # send END signal to all other slaves
+        for process_id in range(1, size + 1):
+            comm.send(
+                dest=process_id, # rank 0 send to rank 1, 2, ...
+                tag="END"
+            )
+        # comm.bcast("END", root=0)   # bcast end signal to all
+        print(eval_results)
+        # self.get_best_eval_results(eval_results)
+
+
+    def slave_worker_handle(comm):
+        # when receving any task id, find it in tune_cfg_lst and do it
+        while True:
+            task = comm.recv(
+                    source=MPI.ANY_SOURCE,
+                    tag=MPI.ANY_TAG,
+                    status=status   # sender (master)
+                )
+
+            if status.Get_tag() == "END":
+                # master tells us can break, not more cfgs...
+                break
+            # set the task id for the slave
+            cfx_idx == status.Get_tag()
+            op_tuning_cfg = self.tune_cfg_lst[cfx_idx]
+
+            # do the following stuff...
+            trials_count = 0
+            traverse_start_time = time()
+            # for op_tuning_cfg in self.next_tune_cfg():    # instead of using this, just run the above op_tuning_cfg
+            tuning_start_time = time()
+            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
+            trials_count += 1
+            tuning_history = self._find_tuning_history(tune_cfg)
+            if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
+                self.last_tune_result = tuning_history['last_tune_result']
+                self.best_tune_result = tuning_history['best_tune_result']
+                logger.warn("Find evaluated tuning config, skip.")
+                continue
+            logger.debug("Dump current tuning configuration:")
+            logger.debug(tune_cfg)
+
+            self.tuning_times += 1
+            self.q_model = self.adaptor.quantize(
+                copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
+            self.algo.calib_iter = tune_cfg['calib_iteration']
+            self.algo.q_model = self.q_model
+            # TODO align the api to let strategy has access to pre_optimized model
+            assert self.adaptor.pre_optimized_model
+            self.algo.origin_model = self.adaptor.pre_optimized_model
+            if self.cfg.quantization.recipes.fast_bias_correction:
+                self.algo.algorithms[0].quantization_cfg = tune_cfg
+            self.last_qmodel = self.algo()
+            assert self.last_qmodel
+            self.last_tune_result = self._evaluate(self.last_qmodel)
+            # self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
+            # need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
+
+            # # record the tuning history
+            # saved_tune_cfg = copy.deepcopy(tune_cfg)
+            # saved_last_tune_result = copy.deepcopy(self.last_tune_result)
+            # self._add_tuning_history(saved_tune_cfg,
+            #                         saved_last_tune_result,
+            #                         q_config=self.q_model.q_config)
+            # self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
+            # self.tune_cfg = tune_cfg
+            # now_time = time()
+            # acc_res_msg = ""
+            # performace_res_msg = ""
+            # if self.tuning_result_data:
+            #     acc_res_msg = "[ " + "| ".join(self.tuning_result_data[0]) + " ]"
+            #     performace_res_msg = "[ " + "| ".join(self.tuning_result_data[1]) + " ]"
+            # logger.debug(f"*** The accuracy of last tuning is: {acc_res_msg}")
+            # logger.debug(f"*** The perfomance of last tuning is: {performace_res_msg}")
+            # logger.debug(f"*** The last tuning time: {(now_time - tuning_start_time):.2f} s")
+            # logger.debug(f"*** The tuning process lasted time: {(now_time - traverse_start_time):.2f} s")
+            
+            # self._dump_tuning_process_statistics()
+            ##### send back the tuning statistics #########
+            comm.send(
+                obj=self.last_tune_result ## what should we put in eval result??
+                dest=0, # rank 0 send to rank 1, 2, ...
+                tag=cfx_idx
+            )
+            # if need_stop:
+            #     if self.re_quant:
+            #         logger.info("*** Do not stop the tuning process, re-quantize the ops.")
+            #         continue
+            #     if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
+            #         logger.debug(f'*** Start to do diagnosis (inspect tensor).')
+            #         self._diagnosis()
+            #     if self.use_multi_objective and len(self.tune_result_record) > 1 and \
+            #         self.best_tune_result is not None:
+            #         best_trail, best_result = self.objectives.best_result(self.tune_result_record,
+            #                                                             copy.deepcopy(self.baseline))
+            #         if best_result != self.best_tune_result:
+            #             from neural_compressor.utils.utility import recover
+            #             self.best_qmodel = recover(self.model.model, 
+            #                 os.path.join(self.cfg.tuning.workspace.path, 'history.snapshot'),
+            #                 best_trail)
+            #             logger.debug(f"*** Update the best qmodel by recovering from history.")
+            #             self.best_tune_result = best_result
+            #         self._dump_tuning_process_statistics()
+            #     break
+            
+
+        
+
+    def distributed_traverse(self):
+        from mpi4py import MPI
+        comm = MPI.Comm()
+        rank = comm.Get_rank()
+
+        # make sure every worker holds the whole tune_cfg_lst
+        self.tune_cfg_lst = []
+        for op_tuning_cfg in self.next_tune_cfg():
+            self.tune_cfg_lst.append(op_tune_cfg)
+
+        if rank == 0:
+            self.master_worker_handle(comm)
+        else:
+            self.slave_worker_handle(comm)
 
     def traverse(self):
         """Traverse the tuning space.
@@ -208,6 +372,9 @@ class TuneStrategy(object):
             # record the FP32 baseline
             self._add_tuning_history()
         self.show_baseline_info()
+
+        if self.cfgs.num_worker > 1:
+            return self.distributed_traverse()
 
         trials_count = 0
         traverse_start_time = time()
