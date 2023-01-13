@@ -5,9 +5,11 @@ This document is used to enable Tensorflow efficientnet_v2_b0 SavedModel format 
 This example can run on Intel CPUs and GPUs.
 
 
-## Prerequisite
+# Prerequisite
 
-### 1. Installation
+## Environment
+
+### 1. Install Intel® Neural Compressor
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
@@ -34,13 +36,13 @@ Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's no
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-### 4. Prepare Pretrained model
+## Prepare Pretrained model
 Download the mobilenetv1 model from tensorflow-hub.
 
 image recognition
 - [efficientnet_v2_b0](https://tfhub.dev/google/imagenet/efficientnet_v2_imagenet1k_b0/classification/2)
 
-### 5. Prepare Dataset
+## Prepare Dataset
 
 Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/ImageNet. The dir include below folder and files:
 
@@ -49,13 +51,13 @@ ls /path/to/ImageNet
 ILSVRC2012_img_val  val.txt
 ```
 
-## Run Command
-### 1. Quantization
+# Run Command
+## 1. Quantization
   ```shell
   bash run_tuning.sh --input_model=./SavedModel --output_model=./nc_SavedModel --dataset_location=/path/to/ImageNet/
   ```
 
-### 2. Benchmark
+## 2. Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./SavedModel --mode=accuracy --dataset_location=/path/to/ImageNet/ --batch_size=32
   bash run_benchmark.sh --input_model=./SavedModel --mode=performance --dataset_location=/path/to/ImageNet/ --batch_size=1

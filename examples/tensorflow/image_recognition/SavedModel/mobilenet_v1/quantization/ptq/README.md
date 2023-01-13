@@ -5,9 +5,11 @@ This document is used to enable Tensorflow mobilenetv1 SavedModel format using I
 This example can run on Intel CPUs and GPUs.
 
 
-## Prerequisite
+# Prerequisite
 
-### 1. Installation
+## Environment
+
+### 1. Install Intel® Neural Compressor
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
@@ -34,23 +36,23 @@ Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's no
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-### 4. Prepare Pretrained model
+## Prepare Pretrained model
 Download the mobilenetv1 model from tensorflow-hub.
 
 image recognition
 - [mobilenetv1](https://tfhub.dev/google/imagenet/mobilenet_v1_075_224/classification/5)
 
-### 5. Prepare Dataset
+## Prepare Dataset
 TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
 We also prepared related scripts in [TF image_recognition example](../../tensorflow/image_recognition/tensorflow_models/quantization/ptq/README.md#2-prepare-dataset).
 
-## Run Command
-### 1. Quantization
+# Run Command
+## 1. Quantization
   ```shell
   bash run_tuning.sh --input_model=./SavedModel --output_model=./nc_SavedModel --dataset_location=/path/to/imagenet/
   ```
 
-### 2. Benchmark
+## 2. Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./SavedModel --mode=accuracy --dataset_location=/path/to/imagenet/ --batch_size=32
   bash run_benchmark.sh --input_model=./SavedModel --mode=performance --dataset_location=/path/to/imagenet/ --batch_size=1

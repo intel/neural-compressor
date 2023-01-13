@@ -400,7 +400,7 @@
     },
     "efficientnet_v2_b0": {
       "model_src_dir": "image_recognition/SavedModel/efficientnet_v2_b0/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
+      "dataset_location": "/tf_dataset2/datasets/imagenet/ImagenetRaw/",
       "input_model": "/tf_dataset/tensorflow/saved_model/efficientnet_v2",
       "main_script": "main.py",
       "batch_size": 100
