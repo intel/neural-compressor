@@ -239,8 +239,8 @@ class BasicTuneStrategy(TuneStrategy):
 
         all_op_type = set()
         kl_op_type = set()
-        new_op_tuning_cfg = deepcopy(self.cur_best_tuning_cfg)
-        for k ,v in new_op_tuning_cfg.items():
+        op_tuning_cfg = deepcopy(self.cur_best_tuning_cfg)
+        for k ,v in op_tuning_cfg.items():
             if len(k) != 2:
                 continue
             op_name, op_type = k
