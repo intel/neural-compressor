@@ -650,11 +650,11 @@ def eval_ssd_r34_mlperf_coco(args):
             ssd_r34 = load(args.tuned_checkpoint, ssd_r34)
         else:
             from neural_compressor.adaptor.pytorch import get_example_inputs
-            example_inputs = get_example_inputs(model, val_dataloader)
-            model = ipex.optimize(model)
+            example_inputs = get_example_inputs(ssd_r34, val_dataloader)
+            ssd_r34 = ipex.optimize(ssd_r34)
             with torch.no_grad():
-                model = torch.jit.trace(model, example_inputs)
-                model = torch.jit.freeze(model)
+                ssd_r34 = torch.jit.trace(ssd_r34, example_inputs)
+                ssd_r34 = torch.jit.freeze(ssd_r34)
         from neural_compressor.config import BenchmarkConfig
         from neural_compressor import benchmark
         b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)

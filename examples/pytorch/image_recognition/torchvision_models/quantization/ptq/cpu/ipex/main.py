@@ -24,7 +24,7 @@ import torchvision.models.quantization as quantize_models
 import torchvision.models as models
 from neural_compressor.adaptor.pytorch import get_torch_version
 from packaging.version import Version
-import intel_extension_for_pytorch
+import intel_extension_for_pytorch as ipex
 
 
 model_names = sorted(name for name in models.__dict__
