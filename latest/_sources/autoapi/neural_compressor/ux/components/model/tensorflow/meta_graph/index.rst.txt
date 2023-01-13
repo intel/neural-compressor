@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: MetaGraphModel
+.. py:class:: MetaGraphModel(path: str)
 
    Bases: :py:obj:`neural_compressor.ux.components.model.tensorflow.model.TensorflowModel`
 
