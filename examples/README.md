@@ -36,121 +36,121 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet50 V1.0</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>ResNet50 V1.5</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>ResNet101</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/resnet101/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>MobileNet V1</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/mobilenet_v1/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>MobileNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/mobilenet_v2/quantization/ptq">keras</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/mobilenet_v2/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/mobilenet_v2/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>MobileNet V3</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/mobilenet_v3/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>Inception V1</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/inception_v1/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>Inception V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/inception_v2/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>Inception V3</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/inception_v3/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>Inception V4</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/inception_v4/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>Inception ResNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/inception_resnet_v2/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>VGG16</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/keras_models/vgg16/quantization/ptq">keras</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/vgg16/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/keras_models/vgg16/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>VGG19</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/keras_models/vgg19/quantization/ptq">keras</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/vgg19/quantization/ptq">pb</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/keras_models/vgg19/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2 50</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/resnetv2_50/quantization/ptq">keras</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/resnet_v2_50/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/resnetv2_50/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2 101</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/resnetv2_101/quantization/ptq">keras</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/resnet_v2_101/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/resnetv2_101/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2 152</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/resnet_v2_152/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>DenseNet121</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/densenet121/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>DenseNet161</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/densenet161/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>DenseNet169</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">pb</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/densenet169/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>EfficientNet B0</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq">ckpt</a></td>
+    <td><a href="./examples/tensorflow/image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq">ckpt</a></td>
   </tr>
   <tr>
     <td>MNIST </td>
