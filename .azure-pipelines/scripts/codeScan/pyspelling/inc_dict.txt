@@ -2513,3 +2513,5 @@ parameterization
 emsp
 frequence
 ema
+MobilenetV
+InceptionResnetV
