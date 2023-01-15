@@ -899,7 +899,7 @@ if __name__ == "__main__":
         print('tune')
         dlrm.eval()
         from neural_compressor import PostTrainingQuantConfig, quantization
-        conf = PostTrainingQuantConfig(approach="static")
+        conf = PostTrainingQuantConfig()
         q_model = quantization.fit(
                             dlrm,
                             conf=conf,

@@ -23,8 +23,7 @@ Classes includes:
     PyTorchIntermediateLayersKnowledgeDistillationLoss.
 """
 
-from abc import abstractmethod
-from collections import UserDict, Counter
+from collections import Counter
 from neural_compressor.utils.utility import LazyImport, singleton
 from neural_compressor.utils import logger
 from neural_compressor.adaptor.pytorch import pytorch_forward_wrapper
@@ -873,9 +872,9 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
             self.teacher_features[teacher_layer] = []
 
         self.loss_weights = [1.0 / len(layer_mappings)] * len(layer_mappings) \
-                            if loss_weights is None else loss_weights
+                            if (loss_weights is None or loss_weights == []) else loss_weights
         self.loss_types = ['MSE'] * len(layer_mappings) \
-                          if loss_types is None else loss_types
+                          if (loss_types is None or loss_types == []) else loss_types
         self.add_origin_loss = add_origin_loss
         self.loss_funcs = []
         self.feature_matchers = None
@@ -1098,7 +1097,8 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         if device != model_device:
             model.to(device)
         with torch.no_grad():
-            return pytorch_forward_wrapper(model, input, device=device)
+            outputs = pytorch_forward_wrapper(model, input, device=device)
+        return outputs
 
     def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
         """Calculate all losses between student model and teacher model.
@@ -1193,9 +1193,9 @@ class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
         param_dict = self.param_dict
         _params = ['layer_mappings', 'loss_types', 'loss_weights', 'add_origin_loss']
         layer_mappings = param_dict['layer_mappings']
-        if 'loss_types' not in param_dict:
+        if 'loss_types' not in param_dict or param_dict['loss_types'] == []:
             param_dict['loss_types'] = ['MSE'] * len(layer_mappings)
-        if 'loss_weights' not in param_dict:
+        if 'loss_weights' not in param_dict or param_dict['loss_weights'] == []:
             param_dict['loss_weights'] = [1.0 / len(layer_mappings)] * len(layer_mappings)
         if 'add_origin_loss' not in param_dict:
             param_dict['add_origin_loss'] = False

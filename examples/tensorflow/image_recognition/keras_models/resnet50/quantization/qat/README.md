@@ -31,7 +31,21 @@ pip install --upgrade intel-extension-for-tensorflow[gpu]
 Please refer to the [Installation Guides](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html) for latest Intel GPU driver installation.
 For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers).
 
-### 4. Prepare Pretrained model
+### 4. Prepare Dataset
+
+  TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
+  We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
+
+  ```shell
+  cd examples/tensorflow/image_recognition/keras_models/
+  # convert validation subset
+  bash prepare_dataset.sh --output_dir=/resnet50/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
+  # convert train subset
+  bash prepare_dataset.sh --output_dir=/resnet50/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
+  cd resnet50/quantization/ptq
+  ```
+
+### 5. Prepare Pretrained model
 
 The pretrained model is provided by [Keras Applications](https://keras.io/api/applications/). prepare the model, Run as follow: 
  ```

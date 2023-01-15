@@ -1,8 +1,18 @@
-## Examples
-we have provided several pruning examples, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
-### [SQuAD](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/question-answering/pruning)
+Step-by-Step
+============
+This document describes the step-by-step instructions for reproducing the pruning for Huggingface models.
 
-We can train a Squad sparse model with N:M(2:4) pattern:
+# Prerequisite
+## Environment
+```shell
+# install dependencies
+cd examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager
+pip install -r requirements.txt
+```
+
+# Pruning
+## 1. Train Sparse Model
+Train a sparse model with N:M(2:4) pattern on Squad:
 ```shell
 python3 ./run_qa_no_trainer.py \
         --model_name_or_path "/path/to/bertmini/dense_finetuned_model" \
@@ -24,7 +34,7 @@ python3 ./run_qa_no_trainer.py \
         --distill_loss_weight 4.5
 ```
 
-We can also choose NxM(4x1) as our pruning pattern:
+NxM(4x1) as pruning pattern:
 ```shell
 python ./run_qa_no_trainer.py \
         --model_name_or_path "/path/to/bertmini/dense_finetuned_model" \
@@ -45,7 +55,7 @@ python ./run_qa_no_trainer.py \
         --weight_decay  1e-7 \
         --distill_loss_weight 4.5
 ```
-
+## 2. Examples
 The pruning results of distilbert-base-uncased, bert-base-uncased and bert-large model can be obtained with the following:
 ```shell
 python run_qa_no_trainer.py \
@@ -107,7 +117,7 @@ python run_qa_no_trainer.py \
         --pruning_pattern "4x1" \
         --pruning_frequency 1000
 ```
-2:4 sparsity is similar to the above, only the target_sparsity and pruning_pattern need to be changed.
+2:4 sparsity is similar to the above, only the target_sparsity and pruning_pattern need to be changed. please refer to [Pruning Scripts](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager/scripts/) for details.
 
 Dense model fine-tune is also supported as following (by setting --do_prune to False):
 ```shell
@@ -123,8 +133,9 @@ python ./run_qa_no_trainer.py \
     --num_train_epochs 5 \
     --output_dir "./dense_qa_bertmini"
 ```
+Please refer to [Bert-mini SQuAD](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager/scripts/bertmini_dense_fintune.sh) for details.
 
-### Results
+## Results
 The snip-momentum pruning method is used by default and the initial dense models are all fine-tuned.
 |  Model  | Dataset  |  Sparsity pattern | Element-wise/matmul, Gemm, conv ratio | Dense F1 (mean/max)| Sparse F1 (mean/max)| Relative drop|
 |  :----:  | :----:  | :----: | :----: |:----: |:----:| :----: |
@@ -140,5 +151,6 @@ The snip-momentum pruning method is used by default and the initial dense models
 ## References
 * [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
 * [Knowledge Distillation with the Reused Teacher Classifier](https://arxiv.org/abs/2203.14001)
+
 
 

@@ -385,7 +385,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet18</td>
     <td>Image Recognition</td>
     <td>Quantization-Aware Training</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed">distributed</a></td>
   </tr>
   <tr>
     <td>ResNet50</td>
@@ -397,7 +397,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet50</td>
     <td>Image Recognition</td>
     <td>Quantization-Aware Training</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed">distributed</a></td>
   </tr>
   <tr>
     <td>ResNeXt101_32x16d_wsl</td>
@@ -634,7 +634,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Natural Language Processing</td>
     <td>Structured (2x1)</td>
     <td>Group Lasso</td>
-    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/legacy/group_lasso/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/question-answering/pruning/legacy/group_lasso/eager">eager</a></td>
   </tr>
 
   <tr>
@@ -642,28 +642,28 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Natural Language Processing (question-answering)</td>
     <td>Unstructured</td>
     <td>Prune once for all</td>
-    <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/legacy/pattern_lock/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/question-answering/pruning/legacy/pattern_lock/eager">eager</a></td>
   </tr>
   <tr>
     <td>bert-base-uncased</td>
     <td>Natural Language Processing</td>
     <td>Structured (Filter/Channel-wise)</td>
     <td>Gradient Sensitivity</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/legacy/gradient_sensitivity/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/pruning/legacy/gradient_sensitivity/eager">eager</a></td>
   </tr>
   <tr>
     <td>DistilBERT</td>
     <td>Natural Language Processing</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/legacy/magnitude/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/pruning/legacy/magnitude/eager">eager</a></td>
   </tr>
   <tr>
     <td>Intel/bert-base-uncased-sparse-70-unstructured</td>
     <td>Natural Language Processing (text-classification)</td>
     <td>Unstructured</td>
     <td>Prune once for all</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-classification/pruning/legacy/pattern_lock/eager">eager</a></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/pruning/legacy/pattern_lock/eager">eager</a></td>
   </tr>
 </tbody>
 </table>
@@ -794,6 +794,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Natural Language Processing (text-classification)</td>
     <td>One-shot: Pruning, Distillation and QAT<br></td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/prune_once_for_all/fx">link</a></td>
+  </tr>
+  <tr>
+    <td>BERT-mini</td>
+    <td>Natural Language Processing (text-classification)</td>
+    <td>One-shot: Pruning, Distillation<br></td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/prune_once_for_all/fx">link</a></td>
   </tr>
 </tbody>
 </table>

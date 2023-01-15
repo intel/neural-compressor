@@ -9,26 +9,20 @@ For more informations of this algorithm, please refer to the paper [Prune Once F
 
 # Prerequisite
 
-## Python Version
-
+## Environment
 Recommend python 3.6 or higher version.
-
-
-## Install dependency
 
 ```shell
 pip install -r requirements.txt
 ```
 
-# Start running neural_compressor implementation of Prune Once For All
+# Prune Once For All
 
 Below are example NLP tasks for Prune Once For All to fine tune the sparse BERT model on the specific task.
 <br>
 It requires the pre-trained task specific model such as `csarron/bert-base-uncased-squad-v1` from Huggingface portal as the teacher model for distillation, also the pre-trained sparse BERT model such as `Intel/bert-base-uncased-sparse-90-unstructured-pruneofa` from Intel Huggingface portal as the model for fine tuning.
 <br>
 The pattern lock pruning configuration is specified in yaml file i.e. prune.yaml, the quantization aware training configuration is specified in yaml file i.e. qat.yaml.
-
-## SQuAD task
 
 ```bash
 # for stage 1
@@ -49,6 +43,8 @@ python run_qa_no_trainer_pruneOFA.py --dataset_name squad \
       --temperature 2 --seed 5143 --pad_to_max_length  --run_teacher_logits \
       --resume /path/to/stage1_output_dir/best_model.pt
 ```
+
+## Distributed Data Parallel Training
 
 We also supported Distributed Data Parallel training on single node and multi nodes settings. To use Distributed Data Parallel to speedup training, the bash command needs a small adjustment.
 <br>

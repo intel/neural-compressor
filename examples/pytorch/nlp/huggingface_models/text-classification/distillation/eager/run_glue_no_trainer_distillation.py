@@ -236,7 +236,6 @@ def train(args, model, train_dataloader, scheduler, compression_manager, criteri
     completed_steps = 0
     best_prec = 0
 
-    compression_manager.callbacks.on_train_begin()
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
@@ -260,6 +259,7 @@ def train(args, model, train_dataloader, scheduler, compression_manager, criteri
 
             if completed_steps >= args.max_train_steps:
                 break
+
         compression_manager.callbacks.on_epoch_end()
         best_score = evaluation(model, eval_dataloader, metric)
         is_best = best_score > best_prec
@@ -620,8 +620,8 @@ def main():
                                                                  loss_weights=args.loss_weights)
         conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
         compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
         model = compression_manager.model
-
         train(args, model, train_dataloader, lr_scheduler, compression_manager, criterion, optimizer, eval_dataloader, metric)
         model = model.model
 

@@ -35,12 +35,11 @@ parser.add_argument('--prune', dest='prune', action='store_true',
                     help='prune sparse model on calibration dataset')
 parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                     help='use pre-trained model')
-parser.add_argument("--config", default=None, help="tuning config")
 parser.add_argument("--output-model", default=None, help="output path", type=str)
 
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
-parser.add_argument('--epochs', default=90, type=int, metavar='N',
+parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -70,6 +69,14 @@ parser.add_argument('--seed', default=None, type=int,
 parser.add_argument('--keep-batch-size', dest='keep_batch_size',
                     action='store_true',
                     help='keep the batch size rather than scale lr')
+parser.add_argument('--pruning_type', default="magnitude", type=str,
+                    help='pruning_type')
+parser.add_argument('--initial_sparsity', default=0.0, type=float,
+                    help='initial_sparsity')
+parser.add_argument('--target_sparsity', default=0.40, type=float,
+                    help='target_sparsity')
+parser.add_argument('--start_epoch', default=0, type=int, help='start_epoch')
+parser.add_argument('--end_epoch', default=9, type=int, help='end_epoch')
 
 best_acc1 = 0
 
@@ -179,63 +186,61 @@ def main_worker(args):
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
-
     if args.prune:
-        from neural_compressor.experimental import Pruning, common
-        prune = Pruning(args.config)
+        num_iterations = (len(train_dataset) / args.batch_size) * args.end_epoch
+        num_warm = (len(train_dataset) / args.batch_size) * args.start_epoch
+        from neural_compressor.training import Pruning, prepare_compression
+        from neural_compressor.training import WeightPruningConfig
+        configs = WeightPruningConfig(
+            pruning_type=args.pruning_type,
+            target_sparsity=args.target_sparsity,
+            start_step=num_warm,
+            end_step=num_iterations
+        )
+        compression_manager = prepare_compression(model=model, confs=configs)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
 
-        def train_func(model):
-            # To add a learning rate scheduler, here redefine a training func
+        if args.distributed:
+            # Horovod: broadcast parameters & optimizer state.
+            hvd.broadcast_parameters(model.state_dict(), root_rank=0)
+            hvd.broadcast_optimizer_state(optimizer, root_rank=0)
 
-            global best_acc1
-            # prune.on_train_begin()
+        for epoch in range(args.start_epoch, args.epochs):
             if args.distributed:
-                # Horovod: broadcast parameters & optimizer state.
-                hvd.broadcast_parameters(model.state_dict(), root_rank=0)
-                hvd.broadcast_optimizer_state(optimizer, root_rank=0)
+                train_sampler.set_epoch(epoch)
+            adjust_learning_rate(optimizer, epoch, args)
 
-            for epoch in range(args.start_epoch, args.epochs):
-                if args.distributed:
-                    train_sampler.set_epoch(epoch)
-                adjust_learning_rate(optimizer, epoch, args)
+            if args.distributed:
+                train_loader.sampler.set_epoch(epoch)
 
-                prune.on_epoch_begin(epoch)
-                if args.distributed:
-                    train_loader.sampler.set_epoch(epoch)
+            # train for one epoch
+            train(train_loader, model, criterion, optimizer, epoch, args, compression_manager)
 
-                # train for one epoch
-                train(train_loader, model, criterion, optimizer, epoch, args, prune)
-                prune.on_epoch_end()
+            # evaluate on validation set
+            acc1 = validate(val_loader, model, criterion, args)
 
-                # evaluate on validation set
-                acc1, acc5 = validate(val_loader, model, criterion, args)
+            # remember best acc@1 and save checkpoint
+            is_best = acc1 > best_acc1
+            best_acc1 = max(acc1, best_acc1)
 
-                # remember best acc@1 and save checkpoint
-                is_best = acc1 > best_acc1
-                best_acc1 = max(acc1, best_acc1)
+            if not args.distributed or (args.distributed 
+                and hvd.rank() == 0):
+                print("=> save checkpoint")
+                save_checkpoint({
+                    'epoch': epoch + 1,
+                    'topology': args.topology,
+                    'state_dict': model.state_dict(),
+                    'best_acc1': best_acc1,
+                    'optimizer': optimizer.state_dict(),
+                }, is_best)
 
-                if not args.distributed or (args.distributed 
-                    and hvd.rank() == 0):
-                    print("=> save checkpoint")
-                    save_checkpoint({
-                        'epoch': epoch + 1,
-                        'topology': args.topology,
-                        'state_dict': model.state_dict(),
-                        'best_acc1': best_acc1,
-                        'optimizer': optimizer.state_dict(),
-                    }, is_best)
-            return model
-
-        prune.model = common.Model(model)
-        prune.train_dataloader = train_loader
-        prune.eval_dataloader = val_loader
-        prune.train_func = train_func
-        model = prune.fit()
-        model.save(args.output_model)
+        compression_manager.callbacks.on_train_end()
+        compression_manager.save(args.output_model)
         return
 
 
-def train(train_loader, model, criterion, optimizer, epoch, args, op):
+def train(train_loader, model, criterion, optimizer, epoch, args, compression_manager):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
@@ -252,7 +257,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args, op):
         # measure data loading time
         data_time.update(time.time() - end)
 
-        op.on_step_begin(i)
+        compression_manager.callbacks.on_step_begin(i)
         # compute output
         output = model(input)
         loss = criterion(output, target)
@@ -266,12 +271,9 @@ def train(train_loader, model, criterion, optimizer, epoch, args, op):
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
-
-        op.on_before_optimizer_step()
-
+        compression_manager.callbacks.on_before_optimizer_step()
         optimizer.step()
-
-        op.on_step_end()
+        compression_manager.callbacks.on_after_optimizer_step()
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
@@ -328,7 +330,7 @@ def validate(val_loader, model, criterion, args):
             print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
                   .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 
-    return top1.avg, losses.avg
+    return top1.avg
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
