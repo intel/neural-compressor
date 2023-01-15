@@ -18,6 +18,8 @@
 
 from neural_compressor.utils import logger
 import tf2onnx as t2o
+from neural_compressor.utils.utility import LazyImport
+
 
 def tf_to_fp32_onnx(
     graph_def,
@@ -52,7 +54,8 @@ def tf_to_int8_onnx(
     save_path,
     opset_version: int = 14,
     input_names=None,
-    output_names=None
+    output_names=None,
+    inputs_as_nchw=None
 ):
     """Export INT8 Tensorflow model into INT8 ONNX model.
 
@@ -65,7 +68,7 @@ def tf_to_int8_onnx(
     """
     from neural_compressor.adaptor.tf_utils.tf2onnx_converter import TensorflowQDQToOnnxQDQConverter
     TensorflowQDQToOnnxQDQConverter(int8_model, input_names, \
-                        output_names, opset_version).convert(save_path)
+                        output_names, inputs_as_nchw, opset_version).convert(save_path)
 
     info = "The INT8 ONNX Model is exported to path: {0}".format(save_path)
     logger.info("*"*len(info))

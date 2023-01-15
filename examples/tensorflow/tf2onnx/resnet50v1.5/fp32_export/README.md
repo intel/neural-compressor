@@ -40,6 +40,6 @@ bash run_export.sh --input_model=./resnet50_v1.pb --output_model=./resnet50_v1.o
 
 ### Run benchmark for ONNX FP32 model
 ```shell
-bash run_benchmark.sh --input_model=./resnet50_v1.onnx --mode=accuracy --dataset_location=/path/to/ImageNet/
-bash run_benchmark.sh --input_model=./resnet50_v1.onnx --mode=performance --dataset_location=/path/to/ImageNet/
+bash run_benchmark.sh --input_model=./resnet50_v1.onnx --mode=accuracy --dataset_location=/path/to/ImageNet/ --batch_size=32
+bash run_benchmark.sh --input_model=./resnet50_v1.onnx --mode=performance --dataset_location=/path/to/ImageNet/ --batch_size=1
 ```

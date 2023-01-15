@@ -32,9 +32,8 @@ def eval_func(model, dataloader, metric, postprocess):
     for input_data, label in dataloader:
         output = sess.run(None, dict(zip(input_names, [input_data])))
         output, label = postprocess((output, label))
-        metric.update(output[1], label)
+        metric.update(output, label)
     return metric.result()
-
 
 class eval_classifier_optimized_graph:
     """Evaluate image classifier with optimized TensorFlow graph."""
@@ -51,18 +50,56 @@ class eval_classifier_optimized_graph:
         arg_parser.add_argument('--benchmark', dest='benchmark', action='store_true', help='run benchmark')
         arg_parser.add_argument('--mode', dest='mode', default='performance', help='benchmark mode')
         arg_parser.add_argument('--export', dest='export', action='store_true', help='use neural_compressor to export.')
+        arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use neural_compressor to tune.')
         arg_parser.add_argument('--dataset_location', dest='dataset_location',
                                  help='location of calibration dataset and evaluate dataset')
         arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
         self.args = arg_parser.parse_args()
 
     def run(self):
-        """This is neural_compressor function include export and benchmark option."""
+        """This is neural_compressor function include tuning, export and benchmark option."""
+        if self.args.tune:
+            from neural_compressor import quantization
+            from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
+            from neural_compressor.utils.create_obj_from_config import create_dataloader
+            calib_dataloader_args = {
+                'batch_size': 10,
+                'dataset': {"ImageRecord": {'root':self.args.dataset_location}},
+                'transform': {'ResizeCropImagenet':
+                     {'height': 224, 'width': 224, 'mean_value': [123.68, 116.78, 103.94]}},
+                'filter': None
+            }
+            calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
+            eval_dataloader_args = {
+                'batch_size': 32,
+                'dataset': {"ImageRecord": {'root':self.args.dataset_location}},
+                'transform': {'ResizeCropImagenet':
+                     {'height': 224, 'width': 224, 'mean_value': [123.68, 116.78, 103.94]}},
+                'filter': None
+            }
+            eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
+            op_name_list = {
+                'resnet_model/dense/MatMul':
+                            {
+                            'activation':  {'dtype': ['fp32']},
+                            'weight': {'dtype': ['fp32']},
+                            }
+                        }
+            conf = PostTrainingQuantConfig(backend='itex', calibration_sampling_size=[50, 100],
+                                           outputs=['softmax_tensor'],
+                                           accuracy_criterion = AccuracyCriterion(tolerable_loss=0.3),
+                                           op_name_list=op_name_list)
+            from neural_compressor.metric import TensorflowTopK
+            top1 = TensorflowTopK(k=1)
+            q_model = quantization.fit(self.args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
+                        eval_dataloader=eval_dataloader, eval_metric=top1)
+            q_model.save(self.args.output_graph)
+
         if self.args.export:
             from neural_compressor.model import Model
             from neural_compressor.config import TF2ONNXConfig
             inc_model = Model(self.args.input_graph)
-            config = TF2ONNXConfig(dtype="fp32", inputs_as_nchw="input_tensor:0")
+            config = TF2ONNXConfig(dtype="int8", inputs_as_nchw="input_tensor:0")
             inc_model.export(self.args.output_graph, config)
 
         if self.args.benchmark:

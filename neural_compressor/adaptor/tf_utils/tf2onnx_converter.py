@@ -19,6 +19,7 @@
 
 import logging
 import tensorflow as tf
+import numpy as np
 from onnx import helper
 from tensorflow.core.framework import tensor_pb2, node_def_pb2
 
@@ -30,9 +31,10 @@ import tf2onnx as t2o
 
 logger = logging.getLogger("neural_compressor")
 
+
 class TensorflowQDQToOnnxQDQConverter:
     """Convert tensorflow QDQ graph to ONNX QDQ graph."""
-    def __init__(self, model, input_names, output_names, opset_version=utils.DEFAULT_OPSET_VERSION):
+    def __init__(self, model, input_names, output_names, inputs_as_nchw=None, opset_version=utils.DEFAULT_OPSET_VERSION):
         """Constructor, initilization.
 
         Args:
@@ -51,6 +53,7 @@ class TensorflowQDQToOnnxQDQConverter:
         self.opset_version = opset_version
         self.input_names = input_names
         self.output_names = output_names
+        self.inputs_as_nchw = inputs_as_nchw
 
     def duplicate_tf_quantizev2_nodes(self, model):
         """Duplicate QuantizeV2 nodes if the Dequantize nodes share the same QuantizeV2."""
@@ -119,6 +122,30 @@ class TensorflowQDQToOnnxQDQConverter:
         model = self.duplicate_tf_quantizev2_nodes(model)
         return model
 
+    def transpose_inputs(self, ctx, inputs_as_nchw):
+        """Insert a transpose from NHWC to NCHW on model input on users request."""
+
+        ops = []
+        for node in ctx.get_nodes():
+            for _, output_name in enumerate(node.output):
+                if output_name in inputs_as_nchw:
+                    shape = ctx.get_shape(output_name)
+                    if len(shape) != len(utils.NCHW_TO_NHWC):
+                        logger.warning("transpose_input for %s: shape must be rank 4, ignored" % output_name)
+                        ops.append(node)
+                        continue
+                    # insert transpose
+                    op_name = utils.set_name(node.name)
+                    transpose = ctx.insert_new_node_on_output("Transpose", output_name, name=op_name)
+                    transpose.set_attr("perm", utils.NCHW_TO_NHWC)
+                    ctx.copy_shape(output_name, transpose.output[0])
+                    ctx.set_shape(output_name, np.array(shape)[utils.NHWC_TO_NCHW])
+                    ops.append(transpose)
+                    ops.append(node)
+                    continue
+            ops.append(node)
+        ctx.reset_nodes(ops)
+
     @dump_elapsed_time("Pass TensorflowQDQToOnnxQDQConverter")
     def convert(self, save_path):
         """Convert tensorflow QDQ model to onnx QDQ model.
@@ -140,6 +167,8 @@ class TensorflowQDQToOnnxQDQConverter:
                 shape = utils.get_tensorflow_tensor_shape(out)
                 dtypes[out.name] = utils.map_tensorflow_dtype(out.dtype)
                 output_shapes[out.name] = shape
+                if output_shapes[out.name] is None:
+                    output_shapes[out.name] = []
 
         # Convert the TF FP32 node to ONNX FP32 node
         for node in node_list:
@@ -175,6 +204,8 @@ class TensorflowQDQToOnnxQDQConverter:
         # Build ONNX Graph using onnx_nodes, output_shapes and dtypes
         onnx_graph = OnnxGraph(onnx_nodes, output_shapes, dtypes, input_names=self.input_names,
                                output_names=self.output_names)
+        if self.inputs_as_nchw:
+            self.transpose_inputs(onnx_graph, self.inputs_as_nchw)
 
         # Convert TF QDQ pattern to ONNX QDQ format
         for node in onnx_graph.get_nodes():
@@ -184,11 +215,14 @@ class TensorflowQDQToOnnxQDQConverter:
                     if parent_node.type == 'QuantizeV2':
                         onnx_graph.convert_qdq_nodes(parent_node, node)
 
-        rewriters = [
-            t2o.rewriter.rewrite_biasadd_with_conv2d
-        ]
+        # rewriters = [
+        #     t2o.rewriter.rewrite_transpose,
+        #     t2o.rewriter.rnn.rewrite_generic_loop,
+        #     t2o.rewriter.cond_rewriter.rewrite_cond,
+        # ]
 
-        t2o.tfonnx.run_rewriters(onnx_graph, rewriters, False)
+        # t2o.tfonnx.run_rewriters(onnx_graph, rewriters, False)
+
 
         # some nodes may already copied into inner Graph, so remove them from main Graph.
         onnx_graph.delete_unused_nodes(onnx_graph.outputs)

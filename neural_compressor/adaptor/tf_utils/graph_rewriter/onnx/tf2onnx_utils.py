@@ -36,6 +36,9 @@ PREFERRED_OPSET = 14
 
 ONNX_UNKNOWN_DIMENSION = -1
 
+NCHW_TO_NHWC = [0, 2, 3, 1]
+NHWC_TO_NCHW = [0, 3, 1, 2]
+
 
 # Built-in supported domains
 ONNX_DOMAIN = ""

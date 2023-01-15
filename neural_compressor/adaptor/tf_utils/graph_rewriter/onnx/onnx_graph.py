@@ -77,8 +77,10 @@ class OnnxGraph:
         self.outputs = []
         for output_name in output_names:
             self.outputs.append(output_name +':0')
-        input_ops_names = [input_name + ':0' for input_name in input_names]
-        input_names = input_ops_names
+        input_names = None
+        if input_names:
+            input_ops_names = [input_name + ':0' for input_name in input_names]
+            input_names = input_ops_names
 
         self.parent_graph = None
         self.contained_graphs = {}  # {node_name: {node_attribute_name: Graph}}
@@ -307,6 +309,16 @@ class OnnxGraph:
         self._nodes.remove(node)
         node.graph = None
 
+    def safe_remove_nodes(self, to_delete):
+        """Delete nodes in `to_delete` without third-party node consuming it."""
+        delete_set = set(to_delete)
+        for n in delete_set:
+            out_consumers = set()
+            for out in n.output:
+                out_consumers |= set(self.find_output_consumers(out))
+            if out_consumers.issubset(delete_set):
+                self.remove_node(n.name)
+
     def reset_nodes(self, ops):
         """Reset the graph with node list."""
         remained_dtypes = {}
@@ -345,6 +357,11 @@ class OnnxGraph:
 
         self._dtypes = remained_dtypes
         self._output_shapes = remained_shapes
+
+    def create_new_graph_with_same_config(self):
+        """Create a clean graph inheriting current graph's configuration."""
+        return OnnxGraph([], output_shapes={}, dtypes={}, target=self._target, opset=self._opset,
+                     extra_opset=self.extra_opset, output_names=[])
 
     def is_empty_input(self, name):
         """Check if the input is empty.
@@ -751,6 +768,36 @@ class OnnxGraph:
             return op_cnt, attr_cnt
         return op_cnt
 
+    def remove_input(self, node, to_be_removed, input_index=None):
+        """Remove input from Node.
+
+        Args:
+            node: the node we expect the input on
+            to_be_removed: the node name we want to remove
+            input_index: if not None, index of the input to be removed,
+                the method is more efficient if *input_index* is specified,
+                otherwise, it has to look for every input named *old_input*.
+        """
+        assert isinstance(node, OnnxNode) and isinstance(to_be_removed, six.text_type)
+        if input_index is not None:
+            assert node.input[input_index] == to_be_removed
+            if node.input[input_index] in self._output_to_consumers:
+                to_ops = self._output_to_consumers[node.input[input_index]]
+                if node.name in to_ops:
+                    to_ops.remove(node.name)
+            del node.input[input_index]
+            return
+
+        for i, name in enumerate(node.input):
+            if name == to_be_removed:
+                utils.assert_error(
+                    node.input.count(node.input[i]) <= 1,
+                    "Node %r takes multiple times the same input %r. This case is not handled.",
+                    node.name, node.input[i])
+                self._unregister_input_name(node.input[i], node)
+                del node.input[i]
+                break
+
     def insert_new_node_on_input(self, node, op_type, input_name, name=None, domain=None, input_index=None, **kwargs):
         """Create and insert a new node into the graph.
 
@@ -781,6 +828,20 @@ class OnnxGraph:
         else:
             self.replace_input(node, node.input[input_index], new_output, input_index)
         return new_node
+
+    def add_graph_input(self, name, dtype=None, shape=None):
+        """Add placeholder node as graph's input. Order matters only for subgraph.
+
+           Placeholders in original graph are assumed for main graph, order not matters.
+        """
+        if dtype is None:
+            dtype = self.get_dtype(name)
+
+        if shape is None:
+            shape = self.get_shape(name)
+
+        new_node = self.make_node("Placeholder", [], outputs=[name], dtypes=[dtype], shapes=[shape])
+        self.inputs.append(new_node)
 
     def insert_node_on_output(self, node, output_name=None):
         """Insert a node into the graph.
@@ -936,6 +997,24 @@ class OnnxGraph:
         self._register_input_name(new_input, node)
         return is_replaced
 
+    def replace_inputs(self, node, new_inputs):
+        """Replace node inputs."""
+        assert isinstance(node, OnnxNode) and isinstance(new_inputs, list)
+
+        for old_input in node.input:
+            to_ops = self._output_to_consumers.get(old_input, None)
+            if to_ops is not None and old_input in to_ops:
+                # To avoid issues when a node
+                # takes twice the same entry.
+                to_ops.remove(old_input)
+
+        for input_name in new_inputs:
+            assert isinstance(input_name, six.text_type)
+            self._register_input_name(input_name, node)
+
+        node.input = new_inputs
+        return True
+
     def _extract_sub_graph_nodes(self, dest_node, input_checker=None):
         """Return nodes of subgraph ending with dest_node.
 
@@ -1020,55 +1099,74 @@ class OnnxGraph:
         narrow_range = q_node.attr['narrow_range'].i
         signed_input = bool(q_node.get_attr_value('T', TensorProto.INT8) == TensorProto.INT8)
 
-        min_quantized, max_quantized = [-127, 127]
-        if not narrow_range and signed_input:
-            min_quantized = -128
+        max_quantized = 127
 
         if not signed_input:
-            min_quantized, max_quantized = [0, 255]
+            max_quantized = 255
 
         # Get axis attribute for per channel implementation.
         axis = q_node.get_attr_value('axis', -1)
         q_attrs = {}
 
-        quantized_np_dtype = np.int8 if signed_input else np.uint8
         quantized_dtype = TensorProto.INT8 if signed_input else TensorProto.UINT8
 
         if axis != -1:
             utils.assert_error(self.opset >= 13, "Opset >= 13 is required for per channel quantization")
             q_attrs['axis'] = axis
 
-        min_np = np.array(min_quantized, np.float32)
-        max_np = np.array(max_quantized, np.float32)
-        max_quantized_const = self.make_const(utils.set_name("max_const"), max_np).output[0]
-        if signed_input:
-            min_quantized_const = self.make_const(utils.set_name("min_const"), min_np).output[0]
-        reduce_attr = {'keepdims': 0}
-        if axis != -1:
             inp_rank = self.get_rank(q_node.input[0])
             utils.assert_error(inp_rank is not None, "Input rank cannot be unknown for qdq op %s", q_node.name)
-            reduce_axes = [i for i in range(inp_rank) if i != axis]
-            reduce_attr['axes'] = reduce_axes
 
-        max_value = self.make_node("ReduceMax", [q_node.input[0]], attr=reduce_attr).output[0]
-        if signed_input:
-            min_value = self.make_node("ReduceMin", [q_node.input[0]], attr=reduce_attr).output[0]
+        # Get the min and max value of the inputs to QDQ op
+        min_value = self.get_tensor_value(q_node.input[1])
+        max_value = self.get_tensor_value(q_node.input[2])
 
-        scale_from_max_side = self.make_node("Div", [max_value, max_quantized_const]).output[0]
-        if signed_input:
-            scale_from_min_side = self.make_node("Div", [min_value, min_quantized_const]).output[0]
-            scale = self.make_node("Max", [scale_from_min_side, scale_from_max_side]).output[0]
+        if isinstance(min_value, list):
+            num_channels = len(min_value)
         else:
-            scale = scale_from_max_side
+            num_channels = 1
 
-        if axis == -1:
-            zero_point_np = np.zeros([], dtype=quantized_np_dtype)
-            zero_point = self.make_const(utils.set_name("zero_point"), zero_point_np).output[0]
+        scales = np.zeros(num_channels, dtype=np.float32)
+
+        # Per-Tensor
+        if num_channels == 1:
+            # sing U8 as default for per tensor
+            max_quantized = 255
+            # Calculate scale from the min and max values
+            scale = (float(max_value) - min_value) / max_quantized if min_value != max_value else 1
+
+            zero_point = round((0 - min_value) / scale)
+            zero_point = np.uint8(round(max(0, min(255, zero_point))))
+
+            utils.assert_error(scale > 0, "Quantize/Dequantize scale must be greater than zero")
+            scales = np.float32(scale)
+            zero_point_np = zero_point
+        # Per-Channel
         else:
-            zero_tensor = helper.make_tensor("value", quantized_dtype, dims=[1], vals=[0])
-            scale_shape = self.make_node("Shape", [scale]).output[0]
-            zero_point = self.make_node("ConstantOfShape", inputs=[scale_shape],
-                                        attr={"value": zero_tensor}).output[0]
+            zero_point = np.zeros(num_channels, dtype=np.int8 if signed_input else np.uint8)
+            for i in range(num_channels):
+                # Calculate scales from the min and max values
+                if signed_input:
+                    max_range = max(abs(min_value[i]), abs(max_value[i]))
+                    scale = (float(max_range) * 2) / max_quantized if max_range > 0 else 1
+                else:
+                    scale = (float(max_value[i]) - min_value[i]) / max_quantized if min_value[i] != max_value[i] else 1
+
+                if scale == 1 or signed_input:
+                    zero_point[i] = np.int8(0)
+                else:
+                    zero_point[i] = round((0 - min_value[i]) / scale)
+                    zero_point[i] = np.uint8(round(max(0, min(255, zero_point[i]))))
+
+                utils.assert_error(scale > 0, "Quantize/Dequantize scale must be greater than zero")
+                scales[i] = np.float32(scale)
+            utils.assert_error(axis != -1, "Axis must be specified for per channel quantization")
+            zero_point_np = zero_point
+
+        # Add QuantizeLinear and DequantizeLinear and remove the TF QDQ node reference
+        cast_scale = scales.astype(np.float32)
+        scale = self.make_const(name=utils.set_name("quant_scale"), np_val=cast_scale).output[0]
+        zero_point = self.make_const(utils.set_name("zero_point"), zero_point_np).output[0]
 
         quant_node = self.make_node(op_type="QuantizeLinear",
                                  inputs=[q_node.input[0], scale, zero_point],
@@ -1090,3 +1188,15 @@ class OnnxGraph:
                                    dtypes=[qdq_node_output_dtype],
                                    name=utils.set_name("DequantLinearNode"))
         self.set_shape(dequant_node.output[0], qdq_node_output_shape)
+
+    def delete_qdq_nodes(self, q_node, dq_node):
+        """Delete tensorflow QuantizeV2/Dequantize in the onnx graph."""
+        qdq_input = q_node.input[0]
+        qdq_output = dq_node.output[0]
+
+        qdq_output_consumers = self.find_output_consumers(qdq_output)
+        for consumer in qdq_output_consumers:
+            self.replace_input(consumer, qdq_output, qdq_input)
+
+        self.remove_node(dq_node.name)
+        self.remove_node(q_node.name)

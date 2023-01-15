@@ -858,16 +858,17 @@ class TensorflowBaseModel(BaseModel):
                                 "we reset opset_version={} here".format(conf.opset_version))
 
             from neural_compressor.experimental.export import tf_to_fp32_onnx, tf_to_int8_onnx
+            inputs_as_nchw = conf.kwargs.get("inputs_as_nchw", None)
             if conf.dtype == 'int8':
                 tf_to_int8_onnx(
                     self.graph_def,
                     save_path,
                     opset_version=conf.opset_version,
                     input_names=conf.input_names if conf.input_names else self.input_tensor_names,
-                    output_names=conf.output_names if conf.output_names else self.output_tensor_names
+                    output_names=conf.output_names if conf.output_names else self.output_tensor_names,
+                    inputs_as_nchw=inputs_as_nchw
                 )
             elif conf.dtype == 'fp32':
-                inputs_as_nchw = conf.kwargs.get("inputs_as_nchw", None)
                 tf_to_fp32_onnx(
                     self.graph_def,
                     save_path,

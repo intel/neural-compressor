@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to show how to export Tensorflow VGG16 FP32 model to ONNX FP32 model using Intel® Neural Compressor.
+This document is used to show how to export Tensorflow ssd_mobilenet_v1 FP32 model to ONNX FP32 model using Intel® Neural Compressor.
 
 
 ## Prerequisite
@@ -39,6 +39,6 @@ bash run_export.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28 --output_mod
 
 ### Run benchmark for ONNX FP32 model
 ```shell
-bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28.onnx --mode=accuracy --dataset_location=/path/to/coco_dataset/
-bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28.onnx --mode=performance --dataset_location=/path/to/coco_dataset/
+bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28.onnx --mode=accuracy --dataset_location=/path/to/coco_dataset/ --batch_size=16
+bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28.onnx --mode=performance --dataset_location=/path/to/coco_dataset/ --batch_size=16
 ```

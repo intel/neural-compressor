@@ -86,10 +86,11 @@ class eval_classifier_optimized_graph:
         arg_parser.add_argument('--export', dest='export', action='store_true', help='use neural_compressor to export.')
         arg_parser.add_argument('--dataset_location', dest='dataset_location',
                                  help='location of calibration dataset and evaluate dataset')
+        arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
         self.args = arg_parser.parse_args()
 
     def run(self):
-        """This is neural_compressor function include tuning and benchmark option."""
+        """This is neural_compressor function include export and benchmark option."""
         if self.args.export:
             from neural_compressor.model import Model
             from neural_compressor.config import TF2ONNXConfig
@@ -104,7 +105,7 @@ class eval_classifier_optimized_graph:
 
             from neural_compressor.utils.create_obj_from_config import create_dataloader
             dataloader_args = {
-                'batch_size': 16,
+                'batch_size': self.args.batch_size,
                 'dataset': {"COCORaw": {'root':self.args.dataset_location}},
                 'transform': {'Resize': {'size': 300}},
                 'filter': None
