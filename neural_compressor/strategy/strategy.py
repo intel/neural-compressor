@@ -352,7 +352,7 @@ class TuneStrategy(object):
         for op_tuning_cfg in self.next_tune_cfg():
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             tune_cfg_lst.append(tune_cfg)
-        tune_cfg_lst = [tune_cfg_lst[0]] * 10 #TODO remove in future
+
         if rank == 0:
             self.master_worker_handle(comm, tune_cfg_lst)
         else:
