@@ -45,41 +45,74 @@ def evaluate(model):
     """Custom evaluate function to estimate the accuracy of the model.
 
     Args:
-        model (tf.Graph_def): The input model graph
+        model (tf.Graph_def or tf AutoTrackable object): The input model
         
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
     from neural_compressor.model import Model
-    model = Model(model)
-    model.input_tensor_names = ["image_tensor"]
-    model.output_tensor_names = ["num_detections:0", "detection_boxes:0", \
-                                    "detection_scores:0", "detection_classes:0"]
-    input_tensor = model.input_tensor
-    output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
-                        model.output_tensor[0]
+    from tensorflow.python.training.tracking.tracking import AutoTrackable  
+    warmup = 5      
     iteration = -1
     if args.benchmark and args.mode == 'performance':
         iteration = 100
     metric = COCOmAPv2(output_index_mapping={'num_detections':0, 'boxes':1, 'scores':2, 'classes':3})
 
-    def eval_func(dataloader):
-        latency_list = []
-        for idx, (inputs, labels) in enumerate(dataloader):
-            # dataloader should keep the order and len of inputs same with input_tensor
-            inputs = np.array([inputs])
-            feed_dict = dict(zip(input_tensor, inputs))
+    if isinstance(model, AutoTrackable):
+        infer = model.signatures["serving_default"]
+        def eval_func(dataloader):
+            latency_list = []
+            for idx, (inputs, labels) in enumerate(dataloader):
+                inputs_dict = {}
+                inputs_dict["image_tensor"] = tf.constant(np.array(inputs), dtype=infer.inputs[0].dtype)
+                
+                start = time.time()
+                results = infer(**inputs_dict)
+                end = time.time()
 
-            start = time.time()
-            predictions = model.sess.run(output_tensor, feed_dict)
-            end = time.time()
+                predictions = []
+                output_names = ["num_detections", "detection_boxes", \
+                                        "detection_scores", "detection_classes"]
+                for key in output_names:
+                    predictions.append(results[key])
 
-            metric.update(predictions, labels)
-            latency_list.append(end-start)
-            if idx + 1 == iteration:
-                break
-        latency = np.array(latency_list).mean() / args.batch_size
-        return latency
+                metric.update(predictions, labels)
+                latency_list.append(end - start)
+                if iteration and idx >= iteration:
+                    break
+            latency = np.array(latency_list[warmup:]).mean() / args.batch_size
+            return latency
+
+    else:
+        model = Model(model)
+        model.input_tensor_names = ["image_tensor"]
+        model.output_tensor_names = ["num_detections:0", "detection_boxes:0", \
+                                        "detection_scores:0", "detection_classes:0"]
+        input_tensor = model.input_tensor
+        output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
+                            model.output_tensor[0]
+        iteration = -1
+        if args.benchmark and args.mode == 'performance':
+            iteration = 100
+        metric = COCOmAPv2(output_index_mapping={'num_detections':0, 'boxes':1, 'scores':2, 'classes':3})
+
+        def eval_func(dataloader):
+            latency_list = []
+            for idx, (inputs, labels) in enumerate(dataloader):
+                # dataloader should keep the order and len of inputs same with input_tensor
+                inputs = np.array([inputs])
+                feed_dict = dict(zip(input_tensor, inputs))
+
+                start = time.time()
+                predictions = model.sess.run(output_tensor, feed_dict)
+                end = time.time()
+
+                metric.update(predictions, labels)
+                latency_list.append(end-start)
+                if idx + 1 == iteration:
+                    break
+            latency = np.array(latency_list[warmup:]).mean() /args.batch_size
+            return latency
 
     eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
             transform=ComposeTransform(transform_list=[ResizeTFTransform(size=600)]))
@@ -99,12 +132,14 @@ def main(_):
 
     if args.tune:
         from neural_compressor import quantization
-        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion(criterion='absolute')
         config = PostTrainingQuantConfig(
             inputs=["image_tensor"],
             outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
             calibration_sampling_size=[10, 50, 100, 200],
-            excluded_precisions=["bf16"])
+            excluded_precisions=["bf16"],
+            accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model=args.input_graph, conf=config, 
                                     calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(args.output_model)

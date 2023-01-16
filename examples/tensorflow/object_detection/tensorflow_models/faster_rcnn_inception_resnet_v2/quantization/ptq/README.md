@@ -83,18 +83,18 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
 ### Tune
 Now we support both pb and saved_model formats.
 
-#### For PB model
+#### For PB format
   
   ```shell
   # The cmd of running faster_rcnn_inception_resnet_v2
   bash run_tuning.sh --input_model=./faster_rcnn_inception_v2_coco_2018_01_28/frozen_inference_graph.pb --output_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
-#### For saved_model model
+#### For saved_model format
   
   ```shell
   # The cmd of running faster_rcnn_inception_resnet_v2
-  bash run_tuning.sh --input_model=./faster_rcnn_inception_v2_coco_2018_01_28/saved_model/ --output_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune.pb --dataset_location=/path/to/dataset/coco_val.record
+  bash run_tuning.sh --input_model=./faster_rcnn_inception_v2_coco_2018_01_28/saved_model/ --output_model=./tensorflow-faster_rcnn_inception_resnet_v2-tune --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ### Benchmark
@@ -117,12 +117,14 @@ After prepare step is done, we just need update main.py like below.
 ```python
     if args.tune:
         from neural_compressor import quantization
-        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion(criterion='absolute')
         config = PostTrainingQuantConfig(
             inputs=["image_tensor"],
             outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
             calibration_sampling_size=[10, 50, 100, 200],
-            excluded_precisions=["bf16"])
+            excluded_precisions=["bf16"],
+            accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model=args.input_graph, conf=config, 
                                     calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(args.output_model)

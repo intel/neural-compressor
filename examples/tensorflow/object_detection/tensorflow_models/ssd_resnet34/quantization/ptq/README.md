@@ -83,7 +83,7 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
   
   ```shell
   # The cmd of running ssd_resnet34
-  bash run_tuning.sh --input_model=./ssd_resnet34_fp32_1200x1200_pretrained_model/frozen_inference_graph.pb --output_model=./tensorflow-ssd_resnet34-tune.pb --dataset_location=/path/to/dataset/coco_val.record --anno_path=./label_map.yaml
+  bash run_tuning.sh --input_model=./ssd_resnet34_fp32_1200x1200_pretrained_model.pb --output_model=./tensorflow-ssd_resnet34-tune.pb --dataset_location=/path/to/dataset/coco_val.record --anno_path=./label_map.yaml
   ```
 
 ### Benchmark
@@ -106,11 +106,13 @@ After prepare step is done, we just need update main.py like below.
 ```python
     if args.tune:
         from neural_compressor import quantization
-        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion(criterion='absolute')
         config = PostTrainingQuantConfig(
             inputs=["image"],
             outputs=["detection_bboxes", "detection_scores", "detection_classes"],
-            calibration_sampling_size=[100])
+            calibration_sampling_size=[100],
+            accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model=args.input_graph, conf=config, 
                                     calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(args.output_model)

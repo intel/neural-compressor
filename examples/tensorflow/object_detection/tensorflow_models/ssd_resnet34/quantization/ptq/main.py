@@ -103,11 +103,13 @@ def main(_):
 
     if args.tune:
         from neural_compressor import quantization
-        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
+        accuracy_criterion = AccuracyCriterion(criterion='absolute')
         config = PostTrainingQuantConfig(
             inputs=["image"],
             outputs=["detection_bboxes", "detection_scores", "detection_classes"],
-            calibration_sampling_size=[100])
+            calibration_sampling_size=[100],
+            accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model=args.input_graph, conf=config, 
                                     calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(args.output_model)
