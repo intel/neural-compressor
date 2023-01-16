@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing TensorFlow keras Intel® Neural Compressor tuning zoo result.
+This document is used to list steps of reproducing TensorFlow keras model resnet50_fashion quantization and benchmark using Intel® Neural Compressor.
 This example can run on Intel CPUs and GPUs.
 
 
