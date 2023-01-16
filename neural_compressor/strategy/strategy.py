@@ -193,14 +193,13 @@ class TuneStrategy(object):
         size = comm.Get_size()
         for process_id in range(1, min(len(tune_cfg_lst) + 1, size)):
             tune_cfg_id = process_id - 1
-            tune_cfg_id = 0
             comm.send(
                 obj=tune_cfg_id, # tune cfg ? do we need that?
                 dest=process_id, # rank 0 send to rank 1, 2, ...
                 tag=tune_cfg_id # tag, the index of tune cfg 0,1,2,3
             )
 
-        cur_cfg_id = min(len(tune_cfg_lst) + 1, size)   # 4 master should be aware of the next config id to send
+        cur_cfg_id = min(len(tune_cfg_lst), size - 1)   # 4 master should be aware of the next config id to send
         self.eval_results = []  # all results
         self.num_acks = 0 # number of all response acks, break when it equals to len()
         status = MPI.Status() # used to obtain the source and the tag for each received message
@@ -228,13 +227,14 @@ class TuneStrategy(object):
                 break
 
         # send END signal to all other slaves
-        for process_id in range(1, size + 1):
+        for process_id in range(1, size):
             comm.send(
+                obj=None,
                 dest=process_id, # rank 0 send to rank 1, 2, ...
-                tag="END"
+                tag=len(tune_cfg_lst)
             )
         # comm.bcast("END", root=0)   # bcast end signal to all
-        print(eval_results)
+        print(self.eval_results)
         # self.get_best_eval_results(eval_results)
 
 
@@ -249,11 +249,12 @@ class TuneStrategy(object):
                     status=status   # sender (master)
                 )
 
-            if status.Get_tag() == "END":
+            if status.Get_tag() == len(tune_cfg_lst):
                 # master tells us can break, not more cfgs...
                 break
             # set the task id for the slave
             cfg_idx = status.Get_tag()
+            print("*" * 50, "cfg_idx:", cfg_idx) # TODO For test, remove in future
             op_tuning_cfg = tune_cfg_lst[cfg_idx]
 
             # do the following stuff...
@@ -351,7 +352,7 @@ class TuneStrategy(object):
         for op_tuning_cfg in self.next_tune_cfg():
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             tune_cfg_lst.append(tune_cfg)
-
+        tune_cfg_lst = [tune_cfg_lst[0]] * 10 #TODO remove in future
         if rank == 0:
             self.master_worker_handle(comm, tune_cfg_lst)
         else:
