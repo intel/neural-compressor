@@ -34,7 +34,7 @@ logger = logging.getLogger("neural_compressor")
 
 class TensorflowQDQToOnnxQDQConverter:
     """Convert tensorflow QDQ graph to ONNX QDQ graph."""
-    def __init__(self, model, input_names, output_names, inputs_as_nchw=None, opset_version=utils.DEFAULT_OPSET_VERSION):
+    def __init__(self, model, input_names, output_names, shape_override, inputs_as_nchw=None, opset_version=utils.DEFAULT_OPSET_VERSION):
         """Constructor, initilization.
 
         Args:
@@ -53,7 +53,19 @@ class TensorflowQDQToOnnxQDQConverter:
         self.opset_version = opset_version
         self.input_names = input_names
         self.output_names = output_names
+        self.shape_override = shape_override
         self.inputs_as_nchw = inputs_as_nchw
+
+        if self.shape_override:
+            logger.info("Apply shape override:")
+            for name, shape in self.shape_override.items():
+                logger.info("\tSet %s shape to %s", name, shape)
+                self.graph.get_tensor_by_name(name).set_shape(shape)
+                graph_def =  self.graph.as_graph_def(add_shapes=True)
+                with tf.Graph().as_default() as inferred_graph:
+                    tf.import_graph_def(graph_def, name="")
+                self.graph = inferred_graph
+
 
     def duplicate_tf_quantizev2_nodes(self, model):
         """Duplicate QuantizeV2 nodes if the Dequantize nodes share the same QuantizeV2."""
@@ -164,7 +176,12 @@ class TensorflowQDQToOnnxQDQConverter:
         # create dict with output to shape mappings
         for node in node_list:
             for out in node.outputs:
-                shape = utils.get_tensorflow_tensor_shape(out)
+                shape = None
+                if self.shape_override:
+                    shape = self.shape_override.get(out.name)
+                if shape is None:
+                    shape = utils.get_tensorflow_tensor_shape(out)
+
                 dtypes[out.name] = utils.map_tensorflow_dtype(out.dtype)
                 output_shapes[out.name] = shape
                 if output_shapes[out.name] is None:

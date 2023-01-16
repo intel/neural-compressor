@@ -74,13 +74,7 @@ class OnnxGraph:
         self.set_config(target, opset, extra_opset)
 
         self.inputs = []
-        self.outputs = []
-        for output_name in output_names:
-            self.outputs.append(output_name +':0')
-        input_names = None
-        if input_names:
-            input_ops_names = [input_name + ':0' for input_name in input_names]
-            input_names = input_ops_names
+        self.outputs = output_names if output_names is not None else []
 
         self.parent_graph = None
         self.contained_graphs = {}  # {node_name: {node_attribute_name: Graph}}

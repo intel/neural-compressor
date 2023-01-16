@@ -18,8 +18,28 @@
 
 from neural_compressor.utils import logger
 import tf2onnx as t2o
-from neural_compressor.utils.utility import LazyImport
+import re
 
+
+def _split_nodename_and_shape(name):
+    """input name with shape into name and shape."""
+    # pattern for a node name
+    inputs = []
+    shapes = {}
+    # input takes in most cases the format name:0, where 0 is the output number
+    # in some cases placeholders don't have a rank which onnx can't handle so we let uses override the shape
+    # by appending the same, ie : [1,28,28,3]
+    name_pattern = r"(?:([\w\d/\-\._:]+)(\[[\-\d,]+\])?),?"
+    splits = re.split(name_pattern, name)
+    for i in range(1, len(splits), 3):
+        inputs.append(splits[i]+':0')
+        if splits[i + 1] is not None:
+            shape = [int(n) for n in splits[i + 1][1:-1].split(",")]
+            shape = [n if n >= 0 else None for n in shape]
+            shapes[splits[i]+':0'] = shape
+    if not shapes:
+        shapes = None
+    return inputs, shapes
 
 def tf_to_fp32_onnx(
     graph_def,
@@ -38,11 +58,15 @@ def tf_to_fp32_onnx(
         input_names (list, optional): input names. Defaults to None.
         output_names (list, optional): output names. Defaults to None.
     """
-    input_names[:] = [i+":0" for i in input_names]
+    shape_override = None
+    if isinstance(input_names, str):
+        input_names, shape_override = _split_nodename_and_shape(input_names)
+    else:
+        input_names[:] = [o+":0" for o in input_names]
     output_names[:] = [o+":0" for o in output_names]
     t2o.convert.from_graph_def(graph_def=graph_def, input_names=input_names,
                       output_names=output_names, inputs_as_nchw=inputs_as_nchw,
-                      opset=opset_version, output_path=save_path)
+                      shape_override=shape_override, opset=opset_version, output_path=save_path)
     info = "The FP32 ONNX Model exported to path: {0}".format(save_path)
     logger.info("*"*len(info))
     logger.info(info)
@@ -66,9 +90,15 @@ def tf_to_int8_onnx(
         input_names (list, optional): input names. Defaults to None.
         output_names (list, optional): output names. Defaults to None.
     """
+    shape_override = None
+    if isinstance(input_names, str):
+        input_names, shape_override = _split_nodename_and_shape(input_names)
+    else:
+        input_names[:] = [o+":0" for o in input_names]
+    output_names[:] = [o+":0" for o in output_names]
     from neural_compressor.adaptor.tf_utils.tf2onnx_converter import TensorflowQDQToOnnxQDQConverter
     TensorflowQDQToOnnxQDQConverter(int8_model, input_names, \
-                        output_names, inputs_as_nchw, opset_version).convert(save_path)
+                        output_names, shape_override, inputs_as_nchw, opset_version).convert(save_path)
 
     info = "The INT8 ONNX Model is exported to path: {0}".format(save_path)
     logger.info("*"*len(info))
