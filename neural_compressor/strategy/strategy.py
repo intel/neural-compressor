@@ -183,22 +183,24 @@ class TuneStrategy(object):
         """
         raise NotImplementedError
 
-    def _collect_eval_result(eval_res): # may need reducing to best result later
+    def _collect_eval_result(self, eval_res): # may need reducing to best result later
         self.eval_results.append(eval_res)
 
-    def master_worker_handle(self, comm):
+    def master_worker_handle(self, comm, tune_cfg_lst):
         # send all task ids to all free nodes, and wait until any result
         # when receving any result, directly send a new task id to the sender (it's free)
+        from mpi4py import MPI
         size = comm.Get_size()
-        for process_id in range(1, min(len(self.tune_cfg_lst) + 1, size)):
+        for process_id in range(1, min(len(tune_cfg_lst) + 1, size)):
             tune_cfg_id = process_id - 1
+            tune_cfg_id = 0
             comm.send(
                 obj=tune_cfg_id, # tune cfg ? do we need that?
                 dest=process_id, # rank 0 send to rank 1, 2, ...
                 tag=tune_cfg_id # tag, the index of tune cfg 0,1,2,3
             )
 
-        self.cur_cfg_id = min(len(self.tune_cfg_lst) + 1, size)   # 4 master should be aware of the next config id to send
+        cur_cfg_id = min(len(tune_cfg_lst) + 1, size)   # 4 master should be aware of the next config id to send
         self.eval_results = []  # all results
         self.num_acks = 0 # number of all response acks, break when it equals to len()
         status = MPI.Status() # used to obtain the source and the tag for each received message
@@ -210,18 +212,19 @@ class TuneStrategy(object):
                 tag=MPI.ANY_TAG,
                 status=status   # get MPI status object
             )
+            self.num_acks += 1
             sender_rank = status.Get_source() # sender rank
             tag = status.Get_tag() # the task id that is finished
 
             # collect the result and send a new task to the sender
             self._collect_eval_result(eval_res)
-            if cur_cfg_id <= len(self.tune_cfg_lst):
-                comm.send(dest=sender_rank, tag=self.cur_cfg_id)
-                self.cur_cfg_id += 1
+            if cur_cfg_id <= len(tune_cfg_lst):
+                comm.send(obj=cur_cfg_id, dest=sender_rank, tag=cur_cfg_id)
+                cur_cfg_id += 1
             else:
                 print("all tune configs are sent, no more sending, just collecting...")
 
-            if len(self.tune_cfg_lst) == self.num_acks:    # all collected (ack should collected == acks)
+            if len(tune_cfg_lst) == self.num_acks:    # all collected (ack should collected == acks)
                 break
 
         # send END signal to all other slaves
@@ -235,8 +238,10 @@ class TuneStrategy(object):
         # self.get_best_eval_results(eval_results)
 
 
-    def slave_worker_handle(comm):
+    def slave_worker_handle(self, comm, tune_cfg_lst):
         # when receving any task id, find it in tune_cfg_lst and do it
+        from mpi4py import MPI
+        status = MPI.Status()
         while True:
             task = comm.recv(
                     source=MPI.ANY_SOURCE,
@@ -248,15 +253,16 @@ class TuneStrategy(object):
                 # master tells us can break, not more cfgs...
                 break
             # set the task id for the slave
-            cfx_idx == status.Get_tag()
-            op_tuning_cfg = self.tune_cfg_lst[cfx_idx]
+            cfg_idx = status.Get_tag()
+            op_tuning_cfg = tune_cfg_lst[cfg_idx]
 
             # do the following stuff...
             trials_count = 0
             traverse_start_time = time()
             # for op_tuning_cfg in self.next_tune_cfg():    # instead of using this, just run the above op_tuning_cfg
             tuning_start_time = time()
-            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
+            # tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
+            tune_cfg = op_tuning_cfg
             trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
             if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
@@ -304,10 +310,12 @@ class TuneStrategy(object):
             
             # self._dump_tuning_process_statistics()
             ##### send back the tuning statistics #########
+            print("##### send back the tuning statistics #########")
+            print(self.last_tune_result)
             comm.send(
-                obj=self.last_tune_result ## what should we put in eval result??
+                obj=self.last_tune_result, ## what should we put in eval result??
                 dest=0, # rank 0 send to rank 1, 2, ...
-                tag=cfx_idx
+                tag=cfg_idx
             )
             # if need_stop:
             #     if self.re_quant:
@@ -335,18 +343,19 @@ class TuneStrategy(object):
 
     def distributed_traverse(self):
         from mpi4py import MPI
-        comm = MPI.Comm()
+        comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
 
         # make sure every worker holds the whole tune_cfg_lst
-        self.tune_cfg_lst = []
+        tune_cfg_lst = []
         for op_tuning_cfg in self.next_tune_cfg():
-            self.tune_cfg_lst.append(op_tune_cfg)
+            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
+            tune_cfg_lst.append(tune_cfg)
 
         if rank == 0:
-            self.master_worker_handle(comm)
+            self.master_worker_handle(comm, tune_cfg_lst)
         else:
-            self.slave_worker_handle(comm)
+            self.slave_worker_handle(comm, tune_cfg_lst)
 
     def traverse(self):
         """Traverse the tuning space.
@@ -364,16 +373,17 @@ class TuneStrategy(object):
             self.eval_func = self._fake_eval_func
 
         # get fp32 model baseline
-        if self.baseline is None:
-            logger.info("Get FP32 model baseline.")
-            self._fp32_model = self.model
-            self.baseline = self._evaluate(self.model)       
-            self.objectives.baseline = self.baseline
-            # record the FP32 baseline
-            self._add_tuning_history()
-        self.show_baseline_info()
-
-        if self.cfgs.num_worker > 1:
+        # if self.baseline is None:
+        #     logger.info("Get FP32 model baseline.")
+        #     self._fp32_model = self.model
+        #     self.baseline = self._evaluate(self.model)       
+        #     self.objectives.baseline = self.baseline
+        #     # record the FP32 baseline
+        #     self._add_tuning_history()
+        # self.show_baseline_info()
+        
+        distributed = True # TODO add distributed/num_worker to config
+        if distributed:
             return self.distributed_traverse()
 
         trials_count = 0
