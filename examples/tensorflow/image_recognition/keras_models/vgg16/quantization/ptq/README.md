@@ -59,12 +59,23 @@ The pretrained model is provided by [Keras Applications](https://keras.io/api/ap
   ```
 
 # Run Command
-## 1 Quantization
+
+## Quantization Config
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+
+## Quantization
   ```shell
   bash run_tuning.sh --input_model=./vgg16_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
   ```
 
-## 2. Benchmark
+## Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./result --mode=accuracy --dataset_location=/path/to/evaluation/dataset --batch_size=32
   bash run_benchmark.sh --input_model=./result --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=1

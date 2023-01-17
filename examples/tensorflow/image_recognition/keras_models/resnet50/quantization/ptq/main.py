@@ -52,12 +52,14 @@ flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
 from neural_compressor.metric import TensorflowTopK
+from neural_compressor.data import LabelShift
 
 from neural_compressor.utils.create_obj_from_config import create_dataloader
 dataloader_args = {
     'batch_size': FLAGS.batch_size,
-    'dataset': {"FashionMNIST": {'root':FLAGS.eval_data}},
-    'transform': {'Rescale': {}},
+    'dataset': {"ImageRecord": {'root':FLAGS.eval_data}},
+    'transform': {'ResizeCropImagenet': {'height': 224, 'width': 224,
+                    'mean_value': [123.68, 116.78, 103.94]}},
     'filter': None
 }
 dataloader = create_dataloader('tensorflow', dataloader_args)
@@ -75,6 +77,7 @@ def evaluate(model):
     output_dict_keys = infer.structured_outputs.keys()
     output_name = list(output_dict_keys )[0]
     metric = TensorflowTopK(k=1)
+    postprocess = LabelShift(label_shift=1)
 
     def eval_func(data_loader, metric):
         warmup = 5
@@ -89,6 +92,7 @@ def evaluate(model):
             predictions = infer(input_tensor)[output_name]
             end = time.time()
             predictions = predictions.numpy()
+            predictions, labels = postprocess((predictions, labels))
             metric.update(predictions, labels)
             latency_list.append(end - start)
             if iteration and idx >= iteration:
@@ -106,10 +110,20 @@ def evaluate(model):
 
 def main(_):
     if FLAGS.tune:
+        from neural_compressor.utils.create_obj_from_config import create_dataloader
+        calib_dataloader_args = {
+            'batch_size': 10,
+            'dataset': {"ImageRecord": {'root':FLAGS.eval_data}},
+            'transform': {'ResizeCropImagenet': {'height': 224, 'width': 224,
+                            'mean_value': [123.68, 116.78, 103.94]}},
+            'filter': None
+        }
+        calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
+
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
         conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
-        q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=dataloader,
+        q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
                     eval_func=evaluate)
         q_model.save(FLAGS.output_model)
 
