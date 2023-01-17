@@ -228,8 +228,10 @@ Intel® Neural Compressor validated the quantization for 10K+ models from popula
 </table>
 
 ## Selected Publications/Events
-* NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Dec 2022)
-* NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Dec 2022)
+* Blog by Intel: [Intel® AMX Enhances AI Interence Performance](https://www.intel.com/content/www/us/en/products/docs/accelerator-engines/advanced-matrix-extensions/alibaba-solution-brief.html) (Jan 2023)
+* Blog by TensorFlow: [Optimizing TensorFlow for 4th Gen Intel Xeon Processors](https://blog.tensorflow.org/2023/01/optimizing-tensorflow-for-4th-gen-intel-xeon-processors.html) (Jan 2023)
+* NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
+* NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 * Blog on Medium: [MLefficiency — Optimizing transformer models for efficiency](https://medium.com/@kawapanion/mlefficiency-optimizing-transformer-models-for-efficiency-a9e230cff051) (Dec 2022)
 * Blog on Medium: [One-Click Acceleration of Hugging Face Transformers with Intel’s Neural Coder](https://medium.com/intel-analytics-software/one-click-acceleration-of-huggingface-transformers-with-optimum-intel-by-neural-coder-f35ca3b1a82f) (Dec 2022)
 * Blog on Medium: [One-Click Quantization of Deep Learning Models with the Neural Coder Extension](https://medium.com/intel-analytics-software/one-click-quantize-your-deep-learning-code-in-visual-studio-code-with-neural-coder-extension-8be1a0022c29) (Dec 2022)
