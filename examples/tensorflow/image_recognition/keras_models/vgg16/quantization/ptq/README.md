@@ -44,7 +44,7 @@ The pretrained model is provided by [Keras Applications](https://keras.io/api/ap
  ```
 `--output_model ` the model should be saved as SavedModel format or H5 format.
 
-### 3. Prepare Dataset
+## 3. Prepare Dataset
 
   TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
   We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.

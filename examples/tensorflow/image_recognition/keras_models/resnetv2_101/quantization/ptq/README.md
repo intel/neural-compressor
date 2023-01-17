@@ -60,7 +60,7 @@ python prepare_model.py   --output_model=/path/to/model
   ```
 
 
-## Run Command
+# Run Command
 
 ## Quantization Config
 The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
