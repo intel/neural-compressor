@@ -52,12 +52,13 @@ def evaluate(model):
     """
     from neural_compressor.model import Model
     model = Model(model)
-    model.input_tensor_names = ["image_tensor"]
+    model.input_tensor_names = ["image_tensor:0"]
     model.output_tensor_names = ["num_detections:0", "detection_boxes:0", \
                                     "detection_scores:0", "detection_classes:0"]
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
+    warmup = 5
     iteration = -1
     if args.benchmark and args.mode == 'performance':
         iteration = 100
@@ -78,7 +79,7 @@ def evaluate(model):
             latency_list.append(end-start)
             if idx + 1 == iteration:
                 break
-        latency = np.array(latency_list).mean() / args.batch_size
+        latency = np.array(latency_list[warmup:]).mean() / args.batch_size
         return latency
 
     eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \

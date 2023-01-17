@@ -56,6 +56,9 @@ def evaluate(model):
     iteration = -1
     if args.benchmark and args.mode == 'performance':
         iteration = 100
+    input_tensor_names = ["image_tensor:0"]
+    output_tensor_names = ["num_detections:0", "detection_boxes:0", \
+                                        "detection_scores:0", "detection_classes:0"]
     metric = COCOmAPv2(output_index_mapping={'num_detections':0, 'boxes':1, 'scores':2, 'classes':3})
 
     if isinstance(model, AutoTrackable):
@@ -64,16 +67,14 @@ def evaluate(model):
             latency_list = []
             for idx, (inputs, labels) in enumerate(dataloader):
                 inputs_dict = {}
-                inputs_dict["image_tensor"] = tf.constant(np.array(inputs), dtype=infer.inputs[0].dtype)
+                inputs_dict[input_tensor_names[0]] = tf.constant(np.array(inputs), dtype=infer.inputs[0].dtype)
                 
                 start = time.time()
                 results = infer(**inputs_dict)
                 end = time.time()
 
                 predictions = []
-                output_names = ["num_detections", "detection_boxes", \
-                                        "detection_scores", "detection_classes"]
-                for key in output_names:
+                for key in output_tensor_names:
                     predictions.append(results[key])
 
                 metric.update(predictions, labels)
@@ -85,9 +86,8 @@ def evaluate(model):
 
     else:
         model = Model(model)
-        model.input_tensor_names = ["image_tensor"]
-        model.output_tensor_names = ["num_detections:0", "detection_boxes:0", \
-                                        "detection_scores:0", "detection_classes:0"]
+        model.input_tensor_names = input_tensor_names
+        model.output_tensor_names = output_tensor_names
         input_tensor = model.input_tensor
         output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                             model.output_tensor[0]
@@ -134,12 +134,9 @@ def main(_):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
         accuracy_criterion = AccuracyCriterion(criterion='absolute')
-        config = PostTrainingQuantConfig(
-            inputs=["image_tensor"],
-            outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
-            calibration_sampling_size=[10, 50, 100, 200],
-            excluded_precisions=["bf16"],
-            accuracy_criterion=accuracy_criterion)
+        config = PostTrainingQuantConfig(calibration_sampling_size=[10, 50, 100, 200],
+                                         excluded_precisions=["bf16"],
+                                         accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model=args.input_graph, conf=config, 
                                     calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(args.output_model)

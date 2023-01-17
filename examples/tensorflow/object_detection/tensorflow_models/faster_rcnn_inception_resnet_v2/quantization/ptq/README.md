@@ -119,12 +119,9 @@ After prepare step is done, we just need update main.py like below.
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
         accuracy_criterion = AccuracyCriterion(criterion='absolute')
-        config = PostTrainingQuantConfig(
-            inputs=["image_tensor"],
-            outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
-            calibration_sampling_size=[10, 50, 100, 200],
-            excluded_precisions=["bf16"],
-            accuracy_criterion=accuracy_criterion)
+        config = PostTrainingQuantConfig(calibration_sampling_size=[10, 50, 100, 200],
+                                         excluded_precisions=["bf16"],
+                                         accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model=args.input_graph, conf=config, 
                                     calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(args.output_model)

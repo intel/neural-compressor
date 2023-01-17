@@ -108,6 +108,7 @@ def evaluate(model):
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
+    warmup = 5
     iteration = -1
     if FLAGS.benchmark and FLAGS.mode == 'performance':
         iteration = 100
@@ -131,7 +132,7 @@ def evaluate(model):
             latency_list.append(end-start)
             if idx + 1 == iteration:
                 break
-        latency = np.array(latency_list).mean() / FLAGS.batch_size
+        latency = np.array(latency_list[warmup:]).mean() / FLAGS.batch_size
         return latency
 
     eval_dataset = COCORecordDataset(root=FLAGS.dataset_location, filter=LabelBalanceCOCORecordFilter(size=1), \
