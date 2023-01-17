@@ -129,7 +129,6 @@ Attributes
 
 
 .. py:data:: framework_datasets
-   
 
    The datasets supported by neural_compressor, it's model specific and can be configured by yaml file.
 
