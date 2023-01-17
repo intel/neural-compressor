@@ -115,10 +115,6 @@ class ModelArguments:
         default=1,
         metadata={"help": ("batch size for benchmark")},
     )
-    quant_format: str = field(
-        default='default', 
-        metadata={"help": ("INC quantization format")},
-    )
 
 
 @dataclass
@@ -278,8 +274,6 @@ def main():
         )
     else:
         model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-    
-    assert model_args.quant_format in ['default', 'QDQ', 'QOperator'], "quant_format can only be in ['default', 'QDQ', 'QOperator']"
 
     # Setup logging
     logging.basicConfig(
@@ -477,21 +471,13 @@ def main():
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         calib_dataset = SQuADDataset(eval_dataset, model, label_names=["start_positions", "end_positions"])
-        if model_args.quant_format == 'default':
-            config = PostTrainingQuantConfig(approach='dynamic')
-        elif model_args.quant_format == 'QOperator':
-            fp32_op_names = None
-            if model_args.model_name_or_path == 'mrm8488/spanbert-finetuned-squadv1':
-                fp32_op_names = ['Gather_94', 'MatMul_660', 'MatMul_754', 'MatMul_848', 'MatMul_1036']
-            elif model_args.model_name_or_path == 'salti/bert-base-multilingual-cased-finetuned-squad':
-                fp32_op_names = ['MatMul_660', 'MatMul_566', 'Unsqueeze_91']
-            config = PostTrainingQuantConfig(approach='static',
-                                             quant_format=model_args.quant_format,
-                                             op_name_list={op_name:FP32_CONFIG for op_name in fp32_op_names if fp32_op_names})
-        else:
-            config = PostTrainingQuantConfig(approach='static',
-                                             quant_format=model_args.quant_format)
-
+        fp32_op_names = None
+        if model_args.model_name_or_path == 'mrm8488/spanbert-finetuned-squadv1':
+            fp32_op_names = ['Gather_94', 'MatMul_660', 'MatMul_754', 'MatMul_848', 'MatMul_1036']
+        elif model_args.model_name_or_path == 'salti/bert-base-multilingual-cased-finetuned-squad':
+            fp32_op_names = ['MatMul_660', 'MatMul_566', 'Unsqueeze_91']
+        config = PostTrainingQuantConfig(approach='static',
+                                         op_name_list={op_name:FP32_CONFIG for op_name in fp32_op_names if fp32_op_names})
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,

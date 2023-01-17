@@ -20,9 +20,6 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
-      --quant_format=*)
-          quant_format=$(echo $var |cut -f2 -d=)
-      ;;
     esac
   done
 
@@ -88,7 +85,6 @@ function run_tuning {
             --task ${TASK_NAME} \
             --num_heads ${num_heads} \
             --hidden_size ${hidden_size} \
-            --quant_format ${quant_format} \
             --tune
 }
 

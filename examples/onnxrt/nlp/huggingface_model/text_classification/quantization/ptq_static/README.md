@@ -43,20 +43,11 @@ bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 
 ## 1. Quantization
 
-Quantize model with dynamic quantization:
-
-```bash
-bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
-                   --output_model=path/to/model_tune \ # model path as *.onnx
-                   --dataset_location=path/to/glue/data
-```
-
-Quantize model with QLinearOps:
+Quantize model with static quantization:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
-                   --output_model=/path/to/model_tune 
-                   --quant_format=QOperator
+                   --output_model=/path/to/model_tune
 ```
 
 ## 2. Benchmark
