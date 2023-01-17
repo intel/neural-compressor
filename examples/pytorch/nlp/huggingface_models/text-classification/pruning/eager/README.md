@@ -178,6 +178,7 @@ pruning_configs=[
 ]
 
 ```
+
 Please be aware that when keywords appear in both the global and the local settings, we select the **local** settings as priority.
 ```shell
 python3 ./run_glue_no_trainer_mixed.py \
@@ -221,7 +222,8 @@ python run_glue_no_trainer.py \
         --output_dir "./dense_sst2_bertmini"
 ```
 ## Results
-The snip-momentum pruning method is used by default, and the initial dense model is fine-tuned.
+=======
+Please be aware that when the keywords appear in both global and local settings, the **local** settings are given priority.The snip-momentum pruning method is used by default, and the initial dense model is fine-tuned.
 ### MRPC
 |  Model  | Dataset  | Sparsity pattern |Element-wise/matmul, Gemm, conv ratio | Dense Accuracy (mean/max) | Sparse Accuracy (mean/max) | Relative drop |
 |  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: |
@@ -241,4 +243,5 @@ The snip-momentum pruning method is used by default, and the initial dense model
 # References
 * [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
 * [Knowledge Distillation with the Reused Teacher Classifier](https://arxiv.org/abs/2203.14001)
+
 

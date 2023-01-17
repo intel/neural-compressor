@@ -102,6 +102,8 @@ class Component(object):
         self.cfg = self.conf.usr_cfg
         if self.cfg.model.framework != 'NA':
             self.framework = self.cfg.model.framework.lower()
+            from neural_compressor.experimental.common.model import set_backend
+            set_backend(self.framework)
             if self.framework in required_libs:
                 for lib in required_libs[self.framework]:
                     try:
@@ -508,7 +510,10 @@ class Component(object):
 
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
-            self._model = Model(user_model, framework=self.framework)
+            if "tensorflow" in self.framework or self.framework == "keras":
+                self._model = Model(user_model, framework=self.framework, device=self.cfg.device)
+            else:
+                self._model = Model(user_model, framework=self.framework)
         else:
             # It is config of neural_compressor version < 2.0, no need in 2.0
             if self.cfg.model.framework == "pytorch_ipex":

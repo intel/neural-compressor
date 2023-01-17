@@ -45,15 +45,15 @@ In our build-in sigopt strategy, the metrics add accuracy as a constraint and op
 Compare to `Basic` strategy, `sigopt_api_token` and `sigopt_project_id` is necessary for `SigOpt` strategy. Before using the strategy, it is required to create the project corresponding to `sigopt_project_id` in your account.
 
 ```python
-from neural_compressor import config
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
-conf = config.PostTrainingQuantConfig(
-    tuning_criterion=config.TuningCriterion(
+conf = PostTrainingQuantConfig(
+    tuning_criterion=TuningCriterion(
         strategy="sigopt",
         strategy_kwargs={
-          "sigopt_api_token": "YOUR-ACCOUNT-API-TOKEN",
-          "sigopt_project_id": "PROJECT-ID",
-          "sigopt_experiment_name": "nc-tune",
+            "sigopt_api_token": "YOUR-ACCOUNT-API-TOKEN",
+            "sigopt_project_id": "PROJECT-ID",
+            "sigopt_experiment_name": "nc-tune",
         },
     ),
 )

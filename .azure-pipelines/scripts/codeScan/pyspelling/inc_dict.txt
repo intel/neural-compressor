@@ -2510,3 +2510,6 @@ Wasserblat
 Zafrir
 etection
 parameterization
+emsp
+frequence
+ema

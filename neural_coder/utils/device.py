@@ -14,25 +14,29 @@
 
 import os
 import subprocess
-import torch
 
 from .. import globals
 
 
 def detect_device():
-    if torch.cuda.is_available():
-        globals.device = "cuda"
-        # torch.cuda.device_count()
-        # torch.cuda.get_device_name(0)
-        # torch.cuda.get_device_properties(0)
-    elif check_has('clinfo | grep "Intel(R) Graphics"'):
-        globals.device = "intel_gpu"
-    else:
-        if check_has('lscpu | grep "amx"'):
-            globals.device = "cpu_with_amx"
-        else:
-            globals.device = "cpu_without_amx"
+    try:
+        import torch
+        if torch.cuda.is_available():
+            globals.device = "cuda"
+            return
+    except:
+        pass # cuda tf wip
 
+    if check_has('clinfo | grep "Intel(R) Graphics"'):
+        globals.device = "intel_gpu"
+        return
+
+    if check_has('lscpu | grep "amx"'):
+        globals.device = "cpu_with_amx"
+        return
+
+    globals.device = "cpu_without_amx"
+    return
 
 def check_has(s):
     cmd = s

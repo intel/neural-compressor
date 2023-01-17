@@ -23,8 +23,7 @@ Classes includes:
     PyTorchIntermediateLayersKnowledgeDistillationLoss.
 """
 
-from abc import abstractmethod
-from collections import UserDict, Counter
+from collections import Counter
 from neural_compressor.utils.utility import LazyImport, singleton
 from neural_compressor.utils import logger
 from neural_compressor.adaptor.pytorch import pytorch_forward_wrapper
@@ -1098,7 +1097,8 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         if device != model_device:
             model.to(device)
         with torch.no_grad():
-            return pytorch_forward_wrapper(model, input, device=device)
+            outputs = pytorch_forward_wrapper(model, input, device=device)
+        return outputs
 
     def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
         """Calculate all losses between student model and teacher model.
