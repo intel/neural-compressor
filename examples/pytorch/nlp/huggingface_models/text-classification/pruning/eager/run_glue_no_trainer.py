@@ -187,6 +187,11 @@ def parse_args():
         type=int, default=-1,
         help="Sparse step frequency for iterative pruning, default to a quarter of pruning steps."
     )
+    parser.add_argument(
+        "--pruning_type",
+        type=str, default="snip_momentum",
+        help="Pruning type determines how should the weights of a neural network are scored and pruned."
+    )
     args = parser.parse_args()
 
     # Sanity checks
@@ -511,17 +516,18 @@ def main():
         pattern=args.pruning_pattern,
         pruning_frequency=frequency,
         start_step=pruning_start,
-        end_step=pruning_end
+        end_step=pruning_end,
+        pruning_type=args.pruning_type,
     )
     # pruner = Pruning(config)
     # pruner.model = model
     # pruner.on_train_begin()
     compression_manager = prepare_compression(model=model, confs=configs)
     compression_manager.callbacks.on_train_begin()
-    
+
     for epoch in range(args.num_train_epochs):
         model.train()
-        
+
         for step, batch in enumerate(train_dataloader):
             # pruner.on_step_begin(local_step=step)
             compression_manager.callbacks.on_step_begin(step)
@@ -538,7 +544,7 @@ def main():
                                                      teacher_outputs['hidden_states'][-1])  ##variant 3
 
             accelerator.backward(loss)
-            
+
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
                 # pruner.on_before_optimizer_step()
                 compression_manager.callbacks.on_before_optimizer_step()
@@ -626,4 +632,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

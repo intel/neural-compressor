@@ -224,10 +224,10 @@ def save_checkpoint(state, is_best, save_dir):
     """Saves checkpoint to disk"""
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    filename = save_dir + "checkpoint.pth"
+    filename = save_dir + "/checkpoint.pth"
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, save_dir + 'model_best.pth')
+        shutil.copyfile(filename, save_dir + '/model_best.pth')
 
 
 def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_manager, accelerator, eval_dataloader, metric):
@@ -259,10 +259,7 @@ def train(args, model, train_dataloader, lr_scheduler, optimizer, compression_ma
                 del batch['teacher_logits']
             outputs = model(**batch)
 
-            outputs_for_kd = torch.vstack([torch.vstack([sx, ex]) \
-                for sx, ex in zip(outputs['start_logits'], outputs['end_logits'])])
-            loss = outputs['loss'].item()
-            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs_for_kd, loss, teacher_logits)
+            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs['logits'], outputs['loss'], teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             accelerator.backward(loss)
 
@@ -593,14 +590,6 @@ def main():
         combs.append(d_conf)
 
     if args.do_quantization:
-        # transforming the student model to fx mode for QAT
-        from transformers.utils.fx import symbolic_trace
-        for input in eval_dataloader:
-            input_names = input.keys()
-            break
-        model = symbolic_trace(accelerator.unwrap_model(model), input_names=input_names, \
-                               batch_size=args.batch_size, sequence_length=args.max_seq_length)
-
         from neural_compressor import QuantizationAwareTrainingConfig
         q_conf = QuantizationAwareTrainingConfig()
         combs.append(q_conf)

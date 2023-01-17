@@ -100,10 +100,10 @@ class Distillation(Component):
 
     def _on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
         """Set or compute output of teacher model.
-        
-        Called after student model forward, calculate the output of the teacher model 
+
+        Called after student model forward, calculate the output of the teacher model
         with the same input of the student model.
-            
+
         Args:
             input (tensor or list or dict): The input of the student model.
             student_output (tensor): The output logits of the student model.

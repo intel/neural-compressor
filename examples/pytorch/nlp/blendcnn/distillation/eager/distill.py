@@ -75,7 +75,7 @@ def main(config='config/distill/mrpc/train.json', args=None):
         tensors = TensorDataset(*dataset.get_tensors()) # To Tensors
         data_iter = DataLoader(tensors, batch_size=cfg_optim.batch_size, shuffle=False)
         return data_iter, dataset
-    
+
     data_iter, dataset = train_dataloader, _ = get_data_iterator(mode='train')
     eval_dataloader, _ = get_data_iterator(mode='eval')
 
@@ -138,7 +138,7 @@ def main(config='config/distill/mrpc/train.json', args=None):
     if cfg.mode == "train":
         # train_loop.train(get_loss, None, None) # not use pretrain file
         # print("Training has been done properly.")
-        
+
         from neural_compressor.training import prepare_compression
         from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
         distillation_criterion = KnowledgeDistillationLossConfig(temperature=args.temperature,
@@ -180,7 +180,7 @@ def main(config='config/distill/mrpc/train.json', args=None):
                         break
                 print('Average Loss: {}'.format(loss_sum / cnt))
                 compression_manager.callbacks.on_epoch_end()
-                
+
                 best_score = eval_func(model)
                 # remember best prec@1 and save checkpoint
                 if best_score > best_prec1:
@@ -216,7 +216,7 @@ def main(config='config/distill/mrpc/train.json', args=None):
 
             if os.environ.get('BLENDCNN_PROFILING') is not None:
                 print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=10))
-            return total_accuracy   
+            return total_accuracy
 
         train_func(model)
         return

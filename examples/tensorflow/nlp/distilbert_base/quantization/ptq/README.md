@@ -49,6 +49,12 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 python download_dataset.py --path_to_save_dataset <enter path to save dataset>
 ```
 
+### 6. Download Model
+Download Frozen graph:
+```shell
+wget https://storage.googleapis.com/intel-optimized-tensorflow/models/2_10_0/distilbert_frozen_graph_fp32_final.pb
+```
+
 ## Run Command
 ### Run Tuning:
 ```shell

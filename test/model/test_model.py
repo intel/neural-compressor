@@ -3,6 +3,7 @@ import numpy as np
 import unittest
 import os
 import platform
+from pkg_resources import parse_version
 from neural_compressor.model import MODELS
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.model.mxnet_model import MXNetModel
@@ -249,7 +250,7 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf keras_model')
 
     def test_tf_qat_model(self):
-        if tf.version.VERSION < '2.3.0':
+        if parse_version(tf.version.VERSION) < parse_version('2.3.0'):
             return
         keras_model = build_keras()
         self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
