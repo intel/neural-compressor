@@ -378,21 +378,13 @@ if __name__ == "__main__":
 
     if args.benchmark:
         model = onnx.load(args.model_path)
-        if args.mode == 'performance':
-            session = ort.InferenceSession(args.model_path, None)
-            input_tensors = session.get_inputs()
-            shape = []
-            for i in range(len(input_tensors)):
-                shape.append((1, 128))
-            dummy_dataset = DummyDataset(shape=shape, low=1, high=1, dtype='int64', label=True)
-            dummy_dataloader = DefaultDataLoader(dummy_dataset, args.batch_size)
-            
+        if args.mode == 'performance':            
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=28,
                                    num_of_instance=1)
-            fit(model, conf, b_dataloader=dummy_dataloader)
+            fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
             print("Batch size = %d" % args.batch_size)
