@@ -1,7 +1,7 @@
 Examples
 ==========
 Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration. Part of the validated cases can be found in the example tables, and the release data is available [here](../docs/source/validated_model_list.md).
-> Note: New API migration work in progress, the example marked with `*` means it still using old API.
+> Note: 2.0 API migration work in progress, the example marked with `*` means it still using 1.x API.
 
 ## Helloworld Examples
 
