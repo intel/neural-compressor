@@ -15,7 +15,7 @@ bash run_distillation.sh --topology=(resnet18|resnet34|resnet50|resnet101) --out
 ```
 dataset_location is the path to save the datasets which will be downloaded automatically.
 
-## CIFAR100 benchmark
+## CIFAR100 Benchmark
 https://github.com/weiaicunzai/pytorch-cifar100
 
 # Paper:
@@ -23,7 +23,7 @@ https://github.com/weiaicunzai/pytorch-cifar100
 
 [Self-Distillation: Towards Efficient and Compact Neural Networks](https://ieeexplore.ieee.org/document/9381661)
 
-# Our results in CIFAR100
+# Results in CIFAR100
 | model    | Baseline | Classifier1 | Classifier2 | Classifier3 | Classifier4 | Ensemble |
 | :------: | :-------:| :---------: | :---------: | :---------: | :---------: | :------: |
 | Resnet50 |  80.88   |    82.06    |   83.64     |    83.85    |    83.41    |  85.10   |
