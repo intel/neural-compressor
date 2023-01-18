@@ -42,6 +42,20 @@ stages:
               utArtifact: "ut-adaptor"
               utTestMode: "no-coverage"
 
+  - stage: Pruning
+    displayName: Unit Test Pruning
+    dependsOn: []
+    jobs:
+      - job:
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "run_basic_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-pruning"
+              utTestMode: "no-coverage"
+
   - stage: IPEX
     displayName: Unit Test IPEX
     dependsOn: []

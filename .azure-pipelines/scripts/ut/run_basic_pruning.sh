@@ -1,6 +1,6 @@
 #!/bin/bash
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
-echo "run basic others"
+echo "run basic pruning"
 
 echo "specify fwk version..."
 source /neural-compressor/.azure-pipelines/scripts/ut/ut_fwk_version.sh $1
@@ -9,20 +9,9 @@ echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
 lpot_path=$(python -c 'import neural_compressor; import os; print(os.path.dirname(neural_compressor.__file__))')
 cd /neural-compressor/test || exit 1
-find . -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
-sed -i '/ adaptor\//d' run.sh
-sed -i '/ tfnewapi\//d' run.sh
-sed -i '/ ux\//d' run.sh
-sed -i '/ neural_coder\//d' run.sh
-sed -i '/ ipex\//d' run.sh
-sed -i '/ itex\//d' run.sh
-sed -i '/ pruning\//d' run.sh
-sed -i '/ pruning_v1\//d' run.sh
-sed -i '/ scheduler\//d' run.sh
-
-echo "copy model for dynas..."
-mkdir -p .torch/ofa_nets || true
-cp -r /tf_dataset/ut-localfile/ofa_mbv3_d234_e346_k357_w1.2 .torch/ofa_nets || true
+find ./pruning -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
+find ./pruning_v1 -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
+find ./scheduler -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'>> run.sh
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
@@ -32,7 +21,7 @@ echo "cat run.sh..."
 cat run.sh | tee ${ut_log_name}
 echo "------UT start-------"
 bash run.sh 2>&1 | tee -a ${ut_log_name}
-cp .coverage ${LOG_DIR}/.coverage.others
+cp .coverage ${LOG_DIR}/.coverage.adaptor
 echo "------UT end -------"
 
 if [ $(grep -c "FAILED" ${ut_log_name}) != 0 ] || [ $(grep -c "OK" ${ut_log_name}) == 0 ];then
