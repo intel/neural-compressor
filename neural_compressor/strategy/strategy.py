@@ -278,7 +278,7 @@ class TuneStrategy(object):
             tag = status.Get_tag() # the task id that is finished
 
             self.overall_trials += 1
-            best_tune_cfg_id = None
+            self.best_tune_cfg_id = None
             self.already_ack_id_lst.add(tag)
 
             if(self.meet_acc_req(eval_res)):    # if meet accuracy requirement, then update minimum id that met requirement
@@ -294,15 +294,15 @@ class TuneStrategy(object):
                 
                 if self.met_flag:
                     # found the best tune cfg!
-                    best_tune_cfg_id = self.requirements_met_min_cfg_id
+                    self.best_tune_cfg_id = self.requirements_met_min_cfg_id
             else:
                 self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(tune_cfg_lst[tag])
 
-            if best_tune_cfg_id:
+            if self.best_tune_cfg_id:
                 #### we find the best tune cfg id that meet requirements!!
                 print("~~~~~~Find best tune cfg id~~~~~~~")
-                print(best_tune_cfg_id)
-                print(tune_cfg_lst[best_tune_cfg_id])
+                print(self.best_tune_cfg_id)
+                print(tune_cfg_lst[self.best_tune_cfg_id])
                 return
             
             # send the next cfg if not exceed max trials
@@ -326,7 +326,8 @@ class TuneStrategy(object):
                     print("~~~~~~Find best tune cfg id~~~~~~~")
                     print(self.requirements_met_min_cfg_id)
                     self.met_flag = True
-                    print(tune_cfg_lst[self.requirements_met_min_cfg_id])
+                    self.best_tune_cfg_id = self.requirements_met_min_cfg_id
+                    print(tune_cfg_lst[self.best_tune_cfg_id])
                 break
 
         # send END signal to all other slaves
@@ -337,8 +338,9 @@ class TuneStrategy(object):
                 tag=len(tune_cfg_lst)
             )
         # comm.bcast("END", root=0)   # bcast end signal to all
-        print(self.eval_results)
         # self.get_best_eval_results(eval_results)
+        self.best_qmodel = self.adaptor.quantize(
+                copy.deepcopy(tune_cfg_lst[self.best_tune_cfg_id]), self.model, self.calib_dataloader, self.q_func)
 
 
     def slave_worker_handle(self, comm, tune_cfg_lst):
