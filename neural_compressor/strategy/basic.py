@@ -63,7 +63,7 @@ class BasicTuneStrategy(TuneStrategy):
                     logger.info("Early stopping the stage 1.")
                     break
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                op_tuning_cfg_lst_stage_1.append(op_tune_cfg)
+                op_tuning_cfg_lst_stage_1.append(op_tuning_cfg)
             yield op_tuning_cfg_lst_stage_1
 
             #### Coordinate: only master knows cur best tune cfg

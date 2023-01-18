@@ -168,6 +168,8 @@ class TuneStrategy(object):
         self.metric_met_point = 0
 
         if resume is not None: self.setup_resume(resume)
+        
+        self.met_flag = False
 
 
     @abstractmethod
@@ -196,7 +198,7 @@ class TuneStrategy(object):
         
         # need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
 
-        return self.objective.compare(self.last_tune_result, self.baseline)
+        return self.objectives.compare(self.last_tune_result, self.baseline)
 
         # record the tuning history
         # saved_tune_cfg = copy.deepcopy(tune_cfg)
@@ -280,11 +282,12 @@ class TuneStrategy(object):
             self.already_ack_id_lst.add(tag)
 
             if(self.meet_acc_req(eval_res)):    # if meet accuracy requirement, then update minimum id that met requirement
-                self.requirements_met_min_cfg_id = min(requirements_met_min_cfg_id, tag)
+                self.met_flag = True
+                self.requirements_met_min_cfg_id = min(self.requirements_met_min_cfg_id, tag)
                 
                 # must ensure every id lower than current min_id has been acknowledged
                 # because a tune cfg (not acked yet) with lower id can have better acc
-                for i in range(requirements_met_min_cfg_id):
+                for i in range(self.requirements_met_min_cfg_id):
                     if i not in already_ack_id_lst:
                         self.met_flag = False   # not completely collected yet!
                         break
