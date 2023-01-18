@@ -346,8 +346,9 @@ class TuneStrategy(object):
                 tag=len(tune_cfg_lst)
             )
 
-        self.best_qmodel = self.adaptor.quantize(
-                copy.deepcopy(tune_cfg_lst[self.best_tune_cfg_id]), self.model, self.calib_dataloader, self.q_func)
+        if self.best_tune_cfg_id is not None:
+            self.best_qmodel = self.adaptor.quantize(
+                    copy.deepcopy(tune_cfg_lst[self.best_tune_cfg_id]), self.model, self.calib_dataloader, self.q_func)
 
 
     def slave_worker_handle(self, comm, tune_cfg_lst):
