@@ -113,7 +113,11 @@ def main(_):
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         if args.mode == 'performance':
-            conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
+            conf = BenchmarkConfig(
+                inputs=["image_tensor"],
+                outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
+                cores_per_instance=28, 
+                num_of_instance=1)
             fit(args.input_graph, conf, b_func=evaluate)
         else:
             accuracy = evaluate(args.input_graph)
