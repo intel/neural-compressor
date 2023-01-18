@@ -191,13 +191,16 @@ class TuneStrategy(object):
     #     # self.eval_results.append(eval_res)
     #     self.trials_count = 0
     #     self.traverse_start_time = time()
+    def fake_need_stop(self):
+        acc1, acc2 = self.last_tune_result
+        return False
+    
     def meet_acc_req(self, eval_res):
         self.last_tune_result = eval_res
         # get the current best acc, not sure whether meet goal (comment for now)
         # self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
         
         # need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
-
         return self.objectives.compare(self.last_tune_result, self.baseline)
 
         # record the tuning history
@@ -245,6 +248,8 @@ class TuneStrategy(object):
     def master_worker_handle(self, comm, tune_cfg_lst):
         # send all task ids to all free nodes, and wait until any result
         # when receving any result, directly send a new task id to the sender (it's free)
+        msg = ("***master_worker_handle at stage ", self.stage, "len(tune_cfg_lst", len(tune_cfg_lst))
+        logger.info(msg)
         from mpi4py import MPI
         size = comm.Get_size()
         for process_id in range(1, min(len(tune_cfg_lst) + 1, size)):
@@ -263,7 +268,7 @@ class TuneStrategy(object):
 
         self.already_ack_id_lst = set()
         self.requirements_met_min_cfg_id = sys.maxsize
-
+        
         # stuck here to receive any result
         while True:
             eval_res = comm.recv(
@@ -318,17 +323,20 @@ class TuneStrategy(object):
             #     self.max_time_flag = True
             elif cur_cfg_id <= len(tune_cfg_lst):
                 print("~~~~~~master send new tuning cfg {} to rank: {}".format(cur_cfg_id, sender_rank))
+                print(cur_cfg_id, "*" * 50, len(tune_cfg_lst))
                 comm.send(obj=cur_cfg_id, dest=sender_rank, tag=cur_cfg_id)
                 cur_cfg_id += 1
             else:                    
                 print("all tune configs are sent, no more sending, just collecting...")
 
+            # msg = (len(tune_cfg_lst), "*" * 50 , self.num_acks)
+            # logger.info(msg)
             if len(tune_cfg_lst) == self.num_acks:    # all collected (ack should collected == acks)
                 # all processes ended
                 # return self.requirements_met_min_cfg_id  if it has been updated
                 if self.requirements_met_min_cfg_id == sys.maxsize:
                     print("~~~~Not found any tune cfg that meet requirements~~~~")
-                    self.cur_best_tuning_cfg = tune_cfg_lst
+                    self.cur_best_tuning_cfg = tune_cfg_lst[0] # TODO select cur_best_tuning_cfg
                 else:
                     print("~~~~~~Find best tune cfg id~~~~~~~")
                     print(self.requirements_met_min_cfg_id)
@@ -336,12 +344,14 @@ class TuneStrategy(object):
                     self.best_tune_cfg_id = self.requirements_met_min_cfg_id
                     print(tune_cfg_lst[self.best_tune_cfg_id])
                 break
+            
 
         # send END signal to all other slaves
+        logger.info("~~~~# send END signal to all other slaves~~~~")
         for process_id in range(1, size):
             print("~~~~~~master send END signal to rank: {}".format(process_id))
             comm.send(
-                obj=None,
+                obj=len(tune_cfg_lst),
                 dest=process_id, # rank 0 send to rank 1, 2, ...
                 tag=len(tune_cfg_lst)
             )
@@ -349,6 +359,10 @@ class TuneStrategy(object):
         if self.best_tune_cfg_id is not None:
             self.best_qmodel = self.adaptor.quantize(
                     copy.deepcopy(tune_cfg_lst[self.best_tune_cfg_id]), self.model, self.calib_dataloader, self.q_func)
+        # comm.bcast("END", root=0)   # bcast end signal to all
+        print(self.eval_results)
+        logger.info(self.eval_results)
+        # self.get_best_eval_results(eval_results)
 
 
     def slave_worker_handle(self, comm, tune_cfg_lst):
@@ -361,13 +375,19 @@ class TuneStrategy(object):
                     tag=MPI.ANY_TAG,
                     status=status   # sender (master)
                 )
-
+            cfg_idx = status.Get_tag()
+            print("&" * 50, "cfg_idx:", cfg_idx, "len(tune_cfg_lst)", len(tune_cfg_lst))
             if status.Get_tag() == len(tune_cfg_lst):
                 # master tells us can break, not more cfgs...
                 break
             # set the task id for the slave
             cfg_idx = status.Get_tag()
-            print("*" * 50, "cfg_idx:", cfg_idx) # TODO For test, remove in future
+            print("*" * 50, "cfg_idx:", cfg_idx, "len(tune_cfg_lst)", len(tune_cfg_lst)) # TODO For test, remove in future
+            # msg = ("*" * 50, "cfg_idx:", cfg_idx, "len(tune_cfg_lst)", len(tune_cfg_lst))
+            # logger.info(msg)
+            if cfg_idx >= len(tune_cfg_lst):
+                # master tells us can break, not more cfgs...
+                break
             op_tuning_cfg = tune_cfg_lst[cfg_idx]
 
             # do the following stuff...
@@ -462,6 +482,7 @@ class TuneStrategy(object):
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
 
+        self.met_flag = False # wheter met 
         self.max_trial_flag = False # whether exceed max trials
         self.max_time_flag = False # whether exceed max time
         self.overall_trials = 0
@@ -474,27 +495,35 @@ class TuneStrategy(object):
         #     tune_cfg_lst.append(tune_cfg)
 
         # get fp32 model baseline on both master and slaves
-        if self.baseline is None:
-            logger.info("Get FP32 model baseline.")
-            self._fp32_model = self.model
-            self.baseline = self._evaluate(self.model)       
-            self.objectives.baseline = self.baseline
-            # record the FP32 baseline
-            self._add_tuning_history()
-        self.show_baseline_info()
+        # if self.baseline is None:
+        #     logger.info("Get FP32 model baseline.")
+        #     self._fp32_model = self.model
+        #     self.baseline = self._evaluate(self.model)       
+        #     self.objectives.baseline = self.baseline
+        #     # record the FP32 baseline
+        #     self._add_tuning_history()
+        # self.show_baseline_info()
 
         # for all the stages, handle the tune cfg lst
         # the tune cfg lst is generated/yielded each time by distributed_next_tune_cfg_lst
         # we must pass the comm to the specific strategy because slaves may not know
         # contexts such as the best_tune_cfg
         # master should make sure slaves have all the contexts needed before going to the next computation stage
+        self.stage = 0
         for op_tuning_cfg_lst in self.distributed_next_tune_cfg_lst(comm):
             tune_cfg_lst = [self._tune_cfg_converter(op_tuning_cfg) for op_tuning_cfg in op_tuning_cfg_lst]
-
+            # tune_cfg_lst = [tune_cfg_lst[0]] * 10 # TODO for test, remove in future
+            if tune_cfg_lst == []:
+                logger.info(("#" * 50, self.stage))
+                continue
+            self.stage += 1
+            # if self.stage == 1:
+            #     self.cur_best_tuning_cfg = tune_cfg_lst[0]
             if rank == 0:
                 self.master_worker_handle(comm, tune_cfg_lst)
             else:
                 self.slave_worker_handle(comm, tune_cfg_lst)
+            logger.info("# if self.met_flag or self.max_trial_flag or self.max_time_flag:")
             if self.met_flag or self.max_trial_flag or self.max_time_flag:
                 break
 
@@ -514,14 +543,14 @@ class TuneStrategy(object):
             self.eval_func = self._fake_eval_func
 
         # get fp32 model baseline
-        # if self.baseline is None:
-        #     logger.info("Get FP32 model baseline.")
-        #     self._fp32_model = self.model
-        #     self.baseline = self._evaluate(self.model)       
-        #     self.objectives.baseline = self.baseline
-        #     # record the FP32 baseline
-        #     self._add_tuning_history()
-        # self.show_baseline_info()
+        if self.baseline is None:
+            logger.info("Get FP32 model baseline.")
+            self._fp32_model = self.model
+            self.baseline = self._evaluate(self.model)       
+            self.objectives.baseline = self.baseline
+            # record the FP32 baseline
+            self._add_tuning_history()
+        self.show_baseline_info()
         
         distributed = True # TODO add distributed/num_worker to config
         if distributed:

@@ -73,8 +73,7 @@ class BasicTuneStrategy(TuneStrategy):
                 comm.bcast(cur_best_tuning_cfg, root=0)
             else:
                 self.cur_best_tuning_cfg = comm.bcast(cur_best_tuning_cfg, root=0)
-
-
+            # logger.info(self.cur_best_tuning_cfg)
             ############ stage 2: yield new_op_tuning_cfg_lst (length of 1)
             # Fallback the ops supported both static and dynamic from static to dynamic
             # Tuning items: None
@@ -103,6 +102,7 @@ class BasicTuneStrategy(TuneStrategy):
                 self.cur_best_tuning_cfg = comm.bcast(cur_best_tuning_cfg, root=0)
 
             best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
+            logger.info(("rank", rank, type(best_op_tuning_cfg_stage1)))
 
             # Fallback
             ############ stage 3, 4: yield op_tuning_cfg_lst
