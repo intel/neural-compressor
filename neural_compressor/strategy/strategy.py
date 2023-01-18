@@ -304,7 +304,7 @@ class TuneStrategy(object):
             else:
                 self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(tune_cfg_lst[tag])
 
-            if self.best_tune_cfg_id:
+            if self.best_tune_cfg_id is not None:
                 #### we find the best tune cfg id that meet requirements!!
                 print("~~~~~~master Find best tune cfg id~~~~~~~")
                 print(self.best_tune_cfg_id)
