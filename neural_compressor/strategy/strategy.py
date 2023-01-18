@@ -249,6 +249,7 @@ class TuneStrategy(object):
         size = comm.Get_size()
         for process_id in range(1, min(len(tune_cfg_lst) + 1, size)):
             tune_cfg_id = process_id - 1
+            print("~~~~~~master sending tune cfg: {}".format(tune_cfg_id))
             comm.send(
                 obj=tune_cfg_id, # tune cfg ? do we need that?
                 dest=process_id, # rank 0 send to rank 1, 2, ...
@@ -271,6 +272,8 @@ class TuneStrategy(object):
                 status=status   # get MPI status object
             )
 
+            print("~~~~~~master reciving eval res: {}".format(eval_res))
+
             self.last_tune_result = eval_res    # for context coordination of stage 3
 
             self.num_acks += 1
@@ -282,28 +285,31 @@ class TuneStrategy(object):
             self.already_ack_id_lst.add(tag)
 
             if(self.meet_acc_req(eval_res)):    # if meet accuracy requirement, then update minimum id that met requirement
+                print("~~~~~~master has one tuning cfg meet acc: {}".format(tag))
                 self.met_flag = True
                 self.requirements_met_min_cfg_id = min(self.requirements_met_min_cfg_id, tag)
                 
                 # must ensure every id lower than current min_id has been acknowledged
                 # because a tune cfg (not acked yet) with lower id can have better acc
                 for i in range(self.requirements_met_min_cfg_id):
-                    if i not in already_ack_id_lst:
+                    if i not in self.already_ack_id_lst:
+                        print("~~~~~~master has one tuning cfg meet acc: {} but not collect all acks before".format(tag))
                         self.met_flag = False   # not completely collected yet!
                         break
                 
                 if self.met_flag:
                     # found the best tune cfg!
+                    print("~~~~~~master has one tuning cfg meet acc: {} and also collect all acks before".format(tag))
                     self.best_tune_cfg_id = self.requirements_met_min_cfg_id
             else:
                 self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(tune_cfg_lst[tag])
 
             if self.best_tune_cfg_id:
                 #### we find the best tune cfg id that meet requirements!!
-                print("~~~~~~Find best tune cfg id~~~~~~~")
+                print("~~~~~~master Find best tune cfg id~~~~~~~")
                 print(self.best_tune_cfg_id)
                 print(tune_cfg_lst[self.best_tune_cfg_id])
-                return
+                break
             
             # send the next cfg if not exceed max trials
             if self.overall_trials > self.cfg.tuning.exit_policy.max_trials:
@@ -311,6 +317,7 @@ class TuneStrategy(object):
             # elif time.time() - self.overall_time_start > self.cfg.tuning.exit_policy.timeout:
             #     self.max_time_flag = True
             elif cur_cfg_id <= len(tune_cfg_lst):
+                print("~~~~~~master send new tuning cfg {} to rank: {}".format(cur_cfg_id, sender_rank))
                 comm.send(obj=cur_cfg_id, dest=sender_rank, tag=cur_cfg_id)
                 cur_cfg_id += 1
             else:                    
@@ -332,13 +339,13 @@ class TuneStrategy(object):
 
         # send END signal to all other slaves
         for process_id in range(1, size):
+            print("~~~~~~master send END signal to rank: {}".format(process_id))
             comm.send(
                 obj=None,
                 dest=process_id, # rank 0 send to rank 1, 2, ...
                 tag=len(tune_cfg_lst)
             )
-        # comm.bcast("END", root=0)   # bcast end signal to all
-        # self.get_best_eval_results(eval_results)
+
         self.best_qmodel = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg_lst[self.best_tune_cfg_id]), self.model, self.calib_dataloader, self.q_func)
 
