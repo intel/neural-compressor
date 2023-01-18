@@ -141,7 +141,7 @@ Functions
       Estimates each activation gap between quantized model and float model.
 
 
-   .. py:method:: get_avg_traces(enable_act=True, num_samples=32)
+   .. py:method:: get_avg_traces(enable_act=True, num_sample=0)
 
       Estimates average hessian trace for each parameter.
 
