@@ -21,7 +21,7 @@ echo "cat run.sh..."
 cat run.sh | tee ${ut_log_name}
 echo "------UT start-------"
 bash run.sh 2>&1 | tee -a ${ut_log_name}
-cp .coverage ${LOG_DIR}/.coverage.adaptor
+cp .coverage ${LOG_DIR}/.coverage.pruning
 echo "------UT end -------"
 
 if [ $(grep -c "FAILED" ${ut_log_name}) != 0 ] || [ $(grep -c "OK" ${ut_log_name}) == 0 ];then
