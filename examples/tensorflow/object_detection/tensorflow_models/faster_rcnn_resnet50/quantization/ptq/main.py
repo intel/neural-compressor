@@ -45,7 +45,7 @@ def evaluate(model):
     """Custom evaluate function to estimate the accuracy of the model.
 
     Args:
-        model (tf.Graph_def): The input model graph
+        model (tf.Graph): The input model graph.
         
     Returns:
         accuracy (float): evaluation result, the larger is better.

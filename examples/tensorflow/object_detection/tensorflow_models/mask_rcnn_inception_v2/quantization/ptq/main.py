@@ -46,16 +46,17 @@ def evaluate(model):
     """Custom evaluate function to estimate the accuracy of the model.
 
     Args:
-        model (tf.Graph_def): The input model graph
+        model (tf.Graph or string or INC.model.TensorflowCheckpointModel): The input model.
         
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
     from neural_compressor.model import Model
-    model = Model(model)
-    model.input_tensor_names = ["image_tensor:0"]
-    model.output_tensor_names = ["num_detections:0", "detection_boxes:0", \
-                                    "detection_scores:0", "detection_classes:0"]
+    if isinstance(model, str) or isinstance(model, tf.compat.v1.Graph):
+        model = Model(model)
+        model.input_tensor_names = ["image_tensor:0"]
+        model.output_tensor_names = ["num_detections:0", "detection_boxes:0", \
+                                        "detection_scores:0", "detection_classes:0"]
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]

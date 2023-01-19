@@ -45,7 +45,7 @@ def evaluate(model):
     """Custom evaluate function to estimate the accuracy of the model.
 
     Args:
-        model (tf.Graph_def or tf AutoTrackable object): The input model
+        model (tf.Graph or tf AutoTrackable object): The input model.
         
     Returns:
         accuracy (float): evaluation result, the larger is better.
