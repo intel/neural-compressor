@@ -37,6 +37,7 @@ arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use ne
 arg_parser.add_argument('--dataset_location', dest='dataset_location',
                           help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
+arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='interations')
 args = arg_parser.parse_args()
 
 def evaluate(model, eval_dataloader, metric, postprocess=None):
@@ -55,7 +56,7 @@ def evaluate(model, eval_dataloader, metric, postprocess=None):
                         model.output_tensor[0]
     iteration = -1
     if args.benchmark and args.mode == 'performance':
-        iteration = 100
+        iteration = args.iters
 
     def eval_func(dataloader):
         latency_list = []
@@ -88,12 +89,15 @@ class eval_classifier_optimized_graph:
 
     def run(self):
         """This is neural_compressor function include tuning, export and benchmark option."""
+        from neural_compressor.utils import set_random_seed
+        set_random_seed(9527)
+
         if args.tune:
             from neural_compressor import quantization
             from neural_compressor.config import PostTrainingQuantConfig
             from neural_compressor.utils.create_obj_from_config import create_dataloader
-            data_path = os.path.join(args.dataset_location, 'ILSVRC2012_img_val')
-            label_path = os.path.join(args.dataset_location, 'val.txt')
+            data_path = os.path.join(args.dataset_location, 'raw_images')
+            label_path = os.path.join(args.dataset_location, 'raw/caffe_ilsvrc12/val.txt')
             dataloader_args = {
                 'batch_size': 10,
                 'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
@@ -112,8 +116,8 @@ class eval_classifier_optimized_graph:
 
         if args.benchmark:
             from neural_compressor.utils.create_obj_from_config import create_dataloader
-            data_path = os.path.join(args.dataset_location, 'ILSVRC2012_img_val')
-            label_path = os.path.join(args.dataset_location, 'val.txt')
+            data_path = os.path.join(args.dataset_location, 'raw_images')
+            label_path = os.path.join(args.dataset_location, 'raw/caffe_ilsvrc12/val.txt')
             dataloader_args = {
                 'batch_size': args.batch_size,
                 'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
