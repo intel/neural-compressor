@@ -168,8 +168,6 @@ class TuneStrategy(object):
         self.metric_met_point = 0
 
         if resume is not None: self.setup_resume(resume)
-        
-        self.met_flag = False
 
 
     @abstractmethod
@@ -191,13 +189,13 @@ class TuneStrategy(object):
     #     # self.eval_results.append(eval_res)
     #     self.trials_count = 0
     #     self.traverse_start_time = time()
-    
     def meet_acc_req(self, eval_res):
         self.last_tune_result = eval_res
         # get the current best acc, not sure whether meet goal (comment for now)
         # self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
         
         # need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
+
         return self.objectives.compare(self.last_tune_result, self.baseline)
 
         # record the tuning history
@@ -263,7 +261,7 @@ class TuneStrategy(object):
 
         self.already_ack_id_lst = set()
         self.requirements_met_min_cfg_id = sys.maxsize
-        
+
         # stuck here to receive any result
         while True:
             eval_res = comm.recv(
@@ -336,7 +334,6 @@ class TuneStrategy(object):
                     self.best_tune_cfg_id = self.requirements_met_min_cfg_id
                     print(tune_cfg_lst[self.best_tune_cfg_id])
                 break
-            
 
         # send END signal to all other slaves
         logger.info("~~~~# send END signal to all other slaves~~~~")
@@ -365,13 +362,10 @@ class TuneStrategy(object):
                 )
             cfg_idx = status.Get_tag()
             print("&" * 50, "cfg_idx:", cfg_idx, "len(tune_cfg_lst)", len(tune_cfg_lst))
-            if status.Get_tag() == len(tune_cfg_lst):
+            if status.Get_tag() >= len(tune_cfg_lst):
+                print("~~~~~~slave {} receiving END signal".format(comm.Get_rank()))
                 # master tells us can break, not more cfgs...
-                break
-            # set the task id for the slave
-            cfg_idx = status.Get_tag()
-            if cfg_idx >= len(tune_cfg_lst):
-                # master tells us can break, not more cfgs...
+                self.met_flag = True
                 break
             op_tuning_cfg = tune_cfg_lst[cfg_idx]
 
@@ -467,7 +461,7 @@ class TuneStrategy(object):
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
 
-        self.met_flag = False # whether met 
+        self.met_flag = False
         self.max_trial_flag = False # whether exceed max trials
         self.max_time_flag = False # whether exceed max time
         self.overall_trials = 0
@@ -478,7 +472,6 @@ class TuneStrategy(object):
         # for op_tuning_cfg in self.distributed_next_tune_cfg(comm):
         #     tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
         #     tune_cfg_lst.append(tune_cfg)
-
 
         # for all the stages, handle the tune cfg lst
         # the tune cfg lst is generated/yielded each time by distributed_next_tune_cfg_lst
