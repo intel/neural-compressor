@@ -45,7 +45,7 @@ function run_benchmark {
             --dataset_location ${dataset_location} \
             --batch_size ${batch_size} \
             --benchmark \
-            --iters
+            --iters ${iters}
 }
 
 main "$@"
