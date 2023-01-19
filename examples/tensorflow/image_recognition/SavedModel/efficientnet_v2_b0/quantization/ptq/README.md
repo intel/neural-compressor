@@ -7,20 +7,20 @@ This example can run on Intel CPUs and GPUs.
 
 # Prerequisite
 
-## Environment
+## 1. Environment
 
-### 1. Install Intel® Neural Compressor
+### Install Intel® Neural Compressor
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow
+### Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
 > Note: Supported Tensorflow >= 2.4.0.
 
-### 3. Install Intel Extension for Tensorflow
+### Install Intel Extension for Tensorflow
 #### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
@@ -36,13 +36,13 @@ Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's no
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-## Prepare Pretrained model
+## 2. Prepare Pretrained model
 Download the mobilenetv1 model from tensorflow-hub.
 
 image recognition
 - [efficientnet_v2_b0](https://tfhub.dev/google/imagenet/efficientnet_v2_imagenet1k_b0/classification/2)
 
-## Prepare Dataset
+## 3. Prepare Dataset
 
 Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/ImageNet. The dir include below folder and files:
 
