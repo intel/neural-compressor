@@ -23,11 +23,13 @@ import copy
 import numpy as np
 import torch.nn
 from torch.quantization.quantize_fx import fuse_fx
+import torch.nn as nn
 import logging
 
 logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional, Any, Union, Callable, Set
-
+import torch
+import tqdm
 
 class Node_collector:
     """Define Collector based on hook, which is used to record the intermediate result."""
@@ -67,7 +69,7 @@ class HessianTrace:
             self.model = model.model
         else:
             logger.info("fusing model")
-            self.model = fuse_fx(model.model)  ##TODO need to check whether model has been already fused
+            self.model = fuse_fx(model.model)
         self.dataloader = dataloader
         self.max_iter = 500
         self.tolerance = 1e-5
@@ -75,6 +77,8 @@ class HessianTrace:
         self.index = 0
         self.device = self.get_device(self.model)
         self.criterion = criterion
+        self._batch_size=dataloader.batch_size
+        self.params= [p for p in self.model.parameters() if p.requires_grad]
         if self.criterion == None:
             self.criterion = torch.nn.CrossEntropyLoss().to(self.device)  ##TODO need to set in config
         self.criterion = self.criterion.to(self.device)
@@ -214,8 +218,8 @@ class HessianTrace:
     def get_params(self):
         """Get weight names and parameters."""
         weight_names = [n for n, p in self.model.named_parameters() if
-                        p.requires_grad and "bias" not in n]  ##remove bias
-        params = [p for n, p in self.model.named_parameters() if p.requires_grad and "bias" not in n]  ##remove bias
+                        p.requires_grad]  ##remove bias and "bias" not in n
+        params = [p for n, p in self.model.named_parameters() if p.requires_grad]  ##keep bias
         self.weight_names = weight_names
         self.params = params
 
@@ -240,10 +244,6 @@ class HessianTrace:
         else:
             model.zero_grad()
 
-    # def get_params(self, model):
-    #     parameters = [p for p in model.parameters() if p.requires_grad]
-    #     return parameters
-
     def _sample_rademacher(self, params):
         samples = []
         for param in params:
@@ -251,11 +251,20 @@ class HessianTrace:
             r.masked_fill_(r == 0, -1)
             samples.append(r)
         return samples
+    
+    def _sample_rademacher_like_params(self):
+        def sample(parameter):
+            r = torch.randint_like(parameter, high=2, device=self.device)
+            return r.masked_fill_(r == 0, -1)
+        return [sample(p) for p in self.params]
+    
+    def _sample_normal_like_params(self):
+        return [torch.randn(p.size(), device=self.device) for p in self.params]
 
     def get_vtHv_weight(self, params, num_samples):
         """Get vtHv weight."""
         v = self._sample_rademacher(params)
-        H_v = [0] * len(v)
+        H_v=self._sample_normal_like_params()
         cnt = 0
         for step, data in enumerate(self.dataloader):
             batch_size = data[0].shape[0]
@@ -267,7 +276,7 @@ class HessianTrace:
                 break
         if cnt > 0:
             H_v = [item / cnt for item in H_v]
-        v_t_H_v = torch.stack([torch.mean(h_v * v_t) for (h_v, v_t) in zip(H_v, v)])  ##maybe sum is better
+        v_t_H_v = torch.stack([torch.sum(h_v * v_t)/h_v.size().numel() for (h_v, v_t) in zip(H_v, v)])
         return v_t_H_v
 
     def get_weight_traces(self, num_samples):
@@ -279,7 +288,6 @@ class HessianTrace:
         Returns:
             op_name_to_trace (dict): op names to trace.
         """
-        import tqdm
         layer_traces_per_iter = []
         prev_avg_model_trace = 0
         for iter in tqdm.tqdm(range(self.max_iter)):
@@ -288,7 +296,9 @@ class HessianTrace:
             layer_traces_estimate = torch.mean(torch.stack(layer_traces_per_iter), dim=0)
             model_trace = torch.sum(layer_traces_estimate)
             diff_ratio = abs(model_trace - prev_avg_model_trace) / (prev_avg_model_trace + self.eps)
-            if diff_ratio < self.tolerance and iter > 10:  ##TODO magic number
+            logger.info("diff_ratio:"+str(diff_ratio)+"|"+str(self.tolerance))
+            if diff_ratio < self.tolerance:  ##TODO magic number and iter>10
+                logger.info("End of hessian computation!")
                 break
             # if iter == 20:  ##TODO for debugging
             #     break
@@ -299,8 +309,9 @@ class HessianTrace:
             weight_name_to_traces[weight_name] = float(trace)  # tensor->float
         op_name_to_trace = {}
         for weight_name in self.weight_names:
-            op_name = self.weight_to_op[weight_name]
-            op_name_to_trace[op_name] = weight_name_to_traces[weight_name]
+            if "weight" in weight_name:
+                op_name = self.weight_to_op[weight_name]
+                op_name_to_trace[op_name] = weight_name_to_traces[weight_name]
         return op_name_to_trace
 
     def get_act_traces(self, num_samples):
@@ -423,10 +434,6 @@ class HessianTrace:
         fp32_act_out = {}
         for i, intern_output in enumerate(intern_outputs):
             stat_features = intern_output.out_features.view(-1)
-            # print ("No.", i, " ", intern_output.out_features.shape)
-            # print ("Numpy No.", i, " ", intern_output.out_features.cpu().data.numpy().shape)
-            # print ("No.", i, " ", stat_features.cpu().data.numpy().shape)
-            # print ("Numpy No.", i, " ", stat_features.cpu().data.numpy())
             fp32_act_out[target_module_list[i]] = stat_features.cpu().data.numpy()
             # break
         for i in intern_outputs:
@@ -454,16 +461,21 @@ class HessianTrace:
             act_gap[fp_i] = np.sum(activation_qnt_error) / activation_qnt_error.size
         return act_gap, mse_gap
 
-    def get_avg_traces(self, enable_act=True, num_samples=32):
+    def get_avg_traces(self, enable_act=True,num_sample=0):
         """Estimates average hessian trace for each parameter."""
-        assert num_samples > 0
+        if num_sample==0:
+            num_samp=self._batch_size
+        else:
+            num_samp=num_sample
+        assert num_samp > 0
+        logger.info("num_samp:"+str(num_samp))
         traces = {}
-        weight_traces = self.get_weight_traces(num_samples)
+        weight_traces = self.get_weight_traces(num_samp)
         traces['weight'] = weight_traces
         act_trace = {}
         if enable_act:
             act_gap, mse_gap = self.get_act_gap(self.model, self.q_model)
-            act_traces = self.get_act_traces(num_samples)
+            act_traces = self.get_act_traces(num_samp)
             for i, j in zip(act_traces, mse_gap):
                 # currently use mse to analysis
                 act_trace[i] = float(act_traces[i]) + float(mse_gap[j])  # Tensor->float
@@ -582,6 +594,8 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
         orig_eval = False
     fp32_model.eval()
     ht = HessianTrace(fp32_model, dataloader=dataloader, q_model=q_model)
+    traces = ht.get_avg_traces(enable_act,num_sample=0)
+    op_to_traces = traces['weight']
     q_model_state_dict = {}
     for key in q_model.state_dict().keys():
         length = len("_model.")
@@ -594,8 +608,7 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
         op_qnt_tensor = weight_quant_loss[key]['quantized'].dequantize()
         diff_l2 = (torch.norm(op_float_tensor - op_qnt_tensor, p=2) ** 2)
         pertur_lst[key] = diff_l2
-    traces = ht.get_avg_traces(enable_act)
-    op_to_traces = traces['weight']
+    
     if enable_act:
         act_to_traces = traces['activation']
         for trace_i, pertur_i, act_i in zip(op_to_traces.keys(), pertur_lst.keys(), act_to_traces.keys()):
@@ -603,7 +616,7 @@ def hawq_top(fp32_model, q_model, dataloader, criterion, enable_act):
             op_to_traces[trace_i] = pertur_lst[pertur_i] * op_to_traces[trace_i] + act_to_traces[act_i]
     else:
         for trace_i, pertur_i in zip(op_to_traces.keys(), pertur_lst.keys()):
-            op_to_traces[trace_i] = pertur_lst[pertur_i] * op_to_traces[trace_i]  # Formula:Omig=Trace*L2
+            op_to_traces[trace_i] = op_to_traces[trace_i]  # Formula:Omig=Trace*L2
     if orig_eval == False:
         fp32_model.train()
     return op_to_traces
