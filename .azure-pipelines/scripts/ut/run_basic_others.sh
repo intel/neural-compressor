@@ -3,12 +3,7 @@ python -c "import neural_compressor as nc;print(nc.version.__version__)"
 echo "run basic others"
 
 echo "specify fwk version..."
-export tensorflow_version='2.10.0'
-export pytorch_version='1.12.0+cpu'
-export torchvision_version='0.13.0+cpu'
-export onnx_version='1.12.0'
-export onnxruntime_version='1.13.1'
-export mxnet_version='1.9.1'
+source /neural-compressor/.azure-pipelines/scripts/ut/ut_fwk_version.sh $1
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh
@@ -21,6 +16,9 @@ sed -i '/ ux\//d' run.sh
 sed -i '/ neural_coder\//d' run.sh
 sed -i '/ ipex\//d' run.sh
 sed -i '/ itex\//d' run.sh
+sed -i '/ pruning\//d' run.sh
+sed -i '/ pruning_v1\//d' run.sh
+sed -i '/ scheduler\//d' run.sh
 
 echo "copy model for dynas..."
 mkdir -p .torch/ofa_nets || true
