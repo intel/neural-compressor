@@ -657,7 +657,7 @@ def main():
         model = ipex.optimize(model)
         import torch
         with torch.no_grad():
-            model = torch.jit.trace(model, example_inputs, checkout_trace=False, strict=False)
+            model = torch.jit.trace(model, example_inputs, strict=False)
             model = torch.jit.freeze(model)
 
     if model_args.benchmark or model_args.accuracy_only:
