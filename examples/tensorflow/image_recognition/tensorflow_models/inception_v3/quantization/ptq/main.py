@@ -88,6 +88,9 @@ class eval_classifier_optimized_graph:
 
     def run(self):
         """This is neural_compressor function include tuning, export and benchmark option."""
+        from neural_compressor.utils import set_random_seed
+        set_random_seed(9527)
+
         if args.tune:
             from neural_compressor import quantization
             from neural_compressor.config import PostTrainingQuantConfig
