@@ -41,6 +41,19 @@ stages:
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut-coverage-adaptor"
 
+  - stage: Pruning
+    displayName: Unit Test Pruning
+    dependsOn: []
+    jobs:
+      - job:
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "run_basic_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-pruning"
+
   - stage: TFNewAPI
     displayName: Unit Test tf newAPI
     dependsOn: []
@@ -105,6 +118,20 @@ stages:
               utScriptFileName: "run_basic_adaptor"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut-coverage-adaptor-base"
+              repo: $(REPO)
+
+  - stage: Pruning_base
+    displayName: Unit Test Pruning baseline
+    dependsOn: []
+    jobs:
+      - job:
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "run_basic_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-pruning-base"
               repo: $(REPO)
 
   - stage: TFNewAPI_base
