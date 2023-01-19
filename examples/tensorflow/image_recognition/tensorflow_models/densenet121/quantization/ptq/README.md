@@ -11,7 +11,7 @@ This example can run on Intel CPUs and GPUs.
 
 ## 1. Environment
 
-### 1. Installation
+### Installation
 Recommend python 3.6 or higher version.
 
 ```shell
@@ -19,19 +19,19 @@ Recommend python 3.6 or higher version.
 pip install neural-compressor
 ```
 
-### 2. Install Intel Tensorflow
+### Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
 
-### 3. Installation Dependency packages
+### Installation Dependency packages
 ```shell
 cd examples/tensorflow/object_detection/tensorflow_models/quantization/ptq
 pip install -r requirements.txt
 ```
 
-### 4. Install Intel Extension for Tensorflow
+### Install Intel Extension for Tensorflow
 #### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
