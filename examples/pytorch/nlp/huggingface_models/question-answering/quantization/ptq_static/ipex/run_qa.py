@@ -655,6 +655,7 @@ def main():
         from neural_compressor.adaptor.pytorch import get_example_inputs
         example_inputs = get_example_inputs(model, eval_dataloader)
         model = ipex.optimize(model)
+        import torch
         with torch.no_grad():
             model = torch.jit.trace(model, example_inputs, checkout_trace=False, strict=False)
             model = torch.jit.freeze(model)
