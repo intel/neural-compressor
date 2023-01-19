@@ -452,7 +452,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>SSD ResNet34</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/object_detection/ssd_resnet34/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/object_detection/ssd_resnet34/quantization/ptq/ipex">ipex</a></td>
+    <td><a href="./pytorch/object_detection/ssd_resnet34/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/object_detection/ssd_resnet34/quantization/ptq_static/ipex">ipex</a></td>
   </tr>
   <tr>
     <td>Mask R-CNN</td>
