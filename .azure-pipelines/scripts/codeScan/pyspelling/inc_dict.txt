@@ -2513,5 +2513,9 @@ parameterization
 emsp
 frequence
 ema
+ASPLOS
+MSFT
+NextPlatform
+VMware
 MobilenetV
 InceptionResnetV
