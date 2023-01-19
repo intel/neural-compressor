@@ -37,6 +37,7 @@ arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use ne
 arg_parser.add_argument('--dataset_location', dest='dataset_location',
                             help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of evaluation')
+arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='interations')
 args = arg_parser.parse_args()
 
 def evaluate(model):
@@ -58,7 +59,7 @@ def evaluate(model):
         iteration = None
         latency_list = []
         if args.benchmark and args.mode == 'performance':
-            iteration = 100
+            iteration = args.iters
         for idx, (inputs, labels) in enumerate(dataloader):
             inputs = np.array(inputs)
             input_tensor = tf.constant(inputs)
