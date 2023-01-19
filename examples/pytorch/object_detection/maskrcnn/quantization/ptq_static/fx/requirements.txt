@@ -2,3 +2,4 @@ neural-compressor
 absl-py
 torch>=1.9.0
 torchvision>=0.10.0
+numpy<=1.23.5

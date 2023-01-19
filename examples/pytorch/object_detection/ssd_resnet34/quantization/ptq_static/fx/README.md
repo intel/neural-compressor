@@ -10,7 +10,7 @@ Our example comes from MLPerf Inference Benchmark Suite
 
 ## 1. Environment
 
-PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to use Python 3.8.
+PyTorch 1.8 or higher version is needed. We recommend to use Python 3.8.
 
 ```shell
 cd examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/fx
