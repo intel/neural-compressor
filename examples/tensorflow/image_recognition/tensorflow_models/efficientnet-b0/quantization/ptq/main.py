@@ -51,6 +51,8 @@ def evaluate(model, eval_dataloader, metric, postprocess=None):
     """
     from neural_compressor.model import Model
     model = Model(model)
+    model.input_tensor_names = ['truediv']
+    model.output_tensor_names = ['Squeeze']
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
@@ -136,7 +138,8 @@ class eval_classifier_optimized_graph:
             if args.mode == 'performance':
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
-                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
+                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4,
+                                       num_of_instance=7)
                 fit(args.input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':
                 acc_result = eval(args.input_graph)
