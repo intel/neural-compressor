@@ -105,6 +105,7 @@ def main():
         train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
         num_workers=args.workers, pin_memory=True, sampler=train_sampler)
 
+
     val_loader = torch.utils.data.DataLoader(
         datasets.ImageFolder(valdir, transforms.Compose([
             transforms.Resize(256),
@@ -159,7 +160,8 @@ def main():
                                                              loss_weights=args.loss_weights)
     conf = DistillationConfig(teacher_model, distillation_criterion)
     compression_manager = prepare_compression(student_model, conf)
-    train(train_loader, compression_manager.model, criterion, optimizer, scheduler,
+    model = compression_manager.model
+    train(train_loader, model, criterion, optimizer, scheduler,
                   compression_manager, best_prec1, val_loader, accelerator)
     # change to framework model for further use
     model = accelerator.unwrap_model(model.model)
@@ -219,7 +221,7 @@ def train(train_loader, model, criterion, optimizer, scheduler, compression_mana
                         loss=losses, top1=top1, scheduler=scheduler))
 
         compression_manager.callbacks.on_epoch_end()
-        best_score = validate(val_loader, model, epoch + 1)
+        best_score = validate(val_loader, model, epoch + 1, accelerator)
         # remember best prec@1 and save checkpoint
         is_best = best_score > best_prec1
         best_prec1 = max(best_score, best_prec1)
