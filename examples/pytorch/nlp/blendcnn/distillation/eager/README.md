@@ -9,7 +9,7 @@ This document describes the step-by-step instructions for reproducing PyTorch Bl
 
 ```Shell
 cd examples/pytorch/nlp/blendcnn/distillation/eager
-pip install torch==1.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch>=1.6.0
 ```
 
 ## 2. Prepare model
