@@ -18,7 +18,8 @@
 
 """Intel Neural Compressor Metric."""
 
-from .metric import METRICS, Metric, BaseMetric, TensorflowTopK, metric_registry
+from .metric import METRICS, Metric, BaseMetric, metric_registry
+from .metric import TensorflowTopK, SquadF1
 from os.path import dirname, basename, isfile, join
 import glob
 
@@ -29,4 +30,4 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["METRICS", "Metric", "BaseMetric", "TensorflowTopK", "metric_registry"]
+__all__ = ["METRICS", "Metric", "BaseMetric", "TensorflowTopK", "metric_registry", "SquadF1"]

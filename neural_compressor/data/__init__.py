@@ -25,6 +25,7 @@ from .dataloaders import DATALOADERS, DataLoader
 from .dataloaders.default_dataloader import DefaultDataLoader
 from .transforms import TRANSFORMS, BaseTransform, ComposeTransform, transform_registry, Postprocess
 from .transforms import LabelShift, BilinearImagenetTransform, TensorflowResizeCropImagenetTransform
+from .transforms import TFSquadV1PostTransform, TFSquadV1ModelZooPostTransform
 
 
 from .filters import FILTERS, Filter, filter_registry
@@ -48,4 +49,6 @@ __all__ = [
     'TensorflowResizeCropImagenetTransform',
     "FILTERS",
     "Filter",
-    "filter_registry",]
+    "filter_registry",
+    "TFSquadV1PostTransform",
+    "TFSquadV1ModelZooPostTransform",]

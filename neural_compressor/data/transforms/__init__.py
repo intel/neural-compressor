@@ -18,6 +18,7 @@
 """Neural Compressor Built-in transforms for multiple framework backends."""
 
 from .transform import TRANSFORMS, BaseTransform, ComposeTransform, transform_registry
+from .transform import TFSquadV1PostTransform, TFSquadV1ModelZooPostTransform
 from .postprocess import Postprocess
 from .imagenet_transform import LabelShift, BilinearImagenetTransform, TensorflowResizeCropImagenetTransform
 from os.path import dirname, basename, isfile, join
@@ -30,5 +31,7 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["TRANSFORMS", "BaseTransform", "ComposeTransform", "transform_registry",
-           "Postprocess", "LabelShift", "BilinearImagenetTransform", "TensorflowResizeCropImagenetTransform"]
+__all__ = ["TRANSFORMS", "BaseTransform", "ComposeTransform", "TFSquadV1PostTransform",
+           "TFSquadV1ModelZooPostTransform", "transform_registry",
+           "Postprocess", "LabelShift", "BilinearImagenetTransform",
+           "TensorflowResizeCropImagenetTransform"]
