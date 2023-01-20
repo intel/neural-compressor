@@ -412,112 +412,88 @@
       "new_benchmark": true
     },
     "ssd_resnet50_v1": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/ssd_resnet50_v1/frozen_inference_graph.pb",
-      "yaml": "ssd_resnet50_v1.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",       
+      "batch_size": 10
     },
     "ssd_resnet50_v1_ckpt": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/ssd_resnet50_v1",
-      "yaml": "ssd_resnet50_v1.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",       
+      "batch_size": 10
     },
     "ssd_mobilenet_v1": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/ssd_mobilenet_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/ssd_mobilenet_v1/frozen_inference_graph.pb",
-      "yaml": "ssd_mobilenet_v1.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",       
+      "batch_size": 10
     },
     "ssd_mobilenet_v1_ckpt": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/ssd_mobilenet_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/ssd_mobilenet_v1",
-      "yaml": "ssd_mobilenet_v1.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",       
+      "batch_size": 10
     },
     "faster_rcnn_inception_resnet_v2": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_inception_resnet_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/mini-coco-500.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_inception_resnet_v2/frozen_inference_graph.pb",
-      "yaml": "faster_rcnn_inception_resnet_v2.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",       
+      "batch_size": 10
     },
     "faster_rcnn_inception_resnet_v2_saved": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_inception_resnet_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/mini-coco-500.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_inception_resnet_v2/saved_model",
-      "yaml": "faster_rcnn_inception_resnet_v2.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",       
+      "batch_size": 10
     },
     "faster_rcnn_resnet101": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_resnet101/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_resnet101/frozen_inference_graph.pb",
-      "yaml": "faster_rcnn_resnet101.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 10
     },
     "faster_rcnn_resnet50": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_resnet50/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_resnet50/frozen_inference_graph.pb",
-      "yaml": "faster_rcnn_resnet50.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 10
     },
     "faster_rcnn_resnet101_saved": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_resnet101/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_resnet101/saved_model",
-      "yaml": "faster_rcnn_resnet101.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 10
     },
     "mask_rcnn_inception_v2": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/mask_rcnn_inception_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/mask_rcnn_inception_v2/frozen_inference_graph.pb",
-      "yaml": "mask_rcnn_inception_v2.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 10
     },
     "mask_rcnn_inception_v2_ckpt": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/mask_rcnn_inception_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/mask_rcnn_inception_v2",
-      "yaml": "mask_rcnn_inception_v2.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 10
     },
     "ssd_resnet34": {
-      "model_src_dir": "object_detection/tensorflow_models/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/ssd_resnet34/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-trained-models/ssd_resnet34/fp32/ssd_resnet34_fp32_1200x1200_pretrained_model.pb",
-      "yaml": "ssd_resnet34.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "wide_deep_large_ds": {
       "model_src_dir": "recommendation/wide_deep_large_ds/quantization/ptq",
@@ -2037,10 +2013,8 @@
       "model_src_dir": "object_detection/yolo_v3/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset2/models/tensorflow/yolo_v3/yolo_v3.pb",
-      "yaml": "yolo_v3.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "infer_detections.py",       
+      "batch_size": 1
     },
     "3dunet-mlperf": {
       "model_src_dir": "semantic_image_segmentation/3dunet-mlperf/quantization/ptq",

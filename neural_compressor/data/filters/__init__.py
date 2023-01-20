@@ -17,6 +17,7 @@
 
 """Built-in filter."""
 
+from .coco_filter import LabelBalanceCOCORecordFilter
 from .filter import FILTERS, Filter, filter_registry
 from os.path import dirname, basename, isfile, join
 import glob
@@ -28,4 +29,4 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["FILTERS", "Filter", "filter_registry"]
+__all__ = ["FILTERS", "Filter", "filter_registry", "LabelBalanceCOCORecordFilter"]
