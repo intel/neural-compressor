@@ -170,7 +170,6 @@ if __name__ == "__main__":
             return AP.mean()
 
         model.eval()
-        model.fuse_model()
         dataset = ListDataset(valid_path, img_size=opt.img_size, augment=False, multiscale=False)
         dataloader = torch.utils.data.DataLoader(
             dataset, batch_size=opt.batch_size, shuffle=False, num_workers=1, collate_fn=dataset.collate_fn
@@ -178,7 +177,7 @@ if __name__ == "__main__":
         nc_dataloader = yolo_dataLoader(dataloader)
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
-        conf = PostTrainingQuantConfig(backend="pytorch")
+        conf = PostTrainingQuantConfig()
         q_model = quantization.fit(model,
                                    conf=conf,
                                    eval_func=eval_func,
@@ -188,7 +187,6 @@ if __name__ == "__main__":
         exit(0)
   
     model.eval()
-    model.fuse_model()
     if opt.int8:
         from neural_compressor.utils.pytorch import load
         new_model = load(

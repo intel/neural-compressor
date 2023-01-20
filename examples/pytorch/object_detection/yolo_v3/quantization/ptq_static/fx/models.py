@@ -11,7 +11,6 @@ from utils.utils import build_targets, to_cpu, non_max_suppression
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from torch.quantization import QuantStub, DeQuantStub, fuse_modules
 
 
 def create_modules(module_defs):
@@ -244,11 +243,8 @@ class Darknet(nn.Module):
         self.seen = 0
         self.header_info = np.array([0, 0, 0, self.seen, 0], dtype=np.int32)
         self.add = torch.nn.quantized.FloatFunctional()
-        self.quant = QuantStub()
-        self.dequant = DeQuantStub()
 
     def forward(self, x, targets=None):
-        x = self.quant(x)
         img_dim = x.shape[2]
         loss = 0
         layer_outputs, yolo_outputs = [], []
@@ -262,7 +258,6 @@ class Darknet(nn.Module):
                 # x = layer_outputs[-1] + layer_outputs[layer_i]
                 x = self.add.add(layer_outputs[-1], layer_outputs[layer_i])
             elif module_def["type"] == "yolo":
-                x = self.dequant(x)
                 x, layer_loss = module[0](x, targets, img_dim)
                 loss += layer_loss
                 yolo_outputs.append(x)
@@ -270,14 +265,6 @@ class Darknet(nn.Module):
         yolo_outputs = to_cpu(torch.cat(yolo_outputs, 1))
         return yolo_outputs if targets is None else (loss, yolo_outputs)
 
-    def fuse_model(self):
-        for i in range(0, len(self.module_list)):
-            if self.module_defs[i]["type"] == "convolutional":
-                if int(self.module_defs[i]["batch_normalize"]):
-                    if self.module_defs[i]["activation"] == "relu":
-                        fuse_modules(self, ['module_list.%d.conv_%d' % (i, i), 'module_list.%d.batch_norm_%d' % (i, i), 'module_list.%d.relu_%d' % (i, i)], inplace=True)
-                    else:
-                        fuse_modules(self, ['module_list.%d.conv_%d' % (i, i), 'module_list.%d.batch_norm_%d' % (i, i)], inplace=True)
 
     def load_darknet_weights(self, weights_path):
         """Parses and loads the weights stored in 'weights_path'"""
