@@ -400,10 +400,10 @@
        "main_script": "run_asr.py",
        "batch_size": 1
     },
-    "wav2vec_fx":{
+    "wav2vec2_fx":{
        "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
        "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
-       "input_model": "wav2vec",
+       "input_model": "wav2vec2",
        "main_script": "run_asr.py",
        "batch_size": 1
     },

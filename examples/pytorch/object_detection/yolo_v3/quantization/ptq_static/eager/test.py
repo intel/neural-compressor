@@ -186,8 +186,7 @@ if __name__ == "__main__":
                                   )
         q_model.save(opt.tuned_checkpoint)
         exit(0)
-
-    if opt.benchmark:
+  
     model.eval()
     model.fuse_model()
     if opt.int8:

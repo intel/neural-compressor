@@ -161,12 +161,8 @@ def main():
     if args.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.model import Model
         conf =  PostTrainingQuantConfig(calibration_sampling_size=50)
-        new_model = Model(model,
-                          **{'prepare_custom_config_dict': prepare_custom_config_dict}
-                         )
-        q_model = quantization.fit(new_model,
+        q_model = quantization.fit(model,
                                    conf=conf,
                                    eval_func=eval_func,
                                    calib_dataloader=cal_dataloader
@@ -176,9 +172,7 @@ def main():
 
     if args.int8:
         from neural_compressor.utils.pytorch import load
-        model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model,
-                     **{'prepare_custom_config_dict': prepare_custom_config_dict,
-                     'dataloader': cal_dataloader})
+        model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)), model)
     if args.benchmark:
         from neural_compressor.config import BenchmarkConfig
         from neural_compressor import benchmark
