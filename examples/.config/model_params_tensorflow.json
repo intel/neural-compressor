@@ -530,10 +530,8 @@
       "model_src_dir": "style_transfer/arbitrary_style_transfer/quantization/ptq",
       "dataset_location": "style_images,content_images",
       "input_model": "/tf_dataset/tensorflow/style_transfer/arbitrary_style_transfer/model.ckpt",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": -1,
-      "new_benchmark": false
+      "main_script": "style_tune.py",
+      "batch_size": 1
     },
     "transformer_lt": {
       "model_src_dir": "nlp/transformer_lt/quantization/ptq",
