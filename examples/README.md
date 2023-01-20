@@ -461,16 +461,16 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/object_detection/maskrcnn/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
-    <td>*YOLOv3</td>
+    <td>YOLOv3</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/object_detection/yolo_v3/quantization/ptq/eager">eager</a></td>
+    <td><a href="./pytorch/object_detection/yolo_v3/quantization/ptq_static/eager">eager</a></td>
   </tr>
   <tr>
-    <td>*DLRM</td>
+    <td>DLRM</td>
     <td>Recommendation</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/recommendation/dlrm/quantization/ptq/eager">eager</a> / <a href="./pytorch/recommendation/dlrm/quantization/ptq/ipex">ipex</a> / <a href="./pytorch/recommendation/dlrm/quantization/ptq/fx">fx</a></td>
+    <td><a href="./pytorch/recommendation/dlrm/quantization/ptq/ipex">ipex</a> / <a href="./pytorch/recommendation/dlrm/quantization/ptq/fx">fx</a></td>
   </tr>
   <tr>
     <td>*RNN-T</td>
