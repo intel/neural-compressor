@@ -3,38 +3,38 @@ Step-by-Step
 
 This document is used to list steps of reproducing TensorFlow Object Detection models tuning results. This example can run on Intel CPUs and GPUs.
 
-## Prerequisite
+# Prerequisite
 
 
-### 1. Environment
+## 1. Environment
 Recommend python 3.6 or higher version.
 
-#### 1. Install Intel® Neural Compressor
+### Install Intel® Neural Compressor
 ```shell
 pip install neural-compressor
 ```
 
-#### 2. Install Intel Tensorflow
+### Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
 
-#### 3. Installation Dependency packages
+### Installation Dependency packages
 ```shell
 cd examples/tensorflow/object_detection/tensorflow_models/
 pip install -r requirements.txt
 cd ssd_resnet50_v1/quantization/ptq
 ```
 
-#### 4. Install Protocol Buffer Compiler
+### Install Protocol Buffer Compiler
 
 `Protocol Buffer Compiler` in version higher than 3.0.0 is necessary ingredient for automatic COCO dataset preparation. To install please follow
 [Protobuf installation instructions](https://grpc.io/docs/protoc-installation/#install-using-a-package-manager).
 
-#### 5. Install Intel Extension for Tensorflow
+### Install Intel Extension for Tensorflow
 
-##### Quantizing the model on Intel GPU
+#### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
@@ -42,16 +42,16 @@ pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
 For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
 
-##### Quantizing the model on Intel CPU(Experimental)
+#### Quantizing the model on Intel CPU(Experimental)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-### 2. Prepare Model
+## 2. Prepare Model
 
-#### Automated approach
+### Automated approach
 Run the `prepare_model.py` script located in `examples/tensorflow/object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq`.
 
 ```
@@ -67,17 +67,17 @@ optional arguments:
                         directory to put models, default is ./model
 ```
 
-#### Manual approach
+### Manual approach
 
-##### ssd_resnet50_v1
+#### ssd_resnet50_v1
 ```shell
 wget http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz
 tar -xvzf ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz
 ```
 
-### 3. Prepare Dataset
+## 3. Prepare Dataset
 
-#### Automatic dataset download
+### Automatic dataset download
 
 > **_Note: `prepare_dataset.sh` script works with TF version 1.x._**
 
@@ -93,30 +93,30 @@ cd ssd_resnet50_v1/quantization/ptq
 This script will download the *train*, *validation* and *test* COCO datasets. Furthermore it will convert them to
 tensorflow records using the `https://github.com/tensorflow/models.git` dedicated script.
 
-#### Manual dataset download
+### Manual dataset download
 Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
 
 
-## Run Command
+# Run
 
 Now we support both pb and ckpt formats.
 
-### Tune
-#### For PB model
+## 1. Tune
+### For PB model
   
   ```shell
   # The cmd of running ssd_resnet50_v1
   bash run_tuning.sh --input_model=./ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/frozen_inference_graph.pb --output_model=./tensorflow-ssd_resnet50_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
-#### For ckpt model
+### For ckpt model
   
   ```shell
   # The cmd of running ssd_resnet50_v1
   bash run_tuning.sh --input_model=./ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/ --output_model=./tensorflow-ssd_resnet50_v1-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
-### Benchmark
+## 2. Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./tensorflow-ssd_resnet50_v1-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
   ```

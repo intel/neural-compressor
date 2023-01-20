@@ -3,38 +3,38 @@ Step-by-Step
 
 This document is used to list steps of reproducing TensorFlow Object Detection models tuning results. This example can run on Intel CPUs and GPUs.
 
-## Prerequisite
+# Prerequisite
 
 
-### 1. Environment
+## 1. Environment
 Recommend python 3.6 or higher version.
 
-#### 1. Install Intel® Neural Compressor
+### Install Intel® Neural Compressor
 ```shell
 pip install neural-compressor
 ```
 
-#### 2. Install Intel Tensorflow
+### Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
 
-#### 3. Installation Dependency packages
+### Installation Dependency packages
 ```shell
 cd examples/tensorflow/object_detection/tensorflow_models/
 pip install -r requirements.txt
 cd ssd_resnet34/quantization/ptq
 ```
 
-#### 4. Install Protocol Buffer Compiler
+### Install Protocol Buffer Compiler
 
 `Protocol Buffer Compiler` in version higher than 3.0.0 is necessary ingredient for automatic COCO dataset preparation. To install please follow
 [Protobuf installation instructions](https://grpc.io/docs/protoc-installation/#install-using-a-package-manager).
 
-#### 5. Install Intel Extension for Tensorflow
+### Install Intel Extension for Tensorflow
 
-##### Quantizing the model on Intel GPU
+#### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
 ```shell
@@ -42,22 +42,22 @@ pip install --upgrade intel-extension-for-tensorflow[gpu]
 ```
 For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers)
 
-##### Quantizing the model on Intel CPU(Experimental)
+#### Quantizing the model on Intel CPU(Experimental)
 Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's not mandatory for quantizing the model on Intel CPUs.
 
 ```shell
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-### 2. Prepare Model
+## 2. Prepare Model
 
 ```shell
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/ssd_resnet34_fp32_1200x1200_pretrained_model.pb
 ```
 
-### 3. Prepare Dataset
+## 3. Prepare Dataset
 
-#### Automatic dataset download
+### Automatic dataset download
 
 > **_Note: `prepare_dataset.sh` script works with TF version 1.x._**
 
@@ -73,20 +73,20 @@ cd ssd_resnet34/quantization/ptq
 This script will download the *train*, *validation* and *test* COCO datasets. Furthermore it will convert them to
 tensorflow records using the `https://github.com/tensorflow/models.git` dedicated script.
 
-#### Manual dataset download
+### Manual dataset download
 Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
 
 
-## Run Command
+# Run
 
-### Tune
+## 1. Tune
   
   ```shell
   # The cmd of running ssd_resnet34
   bash run_tuning.sh --input_model=./ssd_resnet34_fp32_1200x1200_pretrained_model.pb --output_model=./tensorflow-ssd_resnet34-tune.pb --dataset_location=/path/to/dataset/coco_val.record --anno_path=./label_map.yaml
   ```
 
-### Benchmark
+## 2. Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./tensorflow-ssd_resnet34-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
   ```
