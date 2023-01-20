@@ -18,7 +18,6 @@ Classes
    neural_compressor.adaptor.pytorch.PyTorchAdaptor
    neural_compressor.adaptor.pytorch.PyTorch_IPEXAdaptor
    neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor
-   neural_compressor.adaptor.pytorch.PyTorchQuery
 
 
 
@@ -529,41 +528,6 @@ Functions
 
       :returns: sorted op list by sensitivity
       :rtype: ops_lst (list)
-
-
-
-.. py:class:: PyTorchQuery(local_config_file=None)
-
-   Bases: :py:obj:`neural_compressor.adaptor.query.QueryBackendCapability`
-
-   Base class that defines Query Interface.
-   Each adaption layer should implement the inherited class for specific backend on their own.
-
-   .. py:method:: get_quantization_capability()
-
-      Get the supported op types' quantization capability.
-
-      :returns: A list composed of dictionary which key is precision
-                and value is a dict that describes all op types' quantization capability.
-      :rtype: [dictionary list]
-
-
-   .. py:method:: get_op_types()
-
-      Get the supported op types by all precisions.
-      :returns: A list composed of dictionary which key is precision
-                and value is the op types.
-      :rtype: [dictionary list]
-
-
-   .. py:method:: get_op_types_by_precision(precision)
-
-      Get op types per precision
-      :param precision: precision name
-      :type precision: string
-
-      :returns: A list composed of op type.
-      :rtype: [string list]
 
 
 

@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: FrozenPbModel(path: str)
+.. py:class:: FrozenPbModel
 
    Bases: :py:obj:`neural_compressor.ux.components.model.tensorflow.model.TensorflowModel`
 

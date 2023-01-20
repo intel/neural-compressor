@@ -32,6 +32,7 @@ Classes
    neural_compressor.data.Dataset
    neural_compressor.data.IterableDataset
    neural_compressor.data.TensorflowImageRecord
+   neural_compressor.data.COCORecordDataset
    neural_compressor.data.DataLoader
    neural_compressor.data.DefaultDataLoader
    neural_compressor.data.TRANSFORMS
@@ -41,8 +42,14 @@ Classes
    neural_compressor.data.LabelShift
    neural_compressor.data.BilinearImagenetTransform
    neural_compressor.data.TensorflowResizeCropImagenetTransform
+   neural_compressor.data.TensorflowResizeWithRatio
+   neural_compressor.data.ResizeTFTransform
+   neural_compressor.data.RescaleTFTransform
+   neural_compressor.data.NormalizeTFTransform
+   neural_compressor.data.ParseDecodeCocoTransform
    neural_compressor.data.FILTERS
    neural_compressor.data.Filter
+   neural_compressor.data.LabelBalanceCOCORecordFilter
 
 
 
@@ -128,6 +135,22 @@ Attributes
    The file name needs to follow this pattern: '* - * -of- *'
 
    Args: root (str): Root directory of dataset.
+         transform (transform object, default=None):  transform to process input data.
+         filter (Filter objects, default=None): filter out examples according
+                                                to specific conditions.
+
+
+.. py:class:: COCORecordDataset
+
+   Bases: :py:obj:`neural_compressor.data.datasets.dataset.IterableDataset`
+
+   Tensorflow COCO dataset in tf record format.
+
+   Root is a full path to tfrecord file, which contains the file name.
+   Please use Resize transform when batch_size > 1
+
+   Args: root (str): Root directory of dataset.
+         num_cores (int, default=28):The number of input Datasets to interleave from in parallel.
          transform (transform object, default=None):  transform to process input data.
          filter (Filter objects, default=None): filter out examples according
                                                 to specific conditions.
@@ -276,6 +299,73 @@ Attributes
    :returns: tuple of processed image and label
 
 
+.. py:class:: TensorflowResizeWithRatio(min_dim=800, max_dim=1365, padding=False, constant_value=0)
+
+   Bases: :py:obj:`BaseTransform`
+
+   Resize image with aspect ratio and pad it to max shape(optional).
+
+   If the image is padded, the label will be processed at the same time.
+   The input image should be np.array or tf.Tensor.
+
+   :param min_dim: Resizes the image such that its smaller dimension == min_dim
+   :type min_dim: int, default=800
+   :param max_dim: Ensures that the image longest side doesn't exceed this value
+   :type max_dim: int, default=1365
+   :param padding: If true, pads image with zeros so its size is max_dim x max_dim
+   :type padding: bool, default=False
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: ResizeTFTransform(size, interpolation='bilinear')
+
+   Bases: :py:obj:`BaseTransform`
+
+   Resize the input image to the given size.
+
+   :param size: Size of the result
+   :type size: list or int
+   :param interpolation: Desired interpolation type,
+                         support 'bilinear', 'nearest', 'bicubic'
+   :type interpolation: str, default='bilinear'
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: RescaleTFTransform
+
+   Bases: :py:obj:`BaseTransform`
+
+   Scale the values of image to [0,1].
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: NormalizeTFTransform(mean=[0.0], std=[1.0], rescale=None)
+
+   Bases: :py:obj:`BaseTransform`
+
+   Normalize a image with mean and standard deviation.
+
+   :param mean: means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
+                otherwise its length should be same with the length of image shape
+   :type mean: list, default=[0.0]
+   :param std: stds for each channel, if len(std)=1, std will be broadcasted to each channel,
+               otherwise its length should be same with the length of image shape
+   :type std: list, default=[1.0]
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: ParseDecodeCocoTransform
+
+   Bases: :py:obj:`neural_compressor.experimental.data.transforms.BaseTransform`
+
+   Coco decoding will be performed automatically from Neural Compressor v1.4.
+
+
+
 .. py:class:: FILTERS(framework)
 
    Bases: :py:obj:`object`
@@ -312,5 +402,12 @@ Attributes
 
    :returns: The class of register.
    :rtype: cls
+
+
+.. py:class:: LabelBalanceCOCORecordFilter(size=1)
+
+   Bases: :py:obj:`neural_compressor.data.filters.filter.Filter`
+
+   The label balance filter for COCO Record.
 
 

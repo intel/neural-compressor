@@ -32,6 +32,10 @@ Classes
    neural_compressor.data.transforms.TRANSFORMS
    neural_compressor.data.transforms.BaseTransform
    neural_compressor.data.transforms.ComposeTransform
+   neural_compressor.data.transforms.ResizeTFTransform
+   neural_compressor.data.transforms.RescaleTFTransform
+   neural_compressor.data.transforms.NormalizeTFTransform
+   neural_compressor.data.transforms.ParseDecodeCocoTransform
    neural_compressor.data.transforms.Postprocess
    neural_compressor.data.transforms.LabelShift
    neural_compressor.data.transforms.BilinearImagenetTransform
@@ -103,6 +107,54 @@ Functions
 
    :returns: The class of register.
    :rtype: cls
+
+
+.. py:class:: ResizeTFTransform(size, interpolation='bilinear')
+
+   Bases: :py:obj:`BaseTransform`
+
+   Resize the input image to the given size.
+
+   :param size: Size of the result
+   :type size: list or int
+   :param interpolation: Desired interpolation type,
+                         support 'bilinear', 'nearest', 'bicubic'
+   :type interpolation: str, default='bilinear'
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: RescaleTFTransform
+
+   Bases: :py:obj:`BaseTransform`
+
+   Scale the values of image to [0,1].
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: NormalizeTFTransform(mean=[0.0], std=[1.0], rescale=None)
+
+   Bases: :py:obj:`BaseTransform`
+
+   Normalize a image with mean and standard deviation.
+
+   :param mean: means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
+                otherwise its length should be same with the length of image shape
+   :type mean: list, default=[0.0]
+   :param std: stds for each channel, if len(std)=1, std will be broadcasted to each channel,
+               otherwise its length should be same with the length of image shape
+   :type std: list, default=[1.0]
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: ParseDecodeCocoTransform
+
+   Bases: :py:obj:`neural_compressor.experimental.data.transforms.BaseTransform`
+
+   Coco decoding will be performed automatically from Neural Compressor v1.4.
+
 
 
 .. py:class:: Postprocess(postprocess_cls, name='user_postprocess', **kwargs)

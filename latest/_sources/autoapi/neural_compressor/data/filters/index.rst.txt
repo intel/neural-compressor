@@ -27,6 +27,7 @@ Classes
 
 .. autoapisummary::
 
+   neural_compressor.data.filters.LabelBalanceCOCORecordFilter
    neural_compressor.data.filters.FILTERS
    neural_compressor.data.filters.Filter
 
@@ -39,6 +40,13 @@ Functions
 
    neural_compressor.data.filters.filter_registry
 
+
+
+.. py:class:: LabelBalanceCOCORecordFilter(size=1)
+
+   Bases: :py:obj:`neural_compressor.data.filters.filter.Filter`
+
+   The label balance filter for COCO Record.
 
 
 .. py:class:: FILTERS(framework)

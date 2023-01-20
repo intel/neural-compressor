@@ -36,6 +36,7 @@ Classes
    neural_compressor.metric.Metric
    neural_compressor.metric.BaseMetric
    neural_compressor.metric.TensorflowTopK
+   neural_compressor.metric.COCOmAPv2
 
 
 
@@ -182,5 +183,33 @@ Functions
 
    :returns: The function to register metric class.
    :rtype: decorator_metric
+
+
+.. py:class:: COCOmAPv2(anno_path=None, iou_thrs='0.5:0.05:0.95', map_points=101, map_key='DetectionBoxes_Precision/mAP', output_index_mapping={'num_detections': -1, 'boxes': 0, 'scores': 1, 'classes': 2})
+
+   Bases: :py:obj:`BaseMetric`
+
+   Compute mean average precision of the detection task.
+
+   .. py:method:: update(predicts, labels, sample_weight=None)
+
+      Add the predictions and labels.
+
+      :param predicts: The predictions.
+      :param labels: The labels corresponding to the predictions.
+      :param sample_weight: The sample weight. Defaults to None.
+
+
+   .. py:method:: reset()
+
+      Reset the prediction and labels.
+
+
+   .. py:method:: result()
+
+      Compute mean average precision.
+
+      :returns: The mean average precision score.
+
 
 

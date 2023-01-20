@@ -404,6 +404,10 @@ Functions
 
       Return graph defination.
 
+   .. py:property:: model
+
+      Return the model itself to avoid the initialization issue.
+
 
 .. py:class:: TensorflowModel
 

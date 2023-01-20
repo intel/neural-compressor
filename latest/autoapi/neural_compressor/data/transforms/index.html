@@ -195,6 +195,18 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.ComposeTransform" title="neural_compressor.data.transforms.ComposeTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ComposeTransform</span></code></a></p></td>
 <td><p>Composes several transforms together.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.ResizeTFTransform" title="neural_compressor.data.transforms.ResizeTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ResizeTFTransform</span></code></a></p></td>
+<td><p>Resize the input image to the given size.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.RescaleTFTransform" title="neural_compressor.data.transforms.RescaleTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RescaleTFTransform</span></code></a></p></td>
+<td><p>Scale the values of image to [0,1].</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.NormalizeTFTransform" title="neural_compressor.data.transforms.NormalizeTFTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NormalizeTFTransform</span></code></a></p></td>
+<td><p>Normalize a image with mean and standard deviation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.ParseDecodeCocoTransform" title="neural_compressor.data.transforms.ParseDecodeCocoTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParseDecodeCocoTransform</span></code></a></p></td>
+<td><p>Coco decoding will be performed automatically from Neural Compressor v1.4.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.transforms.Postprocess" title="neural_compressor.data.transforms.Postprocess"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Postprocess</span></code></a></p></td>
 <td><p>Just collect the infos to construct a Postprocess.</p></td>
 </tr>
@@ -287,6 +299,64 @@ and provide __getitem__ method to get Transforms according to Transforms type.</
 <dd class="field-odd"><p>cls</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.transforms.ResizeTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.</span></span><span class="sig-name descname"><span class="pre">ResizeTFTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.data.transforms.ResizeTFTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.data.transforms.BaseTransform" title="neural_compressor.data.transforms.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseTransform</span></code></a></p>
+<p>Resize the input image to the given size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>list</em><em> or </em><em>int</em>) – Size of the result</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em><em>, </em><em>default='bilinear'</em>) – Desired interpolation type,
+support ‘bilinear’, ‘nearest’, ‘bicubic’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.transforms.RescaleTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.</span></span><span class="sig-name descname"><span class="pre">RescaleTFTransform</span></span><a class="headerlink" href="#neural_compressor.data.transforms.RescaleTFTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.data.transforms.BaseTransform" title="neural_compressor.data.transforms.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseTransform</span></code></a></p>
+<p>Scale the values of image to [0,1].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.transforms.NormalizeTFTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.</span></span><span class="sig-name descname"><span class="pre">NormalizeTFTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[1.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rescale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.data.transforms.NormalizeTFTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.data.transforms.BaseTransform" title="neural_compressor.data.transforms.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseTransform</span></code></a></p>
+<p>Normalize a image with mean and standard deviation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>0.0</em><em>]</em>) – means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
+otherwise its length should be same with the length of image shape</p></li>
+<li><p><strong>std</strong> (<em>list</em><em>, </em><em>default=</em><em>[</em><em>1.0</em><em>]</em>) – stds for each channel, if len(std)=1, std will be broadcasted to each channel,
+otherwise its length should be same with the length of image shape</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple of processed image and label</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.transforms.ParseDecodeCocoTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.transforms.</span></span><span class="sig-name descname"><span class="pre">ParseDecodeCocoTransform</span></span><a class="headerlink" href="#neural_compressor.data.transforms.ParseDecodeCocoTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../../experimental/data/transforms/index.html#neural_compressor.experimental.data.transforms.BaseTransform" title="neural_compressor.experimental.data.transforms.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.BaseTransform</span></code></a></p>
+<p>Coco decoding will be performed automatically from Neural Compressor v1.4.</p>
 </dd></dl>
 
 <dl class="py class">

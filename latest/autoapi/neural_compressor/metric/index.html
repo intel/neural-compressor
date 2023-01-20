@@ -201,6 +201,9 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.metric.TensorflowTopK" title="neural_compressor.metric.TensorflowTopK"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowTopK</span></code></a></p></td>
 <td><p>Compute Top-k Accuracy classification score for Tensorflow model.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.metric.COCOmAPv2" title="neural_compressor.metric.COCOmAPv2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COCOmAPv2</span></code></a></p></td>
+<td><p>Compute mean average precision of the detection task.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -403,6 +406,45 @@ as one of tensorflow, pytorch, mxnet, onnxrt.</p>
 <dd class="field-odd"><p>decorator_metric</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.metric.COCOmAPv2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">COCOmAPv2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anno_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0.5:0.05:0.95'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DetectionBoxes_Precision/mAP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_index_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'num_detections':</span> <span class="pre">-1,</span> <span class="pre">'boxes':</span> <span class="pre">0,</span> <span class="pre">'scores':</span> <span class="pre">1,</span> <span class="pre">'classes':</span> <span class="pre">2}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.metric.BaseMetric" title="neural_compressor.metric.BaseMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseMetric</span></code></a></p>
+<p>Compute mean average precision of the detection task.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.metric.COCOmAPv2.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the predictions and labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>predicts</strong> – The predictions.</p></li>
+<li><p><strong>labels</strong> – The labels corresponding to the predictions.</p></li>
+<li><p><strong>sample_weight</strong> – The sample weight. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.metric.COCOmAPv2.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the prediction and labels.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.metric.COCOmAPv2.result">
+<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2.result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute mean average precision.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The mean average precision score.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
