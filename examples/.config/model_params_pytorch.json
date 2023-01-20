@@ -197,7 +197,7 @@
       "new_benchmark": false
     },
     "yolo_v3": {
-      "model_src_dir": "object_detection/yolo_v3/quantization/ptq_static/eager",
+      "model_src_dir": "object_detection/yolo_v3/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset/pytorch/coco_data_yolo",
       "input_model": "/tf_dataset/pytorch/coco_data_yolo/yolov3.weights",
       "main_script": "test.py",
