@@ -200,10 +200,8 @@
       "model_src_dir": "object_detection/yolo_v3/quantization/ptq_static/eager",
       "dataset_location": "/tf_dataset/pytorch/coco_data_yolo",
       "input_model": "/tf_dataset/pytorch/coco_data_yolo/yolov3.weights",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
+      "main_script": "test.py",
       "batch_size": 100,
-      "new_benchmark": false
     },
     "bert_base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
@@ -399,6 +397,13 @@
        "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
        "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
        "input_model": "hubert",
+       "main_script": "run_asr.py",
+       "batch_size": 1
+    },
+    "wav2vec_fx":{
+       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
+       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
+       "input_model": "wav2vec",
        "main_script": "run_asr.py",
        "batch_size": 1
     },
