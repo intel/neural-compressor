@@ -400,13 +400,6 @@
        "main_script": "run_asr.py",
        "batch_size": 1
     },
-    "wav2vec2_fx":{
-       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_static/fx",
-       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
-       "input_model": "wav2vec2",
-       "main_script": "run_asr.py",
-       "batch_size": 1
-    },
     "distilbert_base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/eager",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
@@ -657,11 +650,13 @@
       "batch_size": 100
     },
     "maskrcnn_fx": {
-      "model_src_dir": "object_detection/maskrcnn/quantization/ptq_static/fx",
+      "model_src_dir": "object_detection/maskrcnn/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/pytorch/maskrcnn_fx/e2e_mask_rcnn_R_50_FPN_1x.pth",
-      "main_script": "tools/test_net.py",
+      "yaml": "conf.yaml",
+      "strategy": "basic",
       "batch_size": 100,
+      "new_benchmark": false
     },
     "bert_base_MRPC_qat": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/qat/fx",
