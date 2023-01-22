@@ -19,11 +19,13 @@
 
 import copy
 from .conf.pythonic_config import Config
-from .config import DistillationConfig, QuantizationAwareTrainingConfig, WeightPruningConfig
 from .experimental.distillation import Distillation
 from .experimental.quantization import Quantization
 from .experimental.scheduler import Scheduler
+from .model.model import Model
 from .utils import logger
+from neural_compressor import (DistillationConfig, quantization, QuantizationAwareTrainingConfig,
+                               WeightPruningConfig)
 from typing import Callable, List, Union
 from neural_compressor.experimental.pruning_v2 import Pruning
 
@@ -55,63 +57,135 @@ class CompressionManager:
         compression_manager.callbacks.on_train_end()
         compression_manager.save("path_to_save")
     """
-    def __init__(self, component):
+    def __init__(self, model, quantizer=None, pruners=None, distiller=None):
         """Training loop initialization."""
-        self.callbacks = self.CallBacks(component)
-        self.model = component.model
+        self.callbacks = CallBacks()
+        self.model = model
+        self.quantizer = quantizer
+        self.pruners = pruners
+        self.distiller = distiller
+        self._train_func = None
+        self._eval_func = None
+        if quantizer is not None:
+            self.quantizer.prepare(self.callbacks)
+        if pruners is not None:
+            self.pruners.prepare(self.callbacks)
+        if distiller is not None:
+            self.distiller.prepare(self.callbacks)
+
         try:
             # TODO: export to ONNX model need original fp32 model now, will remove it
             #  when int8 model can be exported to ONNX model.
-            self.fp32_model = copy.deepcopy(component.model)
+            self.fp32_model = copy.deepcopy(model)
         except Exception as e:  # pragma: no cover
             logger.warning("Fail to deep copy the model due to {}.".format(repr(e)))
             self.fp32_model = None
 
-    class CallBacks:
-        """Define the basic command for the training loop."""
-        def __init__(self, component):
-            """Callbacks are used for execute the training procedure."""
-            self.callbacks = \
-                component.components[0] if isinstance(component, Scheduler) else component
+    @property
+    def train_func(self):
+        """Not support get train_func."""
+        assert False, 'Should not try to get the value of `train_func` attribute.'
+        return None
 
-        def on_train_begin(self, dataloader=None):
-            """Called before the beginning of epochs."""
-            self.callbacks.on_train_begin(dataloader)
+    @train_func.setter
+    def train_func(self, user_train_func):
+        """Training function.
 
-        def on_train_end(self):
-            """Called after the end of epochs."""
-            self.callbacks.on_train_end()
-            logger.info("Training finished!")
+        Args:
+            user_train_func: This function takes "model" as input parameter
+                         and executes entire training process with self
+                         contained training hyper-parameters. If training_func set,
+                         an evaluation process must be triggered and user should
+                         set eval_dataloader with metric configured or directly eval_func
+                         to make evaluation of the model executed. training_func will return
+                         a trained model.
+        """
+        assert self.quantizer is not None, "There is no quantizer to tune, " \
+                                           "please pass a QuantizationAwareTrainingConfig."
+        self.quantizer.train_func = user_train_func
 
-        def on_epoch_begin(self, epoch):
-            """Called on the beginning of epochs."""
-            self.callbacks.on_epoch_begin(epoch)
+    @property
+    def eval_func(self):
+        """Not support get eval_func."""
+        assert False, 'Should not try to get the value of `eval_func` attribute.'
+        return None
 
-        def on_step_begin(self, batch_id):
-            """Called on the beginning of batches."""
-            self.callbacks.on_step_begin(batch_id)
+    @eval_func.setter
+    def eval_func(self, user_eval_func):
+        """Eval function for component.
 
-        def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
-            """Called on the end of loss computation."""
-            return self.callbacks.on_after_compute_loss(
-                input, student_output, student_loss, teacher_output=teacher_output
-            )
+        Args:
+            user_eval_func: This function takes "model" as input parameter
+                         and executes entire evaluation process with self
+                         contained metrics. If eval_func set,
+                         an evaluation process must be triggered
+                         to make evaluation of the model executed.
+        """
+        assert self.quantizer is not None, "There is no quantizer to tune, " \
+                                           "please pass a QuantizationAwareTrainingConfig."
+        self.quantizer.eval_func = user_eval_func
 
-        def on_before_optimizer_step(self):
-            """Called on the end of backward."""
-            self.callbacks.on_before_optimizer_step()
+    @property
+    def eval_dataloader(self):
+        """Getter to eval dataloader."""
+        return self.quantizer.eval_dataloader
 
-        def on_after_optimizer_step(self):
-            """Called on the end of backward."""
-            self.callbacks.on_after_optimizer_step()
+    @eval_dataloader.setter
+    def eval_dataloader(self, dataloader):
+        """Set Data loader for evaluation of component.
 
-        def on_step_end(self):
-            """Called on the end of batches."""
-            return self.callbacks.on_step_end()
+        It is iterable and the batched data should consists of yield (input, _).
+        the input in the batched data will be used for model inference, so it
+        should satisfy the input format of specific model.
 
-        def on_epoch_end(self):
-            """Called on the end of epochs."""
-            return self.callbacks.on_epoch_end()
+        Args:
+            dataloader(generator): user are supported to set a user defined dataloader
+                                   which meet the requirements that can yield tuple of
+                                   (input, label)/(input, _) batched data.
+        """
+        assert self.quantizer is not None, "There is no quantizer to tune, " \
+                                           "please pass a QuantizationAwareTrainingConfig."
+        assert hasattr(dataloader, '__iter__') and \
+            hasattr(dataloader, 'batch_size'), \
+            'dataloader must implement __iter__ method and batch_size attribute'
+
+        self.quantizer.eval_dataloader = dataloader
+
+    @property
+    def metric(self):
+        """Get `metric` attribute."""
+        assert False, 'Should not try to get the value of `metric` attribute.'
+
+    @metric.setter
+    def metric(self, user_metric):
+        """Set metric class or a dict of built-in metric configures, and neural_compressor will initialize this class when evaluation.
+
+        1. neural_compressor have many built-in metrics, user can pass a metric configure dict to tell neural compressor what metric will be use.
+           You can set multi-metrics to evaluate the performance of a specific model.
+                Single metric:
+                    {topk: 1}
+                
+                Multi-metrics:
+                    {topk: 1,
+                     MSE: {compare_label: False},
+                    }
+            For the built-in metrics, you can refer to [Supported Built-in Metric Matrix](https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix)
+
+        2. User also can set specific metric through this api. The metric class should take the outputs of the model or
+           postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels) as inputs for update,
+           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
+
+        Args:
+            user_metric(neural_compressor.metric.Metric or a dict of built-in metric configures):
+
+        """
+        assert self.quantizer is not None, "There is no quantizer to tune, " \
+                                           "please pass a QuantizationAwareTrainingConfig."
+        self.quantizer.metric = user_metric
+
+    def fit(self):
+        self.model = self.quantizer.fit()
+        return self.model
 
     def save(self, root=None):
         """Save compressed model.
@@ -135,13 +209,71 @@ class CompressionManager:
         self.model.export(save_path, conf)
 
 
+def fit(compression_manager,
+        train_func,
+        eval_func=None,
+        eval_dataloader=None,
+        eval_metric=None,
+        **kwargs):
+    """Quantize the model with a given configure.
+
+    Args:
+        compression_manager (CompressionManager):  The Compression manager contains the model and
+                                              callbacks.
+        train_func (function, optional):      Calibration function for post-training static
+                                              quantization. It is optional.
+                                              This function takes "model" as input parameter
+                                              and executes entire inference process. If this
+                                              parameter specified, calib_dataloader is also needed
+                                              for FX trace if PyTorch >= 1.13.
+        eval_func (function, optional):       The evaluation function provided by user.
+                                              This function takes model as parameter,
+                                              and evaluation dataset and metrics should be
+                                              encapsulated in this function implementation
+                                              and outputs a higher-is-better accuracy scalar
+                                              value.
+                                              The pseudo code should be something like:
+                                              def eval_func(model):
+                                                   input, label = dataloader()
+                                                   output = model(input)
+                                                   accuracy = metric(output, label)
+                                                   return accuracy
+        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
+                                              and should yield a tuple of (input, label).
+                                              The input could be a object, list, tuple or
+                                              dict, depending on user implementation,
+                                              as well as it can be taken as model input.
+                                              The label should be able to take as input of
+                                              supported metrics. If this parameter is
+                                              not None, user needs to specify pre-defined
+                                              evaluation metrics through configuration file
+                                              and should set "eval_func" paramter as None.
+                                              Tuner will combine model, eval_dataloader
+                                              and pre-defined metrics to run evaluation
+                                              process.
+        eval_metric (str or obj):             Set metric class and neural_compressor will initialize 
+                                              this class when evaluation.
+    """
+    assert compression_manager.quantizer is not None, "Only quantization supports tuning with accuracy driven."
+    compression_manager.train_func = train_func
+    if eval_func is not None:
+        compression_manager.eval_func = eval_func
+    if eval_dataloader is not None:
+        compression_manager.eval_dataloader = eval_dataloader
+    if eval_metric is not None:
+        compression_manager.eval_metric = eval_metric
+    return compression_manager.fit()
+
+
 def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs):
     """Summary.
 
     Args:
         model (Callable, optional):    The model to optimize.
         confs (Union[Callable, List]): Config of Distillation, Quantization, Pruning,
-                                       or list of config for orchestration optimization
+                                       or list of config for orchestration optimization.
+                                       The config class is QuantizationAwareTrainingConfig,
+                                       PruningConfig, distillationConfig.
         options (Options, optional):   The configure for random_seed, workspace,
                                        resume path and tensorboard flag.
 
@@ -168,83 +300,153 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                 compression_manager.on_epoch_end()
             compression_manager.on_train_end()
     """
+    backend = "default"
+    quantizer = None
+    pruners = None
+    distiller = None
     if isinstance(confs, List) and len(confs) > 1:
-        from .experimental.scheduler import Scheduler
-        comps = []
         for conf in confs:
             if isinstance(conf, QuantizationAwareTrainingConfig):
-                conf_ = Config(quantization=conf,
-                               benchmark=None,
-                               pruning=None,
-                               distillation=None,
-                               nas=None)
-                com = Quantization(conf_)
-                com.model = model
+                quantizer = quantization.AwareTrainingQuant(conf)
+                backend = confs.backend
             elif isinstance(conf, WeightPruningConfig):
-                conf_ = Config(pruning=conf,
-                               benchmark=None,
-                               quantization=None,
-                               distillation=None,
-                               nas=None)
-                com = Pruning(conf_)
-                com.model = model
+                pruners = Pruning(conf)
             elif isinstance(conf, DistillationConfig):
-                conf_ = Config(distillation=conf,
-                               benchmark=None,
-                               quantization=None,
-                               pruning=None,
-                               nas=None)
-                com = Distillation(conf_)
-                com.model = model
-                if conf.teacher_model is not None:
-                    com.teacher_model = conf.teacher_model
+                distiller = Distillation(conf)
             else:
                 assert False, "Unsupported configure: {}".format(type(conf))
-
-            comps.append(com)
-        scheduler = Scheduler()
-        scheduler.model = model
-        comp = scheduler.combine(*comps)
-        comp.prepare()
-        scheduler.append(comp)
-        component = scheduler
     else:
         if isinstance(confs, List):
             confs = confs[0]
         if isinstance(confs, QuantizationAwareTrainingConfig):
-            conf = Config(quantization=confs,
-                          benchmark=None,
-                          pruning=None,
-                          distillation=None,
-                          nas=None)
-            component = Quantization(conf)
-        elif type(confs) == WeightPruningConfig:
-            conf = Config(pruning=confs,
-                          benchmark=None,
-                          quantization=None,
-                          distillation=None,
-                          nas=None)
-            component = Pruning(conf)
-        elif type(confs) == DistillationConfig:
-            conf = Config(distillation=confs,
-                          benchmark=None,
-                          quantization=None,
-                          pruning=None,
-                          nas=None)
-            component = Distillation(conf)
-            if confs.teacher_model is not None:
-                component.teacher_model = confs.teacher_model
+            quantizer = quantization.AwareTrainingQuant(confs)
+            backend = confs.backend
+        elif isinstance(confs, WeightPruningConfig):
+            pruners = Pruning(confs)
+        elif isinstance(confs, DistillationConfig):
+            distiller = Distillation(confs)
         else:
             assert False, logger.error(
                 "confs should be one of QuantizationAwareTrainingConfig, "
                 "PruningConfig, DistillationConfig. not {}".format(type(confs))
             )
 
-        component.model = model
-        if isinstance(confs, QuantizationAwareTrainingConfig):
-            component.prepare_qat()
-        else:
-            component.prepare()
-    compression_manager = CompressionManager(component)
+    nc_model = Model(model, backend=backend)
+
+    if quantizer is not None:
+        quantizer.model = nc_model
+
+    compression_manager = CompressionManager(nc_model, quantizer, pruners, distiller)
 
     return compression_manager
+
+
+class CallBacks:
+    """Define the basic command for the training loop."""
+    def __init__(self):
+        """Callbacks are used for execute the training procedure."""
+        self.hooks = {
+            'on_train_begin': self.on_train_begin,
+            'on_train_end': self.on_train_end,
+            'on_epoch_begin': self.on_epoch_begin,
+            'on_epoch_end': self.on_epoch_end,
+            'on_step_begin': self.on_step_begin,
+            'on_step_end': self.on_step_end,
+            'on_after_compute_loss': self.on_after_compute_loss,
+            'on_before_optimizer_step': self.on_before_optimizer_step,
+            'on_after_optimizer_step': self.on_after_optimizer_step,
+            'on_before_eval': self.on_before_eval,
+            'on_after_eval': self.on_after_eval
+        }
+        self.hooks_dict = {
+            'on_train_begin': [],
+            'on_train_end': [],
+            'on_epoch_begin': [],
+            'on_epoch_end': [],
+            'on_step_begin': [],
+            'on_step_end': [],
+            'on_after_compute_loss': [],
+            'on_before_optimizer_step': [],
+            'on_after_optimizer_step': [],
+            'on_before_eval': [],
+            'on_after_eval': []
+        }
+
+
+    def on_train_begin(self, dataloader=None):
+        """Be called before the beginning of epochs."""
+        for on_train_begin_hook in self.hooks_dict['on_train_begin']:
+            on_train_begin_hook(dataloader)
+
+    def on_train_end(self):
+        """Be called after the end of epochs."""
+        for on_train_end_hook in self.hooks_dict['on_train_end']:
+            on_train_end_hook()
+
+    def on_epoch_begin(self, epoch):
+        """Be called on the beginning of epochs."""
+        for on_epoch_begin_hook in self.hooks_dict['on_epoch_begin']:
+            on_epoch_begin_hook(epoch)
+
+    def on_step_begin(self, batch_id):
+        """Be called on the beginning of batches."""
+        res_list = []
+        for on_step_begin_hook in self.hooks_dict['on_step_begin']:
+            res_list.append(on_step_begin_hook(batch_id))
+        return res_list
+
+    def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
+        """Be called on the end of loss computation."""
+        loss = student_loss
+        for on_after_compute_loss_hook in self.hooks_dict['on_after_compute_loss']:
+            loss = on_after_compute_loss_hook(input, student_output, loss, teacher_output)
+        return loss
+
+    def on_before_optimizer_step(self):
+        """Be called before optimizer step."""
+        for on_before_optimizer_step_hook in self.hooks_dict['on_before_optimizer_step']:
+            on_before_optimizer_step_hook()
+
+    def on_after_optimizer_step(self):
+        """Be called after optimizer step."""
+        for on_after_optimizer_step_hook in self.hooks_dict['on_after_optimizer_step']:
+            on_after_optimizer_step_hook()
+
+    def on_before_eval(self):
+        """Be called before evaluation."""
+        for on_before_eval_hook in self.hooks_dict['on_before_eval']:
+            on_before_eval_hook()
+
+    def on_after_eval(self):
+        """Be called after evaluation."""
+        for on_after_eval_hook in self.hooks_dict['on_after_eval']:
+            on_after_eval_hook()
+
+    def on_step_end(self):
+        """Be called on the end of batches."""
+        res_list = []
+        for on_step_end_hook in self.hooks_dict['on_step_end']:
+            res_list.append(on_step_end_hook())
+        return res_list
+
+    def on_epoch_end(self):
+        """Be called on the end of epochs."""
+        res_list = []
+
+        for on_epoch_end_hook in self.hooks_dict['on_epoch_end']:
+            res_list.append(on_epoch_end_hook())
+
+        return res_list
+
+    def register_hook(self, scope, hook, input_args=None, input_kwargs=None):
+        """Register hook for component.
+
+        Input_args and input_kwargs are reserved for user registered hooks.
+        """
+        if hook not in self.hooks_dict[scope]:
+            self.hooks_dict[scope].append(hook)
+
+    def remove_hook(self, scope, hook):
+        for registed_hook in self.hooks_dict[scope]:
+            if type(hook) == type(registed_hook):
+                self.hooks_dict[scope].remove(registed_hook)

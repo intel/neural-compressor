@@ -161,20 +161,20 @@ class Model(object):
         Returns:
             BaseModel: neural_compressor built-in model
         """
-        framework = kwargs.get("framework", "NA")
-        if framework == "NA":
-            framework = get_model_fwk_name(root)
+        backend = kwargs.get("backend", "NA")
+        if backend == "NA" or backend == "default":
+            backend_tmp = get_model_fwk_name(root)
+            if backend_tmp == "pytorch" and backend == "default":
+                backend = "pytorch_fx"
+        elif backend == "ipex":
+            backend = "pytorch_ipex"
 
-        if 'tensorflow' in framework:
+        if 'tensorflow' in backend:
             if 'modelType' in kwargs:
                 model_type = kwargs['modelType']
             else:
                 model_type = get_model_type(root)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
-        elif framework == 'keras':
-            model = MODELS['keras'](root, **kwargs)
-        elif framework == 'pytorch':
-            model = MODELS[framework](root, **kwargs)
         else:
-            model = MODELS[framework](root, **kwargs)
+            model = MODELS[backend](root, **kwargs)
         return model
