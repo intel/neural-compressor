@@ -379,6 +379,138 @@ class PostTrainingQuant:
         self._calib_dataloader = dataloader
 
 
+class PostTrainingQuant(BaseQuant):
+    def __init__(self, conf: PostTrainingQuantConfig, **kwargs):
+        super(PostTrainingQuant, self).__init__(conf, **kwargs)
+
+    def __call__(self):
+        """Execute this class.
+
+        For derived classes(Pruning, Quantization, etc.), an override function is required.
+        """
+        return super(PostTrainingQuant, self).__call__()
+
+    fit = __call__
+
+    @property
+    def calib_func(self):
+        """Not support get train_func."""
+        assert False, 'Should not try to get the value of `train_func` attribute.'
+
+    @calib_func.setter
+    def calib_func(self, calib_func):
+        """Calibrate scale and zero for quantization.
+
+        Args:
+            calib_func: This function takes "model" as input parameter
+                         and executes entire evaluation process. If calib_func set,
+                         an evaluation process must be triggered and user should
+                         set eval_dataloader with metric configured or directly eval_func
+                         to make evaluation of the model executed.
+        """
+        self._train_func = calib_func
+
+    @property
+    def calib_dataloader(self):
+        """Get `calib_dataloader` attribute."""
+        return self._calib_dataloader
+
+    @calib_dataloader.setter
+    def calib_dataloader(self, dataloader):
+        """Set Data loader for calibration, mandatory for post-training quantization.
+
+        If calib_func is not be set then user must set calibration dataloader,
+        and calibration is iterable and the batched data should consists of a tuple like
+        (input, label) if the calibration dataset containing label, or yield (input, _)
+        for label-free calibration dataset, the input in the batched data will be used for
+        model inference, so it should satisfy the input format of specific model.
+        In calibration process, label of data loader will not be used and
+        neither the postprocess and metric. User only need to set
+        calib_dataloader when calib_dataloader can not be configured from yaml file.
+
+        Args:
+            dataloader(generator): user are supported to set a user defined dataloader
+                                    which meet the requirements that can yield tuple of
+                                    (input, label)/(input, _) batched data. Another good
+                                    practice is to use neural_compressor.experimental.common.DataLoader
+                                    to initialize a neural_compressor dataloader object. Notice
+                                    neural_compressor.experimental.common.DataLoader is just a wrapper of the
+                                    information needed to build a dataloader, it can't yield
+                                    batched data and only in this setter method
+                                    a 'real' calib_dataloader will be created,
+                                    the reason is we have to know the framework info
+                                    and only after the Quantization object created then
+                                    framework infomation can be known.
+                                    Future we will support creating iterable dataloader
+                                    from neural_compressor.experimental.common.DataLoader
+        """
+        assert hasattr(dataloader, '__iter__') and \
+            hasattr(dataloader, 'batch_size'), \
+            'dataloader must implement __iter__ method and batch_size attribute'
+        self._calib_dataloader = dataloader
+
+
+class AwareTrainingQuant(BaseQuant):
+    def __init__(self, conf: QuantizationAwareTrainingConfig, **kwargs):
+        super(AwareTrainingQuant, self).__init__(conf, **kwargs)
+
+    def prepare(self, callbacks):
+        cfg = self.conf.usr_cfg
+        framework_specific_info = {'device': cfg.device,
+                                   'random_seed': cfg.tuning.random_seed,
+                                   'workspace_path': cfg.tuning.workspace.path,
+                                   'q_dataloader': None}
+        if cfg.quantization.approach is not None:
+            framework_specific_info['approach'] = cfg.quantization.approach
+
+        if 'tensorflow' in cfg.model.framework:
+            framework_specific_info.update(
+                {"inputs": cfg.model.inputs, "outputs": cfg.model.outputs})
+
+        self.adaptor = FRAMEWORKS[cfg.model.framework](framework_specific_info)
+        self.adaptor.model = self.model
+        callbacks.register_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
+        callbacks.register_hook("on_train_end", self.adaptor._post_hook_for_qat)
+        self.callbacks = callbacks
+
+    def pre_proccess(self):
+        """Create strategy to optimize model."""
+        if self.callbacks is not None and hasattr(self.adaptor, "_pre_hook_for_qat"):
+            self.callbacks.remove_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
+            self.callbacks.remove_hook("on_train_end", self.adaptor._post_hook_for_qat)
+
+        super(AwareTrainingQuant, self).pre_proccess()
+
+    def __call__(self):
+        """Execute this class.
+
+        For derived classes(Pruning, Quantization, etc.), an override function is required.
+        """
+        return super(AwareTrainingQuant, self).__call__()
+
+    fit = __call__
+
+    @property
+    def train_func(self):
+        """Not support get train_func."""
+        assert False, 'Should not try to get the value of `train_func` attribute.'
+
+    @train_func.setter
+    def train_func(self, user_train_func):
+        """Training function.
+
+        Args:
+            user_train_func: This function takes "model" as input parameter
+                         and executes entire training process with self
+                         contained training hyper-parameters. If training_func set,
+                         an evaluation process must be triggered and user should
+                         set eval_dataloader with metric configured or directly eval_func
+                         to make evaluation of the model executed. training_func will return
+                         a trained model.
+        """
+        self._train_func = user_train_func
+
+
 def fit(model,
         conf,
         calib_dataloader=None,

@@ -460,11 +460,11 @@ class TuneStrategy(object):
         op_item_dtype_dict = OrderedDict()
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
-        
+
         initial_op_tuning_cfg = {}
         for op_name_type, quant_mode in op_item_dtype_dict.items():
             initial_op_tuning_cfg[op_name_type] = initial_tuning_cfg_with_quant_mode(op_name_type,
-                                                                                     quant_mode, 
+                                                                                     quant_mode,
                                                                                      self.tuning_space)
         return op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg
 
