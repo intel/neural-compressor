@@ -251,8 +251,8 @@ def fit(compression_manager,
                                               Tuner will combine model, eval_dataloader
                                               and pre-defined metrics to run evaluation
                                               process.
-        eval_metric (str or obj):             Set metric class and neural_compressor will initialize 
-                                              this class when evaluation.
+        eval_metric (dict or obj):             Set metric class or a dict of built-in metric configures,
+                                              and neural_compressor will initialize this class when evaluation.
     """
     assert compression_manager.quantizer is not None, "Only quantization supports tuning with accuracy driven."
     compression_manager.train_func = train_func

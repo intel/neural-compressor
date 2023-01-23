@@ -23,8 +23,8 @@ import random
 import numpy as np
 from .adaptor import FRAMEWORKS
 from .conf.config import QuantConf
+from .conf.dotdict import deep_get, deep_set, DotDict
 from .conf.pythonic_config import Config
-from .experimental import Quantization as ExpQuantization
 from .model.model import BaseModel, get_model_fwk_name, Model, MODELS
 from .strategy import STRATEGIES
 from .utils import logger
@@ -32,8 +32,8 @@ from .utils.utility import time_limit
 from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
 
 
-class AwareTrainingQuant:
-    def __init__(self, conf: QuantizationAwareTrainingConfig, **kwargs):
+class BaseQuant:
+    def __init__(self, conf, **kwargs):
         conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
         self.conf = QuantConf()
         self.conf.map_pyconfig_to_cfg(conf)
@@ -41,39 +41,25 @@ class AwareTrainingQuant:
         random.seed(seed)
         np.random.seed(seed)
         self._train_func = None
+        self._calib_dataloader = None
         self._eval_func = None
-        self.adaptor = None
+        self._eval_dataloader = None
+        self._eval_metric = None
         self._model = None
         self.callbacks = None
         if "model" in kwargs:
             self.model = kwargs["model"]
 
-    def prepare(self, callbacks):
-        cfg = self.conf.usr_cfg
-        framework_specific_info = {'device': cfg.device,
-                                   'random_seed': cfg.tuning.random_seed,
-                                   'workspace_path': cfg.tuning.workspace.path,
-                                   'q_dataloader': None}
-        if cfg.quantization.approach is not None:
-            framework_specific_info['approach'] = cfg.quantization.approach
-
-        if 'tensorflow' in cfg.model.framework:
-            framework_specific_info.update(
-                {"inputs": cfg.model.inputs, "outputs": cfg.model.outputs})
-
-        self.adaptor = FRAMEWORKS[cfg.model.framework](framework_specific_info)
-        self.adaptor.model = self.model
-        callbacks.register_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
-        callbacks.register_hook("on_train_end", self.adaptor._post_hook_for_qat)
-        self.callbacks = callbacks
-
     def pre_proccess(self):
         """Create strategy to optimize model."""
-        if self.callbacks is not None and hasattr(self.adaptor, "_pre_hook_for_qat"):
-            self.callbacks.remove_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
-            self.callbacks.remove_hook("on_train_end", self.adaptor._post_hook_for_qat)
-
         cfg = self.conf.usr_cfg
+
+        if os.environ.get("PERFORMANCE_ONLY") in ['0', '1']:
+            performance_only = bool(int(os.environ.get("PERFORMANCE_ONLY")))
+            deep_set(cfg, 'tuning.exit_policy.performance_only', performance_only)
+            logger.info("Get environ 'PERFORMANCE_ONLY={}'," \
+                " force setting 'tuning.exit_policy.performance_only = True'.".format(performance_only))
+
         strategy = cfg.tuning.strategy.name.lower()
         if cfg.quantization.quant_level == 0:
             strategy = "conservative"
@@ -100,13 +86,12 @@ class AwareTrainingQuant:
         self.strategy = STRATEGIES[strategy](
             self._model,
             self.conf,
-            None,
+            self._calib_dataloader,
             self._train_func,
-            None,
+            self._eval_dataloader,
             self._eval_func,
             _resume,
             self.callbacks.hooks if self.callbacks is not None else None)
-
 
     def execute(self):
         """Quantization execute routinue based on strategy design."""
@@ -215,26 +200,6 @@ class AwareTrainingQuant:
             self._model.workspace_path = cfg.tuning.workspace.path
 
     @property
-    def train_func(self):
-        """Not support get train_func."""
-        assert False, 'Should not try to get the value of `train_func` attribute.'
-
-    @train_func.setter
-    def train_func(self, user_train_func):
-        """Training function.
-
-        Args:
-            user_train_func: This function takes "model" as input parameter
-                         and executes entire training process with self
-                         contained training hyper-parameters. If training_func set,
-                         an evaluation process must be triggered and user should
-                         set eval_dataloader with metric configured or directly eval_func
-                         to make evaluation of the model executed. training_func will return
-                         a trained model.
-        """
-        self._train_func = user_train_func
-
-    @property
     def eval_func(self):
         """Not support get eval_func."""
         assert False, 'Should not try to get the value of `eval_func` attribute.'
@@ -305,7 +270,6 @@ class AwareTrainingQuant:
             user_metric(neural_compressor.metric.Metric or a dict of built-in metric configures):
 
         """
-        from .conf.dotdict import deep_get, deep_set, DotDict
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
                            " as user defines the value of `metric` attribute by code.")
@@ -332,6 +296,138 @@ class AwareTrainingQuant:
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
 
         self._metric = user_metric
+
+
+class PostTrainingQuant(BaseQuant):
+    def __init__(self, conf: PostTrainingQuantConfig, **kwargs):
+        super(PostTrainingQuant, self).__init__(conf, **kwargs)
+
+    def __call__(self):
+        """Execute this class.
+
+        For derived classes(Pruning, Quantization, etc.), an override function is required.
+        """
+        return super(PostTrainingQuant, self).__call__()
+
+    fit = __call__
+
+    @property
+    def calib_func(self):
+        """Not support get train_func."""
+        assert False, 'Should not try to get the value of `train_func` attribute.'
+
+    @calib_func.setter
+    def calib_func(self, calib_func):
+        """Calibrate scale and zero for quantization.
+
+        Args:
+            calib_func: This function takes "model" as input parameter
+                         and executes entire evaluation process. If calib_func set,
+                         an evaluation process must be triggered and user should
+                         set eval_dataloader with metric configured or directly eval_func
+                         to make evaluation of the model executed.
+        """
+        self._train_func = calib_func
+
+    @property
+    def calib_dataloader(self):
+        """Get `calib_dataloader` attribute."""
+        return self._calib_dataloader
+
+    @calib_dataloader.setter
+    def calib_dataloader(self, dataloader):
+        """Set Data loader for calibration, mandatory for post-training quantization.
+
+        If calib_func is not be set then user must set calibration dataloader,
+        and calibration is iterable and the batched data should consists of a tuple like
+        (input, label) if the calibration dataset containing label, or yield (input, _)
+        for label-free calibration dataset, the input in the batched data will be used for
+        model inference, so it should satisfy the input format of specific model.
+        In calibration process, label of data loader will not be used and
+        neither the postprocess and metric. User only need to set
+        calib_dataloader when calib_dataloader can not be configured from yaml file.
+
+        Args:
+            dataloader(generator): user are supported to set a user defined dataloader
+                                    which meet the requirements that can yield tuple of
+                                    (input, label)/(input, _) batched data. Another good
+                                    practice is to use neural_compressor.experimental.common.DataLoader
+                                    to initialize a neural_compressor dataloader object. Notice
+                                    neural_compressor.experimental.common.DataLoader is just a wrapper of the
+                                    information needed to build a dataloader, it can't yield
+                                    batched data and only in this setter method
+                                    a 'real' calib_dataloader will be created,
+                                    the reason is we have to know the framework info
+                                    and only after the Quantization object created then
+                                    framework infomation can be known.
+                                    Future we will support creating iterable dataloader
+                                    from neural_compressor.experimental.common.DataLoader
+        """
+        assert hasattr(dataloader, '__iter__') and \
+            hasattr(dataloader, 'batch_size'), \
+            'dataloader must implement __iter__ method and batch_size attribute'
+        self._calib_dataloader = dataloader
+
+
+class AwareTrainingQuant(BaseQuant):
+    def __init__(self, conf: QuantizationAwareTrainingConfig, **kwargs):
+        super(AwareTrainingQuant, self).__init__(conf, **kwargs)
+
+    def prepare(self, callbacks):
+        cfg = self.conf.usr_cfg
+        framework_specific_info = {'device': cfg.device,
+                                   'random_seed': cfg.tuning.random_seed,
+                                   'workspace_path': cfg.tuning.workspace.path,
+                                   'q_dataloader': None}
+        if cfg.quantization.approach is not None:
+            framework_specific_info['approach'] = cfg.quantization.approach
+
+        if 'tensorflow' in cfg.model.framework:
+            framework_specific_info.update(
+                {"inputs": cfg.model.inputs, "outputs": cfg.model.outputs})
+
+        self.adaptor = FRAMEWORKS[cfg.model.framework](framework_specific_info)
+        self.adaptor.model = self.model
+        callbacks.register_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
+        callbacks.register_hook("on_train_end", self.adaptor._post_hook_for_qat)
+        self.callbacks = callbacks
+
+    def pre_proccess(self):
+        """Create strategy to optimize model."""
+        if self.callbacks is not None and hasattr(self.adaptor, "_pre_hook_for_qat"):
+            self.callbacks.remove_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
+            self.callbacks.remove_hook("on_train_end", self.adaptor._post_hook_for_qat)
+
+        super(AwareTrainingQuant, self).pre_proccess()
+
+    def __call__(self):
+        """Execute this class.
+
+        For derived classes(Pruning, Quantization, etc.), an override function is required.
+        """
+        return super(AwareTrainingQuant, self).__call__()
+
+    fit = __call__
+
+    @property
+    def train_func(self):
+        """Not support get train_func."""
+        assert False, 'Should not try to get the value of `train_func` attribute.'
+
+    @train_func.setter
+    def train_func(self, user_train_func):
+        """Training function.
+
+        Args:
+            user_train_func: This function takes "model" as input parameter
+                         and executes entire training process with self
+                         contained training hyper-parameters. If training_func set,
+                         an evaluation process must be triggered and user should
+                         set eval_dataloader with metric configured or directly eval_func
+                         to make evaluation of the model executed. training_func will return
+                         a trained model.
+        """
+        self._train_func = user_train_func
 
 
 def fit(model,
@@ -396,14 +492,10 @@ def fit(model,
                                               Tuner will combine model, eval_dataloader
                                               and pre-defined metrics to run evaluation
                                               process.
-        eval_metric (str or obj):             Set metric class and neural_compressor will initialize 
-                                              this class when evaluation.
+        eval_metric (dict or obj):             Set metric class or a dict of built-in metric configures,
+                                              and neural_compressor will initialize this class when evaluation.
     """
-    if isinstance(conf, PostTrainingQuantConfig):
-        if eval_func is None and eval_dataloader is None:
-            conf.performance_only = True
-        conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
-    quantizer = ExpQuantization(conf)
+    quantizer = PostTrainingQuant(conf)
     quantizer.model = model
     if eval_func is not None:
         quantizer.eval_func = eval_func
