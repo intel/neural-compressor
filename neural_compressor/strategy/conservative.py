@@ -81,22 +81,23 @@ class ConservativeTuneStrategy(TuneStrategy):
                 if self.acc_meet_flag:
                     logger.info(f"*** Convert all {op_type} ops to {dtype} and accuracy still meet the requirements")
                     tune_cfg = deepcopy(tmp_tune_cfg)
+                # skip op-wise
                 else:
-                    tmp_tune_cfg = deepcopy(tune_cfg)
+                    # tmp_tune_cfg = deepcopy(tune_cfg)
                     logger.info(f"*** Convert all {op_type} ops to {dtype} but accuracy not meet the requirements")
-                    logger.info(f"*** Try to convert {op_type} op into {dtype} one by one.")
-                    for item, quant_mode in items_lst:
-                        op_info = item.name
-                        op_config = tuning_space.set_deafult_config(op_info, quant_mode)
-                        tmp_tune_cfg[op_info] = op_config
-                        yield tmp_tune_cfg
-                        if self.acc_meet_flag:
-                            tune_cfg[op_info] = op_config
-                            logger.info((f"*** Convert one {op_type} op({op_info}) "
-                                         f"into {dtype} and accuracy still meet the requirements"))
-                        else:
-                            tmp_tune_cfg[op_info] = tune_cfg[op_info]
-                            logger.info(f"*** Skip convert {op_info}.")
+                    # logger.info(f"*** Try to convert {op_type} op into {dtype} one by one.")
+                #     for item, quant_mode in items_lst:
+                #         op_info = item.name
+                #         op_config = tuning_space.set_deafult_config(op_info, quant_mode)
+                #         tmp_tune_cfg[op_info] = op_config
+                #         yield tmp_tune_cfg
+                #         if self.acc_meet_flag:
+                #             tune_cfg[op_info] = op_config
+                #             logger.info((f"*** Convert one {op_type} op({op_info}) "
+                #                          f"into {dtype} and accuracy still meet the requirements"))
+                #         else:
+                #             tmp_tune_cfg[op_info] = tune_cfg[op_info]
+                #             logger.info(f"*** Skip convert {op_info}.")
         logger.info(f"*** Ending tuning process due to no quantifiable op left.")
 
     def traverse(self):
@@ -165,7 +166,9 @@ class ConservativeTuneStrategy(TuneStrategy):
                         self.best_qmodel = self.last_qmodel
                         self.best_tune_result = self.last_tune_result
                     else:
-                        logger.info(f"*** The qmodel was not updated due to not achieving better performance.")
+                        logger.info(f"*** Not achieved better performance but also update the model.")
+                        self.best_qmodel = self.last_qmodel
+                        self.best_tune_result = self.last_tune_result
             # Dump the current state to log
             self._dump_tuning_state(trials_count, self.last_tune_result, self.best_tune_result, self.baseline)
             # Judge stop or continue tuning
@@ -322,7 +325,7 @@ class ConservativeTuneStrategy(TuneStrategy):
     def _sorted_item_by_op_type(self, 
                                 items_lst: List[Tuple[TuningItem, str]], 
                                 op_type_priority: List[str]) -> OrderedDict[str, List]:
-        """Socring the tuning items according to its op type.
+        """Scoring the tuning items according to its op type.
         
         Args:
             items_lst: The tuning item list. # [(op_item, quant_mode), ... ]
@@ -332,19 +335,19 @@ class ConservativeTuneStrategy(TuneStrategy):
             The tuning items list that sorted according to its op type.
             OrderDict:
                 # op_type: [(TuningItem, quant_mode), ...]
-                conv2d: [(TuningItem, static), (TuningItem, static)] 
+                conv: [(TuningItem, static), (TuningItem, static)] 
                 linear: [(TuningItem, static), (TuningItem, static)]
+                matmul: [(TuningItem, static), (TuningItem, static)]
         """
-        op_type_lst_from_items_lst = list(set([item[0].name[1] for item in items_lst]))
-        # For items whose op type does not exist in the priority list, assign it with lowest priority.
-        sorted_op_type_lst = [op_type for op_type in op_type_priority if op_type in op_type_lst_from_items_lst]
-        sorted_op_type_lst += list(set(op_type_lst_from_items_lst) - set(op_type_priority))
         sorted_items = COrderedDict()
-        for op_type in sorted_op_type_lst:
-            sorted_items[op_type] = []
+        fallback_op_lst = ['conv', 'matmul', 'linear']
         for op_item, quant_mode in items_lst:
-            op_type = op_item.name[1]
-            sorted_items[op_type].append((op_item, quant_mode))
+            op_name, op_type = op_item.name
+            for target_op_type in fallback_op_lst:
+                if target_op_type in op_type.lower():
+                    if target_op_type not in sorted_items:
+                        sorted_items[target_op_type] = []
+                    sorted_items[target_op_type].append((op_item, quant_mode))
         return sorted_items
             
     def _initialize_tune_cfg(self):
@@ -405,12 +408,13 @@ class ConservativeTuneStrategy(TuneStrategy):
         quant_mode_wise_items = self.tuning_space.quant_mode_wise_items
         # Add all quantized pair into queue
         quant_items_pool = COrderedDict()
-        # collect and sorted all ops that support bf16 and fp16
-        for quant_mode in  ['bf16', 'fp16']:
-            if quant_mode in quant_mode_wise_items:
-                op_item_pairs = [(op_item, quant_mode) for op_item in quant_mode_wise_items[quant_mode]]
-                op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
-                quant_items_pool[quant_mode] = op_item_pairs
+        # skip bf16, fp16 only for int8
+        # # collect and sorted all ops that support bf16 and fp16
+        # for quant_mode in  ['bf16', 'fp16']:
+        #     if quant_mode in quant_mode_wise_items:
+        #         op_item_pairs = [(op_item, quant_mode) for op_item in quant_mode_wise_items[quant_mode]]
+        #         op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
+        #         quant_items_pool[quant_mode] = op_item_pairs
         op_item_pairs = []
         quant_ops_name_set = set()
         # collect and sorted all ops that support int8

@@ -135,6 +135,8 @@ class Quantization(Component):
         self._create_eval_dataloader(cfg)
         self._create_calib_dataloader(cfg)
         strategy = cfg.tuning.strategy.name.lower()
+        cfg.quantization.quant_level = 0:
+        logger.info(f"!!! Force convert quantization level to 0.") 
         if cfg.quantization.quant_level == 0:
             strategy = "conservative"
             logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
