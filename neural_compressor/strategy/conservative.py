@@ -323,7 +323,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         return op_type_priority
 
     def _sorted_item_by_op_type(self, 
-                                items_lst: List[Tuple[TuningItem, str]], 
+                                items_lst, 
                                 op_type_priority: List[str]) -> OrderedDict[str, List]:
         """Scoring the tuning items according to its op type.
         
@@ -423,6 +423,6 @@ class ConservativeTuneStrategy(TuneStrategy):
                 _quant_mode = "static" if "static" in quant_mode else "dynamic"
                 op_item_pairs += [(item, _quant_mode) for item in items_lst if item.name not in quant_ops_name_set]
                 quant_ops_name_set = quant_ops_name_set.union([item.name for item in items_lst])
-                op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
-                quant_items_pool['int8'] = op_item_pairs
+        op_item_pairs_dict = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
+        quant_items_pool['int8'] = op_item_pairs_dict
         return quant_items_pool
