@@ -2790,6 +2790,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             self.prepare_custom_config_dict, self.convert_custom_config_dict = None, None
         self.fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
+        self.fx_op_cfgs[""] = None
         self.tune_cfg['fx_sub_module_list'] = self.sub_module_list
         if self.approach == 'quant_aware_training':
             q_model._model.train()
