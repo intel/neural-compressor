@@ -2790,7 +2790,16 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             self.prepare_custom_config_dict, self.convert_custom_config_dict = None, None
         self.fx_op_cfgs = _cfgs_to_fx_cfgs(op_cfgs, self.approach)
-        self.fx_op_cfgs[""] = None
+        # replace the global setting with None
+        version = get_torch_version()
+        if version.release >= Version("1.13.0").release:  # pragma: no cover
+            from torch.ao.quantization import QConfigMapping
+            if isinstance(self.fx_op_cfgs, QConfigMapping):
+                self.fx_op_cfgs.set_global(None)
+                logger.debug(f"*** Replace the global qconfig with None. (1.13.0)")
+        else:
+            self.fx_op_cfgs[""] = None
+            logger.debug(f"*** Replace the global qconfig with None.")
         self.tune_cfg['fx_sub_module_list'] = self.sub_module_list
         if self.approach == 'quant_aware_training':
             q_model._model.train()
