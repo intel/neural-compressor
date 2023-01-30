@@ -22,6 +22,7 @@ from enum import EnumMeta
 import os
 import math
 import copy
+from copy import deepcopy
 import pickle
 from collections import OrderedDict, defaultdict
 from pathlib import Path
@@ -195,8 +196,8 @@ class TuneStrategy(object):
         # self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
         
         # need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
+        return self.objectives.accuracy_meet_req(deepcopy(self.last_tune_result))
 
-        return self.objectives.compare(self.last_tune_result, self.baseline)
 
         # record the tuning history
         # saved_tune_cfg = copy.deepcopy(tune_cfg)
