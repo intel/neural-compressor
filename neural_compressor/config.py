@@ -416,9 +416,10 @@ class _BaseQuantizationConfig:
     def use_distributed_tuning(self):
         return self._use_distributed_tuning
 
-    @quant_level.setter
+    @use_distributed_tuning.setter
     def use_distributed_tuning(self, use_distributed_tuning):
-        self._use_distributed_tuning = use_distributed_tuning
+        if check_value('use_distributed_tuning', use_distributed_tuning, bool):
+            self._use_distributed_tuning = use_distributed_tuning
 
     @property
     def reduce_range(self):
@@ -682,7 +683,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,
                          accuracy_criterion=accuracy_criterion,
-                         use_distributed_tuning=False)
+                         use_distributed_tuning=use_distributed_tuning)
         self.approach = approach
 
     @property
