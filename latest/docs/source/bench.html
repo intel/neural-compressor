@@ -182,6 +182,7 @@
 <p>3.5. <a class="reference external" href="#dataset-tab">Dataset Tab</a></p>
 <p>3.6. <a class="reference external" href="#project-information-tab">Project Information</a></p>
 </li>
+<li><p><a class="reference external" href="#nas-demo">NAS demo</a></p></li>
 <li><p><a class="reference external" href="#system-information">System Information</a></p></li>
 <li><p><a class="reference external" href="#security">Security</a></p></li>
 </ol>
@@ -420,6 +421,22 @@ Click “Download .csv file” button to get profiling data in .csv file.
 <h2>Project Information<a class="headerlink" href="#project-information" title="Permalink to this heading">¶</a></h2>
 <p>Last tab is called “Project info”. You can find here details about the project, when it was created and modified, what is the framework and some details about input model. It is also possible to add some notes about the project.</p>
 <p><img alt="Project info" src="../../_images/project-info.png" /></p>
+</section>
+<section id="nas-demo">
+<h2>NAS demo<a class="headerlink" href="#nas-demo" title="Permalink to this heading">¶</a></h2>
+<p>Neural architecture search (NAS) example can be created from branch called <a class="reference external" href="https://github.com/intel/neural-compressor/tree/NAS_demo">NAS_demo</a>. The following dependencies must be installed before running the code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">ofa</span> <span class="n">fvcore</span> <span class="n">torchvision</span> <span class="n">autograd</span> <span class="n">pymoo</span> <span class="n">numba</span>
+</pre></div>
+</div>
+<p>Then follow the instructions from <a class="reference external" href="#introduction">introduction</a>.</p>
+<p>To create new NAS example, click the <code class="docutils literal notranslate"><span class="pre">Create</span> <span class="pre">new</span> <span class="pre">project</span></code> button and in the second step called <code class="docutils literal notranslate"><span class="pre">Project</span> <span class="pre">type</span></code> choose <code class="docutils literal notranslate"><span class="pre">NAS</span> <span class="pre">example</span></code> like in the picture below.</p>
+<p><img alt="Project wizard2" src="../../_images/wizard2.png" /></p>
+<p>In third step called <code class="docutils literal notranslate"><span class="pre">Details</span></code> choose path to the <a class="reference external" href="https://www.image-net.org/">ImageNet ILSVRC dataset</a>.</p>
+<p><img alt="Project wizard3" src="../../_images/wizard3.png" /></p>
+<p>Details of the demo can be found in the initial view before running the demo:
+<img alt="New NAS" src="../../_images/new-nas.png" /></p>
+<p>To run the demo click <code class="docutils literal notranslate"><span class="pre">Run</span></code> button. The process may take several hours. The results are shown in the chart:</p>
+<p><img alt="Executed NAS" src="../../_images/executed-nas.png" /></p>
 </section>
 <section id="system-information">
 <h2>System Information<a class="headerlink" href="#system-information" title="Permalink to this heading">¶</a></h2>
