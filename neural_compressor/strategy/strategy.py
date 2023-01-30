@@ -198,7 +198,7 @@ class TuneStrategy(object):
             tune_cfg_id = process_id - 1
             logger.info("~~~~~~master sending tune cfg: {}".format(tune_cfg_id))
             comm.send(
-                obj=tune_cfg_id, # tune cfg ? do we need that?
+                obj=tune_cfg_id, # just send the tune cfg id is enough
                 dest=process_id, # rank 0 send to rank 1, 2, ...
                 tag=tune_cfg_id # tag, the index of tune cfg 0,1,2,3
             )
@@ -264,7 +264,7 @@ class TuneStrategy(object):
                 self.max_trial_flag = True
             # elif time.time() - self.overall_time_start > self.cfg.tuning.exit_policy.timeout:
             #     self.max_time_flag = True
-            elif cur_cfg_id <= len(tune_cfg_lst):
+            elif cur_cfg_id < len(tune_cfg_lst):
                 logger.info("~~~~~~master sends new tuning cfg {} to rank: {}".format(cur_cfg_id, sender_rank))
                 comm.send(obj=cur_cfg_id, dest=sender_rank, tag=cur_cfg_id)
                 cur_cfg_id += 1
@@ -290,7 +290,7 @@ class TuneStrategy(object):
         for process_id in range(1, size):
             logger.info("~~~~~~master sends END signal to rank: {}".format(process_id))
             comm.send(
-                obj=len(tune_cfg_lst),
+                obj="MET" if self.met_flag else "NOT MET", # send whether met criterion in the current stage
                 dest=process_id, # rank 0 send to rank 1, 2, ...
                 tag=len(tune_cfg_lst)
             )
@@ -313,9 +313,10 @@ class TuneStrategy(object):
             cfg_idx = status.Get_tag()
             print("&" * 50, "cfg_idx:", cfg_idx, "len(tune_cfg_lst)", len(tune_cfg_lst))
             if status.Get_tag() >= len(tune_cfg_lst):
-                logger.info("~~~~~~slave {} receiving END signal".format(comm.Get_rank()))
-                # master tells us can break, not more cfgs...
-                self.met_flag = True
+                logger.info("~~~~~~slave {} receiving END signal in the current stage".format(comm.Get_rank()))
+                if task == "MET":
+                    logger.info("~~~~~~met criterion in this stage!")
+                    self.met_flag = True
                 break
             tune_cfg = tune_cfg_lst[cfg_idx]
 
@@ -368,6 +369,7 @@ class TuneStrategy(object):
             else:
                 self.slave_worker_handle(comm, tune_cfg_lst)
             logger.info("# if self.met_flag or self.max_trial_flag or self.max_time_flag:")
+            logger.info(self.met_flag or self.max_trial_flag or self.max_time_flag)
             if self.met_flag or self.max_trial_flag or self.max_time_flag:
                 break
 
