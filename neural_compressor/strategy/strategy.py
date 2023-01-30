@@ -517,8 +517,9 @@ class TuneStrategy(object):
             self._add_tuning_history()
         self.show_baseline_info()
         
-        distributed = True # TODO add distributed/num_worker to config
-        if distributed:
+        print(".............use distributed traverse: {}".format(self.cfg.tuning.use_distributed_tuning))
+        # distributed = True # TODO add distributed/num_worker to config
+        if self.cfg.tuning.use_distributed_tuning:
             return self.distributed_traverse()
 
         trials_count = 0

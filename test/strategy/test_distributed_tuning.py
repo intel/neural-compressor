@@ -45,8 +45,7 @@ class TestDistributedTuning(unittest.TestCase):
 
         # tuning and accuracy criterion
         # quant_level = 0
-        conf = PostTrainingQuantConfig()
-
+        conf = PostTrainingQuantConfig(use_distributed_tuning=True)
         # fit
         q_model = fit(model=resnet18,
                       conf=conf,
