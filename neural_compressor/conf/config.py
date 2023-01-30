@@ -1415,6 +1415,7 @@ class Conf(object):
                 'tuning.exit_policy.timeout': pythonic_config.quantization.timeout,
                 'tuning.exit_policy.max_trials': pythonic_config.quantization.max_trials,
                 'tuning.exit_policy.performance_only': pythonic_config.quantization.performance_only,
+                'tuning.use_distributed_tuning': pythonic_config.quantization.use_distributed_tuning,
                 'use_bf16': pythonic_config.quantization.use_bf16,
                 'quantization.quant_level': pythonic_config.quantization.quant_level,
                 'reduce_range': pythonic_config.quantization.reduce_range
