@@ -185,61 +185,9 @@ class TuneStrategy(object):
         """
         raise NotImplementedError
 
-    # def _collect_eval_result(self, eval_res, tag): # may need reducing to best result later
-    #     # eval_res
-    #     # self.eval_results.append(eval_res)
-    #     self.trials_count = 0
-    #     self.traverse_start_time = time()
     def meet_acc_req(self, eval_res):
         self.last_tune_result = eval_res
-        # get the current best acc, not sure whether meet goal (comment for now)
-        # self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
-        
-        # need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
         return self.objectives.accuracy_meet_req(deepcopy(self.last_tune_result))
-
-
-        # record the tuning history
-        # saved_tune_cfg = copy.deepcopy(tune_cfg)
-        # saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-        # self._add_tuning_history(saved_tune_cfg,
-        #                         saved_last_tune_result,
-        #                         q_config=self.q_model.q_config)
-        # self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
-        # self.tune_cfg = tune_cfg
-        # now_time = time()
-        # acc_res_msg = ""
-        # performace_res_msg = ""
-        # if self.tuning_result_data:
-        #     acc_res_msg = "[ " + "| ".join(self.tuning_result_data[0]) + " ]"
-        #     performace_res_msg = "[ " + "| ".join(self.tuning_result_data[1]) + " ]"
-        # logger.debug(f"*** The accuracy of last tuning is: {acc_res_msg}")
-        # logger.debug(f"*** The perfomance of last tuning is: {performace_res_msg}")
-        # logger.debug(f"*** The last tuning time: {(now_time - tuning_start_time):.2f} s")
-        # logger.debug(f"*** The tuning process lasted time: {(now_time - traverse_start_time):.2f} s")
-        
-        # self._dump_tuning_process_statistics()
-
-        # if need_stop:
-        #     if self.re_quant:
-        #         logger.info("*** Do not stop the tuning process, re-quantize the ops.")
-        #         continue
-        #     if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
-        #         logger.debug(f'*** Start to do diagnosis (inspect tensor).')
-        #         self._diagnosis()
-        #     if self.use_multi_objective and len(self.tune_result_record) > 1 and \
-        #         self.best_tune_result is not None:
-        #         best_trail, best_result = self.objectives.best_result(self.tune_result_record,
-        #                                                             copy.deepcopy(self.baseline))
-        #         if best_result != self.best_tune_result:
-        #             from neural_compressor.utils.utility import recover
-        #             self.best_qmodel = recover(self.model.model, 
-        #                 os.path.join(self.cfg.tuning.workspace.path, 'history.snapshot'),
-        #                 best_trail)
-        #             logger.debug(f"*** Update the best qmodel by recovering from history.")
-        #             self.best_tune_result = best_result
-        #         self._dump_tuning_process_statistics()
-        #     break
 
     def master_worker_handle(self, comm, tune_cfg_lst):
         # send all task ids to all free nodes, and wait until any result
@@ -248,7 +196,7 @@ class TuneStrategy(object):
         size = comm.Get_size()
         for process_id in range(1, min(len(tune_cfg_lst) + 1, size)):
             tune_cfg_id = process_id - 1
-            print("~~~~~~master sending tune cfg: {}".format(tune_cfg_id))
+            logger.info("~~~~~~master sending tune cfg: {}".format(tune_cfg_id))
             comm.send(
                 obj=tune_cfg_id, # tune cfg ? do we need that?
                 dest=process_id, # rank 0 send to rank 1, 2, ...
@@ -271,7 +219,7 @@ class TuneStrategy(object):
                 status=status   # get MPI status object
             )
 
-            print("~~~~~~master reciving eval res: {}".format(eval_res))
+            logger.info("~~~~~~master reciving eval result: {}".format(eval_res))
 
             self.last_tune_result = eval_res    # for context coordination of stage 3
 
@@ -284,7 +232,7 @@ class TuneStrategy(object):
             self.already_ack_id_lst.add(tag)
 
             if(self.meet_acc_req(eval_res)):    # if meet accuracy requirement, then update minimum id that met requirement
-                print("~~~~~~master has one tuning cfg meet acc: {}".format(tag))
+                logger.info("~~~~~~master has one tuning cfg meet acc: {}".format(tag))
                 self.met_flag = True
                 self.requirements_met_min_cfg_id = min(self.requirements_met_min_cfg_id, tag)
                 
@@ -292,22 +240,23 @@ class TuneStrategy(object):
                 # because a tune cfg (not acked yet) with lower id can have better acc
                 for i in range(self.requirements_met_min_cfg_id):
                     if i not in self.already_ack_id_lst:
-                        print("~~~~~~master has one tuning cfg meet acc: {} but not collect all acks before".format(tag))
+                        logger.info("~~~~~~master has one tuning cfg meet acc: {} but not collect all acks before".format(tag))
                         self.met_flag = False   # not completely collected yet!
                         break
                 
                 if self.met_flag:
                     # found the best tune cfg!
-                    print("~~~~~~master has one tuning cfg meet acc: {} and also collect all acks before".format(tag))
+                    logger.info("~~~~~~master has one tuning cfg meet acc: {} and also collect all acks before".format(tag))
                     self.best_tune_cfg_id = self.requirements_met_min_cfg_id
             else:
+                # get the current best acc but not meet requirements
                 self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(tune_cfg_lst[tag])
 
             if self.best_tune_cfg_id is not None:
                 #### we find the best tune cfg id that meet requirements!!
-                print("~~~~~~master Find best tune cfg id~~~~~~~")
-                print(self.best_tune_cfg_id)
-                print(tune_cfg_lst[self.best_tune_cfg_id])
+                logger.info("~~~~~~master finds best tune cfg id~~~~~~~")
+                logger.info(self.best_tune_cfg_id)
+                logger.info(tune_cfg_lst[self.best_tune_cfg_id])
                 break
             
             # send the next cfg if not exceed max trials
@@ -316,30 +265,30 @@ class TuneStrategy(object):
             # elif time.time() - self.overall_time_start > self.cfg.tuning.exit_policy.timeout:
             #     self.max_time_flag = True
             elif cur_cfg_id <= len(tune_cfg_lst):
-                print("~~~~~~master send new tuning cfg {} to rank: {}".format(cur_cfg_id, sender_rank))
+                logger.info("~~~~~~master sends new tuning cfg {} to rank: {}".format(cur_cfg_id, sender_rank))
                 comm.send(obj=cur_cfg_id, dest=sender_rank, tag=cur_cfg_id)
                 cur_cfg_id += 1
             else:                    
-                print("all tune configs are sent, no more sending, just collecting...")
+                logger.info("all tune configs are sent, no more sending, just collecting...")
 
             if len(tune_cfg_lst) == self.num_acks:    # all collected (ack should collected == acks)
                 # all processes ended
                 # return self.requirements_met_min_cfg_id  if it has been updated
                 if self.requirements_met_min_cfg_id == sys.maxsize:
-                    print("~~~~Not found any tune cfg that meet requirements~~~~")
+                    logger.info("~~~~~~Not found any tune cfg that meet requirements~~~~~~")
                     self.cur_best_tuning_cfg = tune_cfg_lst[0] # TODO select cur_best_tuning_cfg
                 else:
-                    print("~~~~~~Find best tune cfg id~~~~~~~")
-                    print(self.requirements_met_min_cfg_id)
+                    logger.info("~~~~~~Find best tune cfg id~~~~~~")
+                    logger.info(self.requirements_met_min_cfg_id)
                     self.met_flag = True
                     self.best_tune_cfg_id = self.requirements_met_min_cfg_id
-                    print(tune_cfg_lst[self.best_tune_cfg_id])
+                    logger.info(tune_cfg_lst[self.best_tune_cfg_id])
                 break
 
         # send END signal to all other slaves
-        logger.info("~~~~# send END signal to all other slaves~~~~")
+        logger.info("~~~~~~master sends END signal to all other slaves~~~~")
         for process_id in range(1, size):
-            print("~~~~~~master send END signal to rank: {}".format(process_id))
+            logger.info("~~~~~~master sends END signal to rank: {}".format(process_id))
             comm.send(
                 obj=len(tune_cfg_lst),
                 dest=process_id, # rank 0 send to rank 1, 2, ...
@@ -364,30 +313,12 @@ class TuneStrategy(object):
             cfg_idx = status.Get_tag()
             print("&" * 50, "cfg_idx:", cfg_idx, "len(tune_cfg_lst)", len(tune_cfg_lst))
             if status.Get_tag() >= len(tune_cfg_lst):
-                print("~~~~~~slave {} receiving END signal".format(comm.Get_rank()))
+                logger.info("~~~~~~slave {} receiving END signal".format(comm.Get_rank()))
                 # master tells us can break, not more cfgs...
                 self.met_flag = True
                 break
-            op_tuning_cfg = tune_cfg_lst[cfg_idx]
+            tune_cfg = tune_cfg_lst[cfg_idx]
 
-            # do the following stuff...
-            # trials_count = 0
-            # traverse_start_time = time()
-            # for op_tuning_cfg in self.next_tune_cfg():    # instead of using this, just run the above op_tuning_cfg
-            # tuning_start_time = time()
-            # tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
-            tune_cfg = op_tuning_cfg
-            # trials_count += 1
-            # tuning_history = self._find_tuning_history(tune_cfg)
-            # if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
-            #     self.last_tune_result = tuning_history['last_tune_result']
-            #     self.best_tune_result = tuning_history['best_tune_result']
-            #     logger.warn("Find evaluated tuning config, skip.")
-            #     continue
-            # logger.debug("Dump current tuning configuration:")
-            # logger.debug(tune_cfg)
-
-            # self.tuning_times += 1
             self.q_model = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             self.algo.calib_iter = tune_cfg['calib_iteration']
@@ -402,60 +333,13 @@ class TuneStrategy(object):
             self.last_tune_result = self._evaluate(self.last_qmodel)
 
             ##### send back the tuning statistics #########
-            print("##### send back the tuning statistics #########")
-            print(self.last_tune_result)
+            logger.info("##### Slave sends back the tuning statistics #########")
+            logger.info(self.last_tune_result)
             comm.send(
-                obj=self.last_tune_result, ## what should we put in eval result??
+                obj=self.last_tune_result,
                 dest=0, # rank 0 send to rank 1, 2, ...
                 tag=cfg_idx
             )
-            # self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
-            # need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
-
-            # # record the tuning history
-            # saved_tune_cfg = copy.deepcopy(tune_cfg)
-            # saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-            # self._add_tuning_history(saved_tune_cfg,
-            #                         saved_last_tune_result,
-            #                         q_config=self.q_model.q_config)
-            # self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
-            # self.tune_cfg = tune_cfg
-            # now_time = time()
-            # acc_res_msg = ""
-            # performace_res_msg = ""
-            # if self.tuning_result_data:
-            #     acc_res_msg = "[ " + "| ".join(self.tuning_result_data[0]) + " ]"
-            #     performace_res_msg = "[ " + "| ".join(self.tuning_result_data[1]) + " ]"
-            # logger.debug(f"*** The accuracy of last tuning is: {acc_res_msg}")
-            # logger.debug(f"*** The perfomance of last tuning is: {performace_res_msg}")
-            # logger.debug(f"*** The last tuning time: {(now_time - tuning_start_time):.2f} s")
-            # logger.debug(f"*** The tuning process lasted time: {(now_time - traverse_start_time):.2f} s")
-            
-            # self._dump_tuning_process_statistics()
-
-            # if need_stop:
-            #     if self.re_quant:
-            #         logger.info("*** Do not stop the tuning process, re-quantize the ops.")
-            #         continue
-            #     if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
-            #         logger.debug(f'*** Start to do diagnosis (inspect tensor).')
-            #         self._diagnosis()
-            #     if self.use_multi_objective and len(self.tune_result_record) > 1 and \
-            #         self.best_tune_result is not None:
-            #         best_trail, best_result = self.objectives.best_result(self.tune_result_record,
-            #                                                             copy.deepcopy(self.baseline))
-            #         if best_result != self.best_tune_result:
-            #             from neural_compressor.utils.utility import recover
-            #             self.best_qmodel = recover(self.model.model, 
-            #                 os.path.join(self.cfg.tuning.workspace.path, 'history.snapshot'),
-            #                 best_trail)
-            #             logger.debug(f"*** Update the best qmodel by recovering from history.")
-            #             self.best_tune_result = best_result
-            #         self._dump_tuning_process_statistics()
-            #     break
-            
-
-        
 
     def distributed_traverse(self):
         from mpi4py import MPI
@@ -467,12 +351,6 @@ class TuneStrategy(object):
         self.max_time_flag = False # whether exceed max time
         self.overall_trials = 0
         self.overall_time_start = time()
-
-        # make sure every worker holds the whole tune_cfg_lst
-        # tune_cfg_lst = []
-        # for op_tuning_cfg in self.distributed_next_tune_cfg(comm):
-        #     tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
-        #     tune_cfg_lst.append(tune_cfg)
 
         # for all the stages, handle the tune cfg lst
         # the tune cfg lst is generated/yielded each time by distributed_next_tune_cfg_lst
@@ -518,8 +396,7 @@ class TuneStrategy(object):
             self._add_tuning_history()
         self.show_baseline_info()
         
-        print(".............use distributed traverse: {}".format(self.cfg.tuning.use_distributed_tuning))
-        # distributed = True # TODO add distributed/num_worker to config
+        logger.info("use distributed traverse: {}".format(self.cfg.tuning.use_distributed_tuning))
         if self.cfg.tuning.use_distributed_tuning:
             return self.distributed_traverse()
 
