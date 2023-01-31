@@ -275,7 +275,8 @@ class TensorflowQDQToOnnxQDQConverter:
             t2o.rewriter.rewrite_custom_rnn_cell,
             t2o.rewriter.rewrite_generic_loop,
             t2o.rewriter.rewrite_cond,
-            t2o.rewriter.rewrite_biasadd_with_conv2d,
+            # rewrite_biasadd_with_conv2d introduces accuracy issue
+            #t2o.rewriter.rewrite_biasadd_with_conv2d,
             t2o.rewriter.rewrite_layer_normalization,
             t2o.rewriter.rewrite_gemm,
             t2o.rewriter.rewrite_ragged_variant_shape,
