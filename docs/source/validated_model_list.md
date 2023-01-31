@@ -30,1941 +30,1878 @@ Performance varies by use, configuration and other factors. See [platform config
 
 ### TensorFlow Models with TensorFlow 2.11.0
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-wa1i{font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-uzvj{border-color:inherit;font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-8d8j{text-align:center;vertical-align:bottom}
-.tg .tg-nrix{text-align:center;vertical-align:middle}
-</style>
 <table class="tg">
 <thead>
   <tr>
-    <th class="tg-uzvj" rowspan="2">model</th>
-    <th class="tg-wa1i" rowspan="2">example</th>
-    <th class="tg-wa1i" colspan="3">Accuracy</th>
-    <th class="tg-wa1i" colspan="3">Performance/1s4c8ins1bs/throughput(samples/sec)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th rowspan="2">Model</th>
+    <th rowspan="2">Example</th>
+    <th colspan="3">Accuracy</th>
+    <th colspan="3">Performance<br>Throughput(samples/sec) <br></th>
   </tr>
   <tr>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Acc&nbsp;&nbsp;&nbsp;Ratio<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[(INT8-FP32)/FP32]</th>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Performance&nbsp;&nbsp;&nbsp;Gain<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[INT8/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Performance Ratio[INT8/FP32]</th>
   </tr>
 </thead>
-<tbody>
+<tbody align="center">
   <tr>
-    <td class="tg-8d8j">bert base mrpc</td>
-    <td class="tg-8d8j">ckpt</td>
-    <td class="tg-8d8j">86.52%</td>
-    <td class="tg-8d8j">86.52%</td>
-    <td class="tg-8d8j">0</td>
-    <td class="tg-8d8j">170.443</td>
-    <td class="tg-8d8j">93.685</td>
-    <td class="tg-8d8j">1.82x</td>
+    <td>bert base mrpc</td>
+    <td>ckpt</td>
+    <td>86.52%</td>
+    <td>86.52%</td>
+    <td>0</td>
+    <td>170.443</td>
+    <td>93.685</td>
+    <td>1.82x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert large squad</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">92.404</td>
-    <td class="tg-8d8j">92.9861</td>
-    <td class="tg-8d8j">-0.0063</td>
-    <td class="tg-8d8j">18.388</td>
-    <td class="tg-8d8j">9.924</td>
-    <td class="tg-8d8j">1.85x</td>
+    <td>bert large squad</td>
+    <td>PB</td>
+    <td>92.404</td>
+    <td>92.9861</td>
+    <td>-0.0063</td>
+    <td>18.388</td>
+    <td>9.924</td>
+    <td>1.85x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert large squad model zoo</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">92.4128</td>
-    <td class="tg-8d8j">92.9805</td>
-    <td class="tg-8d8j">-0.0061</td>
-    <td class="tg-8d8j">20.414</td>
-    <td class="tg-8d8j">11.156</td>
-    <td class="tg-8d8j">1.83x</td>
+    <td>bert large squad model zoo</td>
+    <td>PB</td>
+    <td>92.4128</td>
+    <td>92.9805</td>
+    <td>-0.0061</td>
+    <td>20.414</td>
+    <td>11.156</td>
+    <td>1.83x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">densenet 121</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">73.61%</td>
-    <td class="tg-8d8j">72.89%</td>
-    <td class="tg-8d8j">0.0099</td>
-    <td class="tg-8d8j">274.608</td>
-    <td class="tg-8d8j">148.722</td>
-    <td class="tg-8d8j">1.85x</td>
+    <td>densenet 121</td>
+    <td>PB</td>
+    <td>73.61%</td>
+    <td>72.89%</td>
+    <td>0.0099</td>
+    <td>274.608</td>
+    <td>148.722</td>
+    <td>1.85x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">densenet 161</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">76.30%</td>
-    <td class="tg-8d8j">76.29%</td>
-    <td class="tg-8d8j">0.0001</td>
-    <td class="tg-8d8j">132.345</td>
-    <td class="tg-8d8j">95.241</td>
-    <td class="tg-8d8j">1.39x</td>
+    <td>densenet 161</td>
+    <td>PB</td>
+    <td>76.30%</td>
+    <td>76.29%</td>
+    <td>0.0001</td>
+    <td>132.345</td>
+    <td>95.241</td>
+    <td>1.39x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">densenet 169</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">74.38%</td>
-    <td class="tg-8d8j">74.65%</td>
-    <td class="tg-8d8j">-0.0036</td>
-    <td class="tg-8d8j">191.311</td>
-    <td class="tg-8d8j">118.987</td>
-    <td class="tg-8d8j">1.61x</td>
+    <td>densenet 169</td>
+    <td>PB</td>
+    <td>74.38%</td>
+    <td>74.65%</td>
+    <td>-0.0036</td>
+    <td>191.311</td>
+    <td>118.987</td>
+    <td>1.61x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">faster rcnn inception resnet&nbsp;&nbsp;&nbsp;v2</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">37.44%</td>
-    <td class="tg-8d8j">38.31%</td>
-    <td class="tg-8d8j">-0.0227</td>
-    <td class="tg-8d8j">3.312</td>
-    <td class="tg-8d8j">1.813</td>
-    <td class="tg-8d8j">1.83x</td>
+    <td>faster rcnn inception resnet v2</td>
+    <td>PB</td>
+    <td>37.44%</td>
+    <td>38.31%</td>
+    <td>-0.0227</td>
+    <td>3.312</td>
+    <td>1.813</td>
+    <td>1.83x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">faster rcnn inception resnet&nbsp;&nbsp;&nbsp;v2 </td>
-    <td class="tg-nrix">SavedModel</td>
-    <td class="tg-8d8j">37.55%</td>
-    <td class="tg-8d8j">38.31%</td>
-    <td class="tg-8d8j">-0.0198</td>
-    <td class="tg-8d8j">3.322</td>
-    <td class="tg-8d8j">1.809</td>
-    <td class="tg-8d8j">1.84x</td>
+    <td>faster rcnn inception resnet v2</td>
+    <td>SavedModel</td>
+    <td>37.55%</td>
+    <td>38.31%</td>
+    <td>-0.0198</td>
+    <td>3.322</td>
+    <td>1.809</td>
+    <td>1.84x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">faster rcnn resnet101</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">30.33%</td>
-    <td class="tg-8d8j">30.39%</td>
-    <td class="tg-8d8j">-0.002</td>
-    <td class="tg-8d8j">42.568</td>
-    <td class="tg-8d8j">13.25</td>
-    <td class="tg-8d8j">3.21x</td>
+    <td>faster rcnn resnet101</td>
+    <td>PB</td>
+    <td>30.33%</td>
+    <td>30.39%</td>
+    <td>-0.002</td>
+    <td>42.568</td>
+    <td>13.25</td>
+    <td>3.21x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">faster rcnn resnet101 saved</td>
-    <td class="tg-nrix">SavedModel</td>
-    <td class="tg-8d8j">30.33%</td>
-    <td class="tg-8d8j">30.39%</td>
-    <td class="tg-8d8j">-0.002</td>
-    <td class="tg-8d8j">43.413</td>
-    <td class="tg-8d8j">11.733</td>
-    <td class="tg-8d8j">3.70x</td>
+    <td>faster rcnn resnet101</td>
+    <td>SavedModel</td>
+    <td>30.33%</td>
+    <td>30.39%</td>
+    <td>-0.002</td>
+    <td>43.413</td>
+    <td>11.733</td>
+    <td>3.70x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">faster rcnn resnet50</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">26.64%</td>
-    <td class="tg-8d8j">26.59%</td>
-    <td class="tg-8d8j">0.0019</td>
-    <td class="tg-8d8j">51.704</td>
-    <td class="tg-8d8j">16.446</td>
-    <td class="tg-8d8j">3.14x</td>
+    <td>faster rcnn resnet50</td>
+    <td>PB</td>
+    <td>26.64%</td>
+    <td>26.59%</td>
+    <td>0.0019</td>
+    <td>51.704</td>
+    <td>16.446</td>
+    <td>3.14x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">inception resnet v2</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">80.34%</td>
-    <td class="tg-8d8j">80.40%</td>
-    <td class="tg-8d8j">-0.0007</td>
-    <td class="tg-8d8j">139.294</td>
-    <td class="tg-8d8j">76.653</td>
-    <td class="tg-8d8j">1.82x</td>
+    <td>inception resnet v2</td>
+    <td>PB</td>
+    <td>80.34%</td>
+    <td>80.40%</td>
+    <td>-0.0007</td>
+    <td>139.294</td>
+    <td>76.653</td>
+    <td>1.82x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">inception resnet v2 </td>
-    <td class="tg-8d8j">keras</td>
-    <td class="tg-8d8j">80.35%</td>
-    <td class="tg-8d8j">80.40%</td>
-    <td class="tg-8d8j">-0.0005</td>
-    <td class="tg-8d8j">99.424</td>
-    <td class="tg-8d8j">54.5</td>
-    <td class="tg-8d8j">1.82x</td>
+    <td>inception resnet v2 </td>
+    <td>keras</td>
+    <td>80.35%</td>
+    <td>80.40%</td>
+    <td>-0.0005</td>
+    <td>99.424</td>
+    <td>54.5</td>
+    <td>1.82x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">inception v1</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">70.44%</td>
-    <td class="tg-8d8j">69.74%</td>
-    <td class="tg-8d8j">0.01</td>
-    <td class="tg-8d8j">955.202</td>
-    <td class="tg-8d8j">328.148</td>
-    <td class="tg-8d8j">2.91x</td>
+    <td>inception v1</td>
+    <td>PB</td>
+    <td>70.44%</td>
+    <td>69.74%</td>
+    <td>0.01</td>
+    <td>955.202</td>
+    <td>328.148</td>
+    <td>2.91x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">inception v2</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">74.34%</td>
-    <td class="tg-8d8j">73.97%</td>
-    <td class="tg-8d8j">0.005</td>
-    <td class="tg-8d8j">709.916</td>
-    <td class="tg-8d8j">282.403</td>
-    <td class="tg-8d8j">2.51x</td>
+    <td>inception v2</td>
+    <td>PB</td>
+    <td>74.34%</td>
+    <td>73.97%</td>
+    <td>0.005</td>
+    <td>709.916</td>
+    <td>282.403</td>
+    <td>2.51x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">inception v3</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">76.71%</td>
-    <td class="tg-8d8j">76.75%</td>
-    <td class="tg-8d8j">-0.0005</td>
-    <td class="tg-8d8j">337.094</td>
-    <td class="tg-8d8j">160.065</td>
-    <td class="tg-8d8j">2.11x</td>
+    <td>inception v3</td>
+    <td>PB</td>
+    <td>76.71%</td>
+    <td>76.75%</td>
+    <td>-0.0005</td>
+    <td>337.094</td>
+    <td>160.065</td>
+    <td>2.11x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">inception v3 </td>
-    <td class="tg-8d8j">keras</td>
-    <td class="tg-8d8j">77.73%</td>
-    <td class="tg-8d8j">77.83%</td>
-    <td class="tg-8d8j">-0.0013</td>
-    <td class="tg-8d8j">438.515</td>
-    <td class="tg-8d8j">204.757</td>
-    <td class="tg-8d8j">2.14x</td>
+    <td>inception v3 </td>
+    <td>keras</td>
+    <td>77.73%</td>
+    <td>77.83%</td>
+    <td>-0.0013</td>
+    <td>438.515</td>
+    <td>204.757</td>
+    <td>2.14x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">inception v4</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">80.18%</td>
-    <td class="tg-8d8j">80.27%</td>
-    <td class="tg-8d8j">-0.0011</td>
-    <td class="tg-8d8j">223.024</td>
-    <td class="tg-8d8j">105.436</td>
-    <td class="tg-8d8j">2.12x</td>
+    <td>inception v4</td>
+    <td>PB</td>
+    <td>80.18%</td>
+    <td>80.27%</td>
+    <td>-0.0011</td>
+    <td>223.024</td>
+    <td>105.436</td>
+    <td>2.12x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">mask rcnn inception v2</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">28.50%</td>
-    <td class="tg-8d8j">28.73%</td>
-    <td class="tg-8d8j">-0.008</td>
-    <td class="tg-8d8j">69.419</td>
-    <td class="tg-8d8j">32.997</td>
-    <td class="tg-8d8j">2.10x</td>
+    <td>mask rcnn inception v2</td>
+    <td>PB</td>
+    <td>28.50%</td>
+    <td>28.73%</td>
+    <td>-0.008</td>
+    <td>69.419</td>
+    <td>32.997</td>
+    <td>2.10x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">mask rcnn inception v2 </td>
-    <td class="tg-8d8j">ckpt</td>
-    <td class="tg-8d8j">28.50%</td>
-    <td class="tg-8d8j">28.73%</td>
-    <td class="tg-8d8j">-0.008</td>
-    <td class="tg-8d8j">69.467</td>
-    <td class="tg-8d8j">32.879</td>
-    <td class="tg-8d8j">2.11x</td>
+    <td>mask rcnn inception v2</td>
+    <td>ckpt</td>
+    <td>28.50%</td>
+    <td>28.73%</td>
+    <td>-0.008</td>
+    <td>69.467</td>
+    <td>32.879</td>
+    <td>2.11x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">mobilenet v1</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">71.85%</td>
-    <td class="tg-8d8j">70.96%</td>
-    <td class="tg-8d8j">0.0125</td>
-    <td class="tg-8d8j">1347.654</td>
-    <td class="tg-8d8j">439.052</td>
-    <td class="tg-8d8j">3.07x</td>
+    <td>mobilenet v1</td>
+    <td>PB</td>
+    <td>71.85%</td>
+    <td>70.96%</td>
+    <td>0.0125</td>
+    <td>1347.654</td>
+    <td>439.052</td>
+    <td>3.07x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">mobilenet v2</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">72.56%</td>
-    <td class="tg-8d8j">71.76%</td>
-    <td class="tg-8d8j">0.0111</td>
-    <td class="tg-8d8j">1192.006</td>
-    <td class="tg-8d8j">492.922</td>
-    <td class="tg-8d8j">2.42x</td>
+    <td>mobilenet v2</td>
+    <td>PB</td>
+    <td>72.56%</td>
+    <td>71.76%</td>
+    <td>0.0111</td>
+    <td>1192.006</td>
+    <td>492.922</td>
+    <td>2.42x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">mobilenet v2  </td>
-    <td class="tg-8d8j">keras</td>
-    <td class="tg-8d8j">71.10%</td>
-    <td class="tg-8d8j">71.76%</td>
-    <td class="tg-8d8j">-0.0091</td>
-    <td class="tg-8d8j">412.752</td>
-    <td class="tg-8d8j">376.336</td>
-    <td class="tg-8d8j">1.10x</td>
+    <td>mobilenet v2  </td>
+    <td>keras</td>
+    <td>71.10%</td>
+    <td>71.76%</td>
+    <td>-0.0091</td>
+    <td>412.752</td>
+    <td>376.336</td>
+    <td>1.10x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">mobilenet v3</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">74.00%</td>
-    <td class="tg-8d8j">75.31%</td>
-    <td class="tg-8d8j">-0.0174</td>
-    <td class="tg-8d8j">662.066</td>
-    <td class="tg-8d8j">397.693</td>
-    <td class="tg-8d8j">1.66x</td>
+    <td>mobilenet v3</td>
+    <td>PB</td>
+    <td>74.00%</td>
+    <td>75.31%</td>
+    <td>-0.0174</td>
+    <td>662.066</td>
+    <td>397.693</td>
+    <td>1.66x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet101</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">77.50%</td>
-    <td class="tg-8d8j">76.45%</td>
-    <td class="tg-8d8j">0.0137</td>
-    <td class="tg-8d8j">299.233</td>
-    <td class="tg-8d8j">154.672</td>
-    <td class="tg-8d8j">1.93x</td>
+    <td>resnet101</td>
+    <td>PB</td>
+    <td>77.50%</td>
+    <td>76.45%</td>
+    <td>0.0137</td>
+    <td>299.233</td>
+    <td>154.672</td>
+    <td>1.93x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet101 </td>
-    <td class="tg-8d8j">keras</td>
-    <td class="tg-8d8j">61.38%</td>
-    <td class="tg-8d8j">61.47%</td>
-    <td class="tg-8d8j">-0.0016</td>
-    <td class="tg-8d8j">476.394</td>
-    <td class="tg-8d8j">227.242</td>
-    <td class="tg-8d8j">2.10x</td>
+    <td>resnet101 </td>
+    <td>keras</td>
+    <td>61.38%</td>
+    <td>61.47%</td>
+    <td>-0.0016</td>
+    <td>476.394</td>
+    <td>227.242</td>
+    <td>2.10x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet50 fashion</td>
-    <td class="tg-8d8j">keras</td>
-    <td class="tg-8d8j">78.04%</td>
-    <td class="tg-8d8j">78.12%</td>
-    <td class="tg-8d8j">-0.001</td>
-    <td class="tg-8d8j">2734.432</td>
-    <td class="tg-8d8j">1299.729</td>
-    <td class="tg-8d8j">2.10x</td>
+    <td>resnet50 fashion</td>
+    <td>keras</td>
+    <td>78.04%</td>
+    <td>78.12%</td>
+    <td>-0.001</td>
+    <td>2734.432</td>
+    <td>1299.729</td>
+    <td>2.10x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet50 v1.0</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">74.12%</td>
-    <td class="tg-8d8j">74.27%</td>
-    <td class="tg-8d8j">-0.002</td>
-    <td class="tg-8d8j">498.756</td>
-    <td class="tg-8d8j">178.724</td>
-    <td class="tg-8d8j">2.79x</td>
+    <td>resnet50 v1.0</td>
+    <td>PB</td>
+    <td>74.12%</td>
+    <td>74.27%</td>
+    <td>-0.002</td>
+    <td>498.756</td>
+    <td>178.724</td>
+    <td>2.79x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet50 v1.5</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">76.23%</td>
-    <td class="tg-8d8j">76.46%</td>
-    <td class="tg-8d8j">-0.003</td>
-    <td class="tg-8d8j">427.455</td>
-    <td class="tg-8d8j">173.249</td>
-    <td class="tg-8d8j">2.47x</td>
+    <td>resnet50 v1.5</td>
+    <td>PB</td>
+    <td>76.23%</td>
+    <td>76.46%</td>
+    <td>-0.003</td>
+    <td>427.455</td>
+    <td>173.249</td>
+    <td>2.47x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnetv2 101</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">72.65%</td>
-    <td class="tg-8d8j">71.87%</td>
-    <td class="tg-8d8j">0.0109</td>
-    <td class="tg-8d8j">194.112</td>
-    <td class="tg-8d8j">146.42</td>
-    <td class="tg-8d8j">1.33x</td>
+    <td>resnetv2 101</td>
+    <td>PB</td>
+    <td>72.65%</td>
+    <td>71.87%</td>
+    <td>0.0109</td>
+    <td>194.112</td>
+    <td>146.42</td>
+    <td>1.33x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnetv2 101 </td>
-    <td class="tg-8d8j">keras</td>
-    <td class="tg-8d8j">71.48%</td>
-    <td class="tg-8d8j">71.57%</td>
-    <td class="tg-8d8j">-0.0012</td>
-    <td class="tg-8d8j">237.088</td>
-    <td class="tg-8d8j">187.244</td>
-    <td class="tg-8d8j">1.27x</td>
+    <td>resnetv2 101 </td>
+    <td>keras</td>
+    <td>71.48%</td>
+    <td>71.57%</td>
+    <td>-0.0012</td>
+    <td>237.088</td>
+    <td>187.244</td>
+    <td>1.27x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnetv2 152</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">73.07%</td>
-    <td class="tg-8d8j">72.37%</td>
-    <td class="tg-8d8j">0.0097</td>
-    <td class="tg-8d8j">155.044</td>
-    <td class="tg-8d8j">112.014</td>
-    <td class="tg-8d8j">1.38x</td>
+    <td>resnetv2 152</td>
+    <td>PB</td>
+    <td>73.07%</td>
+    <td>72.37%</td>
+    <td>0.0097</td>
+    <td>155.044</td>
+    <td>112.014</td>
+    <td>1.38x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnetv2 50</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">70.44%</td>
-    <td class="tg-8d8j">69.64%</td>
-    <td class="tg-8d8j">0.0115</td>
-    <td class="tg-8d8j">302.546</td>
-    <td class="tg-8d8j">215.496</td>
-    <td class="tg-8d8j">1.40x</td>
+    <td>resnetv2 50</td>
+    <td>PB</td>
+    <td>70.44%</td>
+    <td>69.64%</td>
+    <td>0.0115</td>
+    <td>302.546</td>
+    <td>215.496</td>
+    <td>1.40x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnetv 2 50 </td>
-    <td class="tg-8d8j">keras</td>
-    <td class="tg-8d8j">69.20%</td>
-    <td class="tg-8d8j">69.03%</td>
-    <td class="tg-8d8j">0.0025</td>
-    <td class="tg-8d8j">346.988</td>
-    <td class="tg-8d8j">312.153</td>
-    <td class="tg-8d8j">1.11x</td>
+    <td>resnetv 2 50 </td>
+    <td>keras</td>
+    <td>69.20%</td>
+    <td>69.03%</td>
+    <td>0.0025</td>
+    <td>346.988</td>
+    <td>312.153</td>
+    <td>1.11x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">ssd mobilenet v1</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">23.12%</td>
-    <td class="tg-8d8j">23.13%</td>
-    <td class="tg-8d8j">-0.0004</td>
-    <td class="tg-8d8j">277.099</td>
-    <td class="tg-8d8j">173.609</td>
-    <td class="tg-8d8j">1.60x</td>
+    <td>ssd mobilenet v1</td>
+    <td>PB</td>
+    <td>23.12%</td>
+    <td>23.13%</td>
+    <td>-0.0004</td>
+    <td>277.099</td>
+    <td>173.609</td>
+    <td>1.60x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">ssd mobilenet v1 </td>
-    <td class="tg-8d8j">ckpt</td>
-    <td class="tg-8d8j">23.10%</td>
-    <td class="tg-8d8j">23.13%</td>
-    <td class="tg-8d8j">-0.0013</td>
-    <td class="tg-8d8j">273.51</td>
-    <td class="tg-8d8j">118.456</td>
-    <td class="tg-8d8j">2.31x</td>
+    <td>ssd mobilenet v1 </td>
+    <td>ckpt</td>
+    <td>23.10%</td>
+    <td>23.13%</td>
+    <td>-0.0013</td>
+    <td>273.51</td>
+    <td>118.456</td>
+    <td>2.31x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">ssd resnet34</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">21.70%</td>
-    <td class="tg-8d8j">22.09%</td>
-    <td class="tg-8d8j">-0.0177</td>
-    <td class="tg-8d8j">33.951</td>
-    <td class="tg-8d8j">8.81</td>
-    <td class="tg-8d8j">3.85x</td>
+    <td>ssd resnet34</td>
+    <td>PB</td>
+    <td>21.70%</td>
+    <td>22.09%</td>
+    <td>-0.0177</td>
+    <td>33.951</td>
+    <td>8.81</td>
+    <td>3.85x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">ssd resnet50 v1</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">37.75%</td>
-    <td class="tg-8d8j">38.00%</td>
-    <td class="tg-8d8j">-0.0066</td>
-    <td class="tg-8d8j">34.108</td>
-    <td class="tg-8d8j">15.665</td>
-    <td class="tg-8d8j">2.18x</td>
+    <td>ssd resnet50 v1</td>
+    <td>PB</td>
+    <td>37.75%</td>
+    <td>38.00%</td>
+    <td>-0.0066</td>
+    <td>34.108</td>
+    <td>15.665</td>
+    <td>2.18x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">ssd resnet50 v1 </td>
-    <td class="tg-8d8j">ckpt</td>
-    <td class="tg-8d8j">37.82%</td>
-    <td class="tg-8d8j">38.00%</td>
-    <td class="tg-8d8j">-0.0047</td>
-    <td class="tg-8d8j">34.566</td>
-    <td class="tg-8d8j">13.677</td>
-    <td class="tg-8d8j">2.53x</td>
+    <td>ssd resnet50 v1 </td>
+    <td>ckpt</td>
+    <td>37.82%</td>
+    <td>38.00%</td>
+    <td>-0.0047</td>
+    <td>34.566</td>
+    <td>13.677</td>
+    <td>2.53x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">transformer lt mlperf</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">27.11589</td>
-    <td class="tg-8d8j">27.16596</td>
-    <td class="tg-8d8j">-0.0018</td>
-    <td class="tg-8d8j">3.255</td>
-    <td class="tg-8d8j">2.632</td>
-    <td class="tg-8d8j">1.24x</td>
+    <td>transformer lt mlperf</td>
+    <td>PB</td>
+    <td>27.11589</td>
+    <td>27.16596</td>
+    <td>-0.0018</td>
+    <td>3.255</td>
+    <td>2.632</td>
+    <td>1.24x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">vgg16</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">72.64%</td>
-    <td class="tg-8d8j">70.89%</td>
-    <td class="tg-8d8j">0.0247</td>
-    <td class="tg-8d8j">219.106</td>
-    <td class="tg-8d8j">91.302</td>
-    <td class="tg-8d8j">2.40x</td>
+    <td>vgg16</td>
+    <td>PB</td>
+    <td>72.64%</td>
+    <td>70.89%</td>
+    <td>0.0247</td>
+    <td>219.106</td>
+    <td>91.302</td>
+    <td>2.40x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">vgg19</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">72.69%</td>
-    <td class="tg-8d8j">71.01%</td>
-    <td class="tg-8d8j">0.0237</td>
-    <td class="tg-8d8j">193.606</td>
-    <td class="tg-8d8j">78.467</td>
-    <td class="tg-8d8j">2.47x</td>
+    <td>vgg19</td>
+    <td>PB</td>
+    <td>72.69%</td>
+    <td>71.01%</td>
+    <td>0.0237</td>
+    <td>193.606</td>
+    <td>78.467</td>
+    <td>2.47x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">wide deep large ds</td>
-    <td class="tg-8d8j">PB</td>
-    <td class="tg-8d8j">77.75%</td>
-    <td class="tg-8d8j">77.67%</td>
-    <td class="tg-8d8j">0.001</td>
-    <td class="tg-8d8j">11506.91</td>
-    <td class="tg-8d8j">9665.067</td>
-    <td class="tg-8d8j">1.19x</td>
+    <td>wide deep large ds</td>
+    <td>PB</td>
+    <td>77.75%</td>
+    <td>77.67%</td>
+    <td>0.001</td>
+    <td>11506.91</td>
+    <td>9665.067</td>
+    <td>1.19x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">xception</td>
-    <td class="tg-8d8j">keras</td>
-    <td class="tg-8d8j">78.43%</td>
-    <td class="tg-8d8j">78.94%</td>
-    <td class="tg-8d8j">-0.0065</td>
-    <td class="tg-8d8j">262.828</td>
-    <td class="tg-8d8j">137.354</td>
-    <td class="tg-8d8j">1.91x</td>
+    <td>xception</td>
+    <td>keras</td>
+    <td>78.43%</td>
+    <td>78.94%</td>
+    <td>-0.0065</td>
+    <td>262.828</td>
+    <td>137.354</td>
+    <td>1.91x</td>
   </tr>
 </tbody>
 </table>
 
-### PyTorch Models with Torch 1.13.1+cpu in PTQ Mode
+###PyTorch Models with Torch 1.13.1+cpu in PTQ Mode
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-wa1i{font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-uzvj{border-color:inherit;font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-8d8j{text-align:center;vertical-align:bottom}
-.tg .tg-nrix{text-align:center;vertical-align:middle}
-</style>
 <table class="tg">
 <thead>
   <tr>
-    <th class="tg-uzvj" rowspan="2">model</th>
-    <th class="tg-wa1i" rowspan="2">example</th>
-    <th class="tg-wa1i" colspan="3">Accuracy</th>
-    <th class="tg-wa1i" colspan="3">Performance/1s4c8ins1bs/throughput(samples/sec)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th rowspan="2">Model</th>
+    <th rowspan="2">Example</th>
+    <th colspan="3">Accuracy</th>
+    <th colspan="3">Performance<br>Throughput (samples/sec) <br></th>
   </tr>
   <tr>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Acc&nbsp;&nbsp;&nbsp;Ratio<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[(INT8-FP32)/FP32]</th>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Performance&nbsp;&nbsp;&nbsp;Gain<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[INT8/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Performance Ratio[INT8/FP32]</th>
   </tr>
 </thead>
-<tbody>
+<tbody align="center">
   <tr>
-    <td class="tg-8d8j">albert base mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">88.85%</td>
-    <td class="tg-8d8j">88.50%</td>
-    <td class="tg-8d8j">0.40%</td>
-    <td class="tg-8d8j">25.676</td>
-    <td class="tg-8d8j">21.579</td>
-    <td class="tg-8d8j">1.19x</td>
+    <td>albert base mrpc</td>
+    <td>EAGER</td>
+    <td>88.85%</td>
+    <td>88.50%</td>
+    <td>0.40%</td>
+    <td>25.676</td>
+    <td>21.579</td>
+    <td>1.19x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">barthez mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">83.92%</td>
-    <td class="tg-8d8j">83.81%</td>
-    <td class="tg-8d8j">0.14%</td>
-    <td class="tg-8d8j">143.369</td>
-    <td class="tg-8d8j">70.959</td>
-    <td class="tg-8d8j">2.02x</td>
+    <td>barthez mrpc</td>
+    <td>EAGER</td>
+    <td>83.92%</td>
+    <td>83.81%</td>
+    <td>0.14%</td>
+    <td>143.369</td>
+    <td>70.959</td>
+    <td>2.02x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert base cola</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">58.80%</td>
-    <td class="tg-8d8j">58.84%</td>
-    <td class="tg-8d8j">-0.0007</td>
-    <td class="tg-8d8j">223.51</td>
-    <td class="tg-8d8j">101.394</td>
-    <td class="tg-8d8j">2.20x</td>
+    <td>bert base cola</td>
+    <td>FX</td>
+    <td>58.80%</td>
+    <td>58.84%</td>
+    <td>-0.0007</td>
+    <td>223.51</td>
+    <td>101.394</td>
+    <td>2.20x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert base mrpc</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">89.90%</td>
-    <td class="tg-8d8j">90.69%</td>
-    <td class="tg-8d8j">-0.0088</td>
-    <td class="tg-8d8j">209.801</td>
-    <td class="tg-8d8j">100.956</td>
-    <td class="tg-8d8j">2.08x</td>
+    <td>bert base mrpc</td>
+    <td>FX</td>
+    <td>89.90%</td>
+    <td>90.69%</td>
+    <td>-0.0088</td>
+    <td>209.801</td>
+    <td>100.956</td>
+    <td>2.08x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert base rte</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">69.31%</td>
-    <td class="tg-8d8j">69.68%</td>
-    <td class="tg-8d8j">-0.0052</td>
-    <td class="tg-8d8j">221.92</td>
-    <td class="tg-8d8j">101.364</td>
-    <td class="tg-8d8j">2.19x</td>
+    <td>bert base rte</td>
+    <td>FX</td>
+    <td>69.31%</td>
+    <td>69.68%</td>
+    <td>-0.0052</td>
+    <td>221.92</td>
+    <td>101.364</td>
+    <td>2.19x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert base sst-2</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">91.06%</td>
-    <td class="tg-8d8j">91.86%</td>
-    <td class="tg-8d8j">-0.0087</td>
-    <td class="tg-8d8j">224.19</td>
-    <td class="tg-8d8j">101.233</td>
-    <td class="tg-8d8j">2.21x</td>
+    <td>bert base sst-2</td>
+    <td>FX</td>
+    <td>91.06%</td>
+    <td>91.86%</td>
+    <td>-0.0087</td>
+    <td>224.19</td>
+    <td>101.233</td>
+    <td>2.21x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert base sts-b</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">89.10%</td>
-    <td class="tg-8d8j">89.75%</td>
-    <td class="tg-8d8j">-0.0072</td>
-    <td class="tg-8d8j">218.037</td>
-    <td class="tg-8d8j">101.154</td>
-    <td class="tg-8d8j">2.16x</td>
+    <td>bert base sts-b</td>
+    <td>FX</td>
+    <td>89.10%</td>
+    <td>89.75%</td>
+    <td>-0.0072</td>
+    <td>218.037</td>
+    <td>101.154</td>
+    <td>2.16x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert large cola</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">64.12%</td>
-    <td class="tg-8d8j">62.57%</td>
-    <td class="tg-8d8j">0.0248</td>
-    <td class="tg-8d8j">75.423</td>
-    <td class="tg-8d8j">29.318</td>
-    <td class="tg-8d8j">2.57x</td>
+    <td>bert large cola</td>
+    <td>FX</td>
+    <td>64.12%</td>
+    <td>62.57%</td>
+    <td>0.0248</td>
+    <td>75.423</td>
+    <td>29.318</td>
+    <td>2.57x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert large mrpc</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">89.50%</td>
-    <td class="tg-8d8j">90.38%</td>
-    <td class="tg-8d8j">-0.0097</td>
-    <td class="tg-8d8j">75.096</td>
-    <td class="tg-8d8j">29.411</td>
-    <td class="tg-8d8j">2.55x</td>
+    <td>bert large mrpc</td>
+    <td>FX</td>
+    <td>89.50%</td>
+    <td>90.38%</td>
+    <td>-0.0097</td>
+    <td>75.096</td>
+    <td>29.411</td>
+    <td>2.55x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert large qnli</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">90.90%</td>
-    <td class="tg-8d8j">91.82%</td>
-    <td class="tg-8d8j">-0.01</td>
-    <td class="tg-8d8j">74.804</td>
-    <td class="tg-8d8j">29.17</td>
-    <td class="tg-8d8j">2.56x</td>
+    <td>bert large qnli</td>
+    <td>FX</td>
+    <td>90.90%</td>
+    <td>91.82%</td>
+    <td>-0.01</td>
+    <td>74.804</td>
+    <td>29.17</td>
+    <td>2.56x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert large RTE</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">72.20%</td>
-    <td class="tg-8d8j">74.01%</td>
-    <td class="tg-8d8j">-2.44%</td>
-    <td class="tg-8d8j">40.38</td>
-    <td class="tg-8d8j">29.282</td>
-    <td class="tg-8d8j">1.38x</td>
+    <td>bert large RTE</td>
+    <td>FX</td>
+    <td>72.20%</td>
+    <td>74.01%</td>
+    <td>-2.44%</td>
+    <td>40.38</td>
+    <td>29.282</td>
+    <td>1.38x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">bert large squad</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">92.61422</td>
-    <td class="tg-8d8j">93.15842</td>
-    <td class="tg-8d8j">-0.0058</td>
-    <td class="tg-8d8j">18.529</td>
-    <td class="tg-8d8j">9.818</td>
-    <td class="tg-8d8j">1.89x</td>
+    <td>bert large squad</td>
+    <td>FX</td>
+    <td>92.61422</td>
+    <td>93.15842</td>
+    <td>-0.0058</td>
+    <td>18.529</td>
+    <td>9.818</td>
+    <td>1.89x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">blendcnn</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">68.40%</td>
-    <td class="tg-8d8j">68.40%</td>
-    <td class="tg-8d8j">0</td>
-    <td class="tg-8d8j">4885.6</td>
-    <td class="tg-8d8j">3715.36</td>
-    <td class="tg-8d8j">1.31x</td>
+    <td>blendcnn</td>
+    <td>EAGER</td>
+    <td>68.40%</td>
+    <td>68.40%</td>
+    <td>0</td>
+    <td>4885.6</td>
+    <td>3715.36</td>
+    <td>1.31x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">camembert base mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">86.70%</td>
-    <td class="tg-8d8j">86.82%</td>
-    <td class="tg-8d8j">-0.14%</td>
-    <td class="tg-8d8j">206.002</td>
-    <td class="tg-8d8j">98.504</td>
-    <td class="tg-8d8j">2.09x</td>
+    <td>camembert base mrpc</td>
+    <td>EAGER</td>
+    <td>86.70%</td>
+    <td>86.82%</td>
+    <td>-0.14%</td>
+    <td>206.002</td>
+    <td>98.504</td>
+    <td>2.09x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">ctrl mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">81.87%</td>
-    <td class="tg-8d8j">82.00%</td>
-    <td class="tg-8d8j">-0.15%</td>
-    <td class="tg-8d8j">19.391</td>
-    <td class="tg-8d8j">7.189</td>
-    <td class="tg-8d8j">2.70x</td>
+    <td>ctrl mrpc</td>
+    <td>EAGER</td>
+    <td>81.87%</td>
+    <td>82.00%</td>
+    <td>-0.15%</td>
+    <td>19.391</td>
+    <td>7.189</td>
+    <td>2.70x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">deberta mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">90.88%</td>
-    <td class="tg-8d8j">90.91%</td>
-    <td class="tg-8d8j">-0.04%</td>
-    <td class="tg-8d8j">125.415</td>
-    <td class="tg-8d8j">67.674</td>
-    <td class="tg-8d8j">1.85x</td>
+    <td>deberta mrpc</td>
+    <td>EAGER</td>
+    <td>90.88%</td>
+    <td>90.91%</td>
+    <td>-0.04%</td>
+    <td>125.415</td>
+    <td>67.674</td>
+    <td>1.85x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">distilbert base mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">88.23%</td>
-    <td class="tg-8d8j">89.16%</td>
-    <td class="tg-8d8j">-1.05%</td>
-    <td class="tg-8d8j">366.274</td>
-    <td class="tg-8d8j">197.764</td>
-    <td class="tg-8d8j">1.85x</td>
+    <td class="tg-zk71">distilbert base mrpc</td>
+    <td>EAGER</td>
+    <td>88.23%</td>
+    <td>89.16%</td>
+    <td>-1.05%</td>
+    <td>366.274</td>
+    <td>197.764</td>
+    <td>1.85x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">distilbert base mrpc</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">88.54%</td>
-    <td class="tg-8d8j">89.16%</td>
-    <td class="tg-8d8j">-0.0069</td>
-    <td class="tg-8d8j">399.63</td>
-    <td class="tg-8d8j">197.47</td>
-    <td class="tg-8d8j">2.02x</td>
+    <td>distilbert base mrpc</td>
+    <td>FX</td>
+    <td>88.54%</td>
+    <td>89.16%</td>
+    <td>-0.0069</td>
+    <td>399.63</td>
+    <td>197.47</td>
+    <td>2.02x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">flaubert mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">79.87%</td>
-    <td class="tg-8d8j">80.19%</td>
-    <td class="tg-8d8j">-0.40%</td>
-    <td class="tg-8d8j">592.529</td>
-    <td class="tg-8d8j">385.005</td>
-    <td class="tg-8d8j">1.54x</td>
+    <td>flaubert mrpc</td>
+    <td>EAGER</td>
+    <td>79.87%</td>
+    <td>80.19%</td>
+    <td>-0.40%</td>
+    <td>592.529</td>
+    <td>385.005</td>
+    <td>1.54x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">gpt j wikitext</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">3.3587</td>
-    <td class="tg-8d8j">2.33509</td>
-    <td class="tg-8d8j">0.4384</td>
-    <td class="tg-8d8j">0.519</td>
-    <td class="tg-8d8j">0.2</td>
-    <td class="tg-8d8j">2.60x</td>
+    <td>gpt j wikitext</td>
+    <td>FX</td>
+    <td>3.3587</td>
+    <td>2.33509</td>
+    <td>0.4384</td>
+    <td>0.519</td>
+    <td>0.2</td>
+    <td>2.60x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">hubert</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">97.63%</td>
-    <td class="tg-8d8j">97.84%</td>
-    <td class="tg-8d8j">-0.0021</td>
-    <td class="tg-8d8j">9.999</td>
-    <td class="tg-8d8j">7.256</td>
-    <td class="tg-8d8j">1.38x</td>
+    <td>hubert</td>
+    <td>EAGER</td>
+    <td>97.63%</td>
+    <td>97.84%</td>
+    <td>-0.0021</td>
+    <td>9.999</td>
+    <td>7.256</td>
+    <td>1.38x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">inception v3</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">69.43%</td>
-    <td class="tg-8d8j">69.52%</td>
-    <td class="tg-8d8j">-0.0013</td>
-    <td class="tg-8d8j">446.654</td>
-    <td class="tg-8d8j">181.408</td>
-    <td class="tg-8d8j">2.46x</td>
+    <td class="tg-zk71">inception v3</td>
+    <td>EAGER</td>
+    <td>69.43%</td>
+    <td>69.52%</td>
+    <td>-0.0013</td>
+    <td>446.654</td>
+    <td>181.408</td>
+    <td>2.46x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">layoutlm mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">81.22%</td>
-    <td class="tg-8d8j">78.01%</td>
-    <td class="tg-8d8j">4.12%</td>
-    <td class="tg-8d8j">204.218</td>
-    <td class="tg-8d8j">96.26</td>
-    <td class="tg-8d8j">2.12x</td>
+    <td>layoutlm mrpc</td>
+    <td>EAGER</td>
+    <td>81.22%</td>
+    <td>78.01%</td>
+    <td>4.12%</td>
+    <td>204.218</td>
+    <td>96.26</td>
+    <td>2.12x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">longformer mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">91.01%</td>
-    <td class="tg-8d8j">91.46%</td>
-    <td class="tg-8d8j">-0.49%</td>
-    <td class="tg-8d8j">18.684</td>
-    <td class="tg-8d8j">14.246</td>
-    <td class="tg-8d8j">1.31x</td>
+    <td>longformer mrpc</td>
+    <td>EAGER</td>
+    <td>91.01%</td>
+    <td>91.46%</td>
+    <td>-0.49%</td>
+    <td>18.684</td>
+    <td>14.246</td>
+    <td>1.31x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">maskrcnn</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">37.60%</td>
-    <td class="tg-8d8j">37.80%</td>
-    <td class="tg-8d8j">-0.53%</td>
-    <td class="tg-8d8j">7.195</td>
-    <td class="tg-8d8j">4.7708</td>
-    <td class="tg-8d8j">1.51x</td>
+    <td>maskrcnn</td>
+    <td>FX</td>
+    <td>37.60%</td>
+    <td>37.80%</td>
+    <td>-0.53%</td>
+    <td>7.195</td>
+    <td>4.7708</td>
+    <td>1.51x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">mbart wnli</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">56.34%</td>
-    <td class="tg-8d8j">56.34%</td>
-    <td class="tg-8d8j">0.00%</td>
-    <td class="tg-8d8j">56.318</td>
-    <td class="tg-8d8j">24.766</td>
-    <td class="tg-8d8j">2.27x</td>
+    <td>mbart wnli</td>
+    <td>EAGER</td>
+    <td>56.34%</td>
+    <td>56.34%</td>
+    <td>0.00%</td>
+    <td>56.318</td>
+    <td>24.766</td>
+    <td>2.27x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">mobilenet v2</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">70.54%</td>
-    <td class="tg-8d8j">71.84%</td>
-    <td class="tg-8d8j">-1.81%</td>
-    <td class="tg-8d8j">625.379</td>
-    <td class="tg-8d8j">451.249</td>
-    <td class="tg-8d8j">1.39x</td>
+    <td class="tg-zk71">mobilenet v2</td>
+    <td>EAGER</td>
+    <td>70.54%</td>
+    <td>71.84%</td>
+    <td>-1.81%</td>
+    <td>625.379</td>
+    <td>451.249</td>
+    <td>1.39x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">pegasus samsum</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">42.096</td>
-    <td class="tg-8d8j">42.6716</td>
-    <td class="tg-8d8j">-0.0135</td>
-    <td class="tg-8d8j">3.583</td>
-    <td class="tg-8d8j">1.059</td>
-    <td class="tg-8d8j">3.38x</td>
+    <td class="tg-zk71">lvwerra/pegasus-samsum</td>
+    <td>EAGER</td>
+    <td>42.096</td>
+    <td>42.6716</td>
+    <td>-0.0135</td>
+    <td>3.583</td>
+    <td>1.059</td>
+    <td>3.38x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">peleenet</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">71.64%</td>
-    <td class="tg-8d8j">72.10%</td>
-    <td class="tg-8d8j">-0.0064</td>
-    <td class="tg-8d8j">402.328</td>
-    <td class="tg-8d8j">312.37</td>
-    <td class="tg-8d8j">1.29x</td>
+    <td class="tg-zk71">peleenet</td>
+    <td>EAGER</td>
+    <td>71.64%</td>
+    <td>72.10%</td>
+    <td>-0.0064</td>
+    <td>402.328</td>
+    <td>312.37</td>
+    <td>1.29x</td>
   </tr>
   <tr>
-    <td class="tg-nrix">pokemon diffusers</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-nrix">275.8026</td>
-    <td class="tg-nrix">334.4761</td>
-    <td class="tg-nrix">-17.54%</td>
-    <td class="tg-nrix">0.0322</td>
-    <td class="tg-nrix">0.0217</td>
-    <td class="tg-nrix">1.48x</td>
+    <td>pokemon diffusers</td>
+    <td>FX</td>
+    <td>275.8026</td>
+    <td>334.4761</td>
+    <td>-17.54%</td>
+    <td>0.0322</td>
+    <td>0.0217</td>
+    <td>1.48x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">reformer crime and punishment</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">1.87979</td>
-    <td class="tg-8d8j">1.8717</td>
-    <td class="tg-8d8j">0.0043</td>
-    <td class="tg-8d8j">162.342</td>
-    <td class="tg-8d8j">153.645</td>
-    <td class="tg-8d8j">1.06x</td>
+    <td>reformer crime and punishment</td>
+    <td>EAGER</td>
+    <td>1.87979</td>
+    <td>1.8717</td>
+    <td>0.0043</td>
+    <td>162.342</td>
+    <td>153.645</td>
+    <td>1.06x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet18</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">69.57%</td>
-    <td class="tg-8d8j">69.76%</td>
-    <td class="tg-8d8j">-0.0027</td>
-    <td class="tg-8d8j">657.721</td>
-    <td class="tg-8d8j">327.694</td>
-    <td class="tg-8d8j">2.01x</td>
+    <td class="tg-zk71">resnet18</td>
+    <td>EAGER</td>
+    <td>69.57%</td>
+    <td>69.76%</td>
+    <td>-0.0027</td>
+    <td>657.721</td>
+    <td>327.694</td>
+    <td>2.01x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet18</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">69.62%</td>
-    <td class="tg-8d8j">69.76%</td>
-    <td class="tg-8d8j">-0.20%</td>
-    <td class="tg-8d8j">812.991</td>
-    <td class="tg-8d8j">344.985</td>
-    <td class="tg-8d8j">2.36x</td>
+    <td class="tg-zk71">resnet18</td>
+    <td>FX</td>
+    <td>69.62%</td>
+    <td>69.76%</td>
+    <td>-0.20%</td>
+    <td>812.991</td>
+    <td>344.985</td>
+    <td>2.36x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet50</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">75.98%</td>
-    <td class="tg-8d8j">76.15%</td>
-    <td class="tg-8d8j">-0.0021</td>
-    <td class="tg-8d8j">360.161</td>
-    <td class="tg-8d8j">161.441</td>
-    <td class="tg-8d8j">2.23x</td>
+    <td class="tg-zk71">resnet50</td>
+    <td>EAGER</td>
+    <td>75.98%</td>
+    <td>76.15%</td>
+    <td>-0.0021</td>
+    <td>360.161</td>
+    <td>161.441</td>
+    <td>2.23x</td>
+  </tr>
+  <tr class="tg-zk71">
+    <td>resnext101 32x8d</td>
+    <td>EAGER</td>
+    <td>79.08%</td>
+    <td>79.31%</td>
+    <td>-0.0029</td>
+    <td>182.838</td>
+    <td>60.553</td>
+    <td>3.02x</td>
+  </tr>
+  <tr class="tg-zk71">
+    <td>roberta base mrpc</td>
+    <td>EAGER</td>
+    <td>88.25%</td>
+    <td>88.18%</td>
+    <td>0.08%</td>
+    <td>207.407</td>
+    <td>98.707</td>
+    <td>2.10x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnext101 32x8d</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">79.08%</td>
-    <td class="tg-8d8j">79.31%</td>
-    <td class="tg-8d8j">-0.0029</td>
-    <td class="tg-8d8j">182.838</td>
-    <td class="tg-8d8j">60.553</td>
-    <td class="tg-8d8j">3.02x</td>
+    <td>squeezebert mrpc</td>
+    <td>EAGER</td>
+    <td>86.87%</td>
+    <td>87.65%</td>
+    <td>-0.89%</td>
+    <td>195.001</td>
+    <td>150.091</td>
+    <td>1.30x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">roberta base mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">88.25%</td>
-    <td class="tg-8d8j">88.18%</td>
-    <td class="tg-8d8j">0.08%</td>
-    <td class="tg-8d8j">207.407</td>
-    <td class="tg-8d8j">98.707</td>
-    <td class="tg-8d8j">2.10x</td>
+    <td>ssd resnet34</td>
+    <td>FX</td>
+    <td>19.468</td>
+    <td>19.63</td>
+    <td>-0.83%</td>
+    <td>18.564</td>
+    <td>6.753</td>
+    <td>2.75x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">squeezebert mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">86.87%</td>
-    <td class="tg-8d8j">87.65%</td>
-    <td class="tg-8d8j">-0.89%</td>
-    <td class="tg-8d8j">195.001</td>
-    <td class="tg-8d8j">150.091</td>
-    <td class="tg-8d8j">1.30x</td>
+    <td>transfo xl mrpc</td>
+    <td>EAGER</td>
+    <td>81.97%</td>
+    <td>81.20%</td>
+    <td>0.94%</td>
+    <td>9.728</td>
+    <td>6.917</td>
+    <td>1.41x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">ssd resnet34</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">19.468</td>
-    <td class="tg-8d8j">19.63</td>
-    <td class="tg-8d8j">-0.83%</td>
-    <td class="tg-8d8j">18.564</td>
-    <td class="tg-8d8j">6.753</td>
-    <td class="tg-8d8j">2.75x</td>
+    <td>wav2vec2</td>
+    <td>EAGER</td>
+    <td>95.71%</td>
+    <td>96.60%</td>
+    <td>-0.0092</td>
+    <td>23.78</td>
+    <td>19.453</td>
+    <td>1.22x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">transfo xl mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">81.97%</td>
-    <td class="tg-8d8j">81.20%</td>
-    <td class="tg-8d8j">0.94%</td>
-    <td class="tg-8d8j">9.728</td>
-    <td class="tg-8d8j">6.917</td>
-    <td class="tg-8d8j">1.41x</td>
+    <td>xlm roberta mrpc</td>
+    <td>EAGER</td>
+    <td>88.24%</td>
+    <td>88.24%</td>
+    <td>0.00%</td>
+    <td>102.191</td>
+    <td>102.576</td>
+    <td>1.00x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">wav2vec2</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">95.71%</td>
-    <td class="tg-8d8j">96.60%</td>
-    <td class="tg-8d8j">-0.0092</td>
-    <td class="tg-8d8j">23.78</td>
-    <td class="tg-8d8j">19.453</td>
-    <td class="tg-8d8j">1.22x</td>
+    <td>xlm-roberta-base mrpc</td>
+    <td>EAGER</td>
+    <td>88.03%</td>
+    <td>88.62%</td>
+    <td>-0.67%</td>
+    <td>115.163</td>
+    <td>98.747</td>
+    <td>1.17x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">xlm roberta mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">88.24%</td>
-    <td class="tg-8d8j">88.24%</td>
-    <td class="tg-8d8j">0.00%</td>
-    <td class="tg-8d8j">102.191</td>
-    <td class="tg-8d8j">102.576</td>
-    <td class="tg-8d8j">1.00x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">xlm-roberta-base mrpc</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">88.03%</td>
-    <td class="tg-8d8j">88.62%</td>
-    <td class="tg-8d8j">-0.67%</td>
-    <td class="tg-8d8j">115.163</td>
-    <td class="tg-8d8j">98.747</td>
-    <td class="tg-8d8j">1.17x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">yolo v3</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">24.60%</td>
-    <td class="tg-8d8j">24.54%</td>
-    <td class="tg-8d8j">0.21%</td>
-    <td class="tg-8d8j">76.145</td>
-    <td class="tg-8d8j">31.802</td>
-    <td class="tg-8d8j">2.39x</td>
+    <td class="tg-zk71">yolo v3</td>
+    <td>EAGER</td>
+    <td>24.60%</td>
+    <td>24.54%</td>
+    <td>0.21%</td>
+    <td>76.145</td>
+    <td>31.802</td>
+    <td>2.39x</td>
   </tr>
 </tbody>
 </table>
 
-### PyTorch Models with Torch 1.13.1+cpu in QAT Mode
+###PyTorch Models with Torch 1.13.1+cpu in QAT Mode
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-wa1i{font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-uzvj{border-color:inherit;font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-8d8j{text-align:center;vertical-align:bottom}
-</style>
 <table class="tg">
 <thead>
   <tr>
-    <th class="tg-uzvj" rowspan="2">model</th>
-    <th class="tg-wa1i" rowspan="2">example</th>
-    <th class="tg-wa1i" colspan="3">Accuracy</th>
-    <th class="tg-wa1i" colspan="3">Performance/1s4c8ins1bs/throughput(samples/sec)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th rowspan="2">Model</th>
+    <th rowspan="2">Example</th>
+    <th colspan="3">Accuracy</th>
+    <th colspan="3">Performance<br>Throughput (samples/sec) <br></th>
   </tr>
   <tr>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Acc&nbsp;&nbsp;&nbsp;Ratio<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[(INT8-FP32)/FP32]</th>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Performance&nbsp;&nbsp;&nbsp;Gain<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[INT8/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Performance Ratio[INT8/FP32]</th>
   </tr>
 </thead>
-<tbody>
+<tbody align="center">
   <tr>
-    <td class="tg-8d8j">bert base MRPC</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">89.20%</td>
-    <td class="tg-8d8j">89.50%</td>
-    <td class="tg-8d8j">-0.34%</td>
-    <td class="tg-8d8j">232.164</td>
-    <td class="tg-8d8j">101.885</td>
-    <td class="tg-8d8j">2.28x</td>
+    <td>bert base MRPC</td>
+    <td>FX</td>
+    <td>89.20%</td>
+    <td>89.50%</td>
+    <td>-0.34%</td>
+    <td>232.164</td>
+    <td>101.885</td>
+    <td>2.28x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet 18</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">69.68%</td>
-    <td class="tg-8d8j">69.76%</td>
-    <td class="tg-8d8j">-0.0012</td>
-    <td class="tg-8d8j">664.993</td>
-    <td class="tg-8d8j">329.146</td>
-    <td class="tg-8d8j">2.02x</td>
+    <td class="tg-zk71">resnet 18</td>
+    <td>EAGER</td>
+    <td>69.68%</td>
+    <td>69.76%</td>
+    <td>-0.0012</td>
+    <td>664.993</td>
+    <td>329.146</td>
+    <td>2.02x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet 18</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">69.84%</td>
-    <td class="tg-8d8j">69.76%</td>
-    <td class="tg-8d8j">0.12%</td>
-    <td class="tg-8d8j">832.321</td>
-    <td class="tg-8d8j">338.475</td>
-    <td class="tg-8d8j">2.46x</td>
+    <td class="tg-zk71">resnet 18</td>
+    <td>FX</td>
+    <td>69.84%</td>
+    <td>69.76%</td>
+    <td>0.12%</td>
+    <td>832.321</td>
+    <td>338.475</td>
+    <td>2.46x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet 50</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">76.03%</td>
-    <td class="tg-8d8j">76.15%</td>
-    <td class="tg-8d8j">-0.0015</td>
-    <td class="tg-8d8j">433.831</td>
-    <td class="tg-8d8j">164.977</td>
-    <td class="tg-8d8j">2.63x</td>
+    <td class="tg-zk71">resnet 50</td>
+    <td>EAGER</td>
+    <td>76.03%</td>
+    <td>76.15%</td>
+    <td>-0.0015</td>
+    <td>433.831</td>
+    <td>164.977</td>
+    <td>2.63x</td>
   </tr>
 </tbody>
 </table>
 
 ### PyTorch Models with Torch and Intel® Extension for PyTorch* 1.13.0+cpu
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-wa1i{font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-uzvj{border-color:inherit;font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-8d8j{text-align:center;vertical-align:bottom}
-</style>
 <table class="tg">
 <thead>
   <tr>
-    <th class="tg-uzvj" rowspan="2">model</th>
-    <th class="tg-wa1i" rowspan="2">example</th>
-    <th class="tg-wa1i" colspan="3">Accuracy</th>
-    <th class="tg-wa1i" colspan="3">Performance/1s4c8ins1bs/throughput(samples/sec)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th rowspan="2">Model</th>
+    <th rowspan="2">Example</th>
+    <th colspan="3">Accuracy</th>
+    <th colspan="3">Performance<br>Throughput (samples/sec) <br></th>
   </tr>
   <tr>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Acc&nbsp;&nbsp;&nbsp;Ratio<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[(INT8-FP32)/FP32]</th>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Performance&nbsp;&nbsp;&nbsp;Gain<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[INT8/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Performance Ratio[INT8/FP32]</th>
   </tr>
 </thead>
-<tbody>
+<tbody align="center">
   <tr>
-    <td class="tg-8d8j">bert&nbsp;&nbsp;&nbsp;base MRPC</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">89.20%</td>
-    <td class="tg-8d8j">89.50%</td>
-    <td class="tg-8d8j">-0.34%</td>
-    <td class="tg-8d8j">232.164</td>
-    <td class="tg-8d8j">101.885</td>
-    <td class="tg-8d8j">2.28x</td>
+    <td >resnet50</td>
+    <td>IPEX</td>
+    <td >76.01%</td>
+    <td >76.15%</td>
+    <td >-0.17%</td>
+    <td >836.382</td>
+    <td >207.893</td>
+    <td >4.02x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet 18</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">69.68%</td>
-    <td class="tg-8d8j">69.76%</td>
-    <td class="tg-8d8j">-0.0012</td>
-    <td class="tg-8d8j">664.993</td>
-    <td class="tg-8d8j">329.146</td>
-    <td class="tg-8d8j">2.02x</td>
+    <td >resnet18</td>
+    <td>IPEX</td>
+    <td >69.65%</td>
+    <td >69.76%</td>
+    <td >-0.15%</td>
+    <td >1396.523</td>
+    <td >463.952</td>
+    <td >3.01x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet 18</td>
-    <td class="tg-8d8j">fx</td>
-    <td class="tg-8d8j">69.84%</td>
-    <td class="tg-8d8j">69.76%</td>
-    <td class="tg-8d8j">0.12%</td>
-    <td class="tg-8d8j">832.321</td>
-    <td class="tg-8d8j">338.475</td>
-    <td class="tg-8d8j">2.46x</td>
+    <td >ssd resnet34</td>
+    <td>IPEX</td>
+    <td >19.93%</td>
+    <td >20.00%</td>
+    <td >-0.36%</td>
+    <td >30.083</td>
+    <td >7.659</td>
+    <td >3.93x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet 50</td>
-    <td class="tg-8d8j">eager</td>
-    <td class="tg-8d8j">76.03%</td>
-    <td class="tg-8d8j">76.15%</td>
-    <td class="tg-8d8j">-0.0015</td>
-    <td class="tg-8d8j">433.831</td>
-    <td class="tg-8d8j">164.977</td>
-    <td class="tg-8d8j">2.63x</td>
+    <td >bert large</td>
+    <td>IPEX</td>
+    <td >92.81263221</td>
+    <td >93.15841753</td>
+    <td >-0.0037</td>
+    <td >46.444</td>
+    <td >6.729</td>
+    <td >6.90x</td>
   </tr>
 </tbody>
 </table>
 
 ### ONNX Models with ONNX Runtime 1.13.1
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-baqh{text-align:center;vertical-align:top}
-.tg .tg-wa1i{font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-uzvj{border-color:inherit;font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-8d8j{text-align:center;vertical-align:bottom}
-</style>
 <table class="tg">
 <thead>
   <tr>
-    <th class="tg-uzvj" rowspan="2">model</th>
-    <th class="tg-wa1i" rowspan="2">example</th>
-    <th class="tg-wa1i" colspan="3">Accuracy</th>
-    <th class="tg-wa1i" colspan="3">Performance/1s4c8ins1bs/throughput(samples/sec)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th rowspan="2">Model</th>
+    <th rowspan="2">Example</th>
+    <th colspan="3">Accuracy</th>
+    <th colspan="3">Performance<br>Throughput(samples/sec) <br></th>
   </tr>
   <tr>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Acc&nbsp;&nbsp;&nbsp;Ratio<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[(INT8-FP32)/FP32]</th>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Performance&nbsp;&nbsp;&nbsp;Gain<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[INT8/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Performance Ratio[INT8/FP32]</th>
   </tr>
 </thead>
-<tbody>
-  <tr>
-    <td class="tg-8d8j">alexnet</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">54.73%</td>
-    <td class="tg-8d8j">54.79%</td>
-    <td class="tg-8d8j">-0.11%</td>
-    <td class="tg-8d8j">968.215</td>
-    <td class="tg-8d8j">473.307</td>
-    <td class="tg-8d8j">2.05x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">alexnet </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">54.71%</td>
-    <td class="tg-8d8j">54.79%</td>
-    <td class="tg-8d8j">-0.15%</td>
-    <td class="tg-8d8j">958.751</td>
-    <td class="tg-8d8j">477.769</td>
-    <td class="tg-8d8j">2.01x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">arcface</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">99.80%</td>
-    <td class="tg-8d8j">99.80%</td>
-    <td class="tg-8d8j">0.00%</td>
-    <td class="tg-8d8j">225.096</td>
-    <td class="tg-8d8j">126.563</td>
-    <td class="tg-8d8j">1.78x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">bert base mrpc dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">85.29%</td>
-    <td class="tg-8d8j">86.03%</td>
-    <td class="tg-8d8j">-0.86%</td>
-    <td class="tg-8d8j">298.334</td>
-    <td class="tg-8d8j">124.673</td>
-    <td class="tg-8d8j">2.39x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">bert base mrpc static</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">85.54%</td>
-    <td class="tg-8d8j">86.03%</td>
-    <td class="tg-8d8j">-0.57%</td>
-    <td class="tg-8d8j">624.429</td>
-    <td class="tg-8d8j">254.639</td>
-    <td class="tg-8d8j">2.45x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">bert squad model zoo dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">80.43519</td>
-    <td class="tg-8d8j">80.67171</td>
-    <td class="tg-8d8j">-0.29%</td>
-    <td class="tg-8d8j">97.807</td>
-    <td class="tg-8d8j">52.745</td>
-    <td class="tg-8d8j">1.85x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">caffenet</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">56.21%</td>
-    <td class="tg-8d8j">56.30%</td>
-    <td class="tg-8d8j">-0.16%</td>
-    <td class="tg-8d8j">1432.981</td>
-    <td class="tg-8d8j">540.284</td>
-    <td class="tg-8d8j">2.65x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">caffenet </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">56.25%</td>
-    <td class="tg-8d8j">56.30%</td>
-    <td class="tg-8d8j">-0.09%</td>
-    <td class="tg-8d8j">1460.212</td>
-    <td class="tg-8d8j">540.81</td>
-    <td class="tg-8d8j">2.70x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">densenet</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">60.53%</td>
-    <td class="tg-8d8j">60.96%</td>
-    <td class="tg-8d8j">-0.71%</td>
-    <td class="tg-8d8j">357.409</td>
-    <td class="tg-8d8j">265.218</td>
-    <td class="tg-8d8j">1.35x</td>
-  </tr>
-  <tr>
-    <td class="tg-baqh">distilbert base mrpc</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">85.54%</td>
-    <td class="tg-8d8j">84.56%</td>
-    <td class="tg-8d8j">1.16%</td>
-    <td class="tg-8d8j">1365.718</td>
-    <td class="tg-8d8j">477.62</td>
-    <td class="tg-8d8j">2.86x</td>
-  </tr>
+<tbody align="center"> 
+ <tr>
+    <td>alexnet</td>
+    <td>QLinear</td>
+    <td>54.73%</td>
+    <td>54.79%</td>
+    <td>-0.11%</td>
+    <td>968.215</td>
+    <td>473.307</td>
+    <td>2.05x</td>
+  </tr>
+  <tr>
+    <td>alexnet </td>
+    <td>QDQ</td>
+    <td>54.71%</td>
+    <td>54.79%</td>
+    <td>-0.15%</td>
+    <td>958.751</td>
+    <td>477.769</td>
+    <td>2.01x</td>
+  </tr>
+  <tr>
+    <td>arcface</td>
+    <td>QLinear</td>
+    <td>99.80%</td>
+    <td>99.80%</td>
+    <td>0.00%</td>
+    <td>225.096</td>
+    <td>126.563</td>
+    <td>1.78x</td>
+  </tr>
+  <tr>
+    <td>bert base mrpc dynamic</td>
+    <td>QLinear</td>
+    <td>85.29%</td>
+    <td>86.03%</td>
+    <td>-0.86%</td>
+    <td>298.334</td>
+    <td>124.673</td>
+    <td>2.39x</td>
+  </tr>
+  <tr>
+    <td>bert base mrpc static</td>
+    <td>QLinear</td>
+    <td>85.54%</td>
+    <td>86.03%</td>
+    <td>-0.57%</td>
+    <td>624.429</td>
+    <td>254.639</td>
+    <td>2.45x</td>
+  </tr>
+  <tr>
+    <td>bert squad model zoo dynamic</td>
+    <td>QLinear</td>
+    <td>80.43519</td>
+    <td>80.67171</td>
+    <td>-0.29%</td>
+    <td>97.807</td>
+    <td>52.745</td>
+    <td>1.85x</td>
+  </tr>
+  <tr>
+    <td>caffenet</td>
+    <td>QLinear</td>
+    <td>56.21%</td>
+    <td>56.30%</td>
+    <td>-0.16%</td>
+    <td>1432.981</td>
+    <td>540.284</td>
+    <td>2.65x</td>
+  </tr>
+  <tr>
+    <td>caffenet </td>
+    <td>QDQ</td>
+    <td>56.25%</td>
+    <td>56.30%</td>
+    <td>-0.09%</td>
+    <td>1460.212</td>
+    <td>540.81</td>
+    <td>2.70x</td>
+  </tr>
+  <tr>
+    <td>densenet</td>
+    <td>QLinear</td>
+    <td>60.53%</td>
+    <td>60.96%</td>
+    <td>-0.71%</td>
+    <td>357.409</td>
+    <td>265.218</td>
+    <td>1.35x</td>
+  </tr>
+  <tr>
+    <td>distilbert base mrpc</td>
+    <td>QLinear</td>
+    <td>85.54%</td>
+    <td>84.56%</td>
+    <td>1.16%</td>
+    <td>1365.718</td>
+    <td>477.62</td>
+    <td>2.86x</td>
+  </tr>
   <tr>
-    <td class="tg-8d8j">distilbert base mrpc </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">84.56%</td>
-    <td class="tg-8d8j">84.56%</td>
-    <td class="tg-8d8j">0.00%</td>
-    <td class="tg-8d8j">524.955</td>
-    <td class="tg-8d8j">476.394</td>
-    <td class="tg-8d8j">1.10x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">duc</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">81.62%</td>
-    <td class="tg-8d8j">81.92%</td>
-    <td class="tg-8d8j">-0.37%</td>
-    <td class="tg-8d8j">5.655</td>
-    <td class="tg-8d8j">2.819</td>
-    <td class="tg-8d8j">2.01x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">efficientnet</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">77.57%</td>
-    <td class="tg-8d8j">77.70%</td>
-    <td class="tg-8d8j">-0.17%</td>
-    <td class="tg-8d8j">1211.095</td>
-    <td class="tg-8d8j">758.409</td>
-    <td class="tg-8d8j">1.60x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">efficientnet </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">77.61%</td>
-    <td class="tg-8d8j">77.70%</td>
-    <td class="tg-8d8j">-0.12%</td>
-    <td class="tg-8d8j">856.644</td>
-    <td class="tg-8d8j">762.482</td>
-    <td class="tg-8d8j">1.12x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">emotion ferplus</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">8.00%</td>
-    <td class="tg-8d8j">8.00%</td>
-    <td class="tg-8d8j">0.00%</td>
-    <td class="tg-8d8j">925.428</td>
-    <td class="tg-8d8j">694.985</td>
-    <td class="tg-8d8j">1.33x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">faster rcnn</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">34.09%</td>
-    <td class="tg-8d8j">34.37%</td>
-    <td class="tg-8d8j">-0.81%</td>
-    <td class="tg-8d8j">13.819</td>
-    <td class="tg-8d8j">5.889</td>
-    <td class="tg-8d8j">2.35x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">faster rcnn </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">33.90%</td>
-    <td class="tg-8d8j">34.37%</td>
-    <td class="tg-8d8j">-1.37%</td>
-    <td class="tg-8d8j">9.593</td>
-    <td class="tg-8d8j">6.094</td>
-    <td class="tg-8d8j">1.57x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">fcn</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">64.54%</td>
-    <td class="tg-8d8j">64.98%</td>
-    <td class="tg-8d8j">-0.68%</td>
-    <td class="tg-8d8j">40.493</td>
-    <td class="tg-8d8j">11.921</td>
-    <td class="tg-8d8j">3.40x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">fcn </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">64.40%</td>
-    <td class="tg-8d8j">64.98%</td>
-    <td class="tg-8d8j">-0.89%</td>
-    <td class="tg-8d8j">26.87</td>
-    <td class="tg-8d8j">11.919</td>
-    <td class="tg-8d8j">2.25x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">googlenet-12</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">67.71%</td>
-    <td class="tg-8d8j">67.79%</td>
-    <td class="tg-8d8j">-0.12%</td>
-    <td class="tg-8d8j">771.387</td>
-    <td class="tg-8d8j">571.351</td>
-    <td class="tg-8d8j">1.35x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">googlenet-12 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">67.73%</td>
-    <td class="tg-8d8j">67.79%</td>
-    <td class="tg-8d8j">-0.09%</td>
-    <td class="tg-8d8j">763.79</td>
-    <td class="tg-8d8j">579.946</td>
-    <td class="tg-8d8j">1.32x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">hf albert-base-v2 dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">91.40%</td>
-    <td class="tg-8d8j">92.32%</td>
-    <td class="tg-8d8j">-1.00%</td>
-    <td class="tg-8d8j">156.958</td>
-    <td class="tg-8d8j">105.894</td>
-    <td class="tg-8d8j">1.48x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">hf bert-base-multilingual-cased dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">88.7022</td>
-    <td class="tg-8d8j">89.1263</td>
-    <td class="tg-8d8j">-0.48%</td>
-    <td class="tg-8d8j">47.676</td>
-    <td class="tg-8d8j">23.952</td>
-    <td class="tg-8d8j">1.99x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">hf bert-base-uncased dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">89.58%</td>
-    <td class="tg-8d8j">90.42%</td>
-    <td class="tg-8d8j">-0.93%</td>
-    <td class="tg-8d8j">199.365</td>
-    <td class="tg-8d8j">104.847</td>
-    <td class="tg-8d8j">1.90x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">hf camembert-base dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">88.47%</td>
-    <td class="tg-8d8j">89.28%</td>
-    <td class="tg-8d8j">-0.91%</td>
-    <td class="tg-8d8j">182.604</td>
-    <td class="tg-8d8j">105.447</td>
-    <td class="tg-8d8j">1.73x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">hf distilbert-base-uncased&nbsp;&nbsp;&nbsp;dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">90.37%</td>
-    <td class="tg-8d8j">91.06%</td>
-    <td class="tg-8d8j">-0.76%</td>
-    <td class="tg-8d8j">449.707</td>
-    <td class="tg-8d8j">164.208</td>
-    <td class="tg-8d8j">2.74x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">hf minilm-l12-h384-uncased&nbsp;&nbsp;&nbsp;dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">91.07%</td>
-    <td class="tg-8d8j">90.97%</td>
-    <td class="tg-8d8j">0.11%</td>
-    <td class="tg-8d8j">466.585</td>
-    <td class="tg-8d8j">247.708</td>
-    <td class="tg-8d8j">1.88x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">hf minilm-l6-h384-uncased&nbsp;&nbsp;&nbsp;dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">89.91%</td>
-    <td class="tg-8d8j">90.14%</td>
-    <td class="tg-8d8j">-0.26%</td>
-    <td class="tg-8d8j">523.59</td>
-    <td class="tg-8d8j">354.049</td>
-    <td class="tg-8d8j">1.48x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">hf roberta-base dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">90.85%</td>
-    <td class="tg-8d8j">91.38%</td>
-    <td class="tg-8d8j">-0.58%</td>
-    <td class="tg-8d8j">183.586</td>
-    <td class="tg-8d8j">107.7</td>
-    <td class="tg-8d8j">1.70x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">hf spanbert dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">91.3983</td>
-    <td class="tg-8d8j">91.9755</td>
-    <td class="tg-8d8j">-0.63%</td>
-    <td class="tg-8d8j">48.357</td>
-    <td class="tg-8d8j">24.027</td>
-    <td class="tg-8d8j">2.01x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">hf xlm-roberta-base dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">89.45%</td>
-    <td class="tg-8d8j">90.10%</td>
-    <td class="tg-8d8j">-0.72%</td>
-    <td class="tg-8d8j">208.155</td>
-    <td class="tg-8d8j">64.604</td>
-    <td class="tg-8d8j">3.22x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">inception v1</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">67.21%</td>
-    <td class="tg-8d8j">67.24%</td>
-    <td class="tg-8d8j">-0.04%</td>
-    <td class="tg-8d8j">795.376</td>
-    <td class="tg-8d8j">600.027</td>
-    <td class="tg-8d8j">1.33x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">inception v1 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">67.21%</td>
-    <td class="tg-8d8j">67.24%</td>
-    <td class="tg-8d8j">-0.04%</td>
-    <td class="tg-8d8j">780.704</td>
-    <td class="tg-8d8j">591.812</td>
-    <td class="tg-8d8j">1.32x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">mask rcnn</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">33.13%</td>
-    <td class="tg-8d8j">33.72%</td>
-    <td class="tg-8d8j">-1.75%</td>
-    <td class="tg-8d8j">11.61</td>
-    <td class="tg-8d8j">5.577</td>
-    <td class="tg-8d8j">2.08x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">mask rcnn </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">33.28%</td>
-    <td class="tg-8d8j">33.72%</td>
-    <td class="tg-8d8j">-1.30%</td>
-    <td class="tg-8d8j">8.639</td>
-    <td class="tg-8d8j">5.534</td>
-    <td class="tg-8d8j">1.56x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">mobilebert mrpc</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">86.27%</td>
-    <td class="tg-8d8j">86.27%</td>
-    <td class="tg-8d8j">0.00%</td>
-    <td class="tg-8d8j">591.94</td>
-    <td class="tg-8d8j">515.485</td>
-    <td class="tg-8d8j">1.15x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">mobilebert squad mlperf&nbsp;&nbsp;&nbsp;dynamic</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">89.82276</td>
-    <td class="tg-8d8j">90.0265</td>
-    <td class="tg-8d8j">-0.23%</td>
-    <td class="tg-8d8j">85.658</td>
-    <td class="tg-8d8j">74.123</td>
-    <td class="tg-8d8j">1.16x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">mobilenet v2</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">65.59%</td>
-    <td class="tg-8d8j">66.89%</td>
-    <td class="tg-8d8j">-1.94%</td>
-    <td class="tg-8d8j">2370.927</td>
-    <td class="tg-8d8j">1526.329</td>
-    <td class="tg-8d8j">1.55x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">mobilenet v2 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">65.82%</td>
-    <td class="tg-8d8j">66.89%</td>
-    <td class="tg-8d8j">-1.60%</td>
-    <td class="tg-8d8j">2216.018</td>
-    <td class="tg-8d8j">1506.851</td>
-    <td class="tg-8d8j">1.47x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">mobilenet v3 mlperf</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">75.58%</td>
-    <td class="tg-8d8j">75.74%</td>
-    <td class="tg-8d8j">-0.21%</td>
-    <td class="tg-8d8j">2078.849</td>
-    <td class="tg-8d8j">1028.313</td>
-    <td class="tg-8d8j">2.02x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">mobilenet v3 mlperf </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">75.57%</td>
-    <td class="tg-8d8j">75.74%</td>
-    <td class="tg-8d8j">-0.22%</td>
-    <td class="tg-8d8j">1762.617</td>
-    <td class="tg-8d8j">999.313</td>
-    <td class="tg-8d8j">1.76x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">mobilenetv2-12</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">68.38%</td>
-    <td class="tg-8d8j">69.48%</td>
-    <td class="tg-8d8j">-1.58%</td>
-    <td class="tg-8d8j">2615.52</td>
-    <td class="tg-8d8j">1645.083</td>
-    <td class="tg-8d8j">1.59x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">mobilenetv2-12 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">68.51%</td>
-    <td class="tg-8d8j">69.48%</td>
-    <td class="tg-8d8j">-1.40%</td>
-    <td class="tg-8d8j">2461.246</td>
-    <td class="tg-8d8j">1674.355</td>
-    <td class="tg-8d8j">1.47x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">resnet v1 5 mlperf</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">76.15%</td>
-    <td class="tg-8d8j">76.46%</td>
-    <td class="tg-8d8j">-0.41%</td>
-    <td class="tg-8d8j">766.332</td>
-    <td class="tg-8d8j">431.923</td>
-    <td class="tg-8d8j">1.77x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">resnet v1 5 mlperf </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">76.14%</td>
-    <td class="tg-8d8j">76.46%</td>
-    <td class="tg-8d8j">-0.42%</td>
-    <td class="tg-8d8j">575.336</td>
-    <td class="tg-8d8j">430.825</td>
-    <td class="tg-8d8j">1.34x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">resnet50 v1 5</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">72.26%</td>
-    <td class="tg-8d8j">72.29%</td>
-    <td class="tg-8d8j">-0.04%</td>
-    <td class="tg-8d8j">747.307</td>
-    <td class="tg-8d8j">431.092</td>
-    <td class="tg-8d8j">1.73x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">resnet50 v1 5 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">72.20%</td>
-    <td class="tg-8d8j">72.29%</td>
-    <td class="tg-8d8j">-0.12%</td>
-    <td class="tg-8d8j">564.212</td>
-    <td class="tg-8d8j">431.495</td>
-    <td class="tg-8d8j">1.31x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">resnet50-v1-12</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">74.81%</td>
-    <td class="tg-8d8j">74.99%</td>
-    <td class="tg-8d8j">-0.24%</td>
-    <td class="tg-8d8j">594.291</td>
-    <td class="tg-8d8j">449.209</td>
-    <td class="tg-8d8j">1.32x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">resnet50-v1-12 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">74.76%</td>
-    <td class="tg-8d8j">74.99%</td>
-    <td class="tg-8d8j">-0.31%</td>
-    <td class="tg-8d8j">590.513</td>
-    <td class="tg-8d8j">449.934</td>
-    <td class="tg-8d8j">1.31x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">roberta base mrpc</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">90.69%</td>
-    <td class="tg-8d8j">89.95%</td>
-    <td class="tg-8d8j">0.82%</td>
-    <td class="tg-8d8j">643.025</td>
-    <td class="tg-8d8j">253.041</td>
-    <td class="tg-8d8j">2.54x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">shufflenet-v2-12</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">66.13%</td>
-    <td class="tg-8d8j">66.36%</td>
-    <td class="tg-8d8j">-0.35%</td>
-    <td class="tg-8d8j">2354.511</td>
-    <td class="tg-8d8j">1461.472</td>
-    <td class="tg-8d8j">1.61x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">shufflenet-v2-12 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">66.12%</td>
-    <td class="tg-8d8j">66.36%</td>
-    <td class="tg-8d8j">-0.36%</td>
-    <td class="tg-8d8j">1850.085</td>
-    <td class="tg-8d8j">1368.347</td>
-    <td class="tg-8d8j">1.35x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">squeezenet</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">56.54%</td>
-    <td class="tg-8d8j">56.87%</td>
-    <td class="tg-8d8j">-0.58%</td>
-    <td class="tg-8d8j">2484.357</td>
-    <td class="tg-8d8j">1912.365</td>
-    <td class="tg-8d8j">1.30x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">squeezenet </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">56.39%</td>
-    <td class="tg-8d8j">56.87%</td>
-    <td class="tg-8d8j">-0.83%</td>
-    <td class="tg-8d8j">2526.016</td>
-    <td class="tg-8d8j">1911.319</td>
-    <td class="tg-8d8j">1.32x</td>
-  </tr>
-  <tr>
-    <td class="tg-baqh">ssd mobilenet v1</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">22.44%</td>
-    <td class="tg-8d8j">23.10%</td>
-    <td class="tg-8d8j">-2.86%</td>
-    <td class="tg-8d8j">710.173</td>
-    <td class="tg-8d8j">549.548</td>
-    <td class="tg-8d8j">1.29x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">ssd mobilenet v1 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">22.44%</td>
-    <td class="tg-8d8j">23.10%</td>
-    <td class="tg-8d8j">-2.86%</td>
-    <td class="tg-8d8j">622.58</td>
-    <td class="tg-8d8j">497.419</td>
-    <td class="tg-8d8j">1.25x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">ssd mobilenet v1-2</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">22.96%</td>
-    <td class="tg-8d8j">23.02%</td>
-    <td class="tg-8d8j">-0.26%</td>
-    <td class="tg-8d8j">652.141</td>
-    <td class="tg-8d8j">507.766</td>
-    <td class="tg-8d8j">1.28x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">ssd mobilenet v1-2 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">22.96%</td>
-    <td class="tg-8d8j">23.02%</td>
-    <td class="tg-8d8j">-0.26%</td>
-    <td class="tg-8d8j">573.3</td>
-    <td class="tg-8d8j">470.424</td>
-    <td class="tg-8d8j">1.22x</td>
-  </tr>
-  <tr>
-    <td class="tg-baqh">ssd mobilenet v2</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">24.03%</td>
-    <td class="tg-8d8j">24.67%</td>
-    <td class="tg-8d8j">-2.59%</td>
-    <td class="tg-8d8j">527.674</td>
-    <td class="tg-8d8j">396.265</td>
-    <td class="tg-8d8j">1.33x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">ssd-12</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">18.92%</td>
-    <td class="tg-8d8j">18.98%</td>
-    <td class="tg-8d8j">-0.32%</td>
-    <td class="tg-8d8j">31.241</td>
-    <td class="tg-8d8j">8.766</td>
-    <td class="tg-8d8j">3.56x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">ssd-12 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">18.63%</td>
-    <td class="tg-8d8j">18.98%</td>
-    <td class="tg-8d8j">-1.84%</td>
-    <td class="tg-8d8j">23.721</td>
-    <td class="tg-8d8j">8.866</td>
-    <td class="tg-8d8j">2.68x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">tiny yolov3</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">11.82%</td>
-    <td class="tg-8d8j">12.42%</td>
-    <td class="tg-8d8j">-4.83%</td>
-    <td class="tg-8d8j">647.166</td>
-    <td class="tg-8d8j">514.415</td>
-    <td class="tg-8d8j">1.26x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">ultraface</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">83.34%</td>
-    <td class="tg-8d8j">83.65%</td>
-    <td class="tg-8d8j">-0.37%</td>
-    <td class="tg-8d8j">314.504</td>
-    <td class="tg-8d8j">125.561</td>
-    <td class="tg-8d8j">2.50x</td>
-  </tr>
-  <tr>
-    <td class="tg-baqh">vgg16</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">66.67%</td>
-    <td class="tg-8d8j">66.69%</td>
-    <td class="tg-8d8j">-0.03%</td>
-    <td class="tg-8d8j">221.615</td>
-    <td class="tg-8d8j">98.201</td>
-    <td class="tg-8d8j">2.26x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">vgg16 </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">66.69%</td>
-    <td class="tg-8d8j">66.69%</td>
-    <td class="tg-8d8j">0.00%</td>
-    <td class="tg-8d8j">304.094</td>
-    <td class="tg-8d8j">98.329</td>
-    <td class="tg-8d8j">3.09x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">vgg16 model zoo</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">72.32%</td>
-    <td class="tg-8d8j">72.40%</td>
-    <td class="tg-8d8j">-0.11%</td>
-    <td class="tg-8d8j">316.543</td>
-    <td class="tg-8d8j">98.489</td>
-    <td class="tg-8d8j">3.21x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">vgg16 model zoo </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">72.31%</td>
-    <td class="tg-8d8j">72.40%</td>
-    <td class="tg-8d8j">-0.12%</td>
-    <td class="tg-8d8j">315.612</td>
-    <td class="tg-8d8j">98.46</td>
-    <td class="tg-8d8j">3.21x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">yolov3</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">26.92%</td>
-    <td class="tg-8d8j">28.73%</td>
-    <td class="tg-8d8j">-6.30%</td>
-    <td class="tg-8d8j">119.633</td>
-    <td class="tg-8d8j">53.371</td>
-    <td class="tg-8d8j">2.24x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">yolov4</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">32.33%</td>
-    <td class="tg-8d8j">33.71%</td>
-    <td class="tg-8d8j">-4.09%</td>
-    <td class="tg-8d8j">49.299</td>
-    <td class="tg-8d8j">32.879</td>
-    <td class="tg-8d8j">1.50x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">zfnet</td>
-    <td class="tg-8d8j">qLinear</td>
-    <td class="tg-8d8j">55.84%</td>
-    <td class="tg-8d8j">55.96%</td>
-    <td class="tg-8d8j">-0.21%</td>
-    <td class="tg-8d8j">462.281</td>
-    <td class="tg-8d8j">268.316</td>
-    <td class="tg-8d8j">1.72x</td>
-  </tr>
-  <tr>
-    <td class="tg-8d8j">zfnet </td>
-    <td class="tg-8d8j">qdq</td>
-    <td class="tg-8d8j">55.86%</td>
-    <td class="tg-8d8j">55.96%</td>
-    <td class="tg-8d8j">-0.18%</td>
-    <td class="tg-8d8j">465.44</td>
-    <td class="tg-8d8j">265.581</td>
-    <td class="tg-8d8j">1.75x</td>
+    <td>distilbert base mrpc </td>
+    <td>QDQ</td>
+    <td>84.56%</td>
+    <td>84.56%</td>
+    <td>0.00%</td>
+    <td>524.955</td>
+    <td>476.394</td>
+    <td>1.10x</td>
+  </tr>
+  <tr>
+    <td>duc</td>
+    <td>QLinear</td>
+    <td>81.62%</td>
+    <td>81.92%</td>
+    <td>-0.37%</td>
+    <td>5.655</td>
+    <td>2.819</td>
+    <td>2.01x</td>
+  </tr>
+  <tr>
+    <td>efficientnet</td>
+    <td>QLinear</td>
+    <td>77.57%</td>
+    <td>77.70%</td>
+    <td>-0.17%</td>
+    <td>1211.095</td>
+    <td>758.409</td>
+    <td>1.60x</td>
+  </tr>
+  <tr>
+    <td>efficientnet </td>
+    <td>QDQ</td>
+    <td>77.61%</td>
+    <td>77.70%</td>
+    <td>-0.12%</td>
+    <td>856.644</td>
+    <td>762.482</td>
+    <td>1.12x</td>
+  </tr>
+  <tr>
+    <td>emotion ferplus</td>
+    <td>QLinear</td>
+    <td>8.00%</td>
+    <td>8.00%</td>
+    <td>0.00%</td>
+    <td>925.428</td>
+    <td>694.985</td>
+    <td>1.33x</td>
+  </tr>
+  <tr>
+    <td>faster rcnn</td>
+    <td>QLinear</td>
+    <td>34.09%</td>
+    <td>34.37%</td>
+    <td>-0.81%</td>
+    <td>13.819</td>
+    <td>5.889</td>
+    <td>2.35x</td>
+  </tr>
+  <tr>
+    <td>faster rcnn </td>
+    <td>QDQ</td>
+    <td>33.90%</td>
+    <td>34.37%</td>
+    <td>-1.37%</td>
+    <td>9.593</td>
+    <td>6.094</td>
+    <td>1.57x</td>
+  </tr>
+  <tr>
+    <td>fcn</td>
+    <td>QLinear</td>
+    <td>64.54%</td>
+    <td>64.98%</td>
+    <td>-0.68%</td>
+    <td>40.493</td>
+    <td>11.921</td>
+    <td>3.40x</td>
+  </tr>
+  <tr>
+    <td>fcn </td>
+    <td>QDQ</td>
+    <td>64.40%</td>
+    <td>64.98%</td>
+    <td>-0.89%</td>
+    <td>26.87</td>
+    <td>11.919</td>
+    <td>2.25x</td>
+  </tr>
+  <tr>
+    <td>googlenet-12</td>
+    <td>QLinear</td>
+    <td>67.71%</td>
+    <td>67.79%</td>
+    <td>-0.12%</td>
+    <td>771.387</td>
+    <td>571.351</td>
+    <td>1.35x</td>
+  </tr>
+  <tr>
+    <td>googlenet-12 </td>
+    <td>QDQ</td>
+    <td>67.73%</td>
+    <td>67.79%</td>
+    <td>-0.09%</td>
+    <td>763.79</td>
+    <td>579.946</td>
+    <td>1.32x</td>
+  </tr>
+  <tr>
+    <td>hf albert-base-v2 dynamic</td>
+    <td>QLinear</td>
+    <td>91.40%</td>
+    <td>92.32%</td>
+    <td>-1.00%</td>
+    <td>156.958</td>
+    <td>105.894</td>
+    <td>1.48x</td>
+  </tr>
+  <tr>
+    <td>hf bert-base-multilingual-cased dynamic</td>
+    <td>QLinear</td>
+    <td>88.7022</td>
+    <td>89.1263</td>
+    <td>-0.48%</td>
+    <td>47.676</td>
+    <td>23.952</td>
+    <td>1.99x</td>
+  </tr>
+  <tr>
+    <td>hf bert-base-uncased dynamic</td>
+    <td>QLinear</td>
+    <td>89.58%</td>
+    <td>90.42%</td>
+    <td>-0.93%</td>
+    <td>199.365</td>
+    <td>104.847</td>
+    <td>1.90x</td>
+  </tr>
+  <tr>
+    <td>hf camembert-base dynamic</td>
+    <td>QLinear</td>
+    <td>88.47%</td>
+    <td>89.28%</td>
+    <td>-0.91%</td>
+    <td>182.604</td>
+    <td>105.447</td>
+    <td>1.73x</td>
+  </tr>
+  <tr>
+    <td>hf distilbert-base-uncased dynamic</td>
+    <td>QLinear</td>
+    <td>90.37%</td>
+    <td>91.06%</td>
+    <td>-0.76%</td>
+    <td>449.707</td>
+    <td>164.208</td>
+    <td>2.74x</td>
+  </tr>
+  <tr>
+    <td>hf minilm-l12-h384-uncased dynamic</td>
+    <td>QLinear</td>
+    <td>91.07%</td>
+    <td>90.97%</td>
+    <td>0.11%</td>
+    <td>466.585</td>
+    <td>247.708</td>
+    <td>1.88x</td>
+  </tr>
+  <tr>
+    <td>hf minilm-l6-h384-uncased dynamic</td>
+    <td>QLinear</td>
+    <td>89.91%</td>
+    <td>90.14%</td>
+    <td>-0.26%</td>
+    <td>523.59</td>
+    <td>354.049</td>
+    <td>1.48x</td>
+  </tr>
+  <tr>
+    <td>hf roberta-base dynamic</td>
+    <td>QLinear</td>
+    <td>90.85%</td>
+    <td>91.38%</td>
+    <td>-0.58%</td>
+    <td>183.586</td>
+    <td>107.7</td>
+    <td>1.70x</td>
+  </tr>
+  <tr>
+    <td>hf spanbert dynamic</td>
+    <td>QLinear</td>
+    <td>91.3983</td>
+    <td>91.9755</td>
+    <td>-0.63%</td>
+    <td>48.357</td>
+    <td>24.027</td>
+    <td>2.01x</td>
+  </tr>
+  <tr>
+    <td>hf xlm-roberta-base dynamic</td>
+    <td>QLinear</td>
+    <td>89.45%</td>
+    <td>90.10%</td>
+    <td>-0.72%</td>
+    <td>208.155</td>
+    <td>64.604</td>
+    <td>3.22x</td>
+  </tr>
+  <tr>
+    <td>inception v1</td>
+    <td>QLinear</td>
+    <td>67.21%</td>
+    <td>67.24%</td>
+    <td>-0.04%</td>
+    <td>795.376</td>
+    <td>600.027</td>
+    <td>1.33x</td>
+  </tr>
+  <tr>
+    <td>inception v1 </td>
+    <td>QDQ</td>
+    <td>67.21%</td>
+    <td>67.24%</td>
+    <td>-0.04%</td>
+    <td>780.704</td>
+    <td>591.812</td>
+    <td>1.32x</td>
+  </tr>
+  <tr>
+    <td>mask rcnn</td>
+    <td>QLinear</td>
+    <td>33.13%</td>
+    <td>33.72%</td>
+    <td>-1.75%</td>
+    <td>11.61</td>
+    <td>5.577</td>
+    <td>2.08x</td>
+  </tr>
+  <tr>
+    <td>mask rcnn </td>
+    <td>QDQ</td>
+    <td>33.28%</td>
+    <td>33.72%</td>
+    <td>-1.30%</td>
+    <td>8.639</td>
+    <td>5.534</td>
+    <td>1.56x</td>
+  </tr>
+  <tr>
+    <td>mobilebert mrpc</td>
+    <td>QLinear</td>
+    <td>86.27%</td>
+    <td>86.27%</td>
+    <td>0.00%</td>
+    <td>591.94</td>
+    <td>515.485</td>
+    <td>1.15x</td>
+  </tr>
+  <tr>
+    <td>mobilebert squad mlperf dynamic</td>
+    <td>QLinear</td>
+    <td>89.82276</td>
+    <td>90.0265</td>
+    <td>-0.23%</td>
+    <td>85.658</td>
+    <td>74.123</td>
+    <td>1.16x</td>
+  </tr>
+  <tr>
+    <td>mobilenet v2</td>
+    <td>QLinear</td>
+    <td>65.59%</td>
+    <td>66.89%</td>
+    <td>-1.94%</td>
+    <td>2370.927</td>
+    <td>1526.329</td>
+    <td>1.55x</td>
+  </tr>
+  <tr>
+    <td>mobilenet v2 </td>
+    <td>QDQ</td>
+    <td>65.82%</td>
+    <td>66.89%</td>
+    <td>-1.60%</td>
+    <td>2216.018</td>
+    <td>1506.851</td>
+    <td>1.47x</td>
+  </tr>
+  <tr>
+    <td>mobilenet v3 mlperf</td>
+    <td>QLinear</td>
+    <td>75.58%</td>
+    <td>75.74%</td>
+    <td>-0.21%</td>
+    <td>2078.849</td>
+    <td>1028.313</td>
+    <td>2.02x</td>
+  </tr>
+  <tr>
+    <td>mobilenet v3 mlperf </td>
+    <td>QDQ</td>
+    <td>75.57%</td>
+    <td>75.74%</td>
+    <td>-0.22%</td>
+    <td>1762.617</td>
+    <td>999.313</td>
+    <td>1.76x</td>
+  </tr>
+  <tr>
+    <td>mobilenetv2-12</td>
+    <td>QLinear</td>
+    <td>68.38%</td>
+    <td>69.48%</td>
+    <td>-1.58%</td>
+    <td>2615.52</td>
+    <td>1645.083</td>
+    <td>1.59x</td>
+  </tr>
+  <tr>
+    <td>mobilenetv2-12 </td>
+    <td>QDQ</td>
+    <td>68.51%</td>
+    <td>69.48%</td>
+    <td>-1.40%</td>
+    <td>2461.246</td>
+    <td>1674.355</td>
+    <td>1.47x</td>
+  </tr>
+  <tr>
+    <td>resnet v1 5 mlperf</td>
+    <td>QLinear</td>
+    <td>76.15%</td>
+    <td>76.46%</td>
+    <td>-0.41%</td>
+    <td>766.332</td>
+    <td>431.923</td>
+    <td>1.77x</td>
+  </tr>
+  <tr>
+    <td>resnet v1 5 mlperf </td>
+    <td>QDQ</td>
+    <td>76.14%</td>
+    <td>76.46%</td>
+    <td>-0.42%</td>
+    <td>575.336</td>
+    <td>430.825</td>
+    <td>1.34x</td>
+  </tr>
+  <tr>
+    <td>resnet50 v1 5</td>
+    <td>QLinear</td>
+    <td>72.26%</td>
+    <td>72.29%</td>
+    <td>-0.04%</td>
+    <td>747.307</td>
+    <td>431.092</td>
+    <td>1.73x</td>
+  </tr>
+  <tr>
+    <td>resnet50 v1 5 </td>
+    <td>QDQ</td>
+    <td>72.20%</td>
+    <td>72.29%</td>
+    <td>-0.12%</td>
+    <td>564.212</td>
+    <td>431.495</td>
+    <td>1.31x</td>
+  </tr>
+  <tr>
+    <td>resnet50-v1-12</td>
+    <td>QLinear</td>
+    <td>74.81%</td>
+    <td>74.99%</td>
+    <td>-0.24%</td>
+    <td>594.291</td>
+    <td>449.209</td>
+    <td>1.32x</td>
+  </tr>
+  <tr>
+    <td>resnet50-v1-12 </td>
+    <td>QDQ</td>
+    <td>74.76%</td>
+    <td>74.99%</td>
+    <td>-0.31%</td>
+    <td>590.513</td>
+    <td>449.934</td>
+    <td>1.31x</td>
+  </tr>
+  <tr>
+    <td>roberta base mrpc</td>
+    <td>QLinear</td>
+    <td>90.69%</td>
+    <td>89.95%</td>
+    <td>0.82%</td>
+    <td>643.025</td>
+    <td>253.041</td>
+    <td>2.54x</td>
+  </tr>
+  <tr>
+    <td>shufflenet-v2-12</td>
+    <td>QLinear</td>
+    <td>66.13%</td>
+    <td>66.36%</td>
+    <td>-0.35%</td>
+    <td>2354.511</td>
+    <td>1461.472</td>
+    <td>1.61x</td>
+  </tr>
+  <tr>
+    <td>shufflenet-v2-12 </td>
+    <td>QDQ</td>
+    <td>66.12%</td>
+    <td>66.36%</td>
+    <td>-0.36%</td>
+    <td>1850.085</td>
+    <td>1368.347</td>
+    <td>1.35x</td>
+  </tr>
+  <tr>
+    <td>squeezenet</td>
+    <td>QLinear</td>
+    <td>56.54%</td>
+    <td>56.87%</td>
+    <td>-0.58%</td>
+    <td>2484.357</td>
+    <td>1912.365</td>
+    <td>1.30x</td>
+  </tr>
+  <tr>
+    <td>squeezenet </td>
+    <td>QDQ</td>
+    <td>56.39%</td>
+    <td>56.87%</td>
+    <td>-0.83%</td>
+    <td>2526.016</td>
+    <td>1911.319</td>
+    <td>1.32x</td>
+  </tr>
+  <tr>
+    <td>ssd mobilenet v1</td>
+    <td>QLinear</td>
+    <td>22.44%</td>
+    <td>23.10%</td>
+    <td>-2.86%</td>
+    <td>710.173</td>
+    <td>549.548</td>
+    <td>1.29x</td>
+  </tr>
+  <tr>
+    <td>ssd mobilenet v1 </td>
+    <td>QDQ</td>
+    <td>22.44%</td>
+    <td>23.10%</td>
+    <td>-2.86%</td>
+    <td>622.58</td>
+    <td>497.419</td>
+    <td>1.25x</td>
+  </tr>
+  <tr>
+    <td>ssd mobilenet v1-2</td>
+    <td>QLinear</td>
+    <td>22.96%</td>
+    <td>23.02%</td>
+    <td>-0.26%</td>
+    <td>652.141</td>
+    <td>507.766</td>
+    <td>1.28x</td>
+  </tr>
+  <tr>
+    <td>ssd mobilenet v1-2 </td>
+    <td>QDQ</td>
+    <td>22.96%</td>
+    <td>23.02%</td>
+    <td>-0.26%</td>
+    <td>573.3</td>
+    <td>470.424</td>
+    <td>1.22x</td>
+  </tr>
+  <tr>
+    <td>ssd mobilenet v2</td>
+    <td>QLinear</td>
+    <td>24.03%</td>
+    <td>24.67%</td>
+    <td>-2.59%</td>
+    <td>527.674</td>
+    <td>396.265</td>
+    <td>1.33x</td>
+  </tr>
+  <tr>
+    <td>ssd-12</td>
+    <td>QLinear</td>
+    <td>18.92%</td>
+    <td>18.98%</td>
+    <td>-0.32%</td>
+    <td>31.241</td>
+    <td>8.766</td>
+    <td>3.56x</td>
+  </tr>
+  <tr>
+    <td>ssd-12 </td>
+    <td>QDQ</td>
+    <td>18.63%</td>
+    <td>18.98%</td>
+    <td>-1.84%</td>
+    <td>23.721</td>
+    <td>8.866</td>
+    <td>2.68x</td>
+  </tr>
+  <tr>
+    <td>tiny yolov3</td>
+    <td>QLinear</td>
+    <td>11.82%</td>
+    <td>12.42%</td>
+    <td>-4.83%</td>
+    <td>647.166</td>
+    <td>514.415</td>
+    <td>1.26x</td>
+  </tr>
+  <tr>
+    <td>ultraface</td>
+    <td>QLinear</td>
+    <td>83.34%</td>
+    <td>83.65%</td>
+    <td>-0.37%</td>
+    <td>314.504</td>
+    <td>125.561</td>
+    <td>2.50x</td>
+  </tr>
+  <tr>
+    <td>vgg16</td>
+    <td>QLinear</td>
+    <td>66.67%</td>
+    <td>66.69%</td>
+    <td>-0.03%</td>
+    <td>221.615</td>
+    <td>98.201</td>
+    <td>2.26x</td>
+  </tr>
+  <tr>
+    <td>vgg16 </td>
+    <td>QDQ</td>
+    <td>66.69%</td>
+    <td>66.69%</td>
+    <td>0.00%</td>
+    <td>304.094</td>
+    <td>98.329</td>
+    <td>3.09x</td>
+  </tr>
+  <tr>
+    <td>vgg16 model zoo</td>
+    <td>QLinear</td>
+    <td>72.32%</td>
+    <td>72.40%</td>
+    <td>-0.11%</td>
+    <td>316.543</td>
+    <td>98.489</td>
+    <td>3.21x</td>
+  </tr>
+  <tr>
+    <td>vgg16 model zoo </td>
+    <td>QDQ</td>
+    <td>72.31%</td>
+    <td>72.40%</td>
+    <td>-0.12%</td>
+    <td>315.612</td>
+    <td>98.46</td>
+    <td>3.21x</td>
+  </tr>
+  <tr>
+    <td>yolov3</td>
+    <td>QLinear</td>
+    <td>26.92%</td>
+    <td>28.73%</td>
+    <td>-6.30%</td>
+    <td>119.633</td>
+    <td>53.371</td>
+    <td>2.24x</td>
+  </tr>
+  <tr>
+    <td>yolov4</td>
+    <td>QLinear</td>
+    <td>32.33%</td>
+    <td>33.71%</td>
+    <td>-4.09%</td>
+    <td>49.299</td>
+    <td>32.879</td>
+    <td>1.50x</td>
+  </tr>
+  <tr>
+    <td>zfnet</td>
+    <td>QLinear</td>
+    <td>55.84%</td>
+    <td>55.96%</td>
+    <td>-0.21%</td>
+    <td>462.281</td>
+    <td>268.316</td>
+    <td>1.72x</td>
+  </tr>
+  <tr>
+    <td>zfnet </td>
+    <td>QDQ</td>
+    <td>55.86%</td>
+    <td>55.96%</td>
+    <td>-0.18%</td>
+    <td>465.44</td>
+    <td>265.581</td>
+    <td>1.75x</td>
   </tr>
 </tbody>
 </table>
 
 ### MXNet Models with MXNet 1.9.1
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-wa1i{font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-uzvj{border-color:inherit;font-weight:bold;text-align:center;vertical-align:middle}
-.tg .tg-8d8j{text-align:center;vertical-align:bottom}
-</style>
 <table class="tg">
 <thead>
   <tr>
-    <th class="tg-uzvj" rowspan="2">model</th>
-    <th class="tg-wa1i" colspan="3">Accuracy</th>
-    <th class="tg-wa1i" colspan="3">Performance/1s4c8ins1bs/throughput(samples/sec)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th rowspan="2">Model</th>
+    <th colspan="3">Accuracy</th>
+    <th colspan="3">Performance<br>Throughput(samples/sec) <br></th>
   </tr>
   <tr>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Acc&nbsp;&nbsp;&nbsp;Ratio<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[(INT8-FP32)/FP32]</th>
-    <th class="tg-wa1i">INT8</th>
-    <th class="tg-wa1i">FP32</th>
-    <th class="tg-wa1i">Performance&nbsp;&nbsp;&nbsp;Gain<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[INT8/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>INT8</th>
+    <th>FP32</th>
+    <th>Performance Ratio[INT8/FP32]</th>
   </tr>
 </thead>
-<tbody>
+<tbody align="center">
   <tr>
-    <td class="tg-8d8j">inception&nbsp;&nbsp;&nbsp;v3</td>
-    <td class="tg-8d8j">77.65%</td>
-    <td class="tg-8d8j">0.16%</td>
-    <td class="tg-8d8j">94.236</td>
-    <td class="tg-8d8j">58.046</td>
-    <td class="tg-8d8j">1.62x</td>
-    <td class="tg-8d8j">2.05x</td>
+    <td>inception v3</td>
+    <td>77.65%</td>
+    <td>0.16%</td>
+    <td>94.236</td>
+    <td>58.046</td>
+    <td>1.62x</td>
+    <td>2.05x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">mobilenet 1.0</td>
-    <td class="tg-8d8j">72.23%</td>
-    <td class="tg-8d8j">-0.86%</td>
-    <td class="tg-8d8j">436.461</td>
-    <td class="tg-8d8j">314.811</td>
-    <td class="tg-8d8j">1.39x</td>
-    <td class="tg-8d8j">2.01x</td>
+    <td>mobilenet 1.0</td>
+    <td>72.23%</td>
+    <td>-0.86%</td>
+    <td>436.461</td>
+    <td>314.811</td>
+    <td>1.39x</td>
+    <td>2.01x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">mobilenet v2 1.0</td>
-    <td class="tg-8d8j">70.87%</td>
-    <td class="tg-8d8j">-0.16%</td>
-    <td class="tg-8d8j">270.779</td>
-    <td class="tg-8d8j">229.21</td>
-    <td class="tg-8d8j">1.18x</td>
-    <td class="tg-8d8j">1.78x</td>
+    <td>mobilenet v2 1.0</td>
+    <td>70.87%</td>
+    <td>-0.16%</td>
+    <td>270.779</td>
+    <td>229.21</td>
+    <td>1.18x</td>
+    <td>1.78x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet 152 v1</td>
-    <td class="tg-8d8j">78.54%</td>
-    <td class="tg-8d8j">-0.30%</td>
-    <td class="tg-8d8j">66.616</td>
-    <td class="tg-8d8j">36.553</td>
-    <td class="tg-8d8j">1.82x</td>
-    <td class="tg-8d8j">2.39x</td>
+    <td>resnet 152 v1</td>
+    <td>78.54%</td>
+    <td>-0.30%</td>
+    <td>66.616</td>
+    <td>36.553</td>
+    <td>1.82x</td>
+    <td>2.39x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet 18 v1</td>
-    <td class="tg-8d8j">70.14%</td>
-    <td class="tg-8d8j">-0.19%</td>
-    <td class="tg-8d8j">429.858</td>
-    <td class="tg-8d8j">224.103</td>
-    <td class="tg-8d8j">1.92x</td>
-    <td class="tg-8d8j">2.45x</td>
+    <td>resnet 18 v1</td>
+    <td>70.14%</td>
+    <td>-0.19%</td>
+    <td>429.858</td>
+    <td>224.103</td>
+    <td>1.92x</td>
+    <td>2.45x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">resnet 50 v1</td>
-    <td class="tg-8d8j">76.33%</td>
-    <td class="tg-8d8j">-0.50%</td>
-    <td class="tg-8d8j">182.561</td>
-    <td class="tg-8d8j">94.152</td>
-    <td class="tg-8d8j">1.94x</td>
-    <td class="tg-8d8j">1.85x</td>
+    <td>resnet 50 v1</td>
+    <td>76.33%</td>
+    <td>-0.50%</td>
+    <td>182.561</td>
+    <td>94.152</td>
+    <td>1.94x</td>
+    <td>1.85x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">squeezenet 1.0</td>
-    <td class="tg-8d8j">56.97%</td>
-    <td class="tg-8d8j">-0.26%</td>
-    <td class="tg-8d8j">331.716</td>
-    <td class="tg-8d8j">242.763</td>
-    <td class="tg-8d8j">1.37x</td>
-    <td class="tg-8d8j">2.65x</td>
+    <td>squeezenet 1.0</td>
+    <td>56.97%</td>
+    <td>-0.26%</td>
+    <td>331.716</td>
+    <td>242.763</td>
+    <td>1.37x</td>
+    <td>2.65x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">ssd mobilenet 1.0</td>
-    <td class="tg-8d8j">75.54%</td>
-    <td class="tg-8d8j">-0.79%</td>
-    <td class="tg-8d8j">53.659</td>
-    <td class="tg-8d8j">27.161</td>
-    <td class="tg-8d8j">1.98x</td>
-    <td class="tg-8d8j">2.70x</td>
+    <td>ssd mobilenet 1.0</td>
+    <td>75.54%</td>
+    <td>-0.79%</td>
+    <td>53.659</td>
+    <td>27.161</td>
+    <td>1.98x</td>
+    <td>2.70x</td>
   </tr>
   <tr>
-    <td class="tg-8d8j">ssd resnet50 v1</td>
-    <td class="tg-8d8j">80.23%</td>
-    <td class="tg-8d8j">-0.05%</td>
-    <td class="tg-8d8j">37.629</td>
-    <td class="tg-8d8j">16.798</td>
-    <td class="tg-8d8j">2.24x</td>
-    <td class="tg-8d8j">1.35x</td>
+    <td>ssd resnet50 v1</td>
+    <td>80.23%</td>
+    <td>-0.05%</td>
+    <td>37.629</td>
+    <td>16.798</td>
+    <td>2.24x</td>
+    <td>1.35x</td>
   </tr>
 </tbody>
 </table>
