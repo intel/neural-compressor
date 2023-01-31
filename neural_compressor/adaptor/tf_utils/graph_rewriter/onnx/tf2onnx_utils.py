@@ -148,6 +148,10 @@ def map_numpy_to_onnx_dtype(np_dtype):
             return onnx_dtype
     raise ValueError("unsupported numpy dtype '%s' for mapping to onnx" % np_dtype)
 
+def map_onnx_to_numpy_type(onnx_type):
+    """Map ONNX dtype to numpy dtype."""
+    return ONNX_TO_NUMPY_DTYPE[onnx_type]
+
 def add_port_to_name(name, nr=0):
     """Map node output number to name."""
     return name + ":" + str(nr)
@@ -413,3 +417,145 @@ def initialize_name_counter(model_proto):
             avoid_name(n.name)
             for out in n.output:
                 avoid_name(out)
+
+def get_index_from_strided_slice_of_shape(node, outputs_to_values):
+    """Returns the index of the dimension that the strided slice is reading from the shape node or None."""
+    attr_vals = {
+        'shrink_axis_mask': 1,
+        'ellipsis_mask': 0,
+        'begin_mask': 0,
+        'new_axis_mask': 0,
+        'end_mask': 0
+    }
+    for a in node.node_def.attr:
+        if a in attr_vals:
+            i = get_tensorflow_node_attr(node, a)
+            if i != attr_vals[a]:
+                return None
+    i1 = outputs_to_values.get(node.inputs[1].name)
+    i2 = outputs_to_values.get(node.inputs[2].name)
+    i3 = outputs_to_values.get(node.inputs[3].name)
+    if i1 is None or i2 is None or i3 is None:
+        return None
+    if i1.shape != (1,) or i2.shape != (1,) or i3.shape != (1,):
+        return None
+    i1, i2, i3 = i1[0], i2[0], i3[0]
+    if i1 + 1 != i2 or i3 != 1:
+        return None
+    return i1
+
+def compute_const_folding_using_tf(g, const_node_values, graph_outputs):
+    """Find nodes with constant inputs and compute their values using TF."""
+    if const_node_values is None:
+        const_node_values = {}
+    graph_outputs = set(graph_outputs)
+    from tf2onnx.tf_loader import tf_session, tf_placeholder
+
+    ops = g.get_operations()
+    outputs_to_values = {}
+    outputs_to_dtypes = {}
+    outputs_to_shapes = {}
+    shape_node_outputs = {}
+
+    def is_small_shape(x):
+        return np.product(x) <= 1000
+
+    def is_huge_shape(x):
+        return np.product(x) >= 1000000
+
+    for node in ops:
+        # Load values of constants. Use const_node_values if possible
+        if node.type in ["Const", "ConstV2"]:
+            tensor = node.node_def.attr["value"].tensor
+            if node.name in const_node_values:
+                tensor.tensor_content = const_node_values[node.name]
+            outputs_to_values[node.outputs[0].name] = get_tensorflow_tensor_data(tensor)
+            outputs_to_dtypes[node.outputs[0].name] = node.outputs[0].dtype
+        for out in node.outputs:
+            outputs_to_shapes[out.name] = get_tensorflow_tensor_shape(out)
+
+    for node in ops:
+        if node.type == "Shape":
+            shape = outputs_to_shapes.get(node.inputs[0].name)
+            if shape is not None:
+                shape_node_outputs[node.outputs[0].name] = shape
+
+    unneeded_outputs = set()
+    progress = True
+    while progress:
+        progress = False
+        for node in ops:
+            # Find ops with constant inputs and compute their values
+            input_names = [i.name for i in node.inputs]
+            output_names = [i.name for i in node.outputs]
+            if node.type == 'StridedSlice' and input_names[0] in shape_node_outputs \
+                                           and output_names[0] not in outputs_to_values:
+                shape = shape_node_outputs[input_names[0]]
+                i = get_index_from_strided_slice_of_shape(node, outputs_to_values)
+                if i is not None and 0 <= i < len(shape) and shape[i] is not None:
+                    np_dtype = map_onnx_to_numpy_type(map_tensorflow_dtype(node.outputs[0].dtype))
+                    outputs_to_values[output_names[0]] = np.array(shape[i], dtype=np_dtype)
+                    outputs_to_dtypes[node.outputs[0].name] = node.outputs[0].dtype
+                    progress = True
+            can_fold = node.type not in ['Enter', 'Placeholder', 'PlaceholderWithDefault', 'Switch', 'Merge',
+                                         'NextIteration', 'Exit', 'QuantizeAndDequantizeV2', 'QuantizeAndDequantizeV3',
+                                         'QuantizeAndDequantizeV4']
+            can_fold = can_fold and not node.type.startswith('Random')
+            can_fold = can_fold and len(input_names) > 0 and all(inp in outputs_to_values for inp in input_names)
+            # We can only fold nodes with a single output
+            can_fold = can_fold and len(output_names) == 1 and output_names[0] not in outputs_to_values
+            # Skip if value already computed, used, and discarded
+            can_fold = can_fold and output_names[0] not in unneeded_outputs and output_names[0] not in graph_outputs
+            if can_fold:
+                # Make a mini graph containing just the node to fold
+                g2 = tf.Graph()
+                with g2.as_default():
+                    for inp in input_names:
+                        tf_placeholder(outputs_to_dtypes[inp], name=inp.split(':')[0])
+                    mini_graph_def = g2.as_graph_def()
+                    mini_graph_def.node.append(node.node_def)
+                g3 = tf.Graph()
+                with g3.as_default():
+                    feed_dict = {}
+                    inp_shapes = []
+                    for inp in input_names:
+                        inp_np = outputs_to_values[inp]
+                        feed_dict[inp] = inp_np
+                        inp_shapes.append(inp_np.shape)
+                    try:
+                        with tf_session() as sess:
+                            tf.import_graph_def(mini_graph_def, name='')
+                            results = sess.run(output_names, feed_dict=feed_dict)
+                        if is_huge_shape(results[0].shape) and all(is_small_shape(inp) for inp in inp_shapes):
+                            logger.debug("Skipping folding of node %s since result shape %s is much larger "
+                                         "than input shapes %s", node.name, results[0].shape, inp_shapes)
+                        else:
+                            outputs_to_values[output_names[0]] = results[0]
+                            outputs_to_dtypes[output_names[0]] = node.outputs[0].dtype
+                            progress = True
+                    except Exception:  # pylint: disable=broad-except
+                        logger.debug("Could not fold node %s", node.name)
+        unneeded_outputs.update(outputs_to_values.keys())
+        for node in ops:
+            # Mark values we need to keep
+            input_names = [i.name for i in node.inputs]
+            output_names = [i.name for i in node.outputs]
+            if len(output_names) == 1 and output_names[0] in outputs_to_values:
+                continue
+            for i in input_names:
+                if i in unneeded_outputs:
+                    unneeded_outputs.remove(i)
+        for node in unneeded_outputs:
+            # Remove unneeded values to prevent memory usage explosion
+            if node in outputs_to_values:
+                del outputs_to_values[node]
+                del outputs_to_dtypes[node]
+
+    for node in ops:
+        # We don't need the constants any more
+        if node.type in ["Const", "ConstV2"] and node.outputs[0].name in outputs_to_values:
+            del outputs_to_values[node.outputs[0].name]
+            del outputs_to_dtypes[node.outputs[0].name]
+
+    logger.info("Computed %d values for constant folding", len(outputs_to_values))
+    return outputs_to_values, outputs_to_dtypes

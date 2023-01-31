@@ -21,6 +21,7 @@ import logging
 import tensorflow as tf
 import numpy as np
 from onnx import helper
+from packaging.version import Version
 from tensorflow.core.framework import tensor_pb2, node_def_pb2
 
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
@@ -171,9 +172,21 @@ class TensorflowQDQToOnnxQDQConverter:
         functions = {}
         logger.info("Using ONNX opset %s", self.opset_version)
 
+        self.graph = t2o.shape_inference.infer_shape_for_graph(self.graph)
+
+        op_outputs_with_none_shape = t2o.shape_inference.check_shape_for_tf_graph(self.graph)
+        if op_outputs_with_none_shape:
+            if Version(tf.__version__) > Version("1.5.0"):
+                for op, outs in op_outputs_with_none_shape.items():
+                    logger.warning("Cannot infer shape for %s: %s", op, ",".join(outs))
+            self.graph = t2o.shape_inference.infer_shape_for_graph_legacy(self.graph)
+
         node_list = self.graph.get_operations()
 
-        # create dict with output to shape mappings
+        outputs_to_values, _ = utils.compute_const_folding_using_tf(
+            self.graph, None, self.output_names)
+
+        # Create dict with output to shape mappings
         for node in node_list:
             for out in node.outputs:
                 shape = None
@@ -221,6 +234,8 @@ class TensorflowQDQToOnnxQDQConverter:
         # Build ONNX Graph using onnx_nodes, output_shapes and dtypes
         onnx_graph = OnnxGraph(onnx_nodes, output_shapes, dtypes, input_names=self.input_names,
                                output_names=self.output_names)
+        t2o.tfonnx.fold_constants_using_tf(onnx_graph, outputs_to_values)
+
         if self.inputs_as_nchw:
             self.transpose_inputs(onnx_graph, self.inputs_as_nchw)
 
@@ -232,21 +247,46 @@ class TensorflowQDQToOnnxQDQConverter:
                     if parent_node.type == 'QuantizeV2':
                         onnx_graph.convert_qdq_nodes(parent_node, node)
 
-        # rewriters = [
-        #     t2o.rewriter.rewrite_transpose,
-        #     t2o.rewriter.rnn.rewrite_generic_loop,
-        #     t2o.rewriter.cond_rewriter.rewrite_cond,
-        # ]
+        # Create ops mapping for the desired opsets
+        ops_mapping = t2o.handler.tf_op.create_mapping(onnx_graph.opset, onnx_graph.extra_opset)
 
-        # t2o.tfonnx.run_rewriters(onnx_graph, rewriters, False)
+        # Run tf2onnx rewriters
+        rewriters = [
+            # single directional
+            t2o.tfonnx.rewrite_constant_fold,
+            t2o.rewriter.rewrite_transpose,
+            t2o.rewriter.rewrite_flatten,
+            t2o.rewriter.rewrite_random_uniform,
+            t2o.rewriter.rewrite_random_uniform_fold_const,
+            t2o.rewriter.rewrite_random_normal,
+            t2o.rewriter.rewrite_dropout,
+            t2o.rewriter.rewrite_conv_dilations,
+            t2o.rewriter.rewrite_eye,
+            t2o.rewriter.rewrite_leakyrelu,
+            t2o.rewriter.rewrite_thresholded_relu,
+            t2o.rewriter.rewrite_conv2d_with_pad,
+            t2o.rewriter.rewriter_lstm_tf2,
+            t2o.rewriter.rewrite_gru_tf2,
+            t2o.rewriter.rewrite_single_direction_lstm,
+            # bi-directional
+            t2o.rewriter.rewrite_bi_direction_lstm,
+            t2o.rewriter.rewrite_single_direction_gru,
+            t2o.rewriter.rewrite_bi_direction_gru,
+            t2o.rewriter.rewrite_custom_rnn_cell,
+            t2o.rewriter.rewrite_generic_loop,
+            t2o.rewriter.rewrite_cond,
+            t2o.rewriter.rewrite_biasadd_with_conv2d,
+            t2o.rewriter.rewrite_layer_normalization,
+            t2o.rewriter.rewrite_gemm,
+            t2o.rewriter.rewrite_ragged_variant_shape,
+        ]
 
+        t2o.tfonnx.run_rewriters(onnx_graph, rewriters, False)
 
-        # some nodes may already copied into inner Graph, so remove them from main Graph.
+        # Some nodes may already copied into inner Graph, so remove them from main Graph.
         onnx_graph.delete_unused_nodes(onnx_graph.outputs)
         t2o.tfonnx.topological_sort(onnx_graph, False)
 
-        # create ops mapping for the desired opsets
-        ops_mapping = t2o.handler.tf_op.create_mapping(onnx_graph.opset, onnx_graph.extra_opset)
         mapped_op, unmapped_op, exceptions = \
             t2o.tfonnx.tensorflow_onnx_mapping(onnx_graph, ops_mapping)
         if unmapped_op:
