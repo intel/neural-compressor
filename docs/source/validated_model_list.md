@@ -4,7 +4,7 @@ Validated Models
 
 1. [Validated Quantization Examples](#Validated-Quantization-Examples)
 
-    1.1. [TensorFlow Models with TensorFlow 2.11.0](#tensorflow-models-with-tensorflow-2100)
+    1.1. [TensorFlow Models with TensorFlow 2.11.0](#tensorflow-models-with-tensorflow-2110)
 
     1.2. [PyTorch Models with Torch 1.13.1+cpu in PTQ Mode](#pytorch-models-with-torch-1131cpu-in-qat-mode)
 
@@ -49,7 +49,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </thead>
 <tbody align="center">
   <tr>
-    <td>bert base mrpc</td>
+    <td>BERT base MRPC</td>
     <td>ckpt</td>
     <td>86.52%</td>
     <td>86.52%</td>
@@ -59,7 +59,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.82x</td>
   </tr>
   <tr>
-    <td>bert large squad</td>
+    <td>BERT large SQuAD<</td>
     <td>PB</td>
     <td>92.404</td>
     <td>92.9861</td>
@@ -69,8 +69,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.85x</td>
   </tr>
   <tr>
-    <td>bert large squad model zoo</td>
-    <td>PB</td>
+    <td>BERT large SQuAD (ONNX Model Zoo)</td>
+    <td>pb</td>
     <td>92.4128</td>
     <td>92.9805</td>
     <td>-0.0061</td>
@@ -79,8 +79,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.83x</td>
   </tr>
   <tr>
-    <td>densenet 121</td>
-    <td>PB</td>
+    <td>Densenet 121</td>
+    <td>pb</td>
     <td>73.61%</td>
     <td>72.89%</td>
     <td>0.0099</td>
@@ -89,8 +89,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.85x</td>
   </tr>
   <tr>
-    <td>densenet 161</td>
-    <td>PB</td>
+    <td>Densenet 161</td>
+    <td>pb</td>
     <td>76.30%</td>
     <td>76.29%</td>
     <td>0.0001</td>
@@ -99,8 +99,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.39x</td>
   </tr>
   <tr>
-    <td>densenet 169</td>
-    <td>PB</td>
+    <td>Densenet 169</td>
+    <td>pb</td>
     <td>74.38%</td>
     <td>74.65%</td>
     <td>-0.0036</td>
@@ -109,8 +109,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.61x</td>
   </tr>
   <tr>
-    <td>faster rcnn inception resnet v2</td>
-    <td>PB</td>
+    <td>faster R-CNN Inception ResNet V2</td>
+    <td>pb</td>
     <td>37.44%</td>
     <td>38.31%</td>
     <td>-0.0227</td>
@@ -119,7 +119,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.83x</td>
   </tr>
   <tr>
-    <td>faster rcnn inception resnet v2</td>
+    <td>faster R-CNN Inception ResNet V2</td>
     <td>SavedModel</td>
     <td>37.55%</td>
     <td>38.31%</td>
@@ -129,8 +129,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.84x</td>
   </tr>
   <tr>
-    <td>faster rcnn resnet101</td>
-    <td>PB</td>
+    <td>faster R-CNN ResNet101</td>
+    <td>pb</td>
     <td>30.33%</td>
     <td>30.39%</td>
     <td>-0.002</td>
@@ -139,7 +139,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.21x</td>
   </tr>
   <tr>
-    <td>faster rcnn resnet101</td>
+    <td>faster R-CNN ResNet101</td>
     <td>SavedModel</td>
     <td>30.33%</td>
     <td>30.39%</td>
@@ -149,8 +149,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.70x</td>
   </tr>
   <tr>
-    <td>faster rcnn resnet50</td>
-    <td>PB</td>
+    <td>faster R-CNN ResNet50</td>
+    <td>pb</td>
     <td>26.64%</td>
     <td>26.59%</td>
     <td>0.0019</td>
@@ -159,8 +159,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.14x</td>
   </tr>
   <tr>
-    <td>inception resnet v2</td>
-    <td>PB</td>
+    <td>Inception ResNet V2</td>
+    <td>pb</td>
     <td>80.34%</td>
     <td>80.40%</td>
     <td>-0.0007</td>
@@ -169,7 +169,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.82x</td>
   </tr>
   <tr>
-    <td>inception resnet v2 </td>
+    <td>Inception ResNet V2 </td>
     <td>keras</td>
     <td>80.35%</td>
     <td>80.40%</td>
@@ -179,8 +179,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.82x</td>
   </tr>
   <tr>
-    <td>inception v1</td>
-    <td>PB</td>
+    <td>Inception v1</td>
+    <td>pb</td>
     <td>70.44%</td>
     <td>69.74%</td>
     <td>0.01</td>
@@ -189,8 +189,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.91x</td>
   </tr>
   <tr>
-    <td>inception v2</td>
-    <td>PB</td>
+    <td>Inception V2</td>
+    <td>pb</td>
     <td>74.34%</td>
     <td>73.97%</td>
     <td>0.005</td>
@@ -199,8 +199,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.51x</td>
   </tr>
   <tr>
-    <td>inception v3</td>
-    <td>PB</td>
+    <td>Inception V3</td>
+    <td>pb</td>
     <td>76.71%</td>
     <td>76.75%</td>
     <td>-0.0005</td>
@@ -209,7 +209,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.11x</td>
   </tr>
   <tr>
-    <td>inception v3 </td>
+    <td>Inception V3 </td>
     <td>keras</td>
     <td>77.73%</td>
     <td>77.83%</td>
@@ -219,8 +219,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.14x</td>
   </tr>
   <tr>
-    <td>inception v4</td>
-    <td>PB</td>
+    <td>Inception v4</td>
+    <td>pb</td>
     <td>80.18%</td>
     <td>80.27%</td>
     <td>-0.0011</td>
@@ -229,8 +229,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.12x</td>
   </tr>
   <tr>
-    <td>mask rcnn inception v2</td>
-    <td>PB</td>
+    <td>Mask R-CNN Inception V2</td>
+    <td>pb</td>
     <td>28.50%</td>
     <td>28.73%</td>
     <td>-0.008</td>
@@ -239,7 +239,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.10x</td>
   </tr>
   <tr>
-    <td>mask rcnn inception v2</td>
+    <td>Mask R-CNN Inception V2</td>
     <td>ckpt</td>
     <td>28.50%</td>
     <td>28.73%</td>
@@ -249,8 +249,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.11x</td>
   </tr>
   <tr>
-    <td>mobilenet v1</td>
-    <td>PB</td>
+    <td>MobileNet v1</td>
+    <td>pb</td>
     <td>71.85%</td>
     <td>70.96%</td>
     <td>0.0125</td>
@@ -259,8 +259,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.07x</td>
   </tr>
   <tr>
-    <td>mobilenet v2</td>
-    <td>PB</td>
+    <td>MobileNet V2</td>
+    <td>pb</td>
     <td>72.56%</td>
     <td>71.76%</td>
     <td>0.0111</td>
@@ -269,7 +269,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.42x</td>
   </tr>
   <tr>
-    <td>mobilenet v2  </td>
+    <td>MobileNet V2  </td>
     <td>keras</td>
     <td>71.10%</td>
     <td>71.76%</td>
@@ -279,8 +279,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.10x</td>
   </tr>
   <tr>
-    <td>mobilenet v3</td>
-    <td>PB</td>
+    <td>MobileNet V3</td>
+    <td>pb</td>
     <td>74.00%</td>
     <td>75.31%</td>
     <td>-0.0174</td>
@@ -289,8 +289,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.66x</td>
   </tr>
   <tr>
-    <td>resnet101</td>
-    <td>PB</td>
+    <td>ResNet101</td>
+    <td>pb</td>
     <td>77.50%</td>
     <td>76.45%</td>
     <td>0.0137</td>
@@ -299,7 +299,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.93x</td>
   </tr>
   <tr>
-    <td>resnet101 </td>
+    <td>ResNet101 </td>
     <td>keras</td>
     <td>61.38%</td>
     <td>61.47%</td>
@@ -309,7 +309,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.10x</td>
   </tr>
   <tr>
-    <td>resnet50 fashion</td>
+    <td>ResNet50 fashion</td>
     <td>keras</td>
     <td>78.04%</td>
     <td>78.12%</td>
@@ -319,8 +319,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.10x</td>
   </tr>
   <tr>
-    <td>resnet50 v1.0</td>
-    <td>PB</td>
+    <td>ResNet50 v1.0</td>
+    <td>pb</td>
     <td>74.12%</td>
     <td>74.27%</td>
     <td>-0.002</td>
@@ -329,8 +329,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.79x</td>
   </tr>
   <tr>
-    <td>resnet50 v1.5</td>
-    <td>PB</td>
+    <td>ResNet50 v1.5</td>
+    <td>pb</td>
     <td>76.23%</td>
     <td>76.46%</td>
     <td>-0.003</td>
@@ -339,8 +339,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.47x</td>
   </tr>
   <tr>
-    <td>resnetv2 101</td>
-    <td>PB</td>
+    <td>ResNetV2 101</td>
+    <td>pb</td>
     <td>72.65%</td>
     <td>71.87%</td>
     <td>0.0109</td>
@@ -349,7 +349,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.33x</td>
   </tr>
   <tr>
-    <td>resnetv2 101 </td>
+    <td>ResNetV2 101 </td>
     <td>keras</td>
     <td>71.48%</td>
     <td>71.57%</td>
@@ -359,8 +359,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.27x</td>
   </tr>
   <tr>
-    <td>resnetv2 152</td>
-    <td>PB</td>
+    <td>ResNetV2 152</td>
+    <td>pb</td>
     <td>73.07%</td>
     <td>72.37%</td>
     <td>0.0097</td>
@@ -369,8 +369,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.38x</td>
   </tr>
   <tr>
-    <td>resnetv2 50</td>
-    <td>PB</td>
+    <td>ResNetV2 50</td>
+    <td>pb</td>
     <td>70.44%</td>
     <td>69.64%</td>
     <td>0.0115</td>
@@ -379,7 +379,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.40x</td>
   </tr>
   <tr>
-    <td>resnetv 2 50 </td>
+    <td>ResNetv 2 50 </td>
     <td>keras</td>
     <td>69.20%</td>
     <td>69.03%</td>
@@ -389,8 +389,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.11x</td>
   </tr>
   <tr>
-    <td>ssd mobilenet v1</td>
-    <td>PB</td>
+    <td>SSD MobileNet v1</td>
+    <td>pb</td>
     <td>23.12%</td>
     <td>23.13%</td>
     <td>-0.0004</td>
@@ -399,7 +399,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.60x</td>
   </tr>
   <tr>
-    <td>ssd mobilenet v1 </td>
+    <td>SSD MobileNet v1 </td>
     <td>ckpt</td>
     <td>23.10%</td>
     <td>23.13%</td>
@@ -409,8 +409,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.31x</td>
   </tr>
   <tr>
-    <td>ssd resnet34</td>
-    <td>PB</td>
+    <td>SSD ResNet34</td>
+    <td>pb</td>
     <td>21.70%</td>
     <td>22.09%</td>
     <td>-0.0177</td>
@@ -419,8 +419,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.85x</td>
   </tr>
   <tr>
-    <td>ssd resnet50 v1</td>
-    <td>PB</td>
+    <td>SSD ResNet50 v1</td>
+    <td>pb</td>
     <td>37.75%</td>
     <td>38.00%</td>
     <td>-0.0066</td>
@@ -429,7 +429,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.18x</td>
   </tr>
   <tr>
-    <td>ssd resnet50 v1 </td>
+    <td>SSD ResNet50 v1 </td>
     <td>ckpt</td>
     <td>37.82%</td>
     <td>38.00%</td>
@@ -439,8 +439,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.53x</td>
   </tr>
   <tr>
-    <td>transformer lt mlperf</td>
-    <td>PB</td>
+    <td>transformer lt MLPerf</td>
+    <td>pb</td>
     <td>27.11589</td>
     <td>27.16596</td>
     <td>-0.0018</td>
@@ -449,8 +449,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.24x</td>
   </tr>
   <tr>
-    <td>vgg16</td>
-    <td>PB</td>
+    <td>VGG16</td>
+    <td>pb</td>
     <td>72.64%</td>
     <td>70.89%</td>
     <td>0.0247</td>
@@ -459,8 +459,8 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.40x</td>
   </tr>
   <tr>
-    <td>vgg19</td>
-    <td>PB</td>
+    <td>VGG19</td>
+    <td>pb</td>
     <td>72.69%</td>
     <td>71.01%</td>
     <td>0.0237</td>
@@ -470,7 +470,7 @@ Performance varies by use, configuration and other factors. See [platform config
   </tr>
   <tr>
     <td>wide deep large ds</td>
-    <td>PB</td>
+    <td>pb</td>
     <td>77.75%</td>
     <td>77.67%</td>
     <td>0.001</td>
@@ -512,7 +512,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </thead>
 <tbody align="center">
   <tr>
-    <td>albert base mrpc</td>
+    <td>alBERT base mrpc</td>
     <td>EAGER</td>
     <td>88.85%</td>
     <td>88.50%</td>
@@ -532,7 +532,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.02x</td>
   </tr>
   <tr>
-    <td>bert base cola</td>
+    <td>BERT base cola</td>
     <td>FX</td>
     <td>58.80%</td>
     <td>58.84%</td>
@@ -542,7 +542,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.20x</td>
   </tr>
   <tr>
-    <td>bert base mrpc</td>
+    <td>BERT base mrpc</td>
     <td>FX</td>
     <td>89.90%</td>
     <td>90.69%</td>
@@ -552,7 +552,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.08x</td>
   </tr>
   <tr>
-    <td>bert base rte</td>
+    <td>BERT base rte</td>
     <td>FX</td>
     <td>69.31%</td>
     <td>69.68%</td>
@@ -562,7 +562,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.19x</td>
   </tr>
   <tr>
-    <td>bert base sst-2</td>
+    <td>BERT base sst-2</td>
     <td>FX</td>
     <td>91.06%</td>
     <td>91.86%</td>
@@ -572,7 +572,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.21x</td>
   </tr>
   <tr>
-    <td>bert base sts-b</td>
+    <td>BERT base sts-b</td>
     <td>FX</td>
     <td>89.10%</td>
     <td>89.75%</td>
@@ -582,7 +582,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.16x</td>
   </tr>
   <tr>
-    <td>bert large cola</td>
+    <td>BERT large cola</td>
     <td>FX</td>
     <td>64.12%</td>
     <td>62.57%</td>
@@ -592,7 +592,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.57x</td>
   </tr>
   <tr>
-    <td>bert large mrpc</td>
+    <td>BERT large mrpc</td>
     <td>FX</td>
     <td>89.50%</td>
     <td>90.38%</td>
@@ -602,7 +602,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.55x</td>
   </tr>
   <tr>
-    <td>bert large qnli</td>
+    <td>BERT large qnli</td>
     <td>FX</td>
     <td>90.90%</td>
     <td>91.82%</td>
@@ -612,7 +612,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.56x</td>
   </tr>
   <tr>
-    <td>bert large RTE</td>
+    <td>BERT large RTE</td>
     <td>FX</td>
     <td>72.20%</td>
     <td>74.01%</td>
@@ -622,7 +622,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.38x</td>
   </tr>
   <tr>
-    <td>bert large squad</td>
+    <td>BERT large SQuAD</td>
     <td>FX</td>
     <td>92.61422</td>
     <td>93.15842</td>
@@ -642,7 +642,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.31x</td>
   </tr>
   <tr>
-    <td>camembert base mrpc</td>
+    <td>camemBERT base mrpc</td>
     <td>EAGER</td>
     <td>86.70%</td>
     <td>86.82%</td>
@@ -662,7 +662,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.70x</td>
   </tr>
   <tr>
-    <td>deberta mrpc</td>
+    <td>deBERTa mrpc</td>
     <td>EAGER</td>
     <td>90.88%</td>
     <td>90.91%</td>
@@ -672,7 +672,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.85x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">distilbert base mrpc</td>
+    <td class="tg-zk71">distilBERT base mrpc</td>
     <td>EAGER</td>
     <td>88.23%</td>
     <td>89.16%</td>
@@ -682,7 +682,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.85x</td>
   </tr>
   <tr>
-    <td>distilbert base mrpc</td>
+    <td>distilBERT base mrpc</td>
     <td>FX</td>
     <td>88.54%</td>
     <td>89.16%</td>
@@ -692,7 +692,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.02x</td>
   </tr>
   <tr>
-    <td>flaubert mrpc</td>
+    <td>flauBERT mrpc</td>
     <td>EAGER</td>
     <td>79.87%</td>
     <td>80.19%</td>
@@ -712,7 +712,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.60x</td>
   </tr>
   <tr>
-    <td>hubert</td>
+    <td>huBERT</td>
     <td>EAGER</td>
     <td>97.63%</td>
     <td>97.84%</td>
@@ -722,7 +722,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.38x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">inception v3</td>
+    <td class="tg-zk71">Inception V3</td>
     <td>EAGER</td>
     <td>69.43%</td>
     <td>69.52%</td>
@@ -752,7 +752,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.31x</td>
   </tr>
   <tr>
-    <td>maskrcnn</td>
+    <td>MaskR-CNN</td>
     <td>FX</td>
     <td>37.60%</td>
     <td>37.80%</td>
@@ -772,7 +772,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.27x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">mobilenet v2</td>
+    <td class="tg-zk71">MobileNet V2</td>
     <td>EAGER</td>
     <td>70.54%</td>
     <td>71.84%</td>
@@ -822,7 +822,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.06x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">resnet18</td>
+    <td class="tg-zk71">ResNet18</td>
     <td>EAGER</td>
     <td>69.57%</td>
     <td>69.76%</td>
@@ -832,7 +832,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.01x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">resnet18</td>
+    <td class="tg-zk71">ResNet18</td>
     <td>FX</td>
     <td>69.62%</td>
     <td>69.76%</td>
@@ -842,7 +842,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.36x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">resnet50</td>
+    <td class="tg-zk71">ResNet50</td>
     <td>EAGER</td>
     <td>75.98%</td>
     <td>76.15%</td>
@@ -862,7 +862,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.02x</td>
   </tr>
   <tr class="tg-zk71">
-    <td>roberta base mrpc</td>
+    <td>roBERTa base mrpc</td>
     <td>EAGER</td>
     <td>88.25%</td>
     <td>88.18%</td>
@@ -872,7 +872,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.10x</td>
   </tr>
   <tr>
-    <td>squeezebert mrpc</td>
+    <td>squeezeBERT mrpc</td>
     <td>EAGER</td>
     <td>86.87%</td>
     <td>87.65%</td>
@@ -882,7 +882,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.30x</td>
   </tr>
   <tr>
-    <td>ssd resnet34</td>
+    <td>SSD ResNet34</td>
     <td>FX</td>
     <td>19.468</td>
     <td>19.63</td>
@@ -902,7 +902,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.41x</td>
   </tr>
   <tr>
-    <td>wav2vec2</td>
+    <td>waV2vec2</td>
     <td>EAGER</td>
     <td>95.71%</td>
     <td>96.60%</td>
@@ -912,7 +912,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.22x</td>
   </tr>
   <tr>
-    <td>xlm roberta mrpc</td>
+    <td>xlm roBERTa mrpc</td>
     <td>EAGER</td>
     <td>88.24%</td>
     <td>88.24%</td>
@@ -922,7 +922,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.00x</td>
   </tr>
   <tr>
-    <td>xlm-roberta-base mrpc</td>
+    <td>xlm-roBERTa-base mrpc</td>
     <td>EAGER</td>
     <td>88.03%</td>
     <td>88.62%</td>
@@ -932,7 +932,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.17x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">yolo v3</td>
+    <td class="tg-zk71">YOLO V3</td>
     <td>EAGER</td>
     <td>24.60%</td>
     <td>24.54%</td>
@@ -965,7 +965,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </thead>
 <tbody align="center">
   <tr>
-    <td>bert base MRPC</td>
+    <td>BERT base MRPC</td>
     <td>FX</td>
     <td>89.20%</td>
     <td>89.50%</td>
@@ -975,7 +975,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.28x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">resnet 18</td>
+    <td class="tg-zk71">ResNet 18</td>
     <td>EAGER</td>
     <td>69.68%</td>
     <td>69.76%</td>
@@ -985,7 +985,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.02x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">resnet 18</td>
+    <td class="tg-zk71">ResNet 18</td>
     <td>FX</td>
     <td>69.84%</td>
     <td>69.76%</td>
@@ -995,7 +995,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.46x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">resnet 50</td>
+    <td class="tg-zk71">ResNet 50</td>
     <td>EAGER</td>
     <td>76.03%</td>
     <td>76.15%</td>
@@ -1028,7 +1028,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </thead>
 <tbody align="center">
   <tr>
-    <td >resnet50</td>
+    <td >ResNet50</td>
     <td>IPEX</td>
     <td >76.01%</td>
     <td >76.15%</td>
@@ -1038,7 +1038,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td >4.02x</td>
   </tr>
   <tr>
-    <td >resnet18</td>
+    <td >ResNet18</td>
     <td>IPEX</td>
     <td >69.65%</td>
     <td >69.76%</td>
@@ -1048,7 +1048,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td >3.01x</td>
   </tr>
   <tr>
-    <td >ssd resnet34</td>
+    <td >ssd ResNet34</td>
     <td>IPEX</td>
     <td >19.93%</td>
     <td >20.00%</td>
@@ -1058,7 +1058,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td >3.93x</td>
   </tr>
   <tr>
-    <td >bert large</td>
+    <td >BERT large</td>
     <td>IPEX</td>
     <td >92.81263221</td>
     <td >93.15841753</td>
@@ -1121,7 +1121,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.78x</td>
   </tr>
   <tr>
-    <td>bert base mrpc dynamic</td>
+    <td>BERT base mrpc DYNAMIC</td>
     <td>QLinear</td>
     <td>85.29%</td>
     <td>86.03%</td>
@@ -1131,7 +1131,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.39x</td>
   </tr>
   <tr>
-    <td>bert base mrpc static</td>
+    <td>BERT base mrpc STATIC</td>
     <td>QLinear</td>
     <td>85.54%</td>
     <td>86.03%</td>
@@ -1141,7 +1141,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.45x</td>
   </tr>
   <tr>
-    <td>bert squad model zoo dynamic</td>
+    <td>BERT SQuAD model zoo DYNAMIC</td>
     <td>QLinear</td>
     <td>80.43519</td>
     <td>80.67171</td>
@@ -1171,7 +1171,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.70x</td>
   </tr>
   <tr>
-    <td>densenet</td>
+    <td>Densenet</td>
     <td>QLinear</td>
     <td>60.53%</td>
     <td>60.96%</td>
@@ -1181,7 +1181,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.35x</td>
   </tr>
   <tr>
-    <td>distilbert base mrpc</td>
+    <td>distilBERT base mrpc</td>
     <td>QLinear</td>
     <td>85.54%</td>
     <td>84.56%</td>
@@ -1191,7 +1191,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.86x</td>
   </tr>
   <tr>
-    <td>distilbert base mrpc </td>
+    <td>distilBERT base mrpc </td>
     <td>QDQ</td>
     <td>84.56%</td>
     <td>84.56%</td>
@@ -1241,7 +1241,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.33x</td>
   </tr>
   <tr>
-    <td>faster rcnn</td>
+    <td>faster R-CNN</td>
     <td>QLinear</td>
     <td>34.09%</td>
     <td>34.37%</td>
@@ -1251,7 +1251,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.35x</td>
   </tr>
   <tr>
-    <td>faster rcnn </td>
+    <td>faster R-CNN </td>
     <td>QDQ</td>
     <td>33.90%</td>
     <td>34.37%</td>
@@ -1301,7 +1301,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.32x</td>
   </tr>
   <tr>
-    <td>hf albert-base-v2 dynamic</td>
+    <td>hf alBERT-base-V2 DYNAMIC</td>
     <td>QLinear</td>
     <td>91.40%</td>
     <td>92.32%</td>
@@ -1311,7 +1311,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.48x</td>
   </tr>
   <tr>
-    <td>hf bert-base-multilingual-cased dynamic</td>
+    <td>hf BERT-base-multilingual-cased DYNAMIC</td>
     <td>QLinear</td>
     <td>88.7022</td>
     <td>89.1263</td>
@@ -1321,7 +1321,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.99x</td>
   </tr>
   <tr>
-    <td>hf bert-base-uncased dynamic</td>
+    <td>hf BERT-base-uncased DYNAMIC</td>
     <td>QLinear</td>
     <td>89.58%</td>
     <td>90.42%</td>
@@ -1331,7 +1331,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.90x</td>
   </tr>
   <tr>
-    <td>hf camembert-base dynamic</td>
+    <td>hf camemBERT-base DYNAMIC</td>
     <td>QLinear</td>
     <td>88.47%</td>
     <td>89.28%</td>
@@ -1341,7 +1341,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.73x</td>
   </tr>
   <tr>
-    <td>hf distilbert-base-uncased dynamic</td>
+    <td>hf distilBERT-base-uncased DYNAMIC</td>
     <td>QLinear</td>
     <td>90.37%</td>
     <td>91.06%</td>
@@ -1351,7 +1351,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.74x</td>
   </tr>
   <tr>
-    <td>hf minilm-l12-h384-uncased dynamic</td>
+    <td>hf minilm-l12-h384-uncased DYNAMIC</td>
     <td>QLinear</td>
     <td>91.07%</td>
     <td>90.97%</td>
@@ -1361,7 +1361,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.88x</td>
   </tr>
   <tr>
-    <td>hf minilm-l6-h384-uncased dynamic</td>
+    <td>hf minilm-l6-h384-uncased DYNAMIC</td>
     <td>QLinear</td>
     <td>89.91%</td>
     <td>90.14%</td>
@@ -1371,7 +1371,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.48x</td>
   </tr>
   <tr>
-    <td>hf roberta-base dynamic</td>
+    <td>hf roBERTa-base DYNAMIC</td>
     <td>QLinear</td>
     <td>90.85%</td>
     <td>91.38%</td>
@@ -1381,7 +1381,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.70x</td>
   </tr>
   <tr>
-    <td>hf spanbert dynamic</td>
+    <td>hf spanBERT DYNAMIC</td>
     <td>QLinear</td>
     <td>91.3983</td>
     <td>91.9755</td>
@@ -1391,7 +1391,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.01x</td>
   </tr>
   <tr>
-    <td>hf xlm-roberta-base dynamic</td>
+    <td>hf xlm-roBERTa-base DYNAMIC</td>
     <td>QLinear</td>
     <td>89.45%</td>
     <td>90.10%</td>
@@ -1401,7 +1401,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.22x</td>
   </tr>
   <tr>
-    <td>inception v1</td>
+    <td>Inception v1</td>
     <td>QLinear</td>
     <td>67.21%</td>
     <td>67.24%</td>
@@ -1411,7 +1411,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.33x</td>
   </tr>
   <tr>
-    <td>inception v1 </td>
+    <td>Inception v1 </td>
     <td>QDQ</td>
     <td>67.21%</td>
     <td>67.24%</td>
@@ -1421,7 +1421,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.32x</td>
   </tr>
   <tr>
-    <td>mask rcnn</td>
+    <td>Mask R-CNN</td>
     <td>QLinear</td>
     <td>33.13%</td>
     <td>33.72%</td>
@@ -1431,7 +1431,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.08x</td>
   </tr>
   <tr>
-    <td>mask rcnn </td>
+    <td>Mask R-CNN </td>
     <td>QDQ</td>
     <td>33.28%</td>
     <td>33.72%</td>
@@ -1441,7 +1441,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.56x</td>
   </tr>
   <tr>
-    <td>mobilebert mrpc</td>
+    <td>MobileBERT mrpc</td>
     <td>QLinear</td>
     <td>86.27%</td>
     <td>86.27%</td>
@@ -1451,7 +1451,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.15x</td>
   </tr>
   <tr>
-    <td>mobilebert squad mlperf dynamic</td>
+    <td>MobileBERT SQuAD MLPerf DYNAMIC</td>
     <td>QLinear</td>
     <td>89.82276</td>
     <td>90.0265</td>
@@ -1461,7 +1461,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.16x</td>
   </tr>
   <tr>
-    <td>mobilenet v2</td>
+    <td>MobileNet V2</td>
     <td>QLinear</td>
     <td>65.59%</td>
     <td>66.89%</td>
@@ -1471,7 +1471,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.55x</td>
   </tr>
   <tr>
-    <td>mobilenet v2 </td>
+    <td>MobileNet V2 </td>
     <td>QDQ</td>
     <td>65.82%</td>
     <td>66.89%</td>
@@ -1481,7 +1481,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.47x</td>
   </tr>
   <tr>
-    <td>mobilenet v3 mlperf</td>
+    <td>MobileNet V3 MLPerf</td>
     <td>QLinear</td>
     <td>75.58%</td>
     <td>75.74%</td>
@@ -1491,7 +1491,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.02x</td>
   </tr>
   <tr>
-    <td>mobilenet v3 mlperf </td>
+    <td>MobileNet V3 MLPerf </td>
     <td>QDQ</td>
     <td>75.57%</td>
     <td>75.74%</td>
@@ -1501,7 +1501,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.76x</td>
   </tr>
   <tr>
-    <td>mobilenetv2-12</td>
+    <td>MobileNetV2-12</td>
     <td>QLinear</td>
     <td>68.38%</td>
     <td>69.48%</td>
@@ -1511,7 +1511,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.59x</td>
   </tr>
   <tr>
-    <td>mobilenetv2-12 </td>
+    <td>MobileNetV2-12 </td>
     <td>QDQ</td>
     <td>68.51%</td>
     <td>69.48%</td>
@@ -1521,7 +1521,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.47x</td>
   </tr>
   <tr>
-    <td>resnet v1 5 mlperf</td>
+    <td>ResNet v1 5 MLPerf</td>
     <td>QLinear</td>
     <td>76.15%</td>
     <td>76.46%</td>
@@ -1531,7 +1531,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.77x</td>
   </tr>
   <tr>
-    <td>resnet v1 5 mlperf </td>
+    <td>ResNet v1 5 MLPerf </td>
     <td>QDQ</td>
     <td>76.14%</td>
     <td>76.46%</td>
@@ -1541,7 +1541,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.34x</td>
   </tr>
   <tr>
-    <td>resnet50 v1 5</td>
+    <td>ResNet50 v1 5</td>
     <td>QLinear</td>
     <td>72.26%</td>
     <td>72.29%</td>
@@ -1551,7 +1551,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.73x</td>
   </tr>
   <tr>
-    <td>resnet50 v1 5 </td>
+    <td>ResNet50 v1 5 </td>
     <td>QDQ</td>
     <td>72.20%</td>
     <td>72.29%</td>
@@ -1561,7 +1561,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.31x</td>
   </tr>
   <tr>
-    <td>resnet50-v1-12</td>
+    <td>ResNet50-v1-12</td>
     <td>QLinear</td>
     <td>74.81%</td>
     <td>74.99%</td>
@@ -1571,7 +1571,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.32x</td>
   </tr>
   <tr>
-    <td>resnet50-v1-12 </td>
+    <td>ResNet50-v1-12 </td>
     <td>QDQ</td>
     <td>74.76%</td>
     <td>74.99%</td>
@@ -1581,7 +1581,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.31x</td>
   </tr>
   <tr>
-    <td>roberta base mrpc</td>
+    <td>roBERTa base mrpc</td>
     <td>QLinear</td>
     <td>90.69%</td>
     <td>89.95%</td>
@@ -1591,7 +1591,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.54x</td>
   </tr>
   <tr>
-    <td>shufflenet-v2-12</td>
+    <td>ShuffleNet V2-12</td>
     <td>QLinear</td>
     <td>66.13%</td>
     <td>66.36%</td>
@@ -1601,7 +1601,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.61x</td>
   </tr>
   <tr>
-    <td>shufflenet-v2-12 </td>
+    <td>ShuffleNet V2-12 </td>
     <td>QDQ</td>
     <td>66.12%</td>
     <td>66.36%</td>
@@ -1611,7 +1611,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.35x</td>
   </tr>
   <tr>
-    <td>squeezenet</td>
+    <td>SqueezeNet</td>
     <td>QLinear</td>
     <td>56.54%</td>
     <td>56.87%</td>
@@ -1621,7 +1621,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.30x</td>
   </tr>
   <tr>
-    <td>squeezenet </td>
+    <td>SqueezeNet </td>
     <td>QDQ</td>
     <td>56.39%</td>
     <td>56.87%</td>
@@ -1631,7 +1631,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.32x</td>
   </tr>
   <tr>
-    <td>ssd mobilenet v1</td>
+    <td>SSD MobileNet v1</td>
     <td>QLinear</td>
     <td>22.44%</td>
     <td>23.10%</td>
@@ -1641,7 +1641,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.29x</td>
   </tr>
   <tr>
-    <td>ssd mobilenet v1 </td>
+    <td>SSD MobileNet v1 </td>
     <td>QDQ</td>
     <td>22.44%</td>
     <td>23.10%</td>
@@ -1651,7 +1651,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.25x</td>
   </tr>
   <tr>
-    <td>ssd mobilenet v1-2</td>
+    <td>SSD MobileNet v1-2</td>
     <td>QLinear</td>
     <td>22.96%</td>
     <td>23.02%</td>
@@ -1661,7 +1661,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.28x</td>
   </tr>
   <tr>
-    <td>ssd mobilenet v1-2 </td>
+    <td>SSD MobileNet v1-2 </td>
     <td>QDQ</td>
     <td>22.96%</td>
     <td>23.02%</td>
@@ -1671,7 +1671,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.22x</td>
   </tr>
   <tr>
-    <td>ssd mobilenet v2</td>
+    <td>SSD MobileNet V2</td>
     <td>QLinear</td>
     <td>24.03%</td>
     <td>24.67%</td>
@@ -1681,7 +1681,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.33x</td>
   </tr>
   <tr>
-    <td>ssd-12</td>
+    <td>SSD-12</td>
     <td>QLinear</td>
     <td>18.92%</td>
     <td>18.98%</td>
@@ -1691,7 +1691,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.56x</td>
   </tr>
   <tr>
-    <td>ssd-12 </td>
+    <td>SSD-12 </td>
     <td>QDQ</td>
     <td>18.63%</td>
     <td>18.98%</td>
@@ -1701,7 +1701,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.68x</td>
   </tr>
   <tr>
-    <td>tiny yolov3</td>
+    <td>Tiny YOLO V3</td>
     <td>QLinear</td>
     <td>11.82%</td>
     <td>12.42%</td>
@@ -1721,7 +1721,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.50x</td>
   </tr>
   <tr>
-    <td>vgg16</td>
+    <td>VGG16</td>
     <td>QLinear</td>
     <td>66.67%</td>
     <td>66.69%</td>
@@ -1731,7 +1731,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.26x</td>
   </tr>
   <tr>
-    <td>vgg16 </td>
+    <td>VGG16 </td>
     <td>QDQ</td>
     <td>66.69%</td>
     <td>66.69%</td>
@@ -1741,7 +1741,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.09x</td>
   </tr>
   <tr>
-    <td>vgg16 model zoo</td>
+    <td>VGG16 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>72.32%</td>
     <td>72.40%</td>
@@ -1751,7 +1751,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.21x</td>
   </tr>
   <tr>
-    <td>vgg16 model zoo </td>
+    <td>VGG16 (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>72.31%</td>
     <td>72.40%</td>
@@ -1761,7 +1761,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.21x</td>
   </tr>
   <tr>
-    <td>yolov3</td>
+    <td>YOLO V3</td>
     <td>QLinear</td>
     <td>26.92%</td>
     <td>28.73%</td>
@@ -1771,7 +1771,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.24x</td>
   </tr>
   <tr>
-    <td>yolov4</td>
+    <td>YOLO V4</td>
     <td>QLinear</td>
     <td>32.33%</td>
     <td>33.71%</td>
@@ -1823,7 +1823,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </thead>
 <tbody align="center">
   <tr>
-    <td>inception v3</td>
+    <td>Inception V3</td>
     <td>77.65%</td>
     <td>0.16%</td>
     <td>94.236</td>
@@ -1832,7 +1832,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.05x</td>
   </tr>
   <tr>
-    <td>mobilenet 1.0</td>
+    <td>MobileNet 1.0</td>
     <td>72.23%</td>
     <td>-0.86%</td>
     <td>436.461</td>
@@ -1841,7 +1841,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.01x</td>
   </tr>
   <tr>
-    <td>mobilenet v2 1.0</td>
+    <td>MobileNet V2 1.0</td>
     <td>70.87%</td>
     <td>-0.16%</td>
     <td>270.779</td>
@@ -1850,7 +1850,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.78x</td>
   </tr>
   <tr>
-    <td>resnet 152 v1</td>
+    <td>ResNet 152 v1</td>
     <td>78.54%</td>
     <td>-0.30%</td>
     <td>66.616</td>
@@ -1859,7 +1859,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.39x</td>
   </tr>
   <tr>
-    <td>resnet 18 v1</td>
+    <td>ResNet 18 v1</td>
     <td>70.14%</td>
     <td>-0.19%</td>
     <td>429.858</td>
@@ -1868,7 +1868,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.45x</td>
   </tr>
   <tr>
-    <td>resnet 50 v1</td>
+    <td>ResNet 50 v1</td>
     <td>76.33%</td>
     <td>-0.50%</td>
     <td>182.561</td>
@@ -1877,7 +1877,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.85x</td>
   </tr>
   <tr>
-    <td>squeezenet 1.0</td>
+    <td>SqueezeNet 1.0</td>
     <td>56.97%</td>
     <td>-0.26%</td>
     <td>331.716</td>
@@ -1886,7 +1886,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.65x</td>
   </tr>
   <tr>
-    <td>ssd mobilenet 1.0</td>
+    <td>SSD MobileNet 1.0</td>
     <td>75.54%</td>
     <td>-0.79%</td>
     <td>53.659</td>
@@ -1895,7 +1895,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.70x</td>
   </tr>
   <tr>
-    <td>ssd resnet50 v1</td>
+    <td>SSD ResNet50 v1</td>
     <td>80.23%</td>
     <td>-0.05%</td>
     <td>37.629</td>
@@ -2102,7 +2102,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
   </tr>
   <tr>
-    <td>Distilbert-base-uncased</td>
+    <td>DistilBERT-base-uncased</td>
     <td>question answering</br>SQuAD-v1.1</td>
     <td>f1]=86.90</br>f1=86.15</td>
     <td>-0.86%</td>
@@ -2112,7 +2112,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
   </tr>
   <tr>
-    <td>Distilbert-base-uncased</td>
+    <td>DistilBERT-base-uncased</td>
     <td>question answering</br>SQuAD-v1.1</td>
     <td>f1=86.90</br>f1=87.50</td>
     <td>+0.69%</td>
@@ -2202,7 +2202,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
   </tr>
   <tr>
-    <td>Distilbert-base-uncased</td>
+    <td>DistilBERT-base-uncased</td>
     <td>text classification</br>MRPC</td>
     <td>f1=90.26</br>f1=89.85</td>
     <td>-0.46%</td>
@@ -2212,7 +2212,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
   </tr>  
   <tr>
-    <td>Distilbert-base-uncased</td>
+    <td>DistilBERT-base-uncased</td>
     <td>text classification</br>MRPC</td>
     <td>f1=90.26</br>f1=90.88</td>
     <td>+0.69%</td>
@@ -2380,7 +2380,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">22.87%</td>
   </tr>
   <tr>
-    <td class="tg-cwad">Mobile bert MRPC</td>
+    <td class="tg-cwad">Mobile BERT MRPC</td>
     <td class="tg-pm1l">85.54%</td>
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">85.54%</td>
