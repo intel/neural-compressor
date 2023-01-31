@@ -11,11 +11,8 @@ import torch
 import torchvision
 import torchvision.models.resnet as models
 import torchvision.transforms as transforms
-from neural_compressor.data import Datasets
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import \
+from neural_compressor.data.dataloaders.pytorch_dataloader import \
     PyTorchDataLoader
-from neural_compressor.experimental.data.transforms.transform import \
-    CropResizeTFTransform
 from neural_compressor.utils import logger
 
 from autoaugment import CIFAR10Policy
@@ -321,7 +318,6 @@ def main_worker(args):
     )
 
     testloader = PyTorchDataLoader(testset, batch_size=args.batch_size)
-    from neural_compressor.experimental import Distillation, common
 
     if args.hpo:
         if is_optuna_available():

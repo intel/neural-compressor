@@ -2,4 +2,4 @@ diffusers
 accelerate
 pytorch_fid
 transformers
-torch >= 1.9
+torch>=1.9.0
