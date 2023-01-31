@@ -59,7 +59,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.82x</td>
   </tr>
   <tr>
-    <td>BERT large SQuAD<</td>
+    <td>BERT large SQuAD</td>
     <td>PB</td>
     <td>92.404</td>
     <td>92.9861</td>
@@ -491,7 +491,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-###PyTorch Models with Torch 1.13.1+cpu in PTQ Mode
+### PyTorch Models with Torch 1.13.1+cpu in PTQ Mode
 
 <table class="tg">
 <thead>
@@ -652,7 +652,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.09x</td>
   </tr>
   <tr>
-    <td>ctrl MRPC</td>
+    <td>Ctrl MRPC</td>
     <td>EAGER</td>
     <td>81.87%</td>
     <td>82.00%</td>
@@ -662,7 +662,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.70x</td>
   </tr>
   <tr>
-    <td>deBERTa MRPC</td>
+    <td>Deberta MRPC</td>
     <td>EAGER</td>
     <td>90.88%</td>
     <td>90.91%</td>
@@ -672,7 +672,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.85x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">distilBERT base MRPC</td>
+    <td class="tg-zk71">DistilBERT base MRPC</td>
     <td>EAGER</td>
     <td>88.23%</td>
     <td>89.16%</td>
@@ -682,7 +682,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.85x</td>
   </tr>
   <tr>
-    <td>distilBERT base MRPC</td>
+    <td>DistilBERT base MRPC</td>
     <td>FX</td>
     <td>88.54%</td>
     <td>89.16%</td>
@@ -692,7 +692,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.02x</td>
   </tr>
   <tr>
-    <td>flauBERT MRPC</td>
+    <td>FlauBERT MRPC</td>
     <td>EAGER</td>
     <td>79.87%</td>
     <td>80.19%</td>
@@ -702,7 +702,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.54x</td>
   </tr>
   <tr>
-    <td>gpt j wikitext</td>
+    <td>GPT J WikiText</td>
     <td>FX</td>
     <td>3.3587</td>
     <td>2.33509</td>
@@ -712,7 +712,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.60x</td>
   </tr>
   <tr>
-    <td>huBERT</td>
+    <td>HuBERT</td>
     <td>EAGER</td>
     <td>97.63%</td>
     <td>97.84%</td>
@@ -732,7 +732,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.46x</td>
   </tr>
   <tr>
-    <td>layoutlm MRPC</td>
+    <td>Layoutlm MRPC</td>
     <td>EAGER</td>
     <td>81.22%</td>
     <td>78.01%</td>
@@ -742,7 +742,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.12x</td>
   </tr>
   <tr>
-    <td>longformer MRPC</td>
+    <td>Longformer MRPC</td>
     <td>EAGER</td>
     <td>91.01%</td>
     <td>91.46%</td>
@@ -762,7 +762,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.51x</td>
   </tr>
   <tr>
-    <td>mbart wnli</td>
+    <td>Mbart wnli</td>
     <td>EAGER</td>
     <td>56.34%</td>
     <td>56.34%</td>
@@ -792,7 +792,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.38x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">peleenet</td>
+    <td class="tg-zk71">Peleenet</td>
     <td>EAGER</td>
     <td>71.64%</td>
     <td>72.10%</td>
@@ -802,7 +802,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.29x</td>
   </tr>
   <tr>
-    <td>pokemon diffusers</td>
+    <td>Pokemon Diffusers</td>
     <td>FX</td>
     <td>275.8026</td>
     <td>334.4761</td>
@@ -812,7 +812,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.48x</td>
   </tr>
   <tr>
-    <td>reformer crime and punishment</td>
+    <td>Reformer Crime and Punishment</td>
     <td>EAGER</td>
     <td>1.87979</td>
     <td>1.8717</td>
@@ -912,7 +912,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.22x</td>
   </tr>
   <tr>
-    <td>xlm Roberta MRPC</td>
+    <td>Xlm Roberta MRPC</td>
     <td>EAGER</td>
     <td>88.24%</td>
     <td>88.24%</td>
@@ -944,7 +944,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-###PyTorch Models with Torch 1.13.1+cpu in QAT Mode
+### PyTorch Models with Torch 1.13.1+cpu in QAT Mode
 
 <table class="tg">
 <thead>
@@ -1271,7 +1271,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>3.40x</td>
   </tr>
   <tr>
-    <td>fcn </td>
+    <td>FCN</td>
     <td>QDQ</td>
     <td>64.40%</td>
     <td>64.98%</td>
@@ -2263,7 +2263,7 @@ Performance varies by use, configuration and other factors. See [platform config
 | ResNet example      | ImageNet  | ResNet18<br>(0.6739 ACC)             | ResNet50<br>(0.7399 ACC)           |   0.6845 ACC<br>(0.0106 ACC)                        |   WIP                        |
 | BlendCnn example    |   MRPC    | BlendCnn<br>(0.7034 ACC)             | BERT-Base<br>(0.8382 ACC)          |   0.7034 ACC<br>(0 ACC)                             |   WIP                        |
 | BiLSTM example      |  SST-2    | BiLSTM<br>(0.8314 ACC)               | RoBERTa-Base<br>(0.9403 ACC)       |   0.9048 ACC<br>(0.0734 ACC)                        |   WIP                        |
-|Distilbert example   |  SQuAD    | Distilbert<br>(0.7323/0.8256 EM/F1)  | BERT-Base<br>(0.8084/0.8814 EM/F1) |   0.7442/0.8371 EM/F1<br>(0.0119/0.0115 EM/F1)      |   WIP                        |
+|DistilBERT example   |  SQuAD    | DistilBERT<br>(0.7323/0.8256 EM/F1)  | BERT-Base<br>(0.8084/0.8814 EM/F1) |   0.7442/0.8371 EM/F1<br>(0.0119/0.0115 EM/F1)      |   WIP                        |
 |TinyBERT example     |  MNLI     | TinyBERT<br>(0.8018/0.8044 m/mm)     | BERT-Base<br>(0.8363/0.8411 m/mm)  |   0.8025/0.8074 m/mm<br>(0.0007/0.0030 m/mm)        |   WIP                        |
 |BERT-3 example       |  QQP      | BERT-3<br>(0.8626/0.8213 EM/F1)      | BERT-Base<br>(0.9091/0.8782 EM/F1) |   0.8684/0.8259 EM/F1<br>(0.0058/0.0046 EM/F1)      |   WIP                        |
 |DistilRoBERTa example|  COLA     | DistilRoBERTa<br>(0.6057 ACC)        | RoBERTa-Large<br>(0.6455 ACC)      |   0.6187 ACC<br>(0.0130 ACC)                        |   WIP                        |
@@ -2317,7 +2317,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td class="tg-pm1l">22.35%</td>
   </tr>
   <tr>
-    <td class="tg-cwad">Distilbert base MRPC</td>
+    <td class="tg-cwad">DistilBERT base MRPC</td>
     <td class="tg-pm1l">84.56%</td>
     <td class="tg-pm1l">83.82%</td>
     <td class="tg-pm1l">84.56%</td>
