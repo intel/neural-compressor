@@ -191,12 +191,12 @@ class TuneStrategy(object):
 
     def master_worker_handle(self, comm, tune_cfg_lst):
         # send all task ids to all free nodes, and wait until any result
-        # when receving any result, directly send a new task id to the sender (it's free)
+        # when receiving any result, directly send a new task id to the sender (it's free)
         from mpi4py import MPI
         size = comm.Get_size()
         for process_id in range(1, min(len(tune_cfg_lst) + 1, size)):
             tune_cfg_id = process_id - 1
-            logger.info("~~~~~~master sending tune cfg: {}".format(tune_cfg_id))
+            logger.info("~~~~~~master sending tune cfg: {} to rank {}".format(tune_cfg_id, process_id))
             comm.send(
                 obj=tune_cfg_id, # just send the tune cfg id is enough
                 dest=process_id, # rank 0 send to rank 1, 2, ...
@@ -218,15 +218,14 @@ class TuneStrategy(object):
                 tag=MPI.ANY_TAG,
                 status=status   # get MPI status object
             )
-
-            logger.info("~~~~~~master reciving eval result: {}".format(eval_res))
-
-            self.last_tune_result = eval_res    # for context coordination of stage 3
-
             self.num_acks += 1
             sender_rank = status.Get_source() # sender rank
             tag = status.Get_tag() # the task id that is finished
 
+            logger.info("~~~~~~master receiving eval result: {} from rank {}".format(eval_res, sender_rank))
+
+            self.last_tune_result = eval_res    # for context coordination of stage 3
+            
             self.overall_trials += 1
             self.best_tune_cfg_id = None
             self.already_ack_id_lst.add(tag)
@@ -301,7 +300,7 @@ class TuneStrategy(object):
 
 
     def slave_worker_handle(self, comm, tune_cfg_lst):
-        # when receving any task id, find it in tune_cfg_lst and do it
+        # when receiving any task id, find it in tune_cfg_lst and do it
         from mpi4py import MPI
         status = MPI.Status()
         while True:
