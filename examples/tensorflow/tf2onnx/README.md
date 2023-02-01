@@ -6,4 +6,5 @@ Please note that we only support exporting ONNX QDQ format for INT8 now.
 The following examples are available:
 
 * [resnet50v1.5](/examples/tensorflow/tf2onnx/resnet50v1.5): image recognition ResNet50 model from MLPerf.
+* [mobilenet_v2](/examples/tensorflow/tf2onnx/mobilenet_v2): image recognition mobilenet_v2 model.
 * [ssd_mobilenet_v1](/examples/tensorflow/tf2onnx/ssd_mobilenet_v1): object detection ssd_mobilenet_v1 model.
