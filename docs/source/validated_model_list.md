@@ -6,9 +6,9 @@ Validated Models
 
     1.1. [TensorFlow Models with TensorFlow 2.11.0](#tensorflow-models-with-tensorflow-2110)
 
-    1.2. [PyTorch Models with Torch 1.13.1+cpu in PTQ Mode](#pytorch-models-with-torch-1131cpu-in-qat-mode)
+    1.2. [PyTorch Models with Torch 1.13.0+cpu in PTQ Mode](#pytorch-models-with-torch-1131cpu-in-qat-mode)
 
-    1.3. [PyTorch Models with Torch 1.13.1+cpu in QAT Mode](#pytorch-models-with-torch-1131cpu-in-qat-mode)
+    1.3. [PyTorch Models with Torch 1.13.0+cpu in QAT Mode](#pytorch-models-with-torch-1130cpu-in-qat-mode)
 
     1.4. [PyTorch Models with Torch and Intel® Extension for PyTorch* 1.13.0+cpu](#pytorch-models-with-torch-and-intel-extension-for-pytorch-1130cpu)
     
@@ -491,7 +491,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch Models with Torch 1.13.1+cpu in PTQ Mode
+### PyTorch Models with Torch 1.13.0+cpu in PTQ Mode
 
 <table class="tg">
 <thead>
@@ -504,7 +504,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Performance Ratio[INT8/FP32]</th>
@@ -614,9 +614,9 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <td>BERT large RTE</td>
     <td>FX</td>
-    <td>72.20%</td>
+    <td>73.29%</td>
     <td>74.01%</td>
-    <td>-2.44%</td>
+    <td>-0.97%</td>
     <td>40.38 </td>
     <td>29.28 </td>
     <td>1.38x</td>
@@ -944,7 +944,7 @@ Performance varies by use, configuration and other factors. See [platform config
 </tbody>
 </table>
 
-### PyTorch Models with Torch 1.13.1+cpu in QAT Mode
+### PyTorch Models with Torch 1.13.0+cpu in QAT Mode
 
 <table class="tg">
 <thead>
@@ -957,7 +957,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Performance Ratio[INT8/FP32]</th>
@@ -1020,7 +1020,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Performance Ratio[INT8/FP32]</th>
@@ -1093,7 +1093,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Performance Ratio[INT8/FP32]</th>
@@ -1825,7 +1825,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Performance Ratio[INT8/FP32]</th>
