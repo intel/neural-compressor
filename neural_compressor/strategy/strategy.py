@@ -202,6 +202,8 @@ class TuneStrategy(object):
                 dest=process_id, # rank 0 send to rank 1, 2, ...
                 tag=tune_cfg_id # tag, the index of tune cfg 0,1,2,3
             )
+            import time as ttime
+            ttime.sleep(0.5) # WA for UT
 
         cur_cfg_id = min(len(tune_cfg_lst), size - 1)   # 4 master should be aware of the next config id to send
         self.eval_results = []  # all results

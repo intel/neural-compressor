@@ -51,7 +51,7 @@ class TestDistributedTuning(unittest.TestCase):
         # fake evaluation function
         num_baseline = num_processes # TODO, replace num_baseline with 1 when evaluating baseline only once.
         acc_lst =  [2.0] * num_baseline + [1.0, 2.1, 2.2, 2.3, 2.0] #the tuning result (2.1)
-        perf_lst = [2.0] * num_baseline + [1.5, 1.0, 0.5, 0.1, 4.0] 
+        perf_lst = [2.0] * num_baseline + [2.5, 2.0, 1.5, 1.1, 5.0] 
         # make sure this path can be accessed by all nodes
         acc_perf_data_file_path = 'test_pt_stage_1_met_simulate_acc_perf.json' 
         save_acc_perf_to_local(acc_lst, perf_lst, acc_perf_data_file_path)
