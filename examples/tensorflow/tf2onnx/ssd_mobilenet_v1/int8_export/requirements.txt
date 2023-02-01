@@ -1,5 +1,5 @@
-tensorflow=2.10.0
-intel-extension-for-tensorflow[cpu]
+tensorflow==2.11.0
+tf2onnx==1.13.0
 onnx==1.9.0; python_version < '3.10'
 onnx==1.12.0; python_version == '3.10'
 onnxruntime==1.10.0; python_version < '3.10'

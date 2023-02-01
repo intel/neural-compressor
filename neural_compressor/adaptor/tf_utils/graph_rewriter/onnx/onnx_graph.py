@@ -532,6 +532,25 @@ class OnnxGraph:
         if shape is not None:
             self.set_shape(output_name, shape)
 
+    def add_graph_output(self, name, dtype=None, shape=None):
+        """Add node output as graph's output."""
+        utils.assert_error(name in self._output_to_node_name, "output %s not exist in the graph", name)
+
+        if dtype is None:
+            dtype = self.get_dtype(name)
+
+        if shape is None:
+            shape = self.get_shape(name)
+
+        if name not in self.outputs:
+            utils.assert_error(shape is not None, "shape for output %s should not be None", name)
+            utils.assert_error(dtype is not None, "dtype for output %s should not be None", name)
+            self.outputs.append(name)
+            self.set_shape(name, shape)
+            self.set_dtype(name, dtype)
+        else:
+            raise ValueError("graph output " + name + " already exists")
+
     def topological_sort(self, ops):
         """Topological sort of graph."""
         # sort by name, the result will be reversed alphabeta
@@ -1083,6 +1102,18 @@ class OnnxGraph:
                 for body_graph in attr_body_graphs.values():
                     body_graph.delete_unused_nodes(body_graph.outputs)
         self.reset_nodes(related_nodes)
+
+    def safe_to_remove_nodes(self, to_delete):
+        """ List of nodes that safe to delete (i.e. outputs not consumed by other nodes.)"""
+        safe_to_remove = []
+        delete_set = set(to_delete)
+        for n in delete_set:
+            out_consumers = set()
+            for out in n.output:
+                out_consumers |= set(self.find_output_consumers(out))
+            if out_consumers.issubset(delete_set):
+                safe_to_remove.append(n)
+        return safe_to_remove
 
     def convert_qdq_nodes(self, q_node, dq_node):
         """Convert tensorflow QuantizeV2/Dequantize nodes to QuantizeLinear/DequantizeLinear."""

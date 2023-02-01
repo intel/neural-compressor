@@ -4,21 +4,31 @@ Step-by-Step
 This document is used to show how to export Tensorflow INT8 QDQ model to ONNX INT8 QDQ model using Intel® Neural Compressor.
 
 
-## Prerequisite
+# Prerequisite
 
-### 1. Installation
+## 1. Environment
+
+### Installation
+Recommend python 3.8 or higher version.
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install requirements
+
+### Install requirements
 The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this export ONNX INT8 model example.
 The Intel Extension for Tensorflow for Intel CPUs is installed as default.
 ```shell
 pip install -r requirements.txt
 ```
 
-### 3. Prepare Pretrained model
+### Install Intel Extension for Tensorflow
+Intel Extension for Tensorflow is mandatory to be installed for exporting Tensorflow model to ONNX.
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
+```
+
+## 2. Prepare Pretrained model
 
 The mobilenet_v2 checkpoint file comes from [models](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models).
 We can get the pb file by convert the checkpoint file.
@@ -57,7 +67,7 @@ We can get the pb file by convert the checkpoint file.
           --output_node_names=MobilenetV2/Predictions/Reshape_1
   ```
 
-### 4. Prepare Dataset
+## 3. Prepare Dataset
 
 Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/ImageNet. The dir include below folder and files:
 
@@ -69,27 +79,27 @@ The Raw image dataset is used for running benchmarking for ONNX model.
 
 TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format. The TF records format dataset is used for quantizing Tensorflow FP32 model to Tensorflow INT8 QDQ model.
 
-## Run Command
+# Run Command
 
-### Quantize Tensorflow FP32 model to Tensorflow INT8 QDQ model
+## Quantize Tensorflow FP32 model to Tensorflow INT8 QDQ model
 ```shell
 bash run_tuning.sh --input_model=./frozen_mobilenet_v2.pb --output_model=./mobilenet_v2_int8.pb --dataset_location=/path/to/imagenet/
 ```
 Please note this dataset is TF records format.
 
-### Run benchmark for Tensorflow INT8 QDQ model
+## Run benchmark for Tensorflow INT8 QDQ model
 ```shell
 bash run_benchmark.sh --input_model=./mobilenet_v2_int8.pb --mode=accuracy --dataset_location=/path/to/imagenet/ --batch_size=32
 bash run_benchmark.sh --input_model=./mobilenet_v2_int8.pb --mode=performance --dataset_location=/path/to/imagenet/ --batch_size=1
 ```
 Please note this dataset is Raw image dataset.
 
-### Export Tensorflow INT8 QDQ model to ONNX INT8 QDQ model
+## Export Tensorflow INT8 QDQ model to ONNX INT8 QDQ model
 ```shell
 bash run_export.sh --input_model=./mobilenet_v2_int8.pb --output_model=./mobilenet_v2_int8.onnx
 ```
 
-### Run benchmark for ONNX INT8 QDQ model
+## Run benchmark for ONNX INT8 QDQ model
 ```shell
 bash run_benchmark.sh --input_model=./mobilenet_v2_int8.onnx --mode=accuracy --dataset_location=/path/to/ImageNet/ --batch_size=32
 bash run_benchmark.sh --input_model=./mobilenet_v2_int8.onnx --mode=performance --dataset_location=/path/to/ImageNet/ --batch_size=1
