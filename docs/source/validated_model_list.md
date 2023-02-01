@@ -6,7 +6,7 @@ Validated Models
 
     1.1. [TensorFlow Models with TensorFlow 2.11.0](#tensorflow-models-with-tensorflow-2110)
 
-    1.2. [PyTorch Models with Torch 1.13.0+cpu in PTQ Mode](#pytorch-models-with-torch-1131cpu-in-qat-mode)
+    1.2. [PyTorch Models with Torch 1.13.0+cpu in PTQ Mode](#pytorch-models-with-torch-1130cpu-in-qat-mode)
 
     1.3. [PyTorch Models with Torch 1.13.0+cpu in QAT Mode](#pytorch-models-with-torch-1130cpu-in-qat-mode)
 
