@@ -37,8 +37,16 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
 bash run_export.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28 --output_model=./ssd_mobilenet_v1_coco_2018_01_28.onnx
 ```
 
+### Run benchmark for Tensorflow FP32 model
+```shell
+bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28 --mode=accuracy --dataset_location=/path/to/coco_dataset/ --batch_size=16
+bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28 --mode=performance --dataset_location=/path/to/coco_dataset/ --batch_size=16
+```
+Please note this dataset is TF records format.
+
 ### Run benchmark for ONNX FP32 model
 ```shell
 bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28.onnx --mode=accuracy --dataset_location=/path/to/coco_dataset/ --batch_size=16
 bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28.onnx --mode=performance --dataset_location=/path/to/coco_dataset/ --batch_size=16
 ```
+Please note this dataset is Raw Coco dataset.
