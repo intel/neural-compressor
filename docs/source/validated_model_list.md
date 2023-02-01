@@ -852,7 +852,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>2.23x</td>
   </tr>
   <tr>
-    <td>resnext101 32x8d</td>
+    <td>Resnext101 32x8d</td>
     <td>EAGER</td>
     <td>79.08%</td>
     <td>79.31%</td>
@@ -1067,6 +1067,16 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>6.73</td>
     <td>6.90x</td>
   </tr>
+  <tr>
+    <td>Distilbert base</td>
+    <td>IPEX</td>
+    <td>85.97</td>
+    <td>86.84</td>
+    <td>-0.99%</td>
+    <td>159.90</td>
+    <td>68.95</td>
+    <td>2.32x</td>
+  </tr>
 </tbody>
 </table>
 
@@ -1201,7 +1211,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.10x</td>
   </tr>
   <tr>
-    <td>duc</td>
+    <td>DUC</td>
     <td>QLinear</td>
     <td>81.62%</td>
     <td>81.92%</td>
@@ -1291,7 +1301,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.35x</td>
   </tr>
   <tr>
-    <td>googlenet-12</td>
+    <td>GoogleNet-12</td>
     <td>QDQ</td>
     <td>67.73%</td>
     <td>67.79%</td>
@@ -1501,7 +1511,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.76x</td>
   </tr>
   <tr>
-    <td>MobileNetV2-12</td>
+    <td>MobileNetV2-12 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>68.38%</td>
     <td>69.48%</td>
@@ -1511,7 +1521,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.59x</td>
   </tr>
   <tr>
-    <td>MobileNetV2-12</td>
+    <td>MobileNetV2-12 (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>68.51%</td>
     <td>69.48%</td>
@@ -1561,7 +1571,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.31x</td>
   </tr>
   <tr>
-    <td>ResNet50-v1-12</td>
+    <td>ResNet50-v1-12 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>74.81%</td>
     <td>74.99%</td>
@@ -1571,7 +1581,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.32x</td>
   </tr>
   <tr>
-    <td>ResNet50-v1-12</td>
+    <td>ResNet50-v1-12 (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>74.76%</td>
     <td>74.99%</td>
@@ -1651,7 +1661,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.25x</td>
   </tr>
   <tr>
-    <td>SSD MobileNet V1-2</td>
+    <td>SSD MobileNet V1 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>22.96%</td>
     <td>23.02%</td>
@@ -1661,7 +1671,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.28x</td>
   </tr>
   <tr>
-    <td>SSD MobileNet V1-2</td>
+    <td>SSD MobileNet V1 (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>22.96%</td>
     <td>23.02%</td>
