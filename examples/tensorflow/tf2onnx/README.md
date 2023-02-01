@@ -1,10 +1,11 @@
 # Tensorflow models export to ONNX moldes Examples
 
 These examples show how to export Tensorflow models to ONNX models including FP32 and INT8.
-Please note that we only support exporting ONNX QDQ format for INT8 now.
+Please note that we only support to export ONNX QDQ format for INT8 now.
 
 The following examples are available:
 
 * [resnet50v1.5](/examples/tensorflow/tf2onnx/resnet50v1.5): image recognition ResNet50 model from MLPerf.
 * [mobilenet_v2](/examples/tensorflow/tf2onnx/mobilenet_v2): image recognition mobilenet_v2 model.
 * [ssd_mobilenet_v1](/examples/tensorflow/tf2onnx/ssd_mobilenet_v1): object detection ssd_mobilenet_v1 model.
+* [faster_rcnn_resnet50](/examples/tensorflow/tf2onnx/faster_rcnn_resnet50): object detection faster_rcnn_resnet50 model.
