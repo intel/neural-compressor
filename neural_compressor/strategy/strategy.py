@@ -186,7 +186,7 @@ class TuneStrategy(object):
 
     def traverse(self):
         """Traverse the tuning space.
-        
+
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
         if not (self.cfg.evaluation and self.cfg.evaluation.accuracy and \
@@ -198,6 +198,8 @@ class TuneStrategy(object):
             logger.info("Force setting 'tuning.exit_policy.performance_only = True'.")
             logger.info("Generate a fake evaluation function.")
             self.eval_func = self._fake_eval_func
+        elif self.cfg.model["inplace"]:
+            self.cfg.tuning.exit_policy.performance_only = True
 
         # get fp32 model baseline
         if self.baseline is None:
@@ -258,7 +260,7 @@ class TuneStrategy(object):
             logger.debug(f"*** The perfomance of last tuning is: {performace_res_msg}")
             logger.debug(f"*** The last tuning time: {(now_time - tuning_start_time):.2f} s")
             logger.debug(f"*** The tuning process lasted time: {(now_time - traverse_start_time):.2f} s")
-            
+
             self._dump_tuning_process_statistics()
             if need_stop:
                 if self.re_quant:
@@ -551,6 +553,7 @@ class TuneStrategy(object):
         framework = self.cfg.model.framework.lower()
         framework_specific_info.update({'backend': self.cfg.model.get('backend', 'default')})
         framework_specific_info.update({'format': self.cfg.model.get('quant_format', 'default')})
+        framework_specific_info.update({'inplace': self.cfg.model.get('inplace', False)})
 
         self.mixed_precision_mode = bool('mixed_precision' in self.cfg) or \
             bool('graph_optimization' in self.cfg)

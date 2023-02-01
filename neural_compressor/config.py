@@ -359,6 +359,7 @@ class _BaseQuantizationConfig:
                  timeout=0,
                  max_trials=100,
                  performance_only=False,
+                 model_inplace=False,
                  reduce_range=None,
                  excluded_precisions=[],
                  quant_level=1,
@@ -375,6 +376,7 @@ class _BaseQuantizationConfig:
         self.objective = objective
         self.timeout = timeout
         self.max_trials = max_trials
+        self.model_inplace = model_inplace
         self.performance_only = performance_only
         self.reduce_range = reduce_range
         self.excluded_precisions = excluded_precisions
@@ -427,6 +429,15 @@ class _BaseQuantizationConfig:
     def performance_only(self, performance_only):
         if check_value('performance_only', performance_only, bool):
             self._performance_only = performance_only
+
+    @property
+    def model_inplace(self):
+        return self._model_inplace
+
+    @model_inplace.setter
+    def model_inplace(self, model_inplace):
+        if check_value('model_inplace', model_inplace, bool):
+            self._model_inplace = model_inplace
 
     @property
     def max_trials(self):
@@ -649,6 +660,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  reduce_range=None,
                  excluded_precisions=[],
                  quant_level=1,
+                 performance_only=False,
+                 model_inplace=False,
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
     ):
@@ -667,6 +680,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          objective=tuning_criterion.objective,
                          timeout=tuning_criterion.timeout,
                          max_trials=tuning_criterion.max_trials,
+                         performance_only=performance_only,
+                         model_inplace=model_inplace,
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,
@@ -707,6 +722,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  excluded_precisions=[],
+                 model_inplace=False,
                  quant_level=1):
         """Init a QuantizationAwareTrainingConfig object."""
         super().__init__(inputs=inputs,
@@ -717,6 +733,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                          op_name_list=op_name_list,
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
+                         model_inplace=model_inplace,
                          quant_level=quant_level)
         self._approach = 'quant_aware_training'
 

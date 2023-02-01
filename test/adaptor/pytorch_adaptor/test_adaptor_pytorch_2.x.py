@@ -321,6 +321,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 compression_manager.save("./saved")
             else:
                 conf = PostTrainingQuantConfig(
+                  model_inplace=True,
                   op_name_list=ptq_fx_op_name_list)
                 set_workspace("./saved")
                 q_model = quantization.fit(model_origin,

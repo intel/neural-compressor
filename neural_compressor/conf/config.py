@@ -789,7 +789,8 @@ schema = Schema({
         'framework': And(str, lambda s: s in list(FRAMEWORKS.keys()) + ['NA']),
         Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
- 
+        Optional('model_inplace', default=False): And(bool, lambda s: s in [True, False]),
+
     },
     Optional('version', default=float(__version__.split('.')[0])): And(
                                           Or(float,
@@ -1162,7 +1163,8 @@ schema = Schema({
 quantization_default_schema = Schema({
     Optional('model', default={'name': 'default_model_name', \
                                'framework': 'NA', \
-                                'inputs': [], 'outputs': []}): dict,
+                                'inputs': [], 'outputs': [],
+                                'model_inplace': False}): dict,
 
     Optional('version', default=float(__version__.split('.')[0])): str,
 
@@ -1398,6 +1400,7 @@ class Conf(object):
                 'model.inputs': pythonic_config.quantization.inputs,
                 'model.outputs': pythonic_config.quantization.outputs,
                 'model.backend': pythonic_config.quantization.backend,
+                'model.inplace': pythonic_config.quantization.model_inplace,
                 'model.quant_format': pythonic_config.quantization.quant_format,
                 'quantization.approach': pythonic_config.quantization.approach,
                 'quantization.calibration.sampling_size': 

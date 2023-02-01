@@ -94,6 +94,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
     def test_tuning_ipex(self):
         from neural_compressor.experimental import Quantization
         model = M()
+        config.quantization.model_inplace = True
         quantizer = Quantization(config)
         quantizer.model = model
         quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True

@@ -802,6 +802,7 @@ class TemplateAdaptor(Adaptor):
 
         self.fp32_results = []
         self.fp32_preds_as_label = False
+        self.inplace = framework_specific_info['inplace']
 
     def calib_func(self, model, dataloader, tmp_iterations, conf=None):
         try:
@@ -1264,12 +1265,15 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.tune_cfg['bf16_ops_list'] = op_cfgs['bf16_ops_list']
         del op_cfgs['bf16_ops_list']
 
-        try:
-            q_model = copy.deepcopy(model)
-        except Exception as e:  # pragma: no cover
-            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                repr(e)))
+        if self.inplace:
             q_model = model
+        else:
+            try:
+                q_model = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                q_model = model
 
         if self.approach == 'quant_aware_training':
             q_model._model.train()
@@ -2272,12 +2276,15 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
 
         if hasattr(model, "save_qconf_summary"):
             model = torch_utils.util.auto_copy(model)
-        try:
-            model_ = copy.deepcopy(model)
-        except Exception as e:  # pragma: no cover
-            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                repr(e)))
+        if self.inplace:
             model_ = model
+        else:
+            try:
+                model_ = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                model_ = model
         assert not self.version.release < Version("1.10.0").release, \
             "INC support IPEX version >= 1.10.0"
         q_model = model_._model.eval()
@@ -2534,12 +2541,15 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
             model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         else:
-            try:
-                model_ = copy.deepcopy(model)
-            except Exception as e:  # pragma: no cover
-                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                    repr(e)))
+            if self.inplace:
                 model_ = model
+            else:
+                try:
+                    model_ = copy.deepcopy(model)
+                except Exception as e:  # pragma: no cover
+                    logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                        repr(e)))
+                    model_ = model
 
             model_.eval()
             init_model = model_
@@ -2584,7 +2594,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
                             to config.yaml'                                           .format(batch_size))
-            del(init_model)
+            if not self.inplace:
+                del(init_model)
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
             if self.version.release < Version("1.12.0").release:
@@ -2774,13 +2785,16 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         del op_cfgs['bf16_ops_list']
 
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
-        try:
-            q_model = copy.deepcopy(model)
-            q_model.fp32_model = model.fp32_model
-        except Exception as e:  # pragma: no cover
-            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
-                repr(e)))
+        if self.inplace:
             q_model = model
+        else:
+            try:
+                q_model = copy.deepcopy(model)
+                q_model.fp32_model = model.fp32_model
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                q_model = model
         q_model._model.eval()
         if q_model.kwargs is not None:
             self.prepare_custom_config_dict = q_model.kwargs.get('prepare_custom_config_dict',
@@ -2986,7 +3000,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         # For export API, deepcopy fp32_model
         try:
-            self.model.fp32_model = copy.deepcopy(self.model.fp32_model)
+            self.model.fp32_model = copy.deepcopy(self.model.fp32_model) if not self.inplace else None
         except Exception as e:  # pragma: no cover
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
                 repr(e)))
@@ -3494,11 +3508,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             fused_model (GraphModule): fused GraphModule model from torch.fx.
         """
-        try:
-            tmp_model = copy.deepcopy(model._model)
-        except Exception as e:
+        if self.inplace:
             tmp_model = model._model
-            logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
+        else:
+            try:
+                tmp_model = copy.deepcopy(model._model)
+            except Exception as e:
+                tmp_model = model._model
+                logger.warning("Deepcopy failed: {}, inplace=True now!".format(repr(e)))
 
         tmp_model.train() if is_qat else tmp_model.eval()
         from torch.fx import GraphModule
