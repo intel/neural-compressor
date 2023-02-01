@@ -38,8 +38,16 @@ ILSVRC2012_img_val  val.txt
 bash run_export.sh --input_model=./resnet50_v1.pb --output_model=./resnet50_v1.onnx
 ```
 
+### Run benchmark for Tensorflow FP32 model
+```shell
+bash run_benchmark.sh --input_model=./resnet50_v1.pb --mode=accuracy --dataset_location=/path/to/imagenet/ --batch_size=32
+bash run_benchmark.sh --input_model=./resnet50_v1.pb --mode=performance --dataset_location=/path/to/imagenet/ --batch_size=1
+```
+Please note this dataset is TF records format.
+
 ### Run benchmark for ONNX FP32 model
 ```shell
 bash run_benchmark.sh --input_model=./resnet50_v1.onnx --mode=accuracy --dataset_location=/path/to/ImageNet/ --batch_size=32
 bash run_benchmark.sh --input_model=./resnet50_v1.onnx --mode=performance --dataset_location=/path/to/ImageNet/ --batch_size=1
 ```
+Please note this dataset is Raw image dataset.

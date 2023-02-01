@@ -44,6 +44,13 @@ bash run_tuning.sh --input_model=./resnet50_v1.pb --output_model=./resnet50_v1_i
 ```
 Please note this dataset is TF records format.
 
+### Run benchmark for Tensorflow INT8 model
+```shell
+bash run_benchmark.sh --input_model=./resnet50_v1_int8.pb --mode=accuracy --dataset_location=/path/to/imagenet/ --batch_size=32
+bash run_benchmark.sh --input_model=./resnet50_v1_int8.pb --mode=performance --dataset_location=/path/to/imagenet/ --batch_size=1
+```
+Please note this dataset is TF records format.
+
 ### Export Tensorflow INT8 QDQ model to ONNX INT8 QDQ model
 ```shell
 bash run_export.sh --input_model=./resnet50_v1_int8.pb --output_model=./resnet50_v1_int8.onnx

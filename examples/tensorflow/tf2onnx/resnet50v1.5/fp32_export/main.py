@@ -21,11 +21,12 @@ import tensorflow as tf
 import onnx
 import os
 import onnxruntime as ort
+import numpy as np
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 
-def eval_func(model, dataloader, metric, postprocess):
+def eval_func_onnx(model, dataloader, metric, postprocess):
     metric.reset()
     sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
     input_names = [i.name for i in sess.get_inputs()]
@@ -35,6 +36,21 @@ def eval_func(model, dataloader, metric, postprocess):
         metric.update(output[1], label)
     return metric.result()
 
+def eval_func_tf(model, dataloader, metric, postprocess=None):
+    from neural_compressor.model import Model
+    model = Model(model)
+    input_tensor = model.input_tensor
+    output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
+                        model.output_tensor[0]
+
+    for _, (inputs, labels) in enumerate(dataloader):
+        # dataloader should keep the order and len of inputs same with input_tensor
+        inputs = np.array([inputs])
+        feed_dict = dict(zip(input_tensor, inputs))
+        predictions = model.sess.run(output_tensor, feed_dict)
+        metric.update(predictions[1], labels)
+    acc = metric.result()
+    return acc
 
 class eval_classifier_optimized_graph:
     """Evaluate image classifier with optimized TensorFlow graph."""
@@ -66,39 +82,66 @@ class eval_classifier_optimized_graph:
             inc_model.export(self.args.output_graph, config)
 
         if self.args.benchmark:
-            model = onnx.load(self.args.input_graph)
-            data_path = os.path.join(self.args.dataset_location, 'ILSVRC2012_img_val')
-            label_path = os.path.join(self.args.dataset_location, 'val.txt')
+            # ONNX FP32 Benchmark
+            if self.args.input_graph.endswith('.onnx'):
+                model = onnx.load(self.args.input_graph)
+                data_path = os.path.join(self.args.dataset_location, 'ILSVRC2012_img_val')
+                label_path = os.path.join(self.args.dataset_location, 'val.txt')
 
-            from neural_compressor.utils.create_obj_from_config import create_dataloader
-            dataloader_args = {
-                'batch_size': self.args.batch_size,
-                'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
-                'transform': {'ResizeWithAspectRatio': {'height': 224, 'width': 224},
-                              'CenterCrop': {'size': 224},
-                              'Normalize': {'mean': [123.68, 116.78, 103.94]},
-                              'Cast': {'dtype': 'float32'},
-                              'Transpose': {'perm': [2, 0, 1]}},
-                'filter': None
-            }
-            dataloader = create_dataloader('onnxrt_integerops', dataloader_args)
+                from neural_compressor.utils.create_obj_from_config import create_dataloader
+                dataloader_args = {
+                    'batch_size': self.args.batch_size,
+                    'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
+                    'transform': {'ResizeWithAspectRatio': {'height': 224, 'width': 224},
+                                'CenterCrop': {'size': 224},
+                                'Normalize': {'mean': [123.68, 116.78, 103.94]},
+                                'Cast': {'dtype': 'float32'},
+                                'Transpose': {'perm': [2, 0, 1]}},
+                    'filter': None
+                }
+                dataloader = create_dataloader('onnxrt_integerops', dataloader_args)
 
-            from neural_compressor.metric import GeneralTopK
-            top1 = GeneralTopK(k=1)
-            from neural_compressor.data.transforms.imagenet_transform import LabelShift
-            postprocess = LabelShift(label_shift=-1)
-            def eval(onnx_model):
-                return eval_func(onnx_model, dataloader, top1, postprocess)
+                from neural_compressor.metric import GeneralTopK
+                top1 = GeneralTopK(k=1)
+                from neural_compressor.data.transforms.imagenet_transform import LabelShift
+                postprocess = LabelShift(label_shift=-1)
+                def eval(onnx_model):
+                    return eval_func_onnx(onnx_model, dataloader, top1, postprocess)
 
-            if self.args.mode == 'performance':
-                from neural_compressor.benchmark import fit
-                from neural_compressor.config import BenchmarkConfig
-                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
-                fit(model, conf, b_dataloader=dataloader)
-            elif self.args.mode == 'accuracy':
-                acc_result = eval(model)
-                print("Batch size = %d" % dataloader.batch_size)
-                print("Accuracy: %.5f" % acc_result)
+                if self.args.mode == 'performance':
+                    from neural_compressor.benchmark import fit
+                    from neural_compressor.config import BenchmarkConfig
+                    conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
+                    fit(model, conf, b_dataloader=dataloader)
+                elif self.args.mode == 'accuracy':
+                    acc_result = eval(model)
+                    print("Batch size = %d" % dataloader.batch_size)
+                    print("Accuracy: %.5f" % acc_result)
+            # Tensorflow FP32 Benchmark
+            else:
+                from neural_compressor.utils.create_obj_from_config import create_dataloader
+                dataloader_args = {
+                    'batch_size': self.args.batch_size,
+                    'dataset': {"ImageRecord": {'root': self.args.dataset_location}},
+                    'transform': {'ResizeCropImagenet': {'height': 224, 'width': 224,
+                                                        'mean_value': [123.68, 116.78, 103.94]}},
+                    'filter': None
+                }
+                dataloader = create_dataloader('tensorflow', dataloader_args)
+                from neural_compressor.metric import TensorflowTopK
+                top1 = TensorflowTopK(k=1)
+                def eval(model):
+                    return eval_func_tf(model, dataloader, top1)
+
+                if self.args.mode == 'performance':
+                    from neural_compressor.benchmark import fit
+                    from neural_compressor.config import BenchmarkConfig
+                    conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
+                    fit(self.args.input_graph, conf, b_dataloader=dataloader)
+                elif self.args.mode == 'accuracy':
+                    acc_result = eval(self.args.input_graph)
+                    print("Batch size = %d" % dataloader.batch_size)
+                    print("Accuracy: %.5f" % acc_result)
 
 if __name__ == "__main__":
     evaluate_opt_graph = eval_classifier_optimized_graph()
