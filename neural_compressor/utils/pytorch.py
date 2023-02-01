@@ -156,7 +156,7 @@ def _load_int8_orchestration(model, tune_cfg, stat_dict, example_inputs, **kwarg
     return model
 
 
-def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
+def load(checkpoint_dir=None, model=None, history_cfg=None, inplace=False, **kwargs):
     """Execute the quantize process on the specified model.
 
     Args:
@@ -223,12 +223,15 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
         logger.info("Finish load the model quantized by INC IPEX backend.")
         return q_model
 
-    try:
-        q_model = copy.deepcopy(model)
-    except Exception as e:                                           # pragma: no cover
-        logger.warning("Fail to deep copy the model due to {}, inplace is used now.".
-                       format(repr(e)))
+    if inplace:
         q_model = model
+    else:
+        try:
+            q_model = copy.deepcopy(model)
+        except Exception as e:                                           # pragma: no cover
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".
+                           format(repr(e)))
+            q_model = model
 
     if 'is_oneshot' in tune_cfg and tune_cfg['is_oneshot']:
         return _load_int8_orchestration(q_model, tune_cfg, stat_dict, example_inputs, **kwargs)
