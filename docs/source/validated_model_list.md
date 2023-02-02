@@ -4,7 +4,7 @@ Validated Models
 
 1. [Validated Quantization Examples](#Validated-Quantization-Examples)
 
-    1.1. [TensorFlow Models with TensorFlow 2.11.0](#tensorflow-models-with-tensorflow-2110)
+    1.1. [TensorFlow Models with Intel TensorFlow 2.11.0](#tensorflow-models-with-Intel-tensorflow-2110)
 
     1.2. [PyTorch Models with Torch 1.13.0+cpu in PTQ Mode](#pytorch-models-with-torch-1130cpu-in-qat-mode)
 
@@ -28,7 +28,7 @@ Performance results test on ​​01/04/2023 with Intel Xeon Platinum 8380 Scala
 
 Performance varies by use, configuration and other factors. See [platform configuration](./platform_configuration.md) for configuration details. For more complete information about performance and benchmark results, visit www.intel.com/benchmarks
 
-### TensorFlow Models with TensorFlow 2.11.0
+### TensorFlow Models with Intel TensorFlow 2.11.0
 
 <table class="tg">
 <thead>
