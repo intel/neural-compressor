@@ -647,24 +647,31 @@ def main():
         q_model.save(training_args.output_dir)
         return
 
+    model.eval()
+    if model_args.int8:
+        from neural_compressor.utils.pytorch import load
+        model = load(training_args.output_dir, model)
+    else:
+        from neural_compressor.adaptor.pytorch import get_example_inputs
+        example_inputs = get_example_inputs(model, eval_dataloader)
+        model = ipex.optimize(model)
+        import torch
+        with torch.no_grad():
+            model = torch.jit.trace(model, example_inputs, strict=False)
+            model = torch.jit.freeze(model)
+
     if model_args.benchmark or model_args.accuracy_only:
-        ipex.nn.utils._model_convert.replace_dropout_with_identity(model)
-        model.eval()
-        if model_args.int8:
-            from neural_compressor.utils.pytorch import load
-            model = load(training_args.output_dir, model, dataloader=eval_dataloader)
-        if model_args.benchmark or model_args.accuracy_only:
-            if model_args.benchmark:
-                from neural_compressor.config import BenchmarkConfig
-                from neural_compressor import benchmark
-                b_conf = BenchmarkConfig(backend="ipex",
-                                         warmup=5,
-                                         iteration=model_args.iters,
-                                         cores_per_instance=4,
-                                         num_of_instance=1)
-                benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
-            else:
-                eval_func(model)
+        if model_args.benchmark:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(backend="ipex",
+                                     warmup=5,
+                                     iteration=model_args.iters,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
+        else:
+            eval_func(model)
 
 def _mp_fn(index):
     # For xla_spawn (TPUs)
