@@ -19,6 +19,14 @@ Float point 8(FP8) is a promising data type for low precision quantization. In I
 | PyTorch    |          &#10004;         |
 | ONNX       |             WIP           |
 
+**Note**: [FP8 Emulation Toolkit](https://github.com/IntelLabs/FP8-Emulation-Toolkit) is needed to be installed.
+
+```
+$ git clone https://github.com/IntelLabs/FP8-Emulation-Toolkit.git
+$ cd FP8-Emulation-Toolkit  
+$ python setup.py install 
+```
+
 ## Examples
 
 Comparing with int8 quantization, only one parameter: precision(fp8_e5m2/fp8_e4m3/fp8_e3m4) is added.
