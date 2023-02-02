@@ -81,7 +81,14 @@ class Direct8BitOperator(Operator):
             return
         self.quantizer.dtype_cast(self.node, self.dtype)
 
-@op_registry(op_types="Shape, Loop, Slice")
+@op_registry(op_types="Shape, Loop, Slice, Compress, Dropout, DynamicSlice, Expand, Flatten, \
+                       GatherElements, GatherND, Identity, If, IsNaN, Loop, Max, Min, Mod, \
+                       ReverseSequence, Round, Scan, Scatter, ScatterElements, ScatterND, \
+                       Shrink, Sign6, ExpandDims, Inverse, SkipLayerNormalization, \
+                       QuantizeLinear, QAttention, LongformerAttention, Gelu, FusedMatMul, \
+                       FastGelu, DequantizeLinear, BiasGelu, Where, Upsample, Tanh, Sub, Sqrt, \
+                       Softmax, Scatter, ReduceMean, Pow, LayerNormalization, GlobalMaxPool, \
+                       BatchNormalization")
 class DirectCastOperator(Operator): # pragma: no cover
     """Direct8bit Operator Cast."""
 
