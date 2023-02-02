@@ -59,11 +59,11 @@ class FP8HistogramObserver(HistogramObserver):
                                     'right': dst_bin[i+1] - dst_bin[i]}
         dst_bin_of_begin = [bin_of_dst_dict[float(i)] for i in dst_bin_begin]
         dst_bin_of_end = [bin_of_dst_dict[float(i)] for i in dst_bin_end]
-        left_dst_bin_width = [width_dict[float(i)]['left'] for i in dst_bin_begin]
-        right_dst_bin_width = [width_dict[float(i)]['right'] for i in dst_bin_begin]
+        left_dst_bin_end_width = [width_dict[float(i)]['left'] for i in dst_bin_end]
+        right_dst_bin_begin_width = [width_dict[float(i)]['right'] for i in dst_bin_begin]
         return dst_bin_begin, dst_bin_end, \
                 torch.tensor(dst_bin_of_begin), torch.tensor(dst_bin_of_end), \
-                torch.tensor(left_dst_bin_width), torch.tensor(right_dst_bin_width)
+                torch.tensor(left_dst_bin_end_width), torch.tensor(right_dst_bin_begin_width)
 
     def _compute_quantization_error(self, next_start_bin: int, next_end_bin: int):
         r"""
@@ -78,26 +78,26 @@ class FP8HistogramObserver(HistogramObserver):
         src_bin_end = src_bin_begin + bin_width
         dst_bin_begin, dst_bin_end, \
             dst_bin_of_begin, dst_bin_of_end, \
-            left_dst_bin_width, right_dst_bin_width = \
+            left_dst_bin_end_width, right_dst_bin_begin_width = \
                                 self._get_dst_bin(src_bin_begin, src_bin_end, dst_bin_max)
 
-        dst_bin_of_begin_center = dst_bin_begin + right_dst_bin_width
-        dst_bin_of_end_center = dst_bin_end + left_dst_bin_width
+        dst_bin_of_begin_center = dst_bin_begin + right_dst_bin_begin_width
+        dst_bin_of_end_center = dst_bin_end + left_dst_bin_end_width
 
         density = self.histogram / bin_width
 
         norm = torch.zeros(self.bins, device=self.histogram.device)
 
         delta_begin = src_bin_begin - dst_bin_of_begin_center
-        delta_end = right_dst_bin_width
+        delta_end = right_dst_bin_begin_width
 
         norm += self._get_norm(delta_begin, delta_end, density)
 
         norm += (dst_bin_of_end - dst_bin_of_begin - 1) * self._get_norm(
-            torch.tensor(-left_dst_bin_width), torch.tensor(right_dst_bin_width), density
+            torch.tensor(-left_dst_bin_end_width), torch.tensor(right_dst_bin_begin_width), density
         )
 
-        delta_begin = -left_dst_bin_width
+        delta_begin = -left_dst_bin_end_width
         delta_end = src_bin_end - dst_bin_of_end_center
         norm += self._get_norm(delta_begin, delta_end, density)
 
@@ -150,7 +150,6 @@ class FP8HistogramObserver(HistogramObserver):
 
             # calculate the quantization error using next_start_bin and next_end_bin
             norm = self._compute_quantization_error(next_start_bin, next_end_bin)
-            print(norm)
 
             if norm > norm_min:
                 break
