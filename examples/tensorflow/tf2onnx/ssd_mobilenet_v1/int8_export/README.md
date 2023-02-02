@@ -36,10 +36,27 @@ tar -xvf $MODEL.tar.gz
 
 ## 3. Prepare Dataset
 
+### Automatic dataset download
+
+> **_Note: `prepare_coco_dataset.sh` script works with TF version 1.x._**
+
+Run the `prepare_coco_dataset.sh` script located in `examples/tensorflow/tf2onnx`.
+
+Usage:
+```shell
+cd examples/tensorflow/tf2onnx/
+bash prepare_coco_dataset.sh
+cd ssd_mobilenet_v1/int8_export
+```
+
+This script will download the *train*, *validation* and *test* COCO datasets. Furthermore it will convert them to
+tensorflow records using the `https://github.com/tensorflow/models.git` dedicated script.
+
+### Manual dataset download
 Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
-The dataset can be converted into tensorflow records using the `https://github.com/tensorflow/models.git` dedicated script.
 
 # Run Command
+Please note the dataset is TF records format for running benchmark.
 
 ## Quantize Tensorflow FP32 model to Tensorflow INT8 QDQ model
 ```shell
@@ -51,7 +68,6 @@ bash run_tuning.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28 --output_mod
 bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28_int8.pb --mode=accuracy --dataset_location=/path/to/coco_dataset/ --batch_size=16
 bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28_int8.pb --mode=performance --dataset_location=/path/to/coco_dataset/ --batch_size=16
 ```
-Please note this dataset is TF records format.
 
 ## Export Tensorflow INT8 QDQ model to ONNX INT8 QDQ model
 ```shell
@@ -60,7 +76,6 @@ bash run_export.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28_int8.pb --ou
 
 ## Run benchmark for ONNX INT8 QDQ model
 ```shell
-bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28_int8.onnx --mode=accuracy --dataset_location=/path/to/coco_dataset_raw/ --batch_size=16
-bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28_int8.onnx --mode=performance --dataset_location=/path/to/coco_dataset_raw/ --batch_size=16
+bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28_int8.onnx --mode=accuracy --dataset_location=/path/to/coco_dataset/ --batch_size=16
+bash run_benchmark.sh --input_model=./ssd_mobilenet_v1_coco_2018_01_28_int8.onnx --mode=performance --dataset_location=/path/to/coco_dataset/ --batch_size=16
 ```
-Please note this dataset is Raw Coco dataset.
