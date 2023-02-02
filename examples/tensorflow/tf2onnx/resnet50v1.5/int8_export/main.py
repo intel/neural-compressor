@@ -26,13 +26,14 @@ import numpy as np
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 
-def eval_func_onnx(model, dataloader, metric, postprocess):
+def eval_func_onnx(model, dataloader, metric, postprocess=None):
     metric.reset()
     sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
     input_names = [i.name for i in sess.get_inputs()]
     for input_data, label in dataloader:
         output = sess.run(None, dict(zip(input_names, [input_data])))
-        output, label = postprocess((output, label))
+        if postprocess:
+            output, label = postprocess((output, label))
         metric.update(output, label)
     return metric.result()
 
@@ -116,70 +117,43 @@ class eval_classifier_optimized_graph:
             from neural_compressor.model import Model
             from neural_compressor.config import TF2ONNXConfig
             inc_model = Model(self.args.input_graph)
-            config = TF2ONNXConfig(dtype="int8", inputs_as_nchw="input_tensor:0")
+            config = TF2ONNXConfig(dtype="int8")
             inc_model.export(self.args.output_graph, config)
 
         if self.args.benchmark:
-            # ONNX INT8 Benchmark
             if self.args.input_graph.endswith('.onnx'):
                 model = onnx.load(self.args.input_graph)
-                data_path = os.path.join(self.args.dataset_location, 'ILSVRC2012_img_val')
-                label_path = os.path.join(self.args.dataset_location, 'val.txt')
-
-                from neural_compressor.utils.create_obj_from_config import create_dataloader
-                dataloader_args = {
-                    'batch_size': self.args.batch_size,
-                    'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
-                    'transform': {'ResizeWithAspectRatio': {'height': 224, 'width': 224},
-                                'CenterCrop': {'size': 224},
-                                'Normalize': {'mean': [123.68, 116.78, 103.94]},
-                                'Cast': {'dtype': 'float32'},
-                                'Transpose': {'perm': [2, 0, 1]}},
-                    'filter': None
-                }
-                dataloader = create_dataloader('onnxrt_integerops', dataloader_args)
-
-                from neural_compressor.metric import GeneralTopK
-                top1 = GeneralTopK(k=1)
-                from neural_compressor.data.transforms.imagenet_transform import LabelShift
-                postprocess = LabelShift(label_shift=-1)
-                def eval(onnx_model):
-                    return eval_func_onnx(onnx_model, dataloader, top1, postprocess)
-
-                if self.args.mode == 'performance':
-                    from neural_compressor.benchmark import fit
-                    from neural_compressor.config import BenchmarkConfig
-                    conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
-                    fit(model, conf, b_dataloader=dataloader)
-                elif self.args.mode == 'accuracy':
-                    acc_result = eval(model)
-                    print("Batch size = %d" % dataloader.batch_size)
-                    print("Accuracy: %.5f" % acc_result)
-            # Tensorflow INT8 Benchmark
             else:
-                from neural_compressor.utils.create_obj_from_config import create_dataloader
-                dataloader_args = {
-                    'batch_size': self.args.batch_size,
-                    'dataset': {"ImageRecord": {'root': self.args.dataset_location}},
-                    'transform': {'ResizeCropImagenet': {'height': 224, 'width': 224,
-                                                        'mean_value': [123.68, 116.78, 103.94]}},
-                    'filter': None
-                }
-                dataloader = create_dataloader('tensorflow', dataloader_args)
-                from neural_compressor.metric import TensorflowTopK
-                top1 = TensorflowTopK(k=1)
-                def eval(model):
-                    return eval_func_tf(model, dataloader, top1)
+                model = self.args.input_graph
 
-                if self.args.mode == 'performance':
-                    from neural_compressor.benchmark import fit
-                    from neural_compressor.config import BenchmarkConfig
-                    conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
-                    fit(self.args.input_graph, conf, b_dataloader=dataloader)
-                elif self.args.mode == 'accuracy':
-                    acc_result = eval(self.args.input_graph)
-                    print("Batch size = %d" % dataloader.batch_size)
-                    print("Accuracy: %.5f" % acc_result)
+            from neural_compressor.utils.create_obj_from_config import create_dataloader
+            dataloader_args = {
+                'batch_size': 32,
+                'dataset': {"ImageRecord": {'root':self.args.dataset_location}},
+                'transform': {'ResizeCropImagenet':
+                     {'height': 224, 'width': 224, 'mean_value': [123.68, 116.78, 103.94]}},
+                'filter': None
+            }
+            dataloader = create_dataloader('tensorflow', dataloader_args)
+
+            from neural_compressor.metric import TensorflowTopK
+            top1 = TensorflowTopK(k=1)
+
+            def eval(model):
+                if isinstance(model, str):
+                    return eval_func_tf(model, dataloader, top1)
+                else:
+                    return eval_func_onnx(model, dataloader, top1)
+
+            if self.args.mode == 'performance':
+                from neural_compressor.benchmark import fit
+                from neural_compressor.config import BenchmarkConfig
+                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
+                fit(model, conf, b_dataloader=dataloader)
+            elif self.args.mode == 'accuracy':
+                acc_result = eval(model)
+                print("Batch size = %d" % dataloader.batch_size)
+                print("Accuracy: %.5f" % acc_result)
 
 if __name__ == "__main__":
     evaluate_opt_graph = eval_classifier_optimized_graph()

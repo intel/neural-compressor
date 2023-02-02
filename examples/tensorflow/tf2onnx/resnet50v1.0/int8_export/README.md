@@ -36,17 +36,20 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/resne
 
 ## 3. Prepare Dataset
 
-Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/ImageNet. The dir include below folder and files:
+  TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
+  We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
 
-```bash
-ls /path/to/ImageNet
-ILSVRC2012_img_val  val.txt
-```
-The Raw image dataset is used for running benchmarking for ONNX model.
-
-TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format. The TF records format dataset is used for quantizing Tensorflow FP32 model to Tensorflow INT8 QDQ model.
+  ```shell
+  cd examples/tensorflow/tf2onnx/
+  # convert validation subset
+  bash prepare_imagenet_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
+  # convert train subset
+  bash prepare_imagenet_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/train/ --subset=train
+  cd resnet50_v1.0/int8_export
+  ```
 
 # Run Command
+Please note the dataset is TF records format for running quantization and benchmark.
 
 ## Quantize Tensorflow FP32 model to Tensorflow INT8 QDQ model
 ```shell

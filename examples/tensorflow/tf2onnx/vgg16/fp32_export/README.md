@@ -70,15 +70,16 @@ We can get the pb file by convert the checkpoint file.
   We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
 
   ```shell
-  cd examples/tensorflow/tf2onnx/vgg16
+  cd examples/tensorflow/tf2onnx/
   # convert validation subset
-  bash prepare_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
+  bash prepare_imagenet_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
   # convert train subset
-  bash prepare_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/train/ --subset=train
-  cd fp32_export
+  bash prepare_imagenet_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/train/ --subset=train
+  cd vgg16/fp32_export
   ```
 
 ## Run Command
+Please note the dataset is TF records format for running benchmark.
 
 ### Export Tensorflow FP32 model to ONNX FP32 model
 ```shell
@@ -90,11 +91,9 @@ bash run_export.sh --input_model=./frozen_vgg16.pb --output_model=./vgg_16.onnx
 bash run_benchmark.sh --input_model=./frozen_vgg16.pb --mode=accuracy --dataset_location=/path/to/imagenet/ --batch_size=32
 bash run_benchmark.sh --input_model=./frozen_vgg16.pb --mode=performance --dataset_location=/path/to/imagenet/ --batch_size=1
 ```
-Please note this dataset is TF records format.
 
 ### Run benchmark for ONNX FP32 model
 ```shell
 bash run_benchmark.sh --input_model=./vgg_16.onnx --mode=accuracy --dataset_location=/path/to/ImageNet/ --batch_size=32
 bash run_benchmark.sh --input_model=./vgg_16.onnx --mode=performance --dataset_location=/path/to/ImageNet/ --batch_size=1
 ```
-Please note this dataset is TF records format.

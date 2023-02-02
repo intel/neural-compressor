@@ -106,7 +106,6 @@ class eval_classifier_optimized_graph:
                         }
             conf = PostTrainingQuantConfig(backend='itex', calibration_sampling_size=[50, 100],
                                            outputs=['softmax_tensor'],
-                                           accuracy_criterion = AccuracyCriterion(tolerable_loss=0.3),
                                            op_name_list=op_name_list)
             from neural_compressor.metric import TensorflowTopK
             top1 = TensorflowTopK(k=1)

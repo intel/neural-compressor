@@ -69,30 +69,31 @@ We can get the pb file by convert the checkpoint file.
 
 ## 3. Prepare Dataset
 
-Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/ImageNet. The dir include below folder and files:
+  TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
+  We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
 
-```bash
-ls /path/to/ImageNet
-ILSVRC2012_img_val  val.txt
-```
-The Raw image dataset is used for running benchmarking for ONNX model.
-
-TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format. The TF records format dataset is used for quantizing Tensorflow FP32 model to Tensorflow INT8 QDQ model.
+  ```shell
+  cd examples/tensorflow/tf2onnx/
+  # convert validation subset
+  bash prepare_imagenet_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
+  # convert train subset
+  bash prepare_imagenet_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/train/ --subset=train
+  cd mobilenet_v2/int8_export
+  ```
 
 # Run Command
+Please note the dataset is TF records format for running quantization and benchmark.
 
 ## Quantize Tensorflow FP32 model to Tensorflow INT8 QDQ model
 ```shell
 bash run_tuning.sh --input_model=./frozen_mobilenet_v2.pb --output_model=./mobilenet_v2_int8.pb --dataset_location=/path/to/imagenet/
 ```
-Please note this dataset is TF records format.
 
 ## Run benchmark for Tensorflow INT8 QDQ model
 ```shell
 bash run_benchmark.sh --input_model=./mobilenet_v2_int8.pb --mode=accuracy --dataset_location=/path/to/imagenet/ --batch_size=32
 bash run_benchmark.sh --input_model=./mobilenet_v2_int8.pb --mode=performance --dataset_location=/path/to/imagenet/ --batch_size=1
 ```
-Please note this dataset is Raw image dataset.
 
 ## Export Tensorflow INT8 QDQ model to ONNX INT8 QDQ model
 ```shell
@@ -101,7 +102,6 @@ bash run_export.sh --input_model=./mobilenet_v2_int8.pb --output_model=./mobilen
 
 ## Run benchmark for ONNX INT8 QDQ model
 ```shell
-bash run_benchmark.sh --input_model=./mobilenet_v2_int8.onnx --mode=accuracy --dataset_location=/path/to/ImageNet/ --batch_size=32
-bash run_benchmark.sh --input_model=./mobilenet_v2_int8.onnx --mode=performance --dataset_location=/path/to/ImageNet/ --batch_size=1
+bash run_benchmark.sh --input_model=./mobilenet_v2_int8.onnx --mode=accuracy --dataset_location=/path/to/imagenet/ --batch_size=32
+bash run_benchmark.sh --input_model=./mobilenet_v2_int8.onnx --mode=performance --dataset_location=/path/to/imagenet/ --batch_size=1
 ```
-Please note this dataset is Raw image dataset.
