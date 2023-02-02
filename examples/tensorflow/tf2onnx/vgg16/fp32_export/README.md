@@ -12,9 +12,16 @@ This document is used to show how to export Tensorflow VGG16 FP32 model to ONNX 
 ```shell
 pip install neural-compressor
 ```
+
 ### Install requirements
 ```shell
 pip install -r requirements.txt
+```
+
+### Install Intel Extension for Tensorflow
+Intel Extension for Tensorflow is mandatory to be installed for exporting Tensorflow model to ONNX.
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
 ## 2. Prepare Model

@@ -12,11 +12,18 @@ This document is used to show how to export Tensorflow INT8 QDQ model to ONNX IN
 ```shell
 pip install neural-compressor
 ```
+
 ### Install requirements
 The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this export ONNX INT8 model example.
 The Intel Extension for Tensorflow for Intel CPUs is installed as default.
 ```shell
 pip install -r requirements.txt
+```
+
+### Install Intel Extension for Tensorflow
+Intel Extension for Tensorflow is mandatory to be installed for exporting Tensorflow model to ONNX.
+```shell
+pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
 ## 2. Prepare Model
