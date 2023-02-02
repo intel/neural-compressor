@@ -16,7 +16,7 @@ pip install neural-compressor
 ```shell
 pip install intel-tensorflow
 ```
-> Note: Supported Tensorflow [Version](/docs/source/installation_guide.md#validated-software-environment).
+> Note: Validated Tensorflow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 3. Install Intel Extension for Tensorflow
 
