@@ -18,7 +18,12 @@ Installation
     2.2. [Option 1 Install from Binary](#Option-1-Install-from-Binary-1)
 
     2.3. [Option 2 Install from Source](#Option-2-Install-from-Source-1)
-   
+
+3. [System Requirements](#System-Requirements)
+
+   3.1. [Validated Hardware Environment](#Validated-Hardware-Environment)
+
+   3.2. [Validated Software Environment](#Validated-Software-Environment)
 
 ## Linux Installation
 ### Prerequisites
@@ -131,3 +136,67 @@ The following prerequisites and requirements must be satisfied for a successful 
   # build with full functionality (including GUI)
   python setup.py --full install
   ```
+
+## System Requirements
+
+### Validated Hardware Environment
+#### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
+
+* Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, Ice Lake, and Sapphire Rapids)
+* Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM)
+
+#### Intel® Neural Compressor supports GPUs built on Intel's Xe architecture:
+
+* Intel Data Center GPU Flex Series (formerly Arctic Sound-M)
+* Intel Data Center GPU Max Series (formerly Ponte Vecchio)
+
+#### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
+
+* Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model [list](./docs/source/validated_model_list.md#Validated-ONNX-QDQ-INT8-models-on-multiple-hardware-through-ONNX-Runtime).
+
+### Validated Software Environment
+
+* OS version: CentOS 8.4, Ubuntu 20.04
+* Python version: 3.7, 3.8, 3.9, 3.10
+
+<table class="docutils">
+<thead>
+  <tr style="vertical-align: middle; text-align: center;">
+    <th>Framework</th>
+    <th>TensorFlow</th>
+    <th>Intel<br>TensorFlow</th>
+    <th>Intel®<br>Extension for<br>TensorFlow*</th>
+    <th>PyTorch</th>
+    <th>Intel®<br>Extension for<br>PyTorch*</th>
+    <th>ONNX<br>Runtime</th>
+    <th>MXNet</th>
+  </tr>
+</thead>
+<tbody>
+  <tr align="center">
+    <th>Version</th>
+    <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.10.1>2.10.1</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.9.3>2.9.3</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.0.0>1.0.0</a></td>
+    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>1.13.1+cpu</a><br>
+    <a href=https://download.pytorch.org/whl/torch_stable.html>1.12.1+cpu</a><br>
+    <a href=https://download.pytorch.org/whl/torch_stable.html>1.11.0+cpu</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.13.0+cpu>1.13.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.12.100>1.12.1</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.11.0>1.11.0</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.13.1>1.13.1</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.12.1>1.12.1</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.11.0>1.11.0</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.9.1>1.9.1</a><br>
+    <a href=https://github.com/apache/incubator-mxnet/tree/1.8.0>1.8.0</a><br>
+    <a href=https://github.com/apache/incubator-mxnet/tree/1.7.0>1.7.0</a><br></td>
+  </tr>
+</tbody>
+</table>
+
+> **Note:**
+> Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow before v2.9. oneDNN is the default for TensorFlow since v2.9.

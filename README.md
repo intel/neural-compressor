@@ -14,7 +14,7 @@ Intel® Neural Compressor
 ---
 <div align="left">
 
-Intel® Neural Compressor, formerly known as Intel® Low Precision Optimization Tool, is an open-source Python library that runs on Intel CPUs and GPUs, which delivers unified interfaces across multiple deep-learning frameworks for popular network compression technologies such as quantization, pruning, and knowledge distillation. This tool supports automatic accuracy-driven tuning strategies to help the user quickly find out the best quantized model. It also implements different weight-pruning algorithms to generate a pruned model with predefined sparsity goal. It also supports knowledge distillation to distill the knowledge from the teacher model to the student model. 
+Intel® Neural Compressor, is an open-source Python library that runs on Intel CPUs and GPUs, which delivers unified interfaces across multiple deep-learning frameworks for popular network compression technologies such as quantization, pruning, and knowledge distillation. This tool supports automatic accuracy-driven tuning strategies to help the user quickly find out the best quantized model. It also implements different weight-pruning algorithms to generate a pruned model with predefined sparsity goal. It also supports knowledge distillation to distill the knowledge from the teacher model to the student model.   
 Intel® Neural Compressor is a critical AI software component in the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
 
 
@@ -24,27 +24,19 @@ Intel® Neural Compressor is a critical AI software component in the [Intel® on
 
 ### Prerequisites
 
-Python version: 3.7, 3.8, 3.9, 3.10
+Python version: 3.7, 3.8, 3.9, 3.10   
+> More Details of validated hardware and software system can be found at [Installation Guide](./docs/source/installation_guide.md#)
 
 ### Install on Linux
-- Release binary install 
-  ```Shell
-  # install stable basic version from pypi
-  pip install neural-compressor
-  # or install stable full version from pypi (including GUI)
-  pip install neural-compressor-full
-  ```
-- Nightly binary install
-  ```Shell
-  git clone https://github.com/intel/neural-compressor.git
-  cd neural-compressor
-  pip install -r requirements.txt
-  # install nightly basic version from pypi
-  pip install -i https://test.pypi.org/simple/ neural-compressor
-  # or install nightly full version from pypi (including GUI)
-  pip install -i https://test.pypi.org/simple/ neural-compressor-full
-  ```
-More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
+Option1: install stable **basic** version from pypi
+```Shell
+pip install neural-compressor
+```
+Option2: install stable **full** version from pypi which including GUI support
+```Shell
+pip install neural-compressor-full
+```
+> More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
 
 ## Getting Started
 ### Quantization with Python API    
@@ -91,69 +83,6 @@ inc_bench
   <img src="./docs/source/_static/imgs/INC_GUI.gif" alt="Architecture">
 </a>
 
-## System Requirements
-
-### Validated Hardware Environment
-#### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
-
-* Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, Ice Lake, and Sapphire Rapids)
-* Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM)
-
-#### Intel® Neural Compressor supports GPUs built on Intel's Xe architecture:
-
-* Intel Data Center GPU Flex Series (formerly Arctic Sound-M)
-* Intel Data Center GPU Max Series (formerly Ponte Vecchio)
-
-#### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
-
-* Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model [list](./docs/source/validated_model_list.md#Validated-ONNX-QDQ-INT8-models-on-multiple-hardware-through-ONNX-Runtime).
-
-### Validated Software Environment
-
-* OS version: CentOS 8.4, Ubuntu 20.04  
-* Python version: 3.7, 3.8, 3.9, 3.10  
-
-<table class="docutils">
-<thead>
-  <tr style="vertical-align: middle; text-align: center;">
-    <th>Framework</th>
-    <th>TensorFlow</th>
-    <th>Intel<br>TensorFlow</th>
-    <th>Intel®<br>Extension for<br>TensorFlow*</th>
-    <th>PyTorch</th>
-    <th>Intel®<br>Extension for<br>PyTorch*</th>
-    <th>ONNX<br>Runtime</th>
-    <th>MXNet</th>
-  </tr>
-</thead>
-<tbody>
-  <tr align="center">
-    <th>Version</th>
-    <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.10.1>2.10.1</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.9.3>2.9.3</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.0.0>1.0.0</a></td>
-    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>1.13.1+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.12.1+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.11.0+cpu</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.13.0+cpu>1.13.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.12.100>1.12.1</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.11.0>1.11.0</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.13.1>1.13.1</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.12.1>1.12.1</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.11.0>1.11.0</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.9.1>1.9.1</a><br>
-    <a href=https://github.com/apache/incubator-mxnet/tree/1.8.0>1.8.0</a><br>
-    <a href=https://github.com/apache/incubator-mxnet/tree/1.7.0>1.7.0</a><br></td>
-  </tr>
-</tbody>
-</table>
-
-> **Note:**
-> Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow v2.6 to v2.8. oneDNN is the default for TensorFlow v2.9.
 
 ### Validated Models
 Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo) with the performance speedup up to 4.2x on VNNI while minimizing the accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated typical models are available [here](./docs/source/validated_model_list.md).
