@@ -3692,7 +3692,7 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
         self._update_bn_statistics(q_model._model, dataloader, model_qconfig_dict)
         # Insert input observer and execute calibration with input observer.
         if self.approach == 'post_training_static_quant':
-            self._prepare_observer(q_model._model)
+            self._prepare_observer(q_model._model, model_qconfig_dict)
             self._calibration_for_scale(q_model._model, dataloader, model_qconfig_dict)
 
         # add fp8 emulation hook
@@ -3735,7 +3735,7 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
             model_qconfig_dict[k[0]] = mod_qconfig
         return model_qconfig_dict
 
-    def _prepare_observer(self, model):
+    def _prepare_observer(self, model, model_qconfig_dict):
         def input_observer_forward_pre_hook(self, input):
             output = self.input_activation_post_process(input[0])
             if hasattr(self, 'input_activation_post_process1'):
@@ -3750,16 +3750,18 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
                 config = self.tune_cfg['op'][(name, op_type)]
                 if config['activation']['dtype'] in ['fp8_e4m3', 'fp8_e3m4']:
                     algorithm = config['activation']['algorithm']
+                    qtconfig = model_qconfig_dict[name].iact_qconfig
+                    from .torch_utils.observer import FP8HistogramObserver
                     from mpemu.module_wrappers import (BatchMatmul, Matmul, AddMatmul,
                                                         EltwiseAdd, EltwiseMul, EltwiseDiv)
                     module.add_module(
-                        'input_activation_post_process', torch.quantization.HistogramObserver() if \
+                        'input_activation_post_process', FP8HistogramObserver(qtconfig=qtconfig) if \
                                     algorithm == 'kl' else torch.quantization.MinMaxObserver()
                     )
                     if type(module) in [BatchMatmul, Matmul, AddMatmul,
                                         EltwiseAdd, EltwiseMul, EltwiseDiv]:
                         module.add_module(
-                            'input_activation_post_process1', torch.quantization.HistogramObserver() if \
+                            'input_activation_post_process1', FP8HistogramObserver(qtconfig=qtconfig) if \
                                     algorithm == 'kl' else torch.quantization.MinMaxObserver()
                         )
                     module.register_forward_pre_hook(input_observer_forward_pre_hook)
@@ -3777,16 +3779,22 @@ class PyTorch_FP8Adaptor(TemplateAdaptor):
         for name, module in model.named_modules():
             if hasattr(module, 'input_activation_post_process'):
                 HF_max = model_qconfig_dict[name].iact_qconfig.get_flt_max()
-                max_val = module.input_activation_post_process.max_val
-                min_val = module.input_activation_post_process.min_val
+                if hasattr(module.input_activation_post_process, '_non_linear_param_search'):
+                    min_val, max_val = module.input_activation_post_process._non_linear_param_search()
+                else:
+                    min_val = module.input_activation_post_process.min_val
+                    max_val = module.input_activation_post_process.max_val
                 amax = torch.max(torch.abs(max_val), torch.abs(min_val))
                 scale = HF_max / amax
                 module.register_parameter('scale', torch.nn.Parameter(scale))
                 delattr(module, 'input_activation_post_process')
             if hasattr(module, 'input_activation_post_process1'):
                 HF_max = model_qconfig_dict[name].iact_qconfig.get_flt_max()
-                max_val = module.input_activation_post_process1.max_val
-                min_val = module.input_activation_post_process1.min_val
+                if hasattr(module.input_activation_post_process1, '_non_linear_param_search'):
+                    min_val, max_val = module.input_activation_post_process1._non_linear_param_search()
+                else:
+                    min_val = module.input_activation_post_process1.min_val
+                    max_val = module.input_activation_post_process1.max_val
                 amax = torch.max(torch.abs(max_val), torch.abs(min_val))
                 scale = HF_max / amax
                 module.register_parameter('scale1', torch.nn.Parameter(scale))
