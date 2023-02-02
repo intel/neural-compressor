@@ -222,7 +222,8 @@ class Pruning(Component):
                                    'workspace_path': self.cfg.tuning.workspace.path,
                                    'q_dataloader': None,
                                    'format': 'default',
-                                   'backend': 'default'}
+                                   'backend': 'default',
+                                   'inplace': self.cfg.model.get('inplace', False)}
 
         if self.framework == 'tensorflow':
             framework_specific_info.update(

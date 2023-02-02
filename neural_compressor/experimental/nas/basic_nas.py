@@ -95,7 +95,8 @@ class BasicNAS(NASBase, Component):
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None}
+                                   'q_dataloader': None,
+                                   'inplace': self.cfg.model.get('inplace', False)}
 
         if self.framework == 'tensorflow' or self.framework == 'tensorflow_itex':
             framework_specific_info.update(

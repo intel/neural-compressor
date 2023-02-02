@@ -102,7 +102,8 @@ class ModelConversion():
              'fake_quant': True,
              'inputs': cfg.model.inputs,
              'outputs': cfg.model.outputs,
-             'workspace_path': cfg.tuning.workspace.path})
+             'workspace_path': cfg.tuning.workspace.path,
+             'inplace': cfg.model.get('inplace', False)})
 
         self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
         q_model = self.adaptor.convert(self._model, self._source, self._destination)
