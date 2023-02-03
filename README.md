@@ -43,7 +43,8 @@ pip install neural-compressor-full
 ### Quantization with Python API    
 
 ```shell
-# A TensorFlow Example
+# Install Intel Neural Compressor and TensorFlow
+pip install neural-compressor 
 pip install tensorflow
 # Prepare fp32 model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
@@ -64,29 +65,7 @@ q_model = fit(
     calib_dataloader=dataloader,
     eval_dataloader=dataloader)
 ```
-### Quantization with [JupyterLab Extension](./neural_coder/extensions/neural_compressor_ext_lab/README.md)
-Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install with one click:
-
-<a target="_blank" href="./neural_coder/extensions/screenshots/extmanager.png">
-  <img src="./neural_coder/extensions/screenshots/extmanager.png" alt="Extension" width="35%" height="35%">
-</a>
-  
-### Quantization with [GUI](./docs/source/bench.md)
-```shell
-# An ONNX Example
-pip install onnx==1.12.0 onnxruntime==1.12.1 onnxruntime-extensions
-# Prepare fp32 model
-wget https://github.com/onnx/models/raw/main/vision/classification/resnet/model/resnet50-v1-12.onnx
-# Start GUI
-inc_bench
-```
-<a target="_blank" href="./docs/source/_static/imgs/INC_GUI.gif">
-  <img src="./docs/source/_static/imgs/INC_GUI.gif" alt="Architecture">
-</a>
-
-
-### Validated Models
-Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo) with the performance speedup up to 4.2x on VNNI while minimizing the accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated typical models are available [here](./docs/source/validated_model_list.md).
+> More quick samples and validated models can be find in [Get Started Page](./docs/source/get_started.md).
 
 ## Documentation
 
@@ -163,11 +142,8 @@ Intel® Neural Compressor validated the quantization for 10K+ models from popula
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
 * Blog on Medium: [MLefficiency — Optimizing transformer models for efficiency](https://medium.com/@kawapanion/mlefficiency-optimizing-transformer-models-for-efficiency-a9e230cff051) (Dec 2022)
-* Blog on Medium: [One-Click Acceleration of Hugging Face Transformers with Intel’s Neural Coder](https://medium.com/intel-analytics-software/one-click-acceleration-of-huggingface-transformers-with-optimum-intel-by-neural-coder-f35ca3b1a82f) (Dec 2022)
-* Blog on Medium: [One-Click Quantization of Deep Learning Models with the Neural Coder Extension](https://medium.com/intel-analytics-software/one-click-quantize-your-deep-learning-code-in-visual-studio-code-with-neural-coder-extension-8be1a0022c29) (Dec 2022)
-* Blog on Medium: [Accelerate Stable Diffusion with Intel Neural Compressor](https://medium.com/intel-analytics-software/accelerating-stable-diffusion-inference-through-8-bit-post-training-quantization-with-intel-neural-e28f3615f77c) (Dec 2022)
 
-> View our [full publication list](./docs/source/publication_list.md).
+> View our [Full Publication List](./docs/source/publication_list.md).
 
 ## Additional Content
 
