@@ -95,14 +95,22 @@ class eval_classifier_optimized_graph:
             from neural_compressor import quantization
             from neural_compressor.config import PostTrainingQuantConfig
             from neural_compressor.utils.create_obj_from_config import create_dataloader
-            dataloader_args = {
+            calib_dataloader_args = {
                 'batch_size': 10,
                 'dataset': {"ImageRecord": {'root':args.dataset_location}},
                 'transform': {'BilinearImagenet':
                      {'height': 224, 'width': 224}},
                 'filter': None
             }
-            dataloader = create_dataloader('tensorflow', dataloader_args)
+            calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
+            eval_dataloader_args = {
+                'batch_size': 32,
+                'dataset': {"ImageRecord": {'root':args.dataset_location}},
+                'transform': {'BilinearImagenet':
+                     {'height': 224, 'width': 224}},
+                'filter': None
+            }
+            eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
             op_name_list = {
                       'MobilenetV3/Conv/Conv2D': {
                         'activation':  {'dtype': ['fp32']},
@@ -237,10 +245,10 @@ class eval_classifier_optimized_graph:
                         'activation':  {'dtype': ['fp32']},
                       },
                     }
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100],
+            conf = PostTrainingQuantConfig(calibration_sampling_size=[20, 50],
                                            op_name_list=op_name_list)
-            q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=dataloader,
-                        eval_dataloader=dataloader)
+            q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
+                        eval_dataloader=eval_dataloader)
             q_model.save(args.output_graph)
 
         if args.benchmark:

@@ -101,7 +101,7 @@ class eval_classifier_optimized_graph:
             data_path = os.path.join(args.dataset_location, 'raw_images')
             label_path = os.path.join(args.dataset_location, 'raw/caffe_ilsvrc12/val.txt')
             dataloader_args = {
-                'batch_size': 10,
+                'batch_size': 32,
                 'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
                 'transform': {'PaddedCenterCrop': {'size': 224, 'crop_padding': 32},
                               'Resize': {'size': 224, 'interpolation': 'bicubic'},
@@ -138,7 +138,8 @@ class eval_classifier_optimized_graph:
             if args.mode == 'performance':
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
-                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4,
+                conf = BenchmarkConfig(inputs=['truediv'], outputs=['Squeeze'],
+                                       warmup=10, iteration=100, cores_per_instance=4,
                                        num_of_instance=7)
                 fit(args.input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':
