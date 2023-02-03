@@ -141,9 +141,6 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
                 "INC support IPEX version >= 1.12.0"
                 if "label" in input.keys():
                     input.pop("label")
-                for key in input.items():
-                    if key == "start_positions" or key == "end_positions":
-                        continue
                 named_input = namedtuple("input", input.keys())
                 input = named_input._make(input.values())
                 return input
@@ -161,9 +158,6 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
                 "INC support IPEX version >= 1.12.0"
                 if "label" in input.keys():
                     input.pop("label")
-                for key in input.items():
-                    if key == "start_positions" or key == "end_positions":
-                        continue
                 named_input = namedtuple("input", input.keys())
                 input = named_input._make(input.values())
                 return input
