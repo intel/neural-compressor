@@ -1259,6 +1259,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         # For tensorboard display
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
+        self.tune_cfg["reduce_range"] = REDUCE_RANGE
         self.tune_cfg["framework"] = "pytorch"
         op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
         self.tune_cfg['bf16_ops_list'] = op_cfgs['bf16_ops_list']
@@ -2757,6 +2758,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                "The model passed in is not the instance of torch.nn.Module"
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
+        self.tune_cfg["reduce_range"] = REDUCE_RANGE
         self.tune_cfg["framework"] = "pytorch_fx"
 
         # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
