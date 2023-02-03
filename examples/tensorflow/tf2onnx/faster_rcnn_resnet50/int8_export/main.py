@@ -29,11 +29,6 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 def eval_func_onnx(model, dataloader, metric, postprocess=None):
     metric.reset()
     session = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
-    # input_names = [i.name for i in sess.get_inputs()]
-    # for input_data, label in dataloader:
-    #     output = sess.run(None, dict(zip(input_names, [input_data])))
-    #     metric.update(output, label)
-    # return metric.result()
     ort_inputs = {}
     len_inputs = len(session.get_inputs())
     inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
@@ -42,7 +37,7 @@ def eval_func_onnx(model, dataloader, metric, postprocess=None):
             labels = [labels]
         if len_inputs == 1:
             ort_inputs.update(
-                inputs if isinstance(inputs, dict) else {inputs_names[0]: inputs}
+                inputs if isinstance(inputs, dict) else {inputs_names[0]: np.array(inputs,dtype=np.uint8)}
             )
         else:
             assert len_inputs == len(inputs), \
@@ -152,64 +147,40 @@ class eval_classifier_optimized_graph:
             inc_model.export(self.args.output_graph, config)
 
         if self.args.benchmark:
-            # ONNX INT8 Benchmark
             if self.args.input_graph.endswith('.onnx'):
                 model = onnx.load(self.args.input_graph)
-
-                from neural_compressor.utils.create_obj_from_config import create_dataloader
-                dataloader_args = {
-                    'batch_size': self.args.batch_size,
-                    'dataset': {"COCORaw": {'root':self.args.dataset_location}},
-                    'transform': {'Resize': {'size': 600}},
-                    'filter': None
-                }
-                dataloader = create_dataloader('onnxrt_integerops', dataloader_args)
-
-                from neural_compressor.metric import COCOmAPv2
-                output_index_mapping = {'num_detections':0, 'boxes':1, 'scores':2, 'classes':3}
-                mAP2 = COCOmAPv2(output_index_mapping=output_index_mapping)
-                def eval(onnx_model):
-                    return eval_func_onnx(onnx_model, dataloader, mAP2)
-
-                if self.args.mode == 'performance':
-                    from neural_compressor.benchmark import fit
-                    from neural_compressor.config import BenchmarkConfig
-                    conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
-                    fit(model, conf, b_dataloader=dataloader)
-                elif self.args.mode == 'accuracy':
-                    acc_result = eval(model)
-                    print("Batch size = %d" % dataloader.batch_size)
-                    print("Accuracy: %.5f" % acc_result)
-            # Tensorflow INT8 Benchmark
             else:
-                from neural_compressor.utils.create_obj_from_config import create_dataloader
-                dataloader_args = {
+                model = self.args.input_graph
+
+            from neural_compressor.utils.create_obj_from_config import create_dataloader
+            dataloader_args = {
                     'batch_size': self.args.batch_size,
                     'dataset': {"COCORecord": {'root':self.args.dataset_location}},
                     'transform': {'Resize': {'size': 600}},
                     'filter': None
-                }
-                dataloader = create_dataloader('tensorflow', dataloader_args)
-                from neural_compressor.metric import COCOmAPv2
-                output_index_mapping = {'num_detections':0, 'boxes':1, 'scores':2, 'classes':3}
-                mAP2 = COCOmAPv2(output_index_mapping=output_index_mapping)
-                def eval(model):
+            }
+            dataloader = create_dataloader('tensorflow', dataloader_args)
+
+            from neural_compressor.metric import COCOmAPv2
+            output_index_mapping = {'num_detections':0, 'boxes':1, 'scores':2, 'classes':3}
+            mAP2 = COCOmAPv2(output_index_mapping=output_index_mapping)
+
+            def eval(model):
+                if isinstance(model, str):
                     return eval_func_tf(model, dataloader, mAP2)
-                if self.args.mode == 'performance':
-                    from neural_compressor.benchmark import fit
-                    from neural_compressor.config import BenchmarkConfig
-                    conf = BenchmarkConfig(
-                        inputs=["image_tensor"],
-                        outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
-                        warmup=10,
-                        iteration=100,
-                        cores_per_instance=4,
-                        num_of_instance=7)
-                    fit(self.args.input_graph, conf, b_dataloader=dataloader)
                 else:
-                    accuracy = eval(self.args.input_graph)
-                    print('Batch size = %d' % self.args.batch_size)
-                    print("Accuracy: %.5f" % accuracy)
+                    return eval_func_onnx(model, dataloader, mAP2)
+
+            if self.args.mode == 'performance':
+                from neural_compressor.benchmark import fit
+                from neural_compressor.config import BenchmarkConfig
+                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
+                fit(model, conf, b_dataloader=dataloader)
+            elif self.args.mode == 'accuracy':
+                acc_result = eval(model)
+                print("Batch size = %d" % dataloader.batch_size)
+                print("Accuracy: %.5f" % acc_result)
+
 
 if __name__ == "__main__":
     evaluate_opt_graph = eval_classifier_optimized_graph()

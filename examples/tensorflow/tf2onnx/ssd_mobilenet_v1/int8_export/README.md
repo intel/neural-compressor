@@ -56,7 +56,7 @@ tensorflow records using the `https://github.com/tensorflow/models.git` dedicate
 Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
 
 # Run Command
-Please note the dataset is TF records format for running benchmark.
+Please note the dataset is TF records format for running quantization and benchmark.
 
 ## Quantize Tensorflow FP32 model to Tensorflow INT8 QDQ model
 ```shell

@@ -35,10 +35,27 @@ tar -xvf faster_rcnn_resnet50_fp32_coco_pretrained_model.tar.gz
 
 ## 3. Prepare Dataset
 
+### Automatic dataset download
+
+> **_Note: `prepare_coco_dataset.sh` script works with TF version 1.x._**
+
+Run the `prepare_coco_dataset.sh` script located in `examples/tensorflow/tf2onnx`.
+
+Usage:
+```shell
+cd examples/tensorflow/tf2onnx/
+bash prepare_coco_dataset.sh
+cd faster_rcnn_resnet50/fp32_export
+```
+
+This script will download the *train*, *validation* and *test* COCO datasets. Furthermore it will convert them to
+tensorflow records using the `https://github.com/tensorflow/models.git` dedicated script.
+
+### Manual dataset download
 Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
-The dataset can be converted into tensorflow records using the `https://github.com/tensorflow/models.git` dedicated script.
 
 # Run Command
+Please note the dataset is TF records format for running benchmark.
 
 ## Export Tensorflow FP32 model to ONNX FP32 model
 ```shell
@@ -50,11 +67,9 @@ bash run_export.sh --input_model=./faster_rcnn_resnet50_fp32_coco/frozen_inferen
 bash run_benchmark.sh --input_model=./faster_rcnn_resnet50_fp32_coco/frozen_inference_graph.pb --mode=accuracy --dataset_location=/path/to/coco_dataset/ --batch_size=16
 bash run_benchmark.sh --input_model=./faster_rcnn_resnet50_fp32_coco/frozen_inference_graph.pb --mode=performance --dataset_location=/path/to/coco_dataset/ --batch_size=16
 ```
-Please note this dataset is TF records format.
 
 ## Run benchmark for ONNX FP32 model
 ```shell
 bash run_benchmark.sh --input_model=./faster_rcnn_resnet50_fp32_coco.onnx --mode=accuracy --dataset_location=/path/to/coco_dataset/ --batch_size=16
 bash run_benchmark.sh --input_model=./faster_rcnn_resnet50_fp32_coco.onnx --mode=performance --dataset_location=/path/to/coco_dataset/ --batch_size=16
 ```
-Please note this dataset is Raw Coco dataset.
