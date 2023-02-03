@@ -30,7 +30,7 @@ Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQu
 
 ## 1. Quantization
 
-Quantize model with dynamic quantization:
+Quantize model with static quantization:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
