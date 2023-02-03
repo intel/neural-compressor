@@ -995,62 +995,78 @@ Intel® Neural Compressor validated examples with multiple compression technique
   <tr>
     <td>BERT base uncased MRPC (HuggingFace)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td> 
+        <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_static">qlinearops</a>
+    </td>
   </tr>
   <tr>
     <td>Roberta base MRPC (HuggingFace)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_dynamic">integerops</a> / 
+        <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_static">qlinearops</a>
+    </td>
   </tr>
   <tr>
     <td>XLM Roberta base MRPC (HuggingFace)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td> 
+        <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_static">qlinearops</a>
+    </td>
   </tr>
   <tr>
     <td>Camembert base MRPC (HuggingFace)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td> 
+        <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_static">qlinearops</a>
+    </td>
   </tr>
   <tr>
     <td>MiniLM L12 H384 uncased MRPC (HuggingFace)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td> 
+        <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_static">qlinearops</a>
+    </td>
   </tr>
   <tr>
     <td>DistilBERT base uncased SST-2 (HuggingFace)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td> 
+        <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_static">qlinearops</a>
+    </td>
   </tr>
   <tr>
     <td>Albert base v2 SST-2 (HuggingFace)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td> 
+        <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_static">qlinearops</a>
+    </td>
   </tr>
   <tr>
     <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq">qdq</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td> 
+        <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/text_classification/quantization/ptq_static">qlinearops</a>
+    </td>
   </tr>
   <tr>
     <td>Spanbert SQuAD (HuggingFace)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/huggingface_model/question_answering/quantization/ptq">qdq</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/question_answering/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/question_answering/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
     <td>Bert base multilingual cased SQuAD (HuggingFace)</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/nlp/huggingface_model/question_answering/quantization/ptq">qdq</a></td>
+    <td>Post-Training Dynamic / Static Quantization</td>
+    <td><a href="./onnxrt/nlp/huggingface_model/question_answering/quantization/ptq_dynamic">integerops</a> / <a href="./onnxrt/nlp/huggingface_model/question_answering/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
     <td>*SSD MobileNet V1</td>
