@@ -42,7 +42,9 @@ class TensorflowQDQToOnnxQDQConverter:
             model (graphdef): tensorflow QDQ graphdef
             input_names (list, optional): input names. Defaults to None.
             output_names (list, optional): output names. Defaults to None.
+            shape_override: dict with inputs that override the shapes given by tensorflow.
             opset_version (int, optional): opset version. Defaults to 14.
+            inputs_as_nchw (list, optional): transpose the input. Defaults to None.
         """
         graph_def = self.tf_graph_optimize(model)
 
@@ -137,7 +139,6 @@ class TensorflowQDQToOnnxQDQConverter:
 
     def transpose_inputs(self, ctx, inputs_as_nchw):
         """Insert a transpose from NHWC to NCHW on model input on users request."""
-
         ops = []
         for node in ctx.get_nodes():
             for _, output_name in enumerate(node.output):

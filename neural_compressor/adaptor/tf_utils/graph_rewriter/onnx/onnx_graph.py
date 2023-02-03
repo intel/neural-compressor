@@ -845,7 +845,7 @@ class OnnxGraph:
     def add_graph_input(self, name, dtype=None, shape=None):
         """Add placeholder node as graph's input. Order matters only for subgraph.
 
-           Placeholders in original graph are assumed for main graph, order not matters.
+        Placeholders in original graph are assumed for main graph, order not matters.
         """
         if dtype is None:
             dtype = self.get_dtype(name)
@@ -1104,7 +1104,7 @@ class OnnxGraph:
         self.reset_nodes(related_nodes)
 
     def safe_to_remove_nodes(self, to_delete):
-        """ List of nodes that safe to delete (i.e. outputs not consumed by other nodes.)"""
+        """List of nodes that safe to delete, i.e. outputs not consumed by other nodes."""
         safe_to_remove = []
         delete_set = set(to_delete)
         for n in delete_set:

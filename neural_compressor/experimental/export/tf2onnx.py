@@ -22,7 +22,7 @@ import re
 
 
 def _split_nodename_and_shape(name):
-    """input name with shape into name and shape."""
+    """Split input name with shape into name and shape."""
     # pattern for a node name
     inputs = []
     shapes = {}
@@ -57,6 +57,7 @@ def tf_to_fp32_onnx(
         opset_version (int, optional): opset version. Defaults to 14.
         input_names (list, optional): input names. Defaults to None.
         output_names (list, optional): output names. Defaults to None.
+        inputs_as_nchw (list, optional): transpose the input. Defaults to None.
     """
     shape_override = None
     if isinstance(input_names, str):
@@ -89,6 +90,7 @@ def tf_to_int8_onnx(
         opset_version (int, optional): opset version. Defaults to 14.
         input_names (list, optional): input names. Defaults to None.
         output_names (list, optional): output names. Defaults to None.
+        inputs_as_nchw (list, optional): transpose the input. Defaults to None.
     """
     shape_override = None
     if isinstance(input_names, str):
