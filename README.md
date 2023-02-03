@@ -25,19 +25,9 @@ Intel® Neural Compressor is a critical AI software component in the [Intel® on
 
 ## Installation
 
-### Prerequisites
-
-Python version: 3.7, 3.8, 3.9, 3.10   
-> More details of validated hardware and software system can be found at [Installation Guide](./docs/source/installation_guide.md#).
-
-### Install on Linux
-Option1: install stable **basic** version from pypi
+### Install stable **basic** version from pypi
 ```Shell
 pip install neural-compressor
-```
-Option2: install stable **full** version from pypi which including GUI support
-```Shell
-pip install neural-compressor-full
 ```
 > More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
 
@@ -60,10 +50,9 @@ dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
 dataloader = DataLoader(framework='tensorflow', dataset=dataset)
 
 from neural_compressor.quantization import fit
-config = PostTrainingQuantConfig()
 q_model = fit(
     model="./mobilenet_v1_1.0_224_frozen.pb",
-    conf=config,
+    conf=PostTrainingQuantConfig(),
     calib_dataloader=dataloader,
     eval_dataloader=dataloader)
 ```
@@ -153,8 +142,9 @@ q_model = fit(
 * [Contribution Guidelines](./docs/source/CONTRIBUTING.md)
 * [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
-* [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)
 
-## Hiring
+## Research Collaboration
 
-We are actively hiring. Send your resume to inc.maintainers@intel.com if you are interested in model compression techniques.
+Welcome to contribute your advanced research topics and work with us to create the progress of AI techniques.   
+Please contact us by inc.maintainers@intel.com. 
+
