@@ -379,7 +379,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.40x</td>
   </tr>
   <tr>
-    <td>ResNetv 2 50</td>
+    <td>ResNet v2 50</td>
     <td>keras</td>
     <td>69.20%</td>
     <td>69.03%</td>
@@ -752,7 +752,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>1.31x</td>
   </tr>
   <tr>
-    <td>MaskR-CNN</td>
+    <td>Mask R-CNN</td>
     <td>FX</td>
     <td>37.60%</td>
     <td>37.80%</td>
