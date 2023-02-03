@@ -23,9 +23,9 @@ Float point 8(FP8) is a promising data type for low precision quantization. In I
 **Note**: [FP8 Emulation Toolkit](https://github.com/IntelLabs/FP8-Emulation-Toolkit) is needed to be installed.
 
 ```
-$ git clone https://github.com/IntelLabs/FP8-Emulation-Toolkit.git
-$ cd FP8-Emulation-Toolkit  
-$ python setup.py install 
+git clone https://github.com/IntelLabs/FP8-Emulation-Toolkit.git
+cd FP8-Emulation-Toolkit  
+python setup.py install 
 ```
 
 ## Get Start with FP8 Quantization
