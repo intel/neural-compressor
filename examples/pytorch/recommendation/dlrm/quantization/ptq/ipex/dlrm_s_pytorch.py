@@ -864,15 +864,15 @@ def run():
         args.num_cpu_cores = b_conf.cores_per_instance
 
         def b_func(model):
-            return inference(
+            with torch.no_grad():
+                return inference(
                           args,
                           model,
                           best_acc_test,
                           best_auc_test,
                           test_ld
                         )
-        with torch.no_grad():
-            benchmark.fit(dlrm, b_conf, b_func=b_func)
+        benchmark.fit(dlrm, b_conf, b_func=b_func)
         exit(0)
 
     if args.accuracy_only:

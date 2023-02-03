@@ -650,6 +650,7 @@ functionalities
 functionet
 functools
 Funtowicz
+fvcore
 fw
 FWK
 fx
@@ -1441,6 +1442,7 @@ pycocotools
 pyguide
 pylint
 pymodule
+pymoo
 PyObject
 pypi
 PyPI
