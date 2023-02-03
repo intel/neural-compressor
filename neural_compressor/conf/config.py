@@ -1399,6 +1399,8 @@ class Conf(object):
                 'model.outputs': pythonic_config.quantization.outputs,
                 'model.backend': pythonic_config.quantization.backend,
                 'model.quant_format': pythonic_config.quantization.quant_format,
+                'model.domain': pythonic_config.quantization.domain,
+                'quantization.recipes': pythonic_config.quantization.recipes,
                 'quantization.approach': pythonic_config.quantization.approach,
                 'quantization.calibration.sampling_size': 
                     pythonic_config.quantization.calibration_sampling_size,

@@ -551,6 +551,8 @@ class TuneStrategy(object):
         framework = self.cfg.model.framework.lower()
         framework_specific_info.update({'backend': self.cfg.model.get('backend', 'default')})
         framework_specific_info.update({'format': self.cfg.model.get('quant_format', 'default')})
+        framework_specific_info.update({'domain': self.cfg.model.get('domain', 'auto')})
+        framework_specific_info.update({'recipes': self.cfg.quantization.get('recipes', {})})
 
         self.mixed_precision_mode = bool('mixed_precision' in self.cfg) or \
             bool('graph_optimization' in self.cfg)

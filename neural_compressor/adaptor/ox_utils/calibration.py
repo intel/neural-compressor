@@ -206,27 +206,22 @@ class ONNXRTAugment:
                             location="weights.pb",
                             convert_attribute=False)
 
-    def get_intermediate_outputs(self, calib_mode=None, model=None, model_path=None):
+    def get_intermediate_outputs(self, calib_mode=None):
         """Gather intermediate model outputs after running inference."""
         # conduct inference session and get intermediate outputs
         so = onnxruntime.SessionOptions()
         if sys.version_info < (3, 10) and find_spec('onnxruntime_extensions'):  # pragma: no cover
             from onnxruntime_extensions import get_library_path
             so.register_custom_ops_library(get_library_path())
-        if model == None:
-            model = self.augmented_model
-        if model_path == None:
-            model_path = self.model_wrapper.model_path + '_augment.onnx'
-        if self.model_wrapper.large_size:
-            session = onnxruntime.InferenceSession(
-                model_path,
-                so,
-                provider=self.backend)
-        else:
-            session = onnxruntime.InferenceSession(
-                model.SerializeToString(),
-                so,
-                provider=self.backend)
+
+        session = onnxruntime.InferenceSession(
+                    self.augmented_model.SerializeToString(),
+                    so,
+                    provider=self.backend) if not self.model_wrapper.large_size else \
+                  onnxruntime.InferenceSession(
+                    self.model_wrapper.model_path  + '_augment.onnx',
+                    so,
+                    provider=self.backend)
 
         intermediate_outputs = []
         len_inputs = len(session.get_inputs())
@@ -715,8 +710,6 @@ class ONNXRTAugment:
 
         Returns:
             tensors_to_dump: The names of tensor to be dumped
-            model: the modified onnx model
-            large_model_path: the saved path for large onnx model
         """
         model = copy.deepcopy(self.model)
 
@@ -724,12 +717,11 @@ class ONNXRTAugment:
         self._add_tensors_to_outputs(tensors_to_dump, model)
 
         self.smooth_calib_augmented_model = model
-        large_model_path = None
         if self._is_large_model():  # pragma: no cover
-            large_model_path = self.model_wrapper.model_path + '_smooth_calib_augment.onnx'
-            self._save_large_onnx_model(model, large_model_path, "smooth_weights.pb")
+            self.model_wrapper.model_path = self.model_wrapper.model_path + '_smooth_calib_augment.onnx'
+        self.model_wrapper.model = model
 
-        return tensors_to_dump, model, large_model_path
+        return tensors_to_dump
 
     def _calib_smooth(self, percentile, op_types):
         """
@@ -743,8 +735,8 @@ class ONNXRTAugment:
             shape_infos: The shape information of input tensors
 
         """
-        tensors_to_dump, model, large_model_path = self._augment_smooth_calib_graph(op_types)
-        _, output_dicts = self.get_intermediate_outputs(None, model, large_model_path)
+        tensors_to_dump = self._augment_smooth_calib_graph(op_types)
+        _, output_dicts = self.get_intermediate_outputs()
         max_vals_per_channel = {}
         shape_infos = {}
         for key in tensors_to_dump:

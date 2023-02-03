@@ -60,6 +60,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.device = framework_specific_info["device"]
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.dynamic = framework_specific_info["approach"] == "post_training_dynamic_quant"
+        self.domain = framework_specific_info["domain"]
+        self.recipes = framework_specific_info["recipes"]
         self.backend = PROVIDERS[framework_specific_info["backend"]]
 
         if self.backend not in ort.get_all_providers():
@@ -160,12 +162,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
-        smooth_quant = True
-        if smooth_quant:
+        if "smooth_quant" in self.recipes and self.recipes["smooth_quant"]:
             from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
             from neural_compressor.model.onnx_model import ONNXModel
-            if not isinstance(model, ONNXModel):
-                model = ONNXModel(model)
             black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
             white_nodes = [node for node in quantize_config if quantize_config[node] != 'fp32']
 
@@ -174,8 +173,11 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                     black_nodes=black_nodes, white_nodes=white_nodes,
                                     iterations=list(range(0, quantize_config['calib_iteration'])),
                                     backend=self.backend, reduce_range=self.reduce_range)
-            smooth_model = augment.augment_smooth_graph(alpha=1.0,  percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'], scales_per_op=True)
-            model = copy.deepcopy(smooth_model)
+            model = augment.augment_smooth_graph(
+                    self.recipes.get("alpha", 1.0),
+                    self.recipes.get("percentile", 99.999),
+                    self.recipes.get("op_types", ['MatMul', 'Linear', 'Conv']),
+                    self.recipes.get("scales_per_op", True))
 
         tmp_model = copy.deepcopy(model)
 
