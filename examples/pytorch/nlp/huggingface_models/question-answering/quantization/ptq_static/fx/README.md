@@ -9,7 +9,6 @@ This document is used to list steps of reproducing Huggingface models tuning zoo
 Recommend python 3.6 or higher version.
 ```shell
 cd examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx
-pip install transformers==4.10.0
 pip install -r requirements.txt
 pip install torch
 ```
