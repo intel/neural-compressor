@@ -59,6 +59,12 @@ python -u ./run_glue.py \
         --overwrite_output_dir
 ``` 
 
+You can also try to use INC distributed tuning (Take mrpc as an example):
+
+```
+mpirun -np 2 python -u ./run_glue.py --model_name_or_path distilbert_mrpc --task_name mrpc --do_eval --do_train --max_seq_length 128 --per_device_eval_batch_size 16 --no_cuda --output_dir ./int8_model_dir --tune --onnx --overwrite_output_dir
+```
+
 ### 2. To get the benchmark of tuned model, includes Batch_size and Throughput: 
 
 ```bash

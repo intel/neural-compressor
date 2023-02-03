@@ -63,9 +63,8 @@ class BasicTuneStrategy(TuneStrategy):
                     logger.info("Early stopping the stage 1.")
                     break
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                op_tuning_cfg_lst_stage_1.append(op_tuning_cfg)
-            print("yield op_tuning_cfg_lst_stage_1 with length..........")
-            print(len(op_tuning_cfg_lst_stage_1))
+                op_tuning_cfg_lst_stage_1.append(deepcopy(op_tuning_cfg))
+            logger.info("yield op_tuning_cfg_lst_stage_1 with length {}".format(len(op_tuning_cfg_lst_stage_1)))
             yield op_tuning_cfg_lst_stage_1
 
             #### Coordinate: only master knows cur best tune cfg
@@ -92,9 +91,8 @@ class BasicTuneStrategy(TuneStrategy):
                     new_op_tuning_cfg[item.name] = self._initial_dynamic_cfg_based_on_static_cfg(
                                                    new_op_tuning_cfg[item.name])
                 new_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                op_tuning_cfg_lst_stage_2 = [new_op_tuning_cfg]
-                print("yield op_tuning_cfg_lst_stage_2 with length..........")
-                print(len(op_tuning_cfg_lst_stage_2))
+                op_tuning_cfg_lst_stage_2 = [deepcopy(new_op_tuning_cfg)]
+                logger.info("yield op_tuning_cfg_lst_stage_2 with length {}".format(len(op_tuning_cfg_lst_stage_2)))
                 yield op_tuning_cfg_lst_stage_2
 
             #### Coordinate: only master knows cur best tune cfg
@@ -127,11 +125,10 @@ class BasicTuneStrategy(TuneStrategy):
                 for op_index, op_tuning_cfg in enumerate(fallback_sampler):
                     op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                     # yield op_tuning_cfg
-                    op_tuning_cfg_lst_stage_3.append(op_tuning_cfg)
+                    op_tuning_cfg_lst_stage_3.append(deepcopy(op_tuning_cfg))
                     acc, _ = self.last_tune_result
                     op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
-                print("yield op_tuning_cfg_lst_stage_3 with length..........")
-                print(len(op_tuning_cfg_lst_stage_3))
+                logger.info("yield op_tuning_cfg_lst_stage_3 with length {}".format(len(op_tuning_cfg_lst_stage_3)))
                 yield op_tuning_cfg_lst_stage_3
 
                 #### Coordinate: only master knows op_fallback_acc_impact
@@ -156,10 +153,8 @@ class BasicTuneStrategy(TuneStrategy):
                     for op_tuning_cfg in fallback_sampler:
                         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                         # yield op_tuning_cfg
-                        op_tuning_cfg_lst_stage_4.append(op_tuning_cfg)
-                    print("yield op_tuning_cfg_lst_stage_4 with length..........")
-                    print(len(op_tuning_cfg_lst_stage_4))
-                    print(target_dtype)
+                        op_tuning_cfg_lst_stage_4.append(deepcopy(op_tuning_cfg))
+                    logger.info("yield op_tuning_cfg_lst_stage_4 with length {}".format(len(op_tuning_cfg_lst_stage_4)))
                     yield op_tuning_cfg_lst_stage_4
 
     def next_tune_cfg(self):
