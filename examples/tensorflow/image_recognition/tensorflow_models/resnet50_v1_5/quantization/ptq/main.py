@@ -68,7 +68,7 @@ def evaluate(model, eval_dataloader, metric, postprocess=None):
             predictions = model.sess.run(output_tensor, feed_dict)
             end = time.time()
 
-            metric.update(predictions, labels)
+            metric.update(predictions[1], labels)
             latency_list.append(end-start)
             if idx + 1 == iteration:
                 break
