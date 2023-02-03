@@ -22,7 +22,7 @@ import logging
 import six
 import numpy as np
 
-from onnx import helper, numpy_helper, shape_inference, AttributeProto, TensorProto
+from onnx import helper, numpy_helper, AttributeProto, TensorProto
 from . import tf2onnx_utils as utils
 from .onnx_node import OnnxNode
 
@@ -502,7 +502,7 @@ class OnnxGraph:
                     shape[i] = -1
             # hack to allow utils.ONNX_UNKNOWN_DIMENSION to override batchsize if needed.
             # default is -1.
-            if shape[0] == -1:
+            if shape[0] == -1:  # pylint: disable=E1136  # pylint/issues/3139
                 # pylint: disable=unsupported-assignment-operation
                 shape[0] = utils.ONNX_UNKNOWN_DIMENSION
             return shape
@@ -1121,7 +1121,6 @@ class OnnxGraph:
         qdq_node_output_shape = self.get_shape(dq_node.output[0])
 
         # Get the attributes of qdq node
-        narrow_range = q_node.attr['narrow_range'].i
         signed_input = bool(q_node.get_attr_value('T', TensorProto.INT8) == TensorProto.INT8)
 
         max_quantized = 127

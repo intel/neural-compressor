@@ -35,7 +35,8 @@ logger = logging.getLogger("neural_compressor")
 
 class TensorflowQDQToOnnxQDQConverter:
     """Convert tensorflow QDQ graph to ONNX QDQ graph."""
-    def __init__(self, model, input_names, output_names, shape_override, inputs_as_nchw=None, opset_version=utils.DEFAULT_OPSET_VERSION):
+    def __init__(self, model, input_names, output_names, shape_override,
+                 inputs_as_nchw=None, opset_version=utils.DEFAULT_OPSET_VERSION):
         """Constructor, initilization.
 
         Args:
