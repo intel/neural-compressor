@@ -1,4 +1,4 @@
-# Tensorflow models export to ONNX moldes Examples
+# Tensorflow models export to ONNX models Examples
 
 These examples show how to export Tensorflow models to ONNX models including FP32 and INT8.
 Please note that we only support to export ONNX QDQ format for INT8 now.
