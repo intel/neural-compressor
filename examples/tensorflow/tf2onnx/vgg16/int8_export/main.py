@@ -103,14 +103,6 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
-            eval_dataloader_args = {
-                'batch_size': 32,
-                'dataset': {"ImageRecord": {'root':args.dataset_location}},
-                'transform': {'ResizeCropImagenet':
-                     {'height': 224, 'width': 224, 'mean_value': [123.68, 116.78, 103.94]}},
-                'filter': None
-            }
-            eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
             op_name_list = {
                 'resnet_model/dense/MatMul':
                             {
