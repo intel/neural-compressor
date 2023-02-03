@@ -1130,6 +1130,11 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
         self._output_tensor_names = output_sess[2]
         self.model_type = 'graph_def'
 
+    @property
+    def model(self):
+        """Return the model itself to avoid the initialization issue."""
+        return self
+
 
 TENSORFLOW_MODELS = {'frozen_pb': TensorflowBaseModel,
                      'graph_def': TensorflowBaseModel,

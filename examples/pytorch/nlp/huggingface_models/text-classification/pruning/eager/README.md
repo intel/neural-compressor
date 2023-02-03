@@ -221,7 +221,7 @@ python run_glue_no_trainer.py \
         --num_train_epochs 10 \
         --output_dir "./dense_sst2_bertmini"
 ```
-## Results
+Results
 =======
 Please be aware that when the keywords appear in both global and local settings, the **local** settings are given priority.The snip-momentum pruning method is used by default, and the initial dense model is fine-tuned.
 ### MRPC
@@ -243,5 +243,4 @@ Please be aware that when the keywords appear in both global and local settings,
 # References
 * [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
 * [Knowledge Distillation with the Reused Teacher Classifier](https://arxiv.org/abs/2203.14001)
-
 

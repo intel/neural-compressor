@@ -4,17 +4,17 @@ Validated Models
 
 1. [Validated Quantization Examples](#Validated-Quantization-Examples)
 
-    1.1. [TensorFlow Models with TensorFlow 2.10.0](#tensorflow-models-with-tensorflow-2100)
+    1.1. [TensorFlow Models with Intel TensorFlow 2.11.0](#tensorflow-models-with-Intel-tensorflow-2110)
 
-    1.2. [PyTorch Models with Torch 1.12.1+cpu in PTQ Mode](#pytorch-models-with-torch-1121cpu-in-qat-mode)
+    1.2. [PyTorch Models with Torch 1.13.0+cpu in PTQ Mode](#pytorch-models-with-torch-1130cpu-in-qat-mode)
 
-    1.3. [PyTorch Models with Torch 1.12.1+cpu in QAT Mode](#pytorch-models-with-torch-1121cpu-in-qat-mode)
+    1.3. [PyTorch Models with Torch 1.13.0+cpu in QAT Mode](#pytorch-models-with-torch-1130cpu-in-qat-mode)
 
-    1.4. [PyTorch Models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu](#pytorch-models-with-torch-and-intel-extension-for-pytorch-1110cpu)
+    1.4. [PyTorch Models with Torch and Intel® Extension for PyTorch* 1.13.0+cpu](#pytorch-models-with-torch-and-intel-extension-for-pytorch-1130cpu)
     
-    1.5. [ONNX Models with ONNX Runtime 1.12.1](#onnx-models-with-onnx-runtime-1121)
+    1.5. [ONNX Models with ONNX Runtime 1.13.1](#onnx-models-with-onnx-runtime-1131)
 
-    1.6. [MXNet Models with MXNet 1.7.0](#mxnet-models-with-mxnet-170)
+    1.6. [MXNet Models with MXNet 1.9.1](#mxnet-models-with-mxnet-191)
 
 2. [Validated Pruning Examples](#Validated-Pruning-Examples)
 
@@ -24,11 +24,11 @@ Validated Models
 
 ## Validated Quantization Examples
 
-Performance results test on ​​09/24/2022 with Intel Xeon Platinum 8380 Scalable processor, using 1 socket, 4 cores/instance, 8 instances and batch size 1. 
+Performance results test on ​​01/04/2023 with Intel Xeon Platinum 8380 Scalable processor, using 1 socket, 4 cores/instance, 8 instances and batch size 1. 
 
 Performance varies by use, configuration and other factors. See [platform configuration](./platform_configuration.md) for configuration details. For more complete information about performance and benchmark results, visit www.intel.com/benchmarks
 
-### TensorFlow Models with TensorFlow 2.10.0
+### TensorFlow Models with Intel TensorFlow 2.11.0
 
 <table class="tg">
 <thead>
@@ -49,44 +49,94 @@ Performance varies by use, configuration and other factors. See [platform config
 </thead>
 <tbody align="center">
   <tr>
-    <td>EfficientNet</td>
+    <td>BERT base MRPC</td>
+    <td>CKPT</td>
+    <td>86.52%</td>
+    <td>86.52%</td>
+    <td>0.00%</td>
+    <td>170.44 </td>
+    <td>93.69 </td>
+    <td>1.82x</td>
+  </tr>
+  <tr>
+    <td>BERT large SQuAD</td>
     <td>pb</td>
-    <td>76.74%</td>
-    <td>76.76%</td>
-    <td>-0.03%</td>
-    <td>91.43</td>
-    <td>69.41</td>
-    <td>1.32x</td>
+    <td>92.40 </td>
+    <td>92.99 </td>
+    <td>-0.63%</td>
+    <td>18.39 </td>
+    <td>9.92 </td>
+    <td>1.85x</td>
+  </tr>
+  <tr>
+    <td>BERT large SQuAD (ONNX Model Zoo)</td>
+    <td>pb</td>
+    <td>92.41 </td>
+    <td>92.98 </td>
+    <td>-0.61%</td>
+    <td>20.41 </td>
+    <td>11.16 </td>
+    <td>1.83x</td>
+  </tr>
+  <tr>
+    <td>Densenet 121</td>
+    <td>pb</td>
+    <td>73.61%</td>
+    <td>72.89%</td>
+    <td>0.99%</td>
+    <td>274.61 </td>
+    <td>148.72 </td>
+    <td>1.85x</td>
+  </tr>
+  <tr>
+    <td>Densenet 161</td>
+    <td>pb</td>
+    <td>76.30%</td>
+    <td>76.29%</td>
+    <td>0.01%</td>
+    <td>132.35 </td>
+    <td>95.24 </td>
+    <td>1.39x</td>
+  </tr>
+  <tr>
+    <td>Densenet 169</td>
+    <td>pb</td>
+    <td>74.38%</td>
+    <td>74.65%</td>
+    <td>-0.36%</td>
+    <td>191.31 </td>
+    <td>118.99 </td>
+    <td>1.61x</td>
   </tr>
   <tr>
     <td>Faster R-CNN Inception ResNet V2</td>
     <td>pb</td>
-    <td>37.65%</td>
-    <td>38.33%</td>
-    <td>-1.77%</td>
-    <td>2.53</td>
-    <td>1.62</td>
-    <td>1.57x</td>
+    <td>37.44%</td>
+    <td>38.31%</td>
+    <td>-2.27%</td>
+    <td>3.31 </td>
+    <td>1.81 </td>
+    <td>1.83x</td>
   </tr>
   <tr>
-    <td>Faster R-CNN Inception ResNet V2 </td>
+    <td>Faster R-CNN Inception ResNet V2</td>
     <td>SavedModel</td>
-    <td>37.77%</td>
-    <td>38.33%</td>
-    <td>-1.46%</td>
-    <td>2.54</td>
-    <td>1.61</td>
-    <td>1.58x</td>
+    <td>37.55%</td>
+    <td>38.31%</td>
+    <td>-1.98%</td>
+    <td>3.32 </td>
+    <td>1.81 </td>
+    <td>1.84x</td>
   </tr>
   <tr>
     <td>Faster R-CNN ResNet101</td>
     <td>pb</td>
-    <td>30.34%</td>
+    <td>30.33%</td>
     <td>30.39%</td>
-    <td>-0.16%</td>
-    <td>27.63</td>
-    <td>13.12</td>
-    <td>2.11x</td>
+    <td>-0.20%</td>
+    <td>42.57 </td>
+    <td>13.25 </td>
+    <td>3.21x</td>
   </tr>
   <tr>
     <td>Faster R-CNN ResNet101</td>
@@ -94,19 +144,19 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>30.33%</td>
     <td>30.39%</td>
     <td>-0.20%</td>
-    <td>27.71</td>
-    <td>11.06</td>
-    <td>2.51x</td>
+    <td>43.41 </td>
+    <td>11.73 </td>
+    <td>3.70x</td>
   </tr>
   <tr>
     <td>Faster R-CNN ResNet50</td>
     <td>pb</td>
-    <td>26.65%</td>
+    <td>26.64%</td>
     <td>26.59%</td>
-    <td>0.23%</td>
-    <td>33.64</td>
-    <td>16.33</td>
-    <td>2.06x</td>
+    <td>0.19%</td>
+    <td>51.70 </td>
+    <td>16.45 </td>
+    <td>3.14x</td>
   </tr>
   <tr>
     <td>Inception ResNet V2</td>
@@ -114,9 +164,19 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>80.34%</td>
     <td>80.40%</td>
     <td>-0.07%</td>
-    <td>29.25</td>
-    <td>23.43</td>
-    <td>1.25x</td>
+    <td>139.29 </td>
+    <td>76.65 </td>
+    <td>1.82x</td>
+  </tr>
+  <tr>
+    <td>Inception ResNet V2</td>
+    <td>keras</td>
+    <td>80.35%</td>
+    <td>80.40%</td>
+    <td>-0.05%</td>
+    <td>99.42 </td>
+    <td>54.50 </td>
+    <td>1.82x</td>
   </tr>
   <tr>
     <td>Inception V1</td>
@@ -124,9 +184,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>70.44%</td>
     <td>69.74%</td>
     <td>1.00%</td>
-    <td>163.14</td>
-    <td>133.44</td>
-    <td>1.22x</td>
+    <td>955.20 </td>
+    <td>328.15 </td>
+    <td>2.91x</td>
   </tr>
   <tr>
     <td>Inception V2</td>
@@ -134,9 +194,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>74.34%</td>
     <td>73.97%</td>
     <td>0.50%</td>
-    <td>133.49</td>
-    <td>111.5</td>
-    <td>1.20x</td>
+    <td>709.92 </td>
+    <td>282.40 </td>
+    <td>2.51x</td>
   </tr>
   <tr>
     <td>Inception V3</td>
@@ -144,9 +204,19 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>76.71%</td>
     <td>76.75%</td>
     <td>-0.05%</td>
-    <td>91.67</td>
-    <td>64.02</td>
-    <td>1.43x</td>
+    <td>337.09 </td>
+    <td>160.07 </td>
+    <td>2.11x</td>
+  </tr>
+  <tr>
+    <td>Inception V3</td>
+    <td>keras</td>
+    <td>77.73%</td>
+    <td>77.83%</td>
+    <td>-0.13%</td>
+    <td>438.52 </td>
+    <td>204.76 </td>
+    <td>2.14x</td>
   </tr>
   <tr>
     <td>Inception V4</td>
@@ -154,9 +224,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>80.18%</td>
     <td>80.27%</td>
     <td>-0.11%</td>
-    <td>56.87</td>
-    <td>37.09</td>
-    <td>1.53x</td>
+    <td>223.02 </td>
+    <td>105.44 </td>
+    <td>2.12x</td>
   </tr>
   <tr>
     <td>Mask R-CNN Inception V2</td>
@@ -164,19 +234,19 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>28.50%</td>
     <td>28.73%</td>
     <td>-0.80%</td>
-    <td>36.06</td>
-    <td>27.15</td>
-    <td>1.33x</td>
+    <td>69.42 </td>
+    <td>33.00 </td>
+    <td>2.10x</td>
   </tr>
   <tr>
-    <td>Mask R-CNN Inception V2 </td>
+    <td>Mask R-CNN Inception V2</td>
     <td>CKPT</td>
     <td>28.50%</td>
     <td>28.73%</td>
     <td>-0.80%</td>
-    <td>36.1</td>
-    <td>25.06</td>
-    <td>1.44x</td>
+    <td>69.47 </td>
+    <td>32.88 </td>
+    <td>2.11x</td>
   </tr>
   <tr>
     <td>MobileNet V1</td>
@@ -184,18 +254,38 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>71.85%</td>
     <td>70.96%</td>
     <td>1.25%</td>
-    <td>374.38</td>
-    <td>226.03</td>
-    <td>1.66x</td>
+    <td>1347.65 </td>
+    <td>439.05 </td>
+    <td>3.07x</td>
   </tr>
   <tr>
     <td>MobileNet V2</td>
     <td>pb</td>
-    <td>71.85%</td>
-    <td>70.96%</td>
-    <td>1.25%</td>
-    <td>374.38</td>
-    <td>226.03</td>
+    <td>72.56%</td>
+    <td>71.76%</td>
+    <td>1.11%</td>
+    <td>1192.01 </td>
+    <td>492.92 </td>
+    <td>2.42x</td>
+  </tr>
+  <tr>
+    <td>MobileNet V2</td>
+    <td>keras</td>
+    <td>71.10%</td>
+    <td>71.76%</td>
+    <td>-0.91%</td>
+    <td>412.75 </td>
+    <td>376.34 </td>
+    <td>1.10x</td>
+  </tr>
+  <tr>
+    <td>MobileNet V3</td>
+    <td>pb</td>
+    <td>74.00%</td>
+    <td>75.31%</td>
+    <td>-1.74%</td>
+    <td>662.07 </td>
+    <td>397.69 </td>
     <td>1.66x</td>
   </tr>
   <tr>
@@ -204,39 +294,99 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>77.50%</td>
     <td>76.45%</td>
     <td>1.37%</td>
-    <td>92.47</td>
-    <td>65.56</td>
-    <td>1.41x</td>
+    <td>299.23 </td>
+    <td>154.67 </td>
+    <td>1.93x</td>
   </tr>
   <tr>
-    <td>ResNet50 Fashion</td>
-    <td>pb</td>
+    <td>ResNet101</td>
+    <td>keras</td>
+    <td>61.38%</td>
+    <td>61.47%</td>
+    <td>-0.16%</td>
+    <td>476.39 </td>
+    <td>227.24 </td>
+    <td>2.10x</td>
+  </tr>
+  <tr>
+    <td>ResNet50 fashion</td>
+    <td>keras</td>
     <td>78.04%</td>
     <td>78.12%</td>
     <td>-0.10%</td>
-    <td>359.18</td>
-    <td>244.38</td>
-    <td>1.47x</td>
+    <td>2734.43 </td>
+    <td>1299.73 </td>
+    <td>2.10x</td>
   </tr>
   <tr>
-    <td>ResNet50 V1.0</td>
+    <td>ResNet50 v1.0</td>
     <td>pb</td>
-    <td>74.11%</td>
+    <td>74.12%</td>
     <td>74.27%</td>
-    <td>-0.22%</td>
-    <td>172.66</td>
-    <td>87.28</td>
-    <td>1.98x</td>
+    <td>-0.20%</td>
+    <td>498.76 </td>
+    <td>178.72 </td>
+    <td>2.79x</td>
   </tr>
   <tr>
-    <td>ResNet50 V1.5</td>
+    <td>ResNet50 v1.5</td>
     <td>pb</td>
     <td>76.23%</td>
     <td>76.46%</td>
     <td>-0.30%</td>
-    <td>153.37</td>
-    <td>87.24</td>
-    <td>1.76x</td>
+    <td>427.46 </td>
+    <td>173.25 </td>
+    <td>2.47x</td>
+  </tr>
+  <tr>
+    <td>ResNetV2 101</td>
+    <td>pb</td>
+    <td>72.65%</td>
+    <td>71.87%</td>
+    <td>1.09%</td>
+    <td>194.11 </td>
+    <td>146.42 </td>
+    <td>1.33x</td>
+  </tr>
+  <tr>
+    <td>ResNetV2 101</td>
+    <td>keras</td>
+    <td>71.48%</td>
+    <td>71.57%</td>
+    <td>-0.12%</td>
+    <td>237.09 </td>
+    <td>187.24 </td>
+    <td>1.27x</td>
+  </tr>
+  <tr>
+    <td>ResNetV2 152</td>
+    <td>pb</td>
+    <td>73.07%</td>
+    <td>72.37%</td>
+    <td>0.97%</td>
+    <td>155.04 </td>
+    <td>112.01 </td>
+    <td>1.38x</td>
+  </tr>
+  <tr>
+    <td>ResNetV2 50</td>
+    <td>pb</td>
+    <td>70.44%</td>
+    <td>69.64%</td>
+    <td>1.15%</td>
+    <td>302.55 </td>
+    <td>215.50 </td>
+    <td>1.40x</td>
+  </tr>
+  <tr>
+    <td>ResNet v2 50</td>
+    <td>keras</td>
+    <td>69.20%</td>
+    <td>69.03%</td>
+    <td>0.25%</td>
+    <td>346.99 </td>
+    <td>312.15 </td>
+    <td>1.11x</td>
   </tr>
   <tr>
     <td>SSD MobileNet V1</td>
@@ -244,49 +394,59 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>23.12%</td>
     <td>23.13%</td>
     <td>-0.04%</td>
-    <td>151.92</td>
-    <td>112.24</td>
-    <td>1.35x</td>
+    <td>277.10 </td>
+    <td>173.61 </td>
+    <td>1.60x</td>
   </tr>
   <tr>
-    <td>SSD MobileNet V1</td>
+    <td>SSD MobileNet v1</td>
     <td>CKPT</td>
-    <td>23.11%</td>
+    <td>23.10%</td>
     <td>23.13%</td>
-    <td>-0.09%</td>
-    <td>153.18</td>
-    <td>67.79</td>
-    <td>2.26x</td>
+    <td>-0.13%</td>
+    <td>273.51 </td>
+    <td>118.46 </td>
+    <td>2.31x</td>
   </tr>
   <tr>
     <td>SSD ResNet34</td>
     <td>pb</td>
-    <td>21.71%</td>
+    <td>21.70%</td>
     <td>22.09%</td>
-    <td>-1.72%</td>
-    <td>30.99</td>
-    <td>8.65</td>
-    <td>3.58x</td>
+    <td>-1.77%</td>
+    <td>33.95 </td>
+    <td>8.81 </td>
+    <td>3.85x</td>
   </tr>
   <tr>
     <td>SSD ResNet50 V1</td>
     <td>pb</td>
-    <td>37.76%</td>
+    <td>37.75%</td>
     <td>38.00%</td>
-    <td>-0.63%</td>
-    <td>23.04</td>
-    <td>14.75</td>
-    <td>1.56x</td>
+    <td>-0.66%</td>
+    <td>34.11 </td>
+    <td>15.67 </td>
+    <td>2.18x</td>
   </tr>
   <tr>
-    <td>SSD ResNet50 V1</td>
+    <td>SSD ResNet50 v1</td>
     <td>CKPT</td>
     <td>37.82%</td>
     <td>38.00%</td>
     <td>-0.47%</td>
-    <td>23</td>
-    <td>11.94</td>
-    <td>1.93x</td>
+    <td>34.57 </td>
+    <td>13.68 </td>
+    <td>2.53x</td>
+  </tr>
+  <tr>
+    <td>Transformer lt MLPerf</td>
+    <td>pb</td>
+    <td>27.12 </td>
+    <td>27.17 </td>
+    <td>-0.18%</td>
+    <td>3.26 </td>
+    <td>2.63 </td>
+    <td>1.24x</td>
   </tr>
   <tr>
     <td>VGG16</td>
@@ -294,9 +454,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>72.64%</td>
     <td>70.89%</td>
     <td>2.47%</td>
-    <td>178.99</td>
-    <td>83.67</td>
-    <td>2.14x</td>
+    <td>219.11 </td>
+    <td>91.30 </td>
+    <td>2.40x</td>
   </tr>
   <tr>
     <td>VGG19</td>
@@ -304,14 +464,34 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>72.69%</td>
     <td>71.01%</td>
     <td>2.37%</td>
-    <td>156.11</td>
-    <td>71.5</td>
-    <td>2.18x</td>
+    <td>193.61 </td>
+    <td>78.47 </td>
+    <td>2.47x</td>
+  </tr>
+  <tr>
+    <td>Wide Deep large DS</td>
+    <td>pb</td>
+    <td>77.75%</td>
+    <td>77.67%</td>
+    <td>0.10%</td>
+    <td>11506.91 </td>
+    <td>9665.07 </td>
+    <td>1.19x</td>
+  </tr>
+  <tr>
+    <td>Xception</td>
+    <td>keras</td>
+    <td>78.43%</td>
+    <td>78.94%</td>
+    <td>-0.65%</td>
+    <td>262.83 </td>
+    <td>137.35 </td>
+    <td>1.91x</td>
   </tr>
 </tbody>
 </table>
 
-### PyTorch Models with Torch 1.12.1+cpu in PTQ Mode
+### PyTorch Models with Torch 1.13.0+cpu in PTQ Mode
 
 <table class="tg">
 <thead>
@@ -324,7 +504,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Performance Ratio[INT8/FP32]</th>
@@ -337,9 +517,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>88.85%</td>
     <td>88.50%</td>
     <td>0.40%</td>
-    <td>26</td>
-    <td>21.22</td>
-    <td>1.23x</td>
+    <td>25.68 </td>
+    <td>21.58 </td>
+    <td>1.19x</td>
   </tr>
   <tr>
     <td>Barthez MRPC</td>
@@ -347,9 +527,19 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>83.92%</td>
     <td>83.81%</td>
     <td>0.14%</td>
-    <td>128.66</td>
-    <td>70.86</td>
-    <td>1.82x</td>
+    <td>143.37 </td>
+    <td>70.96 </td>
+    <td>2.02x</td>
+  </tr>
+  <tr>
+    <td>BERT base COLA</td>
+    <td>FX</td>
+    <td>58.80%</td>
+    <td>58.84%</td>
+    <td>-0.07%</td>
+    <td>223.51 </td>
+    <td>101.39 </td>
+    <td>2.20x</td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
@@ -357,49 +547,49 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>89.90%</td>
     <td>90.69%</td>
     <td>-0.88%</td>
-    <td>203.38</td>
-    <td>101.29</td>
-    <td>2.01x</td>
+    <td>209.80 </td>
+    <td>100.96 </td>
+    <td>2.08x</td>
   </tr>
   <tr>
     <td>BERT base RTE</td>
     <td>FX</td>
     <td>69.31%</td>
     <td>69.68%</td>
-    <td>-0.53%</td>
-    <td>216.22</td>
-    <td>102.72</td>
-    <td>2.10x</td>
+    <td>-0.52%</td>
+    <td>221.92 </td>
+    <td>101.36 </td>
+    <td>2.19x</td>
   </tr>
   <tr>
-    <td>BERT base SST2</td>
+    <td>BERT base SST-2</td>
     <td>FX</td>
     <td>91.06%</td>
     <td>91.86%</td>
-    <td>-0.88%</td>
-    <td>218.2</td>
-    <td>101.86</td>
-    <td>2.14x</td>
+    <td>-0.87%</td>
+    <td>224.19 </td>
+    <td>101.23 </td>
+    <td>2.21x</td>
   </tr>
   <tr>
     <td>BERT base STSB</td>
     <td>FX</td>
-    <td>64.12%</td>
-    <td>62.57%</td>
-    <td>2.48%</td>
-    <td>73.65</td>
-    <td>29.61</td>
-    <td>2.49x</td>
+    <td>89.10%</td>
+    <td>89.75%</td>
+    <td>-0.72%</td>
+    <td>218.04 </td>
+    <td>101.15 </td>
+    <td>2.16x</td>
   </tr>
   <tr>
     <td>BERT large COLA</td>
     <td>FX</td>
-    <td>92.79</td>
-    <td>93.16</td>
-    <td>-0.39%</td>
-    <td>36.54</td>
-    <td>9.89</td>
-    <td>3.70x</td>
+    <td>64.12%</td>
+    <td>62.57%</td>
+    <td>2.48%</td>
+    <td>75.42 </td>
+    <td>29.32 </td>
+    <td>2.57x</td>
   </tr>
   <tr>
     <td>BERT large MRPC</td>
@@ -407,9 +597,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>89.50%</td>
     <td>90.38%</td>
     <td>-0.97%</td>
-    <td>74.11</td>
-    <td>29.69</td>
-    <td>2.50x</td>
+    <td>75.10 </td>
+    <td>29.41 </td>
+    <td>2.55x</td>
   </tr>
   <tr>
     <td>BERT large QNLI</td>
@@ -417,19 +607,29 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>90.90%</td>
     <td>91.82%</td>
     <td>-1.00%</td>
-    <td>72.45</td>
-    <td>29.66</td>
-    <td>2.44x</td>
+    <td>74.80 </td>
+    <td>29.17 </td>
+    <td>2.56x</td>
   </tr>
   <tr>
     <td>BERT large RTE</td>
     <td>FX</td>
-    <td>73.65%</td>
+    <td>73.29%</td>
     <td>74.01%</td>
-    <td>-0.49%</td>
-    <td>41.53</td>
-    <td>29.67</td>
-    <td>1.40x</td>
+    <td>-0.97%</td>
+    <td>40.38 </td>
+    <td>29.28 </td>
+    <td>1.38x</td>
+  </tr>
+  <tr>
+    <td>BERT large SQuAD</td>
+    <td>FX</td>
+    <td>92.61 </td>
+    <td>93.16 </td>
+    <td>-0.58%</td>
+    <td>18.53 </td>
+    <td>9.82 </td>
+    <td>1.89x</td>
   </tr>
   <tr>
     <td>BlendCNN</td>
@@ -437,9 +637,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>68.40%</td>
     <td>68.40%</td>
     <td>0.00%</td>
-    <td>3878.48</td>
-    <td>3717.52</td>
-    <td>1.04x</td>
+    <td>4885.60 </td>
+    <td>3715.36 </td>
+    <td>1.31x</td>
   </tr>
   <tr>
     <td>CamemBERT base MRPC</td>
@@ -447,19 +647,19 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>86.70%</td>
     <td>86.82%</td>
     <td>-0.14%</td>
-    <td>188.97</td>
-    <td>98.9</td>
-    <td>1.91x</td>
+    <td>206.00 </td>
+    <td>98.50 </td>
+    <td>2.09x</td>
   </tr>
   <tr>
     <td>Ctrl MRPC</td>
     <td>EAGER</td>
     <td>81.87%</td>
-    <td>81.22%</td>
-    <td>0.80%</td>
-    <td>18.68</td>
-    <td>7.25</td>
-    <td>2.58x</td>
+    <td>82.00%</td>
+    <td>-0.15%</td>
+    <td>19.39 </td>
+    <td>7.19 </td>
+    <td>2.70x</td>
   </tr>
   <tr>
     <td>Deberta MRPC</td>
@@ -467,29 +667,29 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>90.88%</td>
     <td>90.91%</td>
     <td>-0.04%</td>
-    <td>124.43</td>
-    <td>68.74</td>
-    <td>1.81x</td>
+    <td>125.42 </td>
+    <td>67.67 </td>
+    <td>1.85x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">DistilBERT base MRPC</td>
+    <td>DistilBERT base MRPC</td>
     <td>EAGER</td>
     <td>88.23%</td>
     <td>89.16%</td>
     <td>-1.05%</td>
-    <td>347.47</td>
-    <td>200.76</td>
-    <td>1.73x</td>
+    <td>366.27 </td>
+    <td>197.76 </td>
+    <td>1.85x</td>
   </tr>
   <tr>
-    <td>DistilBERT base MRPC FX</td>
+    <td>DistilBERT base MRPC</td>
     <td>FX</td>
     <td>88.54%</td>
     <td>89.16%</td>
     <td>-0.69%</td>
-    <td>382.74</td>
-    <td>198.25</td>
-    <td>1.93x</td>
+    <td>399.63 </td>
+    <td>197.47 </td>
+    <td>2.02x</td>
   </tr>
   <tr>
     <td>FlauBERT MRPC</td>
@@ -497,29 +697,49 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>79.87%</td>
     <td>80.19%</td>
     <td>-0.40%</td>
-    <td>561.35</td>
-    <td>370.2</td>
-    <td>1.52x</td>
+    <td>592.53 </td>
+    <td>385.01 </td>
+    <td>1.54x</td>
+  </tr>
+  <tr>
+    <td>GPT J WikiText</td>
+    <td>FX</td>
+    <td>3.36 </td>
+    <td>2.34 </td>
+    <td>43.84%</td>
+    <td>0.52 </td>
+    <td>0.20 </td>
+    <td>2.60x</td>
   </tr>
   <tr>
     <td>HuBERT</td>
-    <td>FX</td>
-    <td>97.69%</td>
+    <td>EAGER</td>
+    <td>97.63%</td>
     <td>97.84%</td>
-    <td>-0.15%</td>
-    <td>9.82</td>
-    <td>7.2</td>
-    <td>1.36x</td>
+    <td>-0.21%</td>
+    <td>10.00 </td>
+    <td>7.26 </td>
+    <td>1.38x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">Inception V3</td>
+    <td>Inception V3</td>
     <td>EAGER</td>
     <td>69.43%</td>
     <td>69.52%</td>
     <td>-0.13%</td>
-    <td>409.34</td>
-    <td>181.95</td>
-    <td>2.25x</td>
+    <td>446.65 </td>
+    <td>181.41 </td>
+    <td>2.46x</td>
+  </tr>
+  <tr>
+    <td>Layoutlm MRPC</td>
+    <td>EAGER</td>
+    <td>81.22%</td>
+    <td>78.01%</td>
+    <td>4.12%</td>
+    <td>204.22 </td>
+    <td>96.26 </td>
+    <td>2.12x</td>
   </tr>
   <tr>
     <td>Longformer MRPC</td>
@@ -527,109 +747,129 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>91.01%</td>
     <td>91.46%</td>
     <td>-0.49%</td>
-    <td>18.73</td>
-    <td>14.66</td>
-    <td>1.28x</td>
+    <td>18.68 </td>
+    <td>14.25 </td>
+    <td>1.31x</td>
   </tr>
   <tr>
-    <td>mBart WNLI</td>
+    <td>Mask R-CNN</td>
+    <td>FX</td>
+    <td>37.60%</td>
+    <td>37.80%</td>
+    <td>-0.53%</td>
+    <td>7.20 </td>
+    <td>4.77 </td>
+    <td>1.51x</td>
+  </tr>
+  <tr>
+    <td>Mbart wnli</td>
     <td>EAGER</td>
     <td>56.34%</td>
     <td>56.34%</td>
     <td>0.00%</td>
-    <td>54.35</td>
-    <td>25.14</td>
-    <td>2.16x</td>
+    <td>56.32 </td>
+    <td>24.77 </td>
+    <td>2.27x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">MobileNet V2</td>
+    <td>MobileNet V2</td>
     <td>EAGER</td>
     <td>70.54%</td>
     <td>71.84%</td>
     <td>-1.81%</td>
-    <td>639.87</td>
-    <td>490.05</td>
-    <td>1.31x</td>
+    <td>625.38 </td>
+    <td>451.25 </td>
+    <td>1.39x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">lvwerra/pegasus-samsum</td>
+    <td>lvwerra/pegasus-samsum</td>
     <td>EAGER</td>
-    <td>42.1</td>
-    <td>42.67</td>
+    <td>42.10 </td>
+    <td>42.67 </td>
     <td>-1.35%</td>
-    <td>3.41</td>
-    <td>1.07</td>
-    <td>3.19x</td>
+    <td>3.58 </td>
+    <td>1.06 </td>
+    <td>3.38x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">PeleeNet</td>
+    <td>Peleenet</td>
     <td>EAGER</td>
     <td>71.64%</td>
     <td>72.10%</td>
     <td>-0.64%</td>
-    <td>419.42</td>
-    <td>316.98</td>
-    <td>1.32x</td>
+    <td>402.33 </td>
+    <td>312.37 </td>
+    <td>1.29x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">ResNet18 </td>
+    <td>Pokemon Diffusers</td>
+    <td>FX</td>
+    <td>275.80 </td>
+    <td>334.48 </td>
+    <td>-17.54%</td>
+    <td>0.03 </td>
+    <td>0.02 </td>
+    <td>1.48x</td>
+  </tr>
+  <tr>
+    <td>Reformer Crime and Punishment</td>
+    <td>EAGER</td>
+    <td>1.88 </td>
+    <td>1.87 </td>
+    <td>0.43%</td>
+    <td>162.34 </td>
+    <td>153.65 </td>
+    <td>1.06x</td>
+  </tr>
+  <tr>
+    <td>ResNet18</td>
     <td>EAGER</td>
     <td>69.57%</td>
     <td>69.76%</td>
     <td>-0.27%</td>
-    <td>686.03</td>
-    <td>332.13</td>
-    <td>2.07x</td>
+    <td>657.72 </td>
+    <td>327.69 </td>
+    <td>2.01x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">ResNet18 </td>
+    <td>ResNet18</td>
     <td>FX</td>
-    <td>69.54%</td>
+    <td>69.62%</td>
     <td>69.76%</td>
-    <td>-0.31%</td>
-    <td>611.36</td>
-    <td>333.27</td>
-    <td>1.83x</td>
+    <td>-0.20%</td>
+    <td>812.99 </td>
+    <td>344.99 </td>
+    <td>2.36x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">ResNet50</td>
+    <td>ResNet50</td>
     <td>EAGER</td>
     <td>75.98%</td>
     <td>76.15%</td>
     <td>-0.21%</td>
-    <td>327.14</td>
-    <td>162.46</td>
-    <td>2.01x</td>
+    <td>360.16 </td>
+    <td>161.44 </td>
+    <td>2.23x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">ResNeXt101_32x8d</td>
+    <td>Resnext101 32x8d</td>
     <td>EAGER</td>
     <td>79.08%</td>
     <td>79.31%</td>
     <td>-0.29%</td>
-    <td>175.93</td>
-    <td>61.09</td>
-    <td>2.88x</td>
+    <td>182.84 </td>
+    <td>60.55 </td>
+    <td>3.02x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">Roberta Base MRPC</td>
+    <td>Roberta base MRPC</td>
     <td>EAGER</td>
     <td>88.25%</td>
     <td>88.18%</td>
     <td>0.08%</td>
-    <td>197.96</td>
-    <td>99.35</td>
-    <td>1.99x</td>
-  </tr>
-  <tr>
-    <td class="tg-zk71">Se_ResNeXt50_32x4d</td>
-    <td>EAGER</td>
-    <td>78.98%</td>
-    <td>79.08%</td>
-    <td>-0.13%</td>
-    <td>308.19</td>
-    <td>144.6</td>
-    <td>2.13x</td>
+    <td>207.41 </td>
+    <td>98.71 </td>
+    <td>2.10x</td>
   </tr>
   <tr>
     <td>SqueezeBERT MRPC</td>
@@ -637,19 +877,19 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>86.87%</td>
     <td>87.65%</td>
     <td>-0.89%</td>
-    <td>186.26</td>
-    <td>155.67</td>
-    <td>1.20x</td>
+    <td>195.00 </td>
+    <td>150.09 </td>
+    <td>1.30x</td>
   </tr>
   <tr>
-    <td>SSD ResNet 34</td>
+    <td>SSD ResNet34</td>
     <td>FX</td>
-    <td>19.52</td>
-    <td>19.63</td>
-    <td>-0.59%</td>
-    <td>19.09</td>
-    <td>6.88</td>
-    <td>2.78x</td>
+    <td>19.47 </td>
+    <td>19.63 </td>
+    <td>-0.83%</td>
+    <td>18.56 </td>
+    <td>6.75 </td>
+    <td>2.75x</td>
   </tr>
   <tr>
     <td>Transfo-xl MRPC</td>
@@ -657,9 +897,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>81.97%</td>
     <td>81.20%</td>
     <td>0.94%</td>
-    <td>9.65</td>
-    <td>7.06</td>
-    <td>1.37x</td>
+    <td>9.73 </td>
+    <td>6.92 </td>
+    <td>1.41x</td>
   </tr>
   <tr>
     <td>Wave2Vec2</td>
@@ -667,34 +907,44 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>95.71%</td>
     <td>96.60%</td>
     <td>-0.92%</td>
-    <td>23.69</td>
-    <td>19.58</td>
-    <td>1.21x</td>
+    <td>23.78 </td>
+    <td>19.45 </td>
+    <td>1.22x</td>
   </tr>
   <tr>
-    <td>Xlm Roberta base MRPC</td>
+    <td>Xlm Roberta MRPC</td>
+    <td>EAGER</td>
+    <td>88.24%</td>
+    <td>88.24%</td>
+    <td>0.00%</td>
+    <td>102.19 </td>
+    <td>102.58 </td>
+    <td>1.00x</td>
+  </tr>
+  <tr>
+    <td>Xlm Roberta-base MRPC</td>
     <td>EAGER</td>
     <td>88.03%</td>
     <td>88.62%</td>
     <td>-0.67%</td>
-    <td>114.31</td>
-    <td>99.34</td>
-    <td>1.15x</td>
+    <td>115.16 </td>
+    <td>98.75 </td>
+    <td>1.17x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">YOLO V3</td>
+    <td>YOLO V3</td>
     <td>EAGER</td>
     <td>24.60%</td>
     <td>24.54%</td>
     <td>0.21%</td>
-    <td>71.81</td>
-    <td>31.38</td>
-    <td>2.29x</td>
+    <td>76.15 </td>
+    <td>31.80 </td>
+    <td>2.39x</td>
   </tr>
 </tbody>
 </table>
 
-### PyTorch Models with Torch 1.12.1+cpu in QAT Mode
+### PyTorch Models with Torch 1.13.0+cpu in QAT Mode
 
 <table class="tg">
 <thead>
@@ -707,7 +957,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Performance Ratio[INT8/FP32]</th>
@@ -715,49 +965,49 @@ Performance varies by use, configuration and other factors. See [platform config
 </thead>
 <tbody align="center">
   <tr>
-    <td class="tg-zk71">ResNet18</td>
+    <td>BERT base MRPC</td>
+    <td>FX</td>
+    <td>89.20%</td>
+    <td>89.50%</td>
+    <td>-0.34%</td>
+    <td>232.16</td>
+    <td>101.89</td>
+    <td>2.28x</td>
+  </tr>
+  <tr>
+    <td class="tg-zk71">ResNet 18</td>
     <td>EAGER</td>
+    <td>69.68%</td>
+    <td>69.76%</td>
+    <td>-0.12%</td>
+    <td>664.99</td>
+    <td>329.15</td>
+    <td>2.02x</td>
+  </tr>
+  <tr>
+    <td class="tg-zk71">ResNet 18</td>
+    <td>FX</td>
     <td>69.84%</td>
     <td>69.76%</td>
-    <td>0.11%</td>
-    <td>690.73</td>
-    <td>330.85</td>
-    <td>2.09x</td>
+    <td>0.12%</td>
+    <td>832.32</td>
+    <td>338.48</td>
+    <td>2.46x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">ResNet18</td>
-    <td>FX</td>
-    <td>69.74%</td>
-    <td>69.76%</td>
-    <td>-0.03%</td>
-    <td>614.83</td>
-    <td>334.35</td>
-    <td>1.84x</td>
-  </tr>
-  <tr>
-    <td>BERT base MRPC QAT</td>
-    <td>FX</td>
-    <td>89.70%</td>
-    <td>89.46%</td>
-    <td>0.27%</td>
-    <td>127.45</td>
-    <td>82.68</td>
-    <td>1.54x</td>
-  </tr>
-  <tr>
-    <td class="tg-zk71">ResNet50</td>
+    <td class="tg-zk71">ResNet 50</td>
     <td>EAGER</td>
-    <td>76.05%</td>
+    <td>76.03%</td>
     <td>76.15%</td>
-    <td>-0.13%</td>
-    <td>410.44</td>
-    <td>168.81</td>
-    <td>2.43x</td>
+    <td>-0.15%</td>
+    <td>433.83</td>
+    <td>164.98</td>
+    <td>2.63x</td>
   </tr>
 </tbody>
 </table>
 
-### PyTorch Models with Torch and Intel® Extension for PyTorch* 1.11.0+cpu
+### PyTorch Models with Torch and Intel® Extension for PyTorch* 1.13.0+cpu
 
 <table class="tg">
 <thead>
@@ -770,67 +1020,67 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Performance Ratio[INT8/FP32]</th>
   </tr>
 </thead>
 <tbody align="center">
-  <tr>
-    <td>bert-large-uncased-whole-word-masking-finetuned-squad </td>
-    <td>IPEX</td>
-    <td>92.9</td>
-    <td>93.16</td>
-    <td>-0.28%</td>
-    <td>31.35</td>
-    <td>9.97</td>
-    <td>3.14x</td>
-  </tr>
-  <tr>
-    <td>ResNeXt101_32x16d_wsl</td>
-    <td>IPEX</td>
-    <td>69.48%</td>
-    <td>69.76%</td>
-    <td>-0.40%</td>
-    <td>1189.15</td>
-    <td>680</td>
-    <td>1.75x</td>
-  </tr>
   <tr>
     <td>ResNet50</td>
     <td>IPEX</td>
-    <td>76.07%</td>
+    <td>76.01%</td>
     <td>76.15%</td>
-    <td>-0.10%</td>
-    <td>677.69</td>
-    <td>381.59</td>
-    <td>1.78x</td>
+    <td>-0.17%</td>
+    <td>836.38</td>
+    <td>207.89</td>
+    <td>4.02x</td>
+  </tr>
+  <tr>
+    <td>ResNet18</td>
+    <td>IPEX</td>
+    <td>69.65%</td>
+    <td>69.76%</td>
+    <td>-0.15%</td>
+    <td>1396.52</td>
+    <td>463.95</td>
+    <td>3.01x</td>
   </tr>
   <tr>
     <td>SSD ResNet34</td>
     <td>IPEX</td>
-    <td>19.95%</td>
+    <td>19.93%</td>
     <td>20.00%</td>
-    <td>-0.25%</td>
-    <td>24.07</td>
-    <td>6.71</td>
-    <td>3.59x</td>
+    <td>-0.36%</td>
+    <td>30.08</td>
+    <td>7.66</td>
+    <td>3.93x</td>
   </tr>
   <tr>
-    <td>DistilBERT base MRPC</td>
+    <td>BERT large</td>
     <td>IPEX</td>
-    <td>86</td>
+    <td>92.81</td>
+    <td>93.16</td>
+    <td>-0.37%</td>
+    <td>46.44</td>
+    <td>6.73</td>
+    <td>6.90x</td>
+  </tr>
+  <tr>
+    <td>Distilbert base</td>
+    <td>IPEX</td>
+    <td>85.97</td>
     <td>86.84</td>
-    <td>-0.96%</td>
-    <td>98.02</td>
-    <td>62.4</td>
-    <td>1.57x</td>
+    <td>-0.99%</td>
+    <td>159.90</td>
+    <td>68.95</td>
+    <td>2.32x</td>
   </tr>
 </tbody>
 </table>
 
-### ONNX Models with ONNX Runtime 1.12.1
+### ONNX Models with ONNX Runtime 1.13.1
 
 <table class="tg">
 <thead>
@@ -843,32 +1093,32 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Performance Ratio[INT8/FP32]</th>
   </tr>
 </thead>
-<tbody align="center">
+<tbody align="center"> 
   <tr>
     <td>AlexNet</td>
     <td>QLinear</td>
     <td>54.73%</td>
     <td>54.79%</td>
     <td>-0.11%</td>
-    <td>960.18</td>
-    <td>469.17</td>
+    <td>968.22 </td>
+    <td>473.31 </td>
     <td>2.05x</td>
   </tr>
   <tr>
-    <td>AlexNet </td>
+    <td>AlexNet</td>
     <td>QDQ</td>
     <td>54.71%</td>
     <td>54.79%</td>
     <td>-0.15%</td>
-    <td>962.71</td>
-    <td>466.56</td>
-    <td>2.06x</td>
+    <td>958.75 </td>
+    <td>477.77 </td>
+    <td>2.01x</td>
   </tr>
   <tr>
     <td>ArcFace</td>
@@ -876,9 +1126,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>99.80%</td>
     <td>99.80%</td>
     <td>0.00%</td>
-    <td>235.14</td>
-    <td>130</td>
-    <td>1.81x</td>
+    <td>225.10 </td>
+    <td>126.56 </td>
+    <td>1.78x</td>
   </tr>
   <tr>
     <td>BERT base MRPC DYNAMIC</td>
@@ -886,79 +1136,89 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>85.29%</td>
     <td>86.03%</td>
     <td>-0.86%</td>
-    <td>294.05</td>
-    <td>125.85</td>
-    <td>2.34x</td>
+    <td>298.33 </td>
+    <td>124.67 </td>
+    <td>2.39x</td>
   </tr>
   <tr>
     <td>BERT base MRPC STATIC</td>
     <td>QLinear</td>
-    <td>85.29%</td>
+    <td>85.54%</td>
     <td>86.03%</td>
-    <td>-0.86%</td>
-    <td>604.07</td>
-    <td>256.93</td>
-    <td>2.35x</td>
+    <td>-0.57%</td>
+    <td>624.43 </td>
+    <td>254.64 </td>
+    <td>2.45x</td>
   </tr>
   <tr>
-    <td>BERT SQuAD</td>
+    <td>BERT SQuAD model zoo DYNAMIC</td>
     <td>QLinear</td>
-    <td>80.44</td>
-    <td>80.67</td>
+    <td>80.44 </td>
+    <td>80.67 </td>
     <td>-0.29%</td>
-    <td>93.21</td>
-    <td>51.45</td>
-    <td>1.81x</td>
+    <td>97.81 </td>
+    <td>52.75 </td>
+    <td>1.85x</td>
   </tr>
   <tr>
-    <td>BERT SQuAD</td>
-    <td>QDQ</td>
-    <td>80.44</td>
-    <td>80.67</td>
-    <td>-0.29%</td>
-    <td>93.27</td>
-    <td>51.67</td>
-    <td>1.80x</td>
-  </tr>
-  <tr>
-    <td>CaffeNet</td>
+    <td>Caffenet</td>
     <td>QLinear</td>
     <td>56.21%</td>
     <td>56.30%</td>
     <td>-0.16%</td>
-    <td>1501.21</td>
-    <td>536.1</td>
-    <td>2.80x</td>
+    <td>1432.98 </td>
+    <td>540.28 </td>
+    <td>2.65x</td>
   </tr>
   <tr>
-    <td>CaffeNet</td>
+    <td>Caffenet</td>
     <td>QDQ</td>
     <td>56.25%</td>
     <td>56.30%</td>
     <td>-0.09%</td>
-    <td>1493.36</td>
-    <td>533.09</td>
-    <td>2.80x</td>
+    <td>1460.21 </td>
+    <td>540.81 </td>
+    <td>2.70x</td>
   </tr>
   <tr>
-    <td>DistilBERT base MRPC</td>
+    <td>Densenet</td>
     <td>QLinear</td>
-    <td>84.80%</td>
-    <td>84.56%</td>
-    <td>0.28%</td>
-    <td>1372.84</td>
-    <td>485.95</td>
-    <td>2.83x</td>
+    <td>60.53%</td>
+    <td>60.96%</td>
+    <td>-0.71%</td>
+    <td>357.41 </td>
+    <td>265.22 </td>
+    <td>1.35x</td>
   </tr>
   <tr>
-    <td>DistilBERT base MRPC</td>
+    <td>Distilbert base MRPC</td>
+    <td>QLinear</td>
+    <td>85.54%</td>
+    <td>84.56%</td>
+    <td>1.16%</td>
+    <td>1365.72 </td>
+    <td>477.62 </td>
+    <td>2.86x</td>
+  </tr>
+  <tr>
+    <td>Distilbert base MRPC</td>
     <td>QDQ</td>
     <td>84.56%</td>
     <td>84.56%</td>
     <td>0.00%</td>
-    <td>541.43</td>
-    <td>480.25</td>
-    <td>1.13x</td>
+    <td>524.96 </td>
+    <td>476.39 </td>
+    <td>1.10x</td>
+  </tr>
+  <tr>
+    <td>DUC</td>
+    <td>QLinear</td>
+    <td>81.62%</td>
+    <td>81.92%</td>
+    <td>-0.37%</td>
+    <td>5.66 </td>
+    <td>2.82 </td>
+    <td>2.01x</td>
   </tr>
   <tr>
     <td>EfficientNet</td>
@@ -966,9 +1226,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>77.57%</td>
     <td>77.70%</td>
     <td>-0.17%</td>
-    <td>1250.63</td>
-    <td>753.09</td>
-    <td>1.66x</td>
+    <td>1211.10 </td>
+    <td>758.41 </td>
+    <td>1.60x</td>
   </tr>
   <tr>
     <td>EfficientNet</td>
@@ -976,79 +1236,179 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>77.61%</td>
     <td>77.70%</td>
     <td>-0.12%</td>
-    <td>1130.67</td>
-    <td>748.12</td>
-    <td>1.51x</td>
+    <td>856.64 </td>
+    <td>762.48 </td>
+    <td>1.12x</td>
   </tr>
   <tr>
     <td>Emotion Ferplus</td>
     <td>QLinear</td>
-    <td>7.86%</td>
     <td>8.00%</td>
-    <td>-1.75%</td>
-    <td>336.52</td>
-    <td>163.72</td>
-    <td>2.06x</td>
+    <td>8.00%</td>
+    <td>0.00%</td>
+    <td>925.43 </td>
+    <td>694.99 </td>
+    <td>1.33x</td>
   </tr>
   <tr>
     <td>Faster R-CNN</td>
     <td>QLinear</td>
-    <td>34.05%</td>
+    <td>34.09%</td>
     <td>34.37%</td>
-    <td>-0.93%</td>
-    <td>16.36</td>
-    <td>6.18</td>
-    <td>2.65x</td>
+    <td>-0.81%</td>
+    <td>13.82 </td>
+    <td>5.89 </td>
+    <td>2.35x</td>
   </tr>
   <tr>
     <td>Faster R-CNN</td>
     <td>QDQ</td>
-    <td>33.97%</td>
+    <td>33.90%</td>
     <td>34.37%</td>
-    <td>-1.16%</td>
-    <td>10.26</td>
-    <td>6.18</td>
-    <td>1.66x</td>
+    <td>-1.37%</td>
+    <td>9.59 </td>
+    <td>6.09 </td>
+    <td>1.57x</td>
   </tr>
   <tr>
     <td>FCN</td>
     <td>QLinear</td>
     <td>64.54%</td>
     <td>64.98%</td>
-    <td>-0.67%</td>
-    <td>40.05</td>
-    <td>12.08</td>
-    <td>3.31x</td>
+    <td>-0.68%</td>
+    <td>40.49 </td>
+    <td>11.92 </td>
+    <td>3.40x</td>
   </tr>
   <tr>
-    <td>FCN QDQ</td>
+    <td>FCN</td>
     <td>QDQ</td>
-    <td>64.65%</td>
+    <td>64.40%</td>
     <td>64.98%</td>
-    <td>-0.50%</td>
-    <td>26.73</td>
-    <td>12.04</td>
-    <td>2.22x</td>
+    <td>-0.89%</td>
+    <td>26.87 </td>
+    <td>11.92 </td>
+    <td>2.25x</td>
   </tr>
   <tr>
-    <td>GoogleNet</td>
+    <td>GoogleNet-12</td>
     <td>QLinear</td>
     <td>67.71%</td>
     <td>67.79%</td>
     <td>-0.12%</td>
-    <td>740.16</td>
-    <td>587.54</td>
-    <td>1.26x</td>
+    <td>771.39 </td>
+    <td>571.35 </td>
+    <td>1.35x</td>
   </tr>
   <tr>
-    <td>GoogleNet</td>
+    <td>GoogleNet-12</td>
     <td>QDQ</td>
     <td>67.73%</td>
     <td>67.79%</td>
     <td>-0.09%</td>
-    <td>770.51</td>
-    <td>567.88</td>
-    <td>1.36x</td>
+    <td>763.79 </td>
+    <td>579.95 </td>
+    <td>1.32x</td>
+  </tr>
+  <tr>
+    <td>HF ALBERT-base-V2 DYNAMIC</td>
+    <td>QLinear</td>
+    <td>91.40%</td>
+    <td>92.32%</td>
+    <td>-1.00%</td>
+    <td>156.96 </td>
+    <td>105.89 </td>
+    <td>1.48x</td>
+  </tr>
+  <tr>
+    <td>HF BERT-base-multilingual-cased DYNAMIC</td>
+    <td>QLinear</td>
+    <td>88.70 </td>
+    <td>89.13 </td>
+    <td>-0.48%</td>
+    <td>47.68 </td>
+    <td>23.95 </td>
+    <td>1.99x</td>
+  </tr>
+  <tr>
+    <td>HF BERT-base-uncased DYNAMIC</td>
+    <td>QLinear</td>
+    <td>89.58%</td>
+    <td>90.42%</td>
+    <td>-0.93%</td>
+    <td>199.37 </td>
+    <td>104.85 </td>
+    <td>1.90x</td>
+  </tr>
+  <tr>
+    <td>HF CamemBERT-base DYNAMIC</td>
+    <td>QLinear</td>
+    <td>88.47%</td>
+    <td>89.28%</td>
+    <td>-0.91%</td>
+    <td>182.60 </td>
+    <td>105.45 </td>
+    <td>1.73x</td>
+  </tr>
+  <tr>
+    <td>HF Distilbert-base-uncased DYNAMIC</td>
+    <td>QLinear</td>
+    <td>90.37%</td>
+    <td>91.06%</td>
+    <td>-0.76%</td>
+    <td>449.71 </td>
+    <td>164.21 </td>
+    <td>2.74x</td>
+  </tr>
+  <tr>
+    <td>HF minilm-l12-h384-uncased DYNAMIC</td>
+    <td>QLinear</td>
+    <td>91.07%</td>
+    <td>90.97%</td>
+    <td>0.11%</td>
+    <td>466.59 </td>
+    <td>247.71 </td>
+    <td>1.88x</td>
+  </tr>
+  <tr>
+    <td>HF minilm-l6-h384-uncased DYNAMIC</td>
+    <td>QLinear</td>
+    <td>89.91%</td>
+    <td>90.14%</td>
+    <td>-0.26%</td>
+    <td>523.59 </td>
+    <td>354.05 </td>
+    <td>1.48x</td>
+  </tr>
+  <tr>
+    <td>HF Roberta-base DYNAMIC</td>
+    <td>QLinear</td>
+    <td>90.85%</td>
+    <td>91.38%</td>
+    <td>-0.58%</td>
+    <td>183.59 </td>
+    <td>107.70 </td>
+    <td>1.70x</td>
+  </tr>
+  <tr>
+    <td>HF Spanbert DYNAMIC</td>
+    <td>QLinear</td>
+    <td>91.40 </td>
+    <td>91.98 </td>
+    <td>-0.63%</td>
+    <td>48.36 </td>
+    <td>24.03 </td>
+    <td>2.01x</td>
+  </tr>
+  <tr>
+    <td>HF Xlm Roberta-base DYNAMIC</td>
+    <td>QLinear</td>
+    <td>89.45%</td>
+    <td>90.10%</td>
+    <td>-0.72%</td>
+    <td>208.16 </td>
+    <td>64.60 </td>
+    <td>3.22x</td>
   </tr>
   <tr>
     <td>Inception V1</td>
@@ -1056,58 +1416,58 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>67.21%</td>
     <td>67.24%</td>
     <td>-0.04%</td>
-    <td>824.15</td>
-    <td>601.92</td>
-    <td>1.37x</td>
+    <td>795.38 </td>
+    <td>600.03 </td>
+    <td>1.33x</td>
   </tr>
   <tr>
-    <td>Inception V1</td>
+    <td>Inception v1</td>
     <td>QDQ</td>
     <td>67.21%</td>
     <td>67.24%</td>
     <td>-0.04%</td>
-    <td>819.85</td>
-    <td>597.46</td>
-    <td>1.37x</td>
+    <td>780.70 </td>
+    <td>591.81 </td>
+    <td>1.32x</td>
   </tr>
   <tr>
     <td>Mask R-CNN</td>
     <td>QLinear</td>
-    <td>33.41%</td>
+    <td>33.13%</td>
     <td>33.72%</td>
-    <td>-0.92%</td>
-    <td>14.18</td>
-    <td>5.78</td>
-    <td>2.45x</td>
+    <td>-1.75%</td>
+    <td>11.61 </td>
+    <td>5.58 </td>
+    <td>2.08x</td>
   </tr>
   <tr>
     <td>Mask R-CNN</td>
     <td>QDQ</td>
-    <td>33.30%</td>
+    <td>33.28%</td>
     <td>33.72%</td>
-    <td>-1.25%</td>
-    <td>9.42</td>
-    <td>5.7</td>
-    <td>1.65x</td>
+    <td>-1.30%</td>
+    <td>8.64 </td>
+    <td>5.53 </td>
+    <td>1.56x</td>
   </tr>
   <tr>
-    <td>Mobile bert MRPC</td>
+    <td>MobileBERT MRPC</td>
     <td>QLinear</td>
     <td>86.27%</td>
     <td>86.27%</td>
     <td>0.00%</td>
-    <td>613.72</td>
-    <td>506.41</td>
-    <td>1.21x</td>
+    <td>591.94 </td>
+    <td>515.49 </td>
+    <td>1.15x</td>
   </tr>
   <tr>
-    <td>MobileBERT SQuAD MLPerf</td>
+    <td>MobileBERT SQuAD MLPerf DYNAMIC</td>
     <td>QLinear</td>
-    <td>89.82</td>
-    <td>90.03</td>
+    <td>89.82 </td>
+    <td>90.03 </td>
     <td>-0.23%</td>
-    <td>88.41</td>
-    <td>76.07</td>
+    <td>85.66 </td>
+    <td>74.12 </td>
     <td>1.16x</td>
   </tr>
   <tr>
@@ -1116,9 +1476,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>65.59%</td>
     <td>66.89%</td>
     <td>-1.94%</td>
-    <td>2454.53</td>
-    <td>1543.79</td>
-    <td>1.59x</td>
+    <td>2370.93 </td>
+    <td>1526.33 </td>
+    <td>1.55x</td>
   </tr>
   <tr>
     <td>MobileNet V2</td>
@@ -1126,9 +1486,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>65.82%</td>
     <td>66.89%</td>
     <td>-1.60%</td>
-    <td>2164.97</td>
-    <td>1564.21</td>
-    <td>1.38x</td>
+    <td>2216.02 </td>
+    <td>1506.85 </td>
+    <td>1.47x</td>
   </tr>
   <tr>
     <td>MobileNet V3 MLPerf</td>
@@ -1136,9 +1496,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>75.58%</td>
     <td>75.74%</td>
     <td>-0.21%</td>
-    <td>2147.42</td>
-    <td>1046.69</td>
-    <td>2.05x</td>
+    <td>2078.85 </td>
+    <td>1028.31 </td>
+    <td>2.02x</td>
   </tr>
   <tr>
     <td>MobileNet V3 MLPerf</td>
@@ -1146,119 +1506,119 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>75.57%</td>
     <td>75.74%</td>
     <td>-0.22%</td>
-    <td>1877.1</td>
-    <td>1054.88</td>
-    <td>1.78x</td>
+    <td>1762.62 </td>
+    <td>999.31 </td>
+    <td>1.76x</td>
   </tr>
   <tr>
-    <td>MobileNetV2 (ONNX Model Zoo)</td>
+    <td>MobileNetV2-12 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>68.38%</td>
     <td>69.48%</td>
     <td>-1.58%</td>
-    <td>2751.7</td>
-    <td>1797.64</td>
-    <td>1.53x</td>
+    <td>2615.52 </td>
+    <td>1645.08 </td>
+    <td>1.59x</td>
   </tr>
   <tr>
-    <td>MobileNetV2 (ONNX Model Zoo)</td>
+    <td>MobileNetV2-12 (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>68.51%</td>
     <td>69.48%</td>
     <td>-1.40%</td>
-    <td>2656.23</td>
-    <td>1835.74</td>
-    <td>1.45x</td>
+    <td>2461.25 </td>
+    <td>1674.36 </td>
+    <td>1.47x</td>
   </tr>
   <tr>
-    <td>ResNet50 v1.5 MLPerf</td>
+    <td>ResNet v1.5 MLPerf</td>
     <td>QLinear</td>
-    <td>0.7615</td>
-    <td>0.7646</td>
+    <td>76.15%</td>
+    <td>76.46%</td>
     <td>-0.41%</td>
-    <td>764.901</td>
-    <td>434.141</td>
-    <td>1.76x</td>
+    <td>766.33 </td>
+    <td>431.92 </td>
+    <td>1.77x</td>
   </tr>
   <tr>
-    <td>ResNet50 v1.5 MLPerf</td>
+    <td>ResNet v1.5 MLPerf</td>
     <td>QDQ</td>
-    <td>0.7614</td>
-    <td>0.7646</td>
+    <td>76.14%</td>
+    <td>76.46%</td>
     <td>-0.42%</td>
-    <td>575.952</td>
-    <td>433.75</td>
-    <td>1.33x</td>
+    <td>575.34 </td>
+    <td>430.83 </td>
+    <td>1.34x</td>
   </tr>
   <tr>
-    <td>ResNet50 V1.5</td>
+    <td>ResNet50 v1.5</td>
     <td>QLinear</td>
-    <td>0.7226</td>
-    <td>0.7229</td>
+    <td>72.26%</td>
+    <td>72.29%</td>
     <td>-0.04%</td>
-    <td>761.12</td>
-    <td>432.615</td>
-    <td>1.76x</td>
+    <td>747.31 </td>
+    <td>431.09 </td>
+    <td>1.73x</td>
   </tr>
   <tr>
-    <td>ResNet50 V1.5</td>
+    <td>ResNet50 v1.5</td>
     <td>QDQ</td>
-    <td>0.722</td>
-    <td>0.7229</td>
+    <td>72.20%</td>
+    <td>72.29%</td>
     <td>-0.12%</td>
-    <td>575.032</td>
-    <td>432.894</td>
-    <td>1.33x</td>
+    <td>564.21 </td>
+    <td>431.50 </td>
+    <td>1.31x</td>
   </tr>
   <tr>
-    <td>ResNet50 V1.5 (ONNX Model Zoo)</td>
+    <td>ResNet50-v1-12 (ONNX Model Zoo)</td>
     <td>QLinear</td>
     <td>74.81%</td>
     <td>74.99%</td>
     <td>-0.24%</td>
-    <td>885.64</td>
-    <td>454.02</td>
-    <td>1.95x</td>
+    <td>594.29 </td>
+    <td>449.21 </td>
+    <td>1.32x</td>
   </tr>
   <tr>
-    <td>ResNet50 V1.5 (ONNX Model Zoo)</td>
+    <td>ResNet50-v1-12 (ONNX Model Zoo)</td>
     <td>QDQ</td>
     <td>74.76%</td>
     <td>74.99%</td>
     <td>-0.31%</td>
-    <td>603.72</td>
-    <td>455.86</td>
-    <td>1.32x</td>
+    <td>590.51 </td>
+    <td>449.93 </td>
+    <td>1.31x</td>
   </tr>
   <tr>
-    <td class="tg-zk71">Roberta Base MRPC</td>
+    <td>Roberta base MRPC</td>
     <td>QLinear</td>
-    <td>89.71%</td>
+    <td>90.69%</td>
     <td>89.95%</td>
-    <td>-0.27%</td>
-    <td>644.636</td>
-    <td>254.791</td>
-    <td>2.53x</td>
+    <td>0.82%</td>
+    <td>643.03 </td>
+    <td>253.04 </td>
+    <td>2.54x</td>
   </tr>
   <tr>
-    <td>ShuffleNet V2</td>
+    <td>ShuffleNet V2-12</td>
     <td>QLinear</td>
     <td>66.13%</td>
     <td>66.36%</td>
     <td>-0.35%</td>
-    <td>2298.55</td>
-    <td>1480.87</td>
-    <td>1.55x</td>
+    <td>2354.51 </td>
+    <td>1461.47 </td>
+    <td>1.61x</td>
   </tr>
   <tr>
-    <td>ShuffleNet V2</td>
+    <td>ShuffleNet V2-12</td>
     <td>QDQ</td>
     <td>66.12%</td>
     <td>66.36%</td>
     <td>-0.36%</td>
-    <td>1951.11</td>
-    <td>1490.78</td>
-    <td>1.31x</td>
+    <td>1850.09 </td>
+    <td>1368.35 </td>
+    <td>1.35x</td>
   </tr>
   <tr>
     <td>SqueezeNet</td>
@@ -1266,99 +1626,109 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>56.54%</td>
     <td>56.87%</td>
     <td>-0.58%</td>
-    <td>2588.97</td>
-    <td>1605.92</td>
-    <td>1.61x</td>
+    <td>2484.36 </td>
+    <td>1912.37 </td>
+    <td>1.30x</td>
   </tr>
   <tr>
     <td>SqueezeNet</td>
     <td>QDQ</td>
-    <td>56.54%</td>
+    <td>56.39%</td>
     <td>56.87%</td>
-    <td>-0.58%</td>
-    <td>2566.18</td>
-    <td>1936.79</td>
+    <td>-0.83%</td>
+    <td>2526.02 </td>
+    <td>1911.32 </td>
     <td>1.32x</td>
   </tr>
   <tr>
     <td>SSD MobileNet V1</td>
     <td>QLinear</td>
-    <td>22.45%</td>
+    <td>22.44%</td>
     <td>23.10%</td>
-    <td>-2.81%</td>
-    <td>725.83</td>
-    <td>570.24</td>
-    <td>1.27x</td>
+    <td>-2.86%</td>
+    <td>710.17 </td>
+    <td>549.55 </td>
+    <td>1.29x</td>
   </tr>
   <tr>
     <td>SSD MobileNet V1</td>
     <td>QDQ</td>
-    <td>22.45%</td>
+    <td>22.44%</td>
     <td>23.10%</td>
-    <td>-2.81%</td>
-    <td>666.01</td>
-    <td>539.77</td>
-    <td>1.23x</td>
+    <td>-2.86%</td>
+    <td>622.58 </td>
+    <td>497.42 </td>
+    <td>1.25x</td>
   </tr>
   <tr>
     <td>SSD MobileNet V1 (ONNX Model Zoo)</td>
     <td>QLinear</td>
-    <td>22.86%</td>
-    <td>23.03%</td>
-    <td>-0.74%</td>
-    <td>641.56</td>
-    <td>519.93</td>
-    <td>1.23x</td>
+    <td>22.96%</td>
+    <td>23.02%</td>
+    <td>-0.26%</td>
+    <td>652.14 </td>
+    <td>507.77 </td>
+    <td>1.28x</td>
   </tr>
   <tr>
     <td>SSD MobileNet V1 (ONNX Model Zoo)</td>
     <td>QDQ</td>
-    <td>22.86%</td>
-    <td>23.03%</td>
-    <td>-0.74%</td>
-    <td>633.61</td>
-    <td>492.5</td>
-    <td>1.29x</td>
+    <td>22.96%</td>
+    <td>23.02%</td>
+    <td>-0.26%</td>
+    <td>573.30 </td>
+    <td>470.42 </td>
+    <td>1.22x</td>
   </tr>
   <tr>
     <td>SSD MobileNet V2</td>
     <td>QLinear</td>
-    <td>24.04%</td>
-    <td>24.68%</td>
+    <td>24.03%</td>
+    <td>24.67%</td>
     <td>-2.59%</td>
-    <td>542.68</td>
-    <td>401.56</td>
-    <td>1.35x</td>
+    <td>527.67 </td>
+    <td>396.27 </td>
+    <td>1.33x</td>
   </tr>
   <tr>
-    <td>SSD</td>
+    <td>SSD-12</td>
     <td>QLinear</td>
-    <td>18.84%</td>
+    <td>18.92%</td>
     <td>18.98%</td>
-    <td>-0.74%</td>
-    <td>31.33</td>
-    <td>8.87</td>
-    <td>3.53x</td>
+    <td>-0.32%</td>
+    <td>31.24 </td>
+    <td>8.77 </td>
+    <td>3.56x</td>
   </tr>
   <tr>
-    <td>SSD</td>
+    <td>SSD-12</td>
     <td>QDQ</td>
     <td>18.63%</td>
     <td>18.98%</td>
     <td>-1.84%</td>
-    <td>23.98</td>
-    <td>8.95</td>
+    <td>23.72 </td>
+    <td>8.87 </td>
     <td>2.68x</td>
   </tr>
   <tr>
-    <td>Tiny YOLOv3</td>
+    <td>Tiny YOLO V3</td>
     <td>QLinear</td>
-    <td>12.08%</td>
-    <td>12.43%</td>
-    <td>-2.82%</td>
-    <td>648.62</td>
-    <td>518.97</td>
-    <td>1.25x</td>
+    <td>11.82%</td>
+    <td>12.42%</td>
+    <td>-4.83%</td>
+    <td>647.17 </td>
+    <td>514.42 </td>
+    <td>1.26x</td>
+  </tr>
+  <tr>
+    <td>Ultraface</td>
+    <td>QLinear</td>
+    <td>83.34%</td>
+    <td>83.65%</td>
+    <td>-0.37%</td>
+    <td>314.50 </td>
+    <td>125.56 </td>
+    <td>2.50x</td>
   </tr>
   <tr>
     <td>VGG16</td>
@@ -1366,29 +1736,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>66.67%</td>
     <td>66.69%</td>
     <td>-0.03%</td>
-    <td>221.93</td>
-    <td>99.51</td>
-    <td>2.23x</td>
-  </tr>
-  <tr>
-    <td>VGG16 (ONNX Model Zoo)</td>
-    <td>QLinear</td>
-    <td>72.32%</td>
-    <td>72.40%</td>
-    <td>-0.11%</td>
-    <td>319.54</td>
-    <td>99.9</td>
-    <td>3.20x</td>
-  </tr>
-  <tr>
-    <td>VGG16 (ONNX Model Zoo)</td>
-    <td>QDQ</td>
-    <td>72.31%</td>
-    <td>72.40%</td>
-    <td>-0.12%</td>
-    <td>319.41</td>
-    <td>99.94</td>
-    <td>3.20x</td>
+    <td>221.62 </td>
+    <td>98.20 </td>
+    <td>2.26x</td>
   </tr>
   <tr>
     <td>VGG16</td>
@@ -1396,29 +1746,49 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>66.69%</td>
     <td>66.69%</td>
     <td>0.00%</td>
-    <td>307.52</td>
-    <td>99.24</td>
-    <td>3.10x</td>
+    <td>304.09 </td>
+    <td>98.33 </td>
+    <td>3.09x</td>
   </tr>
   <tr>
-    <td>YOLOv3</td>
+    <td>VGG16 (ONNX Model Zoo)</td>
     <td>QLinear</td>
-    <td>26.82%</td>
-    <td>28.74%</td>
-    <td>-6.68%</td>
-    <td>124.24</td>
-    <td>54.03</td>
-    <td>2.30x</td>
+    <td>72.32%</td>
+    <td>72.40%</td>
+    <td>-0.11%</td>
+    <td>316.54 </td>
+    <td>98.49 </td>
+    <td>3.21x</td>
   </tr>
   <tr>
-    <td>YOLOv4</td>
+    <td>VGG16 (ONNX Model Zoo)</td>
+    <td>QDQ</td>
+    <td>72.31%</td>
+    <td>72.40%</td>
+    <td>-0.12%</td>
+    <td>315.61 </td>
+    <td>98.46 </td>
+    <td>3.21x</td>
+  </tr>
+  <tr>
+    <td>YOLO V3</td>
     <td>QLinear</td>
-    <td>33.25%</td>
+    <td>26.92%</td>
+    <td>28.73%</td>
+    <td>-6.30%</td>
+    <td>119.63 </td>
+    <td>53.37 </td>
+    <td>2.24x</td>
+  </tr>
+  <tr>
+    <td>YOLO V4</td>
+    <td>QLinear</td>
+    <td>32.33%</td>
     <td>33.71%</td>
-    <td>-1.36%</td>
-    <td>49.76</td>
-    <td>32.99</td>
-    <td>1.51x</td>
+    <td>-4.09%</td>
+    <td>49.30 </td>
+    <td>32.88 </td>
+    <td>1.50x</td>
   </tr>
   <tr>
     <td>ZFNet</td>
@@ -1426,9 +1796,9 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>55.84%</td>
     <td>55.96%</td>
     <td>-0.21%</td>
-    <td>459.38</td>
-    <td>261.93</td>
-    <td>1.75x</td>
+    <td>462.28 </td>
+    <td>268.32 </td>
+    <td>1.72x</td>
   </tr>
   <tr>
     <td>ZFNet</td>
@@ -1436,14 +1806,14 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>55.86%</td>
     <td>55.96%</td>
     <td>-0.18%</td>
-    <td>460.66</td>
-    <td>264.34</td>
-    <td>1.74x</td>
+    <td>465.44 </td>
+    <td>265.58 </td>
+    <td>1.75x</td>
   </tr>
 </tbody>
 </table>
 
-### MXNet Models with MXNet 1.7.0
+### MXNet Models with MXNet 1.9.1
 
 <table class="tg">
 <thead>
@@ -1455,7 +1825,7 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
     <th>INT8</th>
     <th>FP32</th>
-    <th>Acc Ratio[(INT8-FP32)/FP32]</th>
+    <th>Accuracy Ratio[(INT8-FP32)/FP32]</th>
     <th>INT8</th>
     <th>FP32</th>
     <th>Performance Ratio[INT8/FP32]</th>
@@ -1464,84 +1834,84 @@ Performance varies by use, configuration and other factors. See [platform config
 <tbody align="center">
   <tr>
     <td>Inception V3</td>
-    <td>77.80%</td>
+    <td>77.77%</td>
     <td>77.65%</td>
-    <td>0.20%</td>
-    <td>86.52</td>
-    <td>47.98</td>
-    <td>1.80x</td>
+    <td>0.16%</td>
+    <td>94.24 </td>
+    <td>58.05 </td>
+    <td>1.62x</td>
   </tr>
   <tr>
-    <td>MobileNet V1</td>
-    <td>71.60%</td>
+    <td>MobileNet 1.0</td>
+    <td>71.61%</td>
     <td>72.23%</td>
     <td>-0.86%</td>
-    <td>441.59</td>
-    <td>337.52</td>
-    <td>1.31x</td>
+    <td>436.46 </td>
+    <td>314.81 </td>
+    <td>1.39x</td>
   </tr>
   <tr>
-    <td>MobileNet V3 MLPerf</td>
-    <td>70.80%</td>
+    <td>MobileNet V2 1.0</td>
+    <td>70.75%</td>
     <td>70.87%</td>
-    <td>-0.10%</td>
-    <td>272.87</td>
-    <td>211.51</td>
-    <td>1.29x</td>
+    <td>-0.16%</td>
+    <td>270.78 </td>
+    <td>229.21 </td>
+    <td>1.18x</td>
   </tr>
   <tr>
-    <td>ResNet v1 152</td>
-    <td>78.28%</td>
+    <td>ResNet 152 V1</td>
+    <td>78.30%</td>
     <td>78.54%</td>
-    <td>-0.33%</td>
-    <td>65.2</td>
-    <td>37.05</td>
-    <td>1.76x</td>
+    <td>-0.30%</td>
+    <td>66.62 </td>
+    <td>36.55 </td>
+    <td>1.82x</td>
   </tr>
   <tr>
-    <td>ResNet18 V1.0</td>
+    <td>ResNet 18 V1</td>
     <td>70.01%</td>
     <td>70.14%</td>
     <td>-0.19%</td>
-    <td>423.98</td>
-    <td>235.98</td>
-    <td>1.80x</td>
+    <td>429.86 </td>
+    <td>224.10 </td>
+    <td>1.92x</td>
   </tr>
   <tr>
-    <td>ResNet50 V1.0</td>
-    <td>75.91%</td>
+    <td>ResNet 50 V1</td>
+    <td>75.94%</td>
     <td>76.33%</td>
-    <td>-0.55%</td>
-    <td>180.69</td>
-    <td>100.49</td>
-    <td>1.80x</td>
+    <td>-0.50%</td>
+    <td>182.56 </td>
+    <td>94.15 </td>
+    <td>1.94x</td>
   </tr>
   <tr>
-    <td>SqueezeNet</td>
-    <td>56.80%</td>
+    <td>SqueezeNet 1.0</td>
+    <td>56.82%</td>
     <td>56.97%</td>
-    <td>-0.28%</td>
-    <td>311.23</td>
-    <td>198.61</td>
-    <td>1.57x</td>
+    <td>-0.26%</td>
+    <td>331.72 </td>
+    <td>242.76 </td>
+    <td>1.37x</td>
   </tr>
   <tr>
-    <td>SSD MobileNet V1</td>
+    <td>SSD MobileNet 1.0</td>
     <td>74.94%</td>
     <td>75.54%</td>
     <td>-0.79%</td>
-    <td>43.5</td>
-    <td>25.77</td>
-    <td>1.69x</td>
+    <td>53.66 </td>
+    <td>27.16 </td>
+    <td>1.98x</td>
   </tr>
   <tr>
-    <td>SSD ResNet50 V1.0</td>
-    <td>80.21%</td>
+    <td>SSD ResNet50 V1</td>
+    <td>80.19%</td>
     <td>80.23%</td>
-    <td>-0.03%</td>
-    <td>31.64</td>
-    <td>15.13</td>
-    <td>2.09x</td>
+    <td>-0.05%</td>
+    <td>37.63 </td>
+    <td>16.80 </td>
+    <td>2.24x</td>
   </tr>
 </tbody>
 </table>
