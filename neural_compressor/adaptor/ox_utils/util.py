@@ -33,6 +33,10 @@ onnx_domain = "ai.onnx"
 ms_domain = "com.microsoft"      
 
 support_pair = {
+    'float32 bfloat16': True,
+    '1 16': True,
+    'bfloat16 float32': True,
+    '16 1': True,
     'uint8 uint8': True,
     '2 2': True,
     'float16 float16': True,
@@ -59,6 +63,7 @@ dtype_mapping = {
     'uint64': 13,
     'complex64': 14,
     'complex128': 15,
+    'bf16': 16
 }
 
 PROVIDERS = {
@@ -135,6 +140,24 @@ def split_shared_bias(model):
                     node.input[2] = new_input_name
     return model    
 
+def float_to_float16(tensor):
+    min_val = 5.96e-08
+    max_val = 65504.0
+    tensor[(tensor > max_val) & (tensor < float('inf'))] = max_val
+    tensor[(tensor < min_val) & (tensor > 0)] = min_val
+    tensor[(tensor > -min_val) & (tensor < 0)] = -min_val
+    tensor[(tensor < -max_val) & (tensor > float('-inf'))] = -max_val
+    return np.float16(tensor)
+
+def float_to_bfloat16(tensor):
+    min_val = 9.2e-41
+    max_val = 3.38953139e38
+    tensor[(tensor > max_val) & (tensor < float('inf'))] = max_val
+    tensor[(tensor < min_val) & (tensor > 0)] = min_val
+    tensor[(tensor > -min_val) & (tensor < 0)] = -min_val
+    tensor[(tensor < -max_val) & (tensor > float('-inf'))] = -max_val
+    return tensor
+
 def cast_tensor(tensor, dtype): # pragma: no cover
     """Convert tensor float to target dtype.
 
@@ -146,14 +169,18 @@ def cast_tensor(tensor, dtype): # pragma: no cover
         raise ValueError('Expected input type is an ONNX TensorProto but got %s' % type(tensor))
 
     if tensor.data_type == onnx_proto.TensorProto.FLOAT:
-        new_tensor = helper.make_tensor(
-            name=tensor.name,
-            data_type=dtype_mapping[dtype],
-            dims=numpy_helper.to_array(tensor).shape,
-            vals=numpy_helper.to_array(tensor)
-        )
-        return new_tensor
-    return None
+        val = numpy_helper.to_array(tensor).copy()
+        if dtype == 'fp16':
+            new_val = float_to_float16(val)
+        elif dtype == 'bf16':
+            new_val = float_to_bfloat16(val)
+        else:
+            raise ValueError('Expect fp16 or bf16 but get {}.'.format(dtype))
+        tensor.float_data[:] = []
+        tensor.int32_data[:] = []
+        tensor.raw_data = new_val.tostring()
+        return True
+    return False
 
 def remove_init_from_model_input(model):
     """Remove initializer from model input."""

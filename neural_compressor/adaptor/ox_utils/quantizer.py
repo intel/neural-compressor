@@ -362,10 +362,8 @@ class Quantizer:
             if initializer is not None:
                 if initializer.data_type != onnx_proto.TensorProto.FLOAT: 
                     continue
-                new_tensor = cast_tensor(initializer, cfg)
-                if new_tensor:
-                    self.model.remove_initializer(initializer)
-                    self.model.add_initializer(new_tensor)
+                do_cast = cast_tensor(initializer, cfg)
+                if do_cast:
                     self.new_value_info[tensor_name] = ValueInfo(tensor_name,
                                                              TensorProto.FLOAT, dtype_mapping[cfg])
             else:
