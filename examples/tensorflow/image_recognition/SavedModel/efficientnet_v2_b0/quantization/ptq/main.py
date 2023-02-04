@@ -38,6 +38,7 @@ arg_parser.add_argument('--tune', dest='tune', action='store_true', help='use ne
 arg_parser.add_argument('--dataset_location', dest='dataset_location',
                             help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of evaluation')
+arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='interations')
 args = arg_parser.parse_args()
 
 def evaluate(model):
@@ -60,7 +61,7 @@ def evaluate(model):
         iteration = None
         latency_list = []
         if args.benchmark and args.mode == 'performance':
-            iteration = 100
+            iteration = args.iters
         for idx, (inputs, labels) in enumerate(dataloader):
             inputs = np.array(inputs)
             input_tensor = tf.constant(inputs, dtype=tf.float32)
@@ -98,6 +99,8 @@ def evaluate(model):
 
 class eval_object_detection_optimized_graph(object):
     def run(self):
+        from neural_compressor.utils import set_random_seed
+        set_random_seed(9527)
         if args.tune:
             from neural_compressor import quantization
             from neural_compressor.config import PostTrainingQuantConfig
