@@ -123,7 +123,15 @@ class eval_object_detection_optimized_graph(object):
             from neural_compressor.config import BenchmarkConfig
             if args.mode == 'performance':
                 conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
-                fit(model=args.input_graph, config=conf, b_func=evaluate)
+                from neural_compressor.utils.create_obj_from_config import create_dataloader
+                dataloader_args = {
+                    'batch_size': args.batch_size,
+                    'dataset': {"ImageRecord": {'root': args.dataset_location}},
+                    'transform': {'BilinearImagenet': {'height': 224, 'width': 224}},
+                    'filter': None
+                }
+                eval_dataloader = create_dataloader('tensorflow', dataloader_args)
+                fit(model=args.input_graph, config=conf, b_dataloader=eval_dataloader)
             else:
                 from neural_compressor.model import Model
                 model = Model(args.input_graph).model
