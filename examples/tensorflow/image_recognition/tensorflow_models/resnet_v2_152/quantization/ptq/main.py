@@ -97,7 +97,7 @@ class eval_classifier_optimized_graph:
             from neural_compressor.utils.create_obj_from_config import create_dataloader
             calib_dataloader_args = {
                 'batch_size': 10,
-                'dataset': {"ImageRecord": {'root':args.dataset_location}},
+                'dataset': {"ImageRecord": {'root': args.dataset_location}},
                 'transform': {'BilinearImagenet':
                      {'height': 224, 'width': 224}},
                 'filter': None
@@ -105,7 +105,7 @@ class eval_classifier_optimized_graph:
             calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
             eval_dataloader_args = {
                 'batch_size': 32,
-                'dataset': {"ImageRecord": {'root':args.dataset_location}},
+                'dataset': {"ImageRecord": {'root': args.dataset_location}},
                 'transform': {'BilinearImagenet':
                      {'height': 224, 'width': 224}},
                 'filter': None

@@ -100,7 +100,17 @@ class eval_classifier_optimized_graph:
             from neural_compressor.utils.create_obj_from_config import create_dataloader
             data_path = os.path.join(args.dataset_location, 'raw_images')
             label_path = os.path.join(args.dataset_location, 'raw/caffe_ilsvrc12/val.txt')
-            dataloader_args = {
+            calib_dataloader_args = {
+                'batch_size': None,
+                'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
+                'transform': {'PaddedCenterCrop': {'size': 224, 'crop_padding': 32},
+                              'Resize': {'size': 224, 'interpolation': 'bicubic'},
+                              'Normalize': {'mean': [123.675, 116.28, 103.53],
+                                            'std': [58.395, 57.12, 57.375]}},
+                'filter': None
+            }
+            calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
+            eval_dataloader_args = {
                 'batch_size': 32,
                 'dataset': {"ImagenetRaw": {'data_path':data_path, 'image_list':label_path}},
                 'transform': {'PaddedCenterCrop': {'size': 224, 'crop_padding': 32},
@@ -109,11 +119,11 @@ class eval_classifier_optimized_graph:
                                             'std': [58.395, 57.12, 57.375]}},
                 'filter': None
             }
-            dataloader = create_dataloader('tensorflow', dataloader_args)
+            eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
             conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100],
                                            inputs=['truediv'], outputs=['Squeeze'])
-            q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=dataloader,
-                        eval_dataloader=dataloader)
+            q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
+                        eval_dataloader=eval_dataloader)
             q_model.save(args.output_graph)
 
         if args.benchmark:
