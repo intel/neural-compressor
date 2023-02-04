@@ -48,8 +48,8 @@ Pruning
 Neural network pruning is a promising model compression technique that removes the least important parameters/neurons in the network and achieves compact architectures of minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial to reducing the computational and memory footprint that huge neural networks require.
 
 <div align=center>
-<a target="_blank" href="./../../docs/source/imgs/pruning/pruning.PNG">
-    <img src="./../../docs/source/imgs/pruning/pruning.PNG" width=350 height=155 alt="pruning intro">
+<a target="_blank" href="./../../docs/source/imgs/pruning/pruning.png">
+    <img src="./../../docs/source/imgs/pruning/pruning.png" width=350 height=155 alt="pruning intro">
 </a>
 </div>
 
@@ -62,16 +62,16 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 - NxM Pruning
 
   NxM pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. Consecutive NxM matrix blocks are used as the minimum unit for weight pruning, thus NxM pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.
-  Please note that 1x1 pattern is referred to as unstructured pruning and channelx1 (or 1xchannel) pattern is referred to as channel-wise pruning. 
+  Please note that 1x1 pattern is referred to as unstructured pruning and channelx1 (or 1xchannel) pattern is referred to as channel-wise pruning.
 
 - N:M Pruning
 
   N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used.
-  
+
 
 <div align=center>
-<a target="_blank" href="../../docs/source/imgs/pruning/Pruning_patterns.JPG">
-    <img src="../../docs/source/imgs/pruning/pruning_patterns.JPG" width=695 height=145 alt="Sparsity Pattern">
+<a target="_blank" href="../../docs/source/imgs/pruning/Pruning_patterns.jpg">
+    <img src="../../docs/source/imgs/pruning/pruning_patterns.jpg" width=695 height=145 alt="Sparsity Pattern">
 </a>
 </div>
 
@@ -101,8 +101,8 @@ Pruning Criteria determines how should the weights of a neural network are score
   $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
 <div align=center>
-<a target="_blank" href="./../../docs/source/imgs/pruning/pruning_criteria.PNG">
-    <img src="./../../docs/source/imgs/pruning/pruning_criteria.PNG" width=350 height=170 alt="Pruning criteria">
+<a target="_blank" href="./../../docs/source/imgs/pruning/pruning_criteria.png">
+    <img src="./../../docs/source/imgs/pruning/pruning_criteria.png" width=350 height=170 alt="Pruning criteria">
 </a>
 </div>
 
@@ -121,8 +121,8 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
   Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.
 
 <div align=center>
-<a target="_blank" href="../../docs/source/imgs/pruning/Pruning_schedule.JPG">
-    <img src="./../../docs/source/imgs/pruning/Pruning_schedule.JPG" width=930 height=170 alt="Pruning schedule">
+<a target="_blank" href="../../docs/source/imgs/pruning/Pruning_schedule.jpg">
+    <img src="./../../docs/source/imgs/pruning/Pruning_schedule.jpg" width=930 height=170 alt="Pruning schedule">
 </a>
 </div>
 
@@ -194,8 +194,8 @@ Regularization is a technique that discourages learning a more complex model and
   The main ideas of Group Lasso are to construct an objective function that penalizes the L2 parameterization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
 
 <div align=center>
-<a target="_blank" href="../../docs/source/imgs/pruning/Regularization.JPG">
-    <img src="../../docs/source/imgs/pruning/Regularization.JPG" width=350 height=170 alt="Regularization">
+<a target="_blank" href="../../docs/source/imgs/pruning/Regularization.jpg">
+    <img src="../../docs/source/imgs/pruning/Regularization.jpg" width=350 height=170 alt="Regularization">
 </a>
 </div>
 
@@ -279,8 +279,8 @@ The following section exemplifies how to use hooks in user pass-in training func
 The pruning technique  is validated on typical models across various domains (including CV and NLP).
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
-  <a target="_blank" href="../../docs/source/imgs/pruning/pruning_scatter.JPG">
-    <img src="../../docs/source/imgs/pruning/pruning_scatter.JPG" alt="Architecture" width=450 height=300>
+  <a target="_blank" href="../../docs/source/imgs/pruning/pruning_scatter.jpg">
+    <img src="../../docs/source/imgs/pruning/pruning_scatter.jpg" alt="Architecture" width=450 height=300>
   </a>
 </div>
 
@@ -305,5 +305,4 @@ The API [Pruning V2](../../docs/source/pruning.md#Get-Started-with-Pruning-API) 
 [1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.
 
 [2] Zafrir, Ofir, Ariel Larey, Guy Boudoukh, Haihao Shen, and Moshe Wasserblat. "Prune once for all: Sparse pre-trained language models." arXiv preprint arXiv:2111.05754 (2021).
-
 

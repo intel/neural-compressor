@@ -217,17 +217,6 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     version = get_torch_version()
     # Get example inputs for ipex and torch>=1.13.
     example_inputs = None
-    if isinstance(stat_dict, torch.jit._script.RecursiveScriptModule) or \
-      (version.release >= Version("1.13.0").release and \
-      tune_cfg['approach'] != "post_training_dynamic_quant"):
-        if "example_inputs" in kwargs:
-            example_inputs = kwargs["example_inputs"]
-        elif "dataloader" in kwargs:
-            from ..adaptor.pytorch import get_example_inputs
-            example_inputs = get_example_inputs(model, kwargs["dataloader"])
-        else:
-            logger.warning("Please provide the example_inputs or a dataloader" +
-                            " to get example_inputs for quantized model.")
 
     if isinstance(stat_dict, torch.jit._script.RecursiveScriptModule):
         q_model = torch.jit.freeze(stat_dict.eval())

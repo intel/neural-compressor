@@ -3,9 +3,7 @@ python -c "import neural_compressor as nc;print(nc.version.__version__)"
 echo "run basic ipex"
 
 echo "specify fwk version..."
-export pytorch_version='1.12.0+cpu'
-export torchvision_version='0.13.0+cpu'
-export ipex_version='1.12.0+cpu'
+source /neural-compressor/.azure-pipelines/scripts/ut/ut_fwk_version.sh $1
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh

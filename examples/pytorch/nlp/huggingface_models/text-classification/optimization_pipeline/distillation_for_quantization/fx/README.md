@@ -9,22 +9,15 @@ For more informations of this algorithm, please refer to the paper [ZeroQuant: E
 
 # Prerequisite
 
-## Python Version
+## Environment
 
 Recommend python 3.7 or higher version.
-
-
-## Install dependency
 
 ```shell
 pip install -r requirements.txt
 ```
 
-# Start running neural_compressor implementation of distillation for quantization
-
-Below are example NLP tasks of distillation for quantization to quantize the fine tuned BERT model on the specific tasks.
-<br>
-It requires the pre-trained task specific model such as `yoshitomo-matsubara/bert-base-uncased-sst2` from yoshitomo-matsubara Huggingface portal as the teacher model for distillation, as well as for quantization.
+# Run
 
 ## SST-2 task
 
@@ -51,7 +44,7 @@ python run_glue_no_trainer.py --task_name qnli --model_name_or_path yoshitomo-ma
 ```
 
 # Results
-We listed the results on 4 distillation for quantization experiments, for comparison, we also listed the results of QAT as well as the baselie metrics of the FP32 model. These experiments use a fine-tuned BERT-Base model on the 4 GLUE task (SST-2, QNLI, QQP and MNLI), data in the column of FP32 is the metrics of the 4 fine-tuned BERT-Base model, data in the column of INT8 (QAT) is the metrics of the 4 INT8 BERT-Base model from QAT process, data in the column of INT8 (Distillation for Quantization) is the metrics of the 4 INT8 BERT-Base model from distillation for quantization process.
+We listed the results on 4 distillation for quantization experiments, for comparison, we also listed the results of QAT as well as the baselie metrics of the FP32 model. These experiments use a fine-tuned BERT-Base model on 4 GLUE tasks (SST-2, QNLI, QQP and MNLI), data in the column of FP32 is the metrics of the 4 fine-tuned BERT-Base model, data in the column of INT8 (QAT) is the metrics of the 4 INT8 BERT-Base models from QAT process, data in the column of INT8 (Distillation for Quantization) is the metrics of the 4 INT8 BERT-Base models from distillation for quantization process.
   |               |    FP32        |           INT8 (QAT)     |  INT8 (Distillation for Quantization) |
   |---------------|----------------|--------------------------|--------------------------|
   |  SST-2 (ACC)  |     92.48%     |         91.90%           |          92.01%          |

@@ -11,6 +11,9 @@ parameters:
     type: string
   - name: utArtifact
     type: string
+  - name: utTestMode
+    type: string
+    default: "coverage"
 
   - name: utContainerName
     type: string
@@ -29,7 +32,7 @@ steps:
   - script: |
       docker exec ${{ parameters.utContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
       && bash install_nc_full.sh \
-      && bash ut/${{ parameters.utScriptFileName }}.sh"
+      && bash ut/${{ parameters.utScriptFileName }}.sh ${{ parameters.utTestMode }}"
     displayName: "Run UT"
 
   - task: PublishPipelineArtifact@1
