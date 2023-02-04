@@ -650,6 +650,7 @@ functionalities
 functionet
 functools
 Funtowicz
+fvcore
 fw
 FWK
 fx
@@ -1441,6 +1442,7 @@ pycocotools
 pyguide
 pylint
 pymodule
+pymoo
 PyObject
 pypi
 PyPI
@@ -2513,4 +2515,8 @@ parameterization
 emsp
 frequence
 ema
+ASPLOS
+MSFT
+NextPlatform
+VMware
 zalandoresearch

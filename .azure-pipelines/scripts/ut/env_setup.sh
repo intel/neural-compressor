@@ -43,8 +43,11 @@ if [[ "${torchvision_version}" != "" ]]; then
     pip install torchvision==${torchvision_version} -f https://download.pytorch.org/whl/torch_stable.html
 fi
 
-if [[ "${ipex_version}" != "" ]]; then
+if [[ "${ipex_version}" == "1.12.0+cpu" ]]; then
     ipex_whl="http://intel-optimized-pytorch.s3.cn-north-1.amazonaws.com.cn/wheels/v1.12.0/intel_extension_for_pytorch-1.12.0%2Bcpu-cp38-cp38-linux_x86_64.whl"
+    pip install $ipex_whl
+elif [[ "${ipex_version}" == "1.13.0+cpu" ]]; then
+    ipex_whl="https://github.com/intel/intel-extension-for-pytorch/releases/download/v1.13.0%2Bcpu/intel_extension_for_pytorch-1.13.0-cp38-cp38-manylinux2014_x86_64.whl"
     pip install $ipex_whl
 fi
 

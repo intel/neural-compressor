@@ -3245,7 +3245,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         if res[op_type]['FP32'] > 0:
                             res[op_type]['FP32'] -= 1
                     else:
-                        res[op_type]['BF16'] = 1
+                        res[op_type] = {'INT8': 0, 'BF16': 1, 'FP32': 0}
+
 
         output_data = [[
             op_type,
