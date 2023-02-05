@@ -168,12 +168,15 @@
             
   <section id="turn-on-auto-mixed-precision-during-quantization">
 <h1>Turn ON Auto Mixed Precision during Quantization<a class="headerlink" href="#turn-on-auto-mixed-precision-during-quantization" title="Permalink to this heading">¶</a></h1>
-<p>BF16 conversion during quantization is default OFF. To force enable it, users need to turn on use_bf16 by pythonic config:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span>
+<p>BF16 conversion during quantization is default ON. To force disable it, users need to exclude “bf16” in PostTrainingQuantConfig and QuantizationAwareTrainingConfig:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostPostTrainingQuantConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
 
-<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">use_bf16</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">excluded_precisions</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bf16&#39;</span><span class="p">])</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model_origin</span><span class="p">,</span>
+                           <span class="n">conf</span><span class="p">,</span>
+                           <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+                           <span class="n">calib_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
