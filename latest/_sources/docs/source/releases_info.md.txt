@@ -1,9 +1,9 @@
 Release
 =======
 
-1. [Release Notes](#Release-Notes)
-2. [Known Issues](#Known-Issues)
-3. [Incompatible Changes](#Incompatible-Changes)
+1. [Release Notes](#release-notes)
+2. [Known Issues](#known-issues)
+3. [Incompatible Changes](#incompatible-changes)
 
 ## Release Notes
 

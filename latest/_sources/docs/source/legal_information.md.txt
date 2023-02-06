@@ -1,9 +1,9 @@
 Legal Information
 =================
 
-1. [License](#License)
-2. [Citation](#Citation)
-3. [Trademarks](#Trademarks)
+1. [License](#license)
+2. [Citation](#citation)
+3. [Trademarks](#trademarks)
 
 ## License
 
