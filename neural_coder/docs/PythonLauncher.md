@@ -5,7 +5,14 @@ Neural Coder can be used as a Python **Launcher**. Users can run the Python mode
 
 ## Quick-Start
 
-Example: Let's say you are running an NLP model using ```run_glue.py``` from HuggingFace transformers [examples](https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py), you generally run with a Python command line like this:
+Example: Let's say you are running an NLP model using ```run_glue.py``` from HuggingFace transformers [examples](https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py).
+
+Pre-requisites:
+```bash
+pip install transformers==4.21.0 torch datasets 
+```
+
+Generally we run this code with a Python command line like this:
 ```bash
 python run_glue.py --model_name_or_path bert-base-cased --task_name mrpc --do_eval --output_dir result
 ```
