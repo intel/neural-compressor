@@ -81,7 +81,7 @@ The Intel® Neural Compressor library is released as part of the [Intel® oneAPI
 
 The AI Kit is distributed through many common channels, including from Intel's website, YUM, APT, Anaconda, and more. Select and [download](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/download.html) the AI Kit distribution package that's best suited for you and follow the [Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) for post-installation instructions.
 
-|Downlowd|Guide|
+|Download|Guide|
 |-|-|
 |[Download AI Kit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/) |[AI Kit Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) |
 
