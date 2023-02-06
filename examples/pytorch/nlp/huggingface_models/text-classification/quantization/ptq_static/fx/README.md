@@ -32,6 +32,7 @@ pip install -r requirements.txt
 ```shell
 pip install torch
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare pretrained model
 
