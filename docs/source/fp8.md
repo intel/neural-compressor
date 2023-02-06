@@ -10,7 +10,7 @@ Emulated FP8 Quantization
 4. [Examples](#examples)  
 
 ## Introduction
-Float point 8(FP8) is a promising data type for low precision quantization. In Intel Neural Compressor, An emulated FP8 quantization is supported in branch [fp8_adaptor](https://github.com/intel/neural-compressor/tree/fp8_adaptor). With specifing precision(fp8_e5m2, fp8_e4m3, fp8_e3m4), users can validate the accuracy of quantized fp8 model.
+Float point 8(FP8) is a promising data type for low precision quantization. In Intel Neural Compressor, the emulated FP8 quantization is supported in branch [fp8_adaptor](https://github.com/intel/neural-compressor/tree/fp8_adaptor). With specifing precision(fp8_e5m2, fp8_e4m3, fp8_e3m4), users can validate the accuracy of the quantized FP8 model.
 
 
 ## Supported Framework
@@ -30,9 +30,9 @@ python setup.py install
 
 ## Get Start with FP8 Quantization
 
-Comparing with int8 quantization, only one parameter: precision(fp8_e5m2/fp8_e4m3/fp8_e3m4) is added.
+Comparing with the INT8 quantization, only one parameter: precision(fp8_e5m2/fp8_e4m3/fp8_e3m4) is added.
 
-BTW, for models with BatchNorm, it is recommanded to calibrate its statistics in train mode with fp8 data type before quantization.
+Also, for models with BatchNorm, it is recommanded to calibrate its statistics in train mode with FP8 data type before quantization.
 
 ### Old API Configuration for Intel Neural Compressor 1.x
 
@@ -66,7 +66,7 @@ quant_conf = PostTrainingQuantConfig(
 ```
 
 ### Automatic Tuning Strategy
-Unlike the int8 base strategy, the FP8 auto tuning strategy will attempt per operation type tuning. We first aggressively quantize all op types, and if the accuracy requirement is missed, the strategy tries to quantize one op type and accumulates them together. Finally, the user will get the following information.
+Unlike the INT8 base strategy, the FP8 auto tuning strategy will attempt per operation type tuning. We first aggressively quantize all op types. If the accuracy requirement is missed, the strategy will try to quantize one op type and accumulates them together. Finally, the user will get the following information.
 
 ```log
 [INFO] Suggested op types with KL algorithm are: ['Matmul', 'LayerNorm', 'Linear']
@@ -74,7 +74,7 @@ Unlike the int8 base strategy, the FP8 auto tuning strategy will attempt per ope
 ```
 
 ### Global Environment Variables
-In order to facilitate customer customization , some global environment variables are used.
+In order to facilitate customer customization, some global environment variables are used.
 
 | Framework  | Usage | Supported Values |
 |------------|:-------:|:-------------------------:|
