@@ -4,7 +4,7 @@ tf_example2 example
 Step-by-Step
 ============
 
-This is Hello World to demonstrate how to quick start with Intel® Neural Compressor. It is a Keras model on mnist dataset defined by helloworld/train.py, we will implement a customized metric and a customized dataloader for quantization and evaluation.
+This is Hello World to demonstrate how to quickly start with Intel® Neural Compressor. It is a Keras model on mnist dataset defined by helloworld/train.py, we will implement a customized metric and a customized dataloader for quantization and evaluation.
 
 
 ## Prerequisite
@@ -13,6 +13,7 @@ This is Hello World to demonstrate how to quick start with Intel® Neural Compre
 ```shell
 pip install -r requirements.txt
 ```
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 2. Prepare FP32 model
 ```shell

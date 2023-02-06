@@ -6,9 +6,9 @@ Enter the following commands to prepare a dataset and pretrained models for the 
 ```shell
 pip install intel-tensorflow==2.10.0
 python train.py
-
 ```
 The `train.py` script generates a saved model and a frozen pb at ./models for your use.
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## Examples
 The following Hello World examples are available:

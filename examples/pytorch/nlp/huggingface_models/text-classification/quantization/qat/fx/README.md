@@ -16,7 +16,7 @@ PyTorch >=1.12.0 is needed for pytorch_fx backend and huggingface/transformers.
   cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/qat/fx
   pip install -r requirements.txt
   ```
-
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 2. Prepare fine-tuned model
 

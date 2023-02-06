@@ -17,7 +17,7 @@ The Intel Extension for Tensorflow for Intel CPUs is installed as default.
 ```shell
 pip install -r requirements.txt
 ```
-> Note: Validated Tensorflow [Version](/docs/source/installation_guide.md#validated-software-environment).
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 3. Benchmarking the model on Intel GPU (Optional)
 
