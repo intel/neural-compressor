@@ -5,8 +5,7 @@ This document list steps of reproducing inception_v3 model tuning and benchmark 
 This example can run on Intel CPUs and GPUs.
 
 > **Note**: 
-> Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x.
-> [Version support](../../../../../../README.md#supported-frameworks)
+> Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x. Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 # Prerequisite
 
 ## 1. Environment
@@ -23,7 +22,6 @@ pip install neural-compressor
 ```shell
 pip install intel-tensorflow
 ```
-> Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
 
 ### Installation Dependency packages
 ```shell

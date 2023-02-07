@@ -37,33 +37,6 @@
       "main_script": "main.py",
       "batch_size": 32
     },
-    "resnet_v1_50_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/resnet_v1_50.ckpt",
-      "yaml": "resnet_v1_50.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
-    },
-    "resnet_v1_101_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/resnet_v1_101.ckpt",
-      "yaml": "../resnet101.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
-    },
-    "resnet_v1_152_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/resnet_v1_152.ckpt",
-      "yaml": "resnet_v1_152.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
-    },
     "inception_v1": {
       "model_src_dir": "image_recognition/tensorflow_models/inception_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
@@ -71,30 +44,12 @@
       "main_script": "main.py",
       "batch_size": 32
     },
-    "inception_v1_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/inception_v1.ckpt",
-      "yaml": "../inception_v1.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
-    },
     "inception_v2": {
       "model_src_dir": "image_recognition/tensorflow_models/inception_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_inception_v2.pb",
       "main_script": "main.py",
       "batch_size": 32
-    },
-    "inception_v2_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/inception_v2.ckpt",
-      "yaml": "../inception_v2.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
     },
     "inception_v3": {
       "model_src_dir": "image_recognition/tensorflow_models/inception_v3/quantization/ptq",
@@ -110,30 +65,12 @@
       "main_script": "main.py",
       "batch_size": 32
     },
-    "inception_v3_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/inception_v3.ckpt",
-      "yaml": "inception_v3.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
-    },
     "inception_v4": {
       "model_src_dir": "image_recognition/tensorflow_models/inception_v4/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_inception_v4.pb",
       "main_script": "main.py",
       "batch_size": 32
-    },
-    "inception_v4_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/inception_v4.ckpt",
-      "yaml": "../inception_v4.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
     },
     "inception_resnet_v2": {
       "model_src_dir": "image_recognition/tensorflow_models/inception_resnet_v2/quantization/ptq",
@@ -155,15 +92,6 @@
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_vgg16.pb",
       "main_script": "main.py",
       "batch_size": 32
-    },
-    "vgg16_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/vgg_16.ckpt",
-      "yaml": "../vgg16.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
     },
     "vgg16_keras": {
       "model_src_dir": "image_recognition/keras_models/vgg16/quantization/ptq",
@@ -189,15 +117,6 @@
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_vgg19.pb",
       "main_script": "main.py",
       "batch_size": 32
-    },
-    "vgg19_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/vgg_19.ckpt",
-      "yaml": "../vgg19.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
     },
     "vgg19_keras": {
       "model_src_dir": "image_recognition/keras_models/vgg19/quantization/ptq",
@@ -245,15 +164,6 @@
       "main_script": "main.py",
       "batch_size": 32
     },
-    "resnetv2_50_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/resnet_v2_50.ckpt",
-      "yaml": "../resnet_v2_50.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
-    },
     "resnetv2_50_keras": {
       "model_src_dir": "image_recognition/keras_models/resnetv2_50/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
@@ -268,15 +178,6 @@
       "main_script": "main.py",
       "batch_size": 32
     },
-    "resnetv2_101_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/resnet_v2_101.ckpt",
-      "yaml": "../resnet_v2_101.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
-    },
     "resnetv2_101_keras": {
       "model_src_dir": "image_recognition/keras_models/resnetv2_101/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
@@ -290,15 +191,6 @@
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_resnet_v2_152.pb",
       "main_script": "main.py",
       "batch_size": 32
-    },
-    "resnetv2_152_slim": {
-      "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq/slim",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/slim/resnet_v2_152.ckpt",
-      "yaml": "../resnet_v2_152.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
     },
     "mobilenetv1": {
       "model_src_dir": "image_recognition/tensorflow_models/mobilenet_v1/quantization/ptq",
