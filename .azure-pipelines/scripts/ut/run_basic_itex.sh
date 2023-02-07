@@ -3,8 +3,8 @@ python -c "import neural_compressor as nc;print(nc.version.__version__)"
 echo "run basic itex"
 
 echo "specify fwk version..."
-export itex_version='nightly'
-export tensorflow_version='2.10.0-official'
+export itex_version='1.1.0'
+export tensorflow_version='2.11.0-official'
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh

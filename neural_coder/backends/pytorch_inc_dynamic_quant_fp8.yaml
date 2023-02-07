@@ -17,32 +17,31 @@ transformation:
     - ["insert_below_dataloader_definition_line", "insert_below_model_definition_line"]
   content:
     - |-
-      [+] if "GraphModule" not in str(type(MODEL_NAME)):
-      [+]     def eval_func(model):
-      [+]         EVAL_FUNC_LINES
-      [+]     try:
-      [+]         torch.backends.quantized.engine = 'onednn'
-      [+]     except:
-      [+]         from torch.backends.quantized import engine; engine = 'onednn'
-      [+]     from neural_compressor.conf.config import QuantConf
-      [+]     from neural_compressor.experimental import Quantization, common
-      [+]     quant_config = QuantConf()
-      [+]     quant_config.usr_cfg.quantization.approach = "post_training_dynamic_quant"
-      [+]     quant_config.usr_cfg.model.framework = "pytorch"
-      [+]     quant_config.usr_cfg.quantization.precision = FP8_DATA_FORMAT
-      [+]     quantizer = Quantization(quant_config)
-      [+]     quantizer.model = common.Model(MODEL_NAME)
-      [+]     quantizer.calib_dataloader = DATALOADER_NAME
-      [+]     quantizer.eval_func = eval_func
-      [+]     MODEL_NAME = quantizer()
-      [+]     MODEL_NAME = MODEL_NAME.model
-      [+]     MODEL_NAME.eval()
-      [+]     try:
-      [+]         with torch.no_grad():
-      [+]             MODEL_NAME = torch.jit.script(MODEL_NAME)
-      [+]         MODEL_NAME = torch.jit.freeze(MODEL_NAME)
-      [+]     except:
-      [+]         pass
+      [+] def eval_func(model):
+      [+]     EVAL_FUNC_LINES
+      [+] try:
+      [+]     torch.backends.quantized.engine = 'onednn'
+      [+] except:
+      [+]     from torch.backends.quantized import engine; engine = 'onednn'
+      [+] from neural_compressor.conf.config import QuantConf
+      [+] from neural_compressor.experimental import Quantization, common
+      [+] quant_config = QuantConf()
+      [+] quant_config.usr_cfg.quantization.approach = "post_training_dynamic_quant"
+      [+] quant_config.usr_cfg.model.framework = "pytorch"
+      [+] quant_config.usr_cfg.quantization.precision = FP8_DATA_FORMAT
+      [+] quantizer = Quantization(quant_config)
+      [+] quantizer.model = common.Model(MODEL_NAME)
+      [+] quantizer.calib_dataloader = DATALOADER_NAME
+      [+] quantizer.eval_func = eval_func
+      [+] MODEL_NAME = quantizer()
+      [+] MODEL_NAME = MODEL_NAME.model
+      [+] MODEL_NAME.eval()
+      [+] try:
+      [+]     with torch.no_grad():
+      [+]         MODEL_NAME = torch.jit.script(MODEL_NAME)
+      [+]     MODEL_NAME = torch.jit.freeze(MODEL_NAME)
+      [+] except:
+      [+]     pass
   order:
     - below:
       above:

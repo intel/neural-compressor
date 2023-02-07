@@ -1,14 +1,23 @@
 Step-by-Step
 ============
 
-> Note: IPEX version >= 1.10
-
 # Prerequisite
 
 ## 1. Environment
 ```
     pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
+> 
+### install Intel® Extension for PyTorch
+```shell position-relative
+python -m pip install intel_extension_for_pytorch -f https://software.intel.com/ipex-whl-stable
+```
+
+   > Note: Intel® Extension for PyTorch* has PyTorch version requirement. Please check more detailed information via the URL below.
+   >
+   > More installation methods can be found at [Installation Guide](https://intel.github.io/intel-extension-for-pytorch/1.12.0/tutorials/installation.html)
+   >
 
 ## 2. Prepare Model
 

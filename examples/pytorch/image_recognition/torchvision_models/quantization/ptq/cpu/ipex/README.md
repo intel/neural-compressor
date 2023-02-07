@@ -13,10 +13,11 @@ We verified examples with IPEX backend on Python 3.8, recommended.
 cd examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Install pytorch and intel-pytorch-extension
 
-refer [intel/intel-extension-for-pytorch at icx (github.com)](https://github.com/intel/intel-extension-for-pytorch/tree/v1.8.0)
+refer [intel/intel-extension-for-pytorch(github.com)](https://github.com/intel/intel-extension-for-pytorch)
 
 1. install PyTorch and TorchVision
 
@@ -44,11 +45,11 @@ refer [intel/intel-extension-for-pytorch at icx (github.com)](https://github.com
     git apply ../patch.patch
     python setup.py install
    ```
-   > Note: Intel® Extension for PyTorch* has PyTorch version > requirement. Please check more detailed information via > the URL below.
+   > Note: Intel® Extension for PyTorch* has PyTorch version requirement. Please check more detailed information via the URL below.
    >
-   > GCC9 compiler is recommended
+   > More installation methods can be found at [Installation Guide](https://intel.github.io/intel-extension-for-pytorch/1.12.0/tutorials/installation.html)
    >
-   > Support IPEX version >= 1.8.0, 1.12.0 version need build from source and apply patch.
+   > Support IPEX version >= 1.9.0, 1.12.0 version need build from source and apply patch.
 
 ## 3. Prepare Dataset
 

@@ -327,8 +327,8 @@ class FP32Model(torch.nn.Module):
     def forward(self, x):
         times = x.size(1)
         if times == 1:
-            return x + x
-        return x
+            return torch.ones(x.shape)
+        return torch.ones(x.shape) + 1
 
 
 class DynamicModel(torch.nn.Module):

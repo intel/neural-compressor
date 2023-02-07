@@ -780,12 +780,17 @@ def torch_to_int8_onnx(
     extra_options = {'OpTypesToExcludeOutputQuantizatioin': ['MatMul']} \
         if (recipe != 'QDQ_OP_FP32_BIAS_QDQ' and quant_format == ortq.QuantFormat.QDQ) else {}
 
+    REDUCE_RANGE = q_config['reduce_range']
+    if REDUCE_RANGE:
+        logger.info("Reduce range is {}".format(str(REDUCE_RANGE)))
+
     if q_config['approach'] == 'post_training_dynamic_quant':
         logger.info("Quantization format is not avalible when executing dynamic quantization.")
         ortq.quantize_dynamic(
             fp32_onnx_path,
             save_path,
             per_channel=True,
+            reduce_range=REDUCE_RANGE,
             weight_type=weight_type,
             nodes_to_quantize=quantize_nodes,
             nodes_to_exclude=[],
@@ -801,6 +806,7 @@ def torch_to_int8_onnx(
             dummy_datareader,
             quant_format=quant_format,
             per_channel=True,
+            reduce_range=REDUCE_RANGE,
             weight_type=weight_type,
             activation_type=activation_type,
             nodes_to_quantize=quantize_nodes,
