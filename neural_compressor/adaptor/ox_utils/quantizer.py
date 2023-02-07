@@ -63,7 +63,7 @@ class Quantizer:
         """
         self.model = ONNXModel(model) if not isinstance(model, ONNXModel) else model
         model = onnx.shape_inference.infer_shapes(self.model.model) if \
-            not self.model.large_size else self.model.model
+            not self.model.is_large_model else self.model.model
         self.config = q_config
         self.reduce_range = reduce_range
         self.mode = mode # QuantizationMode.Value

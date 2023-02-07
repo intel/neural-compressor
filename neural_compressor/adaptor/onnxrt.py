@@ -162,25 +162,25 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
+
         if "smooth_quant" in self.recipes and self.recipes["smooth_quant"]:
             from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
             from neural_compressor.model.onnx_model import ONNXModel
             black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
             white_nodes = [node for node in quantize_config if quantize_config[node] != 'fp32']
 
-            augment = ONNXRTAugment(model, \
-                                    data_loader, self.quantizable_op_types, \
+            augment = ONNXRTAugment(model,
+                                    data_loader, self.quantizable_op_types,
                                     black_nodes=black_nodes, white_nodes=white_nodes,
                                     iterations=list(range(0, quantize_config['calib_iteration'])),
                                     backend=self.backend, reduce_range=self.reduce_range)
             model = augment.augment_smooth_graph(
-                    self.recipes.get("alpha", 1.0),
+                    self.recipes.get("alpha", 0.5),
                     self.recipes.get("percentile", 99.999),
                     self.recipes.get("op_types", ['MatMul', 'Linear', 'Conv']),
                     self.recipes.get("scales_per_op", True))
 
         tmp_model = copy.deepcopy(model)
-
         iterations = tune_cfg.get('calib_iteration', 1)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if not self.dynamic:
@@ -518,7 +518,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
             from onnxruntime_extensions import get_library_path
             sess_options.register_custom_ops_library(get_library_path())
-        if not model.large_size:
+        if not model.is_large_model:
             ort.InferenceSession(model.model.SerializeToString(),
                                  sess_options,
                                  providers=[self.backend])
@@ -530,7 +530,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             logger.warning('Please use model path instead of onnx model object to quantize')
 
         tmp_model = onnx.load(sess_options.optimized_model_filepath, load_external_data=False)
-        if model.large_size: # pragma: no cover
+        if model.is_large_model: # pragma: no cover
             from onnx.external_data_helper import load_external_data_for_model
             load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
         model.model_path = sess_options.optimized_model_filepath
@@ -908,7 +908,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         Returns:
             (float) evaluation results. acc, f1 e.g.
         """
-        if input_graph.large_size: # pragma: no cover
+        if input_graph.is_large_model: # pragma: no cover
             onnx.save_model(input_graph.model,
                             self.work_space + 'eval.onnx',
                             save_as_external_data=True,
@@ -928,7 +928,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             sess_options.register_custom_ops_library(get_library_path())
         session = ort.InferenceSession(self.work_space + 'eval.onnx',
                                        sess_options,
-                                       providers=[self.backend]) if input_graph.large_size else \
+                                       providers=[self.backend]) if input_graph.is_large_model else \
                   ort.InferenceSession(input_graph.model.SerializeToString(),
                                        sess_options,
                                        providers=[self.backend])

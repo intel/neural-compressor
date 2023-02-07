@@ -1068,7 +1068,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantization.fit(self.matmul_model, config,
             calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue('QLinearMatMul' not in [i.op_type for i in q_model.nodes()])
- 
+
+    def test_smooth_quant(self):
+        from neural_compressor import quantization, PostTrainingQuantConfig
+        config = PostTrainingQuantConfig(approach='static', recipes={'smooth_quant': True})
+        q_model = quantization.fit(self.conv_model, config,
+            calib_dataloader=self.cv_dataloader)
+        self.assertEqual(len([i for i in q_model.nodes() if i.op_type == 'Mul']), 2)
+
     def test_multi_metrics(self):
         conf.model.framework = 'onnxrt_qlinearops'
         conf.quantization.approach = 'post_training_static_quant'
