@@ -17,6 +17,7 @@ PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to
   pip install -r requirements.txt
   pip install "git+https://github.com/mlperf/logging.git"
   ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Download Dataset
 

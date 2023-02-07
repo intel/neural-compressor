@@ -14,7 +14,7 @@ This document is used to list steps of reproducing Intel Optimized TensorFlow OO
   # Install Intel® Tensorflow
   pip install intel-tensorflow
   ```
-> Note: Supported Tensorflow [Version](../../../../../README.md#supported-frameworks).
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Install Intel Extension for Tensorflow
 ### Quantizing the model on Intel GPU

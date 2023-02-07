@@ -104,12 +104,12 @@ def main_worker(args):
 
     # create model
     if args.pretrained:
-        print("=> using pre-trained model '{}'".format(args.topology))
-        # model = models.__dict__[args.topology](pretrained=True, quantize=False)
-        model = models.__dict__[args.topology](pretrained=True)
+        print("=> using pre-trained model '{}'".format(args.arch))
+        # model = models.__dict__[args.arch](pretrained=True, quantize=False)
+        model = models.__dict__[args.arch](pretrained=True)
     else:
-        print("=> creating model '{}'".format(args.topology))
-        model = models.__dict__[args.topology]()
+        print("=> creating model '{}'".format(args.arch))
+        model = models.__dict__[args.arch]()
 
     # Data loading code
     traindir = os.path.join(args.data, 'train')
@@ -210,7 +210,7 @@ def main_worker(args):
         print("=> save checkpoint")
         save_checkpoint({
             'epoch': epoch + 1,
-            'topology': args.topology,
+            'arch': args.arch,
             'state_dict': model.state_dict(),
             'best_acc1': best_acc1,
             'optimizer': optimizer.state_dict(),

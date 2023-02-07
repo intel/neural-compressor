@@ -1,13 +1,16 @@
 ### Turn ON Auto Mixed Precision during Quantization
 
-BF16 conversion during quantization is default OFF. To force enable it, users need to turn on use_bf16 by pythonic config:
+BF16 conversion during quantization is default ON. To force disable it, users need to exclude "bf16" in PostTrainingQuantConfig and QuantizationAwareTrainingConfig:
 
 ```python
-from neural_compressor import config
-from neural_compressor.experimental import Quantization
+from neural_compressor.config import PostPostTrainingQuantConfig
+from neural_compressor import quantization
 
-config.quantization.use_bf16 = True
-quantizer = Quantization(config)
+conf = PostTrainingQuantConfig(excluded_precisions=['bf16'])
+q_model = quantization.fit(model_origin,
+                           conf,
+                           calib_dataloader=dataloader,
+                           calib_func=eval_func)
 ```
 
 ### Tensorflow

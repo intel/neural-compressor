@@ -13,6 +13,7 @@ We verified examples with IPEX backend on Python 3.8, recommended.
 cd examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Install pytorch and intel-pytorch-extension
 
