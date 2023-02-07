@@ -59,10 +59,12 @@ python -u ./run_glue.py \
         --overwrite_output_dir
 ``` 
 
-You can also try to use INC distributed tuning (Take mrpc as an example):
-
+You can also try to use INC distributed tuning (Take mrpc as an example).
+For example, bash command will look like the following, where *`<NUM_PROCESS>`* is the number of processes, it is recommended to set to the number of hosts, *`<MAX_NUM_THREADS>`* is the number of threads, it is recommended to set to
+the number of CPUs on node, *`<HOSTNAME>`* is the host name,  argument `--host <HOSTNAME>,<HOSTNAME>` can be replaced with `--hostfile <HOSTFILE>`, each line is a host name in *`<HOSTFILE>`*.
+Argument `-mca btl_tcp_if_include` set the network communication interface between hosts, for example, *`<NETWORK_INTERFACE>`* set to 192.168.20.0/24.
 ```
-mpirun -np 3 python -u ./run_glue.py --model_name_or_path distilbert_mrpc --task_name mrpc --do_eval --do_train --max_seq_length 128 --per_device_eval_batch_size 16 --no_cuda --output_dir ./int8_model_dir --tune --onnx --overwrite_output_dir
+mpirun -np <NUM_PROCESS> -mca btl_tcp_if_include <NETWORK_INTERFACE> -x OMP_NUM_THREADS=<MAX_NUM_THREADS> --host <HOSTNAME1>,<HOSTNAME2>,<HOSTNAME3> bash run_distributed_tuning.sh
 ```
 
 ### 2. To get the benchmark of tuned model, includes Batch_size and Throughput: 
