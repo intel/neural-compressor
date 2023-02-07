@@ -42,6 +42,7 @@ class Launcher():
         args,
         use_modular=False,
         modular_pattern={},
+        use_inc=True,
     ):
         # copy user entry script (main.py -> main_optimized.py)
         script_copied = args.script[:-3] + "_optimized.py"
@@ -75,6 +76,7 @@ class Launcher():
                 overwrite=True,
                 use_modular=use_modular,
                 modular_item=modular_item,
+                use_inc=use_inc,
             )
 
             if not args.enable: # enable and run
@@ -95,4 +97,5 @@ class Launcher():
             auto_quant(
                 code=script_copied,
                 args=' '.join(args.script_args), # convert list of strings to a single string
+                use_inc=use_inc,
             )

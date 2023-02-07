@@ -66,7 +66,7 @@ def enable(
     test_code_line=False, # print code line info for debug use
     cache_load_transformers=True,
     optimum_quant_config="", # only for HF optimum optimizations, yaml or hub path
-    use_inc=False,
+    use_inc=True,
     use_modular=False,
     modular_item="",
 ):
@@ -752,7 +752,7 @@ def superbench(
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
-    use_inc=False,
+    use_inc=True,
     auto_quant=False,
 ):
 
@@ -1281,7 +1281,7 @@ def auto_quant(
     ncore_per_instance=-1,  # only for "self_defined" mode
     ninstances=-1,  # only for "self_defined" mode
     bench_batch_size=-1,  # only for "self_defined" mode
-    use_inc=False,
+    use_inc=True,
 ):
     return superbench(
         code,
