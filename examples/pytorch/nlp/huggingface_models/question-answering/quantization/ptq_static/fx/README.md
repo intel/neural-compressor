@@ -13,6 +13,7 @@ pip install transformers==4.10.0
 pip install -r requirements.txt
 pip install torch
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment). 
 
 # Quantization
 ```shell

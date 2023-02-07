@@ -54,15 +54,6 @@ flags.DEFINE_integer(
 from neural_compressor.metric import TensorflowTopK
 from neural_compressor.data import LabelShift
 
-from neural_compressor.utils.create_obj_from_config import create_dataloader
-dataloader_args = {
-    'batch_size': FLAGS.batch_size,
-    'dataset': {"ImageRecord": {'root':FLAGS.eval_data}},
-    'transform': {'ResizeCropImagenet': {'height':224, 'width':224,
-                  'mean_value': [123.68, 116.78, 103.94]}},
-    'filter': None
-}
-dataloader = create_dataloader('tensorflow', dataloader_args)
 
 def evaluate(model):
     """Custom evaluate function to inference the model for specified metric on validation dataset.
@@ -100,6 +91,15 @@ def evaluate(model):
         latency = np.array(latency_list[warmup:]).mean() / dataloader.batch_size
         return latency
 
+    from neural_compressor.utils.create_obj_from_config import create_dataloader
+    dataloader_args = {
+        'batch_size': FLAGS.batch_size,
+        'dataset': {"ImageRecord": {'root':FLAGS.eval_data}},
+        'transform': {'ResizeCropImagenet': {'height':224, 'width':224,
+                    'mean_value': [123.68, 116.78, 103.94]}},
+        'filter': None
+    }
+    dataloader = create_dataloader('tensorflow', dataloader_args)
     latency = eval_func(dataloader, metric)
     if FLAGS.benchmark and FLAGS.mode == 'performance':
         print("Batch size = {}".format(dataloader.batch_size))
@@ -113,7 +113,16 @@ def main(_):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
         conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
-        q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=dataloader,
+        from neural_compressor.utils.create_obj_from_config import create_dataloader
+        calib_dataloader_args = {
+            'batch_size': FLAGS.batch_size,
+            'dataset': {"ImageRecord": {'root':FLAGS.eval_data}},
+            'transform': {'ResizeCropImagenet': {'height':224, 'width':224,
+                        'mean_value': [123.68, 116.78, 103.94]}},
+            'filter': None
+        }
+        calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
+        q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
                     eval_func=evaluate)
         q_model.save(FLAGS.output_model)
 
