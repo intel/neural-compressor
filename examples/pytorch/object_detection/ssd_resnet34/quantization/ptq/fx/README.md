@@ -16,6 +16,7 @@ PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to
 cd examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/fx
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 Check your gcc version with command : **gcc -v**
 

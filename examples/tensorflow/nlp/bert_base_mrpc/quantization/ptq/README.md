@@ -16,6 +16,7 @@ pip install neural-compressor
 ```shell
 pip install tensorflow
 ```
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 3. Install Intel Extension for Tensorflow
 
@@ -50,7 +51,7 @@ python prepare_dataset.py --tasks='MRPC' --output_dir=./data
 
 #### Automatic model download
 Run the `prepare_model.sh` script located in `examples/tensorflow/nlp/bert_base_mrpc/quantization/ptq`.
-NOTICE: This will need you first prepare your dataset as mrpc task need do train for good accuracy.
+NOTICE: This will need you first prepare your dataset as mrpc task need to train for good accuracy.
 
 
 Usage:

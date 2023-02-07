@@ -11,6 +11,7 @@ This example is used to demonstrate how to quantize a TensorFlow checkpoint and 
 ```shell
 pip install -r requirements.txt
 ```
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 2. Download the FP32 model
 ```shell
