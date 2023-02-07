@@ -174,7 +174,12 @@
 <p>Neural Coder can be used as a Python <strong>Launcher</strong>. Users can run the Python model code as it is with automatic enabling of Deep Learning optimizations by using Neural Coder’s inline Python <strong>Launcher</strong> design.</p>
 <section id="quick-start">
 <h2>Quick-Start<a class="headerlink" href="#quick-start" title="Permalink to this heading">¶</a></h2>
-<p>Example: Let’s say you are running an NLP model using <code class="docutils literal notranslate"><span class="pre">run_glue.py</span></code> from HuggingFace transformers <a class="reference external" href="https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py">examples</a>, you generally run with a Python command line like this:</p>
+<p>Example: Let’s say you are running an NLP model using <code class="docutils literal notranslate"><span class="pre">run_glue.py</span></code> from HuggingFace transformers <a class="reference external" href="https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py">examples</a>.</p>
+<p>Pre-requisites:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">transformers</span><span class="o">==</span><span class="m">4</span>.21.0<span class="w"> </span>torch<span class="w"> </span>datasets<span class="w"> </span>
+</pre></div>
+</div>
+<p>Generally we run this code with a Python command line like this:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_glue.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>bert-base-cased<span class="w"> </span>--task_name<span class="w"> </span>mrpc<span class="w"> </span>--do_eval<span class="w"> </span>--output_dir<span class="w"> </span>result
 </pre></div>
 </div>
