@@ -153,6 +153,9 @@ def main():
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, len(train_loader)*args.epochs // accelerator.num_processes)
     criterion = torch.nn.CrossEntropyLoss()
 
+    student_model, teacher_model, train_loader, val_loader, optimizer = \
+        accelerator.prepare(student_model, teacher_model, train_loader, val_loader, optimizer)
+
     from neural_compressor.training import prepare_compression
     from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
     distillation_criterion = KnowledgeDistillationLossConfig(temperature=args.temperature,
