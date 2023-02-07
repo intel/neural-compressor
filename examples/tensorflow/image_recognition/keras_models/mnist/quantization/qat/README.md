@@ -8,12 +8,12 @@ This example can run on Intel CPUs and GPUs.
 
 ## 1. Environment
 
-### 1. Installation
+### Installation
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install requirements
+### Install requirements
 The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this QAT example.
 The Intel Extension for Tensorflow for Intel CPUs is installed as default.
 ```shell
@@ -21,7 +21,7 @@ pip install -r requirements.txt
 ```
 > Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
-### 3. Benchmarking the model on Intel GPU (Optional)
+### Benchmarking the model on Intel GPU (Optional)
 
 To run benchmark of the model on Intel GPUs, Intel Extension for Tensorflow for Intel GPUs is required.
 

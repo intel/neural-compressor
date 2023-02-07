@@ -109,6 +109,8 @@ def evaluate(model):
     return acc
 
 def main(_):
+    from neural_compressor.utils import set_random_seed
+    set_random_seed(9527)
     if FLAGS.tune:
         from neural_compressor.utils.create_obj_from_config import create_dataloader
         calib_dataloader_args = {
