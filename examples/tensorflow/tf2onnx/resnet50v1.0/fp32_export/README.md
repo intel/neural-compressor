@@ -1,8 +1,8 @@
 Step-by-Step
 ============
 
-This document is used to show how to export Tensorflow ResNet50_V1.0 FP32 model to ONNX FP32 model using Intel® Neural Compressor.
-
+This document is used to show how to export Tensorflow ResNet50_V1.0 FP32 model to ONNX FP32 model using Intel® Neural Compressor.  
+> Note: Validated Framework [Versions](/docs/source/installation_guide.md#validated-software-environment).
 
 # Prerequisite
 
