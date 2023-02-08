@@ -21,7 +21,7 @@ Post-training Quantization is the most easy way to quantize the model from FP32 
 
 In Intel Neural Compressor 1.X, we resort to a `conf.yaml` to inject the config of the quantization settings.
 
-``` python
+```python
 # main.py
 
 # Basic settings of the model and the experimental settings for GLUE tasks.
@@ -49,7 +49,7 @@ from neural_compressor.utils.load_huggingface import save_for_huggingface_upstre
 
 ```
 
-Apart from the `main.py` file, we need to extraly write a `conf.yaml` in the following format,
+Apart from the `main.py` file, we need to extrally write a `conf.yaml` in the following format,
 
 ```yaml
 version: 1.0
@@ -70,11 +70,11 @@ tuning:
   random_seed: 9527                                  # optional. random seed for deterministic tuning.
 ```
 
-The `approach` parameter defines the approach of the quantization mothod, which could be set as `post_training_static_quant` for Post Training Static Quantization and `post_training_dynamic_quant` for Post Training Dynamic Quantization.
+The `approach` parameter defines the approach of the quantization method, which could be set as `post_training_static_quant` for Post Training Static Quantization and `post_training_dynamic_quant` for Post Training Dynamic Quantization.
 
-In Intel Neural Compressor 2.X, we ensemble the `conf.yaml` into the quantization API to the save the user's effort to write the `conf.yaml`.
+In Intel Neural Compressor 2.X, we integrate the `conf.yaml` into the quantization API to the save the user's effort to write the `conf.yaml`.
 
-``` python
+```python
 # main.py
 
 # Basic settings of the model and the experimental settings for GLUE tasks.
@@ -106,7 +106,7 @@ Quantization aware training emulates inference-time quantization in the forward 
 
 In Intel Neural Compressor 1.X, the difference between the QAT and PTQ is that we need to define the `train_func` in QAT to emulate the training process. The code is compiled as follows,
 
-``` python
+```python
 # main.py
 
 # Basic settings of the model and the experimental settings for GLUE tasks.
@@ -157,7 +157,7 @@ tuning:
 
 In Intel Neural Compressor 2.X, we introduce a `compression manager`  to process the training. The quantization code is updated as:
 
-``` python
+```python
 # main.py
 
 # Basic settings of the model and the experimental settings for GLUE tasks.
@@ -279,7 +279,7 @@ def pruning_func(model):
 
 **Pruning with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, the training process is activated by a `compression manager`. And the configuration information is ensembled in the pruning code. The new code should be updated as,
+In Intel Neural Compressor 2.X, the training process is activated by a `compression manager`. And the configuration information is included in the pruning code. The new code should be updated as,
 
 ```python
     configs = [
@@ -516,7 +516,7 @@ accuracy:
 
 **Mix Precision with Intel Neural Compressor 2.X**
 
-In 2.X version, we ensembled the config information in `MixedPrecisionConfig`, leading to the updates in the code as follows,
+In 2.X version, we integrate the config information in `MixedPrecisionConfig`, leading to the updates in the code as follows,
 ```python
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
