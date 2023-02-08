@@ -144,10 +144,8 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
                 named_input = namedtuple("input", input.keys())
                 input = named_input._make(input.values())
                 return input
-            if isinstance(input, list) or isinstance(input, tuple):
-                return input
-            if isinstance(input, torch.Tensor):
-                return [input]
+            else:
+                return tuple(input)
             break
     except Exception as e:
         for idx, input in enumerate(dataloader):
@@ -161,10 +159,8 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
                 named_input = namedtuple("input", input.keys())
                 input = named_input._make(input.values())
                 return input
-            if isinstance(input, list) or isinstance(input, tuple):
-                return input
-            if isinstance(input, torch.Tensor):
-                return [input]
+            else:
+                return tuple(input)
             break
     if idx == 0:
         assert False, "Please checkout the example_inputs format."
