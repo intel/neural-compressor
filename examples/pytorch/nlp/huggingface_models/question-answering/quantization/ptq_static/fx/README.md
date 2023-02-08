@@ -12,6 +12,7 @@ cd examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_s
 pip install -r requirements.txt
 pip install torch
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment). 
 
 # Quantization
 ```shell

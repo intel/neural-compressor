@@ -662,10 +662,15 @@ class PyTorchModel(PyTorchBaseModel):
         # Quantization
         quant_format = ortq.QuantFormat.QOperator if quant_format != 'QDQ' else ortq.QuantFormat.QDQ
 
+        REDUCE_RANGE = self.q_config['reduce_range']
+        if REDUCE_RANGE:
+            logger.info("Reduce range is {}".format(str(REDUCE_RANGE)))
+
         if 'dynamic' in self.q_config['approach']:
             ortq.quantize_dynamic(fp32_path,
                                 save_path,
                                 per_channel=True,
+                                reduce_range=REDUCE_RANGE,
                                 weight_type=weight_type,
                                 nodes_to_quantize=quantize_nodes,
                                 nodes_to_exclude=[],
@@ -684,6 +689,7 @@ class PyTorchModel(PyTorchBaseModel):
                                 calib_datareader,
                                 quant_format=quant_format,
                                 per_channel=True,
+                                reduce_range=REDUCE_RANGE,
                                 weight_type=weight_type,
                                 activation_type=activation_type,
                                 nodes_to_quantize=quantize_nodes,
