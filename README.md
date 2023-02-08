@@ -143,8 +143,7 @@ q_model = fit(
 * [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
 
-## Research Collaboration
+## Research Collaborations
 
-Welcome to contribute your advanced research topics and work with us to create the progress of AI techniques.   
-Please contact us by inc.maintainers@intel.com. 
+Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (inc.maintainers@intel.com). Look forward to our collaborations on Intel Neural Compressor!
 
