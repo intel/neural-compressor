@@ -56,3 +56,11 @@ Also please note that to use CPU for training in each node with multi nodes sett
 python -m torch.distributed.launch --master_addr=<MASTER_ADDRESS> --nproc_per_node=<NUM_PROCESSES_PER_NODE> --nnodes=<NUM_NODES> --node_rank=<NODE_RANK> \
    main.py -t -a resnet50 --pretrained /path/to/imagenet
 ```
+
+# Results
+We ran QAT for ResNet50 on ImageNet dataset with several settings, results are shown below.
+|   Setting       | Top1 Accuracy  |  Elapsed Time |
+|-----------------|----------------|---------------|
+|   1 CLX6248 Machine     |   76.22%       |        55min  |
+|   2 CLX6248 Machines     |   76.15%       |        26min  |
+|   4 CLX6248 Machines     |   75.99%       |        15min  |
