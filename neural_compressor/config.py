@@ -706,13 +706,13 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         def smooth_quant_args(val):
             check_value("smooth_quant_args", val, dict)
             for k, v in val.items():
-                if k.lower() == "alpha":
+                if k == "alpha":
                     check_value("alpha", v, float)
-                elif k.lower() == "percentile":
+                elif k == "percentile":
                     check_value("alpha", v, float)
-                elif k.lower() == "op_types":
+                elif k == "op_types":
                     check_value("op_types", v, str)
-                elif k.lower() == "scales_per_op":
+                elif k == "scales_per_op":
                     check_value("scales_per_op", v, bool)
             return True
 

@@ -692,7 +692,7 @@ class ONNXRTAugment:
 
         Returns:
             input_tensors_2_weights: A dict, key is the input tensor name, value is the corresponding weights
-            input_tensors_2_weights_nodes: A dict, key is the input tensor name , value is the corresponding nodes with weight
+            input_tensors_2_weights_nodes: A dict, key is the input tensor name , value is the corresponding nodes
 
         """
         tensor_to_absorbed_nodes = {}
@@ -984,15 +984,15 @@ class ONNXRTAugment:
         max_vals_per_channel, shape_infos = self._calib_smooth(percentile, op_types)
 
         tensor_names = [key for key in max_vals_per_channel.keys()]
-        input_tensors_2_weights, input_tensors_2_weights_nodes = self._input_tensor_2_weights(self.model_wrapper, tensor_names,
-                                                                                              op_types)
+        input_tensors_2_weights, input_tensors_2_weights_nodes = self._input_tensor_2_weights(self.model_wrapper,
+                                                                                tensor_names, op_types)
 
         if scales_per_op:
             scales = self._get_smooth_scales_per_op(max_vals_per_channel, input_tensors_2_weights,
                                                     input_tensors_2_weights_nodes, alpha)
 
             new_added_mul_nodes, new_init_tensors, op_nodes = self._insert_smooth_mul_op_per_op(scales, shape_infos,
-                                                                                                input_tensors_2_weights_nodes)
+                                                                                        input_tensors_2_weights_nodes)
             self._adjust_weights_per_op(self.model_wrapper, op_nodes, scales)
 
         else:

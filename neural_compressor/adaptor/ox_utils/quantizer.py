@@ -38,7 +38,6 @@ from neural_compressor.adaptor.ox_utils.util import QuantizedValueType
 from neural_compressor.adaptor.ox_utils.util import find_by_name, dtype_to_name
 from neural_compressor.adaptor.ox_utils.util import __producer__, __version__
 from neural_compressor.adaptor.ox_utils.util import quantize_data, dtype_mapping, support_pair, ValueInfo
-from neural_compressor import options
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.operators import OPERATORS
 
@@ -48,7 +47,9 @@ class Quantizer:
     """Quantizer class."""
 
     def __init__(self, model, q_config, mode, static, quantization_params,
-                 op_types_to_quantize, fallback_list=['fp32'], reduce_range=None):
+                 op_types_to_quantize, fallback_list=['fp32'], reduce_range=None,
+                 add_qdq_pair_to_weight=False, optypes_to_exclude_output_quant=[],
+                 dedicated_qdq_pair=False):
         """Initialization.
 
         Args:
@@ -60,6 +61,9 @@ class Quantizer:
             op_types_to_quantize (list): optypes to quantize
             fallback_list (list, optional): fallback data type. Defaults to ['fp32'].
             reduce_range (bool, optional): use 7 bit or not. Defaults to None.
+            add_qdq_pair_to_weight (bool, optional): add QDQ pair to weight or not. Defaults to False.
+            optypes_to_exclude_output_quant (list, optional): optypes to exclude output quantization. Defaults to [].
+            dedicated_qdq_pair (bool, optional): dedicate QDQ pair or not. Defaults to False.
         """
         self.model = ONNXModel(model) if not isinstance(model, ONNXModel) else model
         model = onnx.shape_inference.infer_shapes(self.model.model) if \
@@ -96,12 +100,10 @@ class Quantizer:
         if not self.static:
             self.op_types_to_exclude_output_quantization = op_types_to_quantize
         else:
-            self.op_types_to_exclude_output_quantization = [] \
-                if not options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin \
-                else options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
+            self.op_types_to_exclude_output_quantization = optypes_to_exclude_output_quant
 
-        self.add_qdq_pair_to_weight = options.onnxrt.qdq_setting.AddQDQPairToWeight
-        self.dedicated_qdq_pair = options.onnxrt.qdq_setting.DedicatedQDQPair
+        self.add_qdq_pair_to_weight = add_qdq_pair_to_weight
+        self.dedicated_qdq_pair = dedicated_qdq_pair
 
     def check_opset_version(self):
         """Check opset version."""

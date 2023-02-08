@@ -89,8 +89,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     logger.warning("Dynamic approach doesn't support QDQ format.")
  
         self.work_space = framework_specific_info["workspace_path"]
-        self.graph_optimization = framework_specific_info["graph_optimization"]
-        self.recipes = deep_get(framework_specific_info, 'recipes', {})
         self.reduce_range = framework_specific_info["reduce_range"] if \
             "reduce_range" in framework_specific_info else not CpuInfo().vnni
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
@@ -109,12 +107,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     self.query_handler.get_op_types_by_precision(precision=precision)
  
         if self.backend == 'TensorrtExecutionProvider':
-            from neural_compressor import options
-            options.onnxrt.qdq_setting.AddQDQPairToWeight = True
-            options.onnxrt.qdq_setting.DedicatedQDQPair = True
-            options.onnxrt.graph_optimization.level = 'DISABLE_ALL'
-            options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin = \
-                ['Conv', 'Gemm', 'Add', 'MatMul']
+            self.recipes['add_qdq_pair_to_weight'] = True
+            self.recipes['dedicated_qdq_pair'] = True
+            self.recipes['graph_optimization_level'] = 'DISABLE_ALL'
+            self.recipes['optypes_to_exclude_output_quant'] = ['Conv', 'Gemm', 'Add', 'MatMul']
             self.static = True
             self.dynamic = False
 
@@ -226,6 +222,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             quantize_params = None
         self.quantize_params = quantize_params
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
+        from neural_compressor import options
         quantizer = Quantizer(copy.deepcopy(model),
             quantize_config,
             format,
@@ -233,7 +230,16 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             quantize_params,
             self.quantizable_op_types,
             self.query_handler.get_fallback_list(),
-            self.reduce_range)
+            self.reduce_range,
+            options.onnxrt.qdq_setting.AddQDQPairToWeight if \
+                not options.onnxrt.qdq_setting.AddQDQPairToWeight else \
+                self.recipes.get('add_qdq_pair_to_weight', False),
+            options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin if \
+                options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin is not None else \
+                self.recipes.get('optypes_to_exclude_output_quant', []),
+            options.onnxrt.qdq_setting.DedicatedQDQPair if \
+                not options.onnxrt.qdq_setting.DedicatedQDQPair else \
+                self.recipes.get('dedicated_qdq_pair', False))
         quantizer.quantize_model()
         tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
         tmp_model.model = quantizer.model.model
@@ -263,7 +269,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         fwk_info['format'] = self.format
         fwk_info['backend'] = ONNXRT_BACKENDS[self.backend]
         fwk_info['workspace_path'] = self.work_space
-        fwk_info['graph_optimization'] = self.graph_optimization
+        fwk_info['recipes'] = self.recipes
+        fwk_info['domain'] = self.domain
         fwk_info['device'] = self.device
         tune_cfg['framework_specific_info'] = fwk_info
         return tune_cfg
@@ -297,17 +304,27 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         else:
             format = QuantizationMode.IntegerOps
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
+        from neural_compressor import options
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_params, tune_cfg = self._parse_qconfig(q_config)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
-        quantizer = Quantizer(model.model,
+        quantizer = Quantizer(copy.deepcopy(model),
             quantize_config,
             format,
             self.static,
             quantize_params,
             self.quantizable_op_types,
             self.query_handler.get_fallback_list(),
-            self.reduce_range)
+            self.reduce_range,
+            options.onnxrt.qdq_setting.AddQDQPairToWeight if \
+                not options.onnxrt.qdq_setting.AddQDQPairToWeight else \
+                self.recipes.get('add_qdq_pair_to_weight', False),
+            options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin if \
+                options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin is not None else \
+                self.recipes.get('optypes_to_exclude_output_quant', []),
+            options.onnxrt.qdq_setting.DedicatedQDQPair if \
+                not options.onnxrt.qdq_setting.DedicatedQDQPair else \
+                self.recipes.get('dedicated_qdq_pair', False))
  
         quantizer.quantize_model()
         model.model = quantizer.model.model
@@ -497,22 +514,25 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         return new_bias_data
 
     def _pre_optimize(self, model, level=1):
+        from neural_compressor import options
         from neural_compressor.adaptor.ox_utils.util import \
             remove_init_from_model_input, split_shared_bias
         remove_init_from_model_input(model)
         sess_options = ort.SessionOptions()
-        level = self.query_handler.get_graph_optimization()
-        if self.graph_optimization.level:
-            optimization_levels = {
-                    'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
-                    'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
-                    'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
-                    'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
-            assert self.graph_optimization.level in optimization_levels, "the optimization \
-                                      choices are {}".format(optimization_levels.keys())
-
-            level = optimization_levels[self.graph_optimization.level]
-        sess_options.graph_optimization_level = level
+        optimization_levels = {
+                'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
+                'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
+                'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
+                'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
+        if options.onnxrt.graph_optimization.level is not None:
+            level = options.onnxrt.graph_optimization.level
+        elif self.recipes.get('graph_optimization_level', None) is not None:
+            level = self.recipes['graph_optimization_level']
+        elif self.domain == 'nlp':
+            level = 'ENABLE_EXTENDED'
+        else:
+            level = 'ENABLE_BASIC'
+        sess_options.graph_optimization_level = optimization_levels[level]
         sess_options.optimized_model_filepath = os.path.join(self.work_space, \
             "Optimized_model.onnx")
         if sys.version_info < (3,10) and find_spec('onnxruntime_extensions'): # pragma: no cover
@@ -534,8 +554,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             from onnx.external_data_helper import load_external_data_for_model
             load_external_data_for_model(tmp_model, os.path.split(model.model_path)[0])
         model.model_path = sess_options.optimized_model_filepath
-        model.model = self._replace_gemm_with_matmul(tmp_model).model \
-            if self.graph_optimization.gemm2matmul else tmp_model
+        model.model = self._replace_gemm_with_matmul(tmp_model).model if \
+            options.onnxrt.graph_optimization.gemm2matmul and self.recipes.get('gemm_to_matmul', True) else \
+            tmp_model
         model.model = self._rename_node(model.model)
         model = self._revert_fusedconv(model)
         if self.backend == 'TensorrtExecutionProvider':
@@ -1205,18 +1226,6 @@ class ONNXRTQuery(QueryBackendCapability):
             return self.cur_config['ops'][precision]
         else:
             return []
-
-    def get_graph_optimization(self):
-        """ Get onnxruntime graph optimization level"""
-        optimization_levels = {'DISABLE_ALL': ort.GraphOptimizationLevel.ORT_DISABLE_ALL,
-                               'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
-                               'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
-                               'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
- 
-        level = self.cur_config['graph_optimization']['level']
-        assert level in optimization_levels, "the optimization choices \
-                                              are {}".format(optimization_levels.keys())
-        return optimization_levels[level]
 
     def get_fallback_list(self):
         return list(self.cur_config['ops'].keys() - self.cur_config['capabilities'].keys())

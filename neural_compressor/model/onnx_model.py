@@ -493,13 +493,10 @@ class ONNXModel(BaseModel):
             exit(0)
 
     def add_tensors_to_outputs(self, tensor_names):
-        """
-        Add the tensors to the model outputs to gets their values
-        Args:
-            tensor_names: The names of tensors to be dumped
+        """Add the tensors to the model outputs to gets their values.
 
-        Returns: None
-        
+        Args:
+            tensor_names: The names of tensors to be dumped.
         """
         added_outputs = []
         for tensor in tensor_names:
@@ -510,13 +507,10 @@ class ONNXModel(BaseModel):
         self._model.graph.output.extend(added_outputs)  # pylint: disable=no-member
 
     def remove_tensors_from_outputs(self, tensor_names):
-        """
-        Remove the tensors from the model outputs
-        Args:
-            tensor_names: The names of tensors to be removed
+        """Remove the tensors from the model outputs.
 
-        Returns: None
-        
+        Args:
+            tensor_names: The names of tensors to be removed.
         """
         removed_outputs = []
         for tensor in tensor_names:
