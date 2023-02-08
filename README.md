@@ -25,7 +25,7 @@ Intel® Neural Compressor is a critical AI software component in the [Intel® on
 
 ## Installation
 
-### Install stable **basic** version from pypi
+### Install from pypi
 ```Shell
 pip install neural-compressor
 ```
