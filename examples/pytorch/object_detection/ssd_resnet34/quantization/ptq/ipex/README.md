@@ -7,6 +7,8 @@ Step-by-Step
 ```
     pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
+> 
 ### install Intel® Extension for PyTorch
 ```shell position-relative
 python -m pip install intel_extension_for_pytorch -f https://software.intel.com/ipex-whl-stable

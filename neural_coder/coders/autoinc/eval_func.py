@@ -50,7 +50,7 @@ class Eval_Func(object):
                 ]
             for index, line in enumerate(lines):
                 if index != 0:
-                    lines[index] = '[+] ' + ' ' * 8 + line
+                    lines[index] = '[+] ' + ' ' * 4 + line
             lines = '\n'.join(lines)
             globals.list_eval_func_lines.append(lines)
         elif globals.code_domain == 'transformers_no_trainer':

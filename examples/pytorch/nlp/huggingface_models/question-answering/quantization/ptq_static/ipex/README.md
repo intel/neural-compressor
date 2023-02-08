@@ -13,6 +13,7 @@ pip install -r requirements.txt
 pip install torch
 python -m pip install intel_extension_for_pytorch -f https://software.intel.com/ipex-whl-stable
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 > Note: Intel® Extension for PyTorch* has PyTorch version requirement. Please check more detailed information via the URL below.
 
 # Quantization

@@ -88,6 +88,11 @@ cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
 sed -i 's/.\/docs\/source\/_static/./g' ./source/docs/source/Welcome.md
 sed -i 's/.md/.html/g; s/.\/docs\/source\//.\//g' ./source/docs/source/Welcome.md
 
+sed -i 's/\"\/neural_coder\/extensions\/screenshots\/extmanager.png/\".\/neural_coder\/extensions\/screenshots\/extmanager.png/g' ./source/docs/source/get_started.md
+
+sed -i 's/\/neural_coder\/extensions\/neural_compressor_ext_lab\/README.md/.\/neural_coder\/extensions\/neural_compressor_ext_lab\/README.md/g' ./source/docs/source/get_started.md
+
+sed -i 's/.\/validated_model_list.md\#/.\/validated_model_list.html\#/g' ./source/docs/source/installation_guide.md
 
 make clean
 make html

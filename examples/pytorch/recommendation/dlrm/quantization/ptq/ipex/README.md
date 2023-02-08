@@ -19,6 +19,7 @@ PyTorch 1.11 or higher version is needed with pytorch_fx backend.
   cd examples/pytorch/recommendation/dlrm/quantization/ptq/ipex
   pip install -r requirements.txt
   ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 2. Prepare Dataset
 
