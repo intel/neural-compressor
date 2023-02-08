@@ -1,97 +1,50 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>neural_compressor.model.tensorflow_model &mdash; Intel® Neural Compressor 2.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
-  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
         <script src="../../../../_static/doctools.js"></script>
         <script src="../../../../_static/sphinx_highlight.js"></script>
-    
-    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
-
-    
+    <script src="../../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
           
-
-          
+          <a href="../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
           </a>
-
-          
-            
-            
             <div class="version">
               <a href="../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/installation_guide.html">Installation</a></li>
@@ -104,78 +57,37 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../../index.html">Intel® Neural Compressor</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
-        
-      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.tensorflow_model</span></code></li>
-    
-    
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.tensorflow_model</span></code></li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="../../../../_sources/autoapi/neural_compressor/model/tensorflow_model/index.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   <section id="module-neural_compressor.model.tensorflow_model">
-<span id="neural-compressor-model-tensorflow-model"></span><h1><a class="reference internal" href="#module-neural_compressor.model.tensorflow_model" title="neural_compressor.model.tensorflow_model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.tensorflow_model</span></code></a><a class="headerlink" href="#module-neural_compressor.model.tensorflow_model" title="Permalink to this heading">¶</a></h1>
+<span id="neural-compressor-model-tensorflow-model"></span><h1><a class="reference internal" href="#module-neural_compressor.model.tensorflow_model" title="neural_compressor.model.tensorflow_model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.model.tensorflow_model</span></code></a><a class="headerlink" href="#module-neural_compressor.model.tensorflow_model" title="Permalink to this heading"></a></h1>
 <p>Class for Tensorflow model.</p>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel" title="neural_compressor.model.tensorflow_model.TensorflowBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowBaseModel</span></code></a></p></td>
@@ -197,7 +109,7 @@
 </table>
 </section>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.get_model_type" title="neural_compressor.model.tensorflow_model.get_model_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_type</span></code></a>(model)</p></td>
@@ -240,7 +152,7 @@
 </table>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.get_model_type">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">get_model_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.get_model_type" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">get_model_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.get_model_type" title="Permalink to this definition"></a></dt>
 <dd><p>Get Tensorflow mode type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -257,7 +169,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.validate_graph_node">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">validate_graph_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.validate_graph_node" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">validate_graph_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.validate_graph_node" title="Permalink to this definition"></a></dt>
 <dd><p>Validate nodes exist in the graph_def.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -271,7 +183,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.validate_and_inference_input_output">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">validate_and_inference_input_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.validate_and_inference_input_output" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">validate_and_inference_input_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.validate_and_inference_input_output" title="Permalink to this definition"></a></dt>
 <dd><p>Validate and inference the input and output tensor names of graph_def.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -293,7 +205,7 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.graph_session">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">graph_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.graph_session" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">graph_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.graph_session" title="Permalink to this definition"></a></dt>
 <dd><p>Helper to build session with tf.compat.v1.Graph.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -316,7 +228,7 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.graph_def_session">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">graph_def_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.graph_def_session" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">graph_def_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.graph_def_session" title="Permalink to this definition"></a></dt>
 <dd><p>Build session with tf.compat.v1.GraphDef.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -339,7 +251,7 @@ output_tensor_names (list of string): validated output_tensor_names</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.frozen_pb_session">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">frozen_pb_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.frozen_pb_session" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">frozen_pb_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.frozen_pb_session" title="Permalink to this definition"></a></dt>
 <dd><p>Build session with frozen pb.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -362,7 +274,7 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.load_saved_model">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">load_saved_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saved_model_tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.load_saved_model" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">load_saved_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saved_model_tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.load_saved_model" title="Permalink to this definition"></a></dt>
 <dd><p>Load graph_def from saved model with the default serving signature key.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -385,7 +297,7 @@ output_tensors: List of output tensors.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.keras_session">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">keras_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.keras_session" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">keras_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.keras_session" title="Permalink to this definition"></a></dt>
 <dd><p>Build session with keras model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -408,7 +320,7 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.slim_session">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">slim_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.slim_session" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">slim_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.slim_session" title="Permalink to this definition"></a></dt>
 <dd><p>Build session with slim model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -431,7 +343,7 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.checkpoint_session">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">checkpoint_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.checkpoint_session" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">checkpoint_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.checkpoint_session" title="Permalink to this definition"></a></dt>
 <dd><p>Build session with ckpt model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -454,7 +366,7 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.estimator_session">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">estimator_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.estimator_session" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">estimator_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.estimator_session" title="Permalink to this definition"></a></dt>
 <dd><p>Build session with estimator model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -478,7 +390,7 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.saved_model_session">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">saved_model_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.saved_model_session" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">saved_model_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.saved_model_session" title="Permalink to this definition"></a></dt>
 <dd><p>Build session with saved model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -501,120 +413,120 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowBaseModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowBaseModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../base_model/index.html#neural_compressor.model.base_model.BaseModel" title="neural_compressor.model.base_model.BaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.model.base_model.BaseModel</span></code></a></p>
 <p>Build Tensorflow Base Model.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.name">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.name" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.name" title="Permalink to this definition"></a></dt>
 <dd><p>Renturn name.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.weights">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">weights</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.weights" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">weights</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.weights" title="Permalink to this definition"></a></dt>
 <dd><p>Return weights.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.q_config">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">q_config</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.q_config" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">q_config</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.q_config" title="Permalink to this definition"></a></dt>
 <dd><p>Return q_config.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.workspace_path">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workspace_path</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.workspace_path" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">workspace_path</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.workspace_path" title="Permalink to this definition"></a></dt>
 <dd><p>Return workspace path.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.model_type">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_type</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.model_type" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model_type</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.model_type" title="Permalink to this definition"></a></dt>
 <dd><p>Return model type.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.model" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.model" title="Permalink to this definition"></a></dt>
 <dd><p>Return model itself.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.graph_def">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph_def</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.graph_def" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph_def</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.graph_def" title="Permalink to this definition"></a></dt>
 <dd><p>Return graph defination.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.graph_info">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph_info</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.graph_info" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph_info</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.graph_info" title="Permalink to this definition"></a></dt>
 <dd><p>Return graph info.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.sess">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sess</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.sess" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sess</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.sess" title="Permalink to this definition"></a></dt>
 <dd><p>Return Session object.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.graph">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.graph" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.graph" title="Permalink to this definition"></a></dt>
 <dd><p>Return model graph.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.iter_op">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">iter_op</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.iter_op" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">iter_op</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.iter_op" title="Permalink to this definition"></a></dt>
 <dd><p>Return model iter op list.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.input_tensor_names">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_tensor_names</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.input_tensor_names" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_tensor_names</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.input_tensor_names" title="Permalink to this definition"></a></dt>
 <dd><p>Return input tensor names.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.output_tensor_names">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_tensor_names</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.output_tensor_names" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_tensor_names</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.output_tensor_names" title="Permalink to this definition"></a></dt>
 <dd><p>Return output tensor names.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.input_node_names">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_node_names</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.input_node_names" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_node_names</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.input_node_names" title="Permalink to this definition"></a></dt>
 <dd><p>Return input node names.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.output_node_names">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_node_names</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.output_node_names" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_node_names</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.output_node_names" title="Permalink to this definition"></a></dt>
 <dd><p>Return output node names.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.input_tensor">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_tensor</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.input_tensor" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_tensor</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.input_tensor" title="Permalink to this definition"></a></dt>
 <dd><p>Return input tensor.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.output_tensor">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_tensor</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.output_tensor" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_tensor</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.output_tensor" title="Permalink to this definition"></a></dt>
 <dd><p>Return output tensor.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.framework">
-<span class="sig-name descname"><span class="pre">framework</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.framework" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">framework</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.framework" title="Permalink to this definition"></a></dt>
 <dd><p>Return framework.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.save" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel.save" title="Permalink to this definition"></a></dt>
 <dd><p>Save Tensorflow model.</p>
 </dd></dl>
 
@@ -622,18 +534,18 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowSavedModelModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowSavedModelModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel" title="neural_compressor.model.tensorflow_model.TensorflowBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowBaseModel</span></code></a></p>
 <p>Build Tensorflow saved model.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.model" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.model" title="Permalink to this definition"></a></dt>
 <dd><p>Return model itself.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.get_all_weight_names">
-<span class="sig-name descname"><span class="pre">get_all_weight_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.get_all_weight_names" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_all_weight_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.get_all_weight_names" title="Permalink to this definition"></a></dt>
 <dd><p>Get weight names of model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -647,13 +559,13 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.update_weights">
-<span class="sig-name descname"><span class="pre">update_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.update_weights" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">update_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_tensor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.update_weights" title="Permalink to this definition"></a></dt>
 <dd><p>Update model weights.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.get_weight">
-<span class="sig-name descname"><span class="pre">get_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.get_weight" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.get_weight" title="Permalink to this definition"></a></dt>
 <dd><p>Return model wight with a given tensor name.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -664,7 +576,7 @@ output_tensor_names (list of string): validated output_tensor_names.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.report_sparsity">
-<span class="sig-name descname"><span class="pre">report_sparsity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.report_sparsity" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">report_sparsity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.report_sparsity" title="Permalink to this definition"></a></dt>
 <dd><p>Get sparsity of the model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -679,7 +591,7 @@ total_sparsity (float): total sparsity of model.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.build_saved_model">
-<span class="sig-name descname"><span class="pre">build_saved_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.build_saved_model" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_saved_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.build_saved_model" title="Permalink to this definition"></a></dt>
 <dd><p>Build Tensorflow saved model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -701,7 +613,7 @@ builder (tf.compat.v1.saved_model.builder.SavedModelBuilder): builds</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.save" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel.save" title="Permalink to this definition"></a></dt>
 <dd><p>Save Tensorflow model.</p>
 </dd></dl>
 
@@ -709,18 +621,18 @@ builder (tf.compat.v1.saved_model.builder.SavedModelBuilder): builds</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowQATModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowQATModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowQATModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel" title="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowSavedModelModel</span></code></a></p>
 <p>Build Tensorflow QAT model.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowQATModel.model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel.model" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel.model" title="Permalink to this definition"></a></dt>
 <dd><p>Return model itself.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowQATModel.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel.save" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel.save" title="Permalink to this definition"></a></dt>
 <dd><p>Save Tensorflow QAT model.</p>
 </dd></dl>
 
@@ -728,18 +640,18 @@ builder (tf.compat.v1.saved_model.builder.SavedModelBuilder): builds</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowCheckpointModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowCheckpointModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowCheckpointModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel" title="neural_compressor.model.tensorflow_model.TensorflowBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowBaseModel</span></code></a></p>
 <p>Build Tensorflow checkpoint model.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowCheckpointModel.graph_def">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph_def</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel.graph_def" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">graph_def</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel.graph_def" title="Permalink to this definition"></a></dt>
 <dd><p>Return graph defination.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowCheckpointModel.model">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel.model" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel.model" title="Permalink to this definition"></a></dt>
 <dd><p>Return the model itself to avoid the initialization issue.</p>
 </dd></dl>
 
@@ -747,7 +659,7 @@ builder (tf.compat.v1.saved_model.builder.SavedModelBuilder): builds</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowModel</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowModel" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowModel</span></span><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowModel" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A wrapper to construct a Tensorflow Model.</p>
 </dd></dl>
@@ -758,46 +670,30 @@ builder (tf.compat.v1.saved_model.builder.SavedModelBuilder): builds</p>
 
 
            </div>
-           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
-
-    </p>
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

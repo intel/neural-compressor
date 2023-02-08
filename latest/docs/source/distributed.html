@@ -1,97 +1,50 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>Distributed Training and Inference (Evaluation) &mdash; Intel® Neural Compressor 2.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
-    
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-
-    
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="../../index.html" class="icon icon-home"> Intel® Neural Compressor
           
-
-          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
           </a>
-
-          
-            
-            
             <div class="version">
               <a href="../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
@@ -104,73 +57,32 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">Intel® Neural Compressor</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
-        
-      <li>Distributed Training and Inference (Evaluation)</li>
-    
-    
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Distributed Training and Inference (Evaluation)</li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="../../_sources/docs/source/distributed.md.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   <section id="distributed-training-and-inference-evaluation">
-<h1>Distributed Training and Inference (Evaluation)<a class="headerlink" href="#distributed-training-and-inference-evaluation" title="Permalink to this heading">¶</a></h1>
+<h1>Distributed Training and Inference (Evaluation)<a class="headerlink" href="#distributed-training-and-inference-evaluation" title="Permalink to this heading"></a></h1>
 <ol>
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
@@ -186,7 +98,7 @@
 </li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
 <p>Neural Compressor uses <a class="reference external" href="https://github.com/horovod/horovod">horovod</a> for distributed training.</p>
 <p>Please check horovod installation documentation and use following commands to install horovod:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">horovod</span>
@@ -194,7 +106,7 @@
 </div>
 </section>
 <section id="supported-feature-matrix">
-<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Permalink to this heading">¶</a></h2>
+<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Permalink to this heading"></a></h2>
 <p>Distributed training and inference are supported in PyTorch and TensorFlow currently.
 | Framework  | Type    | Distributed Support |
 |————|———|:——————-:|
@@ -204,7 +116,7 @@
 | Keras      | Pruning |       ✔      |</p>
 </section>
 <section id="get-started-with-distributed-training-and-inference-api">
-<h2>Get Started with Distributed Training and Inference API<a class="headerlink" href="#get-started-with-distributed-training-and-inference-api" title="Permalink to this heading">¶</a></h2>
+<h2>Get Started with Distributed Training and Inference API<a class="headerlink" href="#get-started-with-distributed-training-and-inference-api" title="Permalink to this heading"></a></h2>
 <p>To enable distributed training or inference, the steps are:</p>
 <ol class="simple">
 <li><p>Setting up distributed training or inference scripts. We have 2 options here:</p>
@@ -216,7 +128,7 @@
 <li><p>use horovodrun to execute your program.</p></li>
 </ol>
 <section id="option-1-pure-yaml-configuration">
-<h3>Option 1: Pure Yaml Configuration<a class="headerlink" href="#option-1-pure-yaml-configuration" title="Permalink to this heading">¶</a></h3>
+<h3>Option 1: Pure Yaml Configuration<a class="headerlink" href="#option-1-pure-yaml-configuration" title="Permalink to this heading"></a></h3>
 <p>To enable distributed training in Neural Compressor, user only need to add a field: <code class="docutils literal notranslate"><span class="pre">Distributed:</span> <span class="pre">True</span></code> in dataloader configuration:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dataloader</span><span class="p">:</span>
   <span class="n">batch_size</span><span class="p">:</span> <span class="mi">256</span>
@@ -248,7 +160,7 @@
 </div>
 </section>
 <section id="option-2-user-defined-training-function">
-<h3>Option 2: User Defined Training Function<a class="headerlink" href="#option-2-user-defined-training-function" title="Permalink to this heading">¶</a></h3>
+<h3>Option 2: User Defined Training Function<a class="headerlink" href="#option-2-user-defined-training-function" title="Permalink to this heading"></a></h3>
 <p>Neural Compressor supports User defined PyTorch training function for distributed training which requires user to modify training script following horovod requirements. We provide a MNIST example to show how to do that and following are the steps for PyTorch.</p>
 <ul class="simple">
 <li><p>Partition dataset via DistributedSampler:</p></li>
@@ -309,7 +221,7 @@
 </div>
 </section>
 <section id="horovodrun-execution">
-<h3>Horovodrun Execution<a class="headerlink" href="#horovodrun-execution" title="Permalink to this heading">¶</a></h3>
+<h3>Horovodrun Execution<a class="headerlink" href="#horovodrun-execution" title="Permalink to this heading"></a></h3>
 <p>User needs to use horovodrun to execute distributed training. For more usage, please refer to <a class="reference external" href="https://horovod.readthedocs.io/en/stable/running_include.html">horovod documentation</a>.</p>
 <p>Following command specified the number of processes and hosts to do distributed training.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">horovodrun</span> <span class="o">-</span><span class="n">np</span> <span class="o">&lt;</span><span class="n">num_of_processes</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">H</span> <span class="o">&lt;</span><span class="n">hosts</span><span class="o">&gt;</span> <span class="n">python</span> <span class="n">example</span><span class="o">.</span><span class="n">py</span>
@@ -321,14 +233,14 @@
 </div>
 </section>
 <section id="security">
-<h3>Security<a class="headerlink" href="#security" title="Permalink to this heading">¶</a></h3>
+<h3>Security<a class="headerlink" href="#security" title="Permalink to this heading"></a></h3>
 <p>Horovodrun requires user set up SSH on all hosts without any prompts. To do distributed training with Neural Compressor, user needs to ensure the SSH setting on all hosts.</p>
 </section>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <section id="pytorch-examples">
-<h3>PyTorch Examples:<a class="headerlink" href="#pytorch-examples" title="Permalink to this heading">¶</a></h3>
+<h3>PyTorch Examples:<a class="headerlink" href="#pytorch-examples" title="Permalink to this heading"></a></h3>
 <ul class="simple">
 <li><p>PyTorch example-1: MNIST</p>
 <ul>
@@ -343,7 +255,7 @@
 </ul>
 </section>
 <section id="tensorflow-examples">
-<h3>TensorFlow Examples:<a class="headerlink" href="#tensorflow-examples" title="Permalink to this heading">¶</a></h3>
+<h3>TensorFlow Examples:<a class="headerlink" href="#tensorflow-examples" title="Permalink to this heading"></a></h3>
 <ul>
 <li><p>TensorFlow example-1: ‘ResNet50 V1.0’ PTQ (Post Training Quantization) with distributed inference</p>
 <ul>
@@ -390,46 +302,30 @@
 
 
            </div>
-           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
-
-    </p>
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

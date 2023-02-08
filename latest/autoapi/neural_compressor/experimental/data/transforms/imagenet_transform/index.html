@@ -1,97 +1,50 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>neural_compressor.experimental.data.transforms.imagenet_transform &mdash; Intel® Neural Compressor 2.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../../../../_static/graphviz.css" type="text/css" />
-  <link rel="stylesheet" href="../../../../../../_static/custom.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
+      <link rel="stylesheet" href="../../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../../_static/custom.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../../" src="../../../../../../_static/documentation_options.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../../../../../" id="documentation_options" src="../../../../../../_static/documentation_options.js"></script>
         <script src="../../../../../../_static/doctools.js"></script>
         <script src="../../../../../../_static/sphinx_highlight.js"></script>
-    
-    <script type="text/javascript" src="../../../../../../_static/js/theme.js"></script>
-
-    
+    <script src="../../../../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="../../../../../../index.html" class="icon icon-home"> Intel® Neural Compressor
           
-
-          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
           </a>
-
-          
-            
-            
             <div class="version">
               <a href="../../../../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
@@ -104,78 +57,37 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../../../../index.html">Intel® Neural Compressor</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
-        
-      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform</span></code></li>
-    
-    
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform</span></code></li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="../../../../../../_sources/autoapi/neural_compressor/experimental/data/transforms/imagenet_transform/index.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   <section id="module-neural_compressor.experimental.data.transforms.imagenet_transform">
-<span id="neural-compressor-experimental-data-transforms-imagenet-transform"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.data.transforms.imagenet_transform" title="neural_compressor.experimental.data.transforms.imagenet_transform"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.data.transforms.imagenet_transform" title="Permalink to this heading">¶</a></h1>
+<span id="neural-compressor-experimental-data-transforms-imagenet-transform"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.data.transforms.imagenet_transform" title="neural_compressor.experimental.data.transforms.imagenet_transform"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.data.transforms.imagenet_transform" title="Permalink to this heading"></a></h1>
 <p>Neural Compressor built-in imagenet transforms.</p>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading">¶</a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.data.transforms.imagenet_transform.QuantizedInput" title="neural_compressor.experimental.data.transforms.imagenet_transform.QuantizedInput"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizedInput</span></code></a></p></td>
@@ -209,7 +121,7 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.imagenet_transform.QuantizedInput">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">QuantizedInput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.QuantizedInput" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">QuantizedInput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.QuantizedInput" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../transform/index.html#neural_compressor.experimental.data.transforms.transform.BaseTransform" title="neural_compressor.experimental.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform.BaseTransform</span></code></a></p>
 <p>Convert the dtype of input to quantize it.</p>
 <dl class="field-list simple">
@@ -227,7 +139,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.imagenet_transform.LabelShift">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">LabelShift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.LabelShift" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">LabelShift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.LabelShift" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../transform/index.html#neural_compressor.experimental.data.transforms.transform.BaseTransform" title="neural_compressor.experimental.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform.BaseTransform</span></code></a></p>
 <p>Convert label to label - label_shift.</p>
 <dl class="field-list simple">
@@ -242,7 +154,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.imagenet_transform.ParseDecodeImagenet">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">ParseDecodeImagenet</span></span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.ParseDecodeImagenet" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">ParseDecodeImagenet</span></span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.ParseDecodeImagenet" title="Permalink to this definition"></a></dt>
 <dd><p>Parse features in Example proto.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -253,7 +165,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.imagenet_transform.ParseDecodeImagenetTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">ParseDecodeImagenetTransform</span></span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.ParseDecodeImagenetTransform" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">ParseDecodeImagenetTransform</span></span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.ParseDecodeImagenetTransform" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../transform/index.html#neural_compressor.experimental.data.transforms.transform.BaseTransform" title="neural_compressor.experimental.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform.BaseTransform</span></code></a></p>
 <p>Imagenet decoding will be performed automatically from Neural Compressor v1.4.</p>
 <dl class="field-list simple">
@@ -265,7 +177,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.imagenet_transform.TensorflowResizeCropImagenetTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowResizeCropImagenetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_crop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize_side</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_flip_left_right</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'channels_last'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subpixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RGB'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.TensorflowResizeCropImagenetTransform" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">TensorflowResizeCropImagenetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_crop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize_side</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_flip_left_right</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'channels_last'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subpixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RGB'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.TensorflowResizeCropImagenetTransform" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../transform/index.html#neural_compressor.experimental.data.transforms.transform.BaseTransform" title="neural_compressor.experimental.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform.BaseTransform</span></code></a></p>
 <p>Combination of a series of transforms which is applicable to images in Imagenet.</p>
 <dl class="field-list simple">
@@ -288,7 +200,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.imagenet_transform.BilinearImagenetTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">BilinearImagenetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">central_fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.875</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.BilinearImagenetTransform" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">BilinearImagenetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">central_fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.875</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.BilinearImagenetTransform" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../transform/index.html#neural_compressor.experimental.data.transforms.transform.BaseTransform" title="neural_compressor.experimental.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform.BaseTransform</span></code></a></p>
 <p>Combination of a series of transforms which is applicable to images in Imagenet.</p>
 <dl class="field-list simple">
@@ -309,7 +221,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.imagenet_transform.OnnxBilinearImagenetTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">OnnxBilinearImagenetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">central_fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.875</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.OnnxBilinearImagenetTransform" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">OnnxBilinearImagenetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">central_fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.875</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.OnnxBilinearImagenetTransform" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../transform/index.html#neural_compressor.experimental.data.transforms.transform.BaseTransform" title="neural_compressor.experimental.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform.BaseTransform</span></code></a></p>
 <p>Combination of a series of transforms which is applicable to images in Imagenet.</p>
 <dl class="field-list simple">
@@ -330,7 +242,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.imagenet_transform.ONNXResizeCropImagenetTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">ONNXResizeCropImagenetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_crop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize_side</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.229,</span> <span class="pre">0.224,</span> <span class="pre">0.225]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'channels_last'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subpixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RGB'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.ONNXResizeCropImagenetTransform" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">ONNXResizeCropImagenetTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_crop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize_side</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.229,</span> <span class="pre">0.224,</span> <span class="pre">0.225]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'channels_last'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subpixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RGB'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.ONNXResizeCropImagenetTransform" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../transform/index.html#neural_compressor.experimental.data.transforms.transform.BaseTransform" title="neural_compressor.experimental.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform.BaseTransform</span></code></a></p>
 <p>Combination of a series of transforms which is applicable to images in Imagenet.</p>
 <dl class="field-list simple">
@@ -351,7 +263,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.data.transforms.imagenet_transform.ResizeWithAspectRatio">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">ResizeWithAspectRatio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">87.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inter_pol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">cv2.INTER_AREA</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.ResizeWithAspectRatio" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.data.transforms.imagenet_transform.</span></span><span class="sig-name descname"><span class="pre">ResizeWithAspectRatio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">87.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inter_pol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">cv2.INTER_AREA</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.data.transforms.imagenet_transform.ResizeWithAspectRatio" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../transform/index.html#neural_compressor.experimental.data.transforms.transform.BaseTransform" title="neural_compressor.experimental.data.transforms.transform.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.transform.BaseTransform</span></code></a></p>
 <p>Resize the image with aspect ratio.</p>
 <dl class="field-list simple">
@@ -367,46 +279,30 @@
 
 
            </div>
-           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
-
-    </p>
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

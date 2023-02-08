@@ -1,97 +1,50 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>neural_compressor.metric &mdash; Intel® Neural Compressor 2.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script src="../../../_static/sphinx_highlight.js"></script>
-    
-    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
-
-    
+    <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="../../../index.html" class="icon icon-home"> Intel® Neural Compressor
           
-
-          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
           </a>
-
-          
-            
-            
             <div class="version">
               <a href="../../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../docs/source/installation_guide.html">Installation</a></li>
@@ -104,76 +57,35 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../index.html">Intel® Neural Compressor</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-        
-      <li><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric</span></code></li>
-    
-    
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric</span></code></li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="../../../_sources/autoapi/neural_compressor/metric/index.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   <section id="module-neural_compressor.metric">
-<span id="neural-compressor-metric"></span><h1><a class="reference internal" href="#module-neural_compressor.metric" title="neural_compressor.metric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric</span></code></a><a class="headerlink" href="#module-neural_compressor.metric" title="Permalink to this heading">¶</a></h1>
+<span id="neural-compressor-metric"></span><h1><a class="reference internal" href="#module-neural_compressor.metric" title="neural_compressor.metric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric</span></code></a><a class="headerlink" href="#module-neural_compressor.metric" title="Permalink to this heading"></a></h1>
 <p>Intel Neural Compressor Metric.</p>
 <section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="bleu/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.metric.bleu</span></code></a></li>
@@ -187,9 +99,9 @@
 </div>
 </section>
 <section id="package-contents">
-<h2>Package Contents<a class="headerlink" href="#package-contents" title="Permalink to this heading">¶</a></h2>
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Permalink to this heading"></a></h2>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">¶</a></h3>
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.metric.METRICS" title="neural_compressor.metric.METRICS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">METRICS</span></code></a></p></td>
@@ -211,7 +123,7 @@
 </table>
 </section>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h3>
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.metric.metric_registry" title="neural_compressor.metric.metric_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">metric_registry</span></code></a>(metric_type, framework)</p></td>
@@ -221,18 +133,18 @@
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.metric.METRICS">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">METRICS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.METRICS" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">METRICS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.METRICS" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Intel Neural Compressor Metrics.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neural_compressor.metric.METRICS.metrics">
-<span class="sig-name descname"><span class="pre">metrics</span></span><a class="headerlink" href="#neural_compressor.metric.METRICS.metrics" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">metrics</span></span><a class="headerlink" href="#neural_compressor.metric.METRICS.metrics" title="Permalink to this definition"></a></dt>
 <dd><p>The collection of registered metrics for the specified framework.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.metric.METRICS.register">
-<span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_cls</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#neural_compressor.metric.METRICS.register" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_cls</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#neural_compressor.metric.METRICS.register" title="Permalink to this definition"></a></dt>
 <dd><p>Register a metric.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -248,7 +160,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.metric.Metric">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">Metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'user_metric'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.Metric" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">Metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'user_metric'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.Metric" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A wrapper of the information needed to construct a Metric.</p>
 <p>The metric class should take the outputs of the model as the metric’s inputs,
@@ -258,12 +170,12 @@ recommended to design metric_cls to take (predictions, labels) as inputs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.metric.BaseMetric">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">BaseMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hvd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.BaseMetric" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">BaseMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hvd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.BaseMetric" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The base class of Metric.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.metric.BaseMetric.metric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metric</span></span><a class="headerlink" href="#neural_compressor.metric.BaseMetric.metric" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metric</span></span><a class="headerlink" href="#neural_compressor.metric.BaseMetric.metric" title="Permalink to this definition"></a></dt>
 <dd><p>Return its metric class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -274,7 +186,7 @@ recommended to design metric_cls to take (predictions, labels) as inputs.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.metric.BaseMetric.hvd">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hvd</span></span><a class="headerlink" href="#neural_compressor.metric.BaseMetric.hvd" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hvd</span></span><a class="headerlink" href="#neural_compressor.metric.BaseMetric.hvd" title="Permalink to this definition"></a></dt>
 <dd><p>Return its hvd class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -285,7 +197,7 @@ recommended to design metric_cls to take (predictions, labels) as inputs.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.metric.BaseMetric.update">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.BaseMetric.update" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.BaseMetric.update" title="Permalink to this definition"></a></dt>
 <dd><p>Update the state that need to be evaluated.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -303,7 +215,7 @@ recommended to design metric_cls to take (predictions, labels) as inputs.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.metric.BaseMetric.reset">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.BaseMetric.reset" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.BaseMetric.reset" title="Permalink to this definition"></a></dt>
 <dd><p>Clear the predictions and labels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
@@ -314,7 +226,7 @@ recommended to design metric_cls to take (predictions, labels) as inputs.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.metric.BaseMetric.result">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.BaseMetric.result" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.BaseMetric.result" title="Permalink to this definition"></a></dt>
 <dd><p>Evaluate the difference between predictions and labels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
@@ -327,14 +239,14 @@ recommended to design metric_cls to take (predictions, labels) as inputs.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.metric.TensorflowTopK">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">TensorflowTopK</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">TensorflowTopK</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.metric.BaseMetric" title="neural_compressor.metric.BaseMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseMetric</span></code></a></p>
 <p>Compute Top-k Accuracy classification score for Tensorflow model.</p>
 <p>This metric computes the number of times where the correct label is among
 the top k labels predicted.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neural_compressor.metric.TensorflowTopK.k">
-<span class="sig-name descname"><span class="pre">k</span></span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.k" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">k</span></span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.k" title="Permalink to this definition"></a></dt>
 <dd><p>The number of most likely outcomes considered to find the correct label.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -345,19 +257,19 @@ the top k labels predicted.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neural_compressor.metric.TensorflowTopK.num_correct">
-<span class="sig-name descname"><span class="pre">num_correct</span></span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.num_correct" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">num_correct</span></span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.num_correct" title="Permalink to this definition"></a></dt>
 <dd><p>The number of predictions that were correct classified.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neural_compressor.metric.TensorflowTopK.num_sample">
-<span class="sig-name descname"><span class="pre">num_sample</span></span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.num_sample" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">num_sample</span></span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.num_sample" title="Permalink to this definition"></a></dt>
 <dd><p>The total number of predictions.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.metric.TensorflowTopK.update">
-<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.update" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.update" title="Permalink to this definition"></a></dt>
 <dd><p>Add the predictions and labels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -372,13 +284,13 @@ the top k labels predicted.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.metric.TensorflowTopK.reset">
-<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.reset" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.reset" title="Permalink to this definition"></a></dt>
 <dd><p>Reset the number of samples and correct predictions.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.metric.TensorflowTopK.result">
-<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.result" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.TensorflowTopK.result" title="Permalink to this definition"></a></dt>
 <dd><p>Compute the top-k score.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -391,7 +303,7 @@ the top k labels predicted.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.metric.metric_registry">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">metric_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.metric_registry" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">metric_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.metric_registry" title="Permalink to this definition"></a></dt>
 <dd><p>Decorate for registering all Metric subclasses.</p>
 <p>The cross-framework metric is supported by specifying the framework param
 as one of tensorflow, pytorch, mxnet, onnxrt.</p>
@@ -413,12 +325,12 @@ as one of tensorflow, pytorch, mxnet, onnxrt.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.metric.COCOmAPv2">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">COCOmAPv2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anno_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0.5:0.05:0.95'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DetectionBoxes_Precision/mAP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_index_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'num_detections':</span> <span class="pre">-1,</span> <span class="pre">'boxes':</span> <span class="pre">0,</span> <span class="pre">'scores':</span> <span class="pre">1,</span> <span class="pre">'classes':</span> <span class="pre">2}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">COCOmAPv2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anno_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0.5:0.05:0.95'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DetectionBoxes_Precision/mAP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_index_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'num_detections':</span> <span class="pre">-1,</span> <span class="pre">'boxes':</span> <span class="pre">0,</span> <span class="pre">'scores':</span> <span class="pre">1,</span> <span class="pre">'classes':</span> <span class="pre">2}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.metric.BaseMetric" title="neural_compressor.metric.BaseMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseMetric</span></code></a></p>
 <p>Compute mean average precision of the detection task.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.metric.COCOmAPv2.update">
-<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2.update" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2.update" title="Permalink to this definition"></a></dt>
 <dd><p>Add the predictions and labels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -433,13 +345,13 @@ as one of tensorflow, pytorch, mxnet, onnxrt.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.metric.COCOmAPv2.reset">
-<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2.reset" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2.reset" title="Permalink to this definition"></a></dt>
 <dd><p>Reset the prediction and labels.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.metric.COCOmAPv2.result">
-<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2.result" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.COCOmAPv2.result" title="Permalink to this definition"></a></dt>
 <dd><p>Compute mean average precision.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -456,46 +368,30 @@ as one of tensorflow, pytorch, mxnet, onnxrt.</p>
 
 
            </div>
-           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
-
-    </p>
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

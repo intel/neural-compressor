@@ -1,97 +1,50 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>TensorBoard &mdash; Intel® Neural Compressor 2.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/doctools.js"></script>
         <script src="../../_static/sphinx_highlight.js"></script>
-    
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-
-    
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
 
           
-            <a href="../../index.html" class="icon icon-home"> Intel® Neural Compressor
           
-
-          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
           </a>
-
-          
-            
-            
             <div class="version">
               <a href="../../../versions.html">latest▼</a>
               <p>Click link above to switch version</p>
             </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
@@ -104,73 +57,32 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">Intel® Neural Compressor</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
-      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
-        
-      <li>TensorBoard</li>
-    
-    
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">TensorBoard</li>
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="../../_sources/docs/source/tensorboard.md.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   <section id="tensorboard">
-<h1>TensorBoard<a class="headerlink" href="#tensorboard" title="Permalink to this heading">¶</a></h1>
+<h1>TensorBoard<a class="headerlink" href="#tensorboard" title="Permalink to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
@@ -178,21 +90,21 @@
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
 <p>TensorBoard is a suite of web applications that provide measurements and visualizations used to inspect and understand your machine learning workflow for <a class="reference external" href="https://github.com/tensorflow/tensorboard">TensorFlow TensorBoard</a> and <a class="reference external" href="https://github.com/pytorch/pytorch/tree/master/torch/utils/tensorboard">PyTorch TensorBoard</a>. Intel® Neural Compressor performs accuracy-driven quantization; the tuning process quantizes the tensor and performs graph transformation and optimization to achieve optimal performance under accuracy requirement. If you want to observe the behaviors of the optimizations, or if you want to discover why an accuracy target cannot be met, TensorBoard can provide you with some valuable information. You can inspect the graph and tensor after each tuning run. If a model cannot meet accuracy requirements, you can analyze the comparison of FP32 and the INT8 tensor histogram.</p>
 <p>We collect the TensorBoard event summary during evaluation. The first time is on the baseline FP32 model and later on at the end of each tuning runs are based on the quantized model. The TensorBoard log directory is named baseline_acc_<accuracy> and tune_<runs><em>acc</em><accuracy>, to indicate the stage and accuracy of the data that is generated. Users can select their data of interest to observe with TensorBoard.</p>
 </section>
 <section id="supported-feature-matrix">
-<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Permalink to this heading">¶</a></h2>
+<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Permalink to this heading"></a></h2>
 <p>| Optimized Framework | Tensorboard Support |
 |———————|:——————-:|
 | PyTorch             |       ✔      |
 | TensorFlow          |       ✔      |</p>
 </section>
 <section id="get-started-with-tensorboard">
-<h2>Get Started with TensorBoard<a class="headerlink" href="#get-started-with-tensorboard" title="Permalink to this heading">¶</a></h2>
+<h2>Get Started with TensorBoard<a class="headerlink" href="#get-started-with-tensorboard" title="Permalink to this heading"></a></h2>
 <section id="pytorch-tensorboard">
-<h3>PyTorch TensorBoard<a class="headerlink" href="#pytorch-tensorboard" title="Permalink to this heading">¶</a></h3>
+<h3>PyTorch TensorBoard<a class="headerlink" href="#pytorch-tensorboard" title="Permalink to this heading"></a></h3>
 <p>PyTorch TensorBoard implementation includes three steps:</p>
 <ul class="simple">
 <li><p>Before evaluation in the _pre_eval_hook() where instruments observers are placed in the model.</p></li>
@@ -288,7 +200,7 @@
 </pre></div>
 </div>
 <section id="usage">
-<h4>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h4>
+<h4>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h4>
 <ol>
 <li><p>Add “tensorboard: true” in the yaml file.</p></li>
 <li><p>Run quantization tuning; a “./runs” folder is generated in the working folder.</p></li>
@@ -299,7 +211,7 @@
 </section>
 </section>
 <section id="tensorflow-tensorboard">
-<h3>TensorFlow Tensorboard<a class="headerlink" href="#tensorflow-tensorboard" title="Permalink to this heading">¶</a></h3>
+<h3>TensorFlow Tensorboard<a class="headerlink" href="#tensorflow-tensorboard" title="Permalink to this heading"></a></h3>
 <p>TensorFlow TensorBoard implementation includes four steps:</p>
 <ol class="simple">
 <li><p>Before evaluation where we create the TensorBoard summary write and write graph, collect FP32 and node names for inspection, and dump the histogram of weights and bias tensor directly from graph_def.</p></li>
@@ -309,7 +221,7 @@
 </ol>
 <p>See the <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/neural_compressor/adaptor/tensorflow.py">tensorflow.py</a> evaluate() function for details.</p>
 <section id="id1">
-<h4>Usage<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h4>
+<h4>Usage<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h4>
 <ol>
 <li><p>Add “tensorboard: true” in the yaml file.</p></li>
 <li><p>Run quantization tuning; a “./runs” folder is generated in the working folder. For example:</p>
@@ -329,15 +241,15 @@ baseline_acc_0.776<span class="w">  </span>tune_1_acc_0.095<span class="w"> </sp
 </section>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <section id="pytorch-examples">
-<h3>PyTorch Examples<a class="headerlink" href="#pytorch-examples" title="Permalink to this heading">¶</a></h3>
+<h3>PyTorch Examples<a class="headerlink" href="#pytorch-examples" title="Permalink to this heading"></a></h3>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="w">  </span>examples/pytorch/eager/image_recognition/imagenet/cpu/ptq/run_tuning_dump_tensor.sh<span class="w"> </span>
 </pre></div>
 </div>
 </section>
 <section id="tensorflow-examples">
-<h3>TensorFlow Examples<a class="headerlink" href="#tensorflow-examples" title="Permalink to this heading">¶</a></h3>
+<h3>TensorFlow Examples<a class="headerlink" href="#tensorflow-examples" title="Permalink to this heading"></a></h3>
 <ol>
 <li><p>Add “tensorboard: true” into examples/tensorflow/image_recognition/inceptionv3.yaml. In order to demonstrate the usage of TensorBoard, remove the following lines which are added to skip the quantization of ‘v0/cg/conv0/conv2d/Conv2D’ to avoid a known limitation.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="nt">op_wise</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
@@ -379,46 +291,30 @@ baseline_acc_0.776<span class="w">  </span>tune_1_acc_0.095<span class="w"> </sp
 
 
            </div>
-           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2022, Intel® Neural Compressor, Intel.
-
-    </p>
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>
