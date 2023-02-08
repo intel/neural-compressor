@@ -146,7 +146,6 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
                 return input
             else:
                 return tuple(input)
-            break
     except Exception as e:
         for idx, input in enumerate(dataloader):
             output = pytorch_forward_wrapper(model,
@@ -161,7 +160,6 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
                 return input
             else:
                 return tuple(input)
-            break
     if idx == 0:
         assert False, "Please checkout the example_inputs format."
 
