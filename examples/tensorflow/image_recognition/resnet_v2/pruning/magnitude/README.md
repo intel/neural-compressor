@@ -18,8 +18,8 @@ pip install tensorflow
 ```
 
 # Run
-Run the command to get pretrained basline model which will be saved to './baseline_model'. Then, the model will be pruned and saved into a given path.
-The CIFAR10 dataset will be automaticly loaded.
+Run the command to get pretrained baseline model which will be saved to './baseline_model'. Then, the model will be pruned and saved into a given path.
+The CIFAR10 dataset will be automatically loaded.
 ```shell
 python main.py --output_model=/path/to/output_model/ --prune
 ```

@@ -335,7 +335,7 @@ def generate_pruner_config(info):
     """Generate pruner config object from prune information.
     
     Args:
-        info: A string representing the path to the configuration file.
+        info: A dotdict that saves prune information.
 
     Returns:
         pruner: A pruner config object.

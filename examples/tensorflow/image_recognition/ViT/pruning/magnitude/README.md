@@ -20,12 +20,12 @@ pip install -r requirements.txt
 ## 2. Prepare Model
 Run the script to save a baseline model to the directory './ViT_Model'.
 ```python
-python perpare_model.py
+python prepare_model.py
 ```
 
 # Run
 Run the command to prune the baseline model and save it into a given path.
-The CIFAR100 dataset will be automaticly loaded.
+The CIFAR100 dataset will be automatically loaded.
 
 ```shell
 python main.py --output_model=/path/to/output_model/
