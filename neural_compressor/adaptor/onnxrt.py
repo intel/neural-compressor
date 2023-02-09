@@ -170,11 +170,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                     black_nodes=black_nodes, white_nodes=white_nodes,
                                     iterations=list(range(0, quantize_config['calib_iteration'])),
                                     backend=self.backend, reduce_range=self.reduce_range)
-            model = augment.augment_smooth_graph(
-                    self.recipes.get("alpha", 0.5),
-                    self.recipes.get("percentile", 99.999),
-                    self.recipes.get("op_types", ['MatMul', 'Linear', 'Conv']),
-                    self.recipes.get("scales_per_op", True))
+            model = augment.augment_smooth_graph(self.recipes.get("alpha", 0.5))
 
         tmp_model = copy.deepcopy(model)
         iterations = tune_cfg.get('calib_iteration', 1)

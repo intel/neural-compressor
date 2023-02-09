@@ -100,12 +100,6 @@ class QuantizationConfig(_BaseQuantizationConfig):
             for k, v in val.items():
                 if k == "alpha":
                     check_value("alpha", v, float)
-                elif k == "percentile":
-                    check_value("alpha", v, float)
-                elif k == "op_types":
-                    check_value("op_types", v, str)
-                elif k == "scales_per_op":
-                    check_value("scales_per_op", v, bool)
             return True
 
         def fast_bias_correction(val):
