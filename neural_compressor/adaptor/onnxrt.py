@@ -308,7 +308,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_params, tune_cfg = self._parse_qconfig(q_config)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
-        quantizer = Quantizer(copy.deepcopy(model),
+        quantizer = Quantizer(model.model,
             quantize_config,
             format,
             self.static,
