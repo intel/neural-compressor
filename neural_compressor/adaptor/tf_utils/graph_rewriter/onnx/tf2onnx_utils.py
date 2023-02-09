@@ -27,6 +27,8 @@ import numpy as np
 from tensorflow.core.framework import types_pb2, tensor_pb2
 from tensorflow.python.framework import tensor_util
 from onnx import helper, onnx_pb, numpy_helper, defs, TensorProto, OperatorSetIdProto, shape_inference
+from neural_compressor.utils.utility import LazyImport
+t2o = LazyImport('tf2onnx')
 
 logger = logging.getLogger("neural_compressor")
 
@@ -449,7 +451,6 @@ def compute_const_folding_using_tf(g, const_node_values, graph_outputs):
     if const_node_values is None:
         const_node_values = {}
     graph_outputs = set(graph_outputs)
-    from tf2onnx.tf_loader import tf_session, tf_placeholder
 
     ops = g.get_operations()
     outputs_to_values = {}
@@ -511,7 +512,7 @@ def compute_const_folding_using_tf(g, const_node_values, graph_outputs):
                 g2 = tf.Graph()
                 with g2.as_default():
                     for inp in input_names:
-                        tf_placeholder(outputs_to_dtypes[inp], name=inp.split(':')[0])
+                        t2o.tf_loader.tf_placeholder(outputs_to_dtypes[inp], name=inp.split(':')[0])
                     mini_graph_def = g2.as_graph_def()
                     mini_graph_def.node.append(node.node_def)
                 g3 = tf.Graph()
@@ -523,7 +524,7 @@ def compute_const_folding_using_tf(g, const_node_values, graph_outputs):
                         feed_dict[inp] = inp_np
                         inp_shapes.append(inp_np.shape)
                     try:
-                        with tf_session() as sess:
+                        with t2o.tf_loader.tf_session() as sess:
                             tf.import_graph_def(mini_graph_def, name='')
                             results = sess.run(output_names, feed_dict=feed_dict)
                         if is_huge_shape(results[0].shape) and all(is_small_shape(inp) for inp in inp_shapes):
