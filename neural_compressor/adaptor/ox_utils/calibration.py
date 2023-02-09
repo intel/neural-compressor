@@ -544,8 +544,8 @@ class ONNXRTAugment:
                                    tensor_array: np.ndarray,
                                    data_type: onnx.TensorProto = onnx.TensorProto.FLOAT
                                    ) -> onnx.TensorProto:
-        """
-        A help function to create initializer tensor in onnx graph
+        """A help function to create initializer tensor in onnx graph.
+
         Args:
             name: The name of tensor to be created
             tensor_array: The numpy array to initialize the tensor
@@ -553,9 +553,7 @@ class ONNXRTAugment:
 
         Returns:
             An onnx tensor
-
         """
-
         # (TensorProto)
         initializer_tensor = onnx.helper.make_tensor(
             name=name,
@@ -566,17 +564,15 @@ class ONNXRTAugment:
         return initializer_tensor
 
     def _check_is_group_conv(self, node, model):
-        """
-        Check the op is group wised or not(depthwise conv is excluded,return false)
+        """Check the op is group wised or not(depthwise conv is excluded,return false).
+
         Args:
             node: The op node
             model: The onnx model
 
         Returns:
             Bool: group wised True, otherwise False, depthwise False
-
         """
-
         name_to_indices = {}
         for index, i in enumerate(model.graph.initializer):
             name_to_indices[i.name] = index
@@ -599,18 +595,17 @@ class ONNXRTAugment:
         return False
 
     def _get_input_tensor_of_ops(self, op_types=['MatMul', 'Linear', 'Conv']):
-        """
-        Traverse the graph and get all the data tensors flowing into layers of {op_types}, group conv is excluded
-        TODO the tensors could be set/filtered in configuration
+        """Traverse the graph and get all the data tensors flowing into layers of {op_types}.
+
+        Group conv is excluded.
+        TODO the tensors could be set/filtered in configuration.
 
         Args:
             op_types: The op types whose input tensor will be dumped
 
         Returns:
             A set of tensor names 
-
         """
-
         tensors_to_dump = set()
         model = self.model
         initializers = {i.name: i for i in model.graph.initializer}
@@ -625,15 +620,14 @@ class ONNXRTAugment:
         return tensors_to_dump
 
     def _get_max_per_channel(self, datas: list, percentile):
-        """
-        Get the max values per input channel
+        """Get the max values per input channel.
+
         Args:
             datas: The tensors
             percentile: percentile of calibration to remove outliers
 
         Returns:
             The max values per input channel
-
         """
         permute_datas = []
         for data in datas:
@@ -655,8 +649,10 @@ class ONNXRTAugment:
         return max_per_channels
 
     def _calib_smooth(self, percentile, op_types):
-        """
-        smooth model calibration, mainly get the max info per channel of input tensors
+        """Smooth model calibration.
+
+        Mainly get the max info per channel of input tensors.
+
         Args:
             percentile:Percentile of calibration to remove outliers
             op_types: The op types whose input tensor will be dumped
@@ -664,7 +660,6 @@ class ONNXRTAugment:
         Returns:
             max_vals_per_channel: max values per channel of input tensors
             shape_infos: The shape information of input tensors
-
         """
         # add the input tensors of {op_types} to outputs of the model
         tensors_to_dump = self._get_input_tensor_of_ops(op_types)
@@ -683,8 +678,8 @@ class ONNXRTAugment:
         return max_vals_per_channel, shape_infos
 
     def _input_tensor_2_weights(self, model, tensor_names, op_types):
-        """
-        get the corresponding weights needs to be adjusted later
+        """Get the corresponding weights needs to be adjusted later.
+
         Args:
             model: The onnx model
             tensor_names: The input tensor names
@@ -693,7 +688,6 @@ class ONNXRTAugment:
         Returns:
             input_tensors_2_weights: A dict, key is the input tensor name, value is the corresponding weights
             input_tensors_2_weights_nodes: A dict, key is the input tensor name , value is the corresponding nodes
-
         """
         tensor_to_absorbed_nodes = {}
         for key in tensor_names:
@@ -729,9 +723,11 @@ class ONNXRTAugment:
 
     def _get_smooth_scales_per_op(self, max_vals_per_channel, input_tensors_2_weights,
                                   input_tensors_2_weights_nodes, alpha):
-        """
-        Get the smooth scales for weights,the ops with the same input will share one mul layer
-        TODO support individual scales for each layer
+        """Get the smooth scales for weights.
+
+        The ops with the same input will share one mul layer.
+        TODO support individual scales for each layer.
+
         Args:
             max_vals_per_channel: Max values per channel after calibration
             input_tensors_2_weights: A dict saved input tensor name and its corresponding weights
@@ -741,7 +737,6 @@ class ONNXRTAugment:
         Returns:
             the smooth scales for weights, currently one input tensor only have one scale
         """
-
         scales = {}
         for key in input_tensors_2_weights_nodes.keys():
             nodes = input_tensors_2_weights_nodes[key]
@@ -762,9 +757,11 @@ class ONNXRTAugment:
         return scales
 
     def _get_smooth_scales_per_input(self, max_vals_per_channel, input_tensors_2_weights, alpha):
-        """
-        Get the smooth scales for weights,the ops with the same input will share one mul layer
-        TODO support individual scales for each layer
+        """Get the smooth scales for weights.
+
+        The ops with the same input will share one mul layer.
+        TODO support individual scales for each layer.
+
         Args:
             max_vals_per_channel: Max values per channel after calibration
             input_tensors_2_weights: A dict saved input tensor name and its corresponding weights
@@ -772,7 +769,6 @@ class ONNXRTAugment:
 
         Returns:
             the smooth scales for weights, currently one input tensor only have one scale
-
         """
         scales = {}
         for key in input_tensors_2_weights.keys():
@@ -799,8 +795,10 @@ class ONNXRTAugment:
         return scales
 
     def _insert_smooth_mul_op_per_op(self, scales, shape_infos, input_tensors_2_weights_nodes):
-        """
-        Insert the mul layer before op, each op has one individual Mul layer
+        """Insert the mul layer before op.
+
+        Each op has one individual Mul layer.
+
         Args:
             scales: The smooth scales
             shape_infos: the input tensor shape information
@@ -810,7 +808,6 @@ class ONNXRTAugment:
             new_added_mul_nodes: added Mul layers
             new_init_tensors: added scales tensor
             name_2_nodes: a dict, key is the node name, value is the node
-
         """
         name_2_nodes = {}
         for key in input_tensors_2_weights_nodes.keys():
@@ -852,8 +849,10 @@ class ONNXRTAugment:
         return new_added_mul_nodes, new_init_tensors, name_2_nodes
 
     def _insert_smooth_mul_op_per_input(self, scales, shape_infos, input_tensors_2_weights_nodes):
-        """
-        Insert the mul layer after inupt, the ops with the same input will share one mul layer
+        """Insert the mul layer after inupt.
+
+        The ops with the same input will share one mul layer.
+
         Args:
             scales: The smooth scales
             shape_infos: the input tensor shape information
@@ -862,7 +861,6 @@ class ONNXRTAugment:
         Returns:
             new_added_mul_nodes: added Mul layers
             new_init_tensors: added scales tensor
-
         """
         new_added_mul_nodes = []
         new_init_tensors = []  ##scales_tensor
@@ -896,17 +894,15 @@ class ONNXRTAugment:
         return new_added_mul_nodes, new_init_tensors
 
     def _adjust_weights_per_op(self, model, nodes, scales):
-        """
-        Adjust the weights per input scale, each op has one individual Mul layer
+        """Adjust the weights per input scale.
+
+        Each op has one individual Mul layer.
+
         Args:
             model: The onnx model
             nodes: The nodes whose weights needs to be adjustd
             scales: The input scales
-
-        Returns:
-
         """
-
         name_to_indices = {}
         for index, i in enumerate(model.model.graph.initializer):
             name_to_indices[i.name] = index
@@ -929,15 +925,14 @@ class ONNXRTAugment:
                 model.model.graph.initializer[name_to_indices[input]].CopyFrom(new_tensor)
 
     def _adjust_weights_per_input(self, model, nodes, scales):
-        """
-        Adjust the weights per input scale, the ops with the same input will share one mul layer
+        """Adjust the weights per input scale.
+
+        The ops with the same input will share one mul layer
+
         Args:
             model: The onnx model
             nodes: The nodes whose weights needs to be adjustd
             scales: The input scales
-
-        Returns:
-
         """
         name_to_indices = {}
         for index, i in enumerate(model.model.graph.initializer):
@@ -963,8 +958,9 @@ class ONNXRTAugment:
 
     def augment_smooth_graph(self, alpha=1.0, percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'],
                              scales_per_op=True):
-        """
-        fake input channel quantization, for more details please refer to
+        """Get augmented model with smooth quant.
+
+        Fake input channel quantization, for more details please refer to:
         [1] SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models
         [2] SPIQ: Data-Free Per-Channel Static Input Quantization
         inert Mul op before each conv/matmul with adjusted weights
@@ -978,9 +974,7 @@ class ONNXRTAugment:
 
         Returns:
             model: A modified onnx model
-
         """
-
         max_vals_per_channel, shape_infos = self._calib_smooth(percentile, op_types)
 
         tensor_names = [key for key in max_vals_per_channel.keys()]
