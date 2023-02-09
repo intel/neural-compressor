@@ -145,6 +145,7 @@ class TuneStrategy(object):
         self.last_qmodel = None
         self.best_tune_result = None
         self.best_qmodel = None
+        self.last_qmodel = None
         self.cur_best_acc = self.initial_best_acc() # track the current best accuracy
         self.cur_best_tuning_cfg = {} # track tuning cfg with the current best accuracy
         self.cur_best_qmodel = None   # track quantized model with the current best accuracy
@@ -212,6 +213,7 @@ class TuneStrategy(object):
         trials_count = 0
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
+            self._remove_redundant_qmodel()
             tuning_start_time = time()
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             trials_count += 1
@@ -225,16 +227,18 @@ class TuneStrategy(object):
             logger.debug(tune_cfg)
 
             self.tuning_times += 1
-            self.q_model = self.adaptor.quantize(
+            q_model = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             self.algo.calib_iter = tune_cfg['calib_iteration']
-            self.algo.q_model = self.q_model
+            self.algo.q_model = q_model
             # TODO align the api to let strategy has access to pre_optimized model
             assert self.adaptor.pre_optimized_model
             self.algo.origin_model = self.adaptor.pre_optimized_model
             if self.cfg.quantization.recipes.fast_bias_correction:
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
             self.last_qmodel = self.algo()
+            # remove the algo to avoid it having a reference to qmodel
+            self.algo = None
             assert self.last_qmodel
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
@@ -245,7 +249,7 @@ class TuneStrategy(object):
             saved_last_tune_result = copy.deepcopy(self.last_tune_result)
             self._add_tuning_history(saved_tune_cfg,
                                     saved_last_tune_result,
-                                    q_config=self.q_model.q_config)
+                                    q_config=q_model.q_config)
             self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
             self.tune_cfg = tune_cfg
             now_time = time()
@@ -280,7 +284,16 @@ class TuneStrategy(object):
                         self.best_tune_result = best_result
                     self._dump_tuning_process_statistics()
                 break
-
+            
+    def _remove_redundant_qmodel(self):
+        """Remove the redundant quantized model to reduce memory use.
+        
+        During the tuning process, the strategy only keeps the best tuning config
+        instead of the best quantized model to reduce memory use.
+        """
+        self.last_qmodel = None
+        self.best_qmodel = None
+        self.cur_best_qmodel = None
 
     def _fallback_started(self):
         self.fallback_start_point = self.tuning_times
@@ -858,8 +871,6 @@ class TuneStrategy(object):
         need_stop = False
         if self.cfg.tuning.exit_policy.performance_only or \
             self.objectives.compare(self.best_tune_result, self.baseline):
-            del self.best_tune_result
-            del self.best_qmodel
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
             logger.debug(f"*** Update the best qmodel with the result {self.best_tune_result}")
