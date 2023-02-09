@@ -19,7 +19,7 @@ pip install -r requirements.txt
 ```bash
 ./launch.sh (torch/ipex) BS CORES_PER_INSTANCE (fp32/bf16) (default/jemalloc/tcmalloc) STEPS SCALE_GUIDE RESOLUTION
 ```
-For example (real-time):
+## For example (real-time):
 PyTorch
 ```bash
 ./launch.sh torch 1 4 fp32 default 20 7.5 512
