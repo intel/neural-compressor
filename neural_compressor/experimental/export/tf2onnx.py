@@ -17,9 +17,10 @@
 """Helper functions to export model from TensorFlow to ONNX."""
 
 from neural_compressor.utils import logger
-import tf2onnx as t2o
+from neural_compressor.utils.utility import LazyImport
 import re
 
+t2o = LazyImport('tf2onnx')
 
 def _split_nodename_and_shape(name):
     """Split input name with shape into name and shape."""

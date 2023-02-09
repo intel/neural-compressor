@@ -25,10 +25,11 @@ from packaging.version import Version
 from tensorflow.core.framework import tensor_pb2, node_def_pb2
 
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
-from neural_compressor.utils.utility import dump_elapsed_time
+from neural_compressor.utils.utility import dump_elapsed_time, LazyImport
 from .graph_rewriter.onnx import tf2onnx_utils as utils
 from .graph_rewriter.onnx.onnx_graph import OnnxGraph
-import tf2onnx as t2o
+
+t2o = LazyImport('tf2onnx')
 
 logger = logging.getLogger("neural_compressor")
 
