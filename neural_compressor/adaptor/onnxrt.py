@@ -524,7 +524,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 'ENABLE_BASIC': ort.GraphOptimizationLevel.ORT_ENABLE_BASIC,
                 'ENABLE_EXTENDED': ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
                 'ENABLE_ALL': ort.GraphOptimizationLevel.ORT_ENABLE_ALL}
-        if options.onnxrt.graph_optimization.level is not None:
+        if not isinstance(self.query_handler.get_graph_optimization(), list):
+            level = self.query_handler.get_graph_optimization()
+        elif options.onnxrt.graph_optimization.level is not None:
             level = options.onnxrt.graph_optimization.level
         elif self.recipes.get('graph_optimization_level', None) is not None:
             level = self.recipes['graph_optimization_level']
@@ -1226,6 +1228,11 @@ class ONNXRTQuery(QueryBackendCapability):
             return self.cur_config['ops'][precision]
         else:
             return []
+
+    def get_graph_optimization(self):
+        """ Get onnxruntime graph optimization level"""
+        level = self.cur_config['graph_optimization']['level']
+        return level
 
     def get_fallback_list(self):
         return list(self.cur_config['ops'].keys() - self.cur_config['capabilities'].keys())

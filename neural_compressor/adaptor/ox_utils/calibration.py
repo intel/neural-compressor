@@ -599,7 +599,7 @@ class ONNXRTAugment:
         return False
 
     def _get_input_tensor_of_ops(self, op_types=['MatMul', 'Linear', 'Conv']):
-        f"""
+        """
         Traverse the graph and get all the data tensors flowing into layers of {op_types}, group conv is excluded
         TODO the tensors could be set/filtered in configuration
 
