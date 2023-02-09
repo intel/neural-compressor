@@ -2522,4 +2522,6 @@ VMware
 todo
 gui
 PostPostTrainingQuantConfig
+MobilenetV
+InceptionResnetV
 zalandoresearch
