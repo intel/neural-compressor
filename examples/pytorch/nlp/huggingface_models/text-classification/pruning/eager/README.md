@@ -1,8 +1,18 @@
-## Examples
-we have provided several pruning examples, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.
-### [Glue](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning)
+Step-by-Step
+============
+This document describes the step-by-step instructions for reproducing the pruning for Huggingface models.
 
-We can train a sparse model with N:M(2:4) pattern on mrpc and sst2:
+# Prerequisite
+## Environment
+```shell
+# install dependencies
+cd examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager
+pip install -r requirements.txt
+```
+
+# Pruning
+## 1. Train Sparse Model
+Train a sparse model with N:M(2:4) pattern on mrpc and sst2:
 ```shell
 python3 ./run_glue_no_trainer.py \
         --model_name_or_path "/path/to/bertmini/dense_finetuned_model" \
@@ -42,7 +52,7 @@ python3 ./run_glue_no_trainer.py \
         --pruning_frequency 500
 ```
 
-We can also choose a NxM (4x1) pattern on mrpc and sst2:
+NxM (4x1) as pruning pattern on mrpc and sst2:
 ```shell
 python3 ./run_glue_no_trainer.py \
         --model_name_or_path "/path/to/bertini/dense_finetuned_model" \
@@ -82,7 +92,7 @@ python3 ./run_glue_no_trainer.py \
         --pruning_frequency 500
 ```
 
-Per-channel pruning is also supported on mrpc and sst2.
+Per-channel pruning on mrpc and sst2.
 ```shell
 python3 ./run_glue_no_trainer.py \
         --model_name_or_path "/path/to/bertmini/dense_finetuned_model" \
@@ -122,7 +132,7 @@ python3 ./run_glue_no_trainer.py \
         --pruning_frequency 500
 ```
 
- Distilbert-base-uncased model pruning is supported on mrpc as following:
+ Distilbert-base-uncased model pruning on mrpc:
  ```shell
       python run_glue_no_trainer.py \
         --model_name_or_path "path/to/distilbert-base-uncased/dense_finetuned_model" \
@@ -142,9 +152,9 @@ python3 ./run_glue_no_trainer.py \
         --pruning_pattern "4x1" \
         --pruning_frequency 50 \
 ```
-2:4 sparsity is similar to the above, only the target_sparsity and pruning_pattern need to be changed.
+2:4 sparsity is similar to the above examples, only the target_sparsity and pruning_pattern need to be changed.
 
-To try to train a sparse model in mixed pattern, local pruning config can be set as follows:
+To try to train a sparse model in mixed pattern, the local pruning config can be set as follows:
 ```python
 pruning_configs=[
         {
@@ -168,7 +178,8 @@ pruning_configs=[
 ]
 
 ```
-Please be aware that when the keywords appear in both global and local settings, we select the **local** settings as priority.
+
+Please be aware that when keywords appear in both the global and the local settings, we select the **local** settings as priority.
 ```shell
 python3 ./run_glue_no_trainer_mixed.py \
         --model_name_or_path "/path/to/dense_finetuned_model/" \
@@ -210,9 +221,10 @@ python run_glue_no_trainer.py \
         --num_train_epochs 10 \
         --output_dir "./dense_sst2_bertmini"
 ```
-### Results
-The snip-momentum pruning method is used by default, and the initial dense model is fine-tuned.
-#### MRPC
+Results
+=======
+Please be aware that when the keywords appear in both global and local settings, the **local** settings are given priority.The snip-momentum pruning method is used by default, and the initial dense model is fine-tuned.
+### MRPC
 |  Model  | Dataset  | Sparsity pattern |Element-wise/matmul, Gemm, conv ratio | Dense Accuracy (mean/max) | Sparse Accuracy (mean/max) | Relative drop |
 |  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: |
 | Bert-Mini | MRPC |  4x1  | 0.8804 | 0.8619/0.8752 | 0.8610/0.8722 | -0.34% |
@@ -221,14 +233,14 @@ The snip-momentum pruning method is used by default, and the initial dense model
 | Distilbert-base-uncased | MRPC |  4x1  | 0.8992 | 0.9026 |0.8985 | -0.46% |
 | Distilbert-base-uncased | MRPC |  2:4  | 0.5000 | 0.9026 | 0.9088 | +0.69% |
 
-#### SST-2
+### SST-2
 |  Model  | Dataset  |  Sparsity pattern |Element-wise/matmul, Gemm, conv ratio | Dense Accuracy (mean/max) | Sparse Accuracy (mean/max)| Relative drop|
 |  :----:  | :----:  | :----: | :----: |:----:|:----:| :----: |
 | Bert-Mini | SST-2 |  4x1  | 0.8815 | 0.8660/0.8761 | 0.8651/0.8692 | -0.79% |
 | Bert-Mini | SST-2 |  2:4  | 0.4795 | 0.8660/0.8761 | 0.8731/0.8773 | +0.14% |
 | Bert-Mini | SST-2 |  per channel  | 0.53 | 0.8660/0.8761 | 0.8651/0.8692 | -0.79% |
 
-## References
+# References
 * [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
 * [Knowledge Distillation with the Reused Teacher Classifier](https://arxiv.org/abs/2203.14001)
 

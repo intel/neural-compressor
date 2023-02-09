@@ -49,11 +49,11 @@ flags.DEFINE_string(
 flags.DEFINE_integer(
     'batch_size', 32, 'batch_size')
 
-from neural_compressor.metric.metric import TensorflowTopK
-from neural_compressor.data.transforms.transform import ComposeTransform
-from neural_compressor.data.datasets.dataset import TensorflowImageRecord
-from neural_compressor.data.transforms.imagenet_transform import LabelShift
-from neural_compressor.data.transforms.imagenet_transform import TensorflowResizeCropImagenetTransform
+from neural_compressor.metric import TensorflowTopK
+from neural_compressor.data import ComposeTransform
+from neural_compressor.data import TensorflowImageRecord
+from neural_compressor.data import LabelShift
+from neural_compressor.data import TensorflowResizeCropImagenetTransform
 
 def prepare_data(root):
     """
@@ -95,7 +95,7 @@ def evaluate(model):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
-    from neural_compressor.model.model import Model
+    from neural_compressor.model import Model
     model = Model(model)
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
@@ -127,7 +127,7 @@ def evaluate(model):
         latency = np.array(latency_list).mean() / FLAGS.batch_size
         return latency
 
-    from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
+    from neural_compressor.data import DefaultDataLoader
     dataset = TensorflowImageRecord(root=FLAGS.dataset_location, transform=ComposeTransform(transform_list=[
             TensorflowResizeCropImagenetTransform(height=224, width=224, mean_value=[123.68, 116.78, 103.94])]))
     dataloader = DefaultDataLoader(dataset, batch_size=FLAGS.batch_size)

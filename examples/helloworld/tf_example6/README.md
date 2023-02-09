@@ -1,11 +1,17 @@
 tf_example6 example
 =====================
+
+Step-by-Step
+============
+
 This example is used to demonstrate how to use default user-facing APIs to quantize a model.
 
+## Prerequisite
 ### 1. Installation
 ```shell
 pip install -r requirements.txt
 ```
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 2. Prepare Dataset  
 TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
@@ -16,7 +22,8 @@ We also prepared related scripts in [TF image_recognition example](../../tensorf
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
 
-### 4. Run Command
+## Run
+### 1. Run Command
 * Run quantization
 ```shell
 python test.py --tune --dataset_location=/path/to/imagenet/
@@ -26,7 +33,7 @@ python test.py --tune --dataset_location=/path/to/imagenet/
 python test.py --benchmark --dataset_location=/path/to/imagenet/
 ``` 
 
-### 5. Introduction
+### 2. Introduction
 * We only need to add the following lines for quantization to create an int8 model.
 ```python
     quantized_model = fit(
@@ -39,9 +46,9 @@ python test.py --benchmark --dataset_location=/path/to/imagenet/
                         name='int8.pb',
                         as_text=False)
 ```
-* Run benchmark according to config, use self defined eval_func to test accuracy and performance.
+* Run benchmark, use self defined eval_func to test accuracy and performance.
 ```python
      # Optional, run benchmark 
-    from neural_compressor.model.model import Model
+    from neural_compressor.model import Model
     evaluate(Model('./int8.pb'))
 ```

@@ -828,8 +828,6 @@ def run():
     print("time/loss/accuracy (if enabled):")
 
     if args.tune:
-        from neural_compressor.experimental import Quantization, common
-
         def eval_func(model):
             args.int8 = False if model.ipex_config_path is None else True
             args.int8_configure = "" \
@@ -847,9 +845,7 @@ def run():
         assert args.inference_only, "Please set inference_only in arguments"
         eval_dataloader = DLRM_DataLoader(train_ld)
         from neural_compressor import PostTrainingQuantConfig, quantization
-        conf = PostTrainingQuantConfig(approach="static",
-                                       backend="ipex"
-                                       )
+        conf = PostTrainingQuantConfig(backend="ipex")
         q_model = quantization.fit(
                             dlrm,
                             conf=conf,
@@ -868,15 +864,15 @@ def run():
         args.num_cpu_cores = b_conf.cores_per_instance
 
         def b_func(model):
-            return inference(
+            with torch.no_grad():
+                return inference(
                           args,
                           model,
                           best_acc_test,
                           best_auc_test,
                           test_ld
                         )
-        with torch.no_grad():
-            benchmark.fit(dlrm, b_conf, b_func=b_func)
+        benchmark.fit(dlrm, b_conf, b_func=b_func)
         exit(0)
 
     if args.accuracy_only:

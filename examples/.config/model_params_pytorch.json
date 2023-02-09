@@ -197,13 +197,11 @@
       "new_benchmark": false
     },
     "yolo_v3": {
-      "model_src_dir": "object_detection/yolo_v3/quantization/ptq/eager",
+      "model_src_dir": "object_detection/yolo_v3/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset/pytorch/coco_data_yolo",
       "input_model": "/tf_dataset/pytorch/coco_data_yolo/yolov3.weights",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
+      "main_script": "test.py",
       "batch_size": 100,
-      "new_benchmark": false
     },
     "bert_base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",

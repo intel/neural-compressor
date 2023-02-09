@@ -55,5 +55,8 @@ def record_output(output, name, output_process, student=False):
 def get_activation(name, output_process='', student=False):
     """Get a hook for getting activation."""
     def hook(model, input, output):
-        return record_output(output, name, output_process, student=student)
+        if model.training or not student:
+            return record_output(output, name, output_process, student=student)
+        else:
+            return output
     return hook

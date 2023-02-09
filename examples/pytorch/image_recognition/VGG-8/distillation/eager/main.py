@@ -191,7 +191,7 @@ def main():
     compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
     train(train_loader, model, scheduler, compression_manager, best_prec1, criterion, val_loader)
-    
+
     # change to framework model for further use
     model = model.model
 

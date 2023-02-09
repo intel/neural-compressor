@@ -1,9 +1,9 @@
 import tensorflow as tf
 
-from neural_compressor.data.datasets.dataset import TensorflowImageRecord
-from neural_compressor.data.transforms.imagenet_transform import BilinearImagenetTransform
-from neural_compressor.data.transforms.transform import ComposeTransform
-from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
+from neural_compressor.data import TensorflowImageRecord
+from neural_compressor.data import BilinearImagenetTransform
+from neural_compressor.data import ComposeTransform
+from neural_compressor.data import DefaultDataLoader
 from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig
 
@@ -21,7 +21,6 @@ eval_dataset = TensorflowImageRecord(root=FLAGS.dataset_location, transform=Comp
 eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
 
 def main():
-
     config = PostTrainingQuantConfig(calibration_sampling_size=[20])
     q_model = fit(
         model="./mobilenet_v1_1.0_224_frozen.pb",
@@ -30,5 +29,4 @@ def main():
         eval_dataloader=eval_dataloader)
 
 if __name__ == "__main__":
-
     main()

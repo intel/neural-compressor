@@ -406,7 +406,7 @@ models = [
     # centernet_hg104
     {
         'model_name': 'centernet_hg104',
-        'input': {'input_tensor': generate_data([224, 224, 3]),},
+        'input': {'input_tensor': generate_data([224, 224, 3], input_dtype="uint8"),},
         'output': ['Identity'],
     },
 ]

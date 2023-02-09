@@ -1,14 +1,14 @@
 Step-by-Step
 ============
 
-This document list steps of reproducing Intel Optimized PyTorch ssd_resnet34 models tuning results via Neural Compressor.
+This document lists steps of reproducing Intel Optimized PyTorch ssd_resnet34 models tuning results via Neural Compressor.
 
 Our example comes from MLPerf Inference Benchmark Suite
 
 
 # Prerequisite
 
-### 1. Installation
+## 1. Environment
 
 PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to use Python 3.8.
 
@@ -16,6 +16,7 @@ PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to
 cd examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/fx
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 Check your gcc version with command : **gcc -v**
 
@@ -25,7 +26,7 @@ GCC5 or above is needed.
   bash prepare_loadgen.sh
   ```
 
-### 2. Prepare Dataset
+## 2. Prepare Dataset
 
 - Step1: Download COCO2017 dataset and extract it.
 - Step2: Upscale COCO2017 dataset image size into 1200x1200 with prepare_dataset.sh
@@ -42,16 +43,16 @@ GCC5 or above is needed.
   Make sure origin_dataset (COCO2017) have two folder: val2017 and annotations.
 
 
-### 3. Prepare pre-trained model
+## 3. Prepare pre-trained model
 
   ```shell
   cd examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/fx
   wget https://zenodo.org/record/3236545/files/resnet34-ssd1200.pytorch
   ```
 
-# Run
+# Quantization
 
-### 1. Enable ssd_resnet34 example with the auto dynamic quantization strategy of Neural Compressor.
+## 1. Enable ssd_resnet34 example with the auto dynamic quantization strategy of Neural Compressor.
 
   The changes made are as follows:
   1. edit python/main.py:
@@ -59,15 +60,15 @@ GCC5 or above is needed.
   2. edit python/model/ssd_r34.py:
     we wrap functions with @torch.fx.wrap to avoid ops cannot be traced by fx mode.
 
-### 2. To get the tuned model and its accuracy: 
+## 2. To get the tuned model and its accuracy:
 
     bash run_tuning.sh  --topology=ssd-resnet34 --dataset_location=./convert_dataset --input_model=./resnet34-ssd1200.pytorch  --output_model=./saved_results
 
-### 3. To get the benchmark of tuned model, includes Batch_size and Throughput: 
+## 3. To get the benchmark of tuned model, includes Batch_size and Throughput:
 
     bash run_benchmark.sh --topology=ssd-resnet34 --dataset_location=./convert_dataset --input_model=./resnet34-ssd1200.pytorch --config=./saved_results --mode=performance --int8=true/false
 
-### 4. The following is the brief output information:
+## 4. The following is the brief output information:
 
 Left part is accuracy/percentage, right part is time_usage/second.
 

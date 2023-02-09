@@ -52,12 +52,12 @@ flags.DEFINE_integer(
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
-from neural_compressor.metric.metric import TensorflowTopK
-from neural_compressor.data.datasets.dataset import TensorflowImageRecord
-from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
-from neural_compressor.data.transforms.transform import ComposeTransform
-from neural_compressor.data.transforms.imagenet_transform import LabelShift
-from neural_compressor.data.transforms.imagenet_transform import BilinearImagenetTransform
+from neural_compressor.metric import TensorflowTopK
+from neural_compressor.data import TensorflowImageRecord
+from neural_compressor.data import DefaultDataLoader
+from neural_compressor.data import ComposeTransform
+from neural_compressor.data import LabelShift
+from neural_compressor.data import BilinearImagenetTransform
 
 eval_dataset = TensorflowImageRecord(root=FLAGS.eval_data, transform=ComposeTransform(transform_list= \
                 [BilinearImagenetTransform(height=299, width=299)]))
@@ -130,7 +130,7 @@ def main(_):
             conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
-            from neural_compressor.model.model import Model
+            from neural_compressor.model import Model
             model = Model(FLAGS.input_model).model
             accuracy = evaluate(model)
             print('Batch size = %d' % FLAGS.batch_size)

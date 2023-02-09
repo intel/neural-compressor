@@ -912,16 +912,6 @@ def main():
         confs.append(p_conf)
 
     if args.do_quantization:
-        # transforming the student model to fx mode for QAT
-        from transformers.utils.fx import symbolic_trace
-        for input in train_dataloader:
-            input_names = list(input.keys())
-            if 'teacher_logits' in input_names:
-                input_names.remove('teacher_logits')
-            break
-        model = symbolic_trace(accelerator.unwrap_model(model), input_names=input_names, \
-                               batch_size=args.batch_size, sequence_length=args.max_seq_length)
-                               
         from neural_compressor import QuantizationAwareTrainingConfig
         q_conf = QuantizationAwareTrainingConfig()
         confs.append(q_conf)

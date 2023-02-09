@@ -193,13 +193,13 @@ See the [tensorflow.py](https://github.com/intel/neural-compressor/tree/master/n
 
 * From the **GRAPHS** tab, select "baseline/." in the "Run" box and find the first 'Conv2d' op after 'input' op. The op name is "v0/cg/conv0/Relu":
 
-![TensorBoard Baseline](./_static/imgs/tensorboard_baseline_v0_cg_conv0.png "TensorBoard Baseline")
+![TensorBoard Baseline](./imgs/tensorboard_baseline_v0_cg_conv0.png "TensorBoard Baseline")
 
 * From the **GRAPHS** tab, select "tune_1/." in the "Run" box and find the first 'Conv2d' op after 'input' op. The tensor name is 'v0/cg/conv0/conv2d/Conv2D_eightbit_requantize':
 
-![TensorBoard Tuning](./_static/imgs/tensorboard_tune_1_v0_cg_conv0.png "TensorBoard Tuning")
+![TensorBoard Tuning](./imgs/tensorboard_tune_1_v0_cg_conv0.png "TensorBoard Tuning")
 
 
 * Switch to the **HISTOGRAMS** tab. Click the 'v0/cg/conv0' op name in the search box. TensorBoard groups the tensors with the same op name together so you can compare the tensor of baseline 'v0/cg/conv0/Relu' with the tensor of tune_1 'v0/cg/conv0/conv2d/Conv2D_eightbit_requantize_int8.output'. Note that the tensor name can be changed after quantization, so group the tensor by op name and compare. From the chart below, we can see that the histogram of the first conv2d output tensor are different. This is due to a known TensorFlow issue. After filtering the 'v0/cg/conv0/conv2d/Conv2D' op by adding "op_wise" in the yaml file, the issue disappears.  
  
-![TensorBoard Histogram](./_static/imgs/tensorboard_v0_cg_conv0_histogram.png "TensorBoard Histogram")
+![TensorBoard Histogram](./imgs/tensorboard_v0_cg_conv0_histogram.png "TensorBoard Histogram")

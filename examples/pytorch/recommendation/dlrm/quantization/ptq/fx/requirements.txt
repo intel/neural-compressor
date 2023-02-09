@@ -4,5 +4,4 @@ pydot
 neural-compressor
 scikit-learn
 tqdm
---find-links https://download.pytorch.org/whl/torch_stable.html
-torch>=1.8.0+cpu
+torch>=1.9.0

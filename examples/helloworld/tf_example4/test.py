@@ -1,5 +1,5 @@
 from neural_compressor.data import Datasets
-from neural_compressor.data.dataloaders.dataloader import DataLoader
+from neural_compressor.data import DataLoader
 from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig
 
@@ -18,5 +18,4 @@ def main():
         calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset, batch_size=1))
 
 if __name__ == "__main__":
-
     main()

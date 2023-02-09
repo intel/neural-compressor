@@ -20,7 +20,7 @@ class TestConvAddRelu(unittest.TestCase):
         conv_bias = tf.compat.v1.get_variable("bias", [32],
                                               initializer=tf.compat.v1.random_normal_initializer())
         conv1 = tf.nn.conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="SAME")
-        conv_bias = tf.math.add(conv1, conv_bias)
+        conv_bias = tf.nn.bias_add(conv1, conv_bias)
         relu = tf.nn.relu(conv_bias, name='Relu_1')
         op_wise_sequences = TensorflowQuery(local_config_file=os.path.join(
             os.path.dirname(neural_compressor.__file__), "adaptor/tensorflow.yaml")).get_eightbit_patterns()
@@ -30,9 +30,7 @@ class TestConvAddRelu(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[relu.name.split(':')[0]])
-            for i in output_graph_def.node:
-                if i.op.find('Add') != -1:
-                    i.op = 'Add'
+
             output_graph_def = QuantizeGraphHelper.remove_training_nodes(
                 output_graph_def, protected_nodes=[relu.name.split(':')[0]])
             inputs = [x.name.split(':')[0]]

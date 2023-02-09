@@ -5,7 +5,7 @@ This document describes the step-by-step instructions for reproducing torchaudio
 
 ## Prerequisite
 
-### 1. Installation
+### 1. Environment
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
@@ -14,6 +14,7 @@ pip install neural-compressor
 cd examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 2. Prepare Dataset
 

@@ -11,9 +11,9 @@ Model
 ## Introduction
 
 The Neural Compressor Model feature is used to encapsulate the behavior of model building and saving. By simply providing information such as different model formats and framework_specific_info, Neural Compressor performs optimizations and quantization on this model object and returns a Neural Compressor Model object for further model persistence or benchmarking. A Neural Compressor Model helps users to maintain necessary model information which is required during optimization and quantization such as the input/output names, workspace path, and other model format knowledge. This helps unify the features gap brought by different model formats and frameworks.
-<a target="_blank" href="./_static/imgs/inc_model.png" text-align:center>
+<a target="_blank" href="./imgs/inc_model.png" text-align:center>
     <center> 
-        <img src="./_static/imgs/model.png" alt="Architecture" width=480 height=200> 
+        <img src="./imgs/model.png" alt="Architecture" width=480 height=200> 
     </center>
 </a>
 

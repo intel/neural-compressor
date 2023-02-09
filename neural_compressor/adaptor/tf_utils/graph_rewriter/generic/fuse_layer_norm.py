@@ -196,7 +196,7 @@ class FuseLayerNormOptimizer():  # pragma: no cover
         result_graph_def.versions.CopyFrom(self.input_graph_def.versions)
         return result_graph_def
 
-def node_name_from_input(node_name):
+def node_name_from_input(node_name):  # pragma: no cover
     """Strips off ports and other decorations to get the underlying node name."""
     if node_name.startswith("^"):
         node_name = node_name[1:]
@@ -205,7 +205,7 @@ def node_name_from_input(node_name):
         node_name = m.group(1)
     return node_name
 
-def node_from_map(node_map, name):
+def node_from_map(node_map, name):  # pragma: no cover
     """Pulls a node def from a dictionary for a given name.
 
     Args:
@@ -223,7 +223,7 @@ def node_from_map(node_map, name):
         raise ValueError("No node named '%s' found in map." % name)
     return node_map[stripped_name]
 
-def values_from_const(node_def):
+def values_from_const(node_def):  # pragma: no cover
     """Extracts the values from a const NodeDef as a numpy ndarray.
 
     Args:

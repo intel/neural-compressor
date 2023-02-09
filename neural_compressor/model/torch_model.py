@@ -162,10 +162,10 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
         """
         # TODO: copy tensor option to new tensor is better
         device = next(self._model.parameters()).device 
-        new_tensor = torch.tensor(new_tensor).float()
+        new_tensor = torch.tensor(new_tensor).float().to(device)
         module_index = '.'.join(tensor_name.split('.')[:-1])
         module = dict(self._model.named_modules())[module_index]
-        setattr(module, tensor_name.split('.')[-1], torch.nn.Parameter(new_tensor.to(device)))
+        getattr(module, tensor_name.split('.')[-1]).data = new_tensor.data
 
     def update_gradient(self, grad_name, new_grad):
         """Update grad value.
@@ -662,10 +662,15 @@ class PyTorchModel(PyTorchBaseModel):
         # Quantization
         quant_format = ortq.QuantFormat.QOperator if quant_format != 'QDQ' else ortq.QuantFormat.QDQ
 
+        REDUCE_RANGE = self.q_config['reduce_range']
+        if REDUCE_RANGE:
+            logger.info("Reduce range is {}".format(str(REDUCE_RANGE)))
+
         if 'dynamic' in self.q_config['approach']:
             ortq.quantize_dynamic(fp32_path,
                                 save_path,
                                 per_channel=True,
+                                reduce_range=REDUCE_RANGE,
                                 weight_type=weight_type,
                                 nodes_to_quantize=quantize_nodes,
                                 nodes_to_exclude=[],
@@ -684,6 +689,7 @@ class PyTorchModel(PyTorchBaseModel):
                                 calib_datareader,
                                 quant_format=quant_format,
                                 per_channel=True,
+                                reduce_range=REDUCE_RANGE,
                                 weight_type=weight_type,
                                 activation_type=activation_type,
                                 nodes_to_quantize=quantize_nodes,

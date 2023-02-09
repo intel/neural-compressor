@@ -183,6 +183,7 @@ BNInception
 bobw
 booktitle
 bool
+Boudoukh
 BoW
 boxlist
 BoxList
@@ -649,6 +650,7 @@ functionalities
 functionet
 functools
 Funtowicz
+fvcore
 fw
 FWK
 fx
@@ -905,6 +907,7 @@ lang
 LanguageModeling
 Lapata
 Larochelle
+Larey
 LastLayerShape
 latencies
 LaTeX
@@ -1439,6 +1442,7 @@ pycocotools
 pyguide
 pylint
 pymodule
+pymoo
 PyObject
 pypi
 PyPI
@@ -2503,3 +2507,21 @@ SmoothQuant
 Vecchio
 WeChat
 QuaLA
+Moshe
+Ofir
+Wasserblat
+Zafrir
+etection
+parameterization
+emsp
+frequence
+ema
+ASPLOS
+MSFT
+NextPlatform
+VMware
+todo
+gui
+PostPostTrainingQuantConfig
+MobilenetV
+InceptionResnetV

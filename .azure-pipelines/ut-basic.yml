@@ -41,6 +41,19 @@ stages:
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut-coverage-adaptor"
 
+  - stage: Pruning
+    displayName: Unit Test Pruning
+    dependsOn: []
+    jobs:
+      - job:
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "run_basic_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-pruning"
+
   - stage: TFNewAPI
     displayName: Unit Test tf newAPI
     dependsOn: []
@@ -107,6 +120,20 @@ stages:
               utArtifact: "ut-coverage-adaptor-base"
               repo: $(REPO)
 
+  - stage: Pruning_base
+    displayName: Unit Test Pruning baseline
+    dependsOn: []
+    jobs:
+      - job:
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "run_basic_pruning"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut-coverage-pruning-base"
+              repo: $(REPO)
+
   - stage: TFNewAPI_base
     displayName: Unit Test tf newAPI baseline
     dependsOn: []
@@ -167,7 +194,7 @@ stages:
     displayName: "Coverage Combine"
     pool:
       vmImage: "ubuntu-latest"
-    dependsOn: [Adaptor, TFNewAPI, IPEX, ITEX, Others, Adaptor_base, TFNewAPI_base, IPEX_base, ITEX_base, Others_base]
+    dependsOn: [Adaptor, Pruning, TFNewAPI, IPEX, ITEX, Others, Adaptor_base, Pruning_base, TFNewAPI_base, IPEX_base, ITEX_base, Others_base]
     jobs:
       - job: CollectDatafiles
         steps:

@@ -16,7 +16,7 @@ pip install neural-compressor
 ```shell
 pip install tensorflow
 ```
-> Note: Supported Tensorflow [Version](../../../../../../README.md#validated-software-environment).
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 3. Install Intel Extension for Tensorflow
 
@@ -154,16 +154,16 @@ After prepare step is done, we add tune code to generate quantized model.
     graph = load_graph(FLAGS.input_graph)
     from neural_compressor import quantization
     from neural_compressor.config import PostTrainingQuantConfig
-    from neural_compressor.data.dataloaders.dataloader import DataLoader
+    from neural_compressor.data import DataLoader
     dataset = Dataset(FLAGS.input_file, FLAGS.vocab_file)
     calib_dataloader = DataLoader(dataset = dataset,
                                   framework ='tensorflow',
                                   collate_fn = collate_fn,
                                   batch_size = FLAGS.batch_size)
-                                    
+
     conf = PostTrainingQuantConfig(inputs=['input_tokens'],
                                    outputs=['model/Transformer/strided_slice_15'],
-                                   calibration_sampling_size=[500])       
+                                   calibration_sampling_size=[500])
     q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
                 eval_func=eval_func)
     try:
