@@ -148,7 +148,6 @@ class TuneStrategy(object):
         self.last_qmodel = None
         self.cur_best_acc = self.initial_best_acc() # track the current best accuracy
         self.cur_best_tuning_cfg = {} # track tuning cfg with the current best accuracy
-        self.cur_best_qmodel = None   # track quantized model with the current best accuracy
         self.re_quant = False
 
         self.capability = self.adaptor.query_fw_capability(model)
@@ -238,7 +237,7 @@ class TuneStrategy(object):
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
             self.last_qmodel = self.algo()
             # remove the algo to avoid it having a reference to qmodel
-            self.algo = None
+            self.algo.q_model = None
             assert self.last_qmodel
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
@@ -293,7 +292,6 @@ class TuneStrategy(object):
         """
         self.last_qmodel = None
         self.best_qmodel = None
-        self.cur_best_qmodel = None
 
     def _fallback_started(self):
         self.fallback_start_point = self.tuning_times
@@ -671,26 +669,22 @@ class TuneStrategy(object):
         acc, _ = self.last_tune_result
         if self.cur_best_tuning_cfg is None:
             self.cur_best_tuning_cfg = copy.deepcopy(op_tuning_cfg)
-            self.cur_best_qmodel = self.last_qmodel
         if not isinstance(acc, list) and ((self.higher_is_better and acc >= self.cur_best_acc) \
             or (not self.higher_is_better and acc <= self.cur_best_acc)):
             self.cur_best_acc = acc
             self.cur_best_tuning_cfg = copy.deepcopy(op_tuning_cfg)
-            self.cur_best_qmodel = self.last_qmodel
         elif len(self.metric_name) > 1 and self.metric_weight is not None:
             acc = np.mean(np.array(acc) * self.metric_weight)
             if (self.higher_is_better and acc >= self.cur_best_acc) or \
                 (not self.higher_is_better and acc <= self.cur_best_acc):
                 self.cur_best_acc = acc
                 self.cur_best_tuning_cfg = copy.deepcopy(op_tuning_cfg)
-                self.cur_best_qmodel = self.last_qmodel
         elif len(self.metric_name) > 1 and self.metric_weight is None:
             if all([acc_i >= best_i if higher_is_better else acc_i <= best_i for \
                 acc_i, best_i, higher_is_better in \
                 zip(acc, self.cur_best_acc, self.metric_criterion)]):
                 self.cur_best_acc = acc
                 self.cur_best_tuning_cfg = copy.deepcopy(op_tuning_cfg)            
-                self.cur_best_qmodel = self.last_qmodel
         logger.debug(f"Best acc is {self.cur_best_acc}.")
         return self.cur_best_acc, self.cur_best_tuning_cfg
 
