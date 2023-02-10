@@ -34,7 +34,9 @@ tf = LazyImport('tensorflow')
 def _add_supported_quantized_objects(custom_objects):
   """Map all the quantized objects."""
   from neural_compressor.adaptor.keras_utils.quantizer import Quantize, DeQuantize
-  from neural_compressor.adaptor.keras_utils.quantizer import FakeQuant, QConv2D, QDense
+  from neural_compressor.adaptor.keras_utils.quantizer import FakeQuant
+  from neural_compressor.adaptor.keras_utils.conv2d import QConv2D
+  from neural_compressor.adaptor.keras_utils.dense import QDense
   custom_objects["Quantize"] = Quantize
   custom_objects["DeQuantize"] = DeQuantize
   custom_objects["FakeQuant"] = FakeQuant
@@ -146,16 +148,25 @@ class KerasAdaptor(Adaptor):
                     format(calib_sampling_size, dataloader.batch_size,
                            dataloader.batch_size * iter))
         q_layers = []
-        for idx, layer in enumerate(self.fp32_layers):
+        self.inbound_nodes_map = {}
+        for idx, layer in enumerate(copy.deepcopy(self.fp32_layers)):
           layer_config = layer["config"]
           if layer["class_name"] in ["Conv2D", "Dense"] and \
             layer['config']['name'] in self.quantize_config['op_wise_config']:
               op_config = self.quantize_config['op_wise_config'][layer['config']['name']]
               mode = 'per_channel' if op_config[0] else 'per_tensor'
               #(TODO) support asym/sym
-              fake_quant_name = 'fake_quant_' + str(idx)
-              q_layers.append({'class_name': 'FakeQuant', 
-                  'config': {'mode': 'per_tensor', 'name': fake_quant_name}})
+              fake_q_name = 'fake_quant_' + str(idx)
+              fake_q_layer = {'class_name': 'FakeQuant', 
+                              'name': fake_q_name,
+                              'config': {'mode': 'per_tensor', 'name': fake_q_name}, 
+                              }
+              if 'inbound_nodes' in layer:
+                  fake_q_layer['inbound_nodes'] = layer['inbound_nodes']
+                  layer['inbound_nodes'] = [[[fake_q_name, 0, 0, {}]]]
+                  self.inbound_nodes_map[fake_q_name] = layer
+              
+              q_layers.append(fake_q_layer)
               q_layers.append(layer)
           else:
               q_layers.append(layer)
@@ -199,28 +210,52 @@ class KerasAdaptor(Adaptor):
         config = json_model["config"]
         layers = config["layers"]
         q_layers = []
-        for layer in layers:
+        inbound_reverse_map = {}
+        for idx,  layer in enumerate(layers):
             layer_config = copy.deepcopy(layer['config'])
             if layer['class_name'] == 'FakeQuant':
                 min_value = min(results[layer['config']['name']]['min'])
                 max_value = max(results[layer['config']['name']]['max'])
-                q_layers.append({'class_name': 'Quantize',
-                                 'config': {'min_range': min_value,
-                                            'max_range': max_value,
-                                           }})
-                q_layers.append({'class_name': 'DeQuantize',
-                                 'config': {'min_range': min_value,
-                                            'max_range': max_value,
-                                           }})
-            elif layer['class_name'] == 'Conv2D' or layer['class_name'] == 'Dense':
+                quantize_layer = {'class_name': 'Quantize',
+                                  'name': 'quantize_' + str(idx), 
+                                  'config': {'min_range': min_value,
+                                             'max_range': max_value,
+                                             'name': 'quantize_' + str(idx), 
+                                            }}
+                dequantize_layer = {'class_name': 'DeQuantize',
+                                    'name': 'dequantize_' + str(idx), 
+                                    'config': {'min_range': min_value,
+                                                'max_range': max_value,
+                                                'name': 'dequantize_' + str(idx), 
+                                               }}
+                if 'inbound_nodes' in layer:
+                    quantize_layer['inbound_nodes'] = layer['inbound_nodes']
+                    dequantize_layer['inbound_nodes'] = [[['quantize_' + str(idx), 0, 0, {}]]]
+                    # find the conv/dense layer from fake quant map and 
+                    # change the conv/dense node inbound to dequantize
+                    layer_name = self.inbound_nodes_map[layer['name']]['name']
+                    inbound_reverse_map[layer_name] = [[['dequantize_' + str(idx), 0, 0, {}]]]
+                    
+                q_layers.append(quantize_layer)
+                q_layers.append(dequantize_layer)
+            elif layer['class_name'] in ['Conv2D', 'Dense'] and \
+                layer['config']['name'] in self.quantize_config['op_wise_config']:
                 # index 0 is weight, index 1 is bias
                 q_layer_name = 'Q' + layer['class_name']
+                # this is for inbounds search
+                q_name  = layer['config']['name']
                 kernel = self.layer_weights[layer['config']['name']][0]
                 layer_config['min_value'] = str(kernel.min())
                 layer_config['max_value'] = str(kernel.max())
-                q_layers.append({'class_name': q_layer_name, 'config': layer_config})
+                layer_config['name'] = q_name
+                q_layer = {'class_name': q_layer_name,
+                           'name': q_name,
+                           'config': layer_config}
+                if 'inbound_nodes' in layer:
+                    q_layer['inbound_nodes'] = inbound_reverse_map[layer['name']]
+                q_layers.append(q_layer)
             else:
-                q_layers.append(layer) 
+                q_layers.append(layer)
 
         json_model['config']['layers'] = q_layers
         quantized_model = self._restore_model_from_json(json_model)
@@ -232,7 +267,8 @@ class KerasAdaptor(Adaptor):
         # We need to keep a dictionary of custom objects as our quantized library
         # is not recognized by keras.
         custom_objects = _add_supported_quantized_objects(custom_objects)
-        qmodel = model_from_json(json.dumps(json_model), custom_objects=custom_objects)
+        json_model_file = json.dumps(json_model)
+        qmodel = model_from_json(json_model_file, custom_objects=custom_objects)
         qmodel = self._set_weights(qmodel, self.layer_weights)
         return qmodel
 
