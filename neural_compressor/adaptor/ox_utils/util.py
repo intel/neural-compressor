@@ -456,13 +456,16 @@ def find_by_name(name, item_list):
 def get_smooth_scales_per_op(max_vals_per_channel, input_tensors_2_weights,
                               input_tensors_2_weights_nodes, alpha):
     """Get the smooth scales for weights.
+
     The ops with the same input will share one mul layer.
     TODO support individual scales for each layer.
+
     Args:
         max_vals_per_channel: Max values per channel after calibration
         input_tensors_2_weights: A dict saved input tensor name and its corresponding weights
         input_tensors_2_weights_nodes:A dict saved input tensor name and its corresponding weight nodes
         alpha: smooth alpha in paper
+
     Returns:
         the smooth scales for weights, currently one input tensor only have one scale
     """
@@ -487,12 +490,15 @@ def get_smooth_scales_per_op(max_vals_per_channel, input_tensors_2_weights,
 
 def get_smooth_scales_per_input(max_vals_per_channel, input_tensors_2_weights, alpha):
     """Get the smooth scales for weights.
+
     The ops with the same input will share one mul layer.
     TODO support individual scales for each layer.
+
     Args:
         max_vals_per_channel: Max values per channel after calibration
         input_tensors_2_weights: A dict saved input tensor name and its corresponding weights
         alpha: smooth alpha in paper
+
     Returns:
         the smooth scales for weights, currently one input tensor only have one scale
     """
@@ -520,11 +526,14 @@ def get_smooth_scales_per_input(max_vals_per_channel, input_tensors_2_weights, a
 
 def insert_smooth_mul_op_per_input(scales, shape_infos, input_tensors_2_weights_nodes):
     """Insert the mul layer after inupt.
+
     The ops with the same input will share one mul layer.
+
     Args:
         scales: The smooth scales
         shape_infos: the input tensor shape information
         input_tensors_2_weights_nodes:  A dict
+
     Returns:
         new_added_mul_nodes: added Mul layers
         new_init_tensors: added scales tensor
@@ -541,12 +550,14 @@ def insert_smooth_mul_op_per_input(scales, shape_infos, input_tensors_2_weights_
         else:
             assert False, "not support"
         name = key + "_" + "smooth_scale"
-        scale_tensor = create_initializer_tensor(
-            name, scale_factor
-        )
+        scale_tensor = helper.make_tensor(
+            name=name,
+            data_type=onnx_proto.TensorProto.FLOAT,
+            dims=scale_factor.shape,
+            vals=scale_factor.flatten().tolist())
         new_init_tensors.append(scale_tensor)
         mul_output_name = key + "_smooth_output"
-        mul_node = onnx.helper.make_node(
+        mul_node = helper.make_node(
             "Mul",
             inputs=[key, key + "_" + "smooth_scale"],
             outputs=[mul_output_name],
@@ -561,7 +572,9 @@ def insert_smooth_mul_op_per_input(scales, shape_infos, input_tensors_2_weights_
 
 def adjust_weights_per_op(model, nodes, scales):
     """Adjust the weights per input scale.
+
     Each op has one individual Mul layer.
+
     Args:
         model: The onnx model
         nodes: The nodes whose weights needs to be adjustd
@@ -589,7 +602,9 @@ def adjust_weights_per_op(model, nodes, scales):
 
 def adjust_weights_per_input(model, nodes, scales):
     """Adjust the weights per input scale.
+
     The ops with the same input will share one mul layer
+
     Args:
         model: The onnx model
         nodes: The nodes whose weights needs to be adjustd
@@ -618,11 +633,14 @@ def adjust_weights_per_input(model, nodes, scales):
 
 def insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nodes):
     """Insert the mul layer before op.
+
     Each op has one individual Mul layer.
+
     Args:
         scales: The smooth scales
         shape_infos: the input tensor shape information
         input_tensors_2_weights_nodes:  A dict
+
     Returns:
         new_added_mul_nodes: added Mul layers
         new_init_tensors: added scales tensor
@@ -648,12 +666,14 @@ def insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nod
             else:
                 assert False, "not support"
             name = key + "_" + "smooth_scale"
-            scale_tensor = create_initializer_tensor(
-                name, scale_factor
-            )
+            scale_tensor = helper.make_tensor(
+                name=name,
+                data_type=onnx_proto.TensorProto.FLOAT,
+                dims=scale_factor.shape,
+                vals=scale_factor.flatten().tolist())
             new_init_tensors.append(scale_tensor)
             mul_output_name = key + "_smooth_output"
-            mul_node = onnx.helper.make_node(
+            mul_node = helper.make_node(
                 "Mul",
                 inputs=[input_key, name],
                 outputs=[mul_output_name],
@@ -665,20 +685,3 @@ def insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nod
                 if input == input_key:
                     node.input[index] = mul_output_name
     return new_added_mul_nodes, new_init_tensors, name_2_nodes
-
-def create_initializer_tensor(name, tensor_array, data_type): 
-    """A help function to create initializer tensor in onnx graph.
-    Args:
-        name: The name of tensor to be created
-        tensor_array: The numpy array to initialize the tensor
-        data_type: The data type
-    Returns:
-        An onnx tensor
-    """
-    # (TensorProto)
-    initializer_tensor = onnx.helper.make_tensor(
-        name=name,
-        data_type=data_type,
-        dims=tensor_array.shape,
-        vals=tensor_array.flatten().tolist())
-    return initializer_tensor
