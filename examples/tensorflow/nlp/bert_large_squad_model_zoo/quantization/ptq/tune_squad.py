@@ -72,7 +72,7 @@ def evaluate(model, dataloader, metric, postprocess):
                         model.output_tensor[0]
     iteration = -1
     if FLAGS.benchmark and FLAGS.mode == 'performance':
-        iteration = 100
+        iteration = FLAGS.iters
     measurer = Performance()
 
     warmup = 5
@@ -81,7 +81,9 @@ def evaluate(model, dataloader, metric, postprocess):
         assert len(input_tensor) == len(inputs), \
             'inputs len must equal with input_tensor'
         feed_dict = dict(zip(input_tensor, inputs))
+        measurer.start()
         predictions = model.sess.run(output_tensor, feed_dict)
+        measurer.end()
         predictions, labels = postprocess((predictions, labels))
         metric.update(predictions, labels)
         if idx + 1 == iteration:
@@ -123,7 +125,7 @@ def main(_):
         if FLAGS.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(iteration=10, cores_per_instance=4, num_of_instance=7)
+            conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
             fit(FLAGS.input_model, conf, b_func=eval)
         elif FLAGS.mode == 'accuracy':
             acc_result = eval(FLAGS.input_model)

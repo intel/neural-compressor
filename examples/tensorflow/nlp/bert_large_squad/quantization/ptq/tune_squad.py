@@ -72,7 +72,7 @@ def evaluate(model, dataloader, metric, postprocess):
                         model.output_tensor[0]
     iteration = -1
     if FLAGS.benchmark and FLAGS.mode == 'performance':
-        iteration = 100
+        iteration = FLAGS.iters
     measurer = Performance()
 
     warmup = 5
