@@ -2,7 +2,7 @@
 set -x
 
 function main {
-
+  batch_size=32
   init_params "$@"
   run_benchmark
 
