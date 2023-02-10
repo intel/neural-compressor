@@ -103,7 +103,6 @@ class eval_classifier_optimized_graph:
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
 
-            breakpoint()
             def eval(model):
                 if isinstance(model, str):
                     return eval_func_tf(model, eval_dataloader, top1, postprocess)
