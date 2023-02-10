@@ -224,9 +224,13 @@ class TuneStrategy(object):
             logger.debug(tune_cfg)
 
             self.tuning_times += 1
+            self.algo.calib_iter = tune_cfg['calib_iteration']
+            if self.cfg.quantization.recipes.smooth_quant:
+                self.algo.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
+                self.algo.tune_cfg = copy.deepcopy(tune_cfg)
+                self.model = self.algo()
             self.q_model = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            self.algo.calib_iter = tune_cfg['calib_iteration']
             self.algo.q_model = self.q_model
             # TODO align the api to let strategy has access to pre_optimized model
             assert self.adaptor.pre_optimized_model

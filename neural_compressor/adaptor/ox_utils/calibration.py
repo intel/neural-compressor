@@ -539,30 +539,6 @@ class ONNXRTAugment:
 
         return zp_and_scale
 
-    def _create_initializer_tensor(self,
-                                   name: str,
-                                   tensor_array: np.ndarray,
-                                   data_type: onnx.TensorProto = onnx.TensorProto.FLOAT
-                                   ) -> onnx.TensorProto:
-        """A help function to create initializer tensor in onnx graph.
-
-        Args:
-            name: The name of tensor to be created
-            tensor_array: The numpy array to initialize the tensor
-            data_type: The data type
-
-        Returns:
-            An onnx tensor
-        """
-        # (TensorProto)
-        initializer_tensor = onnx.helper.make_tensor(
-            name=name,
-            data_type=data_type,
-            dims=tensor_array.shape,
-            vals=tensor_array.flatten().tolist())
-
-        return initializer_tensor
-
     def _check_is_group_conv(self, node, model):
         """Check the op is group wised or not(depthwise conv is excluded,return false).
 
@@ -584,13 +560,13 @@ class ONNXRTAugment:
                     if attr.name == "group":
                         group = attr.i
                         break
-            ##currently only normal conv and depthwise conv are supported
-            if group > 1:  ##group conv, need to check depthwise or not\
+            # currently only normal conv and depthwise conv are supported
+            if group > 1:  # group conv, need to check depthwise or not
                 weight_name = node.input[1]
                 weight_shape = numpy_helper.to_array(
                     model.graph.initializer[name_to_indices[weight_name]]).shape
                 input_channel = weight_shape.shape[1]
-                if input_channel != 1:  ##TODO need to double check
+                if input_channel != 1:  # TODO need to double check
                     return True
         return False
 
@@ -614,7 +590,7 @@ class ONNXRTAugment:
             if len(op_types) == 0 or node.op_type in op_types:
                 if node.op_type == "Conv" and self._check_is_group_conv(node, model):
                     continue
-                ##also need to check whether the layer has weight
+                # also need to check whether the layer has weight
                 if len(node.input) >= 2 and node.input[1] in initializers.keys():
                     tensors_to_dump.add(node.input[0])
         return tensors_to_dump
@@ -631,7 +607,7 @@ class ONNXRTAugment:
         """
         permute_datas = []
         for data in datas:
-            if len(data.shape) == 3:  ##TODO  mammul batchsize*seq*inchannel, conv:batchsize*inchannle*f*f
+            if len(data.shape) == 3:  # TODO  mammul batchsize*seq*inchannel, conv:batchsize*inchannle*f*f
                 tensor = np.abs(np.reshape(data, (-1, data.shape[-1])))
                 permute_datas.append(tensor)
             elif len(data.shape) == 4:
@@ -648,7 +624,7 @@ class ONNXRTAugment:
         max_per_channels = max_per_channels.astype(np.single)
         return max_per_channels
 
-    def _calib_smooth(self, percentile, op_types):
+    def calib_smooth(self, percentile, op_types):
         """Smooth model calibration.
 
         Mainly get the max info per channel of input tensors.
@@ -676,329 +652,3 @@ class ONNXRTAugment:
             max_vals_per_channel[key] = max_val_per_channel
             shape_infos[key] = output_dicts[key][0].shape
         return max_vals_per_channel, shape_infos
-
-    def _input_tensor_2_weights(self, model, tensor_names, op_types):
-        """Get the corresponding weights needs to be adjusted later.
-
-        Args:
-            model: The onnx model
-            tensor_names: The input tensor names
-            op_types:The op types whose input tensor will be dumped
-
-        Returns:
-            input_tensors_2_weights: A dict, key is the input tensor name, value is the corresponding weights
-            input_tensors_2_weights_nodes: A dict, key is the input tensor name , value is the corresponding nodes
-        """
-        tensor_to_absorbed_nodes = {}
-        for key in tensor_names:
-            tensor_to_absorbed_nodes[key] = []
-        for node in model.model.graph.node:
-            for item in node.input:
-                if item in tensor_names:
-                    tensor_to_absorbed_nodes[item].append(node)
-
-        input_tensors_2_weights = {}
-        input_tensors_2_weights_nodes = {}
-        weight_name_to_init_index = {}
-        for index, i in enumerate(model.model.graph.initializer):
-            weight_name_to_init_index[i.name] = index
-        for key in tensor_to_absorbed_nodes.keys():
-            curr_tensor_to_weight = []
-            curr_tensor_to_weight_nodes = []
-            nodes = tensor_to_absorbed_nodes[key]
-
-            for node in nodes:
-                if node.op_type not in op_types:
-                    continue
-                if len(node.input) >= 2:
-                    input = node.input[1]  ##TODO always dump the index 1 to get the weight
-                    if input in weight_name_to_init_index.keys():
-                        weight = numpy_helper.to_array(model.model.graph.initializer[weight_name_to_init_index[input]])
-                        curr_tensor_to_weight.append(weight)
-                        curr_tensor_to_weight_nodes.append(node)
-
-            input_tensors_2_weights[key] = curr_tensor_to_weight
-            input_tensors_2_weights_nodes[key] = curr_tensor_to_weight_nodes
-        return input_tensors_2_weights, input_tensors_2_weights_nodes
-
-    def _get_smooth_scales_per_op(self, max_vals_per_channel, input_tensors_2_weights,
-                                  input_tensors_2_weights_nodes, alpha):
-        """Get the smooth scales for weights.
-
-        The ops with the same input will share one mul layer.
-        TODO support individual scales for each layer.
-
-        Args:
-            max_vals_per_channel: Max values per channel after calibration
-            input_tensors_2_weights: A dict saved input tensor name and its corresponding weights
-            input_tensors_2_weights_nodes:A dict saved input tensor name and its corresponding weight nodes
-            alpha: smooth alpha in paper
-
-        Returns:
-            the smooth scales for weights, currently one input tensor only have one scale
-        """
-        scales = {}
-        for key in input_tensors_2_weights_nodes.keys():
-            nodes = input_tensors_2_weights_nodes[key]
-            for index, node in enumerate(nodes):
-                name = node.name
-                weight = input_tensors_2_weights[key][index]
-                if len(weight.shape) == 4:  ##conv
-                    if weight.shape[1] == 1:  ##depthwise conv
-                        pass
-                    else:
-                        weight = np.moveaxis(weight, 0, 1)
-                weight = weight.reshape(weight.shape[0], -1)
-                weight_max_per_channel = np.amax(weight, axis=-1)
-                input_power = np.power(max_vals_per_channel[key], alpha)
-                weight_power = np.power(weight_max_per_channel, 1 - alpha)
-                scale = np.clip(input_power / weight_power, a_min=1e-5, a_max=None)
-                scales[name] = scale
-        return scales
-
-    def _get_smooth_scales_per_input(self, max_vals_per_channel, input_tensors_2_weights, alpha):
-        """Get the smooth scales for weights.
-
-        The ops with the same input will share one mul layer.
-        TODO support individual scales for each layer.
-
-        Args:
-            max_vals_per_channel: Max values per channel after calibration
-            input_tensors_2_weights: A dict saved input tensor name and its corresponding weights
-            alpha: smooth alpha in paper
-
-        Returns:
-            the smooth scales for weights, currently one input tensor only have one scale
-        """
-        scales = {}
-        for key in input_tensors_2_weights.keys():
-            weights = input_tensors_2_weights[key]
-            weights_in_channel_max = []
-            for weight in weights:  ##mamul ic*oc, conv oc*ic*k*k
-                if len(weight.shape) == 4:  ##conv
-                    if weight.shape[1] == 1:  ##depthwise conv
-                        pass
-                    else:
-                        weight = np.moveaxis(weight, 0, 1)
-
-                weight = weight.reshape(weight.shape[0], -1)
-                cur_max = np.amax(weight, axis=-1)
-                weights_in_channel_max.append(cur_max)
-
-            weigths_stack = np.stack(weights_in_channel_max, axis=-1)
-            weigths_stack = np.abs(weigths_stack.reshape(weigths_stack.shape[0], -1))
-            weights_max = np.amax(weigths_stack, axis=-1)
-            input_power = np.power(max_vals_per_channel[key], alpha)
-            weight_power = np.power(weights_max, 1 - alpha)
-            scale = np.clip(input_power / weight_power, a_min=1e-5, a_max=None)
-            scales[key] = scale
-        return scales
-
-    def _insert_smooth_mul_op_per_op(self, scales, shape_infos, input_tensors_2_weights_nodes):
-        """Insert the mul layer before op.
-
-        Each op has one individual Mul layer.
-
-        Args:
-            scales: The smooth scales
-            shape_infos: the input tensor shape information
-            input_tensors_2_weights_nodes:  A dict
-
-        Returns:
-            new_added_mul_nodes: added Mul layers
-            new_init_tensors: added scales tensor
-            name_2_nodes: a dict, key is the node name, value is the node
-        """
-        name_2_nodes = {}
-        for key in input_tensors_2_weights_nodes.keys():
-            nodes = input_tensors_2_weights_nodes[key]
-            for node in nodes:
-                name_2_nodes[node.name] = node
-
-        new_added_mul_nodes = []
-        new_init_tensors = []  ##scales_tensor
-        for input_key in input_tensors_2_weights_nodes.keys():
-            shape_info = shape_infos[input_key]
-            nodes = input_tensors_2_weights_nodes[input_key]
-            for node in nodes:
-                key = node.name
-                scale_factor = 1.0 / scales[key]
-                if len(shape_info) == 3 or len(shape_info) == 2:  ##the last dim is input channel
-                    pass
-                elif len(shape_info) == 4:
-                    scale_factor = np.reshape(scale_factor, (1, -1, 1, 1))
-                else:
-                    assert False, "not support"
-                name = key + "_" + "smooth_scale"
-                scale_tensor = self._create_initializer_tensor(
-                    name, scale_factor
-                )
-                new_init_tensors.append(scale_tensor)
-                mul_output_name = key + "_smooth_output"
-                mul_node = onnx.helper.make_node(
-                    "Mul",
-                    inputs=[input_key, name],
-                    outputs=[mul_output_name],
-                    name=key + "_smooth_mul"
-                )
-                new_added_mul_nodes.append(mul_node)
-                node = name_2_nodes[key]
-                for index, input in enumerate(node.input):
-                    if input == input_key:
-                        node.input[index] = mul_output_name
-        return new_added_mul_nodes, new_init_tensors, name_2_nodes
-
-    def _insert_smooth_mul_op_per_input(self, scales, shape_infos, input_tensors_2_weights_nodes):
-        """Insert the mul layer after inupt.
-
-        The ops with the same input will share one mul layer.
-
-        Args:
-            scales: The smooth scales
-            shape_infos: the input tensor shape information
-            input_tensors_2_weights_nodes:  A dict
-
-        Returns:
-            new_added_mul_nodes: added Mul layers
-            new_init_tensors: added scales tensor
-        """
-        new_added_mul_nodes = []
-        new_init_tensors = []  ##scales_tensor
-        for key in scales.keys():
-            scale_factor = 1.0 / scales[key]
-            shape_info = shape_infos[key]
-            if len(shape_info) == 3 or len(shape_info) == 2:  ##the last dim is input channel
-                pass
-            elif len(shape_info) == 4:
-                scale_factor = np.reshape(scale_factor, (1, -1, 1, 1))
-            else:
-                assert False, "not support"
-            name = key + "_" + "smooth_scale"
-            scale_tensor = self._create_initializer_tensor(
-                name, scale_factor
-            )
-            new_init_tensors.append(scale_tensor)
-            mul_output_name = key + "_smooth_output"
-            mul_node = onnx.helper.make_node(
-                "Mul",
-                inputs=[key, key + "_" + "smooth_scale"],
-                outputs=[mul_output_name],
-                name=key + "_smooth_mul"
-            )
-            new_added_mul_nodes.append(mul_node)
-
-            for node in input_tensors_2_weights_nodes[key]:
-                for index, input in enumerate(node.input):
-                    if input == key:
-                        node.input[index] = mul_output_name
-        return new_added_mul_nodes, new_init_tensors
-
-    def _adjust_weights_per_op(self, model, nodes, scales):
-        """Adjust the weights per input scale.
-
-        Each op has one individual Mul layer.
-
-        Args:
-            model: The onnx model
-            nodes: The nodes whose weights needs to be adjustd
-            scales: The input scales
-        """
-        name_to_indices = {}
-        for index, i in enumerate(model.model.graph.initializer):
-            name_to_indices[i.name] = index
-
-        for key in nodes.keys():
-            node = nodes[key]
-            input = node.input[1]  ##TODO
-            if input in name_to_indices.keys():
-                weight = numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]])
-                if len(weight.shape) == 2:
-                    scale = np.expand_dims(scales[key],
-                                           axis=-1)  ##TODO, to support conv
-                    new_weight = weight * scale
-                elif len(weight.shape) == 4:  ##TODO need to check conv
-                    scale = np.reshape(scales[key], (1, -1, 1, 1))
-                    new_weight = weight * scale
-                else:
-                    assert False, "not support"
-                new_tensor = numpy_helper.from_array(new_weight, input)
-                model.model.graph.initializer[name_to_indices[input]].CopyFrom(new_tensor)
-
-    def _adjust_weights_per_input(self, model, nodes, scales):
-        """Adjust the weights per input scale.
-
-        The ops with the same input will share one mul layer
-
-        Args:
-            model: The onnx model
-            nodes: The nodes whose weights needs to be adjustd
-            scales: The input scales
-        """
-        name_to_indices = {}
-        for index, i in enumerate(model.model.graph.initializer):
-            name_to_indices[i.name] = index
-
-        for key in nodes.keys():
-            curr_nodes = nodes[key]
-            for node in curr_nodes:
-                input = node.input[1]  ##TODO
-                if input in name_to_indices.keys():
-                    weight = numpy_helper.to_array(model.model.graph.initializer[name_to_indices[input]])
-                    if len(weight.shape) == 2:
-                        scale = np.expand_dims(scales[key],
-                                               axis=-1)  ##TODO, to support conv
-                        new_weight = weight * scale
-                    elif len(weight.shape) == 4:  ##TODO need to check conv
-                        scale = np.reshape(scales[key], (1, -1, 1, 1))
-                        new_weight = weight * scale
-                    else:
-                        assert False, "not support"
-                    new_tensor = numpy_helper.from_array(new_weight, input)
-                    model.model.graph.initializer[name_to_indices[input]].CopyFrom(new_tensor)
-
-    def augment_smooth_graph(self, alpha=1.0, percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'],
-                             scales_per_op=True):
-        """Get augmented model with smooth quant.
-
-        Fake input channel quantization, for more details please refer to:
-        [1] SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models
-        [2] SPIQ: Data-Free Per-Channel Static Input Quantization
-        inert Mul op before each conv/matmul with adjusted weights
-
-        Args:
-            alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
-            percentile:Percentile of calibration to remove outliers
-            op_types: The op types whose input tensor will be dumped
-            scales_per_op: True, each op will have an individual scale, mainly for accuracy
-                           False, ops with the same input will share a scale, mainly for performance
-
-        Returns:
-            model: A modified onnx model
-        """
-        max_vals_per_channel, shape_infos = self._calib_smooth(percentile, op_types)
-
-        tensor_names = [key for key in max_vals_per_channel.keys()]
-        input_tensors_2_weights, input_tensors_2_weights_nodes = self._input_tensor_2_weights(self.model_wrapper,
-                                                                                tensor_names, op_types)
-
-        if scales_per_op:
-            scales = self._get_smooth_scales_per_op(max_vals_per_channel, input_tensors_2_weights,
-                                                    input_tensors_2_weights_nodes, alpha)
-
-            new_added_mul_nodes, new_init_tensors, op_nodes = self._insert_smooth_mul_op_per_op(scales, shape_infos,
-                                                                                        input_tensors_2_weights_nodes)
-            self._adjust_weights_per_op(self.model_wrapper, op_nodes, scales)
-
-        else:
-
-            scales = self._get_smooth_scales_per_input(max_vals_per_channel, input_tensors_2_weights, alpha)
-            new_added_mul_nodes, new_init_tensors = self._insert_smooth_mul_op_per_input(scales, shape_infos,
-                                                                                         input_tensors_2_weights_nodes)
-            self._adjust_weights_per_input(self.model_wrapper, input_tensors_2_weights_nodes, scales)
-
-        self.model_wrapper.model.graph.node.extend(new_added_mul_nodes)
-        self.model_wrapper.model.graph.initializer.extend(new_init_tensors)
-        self.model_wrapper.update()
-        self.model_wrapper.topological_sort()
-        self.model_wrapper.remove_unused_constant()
-        return self.model_wrapper
