@@ -24,6 +24,7 @@ import numpy as np
 import subprocess
 import signal
 import psutil
+from threading import Thread
 from ..adaptor import FRAMEWORKS
 from ..objective import MultiObjective
 from ..conf.config import BenchmarkConf
@@ -218,6 +219,23 @@ class Benchmark(object):
             # (TODO) should add summary after win32 benchmark has log
             pass
 
+    def call_one(self, cmd, log_file):
+        """Execute one command for one instance in one thread and dump the log (for Windows)."""
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                shell=False)
+        with open(log_file, "w", 1, encoding="utf-8") as log_file:
+            log_file.write(f"[ COMMAND ] {cmd} \n")
+            for line in proc.stdout:
+                decoded_line = line.decode("utf-8", errors="ignore").strip()
+                log_file.write(decoded_line + "\n")
+        proc.wait()
+        return_code = proc.returncode
+        msg = "Exit code: {}".format(return_code)
+        if return_code != 0:
+            raise Exception(msg)
+
     def config_instance(self):
         """Configure the multi-instance commands and trigger benchmark with sub process."""
         raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
@@ -244,7 +262,6 @@ class Benchmark(object):
                 multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
                     instance_cmd, instance_log)
             else:  # pragma: no cover
-                # (TODO) should also add log to win32 benchmark
                 multi_instance_cmd += '{} \n'.format(instance_cmd)
 
         multi_instance_cmd += 'wait' if sys.platform in ['linux'] else ''
@@ -254,7 +271,19 @@ class Benchmark(object):
         if sys.platform in ['linux']:
             p = subprocess.Popen(multi_instance_cmd, preexec_fn=os.setsid, shell=True) # nosec
         elif sys.platform in ['win32']:  # pragma: no cover
-            p = subprocess.Popen(multi_instance_cmd, start_new_session=True, shell=True) # nosec
+            cmd_list = multi_instance_cmd.split("\n")[:-1]
+            threads = []
+            for idx, cmd in enumerate(cmd_list):
+                # wrap each execution of windows bat file in one thread
+                # write the log to the log file of the corresponding instance
+                threads.append(Thread(target=self.call_one, args=(cmd,
+                    '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))))
+            for command_thread in threads:
+                command_thread.start()
+            # Wait for all of them to finish
+            for command_thread in threads:
+                command_thread.join()
+            return
         try:
             p.communicate()
         except KeyboardInterrupt:
