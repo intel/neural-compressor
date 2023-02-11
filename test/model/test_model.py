@@ -8,7 +8,7 @@ from neural_compressor.model import MODELS
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.model.mxnet_model import MXNetModel
 from neural_compressor.model.model import get_model_fwk_name
-from neural_compressor.experimental.common.model import Model
+from neural_compressor.model import Model
 
 import torchvision
 import torch

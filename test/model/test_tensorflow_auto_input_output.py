@@ -5,7 +5,7 @@ import unittest
 import os
 import platform
 from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
-from neural_compressor.experimental.common.model import Model as TensorflowModel
+from neural_compressor.model import Model as TensorflowModel
 from neural_compressor.model.tensorflow_model import validate_graph_node
 
 class TestTFAutoDetectInputOutput(unittest.TestCase):

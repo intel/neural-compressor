@@ -415,9 +415,9 @@ class Benchmark(object):
                                     which meet the requirements that can yield a tuple of
                                     (input, label)/(input, _) batched data.
                                     Another good practice is to use
-                                    neural_compressor.experimental.common.DataLoader
+                                    neural_compressor.data.DataLoader
                                     to initialize a neural_compressor dataloader object.
-                                    Notice neural_compressor.experimental.common.DataLoader
+                                    Notice neural_compressor.data.DataLoader
                                     is just a wrapper of the information needed to
                                     build a dataloader, it can't yield
                                     batched data and only in this setter method
@@ -426,7 +426,7 @@ class Benchmark(object):
                                     and only after the Quantization object is created then
                                     framework information can be known.
                                     Future we will support creating iterable dataloader
-                                    from neural_compressor.experimental.common.DataLoader
+                                    from neural_compressor.data.DataLoader
         """
         assert hasattr(dataloader, '__iter__') and \
                     hasattr(dataloader, 'batch_size'), \
@@ -466,7 +466,7 @@ class Benchmark(object):
            user_model: users are supported to set model from the original framework model format
                        (eg, tensorflow frozen_pb or path to a saved model),
                        but not recommended. A best practice is to set from an initialized
-                       neural_compressor.experimental.common.Model.
+                       neural_compressor.model.Model.
                        If tensorflow model is used, the model's inputs/outputs will be
                        auto inferenced, but sometimes auto inferenced
                        inputs/outputs will not meet your requests, so it is better to
@@ -532,7 +532,7 @@ class Benchmark(object):
 
         Args:
             user_metric: user_metric should be an object initialized from
-                neural_compressor.experimental.common.Metric, and in this method the
+                neural_compressor.metric.Metric, and in this method the
                 user_metric.metric_cls will be registered to
                 specific frameworks and initialized.
         """

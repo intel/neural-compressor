@@ -8,7 +8,7 @@ import neural_compressor
 from neural_compressor.adaptor.tf_utils.util import read_graph
 from neural_compressor.adaptor.tf_utils.graph_converter import GraphConverter
 from neural_compressor.adaptor.tensorflow import TensorflowQuery
-from neural_compressor.experimental.common.model import Model
+from neural_compressor.model import Model
 
 import tensorflow as tf
 class TestGraphLibraryDetection(unittest.TestCase):

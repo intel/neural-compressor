@@ -1137,7 +1137,7 @@ class TensorFlowAdaptor(Adaptor):
     def inspect_activation(self, node_list, graph_def, graph_node_name_mapping, quantization_cfg,
                            dataloader, iteration_list, graph_info):
         """Inspect the activation."""
-        from neural_compressor.experimental.common import Model
+        from neural_compressor.model import Model
         original_graph_node_mapping = {}
         for node in graph_def.node:
             original_graph_node_mapping[node.name] = node

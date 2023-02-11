@@ -43,8 +43,8 @@ class TestRegisterMetric(unittest.TestCase):
         images = np.expand_dims(resize_image, axis=0)
         labels = [768]
         from neural_compressor import Benchmark
-        from neural_compressor.experimental.data.transforms.imagenet_transform import LabelShift
-        from neural_compressor.experimental.metric.metric import TensorflowTopK
+        from neural_compressor.data.transforms.imagenet_transform import LabelShift
+        from neural_compressor.metric import TensorflowTopK
         os.environ['NC_ENV_CONF'] = 'True'
 
         evaluator = Benchmark('fake_yaml.yaml')

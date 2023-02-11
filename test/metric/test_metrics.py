@@ -3,8 +3,8 @@ import numpy as np
 import unittest
 import platform
 from neural_compressor.metric import METRICS
-from neural_compressor.experimental.metric.f1 import evaluate
-from neural_compressor.experimental.metric.evaluate_squad import evaluate as evaluate_squad
+from neural_compressor.metric.f1 import evaluate
+from neural_compressor.metric.evaluate_squad import evaluate as evaluate_squad
 
 class InCorrectMetric:
     def __init__(self):

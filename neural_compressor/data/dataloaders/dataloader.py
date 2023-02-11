@@ -41,7 +41,7 @@ class DataLoader(object):
     object's setter method a 'real' calib_dataloader will be created, the reason 
     is we have to know the framework info and only after the Quantization/Benchmark
     object created then framework infomation can be known. Future we will support
-    creating iterable dataloader from neural_compressor.experimental.common.DataLoader
+    creating iterable dataloader from neural_compressor.data.DataLoader
     """
 
     def __init__(self, dataset, batch_size=1, collate_fn=None,
@@ -103,7 +103,7 @@ def _generate_common_dataloader(dataloader, framework, distributed=False):
             hasattr(dataloader, 'batch_size'), \
             'dataloader must implement __iter__ method and batch_size attribute'
         assert not distributed, "Please use \
-            neural_compressor.experimental.common.DataLoader to support distributed computing"
+            neural_compressor.data.DataLoader to support distributed computing"
         return dataloader
     else:
         return DATALOADERS[framework](
