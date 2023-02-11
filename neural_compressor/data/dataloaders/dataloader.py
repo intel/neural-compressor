@@ -87,14 +87,14 @@ class DataLoader(object):
 
 def _generate_common_dataloader(dataloader, framework, distributed=False):
     """Generate common dataloader.
-    
+
     Args:
         dataloader (generator): A dataloader which can yield tuple of (input, label)/(input, _) 
             batched data.
         framework (str): The string of supported framework.
         distributed (bool, optional): Set to ``True`` to support distributed computing. 
             Defaults to False.
-            
+
     Returns:
         BaseDataLoader: neural_compressor built-in dataloader
     """
