@@ -432,9 +432,9 @@ class PostTrainingQuant(BaseQuant):
             dataloader(generator): user are supported to set a user defined dataloader
                                     which meet the requirements that can yield tuple of
                                     (input, label)/(input, _) batched data. Another good
-                                    practice is to use neural_compressor.experimental.common.DataLoader
+                                    practice is to use neural_compressor.data.DataLoader
                                     to initialize a neural_compressor dataloader object. Notice
-                                    neural_compressor.experimental.common.DataLoader is just a wrapper of the
+                                    neural_compressor.data.DataLoader is just a wrapper of the
                                     information needed to build a dataloader, it can't yield
                                     batched data and only in this setter method
                                     a 'real' calib_dataloader will be created,
@@ -442,7 +442,7 @@ class PostTrainingQuant(BaseQuant):
                                     and only after the Quantization object created then
                                     framework infomation can be known.
                                     Future we will support creating iterable dataloader
-                                    from neural_compressor.experimental.common.DataLoader
+                                    from neural_compressor.data.DataLoader
         """
         assert hasattr(dataloader, '__iter__') and \
             hasattr(dataloader, 'batch_size'), \
