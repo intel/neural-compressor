@@ -113,6 +113,6 @@ bash run_benchmark.sh --input_model=./tf-quant.pb --mode=performance --dataset_l
 
 ### Run benchmark for ONNX INT8 QDQ model
 ```shell
-bash run_benchmark.sh --input_model=./frozen_vgg16_int8.onnx --mode=accuracy --dataset_location=/path/to/ImageNet/ --batch_size=32
-bash run_benchmark.sh --input_model=./frozen_vgg16_int8.onnx --mode=performance --dataset_location=/path/to/ImageNet/ --batch_size=1
+bash run_benchmark.sh --input_model=./frozen_vgg16_int8.onnx --mode=accuracy --dataset_location=/path/to/imagenet/ --batch_size=32
+bash run_benchmark.sh --input_model=./frozen_vgg16_int8.onnx --mode=performance --dataset_location=/path/to/imagenet/ --batch_size=1
 ```
