@@ -80,7 +80,7 @@ class eval_classifier_optimized_graph:
         """This is neural_compressor function include tuning, export and benchmark option."""
         if self.args.quant_format != 'qdq':
             raise ValueError("Only support tensorflow export to ONNX for QDQ format, "
-                "please make sure input the corret quant_format.")
+                "please make sure input the correct quant_format.")
 
         if self.args.export:
             if self.args.dtype == 'int8':

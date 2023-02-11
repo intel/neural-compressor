@@ -93,7 +93,7 @@ class eval_classifier_optimized_graph:
         """This is neural_compressor function include tuning, export and benchmark option."""
         if args.quant_format != 'qdq':
             raise ValueError("Only support tensorflow export to ONNX for QDQ format, "
-                "please make sure input the corret quant_format.")
+                "please make sure input the correct quant_format.")
 
         top1 = TensorflowTopK(k=1)
         postprocess = LabelShift(label_shift=1)
