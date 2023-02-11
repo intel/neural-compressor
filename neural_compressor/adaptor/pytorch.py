@@ -144,8 +144,11 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
                 named_input = namedtuple("input", input.keys())
                 input = named_input._make(input.values())
                 return input
-            else:
+            if isinstance(input, list) or isinstance(input, tuple):
                 return tuple(input)
+            if isinstance(input, torch.Tensor):
+                return input
+            break
     except Exception as e:
         for idx, input in enumerate(dataloader):
             output = pytorch_forward_wrapper(model,
@@ -158,8 +161,11 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
                 named_input = namedtuple("input", input.keys())
                 input = named_input._make(input.values())
                 return input
-            else:
+            if isinstance(input, list) or isinstance(input, tuple):
                 return tuple(input)
+            if isinstance(input, torch.Tensor):
+                return input
+            break
     if idx == 0:
         assert False, "Please checkout the example_inputs format."
 
@@ -2332,8 +2338,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                 # At the 2nd run, the llga pass will be triggered and the model is turned into
                 # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                q_model(*example_inputs)
-                q_model(*example_inputs)
+                self.calib_func(q_model, dataloader, tmp_iterations=2)
 
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
