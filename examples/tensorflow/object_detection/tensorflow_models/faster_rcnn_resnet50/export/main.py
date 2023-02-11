@@ -19,26 +19,60 @@
 from argparse import ArgumentParser
 import tensorflow as tf
 import onnx
-import numpy as np
+import os
 import onnxruntime as ort
+import numpy as np
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 
 def eval_func_onnx(model, dataloader, metric, postprocess=None):
     metric.reset()
-    sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
-    input_names = [i.name for i in sess.get_inputs()]
-    for input_data, label in dataloader:
-        output = sess.run(None, dict(zip(input_names, [input_data])))
-        if postprocess:
-            output, label = postprocess((output, label))
-        metric.update(output, label)
-    return metric.result()
+    session = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+    ort_inputs = {}
+    len_inputs = len(session.get_inputs())
+    inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+    for inputs, labels in dataloader:
+        if not isinstance(labels, list):
+            labels = [labels]
+        if len_inputs == 1:
+            ort_inputs.update(
+                inputs if isinstance(inputs, dict) else {inputs_names[0]: np.array(inputs,dtype=np.uint8)}
+            )
+        else:
+            assert len_inputs == len(inputs), \
+                'number of input tensors must align with graph inputs'
+
+            if isinstance(inputs, dict):  # pragma: no cover
+                ort_inputs.update(inputs)
+            else:
+                for i in range(len_inputs):
+                    # in case dataloader contains non-array input
+                    if not isinstance(inputs[i], np.ndarray):
+                        ort_inputs.update({inputs_names[i]: np.array(inputs[i])})
+                    else:
+                        ort_inputs.update({inputs_names[i]: inputs[i]})
+
+        predictions = session.run(None, ort_inputs)
+
+        if postprocess is not None:
+            predictions, labels = postprocess((predictions, labels))
+
+        if not hasattr(metric, "compare_label") or \
+            (hasattr(metric, "compare_label") and metric.compare_label):
+            metric.update(predictions, labels)
+    acc = metric.result()
+    return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
 def eval_func_tf(model, dataloader, metric, postprocess=None):
+    metric.reset()
+
     from neural_compressor.model import Model
-    model = Model(model)
+    if isinstance(model, str) or isinstance(model, tf.compat.v1.Graph):
+        model = Model(model)
+        model.input_tensor_names = ["image_tensor:0"]
+        model.output_tensor_names = ["num_detections:0", "detection_boxes:0", \
+                                        "detection_scores:0", "detection_classes:0"]
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
@@ -48,9 +82,8 @@ def eval_func_tf(model, dataloader, metric, postprocess=None):
         inputs = np.array([inputs])
         feed_dict = dict(zip(input_tensor, inputs))
         predictions = model.sess.run(output_tensor, feed_dict)
-        if postprocess:
-            predictions, labels = postprocess((predictions, labels))
         metric.update(predictions, labels)
+
     acc = metric.result()
     return acc
 
@@ -89,44 +122,40 @@ class eval_classifier_optimized_graph:
                 from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
                 from neural_compressor.utils.create_obj_from_config import create_dataloader
                 calib_dataloader_args = {
-                    'batch_size': 10,
-                    'dataset': {"ImageRecord": {'root':self.args.dataset_location}},
-                    'transform': {'ResizeCropImagenet':
-                        {'height': 224, 'width': 224}},
+                    'dataset': {"COCORecord": {'root':self.args.dataset_location}},
+                    'transform': None,
                     'filter': None
                 }
                 calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
                 eval_dataloader_args = {
-                    'batch_size': 32,
-                    'dataset': {"ImageRecord": {'root':self.args.dataset_location}},
-                    'transform': {'ResizeCropImagenet':
-                        {'height': 224, 'width': 224}},
+                    'batch_size': 10,
+                    'dataset': {"COCORecord": {'root':self.args.dataset_location}},
+                    'transform': {'Resize': {'size': 600}},
                     'filter': None
                 }
                 eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
-                op_name_list = {
-                    'resnet_model/dense/MatMul':
-                                {
-                                'activation':  {'dtype': ['fp32']},
-                                'weight': {'dtype': ['fp32']},
-                                }
-                            }
-                conf = PostTrainingQuantConfig(backend='itex', calibration_sampling_size=[50, 100],
-                                            outputs=['softmax_tensor'],
-                                            op_name_list=op_name_list)
-                from neural_compressor.metric import TensorflowTopK
-                top1 = TensorflowTopK(k=1)
+                conf = PostTrainingQuantConfig(backend='itex', calibration_sampling_size=[10, 50, 100, 200], inputs=['image_tensor'],
+                                            outputs=['num_detections', 'detection_boxes', 'detection_scores', 'detection_classes'],
+                                            accuracy_criterion = AccuracyCriterion(tolerable_loss=0.32))
+                from neural_compressor.metric import COCOmAPv2
+                output_index_mapping = {'num_detections':0, 'boxes':1, 'scores':2, 'classes':3}
+                mAP2 = COCOmAPv2(output_index_mapping=output_index_mapping)
                 q_model = quantization.fit(self.args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
-                            eval_dataloader=eval_dataloader, eval_metric=top1)
+                            eval_dataloader=eval_dataloader, eval_metric=mAP2)
                 q_model.save("./tf-quant.pb")
+
                 from neural_compressor.config import TF2ONNXConfig
-                config = TF2ONNXConfig(dtype=self.args.dtype)
+                q_model.input_tensor_names = ["image_tensor"]
+                q_model.output_tensor_names = ["num_detections", "detection_boxes", "detection_scores", "detection_classes"]
+                config = TF2ONNXConfig(dtype="int8")
                 q_model.export(self.args.output_graph, config)
             else:
                 from neural_compressor.model import Model
                 from neural_compressor.config import TF2ONNXConfig
                 inc_model = Model(self.args.input_graph)
-                config = TF2ONNXConfig(dtype=self.args.dtype)
+                inc_model.input_tensor_names = ["image_tensor"]
+                inc_model.output_tensor_names = ["num_detections", "detection_boxes", "detection_scores", "detection_classes"]
+                config = TF2ONNXConfig(dtype="fp32")
                 inc_model.export(self.args.output_graph, config)
 
         if self.args.benchmark:
@@ -137,22 +166,22 @@ class eval_classifier_optimized_graph:
 
             from neural_compressor.utils.create_obj_from_config import create_dataloader
             dataloader_args = {
-                'batch_size': 32,
-                'dataset': {"ImageRecord": {'root':self.args.dataset_location}},
-                'transform': {'ResizeCropImagenet':
-                     {'height': 224, 'width': 224}},
-                'filter': None
+                    'batch_size': self.args.batch_size,
+                    'dataset': {"COCORecord": {'root':self.args.dataset_location}},
+                    'transform': {'Resize': {'size': 600}},
+                    'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
 
-            from neural_compressor.metric import TensorflowTopK
-            top1 = TensorflowTopK(k=1)
+            from neural_compressor.metric import COCOmAPv2
+            output_index_mapping = {'num_detections':0, 'boxes':1, 'scores':2, 'classes':3}
+            mAP2 = COCOmAPv2(output_index_mapping=output_index_mapping)
 
             def eval(model):
                 if isinstance(model, str):
-                    return eval_func_tf(model, dataloader, top1)
+                    return eval_func_tf(model, dataloader, mAP2)
                 else:
-                    return eval_func_onnx(model, dataloader, top1)
+                    return eval_func_onnx(model, dataloader, mAP2)
 
             if self.args.mode == 'performance':
                 from neural_compressor.benchmark import fit
@@ -163,6 +192,7 @@ class eval_classifier_optimized_graph:
                 acc_result = eval(model)
                 print("Batch size = %d" % dataloader.batch_size)
                 print("Accuracy: %.5f" % acc_result)
+
 
 if __name__ == "__main__":
     evaluate_opt_graph = eval_classifier_optimized_graph()
