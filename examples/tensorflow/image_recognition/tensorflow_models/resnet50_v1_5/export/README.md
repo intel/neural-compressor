@@ -40,12 +40,12 @@ wget https://zenodo.org/record/2535873/files/resnet50_v1.pb
   We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
 
   ```shell
-  cd examples/tensorflow/tf2onnx/
+  cd examples/tensorflow/image_recognition/tensorflow_models/
   # convert validation subset
   bash prepare_imagenet_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
   # convert train subset
   bash prepare_imagenet_dataset.sh --output_dir=/path/to/imagenet/ --raw_dir=/PATH/TO/img_raw/train/ --subset=train
-  cd resnet50_v1.5/int8_export
+  cd resnet50_v1.5/export
   ```
 
 # Run Command
