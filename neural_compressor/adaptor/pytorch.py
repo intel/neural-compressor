@@ -28,7 +28,7 @@ from ..utils.utility import LazyImport, CpuInfo, GLOBAL_STATE, MODE
 from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
-from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from ..data.dataloaders.base_dataloader import BaseDataLoader
 
 torch = LazyImport("torch")
 json = LazyImport("json")
