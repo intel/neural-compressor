@@ -300,7 +300,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Arbitrary Style Transfer</td>
     <td>Style Transfer</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./examples/tensorflow/style_transfer/arbitrary_style_transfer/quantization/ptq">ckpt</a></td>
+    <td><a href="./tensorflow/style_transfer/arbitrary_style_transfer/quantization/ptq">ckpt</a></td>
   </tr>
 </tbody>
 </table>
