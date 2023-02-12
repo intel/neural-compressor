@@ -14,10 +14,13 @@ This example can run on Intel CPUs and GPUs.
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
+
 ### Install Intel Tensorflow
 ```python
 pip install intel-tensorflow
 ```
+
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### Install Intel Extension for Tensorflow
 
