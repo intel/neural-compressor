@@ -18,7 +18,7 @@ pip install neural-compressor
 ```shell
 pip install tensorflow
 ```
-> Note: Supported Tensorflow version >= 2.10.0.
+> Note: Supported TensorFlow version >= 2.10.0.
 
 ### 3. Installation Dependency packages
 ```shell

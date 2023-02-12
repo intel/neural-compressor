@@ -9,6 +9,7 @@ This document describes the step-by-step instructions for reproducing the distil
 cd examples/pytorch/image_recognition/CNN-2/distillation/eager
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 # Distillation
 Distillation examples on CIFAR100.

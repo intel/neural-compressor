@@ -18,7 +18,7 @@
 import copy
 import math
 import os
-from collections import OrderedDict, UserDict
+from collections import OrderedDict, UserDict, namedtuple
 from packaging.version import Version
 import yaml
 from functools import partial
@@ -128,6 +128,7 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
 
 
 def get_example_inputs(model, dataloader):  # pragma: no cover
+    version = get_torch_version()
     # Suggest set dataloader like calib_dataloader
     if dataloader is None:
         return None
@@ -136,14 +137,13 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
             output = pytorch_forward_wrapper(model,
                                              input)
             if isinstance(input, dict) or isinstance(input, UserDict):
-                input_tensor = []
+                assert version.release >= Version("1.12.0").release, \
+                "INC support IPEX version >= 1.12.0"
                 if "label" in input.keys():
                     input.pop("label")
-                for key, value in input.items():
-                    if key == "start_positions" or key == "end_positions":
-                        continue
-                    input_tensor.append(value)
-                return input_tensor
+                named_input = namedtuple("input", input.keys())
+                input = named_input._make(input.values())
+                return input
             if isinstance(input, list) or isinstance(input, tuple):
                 return input
             if isinstance(input, torch.Tensor):
@@ -154,14 +154,13 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
             output = pytorch_forward_wrapper(model,
                                      input)
             if isinstance(input, dict) or isinstance(input, UserDict):
-                input_tensor = []
+                assert version.release >= Version("1.12.0").release, \
+                "INC support IPEX version >= 1.12.0"
                 if "label" in input.keys():
                     input.pop("label")
-                for key, value in input.items():
-                    if key == "start_positions" or key == "end_positions":
-                        continue
-                    input_tensor.append(value)
-                return input_tensor
+                named_input = namedtuple("input", input.keys())
+                input = named_input._make(input.values())
+                return input
             if isinstance(input, list) or isinstance(input, tuple):
                 return input
             if isinstance(input, torch.Tensor):
@@ -1259,6 +1258,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         # For tensorboard display
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
+        self.tune_cfg["reduce_range"] = REDUCE_RANGE
         self.tune_cfg["framework"] = "pytorch"
         op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
         self.tune_cfg['bf16_ops_list'] = op_cfgs['bf16_ops_list']
@@ -2757,6 +2757,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                "The model passed in is not the instance of torch.nn.Module"
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
+        self.tune_cfg["reduce_range"] = REDUCE_RANGE
         self.tune_cfg["framework"] = "pytorch_fx"
 
         # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
@@ -3245,7 +3246,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         if res[op_type]['FP32'] > 0:
                             res[op_type]['FP32'] -= 1
                     else:
-                        res[op_type]['BF16'] = 1
+                        res[op_type] = {'INT8': 0, 'BF16': 1, 'FP32': 0}
+
 
         output_data = [[
             op_type,

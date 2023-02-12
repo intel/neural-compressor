@@ -194,7 +194,7 @@ stages:
     displayName: "Coverage Combine"
     pool:
       vmImage: "ubuntu-latest"
-    dependsOn: [Adaptor, TFNewAPI, IPEX, ITEX, Others, Adaptor_base, TFNewAPI_base, IPEX_base, ITEX_base, Others_base]
+    dependsOn: [Adaptor, Pruning, TFNewAPI, IPEX, ITEX, Others, Adaptor_base, Pruning_base, TFNewAPI_base, IPEX_base, ITEX_base, Others_base]
     jobs:
       - job: CollectDatafiles
         steps:
