@@ -22,6 +22,7 @@ from collections import defaultdict, OrderedDict
 import re
 from typing import Dict
 from copy import deepcopy
+from enum import IntEnum
 from ...utils import logger
 
 PRECISION_SET = {'bf16', 'fp32'}
@@ -32,6 +33,11 @@ TUNING_ITEMS_LST = [('activation','scheme'), ('activation','algorithm'), ('activ
                     ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'),
                     'sampling_size']
 
+class PostTrainingQuantType(IntEnum):
+    """Post training quantization type."""
+    STATIC = 0
+    DYNAMIC = 1
+    WEIGHT_ONLY = 2
 
 class TuningItem:
     """Not displayed in API Docs."""
@@ -107,7 +113,12 @@ class TuningItem:
 
 
 class TuningSpace:
-    """Not displayed in API Docs."""
+    """Not displayed in API Docs.
+    
+    1) capability -> internal format -> merge -> tuning space (tree)
+    2) capability -> merge -> internal format -> tuning space (tree)
+    
+    """
     
     def __init__(self, capability, conf, framework=None):
         """Init the tuning space.
@@ -128,6 +139,15 @@ class TuningSpace:
         usr_cfg = conf.usr_cfg if conf else None
         self.op_items = {}
         self._create_tuning_space(capability, usr_cfg)
+        
+    def _parse_capability_v2(self, capability:Dict) -> None:
+        """Parse the capability and construct the tuning space(a tree)
+
+        Args:
+            capability: tThe merged framework capability.
+        """
+        pass
+    
 
     def _parse_capability(self, capability):
         """Parse the capability and construct the tuning space(a tree)."""
@@ -174,6 +194,78 @@ class TuningSpace:
                 quant_mode_item.append(tuning_item)
 
     def _merge_op_cfg(self, op_cap, op_user_cfg, fw_op_cap):
+        """
+        dtype: ['int8', 'fp32'] -> ('static', ('int8', 'signed')) and ('precision', ('fp32'))
+        dtype: ['fp32'] -> ('precision', ('fp32'))
+        Q1: weight and activation should be assigned 
+        s1: remove the invalid cfg (filter the valid cfg)
+        s2: if not None, replace the cfg with the valid cfg
+        user_precision_set = {}
+        op_user_cfg:
+            {
+                'weight':{
+                    'dtype': ['int8', 'fp32'], 
+                    'scheme': ['sym'],
+                    'algorithm': ['minmax'],
+                    'granularity': ['per_tensor']
+                },
+                'activation': {
+                    'dtype': ['uint8'],
+                    'scheme': ['asym'],
+                    'algorithm': ['minmax'],
+                    'granularity': ['per_tensor']
+                    }
+            }
+        """
+        from .util import extract_data_type, reverted_data_type
+        fw_op_cap = deepcopy(fw_op_cap)
+        for att in ['activation', 'weight']:
+            if att in op_user_cfg and op_user_cfg[att] is not None:
+                user_dtype_lst = op_user_cfg[att]['dtype'] if op_user_cfg[att]['dtype'] is not None else []
+                # Merge the precision part.
+                fwk_att_precision_cap = fw_op_cap['precision'][att]
+                # The intersection of user cfg and fwk capability.
+                valid_precision_set = set(fwk_att_precision_cap.keys()).intersection(set(user_dtype_lst))
+                if len(valid_precision_set) != 0:
+                    # TODO if dtype is ['int8'], no 'fp32'?
+                    fwk_precision_lst = list(fwk_att_precision_cap.keys())
+                    for precision_name in fwk_precision_lst:
+                        if precision_name not in valid_precision_set:
+                            fwk_att_precision_cap.pop(precision_name, None)
+                # Merge the quantization part.
+                quant_modes_lst = list(fw_op_cap.keys())
+                quant_modes_lst.remove('precision')
+                for quant_mode in quant_modes_lst:
+                    data_type_cap = fw_op_cap[quant_mode][att]
+                    data_type_lst = list(data_type_cap.keys())
+                    fwk_data_type_lst = []
+                    for data_type in data_type_lst:
+                        for signed_flag in fw_op_cap[quant_mode][att][data_type].keys():
+                            fwk_data_type_lst.append(reverted_data_type(signed_flag, data_type))
+                    valid_quant_dtype_lst = set(fwk_data_type_lst).intersection(user_dtype_lst)
+                    if len(valid_quant_dtype_lst) != 0:
+                        # Filter the valid dtype
+                        # TODO if dtype is ['fp32']
+                        for dtype in fwk_data_type_lst:
+                            if dtype not in valid_quant_dtype_lst:
+                                signed_flag, data_type = extract_data_type(dtype)
+                                fw_op_cap[quant_mode][att][data_type].pop(signed_flag, None)
+                            if len(fw_op_cap[quant_mode][att][data_type]) == 0:
+                                fw_op_cap[quant_mode][att].remove(data_type, None)
+                            if len(fw_op_cap[quant_mode][att]) == 0:
+                                fw_op_cap[quant_mode].remove(att, None)
+                    # Filter the valid options for tuning item
+                    for data_type in fw_op_cap[quant_mode][att]:
+                        for signed_flag in fw_op_cap[quant_mode][att][data_type]:
+                            fwk_items = fw_op_cap[quant_mode][att][data_type][signed_flag]
+                            for item_name, item_options in op_user_cfg[att].items():
+                                if item_name not in ['dtype', 'quant_mode']:
+                                    options_intersection = set(fwk_items[item_name]).intersection(set(item_options))
+                                    if len(options_intersection) > 0:
+                                        fwk_items[item_name] = [option for option in fwk_items[item_name] if option in options_intersection]
+        return fw_op_cap
+
+    def _merge_op_cfg_v2(self, op_cap, op_user_cfg, fw_op_cap):
         """Merge the framework capability with user config.
 
         # for precision, merge the options of the tuning items 
@@ -370,6 +462,91 @@ class TuningSpace:
         if user_cfg['op_wise'] is not None:
             self._merge_op_wise_cfg(capability, user_cfg['op_wise'], fw_capability)
             
+    def _parse_cap_helper_v3(self, cap):
+        """
+
+        (q/p_type, ((a_bits, a_signed), (w_bits,  w_signed )))
+        ('static', (('int8', 'signed'), ('int4', 'unsigned')))
+        ('static', (('int8', 'signed'),                     ))
+        ('static', ( 'int8'                                  )
+        (op_name, op_type):
+            {
+                'static':{
+                    'act':{
+                        'int8':{
+                            'signed':{ # (op_name, op_type): ('static', (('int8', 'signed'),(...)))
+                                'dtype': 'int8',
+                                'scheme': ['sym'],
+                                'algorithm': ['minmax', 'kl'],
+                                'granularity': ['per_channel','per_tensor'],
+                            }
+                        }
+                        'int4':{
+                            ...
+                        }
+                    },
+                    'weight':{
+                        'int8':{
+                            ...
+                        }
+                        'int4':{
+                            'signed':{ # (op_name, op_type): ('static', ((...), ('int4', 'signed')))
+                                'dtype': 'int4'
+                                'scheme': ['asym'],
+                                ...
+                            }
+                        }
+                    }
+                },
+                'dynamic':{
+                    ...
+                }
+                'precision':{
+                    'act':{
+                        'fp32':{} # use []? (op_name, op_type): ('precision', ('fp32',)) or ('precision', ('fp32','fp32'))
+                        'bf16':{}
+                    },
+                    'weight':{
+                        'fp32':{
+                            'dtype': 'fp32,
+                        },
+                        'bf16':{
+                            'dtype': 'fp32',
+                            },
+                    }
+
+                }
+            }
+        """
+        from .util import OrderedDefaultDict, extract_data_type
+
+        cap = deepcopy(cap)
+        parsed_cap = OrderedDict() # {(op_name, op_type): parsed_op_cap}
+        for op_name_type, op_cap_lst in cap.items():
+            parsed_op_cap = OrderedDefaultDict() # {ptq_type/precision, {}}
+            parsed_op_cap['precision'] = OrderedDefaultDict()
+            has_weight = False
+            for op_cap in op_cap_lst:
+                has_weight = 'weight' in op_cap
+                attrs_lst = ['activation', 'weight'] if has_weight else ['activation']
+                for att in attrs_lst:
+                    # For quantization
+                    if 'activation' in op_cap and 'quant_mode' in op_cap['activation']:
+                        quant_mode = op_cap['activation']['quant_mode']
+                        att_dtype = op_cap[att]['dtype'][0]
+                        signed_flag, _data_type = extract_data_type(att_dtype)
+                        for item_name, item_options in op_cap[att].items():
+                            if item_name not in ['dtype', 'quant_mode']:
+                                parsed_op_cap[quant_mode][att][_data_type][signed_flag][item_name] = item_options
+                    # For precision
+                    else:
+                        att_dtype = op_cap[att]['dtype']
+                        parsed_op_cap['precision'][att][att_dtype] = {'dtype': att_dtype}
+            parsed_cap[op_name_type] = parsed_op_cap
+        logger.info(f"Parsed cap ............")
+        logger.info(parsed_cap)
+        return parsed_cap
+        
     def _parse_cap_helper(self, cap):
         """Parse the capability and convert it into internal structure.
         
@@ -445,8 +622,14 @@ class TuningSpace:
         :return:
         """
         capability['op'] = self._parse_cap_helper(capability['op'])
+        tmp_cap2 = self._parse_cap_helper_v3(deepcopy(capability['op']))
+        # capability['op'] = tmp_cap2
         if usr_cfg:
+            logger.info(f"#############  Before merged with user cfg")
+            logger.info(capability)
             self._merge_with_user_cfg(capability, usr_cfg['quantization'])
+            logger.info(f"#############  After Merged with user cfg")
+            logger.info(capability)
         self._parse_capability(capability)
 
     def query_items_by_quant_mode(self, quant_mode):
