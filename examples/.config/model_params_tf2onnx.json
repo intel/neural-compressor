@@ -1,7 +1,7 @@
 {
   "tf2onnx": {
     "resnet50v1.0": {
-      "model_src_dir": "tf2onnx/resnet50v1.0",
+      "model_src_dir": "image_recognition/tensorflow_models/resnet50_v1/export",
       "source_model_dataset": "/tf_dataset/dataset/imagenet",
       "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ImagenetRaw_small_5000",
       "input_model": "/tf_dataset/pre-trained-models/resnet50/fp32/freezed_resnet50.pb",
@@ -9,7 +9,7 @@
       "batch_size": 32
     },
     "resnet50v1.5": {
-      "model_src_dir": "tf2onnx/resnet50v1.5",
+      "model_src_dir": "image_recognition/tensorflow_models/resnet50_v1_5/export",
       "source_model_dataset": "/tf_dataset/dataset/imagenet",
       "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ImagenetRaw_small_5000",
       "input_model": "/tf_dataset/pre-trained-models/resnet50v1_5/fp32/resnet50_v1.pb",
