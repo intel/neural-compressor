@@ -467,6 +467,16 @@ class TuneStrategy(object):
         for op_name_type, op_config in op_tuning_cfg.items():
             if isinstance(op_config, OpTuningConfig):
                 tune_cfg['op'][op_name_type] = op_config.get_state()
+                op_cap_lst = self.capability['opwise'][op_name_type]
+                # Add pattern for diagnosis
+                for op_cap in op_cap_lst:
+                    if 'pattern' in op_cap:
+                        op_pattern = {}
+                        op_pattern['sequence'] = op_cap['pattern']['sequence'][0] if\
+                            'sequence' in op_cap['pattern'] else None
+                        op_pattern['precision'] = op_cap['pattern']['precision'][0] if\
+                            'precision' in op_cap['pattern'] else None
+                        tune_cfg['op'][op_name_type]['pattern'] = op_pattern
             else:
                 tune_cfg[op_name_type] = op_config
         tune_cfg['calib_sampling_size'] = op_tuning_cfg['calib_sampling_size']
