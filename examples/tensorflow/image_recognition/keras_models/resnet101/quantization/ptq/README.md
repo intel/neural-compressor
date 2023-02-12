@@ -14,11 +14,13 @@ This example can run on Intel CPUs and GPUs.
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
+
 ### Install Tensorflow
 ```shell
 pip install tensorflow
 ```
-> Note: Supported Tensorflow [Version](../../../../../../../README.md).
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
+
 ### Install Intel Extension for Tensorflow
 #### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
