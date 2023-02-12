@@ -306,11 +306,18 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                 activation_observer = _observer(algorithm, scheme, granularity,
                     dtype, 'post_training_dynamic_quant', compute_dtype)
 
+            version = get_torch_version()
             if observer_type == 'quant_aware_training':
                 if key[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell',
-                    'Embedding', 'EmbeddingBag']:
-                    qconfig = torch.quantization.QConfigDynamic(
-                        activation=activation_observer, weight=weights_observer)
+                  'Embedding', 'EmbeddingBag']:
+                    if version.release >= Version("1.11.0").release:
+                        if key[1] in ['Embedding', 'EmbeddingBag']:
+                            qconfig = torch.quantization.float_qparams_weight_only_qconfig
+                        else:
+                            qconfig = torch.quantization.default_dynamic_qconfig
+                    else:
+                        qconfig = torch.quantization.QConfigDynamic(
+                                activation=activation_observer, weight=weights_observer)
                 else:
                     qconfig = torch.quantization.QConfig(activation=activation_fake_quantize,
                                                      weight=weights_fake_quantize)
@@ -318,9 +325,13 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                 qconfig = torch.quantization.QConfig(activation=activation_observer,
                                                      weight=weights_observer)
             else:
-                version = get_torch_version()
                 if version.release < Version("1.6.0").release:  # pragma: no cover
                     qconfig = torch.quantization.QConfigDynamic(weight=weights_observer)
+                elif version.release >= Version("1.11.0").release:
+                    if key[1] in ['Embedding', 'EmbeddingBag']:
+                        qconfig = torch.quantization.float_qparams_weight_only_qconfig
+                    else:
+                        qconfig = torch.quantization.default_dynamic_qconfig
                 else:
                     qconfig = torch.quantization.QConfigDynamic(activation=activation_observer,
                                                                 weight=weights_observer)
