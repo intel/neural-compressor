@@ -212,7 +212,6 @@ class TuneStrategy(object):
         trials_count = 0
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
-            self._remove_redundant_qmodel()
             tuning_start_time = time()
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             trials_count += 1
@@ -222,6 +221,7 @@ class TuneStrategy(object):
                 self.best_tune_result = tuning_history['best_tune_result']
                 logger.warn("Find evaluated tuning config, skip.")
                 continue
+            self._remove_redundant_qmodel()
             logger.debug("Dump current tuning configuration:")
             logger.debug(tune_cfg)
 
@@ -286,6 +286,7 @@ class TuneStrategy(object):
                         self.best_tune_result = best_result
                     self._dump_tuning_process_statistics()
                 break
+        self._recover_best_qmodel_from_tuning_cfg()
             
     def _remove_redundant_qmodel(self):
         """Remove the redundant quantized model to reduce memory use.
