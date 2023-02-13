@@ -105,38 +105,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
     def traverse(self):
         """Traverse the tuning space according to auto-mixed precision strategy."""
         # get fp32 model baseline
-        if self.baseline is None and (self.eval_dataloader or self.eval_func):
-            logger.info("Get FP32 model baseline.")
-            self.baseline = self._evaluate(self.model)
-            # record the FP32 baseline
-            self._add_tuning_history()
-
-            if self.baseline:
-                self.tune_data['baseline'] = self.baseline[0] if \
-                    isinstance(self.baseline[0], list) else [self.baseline[0]]
-
-                for name, data in zip(self.metric_name, self.tune_data['baseline']):
-                    self.tune_data[name] = [data]
-
-                if self.metric_weight:
-                    self.tune_data['Weighted accuracy'] = \
-                        [np.mean(np.array(self.tune_data['baseline']) * self.metric_weight)]
-                    self.tune_data['baseline'] = self.tune_data['Weighted accuracy']
-
-                baseline_msg = '[Accuracy:' + \
-                    ''.join([' {:.4f}'.format(i) for i in self.tune_data['baseline']]) + \
-                    ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
-                    self.objectives.representation, self.baseline[1]) if x != 'Accuracy']) + ']'
-            else: # pragma: no cover
-                if self.metric_weight:
-                    self.tune_data['Weighted accuracy'] = ['n/a']
-                self.tune_data['baseline'] = ['n/a']
-
-                for name, data in zip(self.metric_name, self.tune_data['baseline']):
-                    self.tune_data[name] = ['n/a']
-                baseline_msg = 'n/a'
-
-            logger.info("FP32 baseline is: {}".format(baseline_msg))
+        self._eval_baseline()
 
         trials_count = 0
         for op_tuning_cfg in self.next_tune_cfg():
@@ -155,6 +124,10 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             self.last_qmodel = self.adaptor.quantize(
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)
             assert self.last_qmodel
+            # Return the last quantized model as a result. if performance only.
+            if self.cfg.tuning.exit_policy.performance_only:
+                self.best_qmodel = self.last_qmodel
+                return
             if self.eval_dataloader or self.eval_func:
                 q_config = copy.deepcopy(self.last_qmodel.q_config)
                 self.last_tune_result = self._evaluate(self.last_qmodel)

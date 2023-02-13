@@ -189,26 +189,7 @@ class TuneStrategy(object):
         
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
-        if not (self.cfg.evaluation and self.cfg.evaluation.accuracy and \
-            (self.cfg.evaluation.accuracy.metric or self.cfg.evaluation.accuracy.multi_metrics)) \
-            and self.eval_func is None:
-            logger.info("Neither evaluation function nor metric is defined." \
-                        " Generate a quantized model with default quantization configuration.")
-            self.cfg.tuning.exit_policy.performance_only = True
-            logger.info("Force setting 'tuning.exit_policy.performance_only = True'.")
-            logger.info("Generate a fake evaluation function.")
-            self.eval_func = self._fake_eval_func
-
-        # get fp32 model baseline
-        if self.baseline is None:
-            logger.info("Get FP32 model baseline.")
-            self._fp32_model = self.model
-            self.baseline = self._evaluate(self.model)       
-            self.objectives.baseline = self.baseline
-            # record the FP32 baseline
-            self._add_tuning_history()
-        self.show_baseline_info()
-
+        self._eval_baseline()
         trials_count = 0
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
@@ -236,6 +217,10 @@ class TuneStrategy(object):
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
             self.last_qmodel = self.algo()
             assert self.last_qmodel
+            # Return the last quantized model as a result. if performance only.
+            if self.cfg.tuning.exit_policy.performance_only:
+                self.best_qmodel = self.last_qmodel
+                return
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
             need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
@@ -280,7 +265,27 @@ class TuneStrategy(object):
                         self.best_tune_result = best_result
                     self._dump_tuning_process_statistics()
                 break
-
+            
+    def _eval_baseline(self):
+        """Evaluate the fp32 model if needed."""
+        if not (self.cfg.evaluation and self.cfg.evaluation.accuracy and \
+            (self.cfg.evaluation.accuracy.metric or self.cfg.evaluation.accuracy.multi_metrics)) \
+            and self.eval_func is None:
+            logger.info("Neither evaluation function nor metric is defined." \
+                        " Generate a quantized model with default quantization configuration.")
+            self.cfg.tuning.exit_policy.performance_only = True
+            logger.info("Force setting 'tuning.exit_policy.performance_only = True'.")
+            
+        if not self.cfg.tuning.exit_policy.performance_only:
+            # get fp32 model baseline
+            if self.baseline is None:
+                logger.info("Get FP32 model baseline.")
+                self._fp32_model = self.model
+                self.baseline = self._evaluate(self.model)       
+                self.objectives.baseline = self.baseline
+                # record the FP32 baseline
+                self._add_tuning_history()
+            self.show_baseline_info()
 
     def _fallback_started(self):
         self.fallback_start_point = self.tuning_times
@@ -1073,9 +1078,6 @@ class TuneStrategy(object):
             self.tuning_history.append(tuning_history)
 
         self._save()
-
-    def _fake_eval_func(self, model):
-        return 1.
 
     def _collect_ops_by_quant_mode(self, tune_cfg, quant_mode):
         ops_lst = []

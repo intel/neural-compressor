@@ -82,8 +82,8 @@ class Quantization(Component):
                     logger.info("Because both eval_dataloader_cfg and user-defined eval_func are None," \
                         " automatically setting 'tuning.exit_policy.performance_only = True'.")
                     deep_set(cfg, 'tuning.exit_policy.performance_only', True)
-                    logger.info("Generate a fake evaluation function.")
-                    self._eval_func = self._fake_eval_func
+                    logger.info("The cfg.tuning.exit_policy.performance_only is: {}".format(\
+                        cfg.tuning.exit_policy.performance_only))
                 else:
                     if deep_get(cfg, 'evaluation.accuracy.iteration') == -1 and 'dummy_v2' \
                         in deep_get(cfg, 'evaluation.accuracy.dataloader.dataset', {}):
@@ -387,12 +387,6 @@ class Quantization(Component):
         from .data import TRANSFORMS
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
-
-    # if user doesn't config evaluation dataloader in yaml and eval_func is None, a
-    # fake eval func is created to do quantization once without tuning
-    def _fake_eval_func(self, model):
-        """Return fake accuracy 1 when no need to run tuning."""
-        return 1.
 
     # BELOW API TO BE DEPRECATED!
     @property
