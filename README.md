@@ -14,12 +14,13 @@ Intel® Neural Compressor
 ---
 <div align="left">
 
-Intel® Neural Compressor, is an open-source Python library that runs on Intel CPUs and GPUs, which delivers unified interfaces across multiple deep-learning frameworks for popular network compression technologies such as quantization, pruning, and knowledge distillation.  
-
-This tool supports automatic accuracy-driven tuning strategies to help the user quickly find out the best quantized model. It also implements different weight-pruning algorithms to generate a pruned model with predefined sparsity goal. It also supports knowledge distillation to distill the knowledge from the teacher model to the student model.   
-
-Intel® Neural Compressor is a critical AI software component in the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
-
+Intel® Neural Compressor accelerate deep-learning models on Intel platforms, especially for Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM) and Intel Data Center GPU Flex Series (formerly Arctic Sound-M) with popular network compression technologies such as quantization, pruning, and distillation.  
+The key features and contributes of Intel® Neural Compressor show below:  
+*  Automatic accuracy-driven tuning strategies for quantization. 
+*  Zero-code optimization tool Neural Coder for quickly deployment. 
+*  Popular deep-learning model compression support such as Stable Diffusion, GPT-J. 
+*  Actively upstream models into Huggingface, ONNX model zoo, distribute binaries on Google GCP, AWS, Azure.
+*  Deeply collaborate with Alibaba Blade, Tencent Taco.
 
 **Visit the Intel® Neural Compressor online document website at: <https://intel.github.io/neural-compressor>.**   
 
