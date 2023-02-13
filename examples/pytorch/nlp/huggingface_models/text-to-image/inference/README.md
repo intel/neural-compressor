@@ -1,6 +1,6 @@
 Step-by-Step
 ============
-This document describes the step-by-step instructions to run Stable Diffusion on 4th Gen Intel® Intel® Scalable Processor (SPR) with PyTorch and Intel® Extension for PyTorch.
+This document describes the step-by-step instructions to run Stable Diffusion on 4th Gen Intel® Xeon® Scalable Processor (SPR) with PyTorch and Intel® Extension for PyTorch.
 
 The script ```run_sd.py``` is based on [runwayml/stable-diffusion-v1-5](https://huggingface.co/runwayml/stable-diffusion-v1-5) and provides inference benchmarking.
 
