@@ -142,6 +142,7 @@ class TuneStrategy(object):
         self.baseline = None
         self.last_tune_result = None
         self.last_qmodel = None
+        self.last_tune_cfg = None
         self.best_qmodel = None 
         self.best_tune_result = None
         self.best_tuning_cfg = None # track the best tuning config correspondence to the best quantized model
@@ -235,6 +236,7 @@ class TuneStrategy(object):
             if self.cfg.quantization.recipes.fast_bias_correction:
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
             self.last_qmodel = self.algo()
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
             # remove the algo to avoid it having a reference to qmodel
             self.algo.q_model = None
             assert self.last_qmodel
@@ -874,7 +876,7 @@ class TuneStrategy(object):
             self.objectives.compare(self.best_tune_result, self.baseline):
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
-            self.best_tuning_cfg = copy.deepcopy(self.tune_cfg)
+            self.best_tuning_cfg = copy.deepcopy(self.last_tune_cfg)
             logger.debug(f"*** Update the best qmodel with the result {self.best_tune_result}")
             if self.metric_met_point == 0:
                 self.metric_met_point = self.tuning_times
@@ -884,7 +886,7 @@ class TuneStrategy(object):
             if self.re_quant and self.objectives.accuracy_meets():
                 self.best_tune_result = self.last_tune_result
                 self.best_qmodel = self.last_qmodel
-                self.best_tuning_cfg = copy.deepcopy(self.tune_cfg)
+                self.best_tuning_cfg = copy.deepcopy(self.last_tune_cfg)
                 logger.debug(f"*** Update the best qmodel with the result {self.best_tune_result}.")
             else:
                 logger.debug(f"*** Accuracy not meets the requirements, do not update the best qmodel.")

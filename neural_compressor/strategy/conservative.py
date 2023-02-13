@@ -148,6 +148,7 @@ class ConservativeTuneStrategy(TuneStrategy):
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
             self.last_qmodel = self.algo()
             assert self.last_qmodel
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.acc_meet_flag = self.objectives.accuracy_meets()
             if self.acc_meet_flag:
