@@ -1,0 +1,73 @@
+#!/bin/bash
+set -x
+
+function main {
+
+  init_params "$@"
+  run_tuning
+
+}
+
+# init params
+function init_params {
+    dtype='fp32'
+    for var in "$@"
+    do
+        case $var in
+        --input_model=*)
+            input_model=$(echo $var |cut -f2 -d=)
+        ;;
+        --output_model=*)
+            output_model=$(echo $var |cut -f2 -d=)
+        ;;
+        --dataset_location=*)
+            dataset_location=$(echo $var |cut -f2 -d=)
+        ;;
+        --dtype=*)
+            dtype=$(echo $var |cut -f2 -d=)
+        ;;
+        --quant_format=*)
+            quant_format=$(echo $var |cut -f2 -d=)
+        ;;
+        *)
+            echo "Error: No such parameter: ${var}"
+            exit 1
+        ;;
+        esac
+    done
+
+}
+
+# run_tuning
+function run_tuning {
+    # tuned_checkpoint is used to save torch int8 model.
+    tuned_checkpoint=saved_results
+    extra_cmd=''
+    batch_size=16
+    MAX_SEQ_LENGTH=128
+    quant_format='QDQ' # or QLinear
+    model_name_or_path=${input_model}
+    TASK_NAME=${dataset_location}
+
+    if [[ "${dtype}" = "int8" ]]; then
+        extra_cmd='--tune'
+    fi
+
+    python -u ./run_glue.py \
+        --model_name_or_path ${model_name_or_path} \
+        --task_name ${TASK_NAME} \
+        --do_eval \
+        --do_train \
+        --max_seq_length ${MAX_SEQ_LENGTH} \
+        --per_device_eval_batch_size ${batch_size} \
+        --no_cuda \
+        --output_dir ${tuned_checkpoint} \
+        --export \
+        --export_dtype ${dtype} \
+        --quant_format ${quant_format} \
+        --output_dir ${tuned_checkpoint} \
+        --overwrite_output_dir \
+        ${extra_cmd}
+}
+
+main "$@"
