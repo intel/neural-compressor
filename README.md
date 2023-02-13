@@ -19,7 +19,7 @@ Intel® Neural Compressor accelerate deep-learning models on Intel platforms, es
 *  Innovate by zero-code optimization tool Neural Coder for quickly deployment with Intel® Neural Compressor, 10K+ models from HF are verified. 
 *  Support popular deep-learning models compression such as Stable Diffusion, GPT-J. 
 *  Actively upstream optimized models into Huggingface, ONNX model zoo.
-*  Adopt by broad software platforms such as Google GCP, AWS, Azure, Alibaba Blade, Tencent Taco.
+*  Adopt by broad software platforms such as Google GCP, AWS, Azure, Alibaba OpenAnolis, Tencent Taco.
 
 **Visit the Intel® Neural Compressor online document website at: <https://intel.github.io/neural-compressor>.**   
 
