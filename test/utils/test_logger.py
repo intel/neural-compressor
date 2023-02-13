@@ -18,6 +18,13 @@ class TestLogger(unittest.TestCase):
         logger.warn({"msg": "call logger warn function"})
         logger.warning("call logger warning function")
         logger.warning({"msg": "call logger warning function"})
+        logger.warning(["call logger warning function", "done"])
+        logger.warning(("call logger warning function", "done"))
+        logger.warning([{"msg": "call logger warning function"}, {"msg2": "done"}])
+        logger.warning(({"msg": "call logger warning function"}, {"msg2": "done"}))
+        logger.warning(({"msg": [{"sub-msg":"call logger"},
+                                 {"sub-msg2":"call warning function"}]},
+                        {"msg2": "done"}))
 
 
 if __name__ == "__main__":

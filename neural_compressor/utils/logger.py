@@ -82,7 +82,7 @@ DEBUG = logging.DEBUG
 
 def log(level, msg, *args, **kwargs):
     """Output log with the level as a parameter."""
-    if isinstance(msg, dict):
+    if isinstance(msg, dict) or isinstance(msg, list) or isinstance(msg, tuple):
         for _, line in enumerate(_pretty_dict(msg).split('\n')):
             Logger().get_logger().log(level, line, *args, **kwargs)
     else:
@@ -91,7 +91,7 @@ def log(level, msg, *args, **kwargs):
 
 def debug(msg, *args, **kwargs):
     """Output log with the debug level."""
-    if isinstance(msg, dict):
+    if isinstance(msg, dict) or isinstance(msg, list) or isinstance(msg, tuple):
         for _, line in enumerate(_pretty_dict(msg).split('\n')):
             Logger().get_logger().debug(line, *args, **kwargs)
     else:
@@ -100,7 +100,7 @@ def debug(msg, *args, **kwargs):
 
 def error(msg, *args, **kwargs):
     """Output log with the error level."""
-    if isinstance(msg, dict):
+    if isinstance(msg, dict) or isinstance(msg, list) or isinstance(msg, tuple):
         for _, line in enumerate(_pretty_dict(msg).split('\n')):
             Logger().get_logger().error(line, *args, **kwargs)
     else:
@@ -109,7 +109,7 @@ def error(msg, *args, **kwargs):
 
 def fatal(msg, *args, **kwargs):
     """Output log with the fatal level."""
-    if isinstance(msg, dict):
+    if isinstance(msg, dict) or isinstance(msg, list) or isinstance(msg, tuple):
         for _, line in enumerate(_pretty_dict(msg).split('\n')):
             Logger().get_logger().fatal(line, *args, **kwargs)
     else:
@@ -118,7 +118,7 @@ def fatal(msg, *args, **kwargs):
 
 def info(msg, *args, **kwargs):
     """Output log with the info level."""
-    if isinstance(msg, dict):
+    if isinstance(msg, dict) or isinstance(msg, list) or isinstance(msg, tuple):
         for _, line in enumerate(_pretty_dict(msg).split('\n')):
             Logger().get_logger().info(line, *args, **kwargs)
     else:
@@ -127,7 +127,7 @@ def info(msg, *args, **kwargs):
 
 def warn(msg, *args, **kwargs):
     """Output log with the warning level."""
-    if isinstance(msg, dict):
+    if isinstance(msg, dict) or isinstance(msg, list) or isinstance(msg, tuple):
         for _, line in enumerate(_pretty_dict(msg).split('\n')):
             Logger().get_logger().warning(line, *args, **kwargs)
     else:
@@ -136,7 +136,7 @@ def warn(msg, *args, **kwargs):
 
 def warning(msg, *args, **kwargs):
     """Output log with the warining level (Alias of the method warn)."""
-    if isinstance(msg, dict):
+    if isinstance(msg, dict) or isinstance(msg, list) or isinstance(msg, tuple):
         for _, line in enumerate(_pretty_dict(msg).split('\n')):
             Logger().get_logger().warning(line, *args, **kwargs)
     else:
