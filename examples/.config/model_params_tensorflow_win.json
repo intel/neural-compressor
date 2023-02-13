@@ -1,14 +1,5 @@
 {
     "tensorflow": {
-        "resnet50v1.0": {
-            "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
-            "dataset_location": "imagenet/TF_mini_imagenet",
-            "input_model": "models/tensorflow/freezed_resnet50.pb",
-            "yaml": "resnet50_v1.yaml",
-            "strategy": "basic",
-            "batch_size": 100,
-            "new_benchmark": true
-        },
         "inception_v3": {
             "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
             "dataset_location": "imagenet/TF_mini_imagenet",
