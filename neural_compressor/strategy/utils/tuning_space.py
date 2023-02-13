@@ -146,8 +146,21 @@ class TuningSpace:
         Args:
             capability: tThe merged framework capability.
         """
-        pass
-    
+        def _parse(cap, root):
+            if isinstance(cap, dict):
+                for key, val in cap.items():
+                    if isinstance(val, dict):
+                        tuning_item = TuningItem(name=key, options=[], item_type=key)
+                        root.append(tuning_item)
+                        _parse(val, tuning_item)
+                    elif isinstance(val, list):
+                        tuning_item = TuningItem(name=key, options=val, item_type=key)
+                        root.append(tuning_item)
+                    else:
+                        return 
+        _parse(deepcopy(capability), self.root_item)
+        logger.info("Constructed tuning space.")
+        logger.info(self.root_item.get_details())
 
     def _parse_capability(self, capability):
         """Parse the capability and construct the tuning space(a tree)."""
@@ -643,7 +656,7 @@ class TuningSpace:
             self._merge_with_user_cfg(capability, usr_cfg['quantization'])
             logger.info(f"#############  After Merged with user cfg")
             logger.info(capability)
-        #self._parse_capability(capability)
+        self._parse_capability_v2(capability)
 
     def query_items_by_quant_mode(self, quant_mode):
         """Collect all op items that support the specific quantization/precision mode.
