@@ -131,6 +131,9 @@ class ConservativeTuneStrategy(TuneStrategy):
             # Return the last quantized model as a result. if performance only.
             if self.cfg.tuning.exit_policy.performance_only:
                 self.best_qmodel = self.last_qmodel
+                self._add_tuning_history(copy.deepcopy(tune_cfg),
+                                         (-1, [0]),
+                                         q_config=self.q_model.q_config)
                 return
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.acc_meet_flag = self.objectives.accuracy_meets()
