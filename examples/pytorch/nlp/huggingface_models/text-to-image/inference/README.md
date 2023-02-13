@@ -1,8 +1,8 @@
 Step-by-Step
 ============
-This document describes the step-by-step instructions to benchmark stable diffusion on Intel® Xeon® with PyTorch and Intel® Extension for PyTorch.
+This document describes the step-by-step instructions to run Stable Diffusion on 4th Gen Intel® Intel® Scalable Processor (SPR) with PyTorch and Intel® Extension for PyTorch.
 
-The script ```run_tti.py``` is based on [runwayml/stable-diffusion-v1-5](https://huggingface.co/runwayml/stable-diffusion-v1-5) and provides inference benchmarking.
+The script ```run_sd.py``` is based on [runwayml/stable-diffusion-v1-5](https://huggingface.co/runwayml/stable-diffusion-v1-5) and provides inference benchmarking.
 
 # Prerequisite
 ## Create Environment
@@ -13,7 +13,7 @@ pip install torch==1.13.1 --extra-index-url https://download.pytorch.org/whl/cpu
 pip install intel_extension_for_pytorch=1.13.0
 pip install -r requirements.txt
 ```
-## Setup variable to speedup
+## Setup Environment Variables
 ```
 export KMP_BLOCKTIME=1
 export KMP_SETTINGS=1
@@ -29,7 +29,7 @@ export MALLOC_CONF="oversize_threshold:1,background_thread:true,metadata_thp:aut
 
 # Performance
 ```bash
-numactl -m <node N> -C <cpu list> python run_tti.py
+numactl -m <node N> -C <cpu list> python run_sd.py <fp32/bf16>
 ```
 
 >**Note:** Inference performance speedup with Intel DL Boost (VNNI/AMX) on Intel(R) Xeon(R) hardware, Please refer to [Performance Tuning Guide](https://intel.github.io/intel-extension-for-pytorch/cpu/latest/tutorials/performance_tuning/tuning_guide.html) for more optimizations.
