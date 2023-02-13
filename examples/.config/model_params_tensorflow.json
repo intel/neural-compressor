@@ -97,19 +97,15 @@
       "model_src_dir": "image_recognition/keras_models/vgg16/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/vgg16_keras/vgg16",
-      "yaml": "vgg16.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 32
     },
     "vgg16_keras_h5": {
       "model_src_dir": "image_recognition/keras_models/vgg16/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/vgg16_keras/vgg16.h5",
-      "yaml": "vgg16.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 32
     },
     "vgg19": {
       "model_src_dir": "image_recognition/tensorflow_models/vgg19/quantization/ptq",
@@ -122,19 +118,15 @@
       "model_src_dir": "image_recognition/keras_models/vgg19/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/vgg19_keras/vgg19",
-      "yaml": "vgg19.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 32
     },
     "vgg19_keras_h5": {
       "model_src_dir": "image_recognition/keras_models/vgg19/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/vgg19_keras/vgg19.h5",
-      "yaml": "vgg19.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 32
     },
     "densenet121": {
       "model_src_dir": "image_recognition/tensorflow_models/densenet121/quantization/ptq",
@@ -1462,19 +1454,15 @@
       "model_src_dir": "image_recognition/keras_models/resnet50_fashion/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/mnist/FashionMNIST",
       "input_model": "/tf_dataset2/models/tensorflow/resnet50_fashion",
-      "yaml": "resnet50_fashion.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "resnet50_keras": {
       "model_src_dir": "image_recognition/keras_models/resnet50/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/resnet50_keras/resnet50",
-      "yaml": "resnet50.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "resnet50_keras_qat": {
       "model_src_dir": "image_recognition/keras_models/resnet50/quantization/qat",
@@ -1487,10 +1475,8 @@
       "model_src_dir": "image_recognition/keras_models/resnet50/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/resnet50_keras/resnet50.h5",
-      "yaml": "resnet50.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "3DUNet": {
       "model_src_dir": "oob_models/quantization/ptq",

@@ -11,6 +11,7 @@ function main {
 # init params
 function init_params {
   batch_size=32
+  iters=100
 
   for var in "$@"
   do
@@ -19,13 +20,16 @@ function init_params {
           input_model=$(echo $var |cut -f2 -d=)
       ;;
       --mode=*)
-          mode=$(echo $var |cut -f2 -d=)    
+          mode=$(echo $var |cut -f2 -d=)
       ;;
       --dataset_location=*)
-          dataset_location=$(echo $var |cut -f2 -d=)    
+          dataset_location=$(echo $var |cut -f2 -d=)
       ;;
       --batch_size=*)
-          batch_size=$(echo $var |cut -f2 -d=)    
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
+      --iters=*)
+          iters=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -37,10 +41,11 @@ function run_benchmark {
 
     python main.py \
             --input_model ${input_model} \
-            --benchmark \
             --mode ${mode} \
+            --eval_data ${dataset_location} \
             --batch_size ${batch_size} \
-            --dataset_location ${dataset_location}
+            --benchmark \
+            --iters ${iters}
 }
 
 main "$@"

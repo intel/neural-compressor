@@ -17,7 +17,6 @@
 #
 import time
 import numpy as np
-from neural_compressor import data
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
@@ -57,17 +56,17 @@ from neural_compressor.data import TensorflowImageRecord
 from neural_compressor.data import DefaultDataLoader
 from neural_compressor.data import ComposeTransform
 from neural_compressor.data import LabelShift
-from neural_compressor.data import BilinearImagenetTransform
+from neural_compressor.data import TensorflowResizeCropImagenetTransform
 
 eval_dataset = TensorflowImageRecord(root=FLAGS.eval_data, transform=ComposeTransform(transform_list= \
-                    [BilinearImagenetTransform(height=224, width=224)]))
+            [TensorflowResizeCropImagenetTransform(height=224, width=224, mean_value=[123.68, 116.78, 103.94])]))
 if FLAGS.benchmark and FLAGS.mode == 'performance':
     eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
 else:
     eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=FLAGS.batch_size)
 if FLAGS.calib_data:
     calib_dataset = TensorflowImageRecord(root=FLAGS.calib_data, transform=ComposeTransform(transform_list= \
-                        [BilinearImagenetTransform(height=224, width=224)]))
+            [TensorflowResizeCropImagenetTransform(height=224, width=224, mean_value=[123.68, 116.78, 103.94])]))
     calib_dataloader = DefaultDataLoader(dataset=calib_dataset, batch_size=10)
 
 def evaluate(model):
@@ -75,7 +74,7 @@ def evaluate(model):
 
     Args:
         model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
-        
+
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
@@ -120,7 +119,6 @@ def main(_):
     if FLAGS.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
-
         conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
         q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
                     eval_func=evaluate)

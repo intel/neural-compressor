@@ -17,7 +17,6 @@
 #
 import time
 import numpy as np
-from neural_compressor import data
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
@@ -53,62 +52,52 @@ flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
 from neural_compressor.metric import TensorflowTopK
-from neural_compressor.data import TensorflowImageRecord
-from neural_compressor.data import DefaultDataLoader
-from neural_compressor.data import ComposeTransform
-from neural_compressor.data import LabelShift
-from neural_compressor.data import BilinearImagenetTransform
-
-eval_dataset = TensorflowImageRecord(root=FLAGS.eval_data, transform=ComposeTransform(transform_list= \
-                    [BilinearImagenetTransform(height=224, width=224)]))
-if FLAGS.benchmark and FLAGS.mode == 'performance':
-    eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=1)
-else:
-    eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=FLAGS.batch_size)
-if FLAGS.calib_data:
-    calib_dataset = TensorflowImageRecord(root=FLAGS.calib_data, transform=ComposeTransform(transform_list= \
-                        [BilinearImagenetTransform(height=224, width=224)]))
-    calib_dataloader = DefaultDataLoader(dataset=calib_dataset, batch_size=10)
 
 def evaluate(model):
     """Custom evaluate function to inference the model for specified metric on validation dataset.
 
     Args:
         model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
-        
+
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
     infer = model.signatures["serving_default"]
     output_dict_keys = infer.structured_outputs.keys()
     output_name = list(output_dict_keys )[0]
-    postprocess = LabelShift(label_shift=1)
     metric = TensorflowTopK(k=1)
 
-    def eval_func(dataloader, metric):
+    def eval_func(data_loader, metric):
         warmup = 5
         iteration = None
         latency_list = []
         if FLAGS.benchmark and FLAGS.mode == 'performance':
             iteration = FLAGS.iters
-        for idx, (inputs, labels) in enumerate(dataloader):
+        for idx, (inputs, labels) in enumerate(data_loader):
             inputs = np.array(inputs)
-            input_tensor = tf.constant(inputs)
+            input_tensor = tf.constant(inputs, dtype=tf.float32)
             start = time.time()
             predictions = infer(input_tensor)[output_name]
             end = time.time()
             predictions = predictions.numpy()
-            predictions, labels = postprocess((predictions, labels))
             metric.update(predictions, labels)
             latency_list.append(end - start)
             if iteration and idx >= iteration:
                 break
-        latency = np.array(latency_list[warmup:]).mean() / eval_dataloader.batch_size
+        latency = np.array(latency_list[warmup:]).mean() / dataloader.batch_size
         return latency
 
-    latency = eval_func(eval_dataloader, metric)
+    from neural_compressor.utils.create_obj_from_config import create_dataloader
+    dataloader_args = {
+        'batch_size': FLAGS.batch_size,
+        'dataset': {"FashionMNIST": {'root':FLAGS.eval_data}},
+        'transform': {'Rescale': {}},
+        'filter': None
+    }
+    dataloader = create_dataloader('tensorflow', dataloader_args)
+    latency = eval_func(dataloader, metric)
     if FLAGS.benchmark and FLAGS.mode == 'performance':
-        print("Batch size = {}".format(eval_dataloader.batch_size))
+        print("Batch size = {}".format(dataloader.batch_size))
         print("Latency: {:.3f} ms".format(latency * 1000))
         print("Throughput: {:.3f} images/sec".format(1. / latency))
     acc = metric.result()
@@ -120,8 +109,15 @@ def main(_):
     if FLAGS.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
-
         conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
+        from neural_compressor.utils.create_obj_from_config import create_dataloader
+        calib_dataloader_args = {
+            'batch_size': FLAGS.batch_size,
+            'dataset': {"FashionMNIST": {'root':FLAGS.eval_data}},
+            'transform': {'Rescale': {}},
+            'filter': None
+        }
+        calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
         q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
                     eval_func=evaluate)
         q_model.save(FLAGS.output_model)
