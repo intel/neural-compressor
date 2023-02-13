@@ -77,80 +77,80 @@ op_cap = {
         },
     ],
     # op have both weight and activation and support static/dynamic/fp32
-    # ('op_name2', 'op_type1'): [
-    #     {
-    #         'activation':
-    #             {
-    #                 'dtype': ['int8'],
-    #                 'quant_mode': 'static',
-    #                 'scheme': ['sym'],
-    #                 'granularity': ['per_channel', 'per_tensor'],
-    #                 'algorithm': ['minmax', 'kl']
-    #             },
-    #         'weight':
-    #             {
-    #                 'dtype': ['int8'],
-    #                 'scheme': ['sym'],
-    #                 'granularity': ['per_channel', 'per_tensor']
-    #             }
-    #     },
-    #     {
-    #         'activation':
-    #             {
-    #                 'dtype': ['int8'],
-    #                 'quant_mode': 'dynamic',
-    #                 'scheme': ['sym'],
-    #                 'granularity': ['per_channel', 'per_tensor'],
-    #                 'algorithm': ['minmax', 'kl']
-    #             },
-    #         'weight':
-    #             {
-    #                 'dtype': ['int8'],
-    #                 'scheme': ['sym'],
-    #                 'granularity': ['per_channel', 'per_tensor']
-    #             }
-    #     },
-    #     {
-    #         'activation':
-    #             {
-    #                 'dtype': 'fp32'
-    #             },
-    #         'weight':
-    #             {
-    #                 'dtype': 'fp32'
-    #             }
-    #     },
-    # ],
-    # # op have both weight and activation and support static/fp32
-    # ('op_name3', 'op_type2'): [
-    #     {
-    #         'activation':
-    #             {
-    #                 'dtype': ['int8'],
-    #                 'quant_mode': 'static',
-    #                 'scheme': ['sym'],
-    #                 'granularity': ['per_channel'],
-    #                 'algorithm': ['minmax', 'kl']
-    #             },
-    #         'weight':
-    #             {
-    #                 'dtype': ['int8'],
-    #                 'scheme': ['sym'],
-    #                 'granularity': ['per_channel'],
-    #                 'algorithm': ['minmax', 'kl']
-    #             }
-    #     },
-    #     {
-    #         'activation':
-    #             {
-    #                 'dtype': 'fp32'
-    #             },
-    #         'weight':
-    #             {
-    #                 'dtype': 'fp32'
-    #             }
-    #     },
-    # ],
+    ('op_name2', 'op_type1'): [
+        {
+            'activation':
+                {
+                    'dtype': ['int8'],
+                    'quant_mode': 'static',
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+            'weight':
+                {
+                    'dtype': ['int8'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': ['int8'],
+                    'quant_mode': 'dynamic',
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor'],
+                    'algorithm': ['minmax', 'kl']
+                },
+            'weight':
+                {
+                    'dtype': ['int8'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel', 'per_tensor']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': 'fp32'
+                },
+            'weight':
+                {
+                    'dtype': 'fp32'
+                }
+        },
+    ],
+    # op have both weight and activation and support static/fp32
+    ('op_name3', 'op_type2'): [
+        {
+            'activation':
+                {
+                    'dtype': ['int8'],
+                    'quant_mode': 'static',
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel'],
+                    'algorithm': ['minmax', 'kl']
+                },
+            'weight':
+                {
+                    'dtype': ['int8'],
+                    'scheme': ['sym'],
+                    'granularity': ['per_channel'],
+                    'algorithm': ['minmax', 'kl']
+                }
+        },
+        {
+            'activation':
+                {
+                    'dtype': 'fp32'
+                },
+            'weight':
+                {
+                    'dtype': 'fp32'
+                }
+        },
+    ],
     # op have both weight and activation and support dynamic/fp32
     ('op_name4', 'op_type3'): [
         {
@@ -239,6 +239,22 @@ class TestTuningSampler(unittest.TestCase):
                     'dtype': ['bf16']
                 }
             },
+            'op_name2': {
+                'activation': {
+                    'dtype': ['fp32']
+                },
+                'weight': {
+                    'dtype': ['fp32']
+                }
+            }, # Fallback op_name2 to fp32 by manually, only keep fp32 capability
+            'op_name3': {
+                'activation': {
+                    'dtype': ['int8']
+                },
+                'weight': {
+                    'dtype': ['int8']
+                }
+            }, # Only keep int8 capability
             'op_name4': {
                 'activation': {
                     'granularity': ['per_channel'],
@@ -258,6 +274,7 @@ class TestTuningSampler(unittest.TestCase):
             'calib': {'calib_sampling_size': [1, 10]},
             'op': deepcopy(op_cap2)
         }
+
     
 
 

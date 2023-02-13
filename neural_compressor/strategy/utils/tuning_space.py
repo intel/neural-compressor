@@ -197,9 +197,9 @@ class TuningSpace:
         """
         dtype: ['int8', 'fp32'] -> ('static', ('int8', 'signed')) and ('precision', ('fp32'))
         dtype: ['fp32'] -> ('precision', ('fp32'))
-        Q1: weight and activation should be assigned 
-        s1: remove the invalid cfg (filter the valid cfg)
-        s2: if not None, replace the cfg with the valid cfg
+        step1, For dtype, filter the invalid data type. Override the fwk data type if the valid data type is not empty.
+        step2. For tuning item, filter the invalid options, Override the options if the valid option is not empty.
+        Skip override if the valid data type or options is empty.
         user_precision_set = {}
         op_user_cfg:
             {
@@ -224,11 +224,11 @@ class TuningSpace:
                 user_dtype_lst = op_user_cfg[att]['dtype'] if op_user_cfg[att]['dtype'] is not None else []
                 # Merge the precision part.
                 fwk_att_precision_cap = fw_op_cap['precision'][att]
+                fwk_precision_lst = list(fwk_att_precision_cap.keys())
                 # The intersection of user cfg and fwk capability.
-                valid_precision_set = set(fwk_att_precision_cap.keys()).intersection(set(user_dtype_lst))
+                valid_precision_set = set(fwk_precision_lst).intersection(set(user_dtype_lst))
                 if len(valid_precision_set) != 0:
                     # TODO if dtype is ['int8'], no 'fp32'?
-                    fwk_precision_lst = list(fwk_att_precision_cap.keys())
                     for precision_name in fwk_precision_lst:
                         if precision_name not in valid_precision_set:
                             fwk_att_precision_cap.pop(precision_name, None)
@@ -246,23 +246,35 @@ class TuningSpace:
                     if len(valid_quant_dtype_lst) != 0:
                         # Filter the valid dtype
                         # TODO if dtype is ['fp32']
+                        if len(valid_precision_set) == 0:
+                            for precision in fwk_precision_lst:
+                                fw_op_cap['precision'][att].pop(precision, None)
+                                if len(fw_op_cap['precision'][att]) == 0:
+                                    fw_op_cap['precision'].pop(att, None)
+                                if len(fw_op_cap['precision']) == 0:
+                                    fw_op_cap.pop('precision', None)
                         for dtype in fwk_data_type_lst:
                             if dtype not in valid_quant_dtype_lst:
                                 signed_flag, data_type = extract_data_type(dtype)
                                 fw_op_cap[quant_mode][att][data_type].pop(signed_flag, None)
                             if len(fw_op_cap[quant_mode][att][data_type]) == 0:
-                                fw_op_cap[quant_mode][att].remove(data_type, None)
+                                fw_op_cap[quant_mode][att].pop(data_type, None)
                             if len(fw_op_cap[quant_mode][att]) == 0:
-                                fw_op_cap[quant_mode].remove(att, None)
+                                fw_op_cap[quant_mode].pop(att, None)
+                    else:
+                        if len(valid_precision_set) != 0: # no valid quant data type but have valid precision dtype
+                            fw_op_cap.pop(quant_mode, None)
                     # Filter the valid options for tuning item
-                    for data_type in fw_op_cap[quant_mode][att]:
-                        for signed_flag in fw_op_cap[quant_mode][att][data_type]:
-                            fwk_items = fw_op_cap[quant_mode][att][data_type][signed_flag]
-                            for item_name, item_options in op_user_cfg[att].items():
-                                if item_name not in ['dtype', 'quant_mode']:
-                                    options_intersection = set(fwk_items[item_name]).intersection(set(item_options))
-                                    if len(options_intersection) > 0:
-                                        fwk_items[item_name] = [option for option in fwk_items[item_name] if option in options_intersection]
+                    if quant_mode in fw_op_cap:
+                        for data_type in fw_op_cap[quant_mode][att]:
+                            for signed_flag in fw_op_cap[quant_mode][att][data_type]:
+                                fwk_items = fw_op_cap[quant_mode][att][data_type][signed_flag]
+                                for item_name, item_options in op_user_cfg[att].items():
+                                    if item_name not in ['dtype', 'quant_mode']:
+                                        options_intersection = set(fwk_items[item_name]).intersection(set(item_options))
+                                        if len(options_intersection) > 0:
+                                            fwk_items[item_name] = [option for option in fwk_items[item_name] if\
+                                                option in options_intersection]
         return fw_op_cap
 
     def _merge_op_cfg_v2(self, op_cap, op_user_cfg, fw_op_cap):
@@ -345,6 +357,7 @@ class TuningSpace:
             for op_name in op_name_types:
                 if op_name_pattern.fullmatch(op_name):
                     op_name_type = op_name_types[op_name]
+                    logger.debug(f"*** Start to merge user config for op: {op_name_type}")
                     cap['op'][op_name_type] = self._merge_op_cfg(cap['op'][op_name_type], 
                                                                  op_user_cfg,
                                                                  fw_cap['op'][op_name_type])
@@ -621,16 +634,16 @@ class TuningSpace:
         :param usr_cfg:
         :return:
         """
-        capability['op'] = self._parse_cap_helper(capability['op'])
+        #capability['op'] = self._parse_cap_helper(capability['op'])
         tmp_cap2 = self._parse_cap_helper_v3(deepcopy(capability['op']))
-        # capability['op'] = tmp_cap2
+        capability['op'] = tmp_cap2
         if usr_cfg:
             logger.info(f"#############  Before merged with user cfg")
             logger.info(capability)
             self._merge_with_user_cfg(capability, usr_cfg['quantization'])
             logger.info(f"#############  After Merged with user cfg")
             logger.info(capability)
-        self._parse_capability(capability)
+        #self._parse_capability(capability)
 
     def query_items_by_quant_mode(self, quant_mode):
         """Collect all op items that support the specific quantization/precision mode.
