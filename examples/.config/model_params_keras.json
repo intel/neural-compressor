@@ -1,0 +1,18 @@
+{
+  "keras": {
+    "resnetv2_50": {
+      "model_src_dir": "image_recognition/resnetv2_50/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/resnetv2_50_keras/saved_model",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "xception": {
+      "model_src_dir": "image_recognition/xception/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/xception_keras/saved_model/",
+      "main_script": "main.py",
+      "batch_size": 32
+    }
+  }
+}
