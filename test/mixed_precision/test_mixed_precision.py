@@ -8,6 +8,7 @@ import neural_compressor.adaptor.pytorch as nc_torch
 import shutil
 import tensorflow as tf
 from neural_compressor import mix_precision
+from neural_compressor.mix_precision import fit
 from neural_compressor.utils.utility import LazyImport, CpuInfo
 from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper
 from neural_compressor.config import MixedPrecisionConfig, TuningCriterion
@@ -309,6 +310,9 @@ class TestMixedPrecision(unittest.TestCase):
             conf,
             eval_func=eval,
         )
+        self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
+
+        output_model = fit(self.tf_model, conf, eval)
         self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
 
     @unittest.skipIf(PT_VERSION.release < Version("1.11.0").release,

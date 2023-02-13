@@ -24,4 +24,5 @@ from .utils import options
 from .conf.config import conf
 from .conf.pythonic_config import config
 from .config import DistillationConfig, PostTrainingQuantConfig, \
-                    WeightPruningConfig, QuantizationAwareTrainingConfig
+                    WeightPruningConfig, QuantizationAwareTrainingConfig, \
+                    MixedPrecisionConfig
