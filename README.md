@@ -14,13 +14,12 @@ Intel® Neural Compressor
 ---
 <div align="left">
 
-Intel® Neural Compressor accelerate deep-learning models on Intel platforms, especially for Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM) and Intel Data Center GPU Flex Series (formerly Arctic Sound-M) with popular network compression technologies such as quantization, pruning, and distillation.  
-The key features and contributes of Intel® Neural Compressor show below:  
-*  Automatic accuracy-driven tuning strategies for quantization. 
-*  Zero-code optimization tool Neural Coder for quickly deployment. 
-*  Popular deep-learning model compression support such as Stable Diffusion, GPT-J. 
-*  Actively upstream models into Huggingface, ONNX model zoo, distribute binaries on Google GCP, AWS, Azure.
-*  Deeply collaborate with Alibaba Blade, Tencent Taco.
+Intel® Neural Compressor accelerate deep-learning models on Intel platforms, especially for Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM) and Intel Data Center GPU Flex Series (formerly Arctic Sound-M) with popular network compression technologies such as quantization, pruning, and distillation. The key features and contributes of Intel® Neural Compressor show as below:  
+*  Support automatic accuracy-driven tuning strategies for quantization with minimized accuracy loss. 
+*  Innovate by zero-code optimization tool Neural Coder for quickly deployment with Intel® Neural Compressor, 10K+ models from HF are verified. 
+*  Support popular deep-learning models compression such as Stable Diffusion, GPT-J. 
+*  Actively upstream optimized models into Huggingface, ONNX model zoo.
+*  Adopt by broad software platforms such as Google GCP, AWS, Azure, Alibaba Blade, Tencent Taco.
 
 **Visit the Intel® Neural Compressor online document website at: <https://intel.github.io/neural-compressor>.**   
 
