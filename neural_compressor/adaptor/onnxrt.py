@@ -144,7 +144,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         """
         from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
         from onnx import numpy_helper
-        model = self.pre_optimized_model if self.pre_optimized_model else model_wrapper
+        model = copy.deepcopy(model_wrapper)
         black_nodes = []
         white_nodes = []
         if tune_cfg is not None:
@@ -217,7 +217,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             (dict): quantized model
         """
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
-        model = self.pre_optimized_model if self.pre_optimized_model else model
+        if self.recipes.get('smooth_quant', False):
+            model = model
+        else:
+            model = self.pre_optimized_model if self.pre_optimized_model else model
         ort_version = Version(ort.__version__)
         if ort_version < ONNXRT152_VERSION: # pragma: no cover
             logger.warning("Quantize input needs onnxruntime 1.5.2 or newer.")

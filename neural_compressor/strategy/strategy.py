@@ -226,8 +226,12 @@ class TuneStrategy(object):
             self.tuning_times += 1
             self.algo.calib_iter = tune_cfg['calib_iteration']
             if self.cfg.quantization.recipes.smooth_quant:
-                self.algo.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
+                try:
+                    self.algo.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
+                except:
+                    self.algo.alpha = 0.5
                 self.algo.tune_cfg = copy.deepcopy(tune_cfg)
+                self.algo.q_model = self.adaptor.pre_optimized_model
                 self.model = self.algo()
             self.q_model = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)

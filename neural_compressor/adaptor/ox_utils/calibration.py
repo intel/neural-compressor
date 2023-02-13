@@ -36,7 +36,6 @@ from importlib.util import find_spec
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.util import make_dquant_node, is_B_transposed, \
     _get_qrange_for_qType, calculate_scale_zp
-import itertools
 
 logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
