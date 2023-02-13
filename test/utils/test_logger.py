@@ -20,10 +20,13 @@ class TestLogger(unittest.TestCase):
         logger.warning({"msg": "call logger warning function"})
         logger.warning(["call logger warning function", "done"])
         logger.warning(("call logger warning function", "done"))
+        logger.warning({"msg": {('bert', "embedding"): {'weight': {'dtype': ['unint8', 'int8']}}}})
+        logger.warning({"msg": {('bert', "embedding"): {'op': ('a', 'b')}}})
+        # the following log will not be prettified
         logger.warning([{"msg": "call logger warning function"}, {"msg2": "done"}])
         logger.warning(({"msg": "call logger warning function"}, {"msg2": "done"}))
-        logger.warning(({"msg": [{"sub-msg":"call logger"},
-                                 {"sub-msg2":"call warning function"}]},
+        logger.warning(({"msg": [{"sub_msg":"call logger"},
+                                 {"sub_msg2":"call warning function"}]},
                         {"msg2": "done"}))
 
 
