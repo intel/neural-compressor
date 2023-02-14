@@ -131,6 +131,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                                          (-1, [0]),
                                          q_config=self.q_model.q_config)
                 return
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
             if self.eval_dataloader or self.eval_func:
                 q_config = copy.deepcopy(self.last_qmodel.q_config)
                 self.last_tune_result = self._evaluate(self.last_qmodel)

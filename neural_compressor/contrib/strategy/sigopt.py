@@ -200,6 +200,7 @@ class SigOptTuneStrategy(TuneStrategy):
                                          (-1, [0]),
                                          q_config=self.q_model.q_config)
                 return
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
             self.last_tune_result = self._evaluate(self.last_qmodel)
 
             need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)

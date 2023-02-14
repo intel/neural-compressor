@@ -53,32 +53,32 @@ class Pruner:
         #2 for linear weight, 4 for conv weight
         self.tensor_dims = [2, 4]
 
-        if local_config.method:
+        if local_config.method is not None:
             self.method = local_config.method
         else:
             self.method = "per_tensor"
 
-        if local_config.initial_sparsity:
+        if local_config.initial_sparsity is not None:
             self.initial_sparsity = local_config.initial_sparsity
         else:
             self.initial_sparsity = global_config.initial_sparsity
-        if local_config.target_sparsity:
+        if local_config.target_sparsity is not None:
             self.target_sparsity = local_config.target_sparsity
         else:
             self.target_sparsity = global_config.target_sparsity
-        if local_config.start_epoch:
+        if local_config.start_epoch is not None:
             self.start_epoch = local_config.start_epoch
         else:
             self.start_epoch = global_config.start_epoch
-        if local_config.end_epoch:
+        if local_config.end_epoch is not None:
             self.end_epoch = local_config.end_epoch
         else:
             self.end_epoch = global_config.end_epoch
-        if local_config.update_frequency:
+        if local_config.update_frequency is not None:
             self.freq = local_config.update_frequency
         else:
             self.freq = global_config.update_frequency
-        if local_config.names:
+        if local_config.names is not None:
             self.weights = local_config.names
         else:
             self.weights = self.model.get_all_weight_names()

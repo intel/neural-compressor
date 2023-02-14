@@ -26,6 +26,13 @@
             "strategy": "basic",
             "batch_size": 100,
             "new_benchmark": true
+        },
+	"duc": {
+           "model_src_dir": "object_detection/onnx_model_zoo/DUC/quantization/ptq",
+           "dataset_location": "leftImg8bit/val",
+           "input_model": "models/onnx/DUC/ResNet101-DUC-12.onnx",
+           "main_script": "main.py",
+           "batch_size": 1
         }
     }
 }

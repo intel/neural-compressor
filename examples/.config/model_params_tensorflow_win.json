@@ -1,14 +1,5 @@
 {
     "tensorflow": {
-        "resnet50v1.0": {
-            "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
-            "dataset_location": "imagenet/TF_mini_imagenet",
-            "input_model": "models/tensorflow/freezed_resnet50.pb",
-            "yaml": "resnet50_v1.yaml",
-            "strategy": "basic",
-            "batch_size": 100,
-            "new_benchmark": true
-        },
         "inception_v3": {
             "model_src_dir": "image_recognition/tensorflow_models/quantization/ptq",
             "dataset_location": "imagenet/TF_mini_imagenet",
@@ -152,6 +143,27 @@
             "strategy": "basic",
             "batch_size": 1,
             "new_benchmark": false
+        },
+        "resnet101_keras": {
+            "model_src_dir": "image_recognition/keras_models/resnet101/quantization/ptq",
+            "dataset_location": "imagenet/TF_mini_imagenet",
+            "input_model": "models/tensorflow/resnet101_keras/saved_model/",
+            "main_script": "main.py",
+            "batch_size": 32
+        },
+	"ssd_resnet50_v1": {
+      	    "model_src_dir": "object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq",
+            "dataset_location": "coco_val.record",
+            "input_model": "models/tensorflow/ssd_resnet50_v1/frozen_inference_graph.pb",
+            "main_script": "main.py",       
+            "batch_size": 10
+    	},
+        "resnet50v1.0": {
+            "model_src_dir": "image_recognition/tensorflow_models/resnet50_v1/quantization/ptq",
+            "dataset_location": "imagenet/TF_mini_imagenet",
+            "input_model": "models/tensorflow/freezed_resnet50.pb",
+            "main_script": "main.py",
+            "batch_size": 100
         }
     }
 }

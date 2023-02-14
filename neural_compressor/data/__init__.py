@@ -25,6 +25,7 @@ from .dataloaders import DATALOADERS, DataLoader
 from .dataloaders.default_dataloader import DefaultDataLoader
 from .transforms import TRANSFORMS, BaseTransform, ComposeTransform, transform_registry, Postprocess
 from .transforms import LabelShift, BilinearImagenetTransform, TensorflowResizeCropImagenetTransform
+from .transforms import TFSquadV1PostTransform, TFSquadV1ModelZooPostTransform
 from .transforms import TensorflowResizeWithRatio, ResizeTFTransform, RescaleTFTransform, NormalizeTFTransform
 from .transforms import ParseDecodeCocoTransform
 
@@ -56,4 +57,6 @@ __all__ = [
     "FILTERS",
     "Filter",
     "filter_registry",
-    "LabelBalanceCOCORecordFilter"]
+    "LabelBalanceCOCORecordFilter",
+    "TFSquadV1PostTransform",
+    "TFSquadV1ModelZooPostTransform"]

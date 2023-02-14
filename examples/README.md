@@ -213,16 +213,16 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/nlp/bert_base_mrpc/quantization/ptq">ckpt</a></td>
   </tr>
   <tr>
-    <td>*BERT large SQuAD (Model Zoo)</td>
+    <td>BERT large SQuAD (Model Zoo)</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/nlp/bert_large_squad_model_zoo/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/nlp/bert_large_squad_model_zoo/quantization/ptq">pb</a></td>
   </tr>
   <tr>
-    <td>*BERT large SQuAD</td>
+    <td>BERT large SQuAD</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/nlp/bert_large_squad/quantization/ptq">pb</a></td>
+    <td><a href="./tensorflow/nlp/bert_large_squad/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>DistilBERT base</td>
@@ -297,10 +297,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/recommendation/wide_deep_large_ds/quantization/ptq">pb</a></td>
   </tr> 
   <tr>
-    <td>*Arbitrary Style Transfer</td>
+    <td>Arbitrary Style Transfer</td>
     <td>Style Transfer</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/style_transfer/arbitrary_style_transfer/quantization/ptq">ckpt</a></td>
+    <td><a href="./tensorflow/style_transfer/arbitrary_style_transfer/quantization/ptq">ckpt</a></td>
   </tr>
 </tbody>
 </table>
@@ -318,25 +318,25 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
   <tr>
-    <td>*Inception V3</td>
+    <td>Inception V3</td>
     <td>Image Recognition</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/inception_v3/pruning/magnitude">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/inception_v3/pruning/magnitude">pb</a></td>
   </tr>
   <tr>
-    <td>*ResNet V2</td>
+    <td>ResNet V2</td>
     <td>Image Recognition</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/resnet_v2/pruning/magnitude">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/resnet_v2/pruning/magnitude">pb</a></td>
   </tr>
   <tr>
-    <td>*ViT</td>
+    <td>ViT</td>
     <td>Image Recognition</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/ViT/pruning/magnitude">ckpt</a></td>
+    <td><a href="./tensorflow/image_recognition/ViT/pruning/magnitude">ckpt</a></td>
   </tr>
 </tbody>
 </table>

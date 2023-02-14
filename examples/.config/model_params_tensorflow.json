@@ -344,10 +344,8 @@
       "model_src_dir": "style_transfer/arbitrary_style_transfer/quantization/ptq",
       "dataset_location": "style_images,content_images",
       "input_model": "/tf_dataset/tensorflow/style_transfer/arbitrary_style_transfer/model.ckpt",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": -1,
-      "new_benchmark": false
+      "main_script": "style_tune.py",
+      "batch_size": 1
     },
     "transformer_lt": {
       "model_src_dir": "nlp/transformer_lt/quantization/ptq",
@@ -360,19 +358,15 @@
       "model_src_dir": "nlp/bert_large_squad/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/bert/data",
       "input_model": "/tf_dataset/tensorflow/bert/bert_fp32.pb",
-      "yaml": "bert.yaml",
-      "strategy": "basic",
-      "batch_size": 64,
-      "new_benchmark": true
+      "main_script": "tune_squad.py",
+      "batch_size": 64
     },
     "bert_large_squad_model_zoo": {
       "model_src_dir": "nlp/bert_large_squad_model_zoo/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/bert/data",
       "input_model": "/tf_dataset/tensorflow/bert/fp32_bert_squad.pb",
-      "yaml": "bert.yaml",
-      "strategy": "basic",
-      "batch_size": 64,
-      "new_benchmark": true
+      "main_script": "tune_squad.py",
+      "batch_size": 64
     },
     "bert_base_mrpc": {
       "model_src_dir": "nlp/bert_base_mrpc/quantization/ptq",
