@@ -12,11 +12,13 @@ This document is used to list steps of reproducing Intel® Neural Compressor QAT
 ```shell
 pip install neural-compressor
 ```
-### Install Intel Tensorflow
+### Install Requirements
+The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this QAT example.
+The Intel Extension for Tensorflow for Intel CPUs is installed as default.
 ```shell
-pip install intel-tensorflow
+pip install -r requirements.txt
 ```
-
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 # Run
 
