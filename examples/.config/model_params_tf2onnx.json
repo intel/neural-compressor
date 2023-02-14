@@ -33,7 +33,7 @@
       "batch_size": 32
     },
     "faster_rcnn_resnet50": {
-      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_resnet50/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_resnet50/export",
       "source_model_dataset": "/tf_dataset/tensorflow/coco_val.record",
       "target_model_dataset": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_resnet50/frozen_inference_graph.pb",
@@ -41,7 +41,7 @@
       "batch_size": 10
     },
     "ssd_mobilenet_v1": {
-      "model_src_dir": "object_detection/tensorflow_models/ssd_mobilenet_v1/quantization/ptq",
+      "model_src_dir": "object_detection/tensorflow_models/ssd_mobilenet_v1/export",
       "source_model_dataset": "/tf_dataset/tensorflow/coco_val.record",
       "target_model_dataset": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/ssd_mobilenet_v1/frozen_inference_graph.pb",
