@@ -319,25 +319,25 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
   <tr>
-    <td>*Inception V3</td>
+    <td>Inception V3</td>
     <td>Image Recognition</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/inception_v3/pruning/magnitude">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/inception_v3/pruning/magnitude">pb</a></td>
   </tr>
   <tr>
-    <td>*ResNet V2</td>
+    <td>ResNet V2</td>
     <td>Image Recognition</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/resnet_v2/pruning/magnitude">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/resnet_v2/pruning/magnitude">pb</a></td>
   </tr>
   <tr>
-    <td>*ViT</td>
+    <td>ViT</td>
     <td>Image Recognition</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/ViT/pruning/magnitude">ckpt</a></td>
+    <td><a href="./tensorflow/image_recognition/ViT/pruning/magnitude">ckpt</a></td>
   </tr>
 </tbody>
 </table>
