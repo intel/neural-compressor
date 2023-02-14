@@ -3,7 +3,7 @@
     "resnet50v1.0": {
       "model_src_dir": "image_recognition/tensorflow_models/resnet50_v1/export",
       "source_model_dataset": "/tf_dataset/dataset/imagenet",
-      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ImagenetRaw_small_5000",
+      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset/pre-trained-models/resnet50/fp32/freezed_resnet50.pb",
       "main_script": "main.py",
       "batch_size": 32
@@ -11,7 +11,7 @@
     "resnet50v1.5": {
       "model_src_dir": "image_recognition/tensorflow_models/resnet50_v1_5/export",
       "source_model_dataset": "/tf_dataset/dataset/imagenet",
-      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ImagenetRaw_small_5000",
+      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset/pre-trained-models/resnet50v1_5/fp32/resnet50_v1.pb",
       "main_script": "main.py",
       "batch_size": 32
@@ -19,7 +19,7 @@
     "mobilenetv2": {
       "model_src_dir": "image_recognition/tensorflow_models/mobilenet_v2/export",
       "source_model_dataset": "/tf_dataset/dataset/imagenet",
-      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ImagenetRaw_small_5000",
+      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_mobilenet_v2.pb",
       "main_script": "main.py",
       "batch_size": 32
@@ -27,7 +27,7 @@
     "vgg16": {
       "model_src_dir": "image_recognition/tensorflow_models/vgg16/export",
       "source_model_dataset": "/tf_dataset/dataset/imagenet",
-      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ImagenetRaw_small_5000",
+      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_vgg16.pb",
       "main_script": "main.py",
       "batch_size": 32
