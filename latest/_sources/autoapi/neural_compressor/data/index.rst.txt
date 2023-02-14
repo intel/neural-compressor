@@ -42,6 +42,8 @@ Classes
    neural_compressor.data.LabelShift
    neural_compressor.data.BilinearImagenetTransform
    neural_compressor.data.TensorflowResizeCropImagenetTransform
+   neural_compressor.data.TFSquadV1PostTransform
+   neural_compressor.data.TFSquadV1ModelZooPostTransform
    neural_compressor.data.TensorflowResizeWithRatio
    neural_compressor.data.ResizeTFTransform
    neural_compressor.data.RescaleTFTransform
@@ -297,6 +299,56 @@ Attributes
    :type scale: float, default=1.0
 
    :returns: tuple of processed image and label
+
+
+.. py:class:: TFSquadV1PostTransform(label_file, vocab_file, n_best_size=20, max_seq_length=384, max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128)
+
+   Bases: :py:obj:`BaseTransform`
+
+   Postprocess the predictions of bert on SQuAD.
+
+   :param label_file: path of label file
+   :type label_file: str
+   :param vocab_file: path of vocabulary file
+   :type vocab_file: str
+   :param n_best_size: The total number of n-best predictions to generate in nbest_predictions.json
+   :type n_best_size: int, default=20
+   :param max_seq_length: The maximum total input sequence length after WordPiece tokenization.
+                          Sequences longer than this will be truncated, shorter than this will be padded
+   :type max_seq_length: int, default=384
+   :param max_query_length: The maximum number of tokens for the question.
+                            Questions longer than this will be truncated to this length
+   :type max_query_length: int, default=64
+   :param max_answer_length: The maximum length of an answer that can be generated. This is needed because
+                             the start and end predictions are not conditioned on one another
+   :type max_answer_length: int, default=30
+   :param do_lower_case: Whether to lower case the input text.
+                         Should be True for uncased models and False for cased models
+   :type do_lower_case: bool, default=True
+   :param doc_stride: When splitting up a long document into chunks,
+                      how much stride to take between chunks
+   :type doc_stride: int, default=128
+
+   :returns: tuple of processed prediction and label
+
+   .. py:method:: process_result(results)
+
+      Get the processed results.
+
+
+   .. py:method:: get_postprocess_result(sample)
+
+      Get the post processed results.
+
+
+
+.. py:class:: TFSquadV1ModelZooPostTransform(label_file, vocab_file, n_best_size=20, max_seq_length=384, max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128)
+
+   Bases: :py:obj:`TFSquadV1PostTransform`
+
+   Postprocess the predictions of bert on SQuADV1.1.
+
+   See class TFSquadV1PostTransform for more details
 
 
 .. py:class:: TensorflowResizeWithRatio(min_dim=800, max_dim=1365, padding=False, constant_value=0)

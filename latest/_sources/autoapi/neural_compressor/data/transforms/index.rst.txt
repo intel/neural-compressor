@@ -33,8 +33,11 @@ Classes
    neural_compressor.data.transforms.BaseTransform
    neural_compressor.data.transforms.ComposeTransform
    neural_compressor.data.transforms.ResizeTFTransform
+   neural_compressor.data.transforms.TensorflowResizeWithRatio
    neural_compressor.data.transforms.RescaleTFTransform
    neural_compressor.data.transforms.NormalizeTFTransform
+   neural_compressor.data.transforms.TFSquadV1PostTransform
+   neural_compressor.data.transforms.TFSquadV1ModelZooPostTransform
    neural_compressor.data.transforms.ParseDecodeCocoTransform
    neural_compressor.data.transforms.Postprocess
    neural_compressor.data.transforms.LabelShift
@@ -124,6 +127,25 @@ Functions
    :returns: tuple of processed image and label
 
 
+.. py:class:: TensorflowResizeWithRatio(min_dim=800, max_dim=1365, padding=False, constant_value=0)
+
+   Bases: :py:obj:`BaseTransform`
+
+   Resize image with aspect ratio and pad it to max shape(optional).
+
+   If the image is padded, the label will be processed at the same time.
+   The input image should be np.array or tf.Tensor.
+
+   :param min_dim: Resizes the image such that its smaller dimension == min_dim
+   :type min_dim: int, default=800
+   :param max_dim: Ensures that the image longest side doesn't exceed this value
+   :type max_dim: int, default=1365
+   :param padding: If true, pads image with zeros so its size is max_dim x max_dim
+   :type padding: bool, default=False
+
+   :returns: tuple of processed image and label
+
+
 .. py:class:: RescaleTFTransform
 
    Bases: :py:obj:`BaseTransform`
@@ -147,6 +169,56 @@ Functions
    :type std: list, default=[1.0]
 
    :returns: tuple of processed image and label
+
+
+.. py:class:: TFSquadV1PostTransform(label_file, vocab_file, n_best_size=20, max_seq_length=384, max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128)
+
+   Bases: :py:obj:`BaseTransform`
+
+   Postprocess the predictions of bert on SQuAD.
+
+   :param label_file: path of label file
+   :type label_file: str
+   :param vocab_file: path of vocabulary file
+   :type vocab_file: str
+   :param n_best_size: The total number of n-best predictions to generate in nbest_predictions.json
+   :type n_best_size: int, default=20
+   :param max_seq_length: The maximum total input sequence length after WordPiece tokenization.
+                          Sequences longer than this will be truncated, shorter than this will be padded
+   :type max_seq_length: int, default=384
+   :param max_query_length: The maximum number of tokens for the question.
+                            Questions longer than this will be truncated to this length
+   :type max_query_length: int, default=64
+   :param max_answer_length: The maximum length of an answer that can be generated. This is needed because
+                             the start and end predictions are not conditioned on one another
+   :type max_answer_length: int, default=30
+   :param do_lower_case: Whether to lower case the input text.
+                         Should be True for uncased models and False for cased models
+   :type do_lower_case: bool, default=True
+   :param doc_stride: When splitting up a long document into chunks,
+                      how much stride to take between chunks
+   :type doc_stride: int, default=128
+
+   :returns: tuple of processed prediction and label
+
+   .. py:method:: process_result(results)
+
+      Get the processed results.
+
+
+   .. py:method:: get_postprocess_result(sample)
+
+      Get the post processed results.
+
+
+
+.. py:class:: TFSquadV1ModelZooPostTransform(label_file, vocab_file, n_best_size=20, max_seq_length=384, max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128)
+
+   Bases: :py:obj:`TFSquadV1PostTransform`
+
+   Postprocess the predictions of bert on SQuADV1.1.
+
+   See class TFSquadV1PostTransform for more details
 
 
 .. py:class:: ParseDecodeCocoTransform

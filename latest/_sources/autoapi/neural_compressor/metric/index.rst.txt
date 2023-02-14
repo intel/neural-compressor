@@ -37,6 +37,7 @@ Classes
    neural_compressor.metric.BaseMetric
    neural_compressor.metric.TensorflowTopK
    neural_compressor.metric.COCOmAPv2
+   neural_compressor.metric.SquadF1
 
 
 
@@ -210,6 +211,32 @@ Functions
       Compute mean average precision.
 
       :returns: The mean average precision score.
+
+
+
+.. py:class:: SquadF1
+
+   Bases: :py:obj:`BaseMetric`
+
+   Evaluate for v1.1 of the SQuAD dataset.
+
+   .. py:method:: update(preds, labels, sample_weight=None)
+
+      Add the predictions and labels.
+
+      :param preds: The predictions.
+      :param labels: The labels corresponding to the predictions.
+      :param sample_weight: The sample weight.
+
+
+   .. py:method:: reset()
+
+      Reset the score list.
+
+
+   .. py:method:: result()
+
+      Compute F1 score.
 
 
 

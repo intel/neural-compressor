@@ -119,6 +119,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.metric.COCOmAPv2" title="neural_compressor.metric.COCOmAPv2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COCOmAPv2</span></code></a></p></td>
 <td><p>Compute mean average precision of the detection task.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.metric.SquadF1" title="neural_compressor.metric.SquadF1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SquadF1</span></code></a></p></td>
+<td><p>Evaluate for v1.1 of the SQuAD dataset.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -358,6 +361,40 @@ as one of tensorflow, pytorch, mxnet, onnxrt.</p>
 <dd class="field-odd"><p>The mean average precision score.</p>
 </dd>
 </dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.metric.SquadF1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">SquadF1</span></span><a class="headerlink" href="#neural_compressor.metric.SquadF1" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.metric.BaseMetric" title="neural_compressor.metric.BaseMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseMetric</span></code></a></p>
+<p>Evaluate for v1.1 of the SQuAD dataset.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.metric.SquadF1.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.SquadF1.update" title="Permalink to this definition"></a></dt>
+<dd><p>Add the predictions and labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>preds</strong> – The predictions.</p></li>
+<li><p><strong>labels</strong> – The labels corresponding to the predictions.</p></li>
+<li><p><strong>sample_weight</strong> – The sample weight.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.metric.SquadF1.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.SquadF1.reset" title="Permalink to this definition"></a></dt>
+<dd><p>Reset the score list.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.metric.SquadF1.result">
+<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.SquadF1.result" title="Permalink to this definition"></a></dt>
+<dd><p>Compute F1 score.</p>
 </dd></dl>
 
 </dd></dl>
