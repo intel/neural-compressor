@@ -40,3 +40,9 @@ python -m torch.distributed.launch --master_addr=<MASTER_ADDRESS> --nproc_per_no
  main.py --topology=(resnet18|resnet34|resnet50|resnet101) --teacher=(resnet18|resnet34|resnet50|resnet101) \
   --dataset_location=/path/to/imagenet --output_model=path/to/output_model --distillation --pretrained --no_cuda
 ```
+# Results
+We ran distillation for ResNet50 on ImageNet dataset with several settings, teacher model set to ResNet101, results are shown below.
+|   Setting       | Top1 Accuracy  |  Elapsed Time |
+|-----------------|----------------|---------------|
+|   1 ICX8360Y Machine     |   76.73%       |        2765min  |
+|   4 ICX8360Y Machines     |   76.63%       |        1076min  |
