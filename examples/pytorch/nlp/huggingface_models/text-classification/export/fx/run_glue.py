@@ -508,15 +508,16 @@ def main():
     def eval_func(model):
         return take_eval_steps(model, trainer)
 
+    from neural_compressor.config import Torch2ONNXConfig
+    it = iter(eval_dataloader)
+    input = next(it)
+    input.pop('labels')
+    symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
+    dynamic_axes = {k: symbolic_names for k in input.keys()}
+
     if model_args.export and model_args.export_dtype == 'fp32':
         from neural_compressor.model import Model
         inc_model = Model(model)
-        it = iter(eval_dataloader)
-        input = next(it)
-        input.pop('labels')
-        symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
-        dynamic_axes = {k: symbolic_names for k in input.keys()}
-        from neural_compressor.config import Torch2ONNXConfig
         fp32_onnx_config = Torch2ONNXConfig(
             dtype=model_args.export_dtype,
             opset_version=14,

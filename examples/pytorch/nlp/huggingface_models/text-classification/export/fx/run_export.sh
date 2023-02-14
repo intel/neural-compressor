@@ -49,10 +49,6 @@ function run_tuning {
     model_name_or_path=${input_model}
     TASK_NAME=${dataset_location}
 
-    if [[ "${dtype}" = "int8" ]]; then
-        extra_cmd='--tune'
-    fi
-
     python -u ./run_glue.py \
         --model_name_or_path ${model_name_or_path} \
         --task_name ${TASK_NAME} \

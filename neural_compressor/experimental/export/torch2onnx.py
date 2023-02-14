@@ -681,13 +681,12 @@ def torch_to_fp32_onnx(
         do_constant_folding (bool, optional): do constant folding or not. Defaults to True.
         verbose (bool, optional): dump verbose or not. Defaults to True.
     """
-    if input_names is None:
-        input_names = ['input']
-        if isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict):
+    if input_names is None and \
+      (isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict)):
         input_names = list(example_inputs.keys())
         example_inputs = list(example_inputs.values())
     # match input_names with inspected input_order, especailly for bert in hugginface.
-    if len(input_names) > 1:
+    if input_names and len(input_names) > 1:
         import inspect
         input_order = inspect.signature(fp32_model.forward).parameters.keys()
         flag = [name in input_order for name in input_names] # whether should be checked
