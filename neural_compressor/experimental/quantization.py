@@ -166,7 +166,7 @@ class Quantization(Component):
             self._eval_func,
             _resume,
             self.hooks)
-        
+
         if getattr(self._calib_dataloader, 'distributed', False):
             self.register_hook('on_train_begin', self.strategy.adaptor._pre_hook_for_hvd)
 

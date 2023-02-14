@@ -2315,8 +2315,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         if self.performance_only:
             inc_tmp_model = model
         else:
-            if hasattr(model, "save_qconf_summary"):
-                model = torch_utils.util.auto_copy(model)
             try:
                 inc_tmp_model = copy.deepcopy(model)
             except Exception as e:  # pragma: no cover
@@ -2325,29 +2323,24 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 inc_tmp_model = model
         assert not self.version.release < Version("1.10.0").release, \
             "INC support IPEX version >= 1.10.0"
-        tmp_model = inc_tmp_model.model.eval()
+        example_inputs = get_example_inputs(inc_tmp_model.model, dataloader)
         qscheme = self._cfg_to_qconfig(tune_cfg)
         if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
             iterations = tune_cfg.get('calib_iteration', 1)
             if self.version.release < Version("1.12.0").release:
+                tmp_model = inc_tmp_model.model.eval()
                 ipex_conf = ipex.quantization.QuantConf(configure_file=self.ipex_config_path,  # pylint: disable=E1101
                                                         qscheme=qscheme)
                 self.model_calibration(tmp_model, dataloader, iterations, ipex_conf,
                                        tune_cfg.get('calib_sampling_size', 1))
                 ipex_conf.save(self.ipex_config_path)
-                example_inputs = get_example_inputs(tmp_model, dataloader)
                 ipex_conf = ipex.quantization.QuantConf(self.ipex_config_path)   # pylint: disable=E1101
                 q_model = ipex.quantization.convert(tmp_model,
                                                     ipex_conf,
                                                     example_inputs,
                                                     inplace=True)  # pylint: disable=E1121
             else:
-                from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-                static_qconfig = QConfig(activation=MinMaxObserver.with_args(
-                    qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
-                                   qscheme=torch.per_channel_symmetric))
-
+                tmp_model = model.model.eval()
                 tmp_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
                 if q_func is not None:
                     q_func(tmp_model)
@@ -2384,7 +2377,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
 
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
-        inc_tmp_model.model = q_model
+        inc_tmp_model._model = q_model
         with open(self.ipex_config_path, 'r') as f:
             inc_tmp_model.tune_cfg = json.load(f)
         inc_tmp_model.ipex_config_path = self.ipex_config_path
@@ -2553,8 +2546,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             q_capability (dictionary): tuning capability for each op from model.
         """
         self.pre_optimized_model = model
-        tmp_model = model._model
-        return self._get_quantizable_ops(tmp_model)
+        return self._get_quantizable_ops(model)
 
     def _get_quantizable_ops_recursively(self, model, prefix, quantizable_ops):
         """This is a helper function for `query_fw_capability`,
@@ -2567,15 +2559,16 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             None
         """
 
+        orig_model = model.model
         if not os.path.exists(self.ipex_config_path):
-            assert isinstance(model, torch.nn.Module), \
+            assert isinstance(orig_model, torch.nn.Module), \
                     "The model passed in is not the instance of torch.nn.Module"
 
-        if hasattr(model, "save_qconf_summary"):
+        if hasattr(orig_model, "save_qconf_summary"):
             os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
-            model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+            orig_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
         else:
-            model.eval()
+            orig_model.eval()
             # init_model = model_
             # to record the origin batch_size
             if isinstance(self.q_dataloader, BaseDataLoader):
@@ -2587,10 +2580,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 assert self.q_func is None, ("IPEX < 1.12.0 didn't support calibration function, "
                                                  "Please use IPEX >= 1.12.0!")
                 if self.performance_only:
-                    tmp_model = model
+                    tmp_model = orig_model
                 else:
                     try:
-                        tmp_model = copy.deepcopy(model)
+                        tmp_model = copy.deepcopy(orig_model)
                     except Exception as e:  # pragma: no cover
                         logger.warning(
                             "Fail to deep copy the model due to {}, only quantization without eval_func."
@@ -2611,14 +2604,15 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                         qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                         weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                    qscheme=torch.per_channel_symmetric))
-                    example_inputs = get_example_inputs(model, self.q_dataloader)
-                    model = ipex.quantization.prepare(model, static_qconfig, \
+                    example_inputs = get_example_inputs(orig_model, self.q_dataloader)
+                    orig_model = ipex.quantization.prepare(orig_model, static_qconfig, \
                                             example_inputs=example_inputs, inplace=True)
                 if self.q_func is None:
-                    self.model_calibration(model, self.q_dataloader)
+                    self.model_calibration(orig_model, self.q_dataloader)
                 else:
-                    self.q_func(model)
-                model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+                    self.q_func(orig_model)
+                orig_model.save_qconf_summary(qconf_summary=self.ipex_config_path)
+            model._model = orig_model
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
