@@ -19,6 +19,7 @@
 
 from .transform import TRANSFORMS, BaseTransform, ComposeTransform, transform_registry, \
 ResizeTFTransform, TensorflowResizeWithRatio, RescaleTFTransform, NormalizeTFTransform
+from .transform import TFSquadV1PostTransform, TFSquadV1ModelZooPostTransform
 from .coco_transform import ParseDecodeCocoTransform
 from .postprocess import Postprocess
 from .imagenet_transform import LabelShift, BilinearImagenetTransform, TensorflowResizeCropImagenetTransform
@@ -32,6 +33,7 @@ for f in modules:
         __import__(basename(f)[:-3], globals(), locals(), level=1)
 
 
-__all__ = ["TRANSFORMS", "BaseTransform", "ComposeTransform", "transform_registry", "ResizeTFTransform", 
+__all__ = ["TRANSFORMS", "BaseTransform", "ComposeTransform", "transform_registry", "ResizeTFTransform",
            "Postprocess", "LabelShift", "BilinearImagenetTransform", "TensorflowResizeCropImagenetTransform",
-           "RescaleTFTransform", "NormalizeTFTransform", "ParseDecodeCocoTransform"]
+           "RescaleTFTransform", "NormalizeTFTransform", "ParseDecodeCocoTransform",
+           "TensorflowResizeWithRatio", "TFSquadV1PostTransform", "TFSquadV1ModelZooPostTransform"]
