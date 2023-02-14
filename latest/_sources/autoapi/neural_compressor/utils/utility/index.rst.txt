@@ -62,6 +62,7 @@ Functions
    neural_compressor.utils.utility.set_workspace
    neural_compressor.utils.utility.set_resume_from
    neural_compressor.utils.utility.set_tensorboard
+   neural_compressor.utils.utility.show_memory_info
 
 
 
@@ -279,5 +280,10 @@ Functions
 .. py:function:: set_tensorboard(tensorboard: bool)
 
    Set the tensorboard in config.
+
+
+.. py:function:: show_memory_info(hint)
+
+   Show process full memory.
 
 
