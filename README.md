@@ -14,12 +14,12 @@ Intel® Neural Compressor
 ---
 <div align="left">
 
-Intel® Neural Compressor accelerate deep-learning models on Intel platforms, especially for Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM) and Intel Data Center GPU Flex Series (formerly Arctic Sound-M) with popular network compression technologies such as quantization, pruning, and distillation. The key features and contributes of Intel® Neural Compressor show as below:  
-*  Support automatic accuracy-driven tuning strategies for quantization with minimized accuracy loss. 
-*  Innovate by zero-code optimization tool Neural Coder for quickly deployment with Intel® Neural Compressor, 10K+ models from HF are verified. 
-*  Support popular deep-learning models compression such as Stable Diffusion, GPT-J. 
-*  Actively upstream optimized models into Huggingface, ONNX model zoo.
-*  Adopt by broad software platforms such as Google GCP, AWS, Azure, Alibaba OpenAnolis, Tencent Taco.
+Intel® Neural Compressor accelerate deep-learning models on Intel platforms, especially for advanced Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM) and Intel Data Center GPU Flex Series (formerly Arctic Sound-M) with popular network compression technologies such as quantization, pruning, and distillation. The key features and contributes of Intel® Neural Compressor show as below:  
+*  Support automatic [accuracy-driven](https://github.com/intel/neural-compressor/blob/readme/update/docs/source/design.md#workflow) tuning strategies for quantization with minimized accuracy loss. 
+*  Innovate by zero-code optimization tool [Neural Coder](https://github.com/intel/neural-compressor/tree/readme/update/neural_coder#what-do-we-offer) for quickly deployment with Intel® Neural Compressor, 10K+ models from HF are verified. 
+*  Support popular deep-learning models compression such as [Stable Diffusion](https://github.com/intel/neural-compressor/tree/readme/update/examples/pytorch/nlp/huggingface_models/text-to-image/quantization/README.md), [GPT-J](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx/README.md). 
+*  Actively collaborate with AI ecosystem like [Huggingface](https://huggingface.co/blog/intel), [ONNX model zoo](https://github.com/onnx/models#int8-models-are-generated-by-intel-neural-compressor-intel-neural-compressor-is-an-open-source-python-library-which-supports-automatic-accuracy-driven-tuning-strategies-to-help-user-quickly-find-out-the-best-quantized-model-it-implements-dynamic-and-static-quantization-for-onnx-models-and-can-represent-quantized-onnx-models-with-operator-oriented-as-well-as-tensor-oriented-qdq-ways-users-can-use-web-based-ui-service-or-python-code-to-do-quantization-read-the-introduction-for-more-details).
+*  Adopt by broad software platforms such as Google [GCP](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [AWS](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), [Alibaba](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html), [Tencent](https://mp.weixin.qq.com/s/CPz9-5Nsh-5N9Q8-UmK--w).
 
 **Visit the Intel® Neural Compressor online document website at: <https://intel.github.io/neural-compressor>.**   
 
@@ -128,11 +128,11 @@ q_model = fit(
 </table>
 
 ## Selected Publications/Events
+* Post on Social Media: [Training and Inference for Stable Diffusion | Intel Business](https://www.youtube.com/watch?v=emCgSTlJaAg) (Jan 2023)
 * Blog by Intel: [Intel® AMX Enhances AI Inference Performance](https://www.intel.com/content/www/us/en/products/docs/accelerator-engines/advanced-matrix-extensions/alibaba-solution-brief.html) (Jan 2023)
 * Blog by TensorFlow: [Optimizing TensorFlow for 4th Gen Intel Xeon Processors](https://blog.tensorflow.org/2023/01/optimizing-tensorflow-for-4th-gen-intel-xeon-processors.html) (Jan 2023)
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
-* Blog on Medium: [MLefficiency — Optimizing transformer models for efficiency](https://medium.com/@kawapanion/mlefficiency-optimizing-transformer-models-for-efficiency-a9e230cff051) (Dec 2022)
 
 > View our [Full Publication List](./docs/source/publication_list.md).
 
