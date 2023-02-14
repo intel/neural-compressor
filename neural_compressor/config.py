@@ -365,6 +365,46 @@ class _BaseQuantizationConfig:
                  excluded_precisions=[],
                  quant_level=1,
                  accuracy_criterion=accuracy_criterion):
+        """Initialize _BaseQuantizationConfig class.
+
+        Args:
+            inputs: inputs of model
+            outputs: outputs of model
+            backend: backend for model execution, support default, itex, ipex, onnxrt_trt_ep, onnxrt_cuda_ep
+            domain: model domain. Support auto, cv, object_detection, nlp and recommendation_system.
+                    Adaptor will use specific quantization settings for different domains automatically, and
+                    explicitly specified quantization settings will override the automatic setting.
+                    If users set domain as auto, automatic detection for domain will be executed.
+            recipes: recipes for quantiztaion, support list is as below.
+                     smooth_quant: whether do smooth quant
+                     smooth_quant_args: parameters for smooth_quant
+                     fast_bias_correction: whether do fast bias correction
+                     weight_correction: whether do weight correction
+                     gemm_to_matmul: whether convert gemm to matmul and add, only valid for onnx models
+                     graph_optimization_level: support DISABLE_ALL, ENABLE_BASIC, ENABLE_EXTENDED, ENABLE_ALL
+                                               only valid for onnx models
+                     first_conv_or_matmul_quant: whether quantize the first conv or matmul
+                     last_conv_or_matmul_quant: whether quantize the last conv or matmul
+                     pre_post_process_quant: whether quantize the ops in preprocess and postprocess
+                     add_qdq_pair_to_weight: whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
+                     optypes_to_exclude_output_quant: don't quantize output of specified optypes
+                     dedicated_qdq_pair: whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
+            quant_format: support default, QDQ and QOperator
+            device: support cpu and gpu
+            calibration_sampling_size: number of calibration sample
+            op_type_list: tuning constraints on optype-wise
+            op_name_list: tuning constraints on op-wise
+            strategy: strategy name
+            strategy_kwargs: parameters for strategy
+            objective: objective with accuracy constraint guaranteed, support performance, modelsize and footprint.
+            timeout: tuning timeout (seconds). default value is 0 which means early stop.
+            max_trials: max tune times. default value is 100. Combine with timeout field to decide when to exit.
+            performance_only: whether do evaluation
+            reduce_range: whether use 7 bit
+            excluded_precisions: precisions to be excluded, support bf16
+            quant_level: support 0 and 1, 0 is conservative strategy, 1 is basic(default) or user-specified strategy
+            accuracy_criterion: accuracy constraint settings
+        """
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
