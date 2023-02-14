@@ -27,7 +27,7 @@ cd examples/tensorflow/image_recognition/inception_v3/
 bash prepare_dataset.sh --output_dir==/pruning/magnitude/data/  --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
 # convert train subset
 bash prepare_dataset.sh --output_dir=/pruning/magnitude/data/ --raw_dir=/PATH/TO/img_raw/train/ --subset=train
-cd /pruning/magnitude/
+cd ./pruning/magnitude/
 ```
 
 # Run

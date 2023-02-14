@@ -1,2 +1,2 @@
-intel-tensorflow==2.7.0
-horovod==0.24.0
+tensorflow
+horovod
