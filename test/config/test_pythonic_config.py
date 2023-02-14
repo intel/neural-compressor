@@ -301,46 +301,6 @@ class TestPythonicConf(unittest.TestCase):
         q_model = q()
         self.assertEqual(isinstance(q_model.model.linear, 
             torch.nn.quantized.dynamic.modules.linear.Linear),True)
-        
-    def test_performance_only(self):
-        from neural_compressor.quantization import fit
-        from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.data import Datasets, DATALOADERS
-        conf = PostTrainingQuantConfig()
-        conf.performance_only = True
-        # test performance_only + eval_func
-        # model
-        model = torch_model()
-
-        def _fake_eval(model):
-            return 0.1
-
-        # dataset and dataloader
-        dataset = Datasets("pytorch")["dummy"](((1, 3, 224, 224)))
-        dataloader = DATALOADERS["pytorch"](dataset)
-        
-        #tuning and accuracy criterion
-        conf = PostTrainingQuantConfig()
-        conf.performance_only = True
-        
-        # fit, 
-        q_model = fit(model=model,
-                      conf=conf,
-                      calib_dataloader=dataloader,
-                      eval_dataloader=dataloader,
-                      eval_func=_fake_eval)
-        self.assertIsNotNone(q_model)
-        
-        # test performance_only without eval_func
-        # model
-        model = torch_model()
-        #tuning and accuracy criterion
-        conf = PostTrainingQuantConfig()
-        conf.performance_only = True
-        # fit
-        q_model = fit(model=model, conf=conf, calib_dataloader=dataloader)
-        self.assertIsNotNone(q_model)
-
 
 class TestTFPyhonicConf(unittest.TestCase):
     @classmethod

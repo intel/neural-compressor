@@ -224,9 +224,7 @@ class TuneStrategy(object):
             # Return the last quantized model as a result. if performance only.
             if self.cfg.tuning.exit_policy.performance_only:
                 self.best_qmodel = self.last_qmodel
-                self._add_tuning_history(copy.deepcopy(tune_cfg),
-                                         (-1, [0]),
-                                         q_config=self.q_model.q_config)
+                self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
                 return
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
@@ -289,7 +287,7 @@ class TuneStrategy(object):
         """Determines whether an eval function can be created from cfg.
 
         Returns:
-            Returns True if it can, otherwise returns False.
+            Returns True if the eval func can be created from config, False otherwise.
         """
         if self.cfg.evaluation and self.cfg.evaluation.accuracy and \
             (self.cfg.evaluation.accuracy.metric or self.cfg.evaluation.accuracy.multi_metrics)\
