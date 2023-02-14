@@ -132,7 +132,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
             #     2) re-quantize the op with lower sensitivity accumulatively
             tune_cfg = deepcopy(self.cur_best_tuning_cfg)
             requantize_cfg = deepcopy(self._tune_cfg_converter(self.cur_best_tuning_cfg))
-            self.output_op_names = self.adaptor.get_output_op_names(self.cur_best_qmodel)
+            self.output_op_names = self.adaptor.get_output_op_names(self.last_qmodel)
             self.confidence_batches = (self.cfg.tuning.strategy.confidence_batches
                                        if self.cfg.tuning.strategy.confidence_batches != None else 2)
             tune_cfg_backup = deepcopy(tune_cfg)
