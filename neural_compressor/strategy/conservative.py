@@ -46,6 +46,9 @@ class ConservativeTuneStrategy(TuneStrategy):
         super().__init__(model, conf, q_dataloader, q_func, eval_dataloader, 
                          eval_func, dicts, q_hooks)
         self.acc_meet_flag = False
+        self.fallback_op_lst = ['conv', 'matmul', 'linear']
+        res_lst = [None] * len(self.fallback_op_lst)
+        self.new_o0_tuning_result = {k : v for k, v in zip(self.fallback_op_lst, res_lst)}
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
@@ -79,12 +82,15 @@ class ConservativeTuneStrategy(TuneStrategy):
                     tmp_tune_cfg[op_info] = op_config
                 yield tmp_tune_cfg
                 if self.acc_meet_flag:
+                    self.new_o0_tuning_result[op_type] = 'int8'
                     logger.info(f"*** Convert all {op_type} ops to {dtype} and accuracy still meet the requirements")
                     tune_cfg = deepcopy(tmp_tune_cfg)
                 # skip op-wise
                 else:
                     # tmp_tune_cfg = deepcopy(tune_cfg)
+                    self.new_o0_tuning_result[op_type] = 'fp32'
                     logger.info(f"*** Convert all {op_type} ops to {dtype} but accuracy not meet the requirements")
+                logger.info(f"**--**--, new o0 result {self.new_o0_tuning_result.items()}")
                     # logger.info(f"*** Try to convert {op_type} op into {dtype} one by one.")
                 #     for item, quant_mode in items_lst:
                 #         op_info = item.name
@@ -340,10 +346,9 @@ class ConservativeTuneStrategy(TuneStrategy):
                 matmul: [(TuningItem, static), (TuningItem, static)]
         """
         sorted_items = COrderedDict()
-        fallback_op_lst = ['conv', 'matmul', 'linear']
         for op_item, quant_mode in items_lst:
             op_name, op_type = op_item.name
-            for target_op_type in fallback_op_lst:
+            for target_op_type in self.fallback_op_lst:
                 if target_op_type in op_type.lower():
                     if target_op_type not in sorted_items:
                         sorted_items[target_op_type] = []
