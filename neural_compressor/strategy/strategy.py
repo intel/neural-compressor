@@ -234,9 +234,9 @@ class TuneStrategy(object):
                 self.algo.tune_cfg = copy.deepcopy(tune_cfg)
                 self.algo.q_model = self.adaptor.pre_optimized_model
                 self.model = self.algo()
-            self.q_model = self.adaptor.quantize(
+            q_model = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            self.algo.q_model = self.q_model
+            self.algo.q_model = q_model
             # TODO align the api to let strategy has access to pre_optimized model
             assert self.adaptor.pre_optimized_model
             self.algo.origin_model = self.adaptor.pre_optimized_model
