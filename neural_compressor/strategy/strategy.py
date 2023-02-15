@@ -95,7 +95,7 @@ class TuneStrategy(object):
                 on_step_end. Their values are functions to be executed in adaptor layer.. Defaults to None.
         """
         self.model = model
-        self.cfg = conf.usr_cfg
+        self.cfg = self._disable_recipes_and_op_wise_setting(conf)
         self.history_path = self._create_path(self.cfg.tuning.workspace.path, './history.snapshot')
         self.deploy_path = self._create_path(self.cfg.tuning.workspace.path, 'deploy.yaml')
         logger.debug("Dump user yaml configuration:")
@@ -168,7 +168,23 @@ class TuneStrategy(object):
 
         if resume is not None: self.setup_resume(resume)
 
-
+    def _disable_recipes_and_op_wise_setting(self, conf):
+        usr_cfg = conf.usr_cfg
+        logger.info("*** The cfg before disable recipes and op-wise setting.")
+        logger.info(usr_cfg)
+        logger.info("*** Force disable recipes and op-wise setting")
+        usr_cfg.quantization.recipes.scale_propagation_max_pooling = True
+        usr_cfg.quantization.recipes.scale_propagation_concat = True
+        usr_cfg.quantization.recipes.first_conv_or_matmul_quantization = True
+        usr_cfg.quantization.recipes.last_conv_or_matmul_quantization = True
+        usr_cfg.quantization.recipes.pre_post_process_quantization = True
+        usr_cfg.quantization.model_wise = {'weight': {'bit': [7.0]}, 'activation': {}}
+        usr_cfg.quantization.optype_wise = None
+        usr_cfg.quantization.op_wise = None
+        logger.info("*** The cfg after disable recipes and op-wise setting.")
+        logger.info(usr_cfg)
+        return usr_cfg
+        
     @abstractmethod
     def next_tune_cfg(self):
         """Interface for generate the next tuning config.
