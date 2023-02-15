@@ -61,6 +61,13 @@ def fit(model, config=None, eval_func=None, eval_dataloader=None, eval_metric=No
 
     Raises:
         AssertionError.
+
+    Example:
+        from neural_compressor import mix_precision
+        from neural_compressor.config import MixedPrecisionConfig
+
+        conf = MixedPrecisionConfig()
+        converted_model = mix_precision.fit(model, config=conf)
     """
     assert isinstance(config, MixedPrecisionConfig), "Please provide MixedPrecisionConfig!"
     conf = Config(quantization=config)

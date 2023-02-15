@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The basic tuning strategy."""
-
 import copy
 import numpy as np
 from collections import OrderedDict
@@ -29,16 +27,25 @@ from .utils.tuning_space import TUNING_ITEMS_LST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
-    """The basic tuning strategy."""
+    """The basic tuning strategy.
+    
+    There are three stages executed by Basic strategy sequentially,
+    and the tuning process ends once the condition meets the exit policy.
+    """
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
         
-            1. OP Type Wise Tuning
-            2. Fallback OP One by One
-            3. Fallback Multiple OPs Accumulated
+            1. OP Type Wise Tuning: tries to quantize the OPs as many as possible
+                and traverse all OP type wise tuning configs
+            2. Fallback OP One by One: it performs high-precision OP (FP32, BF16 ...)
+                fallbacks one by one based on the tuning config with the best result
+                in the previous stage, and records the impact of each OP.
+            3. Fallback Multiple OPs Accumulated: first sorted the OPs list
+                according to the impact score in stage II, and tries to incrementally
+                fallback multiple OPs to high precision according to the sorted OP list.
 
-        Yields:
+        Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         from copy import deepcopy

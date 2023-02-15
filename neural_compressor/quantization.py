@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Neural Compressor Quantization API."""
-
 from .experimental import Quantization as ExpQuantization
 from neural_compressor.conf.pythonic_config import Config
 from neural_compressor.config import PostTrainingQuantConfig
@@ -84,6 +82,16 @@ def fit(model,
                                                    return accuracy
         eval_metric (str or obj):             Set metric class and neural_compressor will initialize 
                                               this class when evaluation.
+    Example:
+        # Quantization code for PTQ
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig
+
+        conf = PostTrainingQuantConfig()
+        q_model = quantization.fit(model=model,
+                                conf=conf,
+                                calib_dataloader=val_dataloader)
+        q_model.save('./output')
     """
     if isinstance(conf, PostTrainingQuantConfig):
         if eval_func is None and eval_dataloader is None:

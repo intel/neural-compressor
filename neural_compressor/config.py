@@ -63,7 +63,15 @@ ops_schema = Schema({
 
 
 def check_value(name, src, supported_type, supported_value=[]):
-    """Check if the given object is the given supported type and in the given supported value."""
+    """Check if the given object is the given supported type and in the given supported value.
+    
+    Example:
+        from neural_compressor.config import check_value
+        
+        def datatype(self, datatype):
+            if check_value('datatype', datatype, list, ['fp32', 'bf16', 'uint8', 'int8']):
+                self._datatype = datatype
+    """
     if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
         assert False, ("Type of {} items should be {} but not {}".format(
             name, str(supported_type), [type(i) for i in src]))
@@ -142,7 +150,15 @@ options = Options()
 
 
 class BenchmarkConfig:
-    """Config Class for Benchmark."""
+    """Config Class for Benchmark.
+    
+    Example:
+        # Run benchmark according to config
+        from neural_compressor.benchmark import fit
+
+        conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+    """
     def __init__(self,
                  inputs=[],
                  outputs=[],
@@ -269,7 +285,17 @@ class BenchmarkConfig:
 
 
 class AccuracyCriterion:
-    """Class of Accuracy Criterion."""
+    """Class of Accuracy Criterion.
+    
+    Example:
+        from neural_compressor.config import AccuracyCriterion
+        
+        accuracy_criterion = AccuracyCriterion(
+            higher_is_better=True,  # optional. 
+            criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
+            tolerable_loss=0.01,  # optional.
+        )
+    """
     def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=0.01):
         """Init an AccuracyCriterion object."""
         self.higher_is_better = higher_is_better
@@ -566,7 +592,18 @@ class _BaseQuantizationConfig:
 
 
 class TuningCriterion:
-    """Class for Tuning Criterion."""
+    """Class for Tuning Criterion.
+    
+    Example:
+        from neural_compressor.config import TuningCriterion
+        
+        tuning_criterion=TuningCriterion(
+            timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+            max_trials=100, # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+            strategy="basic", # optional. name of the tuning strategy. 
+            strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.
+        )
+    """
     def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, max_trials=100, objective="performance"):
         """Init a TuningCriterion object."""
         self.strategy = strategy
@@ -635,7 +672,19 @@ tuning_criterion = TuningCriterion()
 
 
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
-    """Config Class for Post Training Quantization."""
+    """Config Class for Post Training Quantization.
+    
+    Example:
+        from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
+
+        conf = PostTrainingQuantConfig(
+            quant_level=0,  # the quantization level.
+            tuning_criterion=TuningCriterion(
+                timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+                max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+            ),
+        )
+    """
     def __init__(self,
                  device="cpu",
                  backend="default",
@@ -697,7 +746,18 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
 
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
-    """Config Class for Quantization Aware Training."""
+    """Config Class for Quantization Aware Training.
+    
+    Example:
+        from neural_compressor.config import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
+
+        if approach == "qat":
+            model = copy.deepcopy(model_origin)
+            conf = QuantizationAwareTrainingConfig(
+                op_name_list=qat_op_name_list
+            )
+            compression_manager = prepare_compression(model, conf)
+    """
     def __init__(self,
                  device="cpu",
                  backend="default",
@@ -730,7 +790,19 @@ pruners = [Pruner()]
 
 
 class WeightPruningConfig:
-    """Similiar to torch optimizer's interface."""
+    """Similiar to torch optimizer's interface.
+    
+    Example:
+        from neural_compressor.config import WeightPruningConfig
+        
+        config = WeightPruningConfig(
+            local_configs,
+            target_sparsity=0.8
+        )
+        prune = Pruning(config)
+        prune.update_config(start_step=1, end_step=10)
+        prune.model = self.model
+    """
     def __init__(self, pruning_configs=[{}],  ##empty dict will use global values
                  target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
                  excluded_op_names=[],
@@ -769,7 +841,22 @@ class WeightPruningConfig:
 
 
 class KnowledgeDistillationLossConfig:
-    """Config Class for Knowledge Distillation Loss."""
+    """Config Class for Knowledge Distillation Loss.
+    
+    Example:
+        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+        from neural_compressor import QuantizationAwareTrainingConfig
+        from neural_compressor.training import prepare_compression
+        
+        combs = []
+        distillation_criterion = KnowledgeDistillationLossConfig()
+        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+        combs.append(d_conf)
+        q_conf = QuantizationAwareTrainingConfig()
+        combs.append(q_conf)
+        compression_manager = prepare_compression(model, combs)
+        model = compression_manager.model
+    """
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5]):
         """Init a KnowledgeDistillationLossConfig object."""
         self.config = DotDict({
@@ -782,7 +869,20 @@ class KnowledgeDistillationLossConfig:
 
 
 class IntermediateLayersKnowledgeDistillationLossConfig:
-    """Config Class for Intermediate Layers Knowledge Distillation Loss."""
+    """Config Class for Intermediate Layers Knowledge Distillation Loss.
+    
+    Example:
+        from neural_compressor.config import DistillationConfig, IntermediateLayersKnowledgeDistillationLossConfig
+        
+        distillation_criterion = IntermediateLayersKnowledgeDistillationLossConfig(
+            layer_mappings=layer_mappings,
+            loss_types=['MSE']*len(layer_mappings),
+            loss_weights=[1.0 / len(layer_mappings)]*len(layer_mappings),
+            add_origin_loss=True
+        )
+        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+        confs.append(d_conf)
+    """
     def __init__(self, layer_mappings=[], loss_types=[], loss_weights=[], add_origin_loss=False):
         """Init an IntermediateLayersKnowledgeDistillationLossConfig object."""
         self.config = DotDict({
@@ -796,7 +896,19 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
 
 
 class SelfKnowledgeDistillationLossConfig:
-    """Config Class for Self Knowledge Distillation Loss."""
+    """Config Class for Self Knowledge Distillation Loss.
+    
+    Example:
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+
+        distil_loss = SelfKnowledgeDistillationLossConfig()
+        conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+        compression_manager = prepare_compression(model, conf)
+        model = compression_manager.model
+    """
     def __init__(self,
                  layer_mappings=[],
                  temperature=1.0,
@@ -827,6 +939,17 @@ class DistillationConfig:
                              Defaults to None.
         criterion (Callable, optional): Distillation loss configure.
         optimizer (dictionary, optional): Optimizer configure.
+    
+    Example:
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+
+        distil_loss = SelfKnowledgeDistillationLossConfig()
+        conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+        compression_manager = prepare_compression(model, conf)
+        model = compression_manager.model
     """
     def __init__(self,
                  teacher_model=None,
@@ -871,7 +994,15 @@ class DistillationConfig:
 
 
 class MixedPrecisionConfig(PostTrainingQuantConfig):
-    """Config Class for MixedPrecision."""
+    """Config Class for MixedPrecision.
+    
+    Example:
+        from neural_compressor import mix_precision
+        from neural_compressor.config import MixedPrecisionConfig
+
+        conf = MixedPrecisionConfig()
+        converted_model = mix_precision.fit(model, config=conf)
+    """
     def __init__(self,
                  device="cpu",
                  backend="default",

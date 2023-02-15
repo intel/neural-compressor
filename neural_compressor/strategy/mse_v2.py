@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The MSE_V2 tuning strategy."""
-
 import copy
 from copy import deepcopy
 import numpy as np
@@ -33,6 +31,7 @@ from .utils.tuning_structs import OpTuningConfig
 class MSE_V2TuneStrategy(TuneStrategy):
     """The `mse_v2` tuning strategy.
     
+    MSE_v2 is a strategy with a two stages fallback and revert fallback. 
     Note that, only tensorflow framework and pytorch FX backend is currently supported for mse_v2
     tuning strategy.
     """
@@ -46,13 +45,14 @@ class MSE_V2TuneStrategy(TuneStrategy):
         """Generate and yield the next tuning config with below order.
            
            1. In the fallback stage, it uses multi-batch data to score the op impact
-           and then fallback the op with the highest score util found the quantized
-           model meets accuracy criteria. 
-           2. In the revert fallback stage, it also scores the impact of fallback OPs
-           in the previous stage and selects the op with the lowest score to revert
-           the fallback until the quantized model not meets accuracy criteria.
+            and then fallback the op with the highest score util found the quantized model
+            that meets accuracy criteria.
+           2. In the revert fallback stage, it also scores
+            the impact of fallback OPs in the previous stage and selects the op
+            with the lowest score to revert the fallback until the quantized model
+            that does not meets accuracy criteria.
     
-        Yields:
+        Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         best_op_tuning_cfg = None

@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Benchmark is used for evaluating the model performance."""
-
 from .utils import logger
 from .data import DATALOADERS
 from .experimental import Benchmark as ExpBenchmark
@@ -24,15 +22,12 @@ from .conf.pythonic_config import Config
 from .config import BenchmarkConfig
 
 class Benchmark(object):
-    """Benchmark class can be used to evaluate the model performance.
-    
-    With the objective setting, user can get the data of what they configured in yaml.
+    """Benchmark class can be used to measure the model performance
+        with the objective settings.
 
     Args:
-        conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
-            Benchmark_Conf class containing accuracy goal, tuning objective and preferred
-            calibration & quantization tuning space etc.
-
+        object (string or obj): containing accuracy goal, tuning objective
+            and preferred calibration & quantization tuning space etc.
     """
     def __init__(self, conf_fname_or_obj):
         """Init a Benchmark object."""
@@ -94,9 +89,8 @@ class Benchmark(object):
         outputs (predictions, labels) as inputs for metric updates.
         
         Args:
-        name (str, optional): Name for postprocess.
-        postprocess_cls (cls): Should be a sub_class of neural_compressor.data.transforms.postprocess.
-
+            name (str, optional): Name for postprocess.
+            postprocess_cls (cls): Should be a sub_class of neural_compressor.data.transforms.postprocess.
         """
         from .experimental.common import Postprocess as NCPostprocess
         nc_postprocess = NCPostprocess(postprocess_cls, name, **kwargs)
@@ -112,8 +106,15 @@ def fit(model, config=None, b_dataloader=None, b_func=None):
                                   tuning objective and preferred calibration & quantization
                                   tuning space etc.
         b_dataloader:             The dataloader for frameworks.
-        b_func:                   customized benchmark function. if user passes the dataloader,
+        b_func:                   Customized benchmark function. If user passes the dataloader,
                                   then b_func is not needed.
+    
+    Example:
+        # Run benchmark according to config
+        from neural_compressor.benchmark import fit
+        
+        conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
     """
     if isinstance(config, BenchmarkConfig):
         config = Config(benchmark=config)
