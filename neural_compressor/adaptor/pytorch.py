@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import copy
+import gc
 import math
 import os
 from collections import OrderedDict, UserDict, namedtuple
@@ -1302,6 +1303,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
         self.tune_cfg['bf16_ops_list'] = op_cfgs['bf16_ops_list']
         del op_cfgs['bf16_ops_list']
+        gc.collect()
 
         if self.performance_only:
             q_model = model
@@ -2323,7 +2325,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 inc_tmp_model = model
         assert not self.version.release < Version("1.10.0").release, \
             "INC support IPEX version >= 1.10.0"
-        example_inputs = get_example_inputs(inc_tmp_model.model, dataloader)
+        example_inputs = get_example_inputs(model.model, dataloader)
         qscheme = self._cfg_to_qconfig(tune_cfg)
         if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
             iterations = tune_cfg.get('calib_iteration', 1)
@@ -2340,6 +2342,10 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                                                     example_inputs,
                                                     inplace=True)  # pylint: disable=E1121
             else:
+                if not self.performance_only:
+                    del inc_tmp_model._model
+                    gc.collect()
+                    inc_tmp_model._model = None
                 tmp_model = model.model.eval()
                 tmp_model.load_qconf_summary(qconf_summary=self.ipex_config_path)
                 if q_func is not None:
@@ -2805,6 +2811,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         op_cfgs = _cfg_to_qconfig(self.tune_cfg, self.approach)
         self.tune_cfg['bf16_ops_list'] = op_cfgs['bf16_ops_list']
         del op_cfgs['bf16_ops_list']
+        gc.collect()
 
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
         if self.performance_only:
@@ -2910,6 +2917,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     q_model._model, convert_custom_config_dict=self.convert_custom_config_dict)
             torch_utils.util.append_attr(q_model._model, tmp_model)
             del tmp_model
+            gc.collect()
         else:
             PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, \
                                                 q_model._model, prefix='')
