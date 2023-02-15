@@ -599,7 +599,8 @@ class TuningCriterion:
         
         tuning_criterion=TuningCriterion(
             timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-            max_trials=100, # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+            max_trials=100, # optional. max tuning times. 
+                                # combined with the `timeout` field to decide when to exit tuning.
             strategy="basic", # optional. name of the tuning strategy. 
             strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.
         )
@@ -681,7 +682,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
             quant_level=0,  # the quantization level.
             tuning_criterion=TuningCriterion(
                 timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-                max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+                max_trials=100,  # optional. max tuning times.
+                                # combined with the `timeout` field to decide when to exit tuning.
             ),
         )
     """
