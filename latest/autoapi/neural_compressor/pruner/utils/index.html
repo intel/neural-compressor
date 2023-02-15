@@ -117,6 +117,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.pruner.utils.parse_to_prune" title="neural_compressor.pruner.utils.parse_to_prune"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_to_prune</span></code></a>(config, model)</p></td>
 <td><p>Keep target pruned layers.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.pruner.utils.generate_pruner_config" title="neural_compressor.pruner.utils.generate_pruner_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_pruner_config</span></code></a>(info)</p></td>
+<td><p>Generate pruner config object from prune information.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -248,6 +251,23 @@
 <li><p><strong>config</strong> – A string representing the path to the configuration file.</p></li>
 <li><p><strong>model</strong> – The model to be pruned.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.pruner.utils.generate_pruner_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.pruner.utils.</span></span><span class="sig-name descname"><span class="pre">generate_pruner_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.pruner.utils.generate_pruner_config" title="Permalink to this definition"></a></dt>
+<dd><p>Generate pruner config object from prune information.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>info</strong> – A dotdict that saves prune information.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A pruner config object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pruner</p>
 </dd>
 </dl>
 </dd></dl>

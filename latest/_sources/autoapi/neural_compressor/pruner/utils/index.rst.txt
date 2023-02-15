@@ -27,6 +27,7 @@ Functions
    neural_compressor.pruner.utils.process_and_check_config
    neural_compressor.pruner.utils.process_config
    neural_compressor.pruner.utils.parse_to_prune
+   neural_compressor.pruner.utils.generate_pruner_config
 
 
 
@@ -109,5 +110,15 @@ Functions
 
    :param config: A string representing the path to the configuration file.
    :param model: The model to be pruned.
+
+
+.. py:function:: generate_pruner_config(info)
+
+   Generate pruner config object from prune information.
+
+   :param info: A dotdict that saves prune information.
+
+   :returns: A pruner config object.
+   :rtype: pruner
 
 
