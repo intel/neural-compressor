@@ -97,8 +97,7 @@ class MSETuneStrategy(TuneStrategy):
             save_to_disk=True, save_path="./nc_workspace/", 
             quantization_cfg=current_best_tune_cfg)
         fp32_tensor_dict = fp32_dump_content['activation'][0]
-        best_qmodel = self.q_model = self.adaptor.quantize(current_best_tune_cfg, self.model, \
-                                                           self.calib_dataloader, self.q_func)
+        best_qmodel = self.adaptor.quantize(current_best_tune_cfg, self.model, self.calib_dataloader, self.q_func)
         quant_dump_content = self.adaptor.inspect_tensor(best_qmodel, 
             self.calib_dataloader, op_name_lst, [1], inspect_type='activation',
             save_to_disk=True, save_path="./nc_workspace/", 

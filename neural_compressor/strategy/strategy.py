@@ -92,14 +92,13 @@ class TuneStrategy(object):
             resume: The dict containing resume information. Defaults to None.
             q_hooks: The dict of training hooks, supported keys are: on_epoch_begin, on_epoch_end, on_step_begin,
                 on_step_end. Their values are functions to be executed in adaptor layer.. Defaults to None.
+            last_qmodel: The quantized model that generated from the last tuning.
+            best_qmodel: The best quantized model that generated during the tuning process.
         """
         self.model = model
         self.cfg = conf.usr_cfg
         self.history_path = self._create_path(self.cfg.tuning.workspace.path, './history.snapshot')
         self.deploy_path = self._create_path(self.cfg.tuning.workspace.path, 'deploy.yaml')
-        logger.debug("Dump user yaml configuration:")
-        logger.debug(self.cfg)
-
         self.eval_dataloader = eval_dataloader
         self.calib_dataloader = q_dataloader
         self.q_func = q_func
@@ -142,11 +141,12 @@ class TuneStrategy(object):
         self.baseline = None
         self.last_tune_result = None
         self.last_qmodel = None
+        self.last_tune_cfg = None
+        self.best_qmodel = None 
         self.best_tune_result = None
-        self.best_qmodel = None
+        self.best_tuning_cfg = None # track the best tuning config correspondence to the best quantized model
         self.cur_best_acc = self.initial_best_acc() # track the current best accuracy
         self.cur_best_tuning_cfg = {} # track tuning cfg with the current best accuracy
-        self.cur_best_qmodel = None   # track quantized model with the current best accuracy
         self.re_quant = False
 
         self.capability = self.adaptor.query_fw_capability(model)
@@ -220,6 +220,7 @@ class TuneStrategy(object):
                 self.best_tune_result = tuning_history['best_tune_result']
                 logger.warn("Find evaluated tuning config, skip.")
                 continue
+            self._remove_redundant_qmodel()
             logger.debug("Dump current tuning configuration:")
             logger.debug(tune_cfg)
 
@@ -242,6 +243,9 @@ class TuneStrategy(object):
             if self.cfg.quantization.recipes.fast_bias_correction:
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
             self.last_qmodel = self.algo()
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
+            # remove the algo to avoid it having a reference to qmodel
+            self.algo.q_model = None
             assert self.last_qmodel
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
@@ -252,7 +256,7 @@ class TuneStrategy(object):
             saved_last_tune_result = copy.deepcopy(self.last_tune_result)
             self._add_tuning_history(saved_tune_cfg,
                                     saved_last_tune_result,
-                                    q_config=self.q_model.q_config)
+                                    q_config=q_model.q_config)
             self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
             self.tune_cfg = tune_cfg
             now_time = time()
@@ -271,6 +275,8 @@ class TuneStrategy(object):
                 if self.re_quant:
                     logger.info("*** Do not stop the tuning process, re-quantize the ops.")
                     continue
+                # recover the best quantized model from tuning config
+                self._recover_best_qmodel_from_tuning_cfg()
                 if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
                     self._diagnosis()
@@ -287,7 +293,22 @@ class TuneStrategy(object):
                         self.best_tune_result = best_result
                     self._dump_tuning_process_statistics()
                 break
+        self._recover_best_qmodel_from_tuning_cfg()
+            
+    def _remove_redundant_qmodel(self):
+        """Remove the redundant quantized model to reduce memory use.
+        
+        During the tuning process, the strategy only keeps the best tuning config
+        instead of the best quantized model to reduce memory use.
+        """
+        self.last_qmodel = None
+        self.best_qmodel = None
 
+    def _recover_best_qmodel_from_tuning_cfg(self):
+        """Recover the best quantized model from tuning config."""
+        if self.best_tuning_cfg and not self.best_qmodel:
+            self.best_qmodel = self.adaptor.quantize(copy.deepcopy(self.best_tuning_cfg), self.model,
+                                                     self.calib_dataloader, self.q_func)
 
     def _fallback_started(self):
         self.fallback_start_point = self.tuning_times
@@ -474,6 +495,16 @@ class TuneStrategy(object):
         for op_name_type, op_config in op_tuning_cfg.items():
             if isinstance(op_config, OpTuningConfig):
                 tune_cfg['op'][op_name_type] = op_config.get_state()
+                op_cap_lst = self.capability['opwise'][op_name_type]
+                # Add pattern for diagnosis
+                for op_cap in op_cap_lst:
+                    if 'pattern' in op_cap:
+                        op_pattern = {}
+                        op_pattern['sequence'] = op_cap['pattern']['sequence'][0] if\
+                            'sequence' in op_cap['pattern'] else None
+                        op_pattern['precision'] = op_cap['pattern']['precision'][0] if\
+                            'precision' in op_cap['pattern'] else None
+                        tune_cfg['op'][op_name_type]['pattern'] = op_pattern
             else:
                 tune_cfg[op_name_type] = op_config
         tune_cfg['calib_sampling_size'] = op_tuning_cfg['calib_sampling_size']
@@ -665,26 +696,22 @@ class TuneStrategy(object):
         acc, _ = self.last_tune_result
         if self.cur_best_tuning_cfg is None:
             self.cur_best_tuning_cfg = copy.deepcopy(op_tuning_cfg)
-            self.cur_best_qmodel = self.last_qmodel
         if not isinstance(acc, list) and ((self.higher_is_better and acc >= self.cur_best_acc) \
             or (not self.higher_is_better and acc <= self.cur_best_acc)):
             self.cur_best_acc = acc
             self.cur_best_tuning_cfg = copy.deepcopy(op_tuning_cfg)
-            self.cur_best_qmodel = self.last_qmodel
         elif len(self.metric_name) > 1 and self.metric_weight is not None:
             acc = np.mean(np.array(acc) * self.metric_weight)
             if (self.higher_is_better and acc >= self.cur_best_acc) or \
                 (not self.higher_is_better and acc <= self.cur_best_acc):
                 self.cur_best_acc = acc
                 self.cur_best_tuning_cfg = copy.deepcopy(op_tuning_cfg)
-                self.cur_best_qmodel = self.last_qmodel
         elif len(self.metric_name) > 1 and self.metric_weight is None:
             if all([acc_i >= best_i if higher_is_better else acc_i <= best_i for \
                 acc_i, best_i, higher_is_better in \
                 zip(acc, self.cur_best_acc, self.metric_criterion)]):
                 self.cur_best_acc = acc
                 self.cur_best_tuning_cfg = copy.deepcopy(op_tuning_cfg)            
-                self.cur_best_qmodel = self.last_qmodel
         logger.debug(f"Best acc is {self.cur_best_acc}.")
         return self.cur_best_acc, self.cur_best_tuning_cfg
 
@@ -865,10 +892,9 @@ class TuneStrategy(object):
         need_stop = False
         if self.cfg.tuning.exit_policy.performance_only or \
             self.objectives.compare(self.best_tune_result, self.baseline):
-            del self.best_tune_result
-            del self.best_qmodel
             self.best_tune_result = self.last_tune_result
             self.best_qmodel = self.last_qmodel
+            self.best_tuning_cfg = copy.deepcopy(self.last_tune_cfg)
             logger.debug(f"*** Update the best qmodel with the result {self.best_tune_result}")
             if self.metric_met_point == 0:
                 self.metric_met_point = self.tuning_times
@@ -878,6 +904,7 @@ class TuneStrategy(object):
             if self.re_quant and self.objectives.accuracy_meets():
                 self.best_tune_result = self.last_tune_result
                 self.best_qmodel = self.last_qmodel
+                self.best_tuning_cfg = copy.deepcopy(self.last_tune_cfg)
                 logger.debug(f"*** Update the best qmodel with the result {self.best_tune_result}.")
             else:
                 logger.debug(f"*** Accuracy not meets the requirements, do not update the best qmodel.")
