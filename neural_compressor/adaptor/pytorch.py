@@ -2616,7 +2616,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
             if isinstance(self.q_dataloader, BaseDataLoader):
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
-                            to config.yaml'                                                                                                                                                                                                                                                                  .format(batch_size))
+                            to config.yaml'.format(batch_size))
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
             if self.version.release < Version("1.12.0").release:

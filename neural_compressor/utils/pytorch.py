@@ -201,7 +201,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
                 stat_dict['best_configure'] = tune_cfg
         else:
             logger.error("Unexpected checkpoint type:{}. \
-              Only file dir/path or state_dict is acceptable"                                                                                                                                                                                                                                                    )
+                         Only file dir/path or state_dict is acceptable")
 
         if not isinstance(stat_dict, torch.jit._script.RecursiveScriptModule):
             assert 'best_configure' in stat_dict, \

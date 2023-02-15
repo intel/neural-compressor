@@ -245,7 +245,7 @@ class TestPruning(unittest.TestCase):
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
         # reloading int8 model
-        reloaded_model = load('./saved', self.q_model)
+        reloaded_model = load('./saved', copy.deepcopy(self.q_model))
         try:
             reloaded_conv_weight = reloaded_model.layer1[0].conv1.weight().dequantize()
         except:
@@ -302,7 +302,7 @@ class TestPruning(unittest.TestCase):
 
         self.assertEqual(combination.__repr__().lower(), 'combination of distillation,quantization')
         # reloading int8 model
-        reloaded_model = load('./saved', self.q_model)
+        reloaded_model = load('./saved', copy.deepcopy(self.q_model))
 
     def test_distillation_prune_oneshot_with_new_API(self):
         from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
@@ -477,7 +477,7 @@ class TestPruning(unittest.TestCase):
                                delta=0.05)
         self.assertEqual(combination.__repr__().lower(), 'combination of pruning,quantization')
         # reloading int8 model
-        reloaded_model = load('./saved', self.model, dataloader=dummy_dataloader)
+        reloaded_model = load('./saved', copy.deepcopy(self.model), dataloader=dummy_dataloader)
         reloaded_conv_weight = reloaded_model.state_dict()['layer1.0.conv1.weight']
         self.assertTrue(torch.equal(reloaded_conv_weight, conv_weight))
 
