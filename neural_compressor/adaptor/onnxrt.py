@@ -94,6 +94,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         os.makedirs(self.work_space, exist_ok=True)
         self.pre_optimized_model = None
+        self.smooth_quant_model = None
         self.quantizable_op_types = []
         self.query_handler_ext = None
         if framework_specific_info["approach"] == "post_training_auto_quant" and \
@@ -124,7 +125,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.optype_statistics = None
 
-    def smooth_quant(self, model_wrapper, dataloader, iterations, tune_cfg, alpha,
+    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha,
                                     percentile, op_types, scales_per_op):
         """Get augmented model with smooth quant.
 
@@ -142,9 +143,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         Returns:
             model: A modified onnx model
         """
+        if self.smooth_quant_model is not None:
+            return self.smooth_quant_model
         from neural_compressor.adaptor.ox_utils.calibration import ONNXRTAugment
         from onnx import numpy_helper
-        model = copy.deepcopy(model_wrapper)
         black_nodes = []
         white_nodes = []
         if tune_cfg is not None:
@@ -199,6 +201,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         model.update()
         model.topological_sort()
         model.remove_unused_constant()
+        self.smooth_quant_model = model
         return model
 
     @dump_elapsed_time("Pass quantize model")
@@ -217,10 +220,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             (dict): quantized model
         """
         assert q_func is None, "quantization aware training has not been supported on ONNXRUNTIME"
-        if self.recipes.get('smooth_quant', False):
-            model = model
-        else:
-            model = self.pre_optimized_model if self.pre_optimized_model else model
+        if self.smooth_quant_model is not None:
+            model = self.smooth_quant_model
+        elif self.pre_optimized_model is not None:
+            model = self.pre_optimized_model
         ort_version = Version(ort.__version__)
         if ort_version < ONNXRT152_VERSION: # pragma: no cover
             logger.warning("Quantize input needs onnxruntime 1.5.2 or newer.")

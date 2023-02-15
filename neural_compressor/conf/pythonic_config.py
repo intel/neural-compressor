@@ -28,8 +28,6 @@ class QuantizationConfig(_BaseQuantizationConfig):
                  inputs=[],
                  outputs=[],
                  backend='default',
-                 domain='auto',
-                 recipes={},
                  device='cpu',
                  approach='post_training_static_quant',
                  calibration_sampling_size=[100],
@@ -66,90 +64,6 @@ class QuantizationConfig(_BaseQuantizationConfig):
             quant_level=quant_level
         )
         self.approach = approach
-        self.domain = domain
-        self.recipes = recipes
-
-    @property
-    def domain(self):
-        """Get domain."""
-        return self._domain
-
-    @domain.setter
-    def domain(self, domain):
-        """Set domain."""
-        if check_value("domain", domain, str,
-            ["auto", "cv", "object_detection", "nlp", "recommendation_system"]):
-            self._domain = domain
-
-    @property
-    def recipes(self):
-        """Get recipes."""
-        return self._recipes
-
-    @recipes.setter
-    def recipes(self, recipes):
-        """Set recipes."""
-        if recipes is not None and not isinstance(recipes, dict):
-            raise ValueError("recipes should be a dict.")
-
-        def smooth_quant(val):
-            return check_value("smooth_quant", val, bool)
-
-        def smooth_quant_args(val):
-            check_value("smooth_quant_args", val, dict)
-            for k, v in val.items():
-                if k == "alpha":
-                    check_value("alpha", v, float)
-            return True
-
-        def fast_bias_correction(val):
-            return check_value("fast_bias_correction", val, bool)
-
-        def weight_correction(val):
-            return check_value("weight_correction", val, bool)
-
-        def gemm_to_matmul(val):
-            return check_value("gemm_to_matmul", val, bool)
-
-        def graph_optimization_level(val):
-            return check_value("graph_optimization_level", val, str,
-                ["DISABLE_ALL", "ENABLE_BASIC", "ENABLE_EXTENDED", "ENABLE_ALL"])
-
-        def first_conv_or_matmul_quant(val):
-            return check_value("first_conv_or_matmul_quant", val, bool)
-
-        def last_conv_or_matmul_quant(val):
-            return check_value("last_conv_or_matmul_quant", val, bool)
-
-        def pre_post_process_quant(val):
-            return check_value("pre_post_process_quant", val, bool)
-
-        def add_qdq_pair_to_weight(val):
-            return check_value("add_qdq_pair_to_weight", val, bool)
-
-        def optypes_to_exclude_output_quant(val):
-            return isinstance(val, list)
-
-        def dedicated_qdq_pair(val):
-            return check_value("dedicated_qdq_pair", val, bool)
-
-        RECIPES = {"smooth_quant": smooth_quant,
-                   "smooth_quant_args": smooth_quant_args,
-                   "fast_bias_correction": fast_bias_correction,
-                   "weight_correction": weight_correction,
-                   "gemm_to_matmul": gemm_to_matmul,
-                   "graph_optimization_level": graph_optimization_level,
-                   "first_conv_or_matmul_quant": first_conv_or_matmul_quant,
-                   "last_conv_or_matmul_quant": last_conv_or_matmul_quant,
-                   "pre_post_process_quant": pre_post_process_quant,
-                   "add_qdq_pair_to_weight": add_qdq_pair_to_weight,
-                   "optypes_to_exclude_output_quant": optypes_to_exclude_output_quant,
-                   "dedicated_qdq_pair": dedicated_qdq_pair
-                   }
-        self._recipes = {}
-        for k, v in recipes.items():
-            if k.lower() in RECIPES and RECIPES[k.lower()](v) is True:
-                self._recipes.update({k.lower(): v})
 
     @property
     def approach(self):
