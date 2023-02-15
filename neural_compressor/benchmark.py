@@ -22,8 +22,7 @@ from .conf.pythonic_config import Config
 from .config import BenchmarkConfig
 
 class Benchmark(object):
-    """Benchmark class can be used to measure the model performance
-        with the objective settings.
+    """Benchmark class measures the model performance with objective settings.
 
     Args:
         object (string or obj): containing accuracy goal, tuning objective

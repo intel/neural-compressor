@@ -162,7 +162,8 @@ class Performance(Objective):
 class Footprint(Objective):
     """Configuration Footprint class.
     
-    Evaluate the peak size of memory blocks during inference."""
+    Evaluate the peak size of memory blocks during inference.
+    """
     representation = 'memory footprint (MB)'
 
     def start(self):

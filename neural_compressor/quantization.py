@@ -82,6 +82,7 @@ def fit(model,
                                                    return accuracy
         eval_metric (str or obj):             Set metric class and neural_compressor will initialize 
                                               this class when evaluation.
+    
     Example:
         # Quantization code for PTQ
         from neural_compressor import quantization
