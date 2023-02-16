@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-import os
+import time
 import onnx
 import numpy as np
 import tensorflow as tf
@@ -59,30 +59,48 @@ def eval_func_onnx(model, dataloader, metric, postprocess=None):
     acc = metric.result()
     return acc
 
-def eval_func_tf(model):
+def eval_func_tf(model, eval_dataloader, metric, postprocess=None):
+    """Custom evaluate function to estimate the accuracy of the model.
+
+    Args:
+        model (tf.Graph_def): The input model graph
+        
+    Returns:
+        accuracy (float): evaluation result, the larger is better.
+    """
     from neural_compressor.model import Model
-    metric = TensorflowTopK(k=1)
-    postprocess = LabelShift(label_shift=1)
     model = Model(model)
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
-    eval_dataloader_args = {
-        'batch_size': 32,
-        'dataset': {"ImageRecord": {'root':args.dataset_location}},
-        'transform': {'ResizeCropImagenet':
-                {'height': 224, 'width': 224, 'mean_value': [123.68, 116.78, 103.94]}},
-        'filter': None
-    }
-    dataloader = create_dataloader('tensorflow', eval_dataloader_args)
+    iteration = -1
+    if args.benchmark and args.mode == 'performance':
+        iteration = args.iters
 
-    for _, (inputs, labels) in enumerate(dataloader):
-        # dataloader should keep the order and len of inputs same with input_tensor
-        inputs = np.array([inputs])
-        feed_dict = dict(zip(input_tensor, inputs))
-        predictions = model.sess.run(output_tensor, feed_dict)
-        predictions, labels = postprocess((predictions, labels))
-        metric.update(predictions, labels)
+    def eval_func(dataloader):
+        latency_list = []
+        for idx, (inputs, labels) in enumerate(dataloader):
+            # dataloader should keep the order and len of inputs same with input_tensor
+            inputs = np.array([inputs])
+            feed_dict = dict(zip(input_tensor, inputs))
+
+            start = time.time()
+            predictions = model.sess.run(output_tensor, feed_dict)
+            end = time.time()
+            if postprocess:
+                predictions, labels = postprocess((predictions, labels))
+            metric.update(predictions, labels)
+            latency_list.append(end-start)
+            if idx + 1 == iteration:
+                break
+        latency = np.array(latency_list).mean() / args.batch_size
+        return latency
+
+    latency = eval_func(eval_dataloader)
+    if args.benchmark and args.mode == 'performance':
+        print("Batch size = {}".format(args.batch_size))
+        print("Latency: {:.3f} ms".format(latency * 1000))
+        print("Throughput: {:.3f} images/sec".format(1. / latency))
     acc = metric.result()
     return acc
 
@@ -110,6 +128,14 @@ class eval_classifier_optimized_graph:
                     'filter': None
                 }
                 calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
+                eval_dataloader_args = {
+                    'batch_size': 32,
+                    'dataset': {"ImageRecord": {'root':args.dataset_location}},
+                    'transform': {'ResizeCropImagenet':
+                            {'height': 224, 'width': 224, 'mean_value': [123.68, 116.78, 103.94]}},
+                    'filter': None
+                }
+                eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
                 op_name_list = {
                     'resnet_model/dense/MatMul':
                                 {
@@ -120,8 +146,10 @@ class eval_classifier_optimized_graph:
                 conf = PostTrainingQuantConfig(backend='itex', calibration_sampling_size=[50, 100],
                                             outputs=['softmax_tensor'],
                                             op_name_list=op_name_list)
+                def eval(model):
+                    return eval_func_tf(model, eval_dataloader, top1, postprocess)
                 q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
-                            eval_func=eval_func_tf)
+                            eval_func=eval)
                 q_model.save("./tf-quant.pb")
                 from neural_compressor.config import TF2ONNXConfig
                 config = TF2ONNXConfig(dtype=args.dtype)
@@ -139,17 +167,16 @@ class eval_classifier_optimized_graph:
             else:
                 model = args.input_graph
             eval_dataloader_args = {
-                'batch_size': 32,
+                'batch_size': args.batch_size,
                 'dataset': {"ImageRecord": {'root':args.dataset_location}},
                 'transform': {'ResizeCropImagenet':
                      {'height': 224, 'width': 224, 'mean_value': [123.68, 116.78, 103.94]}},
                 'filter': None
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
-
             def eval(model):
                 if isinstance(model, str):
-                    return eval_func_tf(model)
+                    return eval_func_tf(model, eval_dataloader, top1, postprocess)
                 else:
                     return eval_func_onnx(model, eval_dataloader, top1, postprocess)
 

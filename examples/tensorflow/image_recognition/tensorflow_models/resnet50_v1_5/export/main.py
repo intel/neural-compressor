@@ -147,7 +147,7 @@ class eval_classifier_optimized_graph:
 
             from neural_compressor.utils.create_obj_from_config import create_dataloader
             dataloader_args = {
-                'batch_size': 32,
+                'batch_size': self.args.batch_size,
                 'dataset': {"ImageRecord": {'root':self.args.dataset_location}},
                 'transform': {'ResizeCropImagenet':
                      {'height': 224, 'width': 224, 'mean_value': [123.68, 116.78, 103.94]}},
