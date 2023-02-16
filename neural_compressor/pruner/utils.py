@@ -330,3 +330,21 @@ def parse_to_prune(config, model):
             continue
         new_modules[name] = modules[name]
     return new_modules
+
+def generate_pruner_config(info):
+    """Generate pruner config object from prune information.
+    
+    Args:
+        info: A dotdict that saves prune information.
+
+    Returns:
+        pruner: A pruner config object.
+    """
+    from neural_compressor.conf.config import Pruner
+    return Pruner(initial_sparsity=0,
+                  method=info.method,
+                  target_sparsity=info.target_sparsity,
+                  start_epoch=info.start_step,
+                  end_epoch=info.end_step,
+                  update_frequency=info.pruning_frequency,
+                  )

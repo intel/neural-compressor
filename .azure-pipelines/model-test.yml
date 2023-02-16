@@ -16,7 +16,7 @@ pr:
     exclude:
       - neural_compressor/ux
 
-pool: MODEL_PERF_TEST
+pool: MODEL_PERF_TEST_TF
 
 variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
@@ -70,6 +70,7 @@ parameters:
 stages:
   - stage: TensorFlowModels
     displayName: Run TensorFlow Model
+    pool: MODEL_PERF_TEST_TF
     dependsOn: []
     condition: and(succeeded(), eq('${{ parameters.TensorFlow_Model }}', 'true'))
     jobs:
@@ -84,6 +85,7 @@ stages:
 
   - stage: PyTorchModels
     displayName: Run PyTorch Model
+    pool: MODEL_PERF_TEST
     dependsOn: []
     condition: and(succeeded(), eq('${{ parameters.PyTorch_Model }}', 'true'))
     jobs:
@@ -98,6 +100,7 @@ stages:
 
   - stage: ONNXModels
     displayName: Run ONNX Model
+    pool: MODEL_PERF_TEST
     dependsOn: []
     condition: and(succeeded(), eq('${{ parameters.ONNX_Model }}', 'true'))
     jobs:
@@ -112,6 +115,7 @@ stages:
 
   - stage: MXNetModels
     displayName: Run MXNet Model
+    pool: MODEL_PERF_TEST
     dependsOn: []
     condition: and(succeeded(), eq('${{ parameters.MXNet_Model }}', 'true'))
     jobs:

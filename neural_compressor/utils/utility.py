@@ -553,3 +553,12 @@ def set_tensorboard(tensorboard: bool):
     """Set the tensorboard in config."""
     from neural_compressor.config import options
     options.tensorboard = tensorboard
+
+def show_memory_info(hint):
+    """Show process full memory."""
+    pid = os.getpid()
+    p = psutil.Process(pid)
+
+    info = p.memory_full_info()
+    memory = info.uss / 1024. / 1024
+    print('{} memory used: {} MB'.format(hint, memory))

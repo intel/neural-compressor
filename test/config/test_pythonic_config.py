@@ -133,7 +133,7 @@ class torch_model(torch.nn.Module):
         return x
 
 
-class TestPyhonicConf(unittest.TestCase):
+class TestPythonicConf(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("./nc_workspace", ignore_errors=True)

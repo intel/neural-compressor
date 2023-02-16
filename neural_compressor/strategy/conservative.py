@@ -101,28 +101,7 @@ class ConservativeTuneStrategy(TuneStrategy):
 
     def traverse(self):
         """Traverse the tuning space."""
-        if not (self.cfg.evaluation and self.cfg.evaluation.accuracy and \
-            (self.cfg.evaluation.accuracy.metric or self.cfg.evaluation.accuracy.multi_metrics)) \
-            and self.eval_func is None:
-            logger.info("Neither evaluation function nor metric is defined." \
-                        " Generate a quantized model with default quantization configuration.")
-            self.cfg.tuning.exit_policy.performance_only = True
-            logger.info("Force setting 'tuning.exit_policy.performance_only = True'.")
-            logger.info("Generate a fake evaluation function.")
-            self.eval_func = self._fake_eval_func
-
-        # Get fp32 model baseline
-        if self.baseline is None:
-            logger.info("Get FP32 model baseline.")
-            self._fp32_model = self.model
-            self.baseline = self._evaluate(self.model)       
-            self.objectives.baseline = self.baseline
-            # self.best_tune_result = self.baseline
-            # Initialize the best qmodel as fp32 model
-            # self.best_qmodel = self._fp32_model
-            # Record the FP32 baseline
-            self._add_tuning_history()
-        self.show_baseline_info()
+        self._eval_baseline()
 
         # Start tuning
         trials_count = 0
@@ -138,10 +117,9 @@ class ConservativeTuneStrategy(TuneStrategy):
             logger.debug("Dump current tuning configuration:")
             logger.debug(tune_cfg)
             self.tuning_times += 1
-            self.q_model = self.adaptor.quantize(
-                copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
+            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             self.algo.calib_iter = tune_cfg['calib_iteration']
-            self.algo.q_model = self.q_model
+            self.algo.q_model = q_model
             # TODO align the api to let strategy has access to pre_optimized model
             assert self.adaptor.pre_optimized_model
             self.algo.origin_model = self.adaptor.pre_optimized_model
@@ -149,6 +127,12 @@ class ConservativeTuneStrategy(TuneStrategy):
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
             self.last_qmodel = self.algo()
             assert self.last_qmodel
+            # Return the last quantized model as a result. if performance only.
+            if self.cfg.tuning.exit_policy.performance_only:
+                self.best_qmodel = self.last_qmodel
+                self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
+                return
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.acc_meet_flag = self.objectives.accuracy_meets()
             if self.acc_meet_flag:
@@ -175,7 +159,7 @@ class ConservativeTuneStrategy(TuneStrategy):
             saved_last_tune_result = copy.deepcopy(self.last_tune_result)
             self._add_tuning_history(saved_tune_cfg,
                                     saved_last_tune_result,
-                                    q_config=self.q_model.q_config)
+                                    q_config=q_model.q_config)
             self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
             self.tune_cfg = tune_cfg
             self._dump_tuning_process_statistics()
@@ -183,6 +167,7 @@ class ConservativeTuneStrategy(TuneStrategy):
                 if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
                     logger.debug(f'*** Start to do diagnosis (inspect tensor).')
                     self._diagnosis()
+                self._recover_best_qmodel_from_tuning_cfg()
                 if self.use_multi_objective and len(self.tune_result_record) > 1 and \
                     self.best_tune_result is not None:
                     best_trail, best_result = self.objectives.best_result(self.tune_result_record,
