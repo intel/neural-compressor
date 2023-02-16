@@ -49,6 +49,12 @@ Functions
    neural_compressor.adaptor.ox_utils.util.quantize_nparray
    neural_compressor.adaptor.ox_utils.util.attribute_to_kwarg
    neural_compressor.adaptor.ox_utils.util.find_by_name
+   neural_compressor.adaptor.ox_utils.util.get_smooth_scales_per_op
+   neural_compressor.adaptor.ox_utils.util.get_smooth_scales_per_input
+   neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_input
+   neural_compressor.adaptor.ox_utils.util.adjust_weights_per_op
+   neural_compressor.adaptor.ox_utils.util.adjust_weights_per_input
+   neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op
 
 
 
@@ -219,5 +225,87 @@ Functions
 .. py:function:: find_by_name(name, item_list)
 
    Helper function to find item by name in a list.
+
+
+.. py:function:: get_smooth_scales_per_op(max_vals_per_channel, input_tensors_2_weights, input_tensors_2_weights_nodes, alpha)
+
+   Get the smooth scales for weights.
+
+   The ops with the same input will share one mul layer.
+   TODO support individual scales for each layer.
+
+   :param max_vals_per_channel: Max values per channel after calibration
+   :param input_tensors_2_weights: A dict saved input tensor name and its corresponding weights
+   :param input_tensors_2_weights_nodes: A dict saved input tensor name and its corresponding weight nodes
+   :param alpha: smooth alpha in paper
+
+   :returns: the smooth scales for weights, currently one input tensor only have one scale
+
+
+.. py:function:: get_smooth_scales_per_input(max_vals_per_channel, input_tensors_2_weights, alpha)
+
+   Get the smooth scales for weights.
+
+   The ops with the same input will share one mul layer.
+   TODO support individual scales for each layer.
+
+   :param max_vals_per_channel: Max values per channel after calibration
+   :param input_tensors_2_weights: A dict saved input tensor name and its corresponding weights
+   :param alpha: smooth alpha in paper
+
+   :returns: the smooth scales for weights, currently one input tensor only have one scale
+
+
+.. py:function:: insert_smooth_mul_op_per_input(scales, shape_infos, input_tensors_2_weights_nodes)
+
+   Insert the mul layer after inupt.
+
+   The ops with the same input will share one mul layer.
+
+   :param scales: The smooth scales
+   :param shape_infos: the input tensor shape information
+   :param input_tensors_2_weights_nodes: A dict
+
+   :returns: added Mul layers
+             new_init_tensors: added scales tensor
+   :rtype: new_added_mul_nodes
+
+
+.. py:function:: adjust_weights_per_op(model, nodes, scales)
+
+   Adjust the weights per input scale.
+
+   Each op has one individual Mul layer.
+
+   :param model: The onnx model
+   :param nodes: The nodes whose weights needs to be adjustd
+   :param scales: The input scales
+
+
+.. py:function:: adjust_weights_per_input(model, nodes, scales)
+
+   Adjust the weights per input scale.
+
+   The ops with the same input will share one mul layer
+
+   :param model: The onnx model
+   :param nodes: The nodes whose weights needs to be adjustd
+   :param scales: The input scales
+
+
+.. py:function:: insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nodes)
+
+   Insert the mul layer before op.
+
+   Each op has one individual Mul layer.
+
+   :param scales: The smooth scales
+   :param shape_infos: the input tensor shape information
+   :param input_tensors_2_weights_nodes: A dict
+
+   :returns: added Mul layers
+             new_init_tensors: added scales tensor
+             name_2_nodes: a dict, key is the node name, value is the node
+   :rtype: new_added_mul_nodes
 
 

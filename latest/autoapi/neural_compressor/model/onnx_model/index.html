@@ -101,9 +101,9 @@
 <dd><p>Bases: <a class="reference internal" href="../base_model/index.html#neural_compressor.model.base_model.BaseModel" title="neural_compressor.model.base_model.BaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.model.base_model.BaseModel</span></code></a></p>
 <p>Build ONNX model.</p>
 <dl class="py property">
-<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.large_size">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">large_size</span></span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.large_size" title="Permalink to this definition"></a></dt>
-<dd><p>Return large size.</p>
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.is_large_model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_large_model</span></span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.is_large_model" title="Permalink to this definition"></a></dt>
+<dd><p>Check the onnx model is over 2GB.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -350,6 +350,28 @@
 <dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.export">
 <span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.export" title="Permalink to this definition"></a></dt>
 <dd><p>Export Qlinear to QDQ model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.add_tensors_to_outputs">
+<span class="sig-name descname"><span class="pre">add_tensors_to_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.add_tensors_to_outputs" title="Permalink to this definition"></a></dt>
+<dd><p>Add the tensors to the model outputs to gets their values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tensor_names</strong> – The names of tensors to be dumped.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.remove_tensors_from_outputs">
+<span class="sig-name descname"><span class="pre">remove_tensors_from_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.remove_tensors_from_outputs" title="Permalink to this definition"></a></dt>
+<dd><p>Remove the tensors from the model outputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tensor_names</strong> – The names of tensors to be removed.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

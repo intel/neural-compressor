@@ -1,0 +1,31 @@
+:py:mod:`neural_compressor.algorithm.smooth_quant`
+==================================================
+
+.. py:module:: neural_compressor.algorithm.smooth_quant
+
+.. autoapi-nested-parse::
+
+   Build SmoothQuant algorithm class.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.algorithm.smooth_quant.SmoothQuant
+
+
+
+
+.. py:class:: SmoothQuant(percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'], scales_per_op=True)
+
+   Bases: :py:obj:`neural_compressor.algorithm.algorithm.Algorithm`
+
+   SmoothQuant algorithm class.
+
+

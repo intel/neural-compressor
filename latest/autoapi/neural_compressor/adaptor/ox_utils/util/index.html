@@ -169,6 +169,24 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.find_by_name" title="neural_compressor.adaptor.ox_utils.util.find_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_by_name</span></code></a>(name, item_list)</p></td>
 <td><p>Helper function to find item by name in a list.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.get_smooth_scales_per_op" title="neural_compressor.adaptor.ox_utils.util.get_smooth_scales_per_op"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_smooth_scales_per_op</span></code></a>(max_vals_per_channel, ...)</p></td>
+<td><p>Get the smooth scales for weights.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.get_smooth_scales_per_input" title="neural_compressor.adaptor.ox_utils.util.get_smooth_scales_per_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_smooth_scales_per_input</span></code></a>(max_vals_per_channel, ...)</p></td>
+<td><p>Get the smooth scales for weights.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_input" title="neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">insert_smooth_mul_op_per_input</span></code></a>(scales, shape_infos, ...)</p></td>
+<td><p>Insert the mul layer after inupt.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.adjust_weights_per_op" title="neural_compressor.adaptor.ox_utils.util.adjust_weights_per_op"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adjust_weights_per_op</span></code></a>(model, nodes, scales)</p></td>
+<td><p>Adjust the weights per input scale.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.adjust_weights_per_input" title="neural_compressor.adaptor.ox_utils.util.adjust_weights_per_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adjust_weights_per_input</span></code></a>(model, nodes, scales)</p></td>
+<td><p>Adjust the weights per input scale.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op" title="neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op"><code class="xref py py-obj docutils literal notranslate"><span class="pre">insert_smooth_mul_op_per_op</span></code></a>(scales, shape_infos, ...)</p></td>
+<td><p>Insert the mul layer before op.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -376,6 +394,126 @@ z: zero point</p>
 <dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.find_by_name">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">find_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.find_by_name" title="Permalink to this definition"></a></dt>
 <dd><p>Helper function to find item by name in a list.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.get_smooth_scales_per_op">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_smooth_scales_per_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_vals_per_channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensors_2_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensors_2_weights_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.get_smooth_scales_per_op" title="Permalink to this definition"></a></dt>
+<dd><p>Get the smooth scales for weights.</p>
+<p>The ops with the same input will share one mul layer.
+TODO support individual scales for each layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_vals_per_channel</strong> – Max values per channel after calibration</p></li>
+<li><p><strong>input_tensors_2_weights</strong> – A dict saved input tensor name and its corresponding weights</p></li>
+<li><p><strong>input_tensors_2_weights_nodes</strong> – A dict saved input tensor name and its corresponding weight nodes</p></li>
+<li><p><strong>alpha</strong> – smooth alpha in paper</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the smooth scales for weights, currently one input tensor only have one scale</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.get_smooth_scales_per_input">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_smooth_scales_per_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_vals_per_channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensors_2_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.get_smooth_scales_per_input" title="Permalink to this definition"></a></dt>
+<dd><p>Get the smooth scales for weights.</p>
+<p>The ops with the same input will share one mul layer.
+TODO support individual scales for each layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_vals_per_channel</strong> – Max values per channel after calibration</p></li>
+<li><p><strong>input_tensors_2_weights</strong> – A dict saved input tensor name and its corresponding weights</p></li>
+<li><p><strong>alpha</strong> – smooth alpha in paper</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the smooth scales for weights, currently one input tensor only have one scale</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_input">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">insert_smooth_mul_op_per_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scales</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape_infos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensors_2_weights_nodes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_input" title="Permalink to this definition"></a></dt>
+<dd><p>Insert the mul layer after inupt.</p>
+<p>The ops with the same input will share one mul layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scales</strong> – The smooth scales</p></li>
+<li><p><strong>shape_infos</strong> – the input tensor shape information</p></li>
+<li><p><strong>input_tensors_2_weights_nodes</strong> – A dict</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>added Mul layers
+new_init_tensors: added scales tensor</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>new_added_mul_nodes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.adjust_weights_per_op">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">adjust_weights_per_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scales</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.adjust_weights_per_op" title="Permalink to this definition"></a></dt>
+<dd><p>Adjust the weights per input scale.</p>
+<p>Each op has one individual Mul layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – The onnx model</p></li>
+<li><p><strong>nodes</strong> – The nodes whose weights needs to be adjustd</p></li>
+<li><p><strong>scales</strong> – The input scales</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.adjust_weights_per_input">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">adjust_weights_per_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scales</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.adjust_weights_per_input" title="Permalink to this definition"></a></dt>
+<dd><p>Adjust the weights per input scale.</p>
+<p>The ops with the same input will share one mul layer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – The onnx model</p></li>
+<li><p><strong>nodes</strong> – The nodes whose weights needs to be adjustd</p></li>
+<li><p><strong>scales</strong> – The input scales</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">insert_smooth_mul_op_per_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scales</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape_infos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensors_2_weights_nodes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op" title="Permalink to this definition"></a></dt>
+<dd><p>Insert the mul layer before op.</p>
+<p>Each op has one individual Mul layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scales</strong> – The smooth scales</p></li>
+<li><p><strong>shape_infos</strong> – the input tensor shape information</p></li>
+<li><p><strong>input_tensors_2_weights_nodes</strong> – A dict</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>added Mul layers
+new_init_tensors: added scales tensor
+name_2_nodes: a dict, key is the node name, value is the node</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>new_added_mul_nodes</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

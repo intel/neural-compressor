@@ -28,9 +28,9 @@ Classes
 
    Build ONNX model.
 
-   .. py:property:: large_size
+   .. py:property:: is_large_model
 
-      Return large size.
+      Check the onnx model is over 2GB.
 
    .. py:property:: model_path
 
@@ -231,6 +231,20 @@ Classes
    .. py:method:: export(save_path, conf)
 
       Export Qlinear to QDQ model.
+
+
+   .. py:method:: add_tensors_to_outputs(tensor_names)
+
+      Add the tensors to the model outputs to gets their values.
+
+      :param tensor_names: The names of tensors to be dumped.
+
+
+   .. py:method:: remove_tensors_from_outputs(tensor_names)
+
+      Remove the tensors from the model outputs.
+
+      :param tensor_names: The names of tensors to be removed.
 
 
 

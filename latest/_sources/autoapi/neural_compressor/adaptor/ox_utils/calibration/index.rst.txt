@@ -86,4 +86,18 @@ Classes
       Given the source and destination node of tensor, return calculated zero point and scales.
 
 
+   .. py:method:: calib_smooth(percentile, op_types)
+
+      Smooth model calibration.
+
+      Mainly get the max info per channel of input tensors.
+
+      :param percentile: Percentile of calibration to remove outliers
+      :param op_types: The op types whose input tensor will be dumped
+
+      :returns: max values per channel of input tensors
+                shape_infos: The shape information of input tensors
+      :rtype: max_vals_per_channel
+
+
 

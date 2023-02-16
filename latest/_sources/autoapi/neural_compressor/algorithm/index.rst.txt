@@ -17,6 +17,7 @@ Submodules
 
    algorithm/index.rst
    fast_bias_correction/index.rst
+   smooth_quant/index.rst
    weight_correction/index.rst
 
 

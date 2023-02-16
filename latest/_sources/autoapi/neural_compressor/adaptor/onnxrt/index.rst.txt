@@ -31,6 +31,24 @@ Classes
    :param framework_specific_info: framework specific configuration for quantization.
    :type framework_specific_info: dict
 
+   .. py:method:: smooth_quant(model, dataloader, iterations, tune_cfg, alpha, percentile, op_types, scales_per_op)
+
+      Get augmented model with smooth quant.
+
+      :param model_wrapper: origin_model
+      :param dataloader: dataloader
+      :param iterations: iterations
+      :param tune_cfg: quantization config
+      :param alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+      :param percentile: Percentile of calibration to remove outliers
+      :param op_types: The op types whose input tensor will be dumped
+      :param scales_per_op: True, each op will have an individual scale, mainly for accuracy
+                            False, ops with the same input will share a scale, mainly for performance
+
+      :returns: A modified onnx model
+      :rtype: model
+
+
    .. py:method:: quantize(tune_cfg, model, data_loader, q_func=None)
 
       The function is used to do calibration and quanitization in post-training

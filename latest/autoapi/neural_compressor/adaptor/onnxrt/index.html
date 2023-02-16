@@ -114,6 +114,33 @@
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.onnxrt.ONNXRUNTIMEAdaptor.smooth_quant">
+<span class="sig-name descname"><span class="pre">smooth_quant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scales_per_op</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.onnxrt.ONNXRUNTIMEAdaptor.smooth_quant" title="Permalink to this definition"></a></dt>
+<dd><p>Get augmented model with smooth quant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_wrapper</strong> – origin_model</p></li>
+<li><p><strong>dataloader</strong> – dataloader</p></li>
+<li><p><strong>iterations</strong> – iterations</p></li>
+<li><p><strong>tune_cfg</strong> – quantization config</p></li>
+<li><p><strong>alpha</strong> – smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ</p></li>
+<li><p><strong>percentile</strong> – Percentile of calibration to remove outliers</p></li>
+<li><p><strong>op_types</strong> – The op types whose input tensor will be dumped</p></li>
+<li><p><strong>scales_per_op</strong> – True, each op will have an individual scale, mainly for accuracy
+False, ops with the same input will share a scale, mainly for performance</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A modified onnx model</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.onnxrt.ONNXRUNTIMEAdaptor.quantize">
 <span class="sig-name descname"><span class="pre">quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.onnxrt.ONNXRUNTIMEAdaptor.quantize" title="Permalink to this definition"></a></dt>
 <dd><dl class="simple">
