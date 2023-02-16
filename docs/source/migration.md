@@ -55,24 +55,6 @@ We formulate the `conf.yaml` in the following format,
 version: 1.0
 
 model:                                               # mandatory. used to specify model specific information.
-  ...
-
-quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
-  ...
-
-tuning:                                              # optional. set the tuning criterion
-  ...
-
-evaluation:                                          # optional. used to config evaluation process.
-  ...
-```
-
-In Intel Neural Compressor 2.X, we integrate the `conf.yaml` into `main.py` to save the user's effort to write the `conf.yaml`. The detail mapping information from 1.X version to 2.X version can be found as follows,
-
-```yaml
-version: 1.0
-
-model:                                               # mandatory. used to specify model specific information.
   name: ssd_mobilenet_v1                             # mandatory. the model name.
   framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_fx, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
   inputs: image_tensor                               # optional. inputs and outputs fields are only required in tensorflow.
@@ -170,7 +152,7 @@ tuning:
     resume: /path/to/a/specified/snapshot/file       # optional. if specified, resume from tuning history.
 ```
 
-In Intel Neural Compressor 2.X, most of config information could be set via the `PostTrainingQuantConfig`. The corresponding information should be written as follows,
+In Intel Neural Compressor 2.X, we integrate the `conf.yaml` into `main.py` to save the user's effort to write the `conf.yaml`, that most of config information could be set via the `PostTrainingQuantConfig`. The corresponding information should be written as follows,
 ```python
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
 
