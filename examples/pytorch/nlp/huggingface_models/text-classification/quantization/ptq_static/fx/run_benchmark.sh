@@ -12,7 +12,7 @@ function main {
 function init_params {
   iters=100
   batch_size=16
-  tuned_checkpoint=saved_results
+  tuned_checkpoint=int8_model_dir
   for var in "$@"
   do
     case $var in
@@ -57,9 +57,9 @@ function run_benchmark {
     TASK_NAME='mrpc'
     model_name_or_path=${input_model}
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
-    elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --benchmark --iters "${iters}
+        mode_cmd=" --accuracy"
+    elif [[ ${mode} == "benchmark" ]]; then
+        mode_cmd=" --performance --iters "${iters}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -95,9 +95,51 @@ function run_benchmark {
     elif [ "${topology}" = "funnel_MRPC_fx" ]; then
         TASK_NAME='mrpc'
         model_name_or_path=${input_model}
+        model_type='funnel'
     elif [ "${topology}" = "distilbert_base_MRPC_fx" ]; then
         TASK_NAME='mrpc'
         model_name_or_path=${input_model}
+        model_type='distilbert'
+    elif [ "${topology}" = "xlm-roberta-base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='xlm-roberta'
+    elif [ "${topology}" = "flaubert_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='flaubert'
+    elif [ "${topology}" = "barthez_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='barthez'
+    elif [ "${topology}" = "longformer_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='longformer'
+    elif [ "${topology}" = "layoutlm_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='layoutlm'
+    elif [ "${topology}" = "deberta_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='deberta'
+    elif [ "${topology}" = "squeezebert_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='squeezebert'
+    elif [ "${topology}" = "xlnet_base_cased_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='xlnet'
+    elif [ "${topology}" = "roberta_base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='roberta'
+    elif [ "${topology}" = "camembert_base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='camembert'
     fi
 
     extra_cmd='--model_name_or_path '${input_model}

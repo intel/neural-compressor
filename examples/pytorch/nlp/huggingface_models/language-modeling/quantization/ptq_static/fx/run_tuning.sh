@@ -44,13 +44,28 @@ function run_tuning {
 
     if [ "${topology}" = "gpt_j_wikitext" ]; then
         TASK_NAME='wikitext'
-        model_name_or_path=$input_model 
-        extra_cmd='--dataset_config_name=wikitext-2-raw-v1' 
+        model_name_or_path=${input_model}
+        model_type='gpt'
+        extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
+    elif [ "${topology}" = "dialogpt_wikitext" ]; then
+        TASK_NAME='wikitext'
+        model_name_or_path=${input_model} 
+        model_type='dialogpt'
+        extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
+    elif [ "${topology}" = "reformer_crime_and_punishment" ]; then
+        TASK_NAME='crime_and_punish'
+        model_name_or_path=${input_model} 
+        model_type='reformer'
+    elif [ "${topology}" = "ctrl_WikiText" ]; then
+        TASK_NAME='wikitext'
+        model_name_or_path=${input_model}
+        model_type='ctrl'
+        extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
     fi
 
 
     python -u run_clm.py \
-        --model_name_or_path ${model_name_or_path} \
+        --model_name_or_path ${input_model} \
         --dataset_name ${TASK_NAME} \
         --do_eval \
         --per_device_eval_batch_size ${batch_size} \

@@ -10,7 +10,7 @@ function main {
 
 # init params
 function init_params {
-  tuned_checkpoint=saved_results
+  tuned_checkpoint=int8_model_dir
   for var in "$@"
   do
     case $var in
@@ -73,13 +73,55 @@ function run_tuning {
     elif [ "${topology}" = "funnel_MRPC_fx" ]; then
         TASK_NAME='mrpc'
         model_name_or_path=${input_model}
+        model_type='funnel'
     elif [ "${topology}" = "distilbert_base_MRPC_fx" ]; then
         TASK_NAME='mrpc'
         model_name_or_path=${input_model}
+        model_type='distilbert'
+    elif [ "${topology}" = "xlm-roberta-base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='xlm-roberta'
+    elif [ "${topology}" = "flaubert_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='flaubert'
+    elif [ "${topology}" = "barthez_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='barthez'
+    elif [ "${topology}" = "longformer_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='longformer'
+    elif [ "${topology}" = "layoutlm_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='layoutlm'
+    elif [ "${topology}" = "deberta_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='deberta'
+    elif [ "${topology}" = "squeezebert_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='squeezebert'
+    elif [ "${topology}" = "xlnet_base_cased_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='xlnet'
+    elif [ "${topology}" = "roberta_base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='roberta'
+    elif [ "${topology}" = "camembert_base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='camembert'
     fi
 
     python -u ./run_glue.py \
-        --model_name_or_path ${model_name_or_path} \
+        --model_name_or_path ${input_model} \
         --task_name ${TASK_NAME} \
         --do_eval \
         --do_train \

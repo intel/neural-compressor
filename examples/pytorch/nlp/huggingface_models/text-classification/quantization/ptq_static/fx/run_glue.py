@@ -189,10 +189,10 @@ class ModelArguments:
     int8: bool = field(
         default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
     )
-    benchmark: bool = field(
+    performance: bool = field(
         default=False, metadata={"help": "get benchmark instead of accuracy"}
     )
-    accuracy_only: bool = field(
+    accuracy: bool = field(
         default=False, metadata={"help": "get accuracy"}
     )
     onnx: bool = field(
@@ -553,8 +553,8 @@ def main():
             q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
         return
 
-    if model_args.benchmark or model_args.accuracy_only:
-        if model_args.benchmark:
+    if model_args.performance or model_args.accuracy:
+        if model_args.performance:
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor import benchmark
             b_conf = BenchmarkConfig(warmup=5,

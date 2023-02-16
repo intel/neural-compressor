@@ -5,14 +5,13 @@ This document is used to list steps of reproducing PyTorch BERT tuning zoo resul
 
 # Prerequisite
 
-## 1. Environment
+## Environment
 
 The dependent packages are all in requirements, please install as following.
 
 ```
 pip install -r requirements.txt
 ```
-> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 # Quantization
 
@@ -30,9 +29,16 @@ python run_clm.py \
   --tune \
   --output_dir /path/to/checkpoint/dir
 ```
+## Language-Modeling Task
+```bash
+sh run_tuning.sh --topology=topology_name --input_model=/path/to/checkpoint/dir
+```
+> NOTE
+>
+> topology_name can be one of {"gpt_j_wikitext", "dialogpt_wikitext", "reformer_crime_and_punishment", "ctrl_WikiText"}
 
 # Saving and Loading Model
-* Saving model:
+## Saving model:
 ```
 from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
 from neural_compressor import quantization
@@ -51,7 +57,7 @@ Here, `q_model` is the Neural Compressor model class, so it has "save" API:
 q_model.save("Path_to_save_quantized_model")
 ```
 
-* Loading model:
+## Loading model:
 
 ```python
 from neural_compressor.utils.pytorch import load

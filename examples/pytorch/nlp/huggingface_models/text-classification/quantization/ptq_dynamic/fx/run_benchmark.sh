@@ -12,7 +12,7 @@ function main {
 function init_params {
   iters=100
   batch_size=16
-  tuned_checkpoint=saved_results
+  tuned_checkpoint=int8_model_dir
   for var in "$@"
   do
     case $var in
@@ -57,9 +57,9 @@ function run_benchmark {
     TASK_NAME='rte'
     model_name_or_path=${input_model}
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
-    elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --benchmark --iters "${iters}
+        mode_cmd=" --accuracy"
+    elif [[ ${mode} == "benchmark" ]]; then
+        mode_cmd=" --performance --iters "${iters}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -68,7 +68,34 @@ function run_benchmark {
     if  [ "${topology}" = "bert_large_RTE" ]; then
         TASK_NAME='rte'
         model_name_or_path=${input_model}
-
+    elif [ "${topology}" = "distilbert_base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='distilbert'
+    elif [ "${topology}" = "albert_base_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model} 
+        model_type='albert'
+    elif [ "${topology}" = "funnel_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model} 
+        model_type='funnel'
+    elif [ "${topology}" = "mbart_WNLI" ]; then
+        TASK_NAME='WNLI'
+        model_name_or_path=${input_model} 
+        model_type='mbart'
+    elif [ "${topology}" = "transfo_xl_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model} 
+        model_type='transfo-xl-wt103'
+    elif [ "${topology}" = "ctrl_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model} 
+        model_type='ctrl'
+    elif [ "${topology}" = "xlm_roberta_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
+        model_type='xlm'
     fi
 
     extra_cmd='--model_name_or_path '${input_model}
