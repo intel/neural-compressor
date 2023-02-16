@@ -126,10 +126,15 @@ class BasicTuneStrategy(TuneStrategy):
                     op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                     # yield op_tuning_cfg
                     op_tuning_cfg_lst_stage_3.append(deepcopy(op_tuning_cfg))
-                    acc, _ = self.last_tune_result
-                    op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
                 logger.info("yield op_tuning_cfg_lst_stage_3 with length {}".format(len(op_tuning_cfg_lst_stage_3)))
                 yield op_tuning_cfg_lst_stage_3
+
+                # Only master updates op_fallback_acc_impact
+                rank = comm.Get_rank()
+                if rank == 0:
+                    for op_index, op_tuning_cfg in enumerate(fallback_sampler):
+                        acc, _ = self.eval_results[op_index]
+                        op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
 
                 #### Coordinate: only master knows op_fallback_acc_impact
                 rank = comm.Get_rank()

@@ -206,7 +206,7 @@ class TuneStrategy(object):
             ttime.sleep(0.5) # WA for UT
 
         cur_cfg_id = min(len(self.tune_cfg_lst), size - 1)   # 4 master should be aware of the next config id to send
-        self.eval_results = []  # all results
+        self.eval_results = {}  # record all results
         self.num_acks = 0 # number of all response acks, break when it equals to len()
         status = MPI.Status() # used to obtain the source and the tag for each received message
 
@@ -227,6 +227,7 @@ class TuneStrategy(object):
             logger.info("~~~~~~master receiving eval result: {} from rank {}".format(eval_res, sender_rank))
 
             self.last_tune_result = eval_res    # for context coordination of stage 3
+            self.eval_results[tag] = eval_res
             
             self.overall_trials += 1
             self.best_tune_cfg_id = None
