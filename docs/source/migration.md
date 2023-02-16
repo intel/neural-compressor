@@ -49,34 +49,165 @@ from neural_compressor.utils.load_huggingface import save_for_huggingface_upstre
 
 ```
 
-Apart from the `main.py` file, we need to extrally write a `conf.yaml` in the following format,
+We formulate the `conf.yaml` in the following format,
 
 ```yaml
 version: 1.0
 
 model:                                               # mandatory. used to specify model specific information.
-  name: bert
-  framework: pytorch_fx                                 # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
+  ...
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
-  approach: post_training_static_quant               # optional. 
+  ...
 
-tuning:
-  accuracy_criterion:
-    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
-  exit_policy:
-    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
-    max_trials: 600
-  random_seed: 9527                                  # optional. random seed for deterministic tuning.
+tuning:                                              # optional. set the tuning criterion
+  ...
+
+evaluation:                                          # optional. used to config evaluation process.
+  ...
 ```
 
-The `approach` parameter defines the approach of the quantization method, which could be set as `post_training_static_quant` for Post Training Static Quantization and `post_training_dynamic_quant` for Post Training Dynamic Quantization.
+In Intel Neural Compressor 2.X, we integrate the `conf.yaml` into `main.py` to save the user's effort to write the `conf.yaml`. The detail mapping information from 1.X version to 2.X version can be found as follows,
 
-In Intel Neural Compressor 2.X, we integrate the `conf.yaml` into the quantization API to the save the user's effort to write the `conf.yaml`.
+```yaml
+version: 1.0
+
+model:                                               # mandatory. used to specify model specific information.
+  name: ssd_mobilenet_v1                             # mandatory. the model name.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_fx, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  inputs: image_tensor                               # optional. inputs and outputs fields are only required in tensorflow.
+  outputs: num_detections,detection_boxes,detection_scores,detection_classes
+
+device: cpu                                          # optional. default value is cpu. other value is gpu.
+
+quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+  approach: post_training_static_quant               # optional. default value is post_training_static_quant.
+  recipes:                                           # optional. used to switch neural_compressor int8 receipts ON or OFF.
+    scale_propagation_max_pooling: True              # optional. default value is True.
+    scale_propagation_concat: True                   # optional. default value is True.
+    first_conv_or_matmul_quantization: True          # optional. default value is True.
+    last_conv_or_matmul_quantization: True
+    pre_post_process_quantization: True
+  calibration:                                       # optional. used to specify calibration behavior of post-training-static-quant. other quantization approachs are not necessary.
+    sampling_size: 1000, 2000                        # optional. default value is 100. used to set how many samples should be used in calibration.
+    dataloader:                                      # optional. if not specified, user need construct a calib_dataloader in code for neural_compressor.experimental.Quantization.
+      dataset:                                       # optional. if not specified, user need construct a calibration dataset in code for calib_dataloader of neural_compressor.experimental.Quantization.
+        TFRecordDataset:
+          root: /path/to/tf_record
+      transform:
+        Resize:
+          size: 256
+        CenterCrop:
+          size: 224
+  model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+    weight:
+      granularity: per_channel
+      scheme: asym
+      dtype: int8
+      algorithm: minmax
+    activation:
+      granularity: per_tensor
+      scheme: asym
+      dtype: int8, fp32
+      algorithm: minmax, kl
+  op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space. 
+        op_list
+       }
+
+evaluation:                                          # optional. used to config evaluation process.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+    metric:                                          # optional. used to evaluate accuracy of passing model.
+      topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
+    configs:                                         # optional. if not specified, use all cores in 1 socket.
+      cores_per_instance: 28
+      num_of_instance: 1
+      inter_num_of_threads: 4
+      intra_num_of_threads: 28
+      kmp_blocktime: 1
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
+      batch_size: 256
+      dataset:
+        TFRecordDataset:
+          root: /path/to/tf_record
+      transform:
+        Resize:
+          size: 256
+        CenterCrop:
+          size: 224
+  performance:                                       # optional. used to benchmark performance of passing model.
+    warmup: 10
+    iteration: 100
+    configs:
+      cores_per_instance: 4
+      num_of_instance: 7
+      inter_num_of_threads: 1
+      intra_num_of_threads: 4
+      kmp_blocktime: 1
+    dataloader:
+      dataset:
+        dummy:
+          shape: [[128, 3, 224, 224], [128, 1, 1, 1]]
+
+tuning:
+  strategy:
+    name: basic                                      # optional. default value is basic. other values are bayesian, mse, sigopt.
+    sigopt_api_token: YOUR-ACCOUNT-API-TOKEN             # optional. Necessary if strategy name is sigopt.
+    sigopt_project_id: PROJECT-ID                    # optional. Necessary if strategy name is sigopt.
+    sigopt_experiment_name: nc-tune                # optional. default is nc-tune if strategy name is sigopt.
+  accuracy_criterion:
+    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+  objective: performance                             # optional. objective with accuracy constraint guaranteed. default value is performance. other values are modelsize and footprint.
+
+  exit_policy:
+    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
+    max_trials: 100                                  # optional. max tune times. default value is 100. combine with timeout field to decide when to exit.
+    performance_only: False                          # optional. max tune times. default value is False which means only generate fully quantized model.
+  random_seed: 9527                                  # optional. random seed for deterministic tuning.
+  tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
+
+  workspace:
+    path: /path/to/saving/directory                  # optional. default workspace is ./nc_workspace/current_time_stamp, saving tuning history and deploy yaml.
+    resume: /path/to/a/specified/snapshot/file       # optional. if specified, resume from tuning history.
+```
+
+In Intel Neural Compressor 2.X, most of config information could be set via the `PostTrainingQuantConfig`. The corresponding information should be written as follows,
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
+
+PostTrainingQuantConfig(
+  ## model: this parameter does not need to specially be defined;
+  backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+  inputs="image_tensor",    # input: same as in the conf.yaml;
+  ouputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  device="cpu",             # device: same as in the conf.yaml;
+  approach="static",        # approach: set as "static" when approach was "post_training_static_quant". Set as "dynamic" when approach was "post_training_dynamic_quant";
+  ## recipes: this parameter does not need to specially be defined;
+  calibration_sampling_size=[1000, 2000],   # sampling_size: same as in the conf.yaml;
+  ## transform: this parameter does not need to specially be defined;
+  ## model_wise: this parameter does not need to specially be defined;
+  op_name_list=op_list,     # op_wise: same as in the conf.yaml;
+  ## evaluation: these parameters do not need to specially be defined;
+  strategy="basic",         # tuning.strategy.name: same as in the conf.yaml;
+  ## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;
+  objective="performance",  # tuning.objective: same as in the conf.yaml;
+  performanc_only=False,    # tuning.performance_only: same as in the conf.yaml;
+  tuning_criterion=tuning_criterion,
+  accuracy_criterion=accuracy_criterion,
+  ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
+)
+
+accuracy_criterion=AccuracyCriterion(
+  tolerable_loss=0.01,      # relative: same as in the conf.yaml;
+)
+tuning_criterion=TuningCriterion(
+  timeout=0,                # timeout: same as in the conf.yaml;
+  max_trials=100,           # maxtrials: same as in the conf.yaml;
+)          
+```
+
+Following is a simple demo about how to quantize the model with PTQ in Intel Neural Compressor 2.X.
 
 ```python
-# main.py
-
 # Basic settings of the model and the experimental settings for GLUE tasks.
 model = AutoModelForSequenceClassification.from_pretrained(model_name_or_path)
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
@@ -97,8 +228,6 @@ q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval
 from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
 save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
 ```
-
-The user can define the quantization approach by setting the `approach` parameter in `PostTrainingQuantConfig` with `static` for Post Training Static Quantization and `dynamic` for Post Training Dynamic Quantization.
 
 **Quantization Aware Training**
 
@@ -134,28 +263,157 @@ from neural_compressor.utils.load_huggingface import save_for_huggingface_upstre
 
 ```
 
-And the corresponding `conf.yaml` is:
+Similar to PTQ, it requires a `conf.yaml` to define the quantization configuration in Intel Neural Compressor 1.X.
 
 ```yaml
 version: 1.0
 
 model:                                               # mandatory. used to specify model specific information.
-  name: bert
-  framework: pytorch_fx                                 # mandatory. possible values are tensorflow, mxnet, pytorch, pytorch_ipex, onnxrt_integerops and onnxrt_qlinearops.
+  name: resnet50v1.5                                 # mandatory. the model name.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_fx, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  inputs: image_tensor                               # optional. inputs and outputs fields are only required in tensorflow.
+  outputs: num_detections,detection_boxes,detection_scores,detection_classes
+
+device: cpu                                          # optional. default value is cpu. other value is gpu.
 
 quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
-  approach: quant_aware_training
+  approach: quant_aware_training                     # optional. default value is post_training_static_quant.
+  train:
+    start_epoch: 0
+    end_epoch: 10
+    iteration: 100
+    frequency: 2
+    hostfile: /path/to/host/file                     # reserved for multi-node training.
+
+    dataloader:
+      batch_size: 256
+      dataset:
+        ImageFolder:
+          root: /path/to/imagenet/train
+      transform:
+        RandomResizedCrop:
+          size: 224
+        RandomHorizontalFlip:
+        ToTensor:
+        Normalize:
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
+    criterion:
+      CrossEntropyLoss:
+        reduction: None
+    optimizer:
+      SGD:
+        learning_rate: 0.1
+        momentum: 0.9
+        weight_decay: 0.0004
+        nesterov: False 
+  model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
+    weight:
+      granularity: per_channel
+      scheme: asym
+      dtype: int8
+      algorithm: minmax
+    activation:
+      granularity: per_tensor
+      scheme: asym
+      dtype: int8, fp32
+      algorithm: minmax, kl
+  op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space. 
+        op_list
+       }
+
+evaluation:                                          # optional. optional. used to config evaluation process.
+  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
+    metric:                                          # optional. used to evaluate accuracy of passing model.
+      topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
+    configs:
+      cores_per_instance: 28
+      num_of_instance: 1
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
+      batch_size: 256
+      dataset:
+        ImageFolder:
+          root: /path/to/imagenet/train
+      transform:
+        RandomResizedCrop:
+          size: 224
+        RandomHorizontalFlip:
+        ToTensor:
+        Normalize:
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
+    postprocess:
+      transform:
+        Reshape:
+          shape: [-1, 1001]
+  performance:                                       # optional. used to benchmark performance of passing model.
+    configs:
+      cores_per_instance: 4
+      num_of_instance: 7
+    dataloader:
+      warmup: 10
+      iteration: 100
+      dataset:
+        dummy:
+          shape: [[128, 3, 224, 224], [128, 1, 1, 1]]
+
 
 tuning:
+  strategy:
+    name: basic                                      # optional. default value is basic. other values are bayesian, mse, sigopt.
   accuracy_criterion:
     relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+  objective: performance                             # optional. objective with accuracy constraint guaranteed. default value is performance. other values are modelsize and footprint.
+
   exit_policy:
     timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
-    max_trials: 600
-  random_seed: 9527   
+    max_trials: 100                                  # optional. max tune times. default value is 100. combine with timeout field to decide when to exit.
+
+  random_seed: 9527                                  # optional. random seed for deterministic tuning.
+  tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
+
+  workspace:
+    path: /path/to/saving/directory                  # optional. default workspace is ./nc_workspace/current_time_stamp, saving tuning history and deploy yaml.
+    resume: /path/to/a/specified/snapshot/file       # optional. if specified, resume from tuning history.
+
+  diagnosis:
+    diagnosis_after_tuning: False                    # optional. bool, defaults to False, whether or not dump tensor and show in Bench after tuning finish.
+    op_list: []                                      # optional. List[str], defaults to [], the op(s) to be dumped to reduce local disk consumption. the default setting means dump all quantized op instead of not dump anything.
+    iteration_list: [1]                              # optional. List[int], defaults to [1], the iteration that needs to dump activation, the default value is [1] which means dump the activation of the first iteration.
+    inspect_type: activation                         # optional. str, defaults to activation, dump weight, activation or all. can be one of 'weight', 'activation' or 'all'.
+    save_to_disk: True                               # optional. bool, defaults to True, whether or not to save the dumped tensor. 
+    save_path: './nc_workspace/inspect_saved/'       # optional. str, defaults to './nc_workspace/inspect_saved/', a path to save the dumped tensor.
 ```
 
-In Intel Neural Compressor 2.X, we introduce a `compression manager`  to process the training. The quantization code is updated as:
+In Intel Neural Compressor 2.X, this `conf.yaml` is set via the `QuantizationAwareTrainingConfig`. The corresponding information should be written as follows,
+
+```python
+from neural_compressor.config import QuantizationAwareTrainingConfig
+
+QuantizationAwareTrainingConfig(
+  ## model: this parameter does not need to specially be defined;
+  backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+  inputs="image_tensor",    # input: same as in the conf.yaml;
+  ouputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  device="cpu",             # device: same as in the conf.yaml;
+  ## approach: this parameter does not need to specially be defined;
+  ## train: these parameters do not need to specially be defined;
+  ## model_wise: this parameter does not need to specially be defined;
+  op_name_list=op_list,     # op_wise: same as in the conf.yaml;
+  ## evaluation: these parameters do not need to specially be defined;
+  strategy="basic",         # tuning.strategy.name: same as in the conf.yaml;
+  ## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;
+  relative=0.01,            # relative: same as in the conf.yaml;
+  timeout=0,                # timeout: same as in the conf.yaml;
+  max_trials=100,           # max_trials: same as in the conf.yaml;
+  objective="performance",  # tuning.objective: same as in the conf.yaml;
+  performanc_only=False,    # tuning.performance_only: same as in the conf.yaml;
+  ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
+  ## diagnosis: these parameters do not need to specially be defined;
+)       
+```
+
+In Intel Neural Compressor 2.X, we introduce a `compression manager`  to control the training process. It requires to insert a pair of hook `callbacks.on_train_begin` and `callbacks.on_train_end` at the begin of the training and the end of the training. Thus, the quantization code is updated as:
 
 ```python
 # main.py
@@ -205,31 +463,105 @@ model = prune.fit()
 The `conf.yaml` is written as,
 
 ```yaml
-version: 1.0
+version: 1.0                                         # optional. reserved for future use. if not specified, a supported version would be written back to user yaml.
 
-model:
-  name: "bert"
-  framework: "pytorch"
+model:                                               # mandatory. neural_compressor uses this module name and framework name to decide where to save tuning history and deploy yaml.
+  name: resnet50v1.5
+  framework: pytorch                                 # mandatory. supported values are tensorflow, pytorch, pytorch_fx, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
 
-pruning:
+device: cpu                                          # optional. default value is cpu. other value is gpu.
+
+pruning:                                             # mandatory only for pruning.
+  train:
+    start_epoch: 0
+    end_epoch: 10
+    iteration: 100
+    frequency: 2
+    hostfile: /path/to/host/file                     # reserved for multi-node training.
+
+    dataloader:
+      batch_size: 256
+      dataset:
+        ImageFolder:
+          root: /path/to/imagenet/train
+      transform:
+        RandomResizedCrop:
+          size: 224
+        RandomHorizontalFlip:
+        ToTensor:
+        Normalize:
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225] 
+    criterion:
+      CrossEntropyLoss:
+        reduction: None
+    optimizer:
+      SGD:
+        learning_rate: 0.1
+        momentum: 0.9
+        weight_decay: 0.0004
+        nesterov: False
+
   approach:
-    weight_compression_pytorch:
-      start_step: 0
-      end_step: 0
-      excluded_names: ["classifier", "pooler", ".*embeddings*", "LayerNorm"]
-      prune_layer_type: ["Linear"]
-      target_sparsity: 0.9
-      update_frequency_on_step: 500
-      max_sparsity_ratio_per_layer: 0.98
-      prune_domain: "global"
-      sparsity_decay_type: "exp"
+    weight_compression:
+      initial_sparsity: 0.0
+      target_sparsity: 0.3
       pruners:
         - !Pruner
-            pattern: "ic_pattern_4x1"
-            update_frequency_on_step: 500
-            prune_domain: "global"
-            prune_type: "snip_momentum"
-            sparsity_decay_type: "exp"
+            initial_sparsity: 0.0
+            target_sparsity: 0.97
+            prune_type: basic_magnitude
+            names: ['layer1.0.conv1.weight']         # tensor name to be pruned.
+            start_epoch: 0
+            end_epoch: 2
+            update_frequency: 0.1
+
+evaluation:                                          # optional. used to config evaluation process. 
+  accuracy:                                          # optional. used to evaluate accuracy of passing model.
+    metric:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Pruning.
+      topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
+    configs:                                         # optional. if not specified, use all cores in 1 socket.
+      cores_per_instance: 28
+      num_of_instance: 1
+    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Pruning.
+      batch_size: 256
+      dataset:
+        ImageFolder:
+          root: /path/to/imagenet/train
+      transform:
+        RandomResizedCrop:
+          size: 224
+        RandomHorizontalFlip:
+        ToTensor:
+        Normalize:
+          mean: [0.485, 0.456, 0.406]
+          std: [0.229, 0.224, 0.225]
+  performance:                                       # optional. used to benchmark performance of passing model.
+    warmup: 10
+    iteration: 100
+    configs:
+      cores_per_instance: 4
+      num_of_instance: 7
+    dataloader:
+      dataset:
+        dummy:
+          shape: [[128, 3, 224, 224], [128, 1, 1, 1]]
+
+tuning:
+  accuracy_criterion:
+    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+  objective: performance                             # optional. objective with accuracy constraint guaranteed. default value is performance. other values are modelsize and footprint.
+
+  exit_policy:
+    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
+    max_trials: 100                                  # optional. max tune times. default value is 100. combine with timeout field to decide when to exit.
+
+  random_seed: 9527                                  # optional. random seed for deterministic tuning.
+  tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
+
+  workspace:
+    path: /path/to/saving/directory                  # optional. default workspace is ./nc_workspace/current_time_stamp, saving tuning history and deploy yaml.
+    resume: /path/to/a/specified/snapshot/file       # optional. if specified, resume from tuning history.
 ```
 
 The pruning code requires the user to insert a series of pre-defined hooks in the training function to activate the pruning with Intel Neural Compressor. The pre-defined hooks are listed as follows,
@@ -279,11 +611,39 @@ def pruning_func(model):
 
 **Pruning with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, the training process is activated by a `compression manager`. And the configuration information is included in the pruning code. The new code should be updated as,
+In Intel Neural Compressor 2.X, the training process is activated by a `compression manager`. And the configuration information is included in the `WeightPruningConfig`. The corresponding config should be set via:
+```python
+from neural_compressor.config import WeightPruningConfig
+
+WeightPruningConfig(
+  ## model, device: these parameters do not need to specially be defined;
+  start_step=0,             # start_epoch: same as in the conf.yaml;
+  end_step=10,              # end_epoch: same as in the conf.yaml;
+  pruning_frequency=2,      # frequency: same as in the conf.yaml;        
+  ## dataloader, criterion, optimizer: these parameters do not need to specially be defined;
+  target_sparsity=0.97      # target_sparsity: same as in the conf.yaml;     
+  pruning_configs: [pruning_config] # Pruner: same as in the conf.yaml;           
+  ## evaluation and tuning: these parameters do not need to specially be defined;
+)       
+```
+
+We also need to replace the hooks in the training code. The newly defined hooks are included in `compression manager` and listed as follows,
 
 ```python
-    configs = [
-            { ## pruner1
+    on_train_begin() : Execute at the beginning of training phase.
+    on_epoch_begin(epoch) : Execute at the beginning of each epoch.
+    on_step_begin(batch) : Execute at the beginning of each batch.
+    on_step_end() : Execute at the end of each batch.
+    on_epoch_end() : Execute at the end of each epoch.
+    on_before_optimizer_step() : Execute before optimization step.
+    on_after_optimizer_step() : Execute after optimization step.
+    on_train_end() : Execute at the ending of training phase.
+```
+
+The final Pruning code is uopdated as follows,
+
+```python
+    config = { ## pruner
                 'target_sparsity': 0.9,   # Target sparsity ratio of modules.
                 'pruning_type': "snip_momentum", # Default pruning type.
                 'pattern': "4x1", # Default pruning pattern.
@@ -297,13 +657,7 @@ In Intel Neural Compressor 2.X, the training process is activated by a `compress
                 'max_sparsity_ratio_per_op': 0.98, # Maximum sparsity ratio of each module.
                 'sparsity_decay_type': "exp", # Function applied to control pruning rate.
                 'pruning_op_types': ['Conv', 'Linear'], # Types of op that would be pruned.
-            },
-            { ## pruner2
-                "op_names": ['layer3.*'], # A list of modules that would be pruned.
-                "pruning_type": "snip_momentum_progressive",   # Pruning type for the listed ops.
-                # 'target_sparsity'
-            } # For layer3, the missing target_sparsity would be complemented by default setting (i.e. 0.8)
-        ]
+            }
     
     from neural_compressor.training import prepare_compression, WeightPruningConfig
     ##setting configs
@@ -311,11 +665,16 @@ In Intel Neural Compressor 2.X, the training process is activated by a `compress
     {"op_names": ['layer1.*']，"pattern":'4x1'},
     {"op_names": ['layer2.*']，"pattern":'1x1', 'target_sparsity':0.5}
     ]
-    config = WeightPruningConfig(pruning_configs,
-                                target_sparsity=0.8,
-                                excluded_op_names=['classifier'])  ##default setting
-    config = WeightPruningConfig(configs)
-    compression_manager = prepare_compression(model, config)
+    configs = WeightPruningConfig(
+        pruning_configs=pruning_configs,
+        target_sparsity=config.target_sparsity,
+        pattern=config.pattern,
+        pruning_frequency=config.pruning_frequency,
+        start_step=config.start_step,
+        end_step=config.end_step,
+        pruning_type=config.pruning_type,
+    )
+    compression_manager = prepare_compression(model=model, confs=configs)
     compression_manager.callbacks.on_train_begin()  ## insert hook
     for epoch in range(num_train_epochs):
         model.train()
@@ -331,19 +690,6 @@ In Intel Neural Compressor 2.X, the training process is activated by a `compress
             model.zero_grad()
     ...
     compression_manager.callbacks.on_train_end()
-```
-
-We need to replace the hooks in the training code. The newly defined hooks are included in `compression manager` and listed as follows,
-
-```python
-    on_train_begin() : Execute at the beginning of training phase.
-    on_epoch_begin(epoch) : Execute at the beginning of each epoch.
-    on_step_begin(batch) : Execute at the beginning of each batch.
-    on_step_end() : Execute at the end of each batch.
-    on_epoch_end() : Execute at the end of each epoch.
-    on_before_optimizer_step() : Execute before optimization step.
-    on_after_optimizer_step() : Execute after optimization step.
-    on_train_end() : Execute at the ending of training phase.
 ```
 
 ## Distillation
@@ -362,29 +708,18 @@ Intel Neural Compressor distillation API is defined under `neural_compressor.exp
         iteration: 100
         
         dataloader:
-        batch_size: 256
-        dataset:
-            ImageFolder:
-            root: /path/to/imagenet/train
-        transform:
-            RandomResizedCrop:
-            size: 224
-            RandomHorizontalFlip:
-            ToTensor:
-            Normalize:
-            mean: [0.485, 0.456, 0.406]
-            std: [0.229, 0.224, 0.225] 
+          batch_size: 256
         criterion:
-        KnowledgeDistillationLoss:
-            temperature: 1.0
-            loss_types: ['CE', 'KL']
-            loss_weights: [0.5, 0.5]
+          KnowledgeDistillationLoss:
+              temperature: 1.0
+              loss_types: ['CE', 'KL']
+              loss_weights: [0.5, 0.5]
         optimizer:
-        SGD:
-            learning_rate: 0.1
-            momentum: 0.9
-            weight_decay: 0.0004
-            nesterov: False
+          SGD:
+              learning_rate: 0.1
+              momentum: 0.9
+              weight_decay: 0.0004
+              nesterov: False
     evaluation:                              # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
     accuracy:                              # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
         metric:
@@ -444,7 +779,16 @@ model = distiller.fit()
 
 **Distillation with Intel Neural Compressor 2.X**
 
-The new distillation API also introduce `compression manager` to conduct the training process. We also use the hooks in `compression manager` to activate the distillation process.
+The new distillation API also introduce `compression manager` to conduct the training process. We continuously use the hooks in `compression manager` to activate the distillation process. We replace the `conf.yaml` with `DistillationConfig` API.
+
+```python
+from neural_compressor.config import DistillationConfig
+
+DistillationConfig(
+  criterion=KnowledgeDistillationLoss,  # criterion: same as in the conf.yaml;
+  optimizer=SGD,                        # optimizer: same as in the conf.yaml;
+)       
+```
 
 The newly updated distillation code is shown as follows,
 ```python
@@ -500,23 +844,61 @@ output_model = converter()
 The configuration `conf.yaml` should be,
 ```yaml
 model:
-name: resnet50_v1
-framework: tensorflow
+  name: resnet50_v1
+  framework: tensorflow
+  inputs: image_tensor
+  outputs: num_detections,detection_boxes,detection_scores,detection_classes
+
+device: cpu
 
 mixed_precision:
-precisions: 'bf16'
+  precisions: 'bf16'  
 
 evaluation:
-accuracy:
-    dataloader:
-    ...
-    metric:
-    ...
+  ...
+
+tuning:
+  accuracy_criterion:
+    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
+  objective: performance                             # optional. objective with accuracy constraint guaranteed. default value is performance. other values are modelsize and footprint.
+
+  exit_policy:
+    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
+    max_trials: 100                                  # optional. max tune times. default value is 100. combine with timeout field to decide when to exit.
+    performance_only: False                          # optional. max tune times. default value is False which means only generate fully quantized model.
+  random_seed: 9527                                  # optional. random seed for deterministic tuning.
+
 ```
 
 **Mix Precision with Intel Neural Compressor 2.X**
 
 In 2.X version, we integrate the config information in `MixedPrecisionConfig`, leading to the updates in the code as follows,
+
+```python
+from neural_compressor.config import MixedPrecisionConfig, TuningCriterion, AccuracyCriterion
+
+MixedPrecisionConfig(
+  ## model: this parameter does not need to specially be defined;
+  backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+  inputs="image_tensor",    # input: same as in the conf.yaml;
+  ouputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  device="cpu",             # device: same as in the conf.yaml;
+  tuning_criterion=tuning_criterion,
+  accuracy_criterion=accuracy_criterion,
+  ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
+)
+
+accuracy_criterion=AccuracyCriterion(
+  tolerable_loss=0.01,      # relative: same as in the conf.yaml;
+)
+tuning_criterion=TuningCriterion(
+  timeout=0,                # timeout: same as in the conf.yaml;
+  max_trials=100,           # maxtrials: same as in the conf.yaml;
+)          
+```
+
+The update demo is shown as follows,
+
 ```python
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
@@ -550,7 +932,7 @@ The user needs to write the `prune_conf.yaml` and the `quantization_aware_traini
 
 **Orchestration with Intel Neural Compressor 2.X**
 
-Intel Neural Compressor 2.X introduces `compression manager` to schedule the training process. Therefore, the code should be updated as,
+Intel Neural Compressor 2.X introduces `compression manager` to schedule the training process. The `conf.yaml` should follows in the previous sessions to set the configuration information. It also requires to inset the hooks from `compression manager` to control the training flow. Therefore, the code should be updated as,
 
 ```python
 from neural_compressor.training import prepare_compression
@@ -589,41 +971,29 @@ The benchmarking feature of Neural Compressor is used to measure the model perfo
 
 In Intel Neural Compressor 1.X requires the user to define the experimental settings for low precision model and FP32 model with a `conf.yaml`.
 ```yaml
-evaluation:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
-  accuracy:                                          # optional. required if user doesn't provide eval_func in neural_compressor.Quantization.
-    metric:
-      topk: 1                                        # built-in metrics are topk, map, f1, allow user to register new metric.
-    dataloader:
-      batch_size: 30
-      dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
-      transform:
-        Resize:
-          size: 256
-        CenterCrop:
-          size: 224
-        ToTensor: {}
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
-          std: [0.229, 0.224, 0.225]
+version: 1.0
+
+model:                                               # mandatory. used to specify model specific information.
+  name: ssd_mobilenet_v1                             # mandatory. the model name.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_fx, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  inputs: image_tensor                               # optional. inputs and outputs fields are only required in tensorflow.
+  outputs: num_detections,detection_boxes,detection_scores,detection_classes
+
+device: cpu                                          # optional. default value is cpu. other value is gpu.
+
+evaluation:                                          # optional. used to config evaluation process.
   performance:                                       # optional. used to benchmark performance of passing model.
+    warmup: 10
+    iteration: 100
     configs:
       cores_per_instance: 4
       num_of_instance: 7
+      inter_num_of_threads: 1
+      intra_num_of_threads: 4
     dataloader:
-      batch_size: 1
       dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset          # NOTE: modify to evaluation dataset location if needed
-      transform:
-        Resize:
-          size: 256
-        CenterCrop:
-          size: 224
-        ToTensor: {}
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
+        dummy:
+          shape: [[128, 3, 224, 224], [128, 1, 1, 1]]
 ```
 
 And then, the user can get the accuracy with,
@@ -642,7 +1012,28 @@ results = evaluator()
 
 **Benchmark with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, we optimize the code to make it simple and clear for the user. 
+In Intel Neural Compressor 2.X, we optimize the code to make it simple and clear for the user. We replace `conf.yaml` with `BenchmarkConfig`. The corresponding information should be defined as:
+```python
+from neural_compressor.config import BenchmarkConfig
+
+BenchmarkConfig(
+  ## model: this parameter does not need to specially be defined;
+  backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+  inputs="image_tensor",    # input: same as in the conf.yaml;
+  ouputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  device="cpu",             # device: same as in the conf.yaml;
+  warmup=10,                # warmup: same as in the conf.yaml;
+  iteration=100,            # iteration: same as in the conf.yaml;
+  cores_per_instance=4,     # cores_per_instance: same as in the conf.yaml;
+  num_of_instance=7,        # num_of_instance: same as in the conf.yaml;
+  inter_num_of_threads=1,   # inter_num_of_threads: same as in the conf.yaml;
+  intra_num_of_threads=4,   # intra_num_of_threads: same as in the conf.yaml;
+  ## dataloader: this parameter does not need to specially be defined;
+)     
+```
+
+The new example in Intel Neural Compressor 2.X should be updated as,
+
 ```python
 from neural_compressor.config import BenchmarkConfig
 from neural_compressor.benchmark import fit
