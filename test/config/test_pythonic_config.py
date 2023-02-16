@@ -176,8 +176,6 @@ class TestPythonicConf(unittest.TestCase):
         self.assertEqual(q.conf.usr_cfg.use_bf16, False)
         q.pre_process()
         self.assertEqual(q.strategy.adaptor.query_handler.get_precisions(), ['int8', 'uint8'])
-        self.assertEqual(q.strategy.adaptor.query_handler.get_graph_optimization(), ort.GraphOptimizationLevel.ORT_DISABLE_ALL)
-            
 
     def test_quantization(self):
         q = Quantization(config)
