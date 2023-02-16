@@ -381,7 +381,7 @@ class _BaseQuantizationConfig:
                      'fast_bias_correction': whether do fast bias correction
                      'weight_correction': whether do weight correction
                      'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
-                     'graph_optimization_level': support DISABLE_ALL, ENABLE_BASIC, ENABLE_EXTENDED, ENABLE_ALL
+                     'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
                                                only valid for onnx models
                      'first_conv_or_matmul_quant': whether quantize the first conv or matmul
                      'last_conv_or_matmul_quant': whether quantize the last conv or matmul
