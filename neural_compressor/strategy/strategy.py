@@ -185,7 +185,7 @@ class TuneStrategy(object):
 
     def traverse(self):
         """Traverse the tuning space.
-        
+
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
         self._eval_baseline()
