@@ -92,8 +92,8 @@ function run_benchmark {
     elif [ "${topology}" = "bert_large_CoLA" ]; then
         TASK_NAME='cola'
         model_name_or_path=${input_model}
-    elif [ "${topology}" = "funnel_MRPC_fx" ]; then
-        TASK_NAME='mrpc'
+    elif [ "${topology}" = "funnel_MNLI_fx" ]; then
+        TASK_NAME='mnli'
         model_name_or_path=${input_model}
         model_type='funnel'
     elif [ "${topology}" = "distilbert_base_MRPC_fx" ]; then
@@ -104,8 +104,8 @@ function run_benchmark {
         TASK_NAME='MRPC'
         model_name_or_path=${input_model}
         model_type='xlm-roberta'
-    elif [ "${topology}" = "flaubert_MRPC" ]; then
-        TASK_NAME='MRPC'
+    elif [ "${topology}" = "flaubert_XNLI" ]; then
+        TASK_NAME='XNLI'
         model_name_or_path=${input_model}
         model_type='flaubert'
     elif [ "${topology}" = "barthez_MRPC" ]; then
@@ -124,8 +124,8 @@ function run_benchmark {
         TASK_NAME='MRPC'
         model_name_or_path=${input_model}
         model_type='deberta'
-    elif [ "${topology}" = "squeezebert_MRPC" ]; then
-        TASK_NAME='MRPC'
+    elif [ "${topology}" = "squeezebert_MNLI" ]; then
+        TASK_NAME='MNLI'
         model_name_or_path=${input_model}
         model_type='squeezebert'
     elif [ "${topology}" = "xlnet_base_cased_MRPC" ]; then

@@ -50,7 +50,7 @@ sh run_tuning.sh --topology=topology_name --input_model=/path/to/checkpoint/dir 
 ```
 > NOTE
 >
-> topology_name should be one of them: {"bert_base_MRPC", "bert_base_CoLA", "bert_base_STS-B", "bert_base_SST-2", "bert_base_RTE", "bert_large_MRPC", "bert_large_RTE", "bert_large_CoLA", "funnel_MRPC_fx", "distilbert_base_MRPC_fx", "xlm-roberta-base_MRPC", "flaubert_MRPC", "barthez_MRPC", "longformer_MRPC", "layoutlm_MRPC", "deberta_MRPC", "squeezebert_MRPC", "xlnet_base_cased_MRPC", "roberta_base_MRPC", "camembert_base_MRPC"}
+> topology_name should be one of them: {"bert_base_MRPC", "bert_base_CoLA", "bert_base_STS-B", "bert_base_SST-2", "bert_base_RTE", "bert_large_MRPC", "bert_large_RTE", "bert_large_CoLA", "funnel_MNLI_fx", "distilbert_base_MRPC_fx", "xlm-roberta-base_MRPC", "flaubert_XNLI", "barthez_MRPC", "longformer_MRPC", "layoutlm_MRPC", "deberta_MRPC", "squeezebert_MNLI", "xlnet_base_cased_MRPC", "roberta_base_MRPC", "camembert_base_MRPC"}
 >
 > /path/to/checkpoint/dir is the path to finetune output_dir 
 
