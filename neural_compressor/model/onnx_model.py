@@ -518,3 +518,122 @@ class ONNXModel(BaseModel):
                 removed_outputs.append(self._model.graph.output[self.output().index(tensor)])
         for output in removed_outputs:
             self._model.graph.output.remove(output)
+
+    def match_first_parent(self, node, parent_op_type, output_name_to_node, exclude=[]):
+        """
+        Find parent node based on constraints on op_type.
+
+        Args:
+            node (str): current node name.
+            parent_op_type (str): constraint of parent node op_type.
+            output_name_to_node (dict): dictionary with output name as key, and node as value.
+            exclude (list): list of nodes that are excluded (not allowed to match as parent).
+
+        Returns:
+            parent: The matched parent node. None if not found.
+            index: The input index of matched parent node. None if not found.
+        """
+        for i, input in enumerate(node.input):
+            if input in output_name_to_node:
+                parent = output_name_to_node[input]
+                if parent.op_type == parent_op_type and parent not in exclude:
+                    return parent, i
+                else:
+                    logger.debug(f"To find first {parent_op_type}, current {parent.op_type}")
+        return None, None
+
+    def match_parent(
+        self,
+        node,
+        parent_op_type,
+        input_index=None,
+        output_name_to_node=None,
+        exclude=[],
+        return_indice=None,
+    ):
+        """
+        Find parent node based on constraints on op_type and index.
+        When input_index is None, we will find the first parent node based on constraints, and return_indice will be appended the corresponding input index.
+
+        Args:
+            node (str): current node name.
+            parent_op_type (str): constraint of parent node op_type.
+            input_index (int or None): only check the parent given input index of current node.
+            output_name_to_node (dict): dictionary with output name as key, and node as value.
+            exclude (list): list of nodes that are excluded (not allowed to match as parent).
+            return_indice (list): a list to append the input index when input_index is None.
+
+        Returns:
+            parent: The matched parent node.
+        """
+        assert node is not None
+        assert input_index is None or input_index >= 0
+
+        if output_name_to_node is None:
+            output_name_to_node = self._output_name_to_node
+
+        if input_index is None:
+            parent, index = self.match_first_parent(node, parent_op_type, output_name_to_node, exclude)
+            # print('parent', parent)
+            if return_indice is not None:
+                return_indice.append(index)
+            return parent
+
+        if input_index >= len(node.input):
+            logger.debug(f"input_index {input_index} >= node inputs {len(node.input)}")
+            return None
+
+        parent = self.get_parent(node, input_index, output_name_to_node)
+        if parent is not None and parent.op_type == parent_op_type and parent not in exclude:
+            return parent
+
+        if parent is not None:
+            logger.debug(f"Expect {parent_op_type}, Got {parent.op_type}")
+
+        return None
+
+    def match_parent_path(
+        self,
+        node,
+        parent_op_types,
+        parent_input_index,
+        output_name_to_node=None,
+        return_indice=None,
+    ):
+        """
+        Find a sequence of input edges based on constraints on parent op_type and index.
+        When input_index is None, we will find the first parent node based on constraints, and return_indice will be appended the corresponding input index.
+
+        Args:
+            node (str): current node name.
+            parent_op_types (str): constraint of parent node op_type of each input edge.
+            parent_input_index (list): constraint of input index of each input edge. None means no constraint.
+            output_name_to_node (dict): dictionary with output name as key, and node as value.
+            return_indice (list): a list to append the input index when there is no constraint on input index of an edge.
+
+        Returns:
+            parents: a list of matched parent node.
+        """
+        assert len(parent_input_index) == len(parent_op_types)
+
+        if output_name_to_node is None:
+            output_name_to_node = self._output_name_to_node
+
+        current_node = node
+        matched_parents = []
+        for i, op_type in enumerate(parent_op_types):
+            matched_parent = self.match_parent(
+                current_node,
+                op_type,
+                parent_input_index[i],
+                output_name_to_node,
+                exclude=[],
+                return_indice=return_indice,
+            )
+            if matched_parent is None:
+                return None
+
+            matched_parents.append(matched_parent)
+            current_node = matched_parent
+
+        return matched_parents
