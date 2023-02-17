@@ -41,7 +41,7 @@ This is a tutorial of how to enable a PyTorch model with Intel® Neural Compress
 
 ### Code Update
 
-we update test.py like below.
+We update test.py like below.
 
 ```python
 class yolo_dataLoader(object):
