@@ -19,19 +19,21 @@
 from argparse import ArgumentParser
 import tensorflow as tf
 import onnx
-import os
+import time
 import onnxruntime as ort
 import numpy as np
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 
-def eval_func_onnx(model, dataloader, metric, postprocess=None):
+def eval_func_onnx(model, dataloader, metric, postprocess=None, batch_size=32, mode='accuracy'):
     metric.reset()
     session = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
     ort_inputs = {}
     len_inputs = len(session.get_inputs())
     inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
+
+    latency_list = []
     for inputs, labels in dataloader:
         if not isinstance(labels, list):
             labels = [labels]
@@ -53,7 +55,9 @@ def eval_func_onnx(model, dataloader, metric, postprocess=None):
                     else:
                         ort_inputs.update({inputs_names[i]: inputs[i]})
 
+        start = time.time()
         predictions = session.run(None, ort_inputs)
+        end = time.time()
 
         if postprocess is not None:
             predictions, labels = postprocess((predictions, labels))
@@ -61,10 +65,17 @@ def eval_func_onnx(model, dataloader, metric, postprocess=None):
         if not hasattr(metric, "compare_label") or \
             (hasattr(metric, "compare_label") and metric.compare_label):
             metric.update(predictions, labels)
+        latency_list.append(end-start)
+    latency = np.array(latency_list[:]).mean() / batch_size
+    if mode == 'performance':
+        print("Batch size = {}".format(batch_size))
+        print("Latency: {:.3f} ms".format(latency * 1000))
+        print("Throughput: {:.3f} images/sec".format(1. / latency))
+
     acc = metric.result()
     return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
-def eval_func_tf(model, dataloader, metric, postprocess=None):
+def eval_func_tf(model, dataloader, metric, postprocess=None, batch_size=32, mode='accuracy'):
     metric.reset()
 
     from neural_compressor.model import Model
@@ -77,12 +88,23 @@ def eval_func_tf(model, dataloader, metric, postprocess=None):
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
 
+    latency_list = []
     for _, (inputs, labels) in enumerate(dataloader):
         # dataloader should keep the order and len of inputs same with input_tensor
         inputs = np.array([inputs])
         feed_dict = dict(zip(input_tensor, inputs))
+
+        start = time.time()
         predictions = model.sess.run(output_tensor, feed_dict)
+        end = time.time()
         metric.update(predictions, labels)
+        latency_list.append(end-start)
+    latency = np.array(latency_list[:]).mean() / batch_size
+
+    if mode == 'performance':
+        print("Batch size = {}".format(batch_size))
+        print("Latency: {:.3f} ms".format(latency * 1000))
+        print("Throughput: {:.3f} images/sec".format(1. / latency))
 
     acc = metric.result()
     return acc
@@ -178,16 +200,18 @@ class eval_classifier_optimized_graph:
             mAP2 = COCOmAPv2(output_index_mapping=output_index_mapping)
 
             def eval(model):
-                if isinstance(model, str):
-                    return eval_func_tf(model, dataloader, mAP2)
+                if self.args.input_graph.endswith('.onnx'):
+                    return eval_func_onnx(model, dataloader, mAP2,
+                                          batch_size=self.args.batch_size, mode='performance')
                 else:
-                    return eval_func_onnx(model, dataloader, mAP2)
+                    return eval_func_tf(model, dataloader, mAP2,
+                                        batch_size=self.args.batch_size, mode='performance')
 
             if self.args.mode == 'performance':
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
                 conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=7)
-                fit(model, conf, b_dataloader=dataloader)
+                fit(model, conf, b_dataloader=dataloader, b_func=eval)
             elif self.args.mode == 'accuracy':
                 acc_result = eval(model)
                 print("Batch size = %d" % dataloader.batch_size)
