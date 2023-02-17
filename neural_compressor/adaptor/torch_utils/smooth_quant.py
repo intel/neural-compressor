@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 from neural_compressor.utils.utility import LazyImport
+
 torch = LazyImport('torch')
 from ...utils import logger
 
@@ -51,7 +52,7 @@ class TorchSmoothQuant:
     once to recover the weights if needed
     """
 
-    def __init__(self, model: torch.nn.Module, dataloader, traced_model=None):
+    def __init__(self, model, dataloader, traced_model=None):
         """
         :param model: Torch model :param dataloader: Calibration dataloader :param traced_model: A specific model
         shares the same architecture as the model and could be traced by torch.jit. If not supplied, we use model
@@ -214,7 +215,7 @@ class TorchSmoothQuant:
             weight = weight.reshape(-1, weight.shape[-1])
         return weight
 
-    def _scale_layer_weight(self, layer_name, scale: torch.Tensor):  ##input channel
+    def _scale_layer_weight(self, layer_name, scale):  ##input channel
         """
         Scale the layer weights at input channel
         :param layer_name: The layer name
@@ -328,7 +329,7 @@ class TorchSmoothQuant:
         return weight_scales_info, absorb_scales_info
 
     def _check_is_same_parameters(self, alpha, percentile, op_types,
-                               scales_per_op, calib_iter):
+                                  scales_per_op, calib_iter):
         """
 
         :param alpha:
@@ -374,11 +375,11 @@ class TorchSmoothQuant:
         matched = self._check_is_same_parameters(alpha, percentile, op_types, scales_per_op, calib_iter)
         with torch.no_grad():
             input_maxes = self.input_maxes
-            if matched == False:##avoid multiple calibaration during tuning
+            if matched == False:  ##avoid multiple calibaration during tuning
                 self.recover()
                 self.absorb_to_layer, no_absorb_layers = self._trace(
                     op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
-                if self.absorb_to_layer==None and no_absorb_layers==None:
+                if self.absorb_to_layer == None and no_absorb_layers == None:
                     logger.warning("sorry, could not trace the model, smooth quant is ignored")
                     return self.model
 
@@ -436,6 +437,7 @@ def get_module(model, key):
 class GraphTrace:
     """
     """
+
     def __init__(self):
         self.supported_torch_module_to_aten = {
             "Linear": "aten::linear",
