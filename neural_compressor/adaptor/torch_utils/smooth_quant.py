@@ -1,4 +1,22 @@
-import torch
+#
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+from neural_compressor.utils.utility import LazyImport
+torch = LazyImport('torch')
 from ...utils import logger
 
 
@@ -309,8 +327,17 @@ class TorchSmoothQuant:
                 weight_scales_info[layer_name] = scale
         return weight_scales_info, absorb_scales_info
 
-    def _match_prev_parameters(self, alpha=0.5, percentile=99.999, op_types=['Linear', 'Conv2d', 'ConvTranspose2d'],
-                               scales_per_op=False, calib_iter=100):
+    def _check_is_same_parameters(self, alpha, percentile, op_types,
+                               scales_per_op, calib_iter):
+        """
+
+        :param alpha:
+        :param percentile:
+        :param op_types:
+        :param scales_per_op:
+        :param calib_iter:
+        :return:
+        """
         if len(self.input_maxes) == 0:
             self.alpha = alpha
             self.percentile = percentile
@@ -344,7 +371,7 @@ class TorchSmoothQuant:
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model
-        matched = self._match_prev_parameters(alpha, percentile, op_types, scales_per_op, calib_iter)
+        matched = self._check_is_same_parameters(alpha, percentile, op_types, scales_per_op, calib_iter)
         with torch.no_grad():
             input_maxes = self.input_maxes
             if matched == False:##avoid multiple calibaration during tuning
