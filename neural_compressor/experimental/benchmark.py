@@ -243,6 +243,9 @@ class Benchmark(object):
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
 
+        logger.info("xxxxxx{}".format(num_of_instance))
+        logger.info("yyyyyy{}".format(cores_per_instance))
+
         if(sys.platform in ['linux'] and get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
             raise OSError('Currently no support on ARM with hyperthreads')
         elif sys.platform in ['linux']:
@@ -262,6 +265,7 @@ class Benchmark(object):
                 multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
                     instance_cmd, instance_log)
             else:  # pragma: no cover
+                logger.info("zzzzzz{}".format(instance_cmd))
                 multi_instance_cmd += '{} \n'.format(instance_cmd)
 
         multi_instance_cmd += 'wait' if sys.platform in ['linux'] else ''
@@ -273,9 +277,11 @@ class Benchmark(object):
         elif sys.platform in ['win32']:  # pragma: no cover
             cmd_list = multi_instance_cmd.split("\n")[:-1]
             threads = []
+            logger.info("hhhh\n{}".format(cmd_list))
             for idx, cmd in enumerate(cmd_list):
                 # wrap each execution of windows bat file in one thread
                 # write the log to the log file of the corresponding instance
+                logger.info('{}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))
                 threads.append(Thread(target=self.call_one, args=(cmd,
                     '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))))
             for command_thread in threads:
