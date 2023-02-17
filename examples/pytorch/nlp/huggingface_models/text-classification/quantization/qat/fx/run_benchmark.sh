@@ -56,7 +56,7 @@ function run_benchmark {
 
     mode_cmd=""
     if [[ ${mode} == "performance" ]]; then
-        mode_cmd="--benchmark --iters "${iters}
+        mode_cmd="--performance --iters "${iters}
     fi
 
     extra_cmd='--model_name_or_path '${input_model}

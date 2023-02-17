@@ -58,7 +58,7 @@ function run_benchmark {
     model_name_or_path=${input_model}
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy"
-    elif [[ ${mode} == "benchmark" ]]; then
+    elif [[ ${mode} == "performance" ]]; then
         mode_cmd=" --performance --iters "${iters}
     else
         echo "Error: No such mode: ${mode}"
