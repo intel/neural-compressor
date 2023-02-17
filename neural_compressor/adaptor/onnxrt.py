@@ -697,10 +697,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         else:
             if self.domain == "auto" and self._detect_domain(model):
                 self.domain = 'nlp' 
-            if self.domain == 'nlp':
-                level = 'ENABLE_EXTENDED'
-            else:
-                level = 'ENABLE_BASIC'
+            level = 'ENABLE_EXTENDED' if self.domain == 'nlp' else 'ENABLE_BASIC'
             logger.warning("Graph optimization level is automatically set to {}. "
                 "You can use 'recipe' argument in 'PostTrainingQuantConfig'" 
                 "to overwrite it".format(level))
@@ -1036,6 +1033,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     else: # pragma: no cover
                         op_wise.update(
                             {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
+        
         return {'optypewise': optype_wise, 'opwise': op_wise}
 
     def _optypewise_filter_for_qdq(self, optype_wise):

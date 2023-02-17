@@ -574,7 +574,6 @@ class ONNXModel(BaseModel):
 
         if input_index is None:
             parent, index = self.match_first_parent(node, parent_op_type, output_name_to_node, exclude)
-            # print('parent', parent)
             if return_indice is not None:
                 return_indice.append(index)
             return parent
