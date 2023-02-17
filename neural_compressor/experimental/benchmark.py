@@ -224,7 +224,7 @@ class Benchmark(object):
         proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,
-                                shell=False)
+                                shell=True)
         with open(log_file, "w", 1, encoding="utf-8") as log_file:
             log_file.write(f"[ COMMAND ] {cmd} \n")
             for line in proc.stdout:
