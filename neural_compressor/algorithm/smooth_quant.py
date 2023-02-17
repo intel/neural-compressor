@@ -24,28 +24,28 @@ from ..utils import logger
 
 @algorithm_registry(algorithm_type='smooth_quant')
 class SmoothQuant(Algorithm):
-    """
-    Fake input channel quantization, for more details please refer to
+    """Fake input channel quantization.
+
+    for more details please refer to
     [1] SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models
     [2] SPIQ: Data-Free Per-Channel Static Input Quantization
     For torch backend, we only handle the layers whose smooth scale could be absorbed, we will support other layers
-    later. For onnx backend, we insert MUL layers before conv/linear layer, the op fusing and kernel will be
+    later. For onnx backend, we insert MUL layer before conv/linear layers, the op fusing and kernel will be
     supported in the future.
     """
 
     def __init__(self, alpha=0.5):
         """
         Initialize SmoothQuant class.
+
         Args:
             alpha:Alpha value to balance the quantization difficulty of activation and weight,
                 please refer to the paper for more details
         """
-
         # percentile:Percentile of calibration to remove outliers,float(0->100)
         # op_types: The op types whose input tensor will be dumped,['Conv', 'Linear']
         # scales_per_op: True, each op will have an individual scale, mainly for accuracy
         #                False, ops with the same input will share a scale, mainly for performance
-
         self.alpha = alpha
         self.percentile = None
         self.op_types = None

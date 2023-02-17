@@ -174,7 +174,8 @@ class TorchSmoothQuant:
             if isinstance(module, torch.nn.Linear) or isinstance(module,
                                                                  torch.nn.Conv2d):
                 if isinstance(module, torch.nn.Conv2d):
-                    if module.groups > 1 and module.in_channels == module.out_channels and module.groups == module.in_channels:
+                    if module.groups > 1 and module.in_channels == module.out_channels and \
+                            module.groups == module.in_channels:
                         continue
                     else:
                         pass
@@ -241,8 +242,8 @@ class TorchSmoothQuant:
         :return:
         """
         layer = self._get_module(layer_name)
-        if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or isinstance(layer,
-                                                                                                          torch.nn.InstanceNorm2d):
+        if isinstance(layer, torch.nn.BatchNorm2d) or isinstance(layer, torch.nn.GroupNorm) or \
+                isinstance(layer, torch.nn.InstanceNorm2d):
             if layer.affine:
                 layer.weight *= scale
                 layer.bias *= scale
@@ -315,7 +316,8 @@ class TorchSmoothQuant:
             input_power = torch.pow(input_max, alpha)
             logger.DEBUG(f"{max(input_max)}, {min(input_power)}")  ##TODO changed it to debug later
             weight_power = torch.pow(weight_max_per_channel, 1 - alpha)
-            ##logger.info(f"{absorb_to_layer[key][0]} layer sparsity is {1.0-torch.count_nonzero(input_power)/input_power.numel()}")
+            #logger.info(f"{absorb_to_layer[key][0]} layer sparsity is
+            # {1.0-torch.count_nonzero(input_power)/input_power.numel()}")
 
             scale = torch.clip(input_power / weight_power, min=1e-5)
             scale[input_power == 0] = 1.0
@@ -346,7 +348,8 @@ class TorchSmoothQuant:
             self.scales_per_op = scales_per_op
             self.calib_iter = calib_iter
             return False
-        if alpha != self.alpha or self.percentile != percentile or self.op_types != op_types or self.scales_per_op != scales_per_op or self.calib_iter != calib_iter:
+        if alpha != self.alpha or self.percentile != percentile or self.op_types != op_types \
+                or self.scales_per_op != scales_per_op or self.calib_iter != calib_iter:
             self.alpha = alpha
             self.percentile = percentile
             self.op_types = op_types
