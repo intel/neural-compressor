@@ -520,8 +520,7 @@ class ONNXModel(BaseModel):
             self._model.graph.output.remove(output)
 
     def match_first_parent(self, node, parent_op_type, output_name_to_node, exclude=[]):
-        """
-        Find parent node based on constraints on op_type.
+        """Find parent node based on constraints on op_type.
 
         Args:
             node (str): current node name.
@@ -538,8 +537,6 @@ class ONNXModel(BaseModel):
                 parent = output_name_to_node[input]
                 if parent.op_type == parent_op_type and parent not in exclude:
                     return parent, i
-                else:
-                    logger.debug(f"To find first {parent_op_type}, current {parent.op_type}")
         return None, None
 
     def match_parent(
@@ -551,9 +548,7 @@ class ONNXModel(BaseModel):
         exclude=[],
         return_indice=None,
     ):
-        """
-        Find parent node based on constraints on op_type and index.
-        When input_index is None, we will find the first parent node based on constraints, and return_indice will be appended the corresponding input index.
+        """Find parent node based on constraints on op_type and index.
 
         Args:
             node (str): current node name.
@@ -573,21 +568,20 @@ class ONNXModel(BaseModel):
             output_name_to_node = self._output_name_to_node
 
         if input_index is None:
-            parent, index = self.match_first_parent(node, parent_op_type, output_name_to_node, exclude)
+            parent, index = self.match_first_parent(node, 
+                                                    parent_op_type, 
+                                                    output_name_to_node, 
+                                                    exclude)
             if return_indice is not None:
                 return_indice.append(index)
             return parent
 
         if input_index >= len(node.input):
-            logger.debug(f"input_index {input_index} >= node inputs {len(node.input)}")
             return None
 
         parent = self.get_parent(node, input_index, output_name_to_node)
         if parent is not None and parent.op_type == parent_op_type and parent not in exclude:
             return parent
-
-        if parent is not None:
-            logger.debug(f"Expect {parent_op_type}, Got {parent.op_type}")
 
         return None
 
@@ -599,16 +593,16 @@ class ONNXModel(BaseModel):
         output_name_to_node=None,
         return_indice=None,
     ):
-        """
-        Find a sequence of input edges based on constraints on parent op_type and index.
-        When input_index is None, we will find the first parent node based on constraints, and return_indice will be appended the corresponding input index.
+        """Find a sequence of input edges based on constraints on parent op_type and index.
 
         Args:
             node (str): current node name.
             parent_op_types (str): constraint of parent node op_type of each input edge.
-            parent_input_index (list): constraint of input index of each input edge. None means no constraint.
+            parent_input_index (list): constraint of input index of each input edge. 
+                                       None means no constraint.
             output_name_to_node (dict): dictionary with output name as key, and node as value.
-            return_indice (list): a list to append the input index when there is no constraint on input index of an edge.
+            return_indice (list): a list to append the input index when there is 
+                                  no constraint on input index of an edge.
 
         Returns:
             parents: a list of matched parent node.
