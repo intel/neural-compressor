@@ -71,31 +71,24 @@ function run_benchmark {
     elif [ "${topology}" = "distilbert_base_MRPC" ]; then
         TASK_NAME='MRPC'
         model_name_or_path=${input_model}
-        model_type='distilbert'
     elif [ "${topology}" = "albert_base_MRPC" ]; then
         TASK_NAME='MRPC'
         model_name_or_path=${input_model} 
-        model_type='albert'
     elif [ "${topology}" = "funnel_MNLI" ]; then
         TASK_NAME='MNLI'
         model_name_or_path=${input_model} 
-        model_type='funnel'
     elif [ "${topology}" = "mbart_MRPC" ]; then
         TASK_NAME='MRPC'
         model_name_or_path=${input_model} 
-        model_type='mbart'
     elif [ "${topology}" = "transfo_xl_MRPC" ]; then
         TASK_NAME='MRPC'
         model_name_or_path=${input_model} 
-        model_type='transfo-xl-wt103'
     elif [ "${topology}" = "ctrl_MRPC" ]; then
         TASK_NAME='MRPC'
         model_name_or_path=${input_model} 
-        model_type='ctrl'
     elif [ "${topology}" = "xlm_roberta_MRPC" ]; then
         TASK_NAME='MRPC'
         model_name_or_path=${input_model}
-        model_type='xlm'
     fi
 
     extra_cmd='--model_name_or_path '${input_model}

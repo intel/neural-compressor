@@ -195,9 +195,6 @@ class ModelArguments:
     accuracy: bool = field(
         default=False, metadata={"help": "get accuracy"}
     )
-    onnx: bool = field(
-        default=False, metadata={"help": "convert PyTorch model to ONNX"}
-    )
     iters: int = field(
         default=100,
         metadata={
@@ -515,43 +512,6 @@ def main():
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
         save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
 
-        if model_args.onnx:
-            it = iter(eval_dataloader)
-            input = next(it)
-            input.pop('labels')
-            symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
-            dynamic_axes = {k: symbolic_names for k in input.keys()}
-            from neural_compressor.config import Torch2ONNXConfig
-            fp32_onnx_config = Torch2ONNXConfig(
-                dtype="fp32",
-                opset_version=14,
-                example_inputs=tuple(input.values()),
-                input_names=list(input.keys()),
-                output_names=['labels'],
-                dynamic_axes=dynamic_axes,
-            )
-            q_model.export('fp32-model.onnx', fp32_onnx_config)
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QDQ",
-                example_inputs=tuple(input.values()),
-                input_names=list(input.keys()),
-                output_names=['labels'],
-                dynamic_axes=dynamic_axes,
-            )
-            q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QLinear",
-                example_inputs=tuple(input.values()),
-                input_names=list(input.keys()),
-                output_names=['labels'],
-                dynamic_axes=dynamic_axes,
-            )
-            q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
-        return
 
     if model_args.performance or model_args.accuracy:
         if model_args.performance:

@@ -13,7 +13,6 @@ function init_params {
   iters=100
   batch_size=16
   tuned_checkpoint=saved_results
-  max_eval_samples=`expr ${iters} \* ${batch_size}`
   echo ${max_eval_samples}
   for var in "$@"
   do
@@ -59,8 +58,7 @@ function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy "
     elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --performance "
-        extra_cmd=$extra_cmd" --max_eval_samples ${max_eval_samples}"
+        mode_cmd=" --performance --iters "${iters}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -69,21 +67,17 @@ function run_benchmark {
     if [ "${topology}" = "gpt_j_wikitext" ]; then
         TASK_NAME='wikitext'
         model_name_or_path=${input_model}
-        model_type='gpt'
         extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
     elif [ "${topology}" = "dialogpt_wikitext" ]; then
         TASK_NAME='wikitext'
         model_name_or_path=${input_model} 
-        model_type='dialogpt'
         extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
     elif [ "${topology}" = "reformer_crime_and_punishment" ]; then
         TASK_NAME='crime_and_punish'
         model_name_or_path=${input_model} 
-        model_type='reformer'
     elif [ "${topology}" = "ctrl_WikiText" ]; then
         TASK_NAME='wikitext'
         model_name_or_path=${input_model}
-        model_type='ctrl'
         extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
     fi
 
