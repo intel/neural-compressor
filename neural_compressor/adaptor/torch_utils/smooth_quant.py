@@ -314,7 +314,7 @@ class TorchSmoothQuant:
 
             weight_max_per_channel = torch.max(torch.abs(weights), dim=0)[0]
             input_power = torch.pow(input_max, alpha)
-            logger.DEBUG(f"{max(input_max)}, {min(input_power)}")  ##TODO changed it to debug later
+            logger.debug(f"{max(input_max)}, {min(input_power)}")
             weight_power = torch.pow(weight_max_per_channel, 1 - alpha)
             #logger.info(f"{absorb_to_layer[key][0]} layer sparsity is
             # {1.0-torch.count_nonzero(input_power)/input_power.numel()}")

@@ -35,8 +35,7 @@ class SmoothQuant(Algorithm):
     """
 
     def __init__(self, alpha=0.5):
-        """
-        Initialize SmoothQuant class.
+        """Initialize SmoothQuant class.
 
         Args:
             alpha:Alpha value to balance the quantization difficulty of activation and weight,
