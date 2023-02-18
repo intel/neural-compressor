@@ -145,9 +145,9 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
                 input = named_input._make(input.values())
                 return input
             if isinstance(input, list) or isinstance(input, tuple):
-                return input
+                return tuple(input)
             if isinstance(input, torch.Tensor):
-                return [input]
+                return input
             break
     except Exception as e:
         for idx, input in enumerate(dataloader):
@@ -162,9 +162,9 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
                 input = named_input._make(input.values())
                 return input
             if isinstance(input, list) or isinstance(input, tuple):
-                return input
+                return tuple(input)
             if isinstance(input, torch.Tensor):
-                return [input]
+                return input
             break
     if idx == 0:
         assert False, "Please checkout the example_inputs format."
@@ -306,11 +306,18 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                 activation_observer = _observer(algorithm, scheme, granularity,
                     dtype, 'post_training_dynamic_quant', compute_dtype)
 
+            version = get_torch_version()
             if observer_type == 'quant_aware_training':
                 if key[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell',
-                    'Embedding', 'EmbeddingBag']:
-                    qconfig = torch.quantization.QConfigDynamic(
-                        activation=activation_observer, weight=weights_observer)
+                  'Embedding', 'EmbeddingBag']:
+                    if version.release >= Version("1.11.0").release:
+                        if key[1] in ['Embedding', 'EmbeddingBag']:
+                            qconfig = torch.quantization.float_qparams_weight_only_qconfig
+                        else:
+                            qconfig = torch.quantization.default_dynamic_qconfig
+                    else:
+                        qconfig = torch.quantization.QConfigDynamic(
+                                activation=activation_observer, weight=weights_observer)
                 else:
                     qconfig = torch.quantization.QConfig(activation=activation_fake_quantize,
                                                      weight=weights_fake_quantize)
@@ -318,9 +325,13 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                 qconfig = torch.quantization.QConfig(activation=activation_observer,
                                                      weight=weights_observer)
             else:
-                version = get_torch_version()
                 if version.release < Version("1.6.0").release:  # pragma: no cover
                     qconfig = torch.quantization.QConfigDynamic(weight=weights_observer)
+                elif version.release >= Version("1.11.0").release:
+                    if key[1] in ['Embedding', 'EmbeddingBag']:
+                        qconfig = torch.quantization.float_qparams_weight_only_qconfig
+                    else:
+                        qconfig = torch.quantization.default_dynamic_qconfig
                 else:
                     qconfig = torch.quantization.QConfigDynamic(activation=activation_observer,
                                                                 weight=weights_observer)
@@ -2338,8 +2349,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                 # At the 2nd run, the llga pass will be triggered and the model is turned into
                 # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                q_model(*example_inputs)
-                q_model(*example_inputs)
+                self.calib_func(q_model, dataloader, tmp_iterations=2)
 
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"

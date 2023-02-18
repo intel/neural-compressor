@@ -147,10 +147,6 @@ class GraphConverter:
         self._sampling_model.output_tensor_names = self.output_tensor_names
         self._sampling_model.input_tensor_names = self.input_tensor_names
 
-        self._itex_model = Model(self.model._model, **self.model.kwargs)
-        self._itex_model.graph_def = self.model.graph_def
-        self._itex_model.output_tensor_names = self.output_tensor_names
-        self._itex_model.input_tensor_names = self.input_tensor_names
         self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
         self.new_api = new_api #bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
         self.performance_only = performance_only
@@ -347,11 +343,11 @@ class GraphConverter:
 
         if self.itex_mode:
             host_const_graph_def = \
-                PostHostConstConverter(self._itex_model.graph_def).do_transformation()
+                PostHostConstConverter(self._tmp_model.graph_def).do_transformation()
             host_const_graph_def.library.CopyFrom(self.model.graph_def.library)
-            self._itex_model.graph_def = host_const_graph_def
+            self._tmp_model.graph_def = host_const_graph_def
 
-            return self._itex_model
+            return self._tmp_model
 
         if self.exclude_node_names:
             self.bf16_ops.extend(self.exclude_node_names)
@@ -490,7 +486,6 @@ class GraphConverter:
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
                 # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph 
                 # after enabling pad+conv2d in new API.
-                
                 non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
                 sampling_graph_def = FusePadWithFP32Conv2DOptimizer(
                     sampling_graph_def,
@@ -511,6 +506,12 @@ class GraphConverter:
                     with CaptureOutputToFile(tmp_dump_file):
                         self._inference(self._sampling_model)
                     self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
+
+                del output_tensor_names
+                del sampling_graph_def
+                del self._sampling_model
+                import gc
+                gc.collect()
 
                 if len(self._calibration_data) > 0:
                     self._freeze_requantization_ranges(self._kl_op_dict)
@@ -807,6 +808,12 @@ class GraphConverter:
                 self._inference(self._sampling_model)
             self._calibration_data = Helper.gen_valid_sampling_log(tmp_dump_file)
 
+        del sampling_graph_def
+        del output_tensor_names
+        del self._sampling_model
+        import gc
+        gc.collect()
+
         # Insert QDQ pattern
         self._tmp_graph_def = GenerateGraphWithQDQPattern(
               self._tmp_graph_def, self._calibration_data, self.op_wise_config,
@@ -847,8 +854,8 @@ class GraphConverter:
             self._tmp_graph_def = MergeDuplicatedQDQOptimizer(self._tmp_graph_def).do_transformation()
 
             self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
-            self._itex_model.graph_def = self._tmp_graph_def
-            self._itex_model.graph_def.library.CopyFrom(self.model.graph_def.library)
+            self._tmp_model.graph_def = self._tmp_graph_def
+            self._tmp_model.graph_def.library.CopyFrom(self.model.graph_def.library)
         else:
             self._tmp_graph_def, exclude_node_names = OptimizeQDQGraph(self._tmp_graph_def,
                                                    self._tmp_model.input_node_names,

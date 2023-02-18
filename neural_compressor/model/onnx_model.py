@@ -40,12 +40,12 @@ class ONNXModel(BaseModel):
         """
         self._model = model if not isinstance(model, str) else onnx.load(model)
         self._model_path = None if not isinstance(model, str) else model
-        self._large_size = False
+        self._is_large_model = False
         try:
             ort.InferenceSession(self._model.SerializeToString())
         except Exception as e:  # pragma: no cover
             if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
-                self._large_size = True
+                self._is_large_model = True
                 if self._model_path is None:
                     logger.warning('Please use model path instead of onnx model '
                                    'object to quantize')
@@ -59,9 +59,9 @@ class ONNXModel(BaseModel):
         self._q_config = None
 
     @property
-    def large_size(self):
-        """Return large size."""
-        return self._large_size
+    def is_large_model(self):
+        """Check the onnx model is over 2GB."""
+        return self._is_large_model
 
     @property
     def model_path(self):
@@ -134,7 +134,7 @@ class ONNXModel(BaseModel):
         """Save ONNX model."""
         if os.path.split(root)[0] != '' and not os.path.exists(os.path.split(root)[0]):
             raise ValueError('"root" directory does not exists.')
-        if self.large_size: # pragma: no cover
+        if self.is_large_model: # pragma: no cover
             from onnx.external_data_helper import convert_model_to_external_data, \
                 load_external_data_for_model
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
@@ -491,3 +491,30 @@ class ONNXModel(BaseModel):
             logger.warning("Unsupported config for export, "
                 "only ONNXQlinear2QDQConfig is supported!")
             exit(0)
+
+    def add_tensors_to_outputs(self, tensor_names):
+        """Add the tensors to the model outputs to gets their values.
+
+        Args:
+            tensor_names: The names of tensors to be dumped.
+        """
+        added_outputs = []
+        for tensor in tensor_names:
+            if tensor not in self.output():
+                added_tensor = onnx.helper.ValueInfoProto()
+                added_tensor.name = tensor
+                added_outputs.append(added_tensor)
+        self._model.graph.output.extend(added_outputs)  # pylint: disable=no-member
+
+    def remove_tensors_from_outputs(self, tensor_names):
+        """Remove the tensors from the model outputs.
+
+        Args:
+            tensor_names: The names of tensors to be removed.
+        """
+        removed_outputs = []
+        for tensor in tensor_names:
+            if tensor in self.output():
+                removed_outputs.append(self._model.graph.output[self.output().index(tensor)])
+        for output in removed_outputs:
+            self._model.graph.output.remove(output)
