@@ -7,7 +7,7 @@ from transformers import set_seed
 from torch.nn.functional import pad
 
 sys.path.append('./')
-
+from neural_compressor.utils.pytorch import load
 set_seed(42)
 
 
@@ -74,50 +74,30 @@ class CalibDataloader():
             yield input_ids
 
 
-##model_name = "/data2/models/opt-125m/"
+
+model_name ="/data2/models/opt-66b"
 model_name = "facebook/opt-125m"
-tokenizer = transformers.AutoTokenizer.from_pretrained(model_name, model_max_length=512)
-dataset = load_dataset('lambada', split='train')
+tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
+
+# load the dataset
+print("Load the datasets.")
+dataset = load_dataset('lambada', split='validation')
 dataset = dataset.shuffle(seed=42)
 calib_dataloader = CalibDataloader(dataset, tokenizer, 'cpu')
+print("Dataset loaded.")
 
-dataset_eval = load_dataset('lambada', split='validation')
-dataset_eval = dataset_eval.shuffle(seed=42)
-evaluator = Evaluator(dataset_eval, tokenizer, 'cpu')
-
-model = transformers.AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torchscript=True,  # torchscript will force `return_dict=False` to avoid jit errors
-)
-
-
-# tokenize the dataset
-def tokenize_function(examples):
-    global tokenizer
-    example = tokenizer(examples['text'])
-    return example
-
-
-my_dataset = dataset.map(tokenize_function, batched=True)
-my_dataset.set_format(type='torch', columns=['input_ids'])
-
-
-# sq = SmoothQuant(model, my_dataset)
-# model = sq.transform()
+evaluator = Evaluator(dataset, tokenizer, 'cpu')
 def eval_func(model):
     acc = evaluator.evaluate(model)
     return acc
 
-
-from neural_compressor import PostTrainingQuantConfig
-from neural_compressor import quantization
-
-conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"])
-
-q_model = quantization.fit(model,
-                           conf,
-                           calib_dataloader=calib_dataloader,
-                           eval_func=eval_func
-                           )
-
-q_model.save('opt-125m-int8-sq')
+print("Obtain the int8 model")
+tuned_checkpoint = "/data2/models/opt-66b-int8-sq-whc/"
+tuned_checkpoint='opt-1.3b-int8-sq'
+import os
+q_model = load(os.path.expanduser(tuned_checkpoint))
+# # model = q_model
+# print("int8 model loaded, ready to evaluate.")
+acc = eval_func(q_model)
+# acc = eval_func(model)
+print(f"Evaluation process ended, the acc is {acc}")
