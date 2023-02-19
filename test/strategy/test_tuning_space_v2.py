@@ -290,7 +290,8 @@ class TestTuningSpace(unittest.TestCase):
         from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
         tuning_space2 = TuningSpace(deepcopy(self.capability), {})
         logger.debug(tuning_space2.root_item.get_details())
-        from neural_compressor.strategy.utils.tuning_space import get_op_mode_by_query_order, query_order
+        from neural_compressor.strategy.utils.tuning_space import get_op_mode_by_query_order
+        from neural_compressor.strategy.utils.constant import static_query_order as query_order
         op_item_dtype_dict = get_op_mode_by_query_order(tuning_space2, query_order)
         print(op_item_dtype_dict)
         # Initialize the tuning cfg 

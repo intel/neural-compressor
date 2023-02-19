@@ -153,7 +153,7 @@ class TuningSpace:
         self._create_tuning_space(capability, usr_cfg)
         
     def _parse_capability(self, capability: Dict) -> None:
-        """Parse the capability and construct the tuning space(a tree)
+        """Parse the capability and construct the tuning space(a tree).
 
         Args:
             capability: tThe merged framework capability.
@@ -199,7 +199,8 @@ class TuningSpace:
                 quant_mode_item.append(tuning_item)
 
     def _merge_op_cfg(self, op_cap, op_user_cfg, fw_op_cap):
-        """
+        """Merge the op cfg with user cfg.
+        
         dtype: ['int8', 'fp32'] -> ('static', ('int8', 'signed')) and ('precision', ('fp32'))
         dtype: ['fp32'] -> ('precision', ('fp32'))
         step1, For dtype, filter the invalid data type. Override the fwk data type if the valid data type is not empty.
@@ -423,7 +424,8 @@ class TuningSpace:
             self._merge_op_wise_cfg(capability, user_cfg['op_wise'], fw_capability)
             
     def _parse_cap_helper(self, cap):
-        """
+        """Convert the cpa to internal format.
+        
         Parsed result:
         (q/p_type, ((a_bits, a_signed), (w_bits,  w_signed )))
         ('static', (('int8', 'signed'), ('int4', 'unsigned')))
@@ -607,7 +609,7 @@ class TuningSpace:
                 return quant_item
 
     def query_item_option(self, op_name_type, path, method_name, method_val):
-        """_summary_
+        """Query the method value, such as scheme, algorithm.
 
         Args:
             op_name_type: _description_
@@ -669,23 +671,9 @@ class TuningSpace:
                                           config)
         return op_tuning_config
     
-    def get_default_op_config(self, op_name_type, mode) -> OpTuningConfig:
-        """Get the default tuning config with specified mode.
-
-        Args:
-            op_name_type: _description_
-            mode: quantization or low-precision mode
-        
-        op_tuning_cfg:
-
-        """
-        pass #TODO
-    
-    def get_tuning_items_and_options(self, op_name_type):
-        pass
-
-    
     def get_item_by_path(self, path, default=None):
+        """Get the item according to the path."""
+        
         logger.info(f"Query item with path {path}")
         item = self.root_item
         for val in path:
@@ -740,20 +728,9 @@ class TuningSpace:
             full_path[att] = (mode, att, path[1] , *result[att])
         return full_path
 
-    
-    def _get_item_by_path(self, path):
-        return None
-
     def query_quant_mode_item_by_full_path(self, op_name_type, path) -> Tuple[TuningItem, Tuple]:
-        """_summary_
-
-        Args:
-            op_name_type: _description_
-            path: _description_
-
-        Returns:
-            _description_
-        """
+        """Query the mode item by full path."""
+        
         new_path = (op_name_type, *path)
         item = self.get_item_by_path(new_path)
         return item
@@ -786,11 +763,7 @@ class TuningSpace:
     
     
     def _search_pattern_to_internal(self, pattern):
-        """_summary_
-
-        Args:
-            pattern: _description_
-        """
+        """Convert the pattern to internal format."""
         # For (mode, data_type), such as ('static', 'int8')
         _act_pattern, _weight_pattern = (pattern[0], 'activation', pattern[1]), (pattern[0], 'weight', pattern[1])
         return _act_pattern, _weight_pattern
@@ -825,6 +798,7 @@ class TuningSpace:
 
 
 def get_op_mode_by_query_order(tuning_space: TuningSpace, query_order):
+    """Get the op mode according to the query order."""
     quant_mode_wise_items = OrderedDict() # mode, op_item_lst
     pre_items = set()
     # Collect op items supported the specified mode.
@@ -846,6 +820,4 @@ def get_op_mode_by_query_order(tuning_space: TuningSpace, query_order):
     print(op_item_dtype_dict)
     return op_item_dtype_dict
 
-query_order = [('static', 'int8'), ('dynamic', 'int8'), ('precision', 'bf16'),\
-    ('precision', 'fp16'), ('precision', 'fp32')]
 

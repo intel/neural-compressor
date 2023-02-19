@@ -23,6 +23,7 @@ class OrderedDefaultDict(OrderedDict):
     """Ordered default dict."""
     
     def __missing__(self, key):
+        """Initialize value for the missing key."""
         self[key] = value = OrderedDefaultDict()
         return value
 
@@ -38,13 +39,5 @@ def extract_data_type(data_type: str) -> str:
     return ('signed', data_type) if data_type[0] != 'u' else ('unsigned', data_type[1:])
 
 def reverted_data_type(signed_flag: str, data_type: str) -> str:
-    """
-
-    Args:
-        signed_flag: signed or unsigned
-        data_type: _description_
-
-    Returns:
-        _description_
-    """
+    """Revert the data type."""
     return data_type if signed_flag == 'signed' else 'u' + data_type
