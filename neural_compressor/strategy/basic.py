@@ -25,7 +25,7 @@ from ..utils import logger
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
-from .utils.tuning_space import TUNING_ITEMS_LST
+from .utils.constant import TUNING_ITEMS_LST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
@@ -133,7 +133,9 @@ class BasicTuneStrategy(TuneStrategy):
                 if tuning_space.query_item_option((op_name, op_type), op_quant_mode, att_item, item_val):
                     dynamic_state[att_item] = item_val
                 else:
-                    quant_mode_item = tuning_space.query_quant_mode_item((op_name, op_type), op_quant_mode)
+                    #TODO need to align the new interface
+                    quant_mode_item = tuning_space.query_quant_mode_item((op_name, op_type),
+                                                                         op_quant_mode, default_att=att)
                     tuning_item = quant_mode_item.get_option_by_name(att_item)
                     dynamic_state[att_item] = tuning_item.options[0] if tuning_item else None
         return OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs=dynamic_state)

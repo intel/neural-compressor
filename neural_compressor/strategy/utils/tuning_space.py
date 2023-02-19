@@ -17,27 +17,26 @@
 
 """Tuning space."""
 
-from ast import Or
 from collections import defaultdict, OrderedDict
+import os
 import re
-from typing import Dict
+from typing import Dict, Tuple
 from copy import deepcopy
 from enum import IntEnum
 from ...utils import logger
+from .util import OrderedDefaultDict
+from .tuning_structs import OpTuningConfig
 
-PRECISION_SET = {'bf16', 'fp32'}
-QUANT_MODE_SET = {'static', 'dynamic'}
-QUNAT_BIT_SET = {'int8', 'uint8', 'int4', 'uint4'}
-
-TUNING_ITEMS_LST = [('activation','scheme'), ('activation','algorithm'), ('activation','granularity'),
-                    ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'),
-                    'sampling_size']
-
-class PostTrainingQuantType(IntEnum):
-    """Post training quantization type."""
-    STATIC = 0
-    DYNAMIC = 1
-    WEIGHT_ONLY = 2
+from .constant import (
+    PRECISION_SET,
+    PRECISION_SET_V2_0,
+    QUANT_MODE_SET,
+    QUNAT_BIT_SET,
+    TUNING_ITEMS_LST,
+    TUNING_ITEM_SET,
+    PostTrainingQuantType,
+    
+    )
 
 class TuningItem:
     """Not displayed in API Docs."""
@@ -62,6 +61,10 @@ class TuningItem:
             All options.
         """
         return self._options
+    
+    def get_options_name(self):
+        """Return the name list of the options."""
+        return [o.name for o in self.options]
 
     def append(self, option):
         """Append option.
@@ -138,36 +141,43 @@ class TuningSpace:
         self.ops_dtype = defaultdict(OrderedDict) 
         usr_cfg = conf.usr_cfg if conf else None
         self.op_items = {}
+
+        # New tuning space
+        # {(op_name, op_type): {(path): data type}}
+        self.ops_data_type = OrderedDefaultDict()
+        self.ops_attr = {'activation': set(), 'weight': set()}
+        self.has_activation_ops = set()
+        # {(op_name, op_type): {path1, path2, ...}
+        self.ops_path_set = defaultdict(set)
+        
         self._create_tuning_space(capability, usr_cfg)
         
-    def _parse_capability_v2(self, capability:Dict) -> None:
+    def _parse_capability(self, capability: Dict) -> None:
         """Parse the capability and construct the tuning space(a tree)
 
         Args:
             capability: tThe merged framework capability.
         """
-        def _parse(cap, root):
-            if isinstance(cap, dict):
-                for key, val in cap.items():
-                    if isinstance(val, dict):
-                        tuning_item = TuningItem(name=key, options=[], item_type=key)
-                        root.append(tuning_item)
-                        _parse(val, tuning_item)
-                    elif isinstance(val, list):
-                        tuning_item = TuningItem(name=key, options=val, item_type=key)
-                        root.append(tuning_item)
-                    else:
-                        return 
-        _parse(deepcopy(capability), self.root_item)
-        logger.info("Constructed tuning space.")
-        logger.info(self.root_item.get_details())
-
-    def _parse_capability(self, capability):
-        """Parse the capability and construct the tuning space(a tree)."""
         calib = TuningItem(name='calib_sampling_size',
                            options=capability['calib']['calib_sampling_size'],
                            item_type='calib_sampling_size')
         self.root_item.append(calib)
+        def _parse(cap, root, path, op_name_type):
+            if isinstance(cap, dict):
+                for key, val in cap.items():
+                    if isinstance(val, dict):
+                        if len(path) > 1 and path[-2] == 'precision':
+                            self.ops_path_set[op_name_type].add(tuple(path + [key]))
+                        tuning_item = TuningItem(name=key, options=[], item_type=key)
+                        root.append(tuning_item)
+                        _parse(val, tuning_item, path + [key], op_name_type)
+                    elif isinstance(val, list):
+                        new_key = ('activation', key) if 'activation' in path else ('weight', key)
+                        tuning_item = TuningItem(name=new_key, options=val, item_type='method')
+                        self.ops_path_set[op_name_type].add(tuple(path))
+                        root.append(tuning_item)
+                    else:
+                        return
 
         for op_name_type, op_cap in capability['op'].items():
             op_name, op_type = op_name_type
@@ -175,29 +185,11 @@ class TuningSpace:
             self.op_type_wise_items[op_type].append(op_item)
             self.root_item.append(op_item)
             self.op_items[op_name_type] = op_item
-            op_weight_flag = op_cap['op_weight_flag']
-            # for other precision capability
-            for quant_mode in op_cap['precision']:
-                self.quant_mode_wise_items[quant_mode].append(op_item)
-                quant_mode_item = TuningItem(name=quant_mode, options=[], item_type='quant_mode')
-                op_item.append(quant_mode_item)
-                self.ops_dtype[op_name_type][quant_mode] = {'act_dtype': quant_mode}
-                if op_weight_flag:
-                    self.ops_dtype[op_name_type][quant_mode]['weight_dtype'] = quant_mode
-            for quant_mode_flag, quant_cap in op_cap['quant'].items():
-                quant_mode_item = TuningItem(name=quant_mode_flag, options=[], item_type='quant_mode')
-                op_item.append(quant_mode_item)
-                self.quant_mode_wise_items[quant_mode_flag].append(op_item)
-                act_dtype = quant_cap['activation']['dtype']
-                act_dtype = act_dtype[0] if isinstance(act_dtype, list) else act_dtype
-                self.ops_dtype[op_name_type][quant_mode_flag] = {'act_dtype': act_dtype}
-                self._create_tuning_item(quant_cap['activation'], 'activation', quant_mode_item)
-                if op_weight_flag:
-                    self._create_tuning_item(quant_cap['weight'], 'weight', quant_mode_item)
-                    weight_dtype = quant_cap['weight']['dtype']
-                    weight_dtype = weight_dtype[0] if isinstance(weight_dtype, list) else weight_dtype
-                    self.ops_dtype[op_name_type][quant_mode_flag]['weight_dtype'] = weight_dtype
-                                                                                       
+            _parse(op_cap, op_item, [], op_name_type)
+        
+        # _parse(deepcopy(capability), self.root_item)
+        logger.info("Constructed tuning space.")
+        logger.info(self.root_item.get_details())
 
     def _create_tuning_item(self, tuning_items: Dict, attr_name: str, quant_mode_item: TuningItem):
         for tuning_item_name, options in tuning_items.items():
@@ -275,7 +267,8 @@ class TuningSpace:
                             if len(fw_op_cap[quant_mode][att]) == 0:
                                 fw_op_cap[quant_mode].pop(att, None)
                     else:
-                        if len(valid_precision_set) != 0: # no valid quant data type but have valid precision dtype
+                        # No valid quant data type but have valid precision dtype
+                        if len(valid_precision_set) != 0:
                             fw_op_cap.pop(quant_mode, None)
                     # Filter the valid options for tuning item
                     if quant_mode in fw_op_cap:
@@ -283,71 +276,12 @@ class TuningSpace:
                             for signed_flag in fw_op_cap[quant_mode][att][data_type]:
                                 fwk_items = fw_op_cap[quant_mode][att][data_type][signed_flag]
                                 for item_name, item_options in op_user_cfg[att].items():
-                                    if item_name not in ['dtype', 'quant_mode']:
+                                    if item_name not in ['dtype', 'quant_mode'] and item_options:
                                         options_intersection = set(fwk_items[item_name]).intersection(set(item_options))
                                         if len(options_intersection) > 0:
                                             fwk_items[item_name] = [option for option in fwk_items[item_name] if\
                                                 option in options_intersection]
         return fw_op_cap
-
-    def _merge_op_cfg_v2(self, op_cap, op_user_cfg, fw_op_cap):
-        """Merge the framework capability with user config.
-
-        # for precision, merge the options of the tuning items 
-        # for quanzation, merge the dtype
-        supported_precision_set = {'fp32', 'bf16'}
-        user_precision_set = {}
-        op_user_cfg:
-            {
-                'weight':{
-                    'dtype': ['int8'],
-                    'scheme': ['sym'],
-                    'algorithm': ['minmax'],
-                    'granularity': ['per_tensor']
-                },
-                'activation': {
-                    'dtype': ['uint8'],
-                    'scheme': ['asym'],
-                    'algorithm': ['minmax'],
-                    'granularity': ['per_tensor']
-                    }
-            }
-            
-        Returns:
-            op_cap: merged op capability.
-
-        """
-        for key in ['activation', 'weight']:
-            if key in op_user_cfg and op_user_cfg[key] is not None:
-                user_dtype_lst = op_user_cfg[key]['dtype'] if op_user_cfg[key]['dtype'] is not None else []
-                precision_flag = len(PRECISION_SET.intersection(set(user_dtype_lst))) != 0
-                quant_flag = len(QUNAT_BIT_SET.intersection(set(user_dtype_lst))) != 0
-                if precision_flag and not quant_flag:
-                    merged_options = [option for option in user_dtype_lst if option in fw_op_cap['precision']]
-                    if not merged_options: 
-                        merged_options = fw_op_cap['precision']
-                    op_cap['precision'] = merged_options
-                    op_cap['quant'] = OrderedDict() # do not do quantization
-                    break
-                for quant_mode_flag, fw_quant_cap in fw_op_cap['quant'].items():
-                    if quant_mode_flag not in op_cap['quant']:
-                        op_cap['quant'][quant_mode_flag] = deepcopy(fw_quant_cap)
-                    for item_name, item_options in op_user_cfg[key].items():
-                        if item_options is not None and key in fw_quant_cap and item_name in fw_quant_cap[key]:
-                            merged_options = []
-                            for option in item_options:
-                                if option in fw_quant_cap[key][item_name]:
-                                    merged_options.append(option)
-                                else:
-                                    logger.warning("By default, {1}: {2} is not supported for {0} ".format(
-                                                    key, item_name, option) + "in Intel Neural Compressor")
-                                    logger.warning("Please visit the corresponding yaml file in " +
-                                                   "neural_compressor/adaptor/ to enhance the default " +
-                                                   "capability in Intel Neural Compressor")
-                            if len(merged_options) == 0:
-                                merged_options = fw_quant_cap[key][item_name]
-                            op_cap['quant'][quant_mode_flag][key][item_name] = merged_options
-        return op_cap
 
     def _merge_optype_wise_cfg(self, cap: Dict, optype_wise_usr_cfg: Dict, fw_cap: Dict):
         for op_type, op_user_cfg in optype_wise_usr_cfg.items():
@@ -488,9 +422,9 @@ class TuningSpace:
         if user_cfg['op_wise'] is not None:
             self._merge_op_wise_cfg(capability, user_cfg['op_wise'], fw_capability)
             
-    def _parse_cap_helper_v3(self, cap):
+    def _parse_cap_helper(self, cap):
         """
-
+        Parsed result:
         (q/p_type, ((a_bits, a_signed), (w_bits,  w_signed )))
         ('static', (('int8', 'signed'), ('int4', 'unsigned')))
         ('static', (('int8', 'signed'),                     ))
@@ -529,7 +463,7 @@ class TuningSpace:
                 }
                 'precision':{
                     'act':{
-                        'fp32':{} # use []? (op_name, op_type): ('precision', ('fp32',)) or ('precision', ('fp32','fp32'))
+                        'fp32':{} #(op_name, op_type): ('precision', ('fp32',)) or ('precision', ('fp32','fp32'))
                         'bf16':{}
                     },
                     'weight':{
@@ -545,7 +479,6 @@ class TuningSpace:
             }
         """
         from .util import OrderedDefaultDict, extract_data_type
-
         cap = deepcopy(cap)
         parsed_cap = OrderedDict() # {(op_name, op_type): parsed_op_cap}
         for op_name_type, op_cap_lst in cap.items():
@@ -554,88 +487,34 @@ class TuningSpace:
             has_weight = False
             for op_cap in op_cap_lst:
                 has_weight = 'weight' in op_cap
+                if has_weight:
+                    self.ops_attr['weight'].add(op_name_type)
+                if 'activation' in op_cap:
+                    self.ops_attr['activation'].add(op_name_type)
                 attrs_lst = ['activation', 'weight'] if has_weight else ['activation']
                 for att in attrs_lst:
-                    # For quantization
+                    # Parse the data info for item that has options.
                     if 'activation' in op_cap and 'quant_mode' in op_cap['activation']:
                         quant_mode = op_cap['activation']['quant_mode']
                         att_dtype = op_cap[att]['dtype'][0]
                         signed_flag, _data_type = extract_data_type(att_dtype)
                         for item_name, item_options in op_cap[att].items():
+                            if item_name == 'dtype':
+                                # The dtype should be a string, need to align with fwk.yaml.
+                                self.ops_data_type[op_name_type][(quant_mode, att, _data_type, signed_flag)] = \
+                                    item_options[0] if isinstance(item_options, list) else item_options
                             if item_name not in ['dtype', 'quant_mode']:
                                 parsed_op_cap[quant_mode][att][_data_type][signed_flag][item_name] = item_options
-                    # For precision
                     else:
+                        # Parse the data info for item　with unique value.
                         att_dtype = op_cap[att]['dtype']
                         parsed_op_cap['precision'][att][att_dtype] = {'dtype': att_dtype}
+                        self.ops_data_type[op_name_type][('precision', att, att_dtype)] = att_dtype
             parsed_cap[op_name_type] = parsed_op_cap
         logger.info(f"Parsed cap ............")
         logger.info(parsed_cap)
-        return parsed_cap
-        
-    def _parse_cap_helper(self, cap):
-        """Parse the capability and convert it into internal structure.
-        
-        # for op support int8 dynamic ptq, int8 static ptq, fp32, and bf16
-        ('op_name1','optype1'):[
-            {
-            'activation': {
-                'dtype': ['int8'],
-                'quant_mode': 'dynamic',
-                'scheme': ['sym'],
-                'granularity': ['per_channel', 'per_tensor'],
-                'algorithm': ['minmax']},
-            'weight': {
-                'dtype': ['int8'],
-                'scheme': ['sym'],
-                'granularity': ['per_channel', 'per_tensor'],
-                'algorithm': ['minmax']}
-            },
-            {
-            'activation': {
-                'dtype': ['int8'],
-                'quant_mode': 'static',
-                'scheme': ['sym'],
-                'granularity': ['per_channel', 'per_tensor'],
-                'algorithm': ['minmax']},
-            'weight': {
-                'dtype': ['int8'],
-                'scheme': ['sym'],
-                'granularity': ['per_channel', 'per_tensor'],
-                'algorithm': ['minmax']}
-            },
-            {
-            'activation': {
-                'dtype': 'fp32'},
-            'weight': {
-                'dtype': 'fp32'},
-            },
-            {
-            'activation': {
-                'dtype': 'bf16'},
-            'weight': {
-                'dtype': 'bf16'},
-            },
-            ],
-        """
-        parsed_cap = OrderedDict()
-        for op_name_type, op_cap_lst in cap.items():
-            parsed_op_cap = {'precision': [], 'quant': OrderedDict()}
-            for op_cap in op_cap_lst:
-                if 'quant_mode' in op_cap['activation']:
-                    quant_mode = op_cap['activation']['quant_mode']
-                    quant_mode = quant_mode[0] if isinstance(quant_mode, list) else quant_mode
-                    act_quant_flag =  op_cap['activation']['dtype'] != ['fp32']
-                    # change the 'int8' to adapt the quantization with different numbers of bits in future
-                    quant_mode_flag = (quant_mode, 'int8', act_quant_flag) 
-                    parsed_op_cap['quant'][quant_mode_flag] = op_cap
-                else:
-                    if isinstance(op_cap['activation']['dtype'], list):
-                        parsed_op_cap['precision'] += op_cap['activation']['dtype']
-                    else:
-                        parsed_op_cap['precision'].append(op_cap['activation']['dtype'])
-            parsed_cap[op_name_type] = parsed_op_cap
-            parsed_cap[op_name_type]['op_weight_flag'] = 'weight' in op_cap_lst[0]
+        logger.info(f"Data type info...")
+        logger.info(self.ops_data_type)
         return parsed_cap
     
     def _create_tuning_space(self, capability, usr_cfg):
@@ -647,8 +526,8 @@ class TuningSpace:
         :param usr_cfg:
         :return:
         """
-        #capability['op'] = self._parse_cap_helper(capability['op'])
-        tmp_cap2 = self._parse_cap_helper_v3(deepcopy(capability['op']))
+        # using new tuning space.
+        tmp_cap2 = self._parse_cap_helper(deepcopy(capability['op']))
         capability['op'] = tmp_cap2
         if usr_cfg:
             logger.info(f"#############  Before merged with user cfg")
@@ -656,9 +535,45 @@ class TuningSpace:
             self._merge_with_user_cfg(capability, usr_cfg['quantization'])
             logger.info(f"#############  After Merged with user cfg")
             logger.info(capability)
-        self._parse_capability_v2(capability)
+        self._parse_capability(capability)
+        # TODO move test for space construction in ut
+        # kk_op_name_type = ('op_name4', 'op_type3')
+        # kk_path = ('static', 'int8')
+        # full_path = self._get_op_default_path(kk_op_name_type, kk_path)
+        # print(full_path)
+        # for key, val in full_path.items():
+        #     item = self.query_quant_mode_item(kk_op_name_type, val)
+        #     print(key, item.get_details())
+        # #print(quant_mode_item.get_details())
+        # kk_op_name_type2 = ('op_name3', 'op_type2')
+        # kk_path2 = ('static', 'int8')
+        # full_path2 = self._get_op_default_path(kk_op_name_type2, kk_path2)
+        # print(full_path2)
 
-    def query_items_by_quant_mode(self, quant_mode):
+        # kk_op_name_type2 = ('op_name3', 'op_type2')
+        # kk_path2 = ('precision', 'fp32')
+        # full_path2 = self._get_op_default_path(kk_op_name_type2, kk_path2)
+        # print(full_path2)
+        # kk_op_name_type2 = ('op_name3', 'op_type2')
+        # kk_path2 = ('precision', 'bf16')
+        # full_path2 = self._get_op_default_path(kk_op_name_type2, kk_path2)
+        # print(f'...')
+        # print(full_path2)
+
+        # #TODO ut Test query_items_by_quant_mode
+        # # self._get_default_path()
+        # p = ('static', 'int8')
+        # ops = self.query_items_by_quant_mode(p)
+        # p2 = ('precision', 'fp32')
+        # ops = self.query_items_by_quant_mode(p2)
+        # p2 = ('static', 'int4')
+        # ops = self.query_items_by_quant_mode(p2)
+        # p2 = ('precision', 'bf16')
+        # ops = self.query_items_by_quant_mode(p2)
+        # p2 = ('dynamic', 'int8')
+        # ops = self.query_items_by_quant_mode(p2)
+
+    def query_items_by_quant_mode_bk(self, quant_mode):
         """Collect all op items that support the specific quantization/precision mode.
         
         Args:
@@ -676,7 +591,7 @@ class TuningSpace:
                         break
         return items_lst
     
-    def query_quant_mode_item(self, op_name_type, quant_mode):
+    def query_quant_mode_item_bk(self, op_name_type, quant_mode):
         """Interface for query the quantization item.
 
         Args:
@@ -691,7 +606,27 @@ class TuningSpace:
             if quant_mode == quant_item.name or quant_mode in quant_item.name:
                 return quant_item
 
-    def query_item_option(self, op_name_type, quant_mode, key, val):
+    def query_item_option(self, op_name_type, path, method_name, method_val):
+        """_summary_
+
+        Args:
+            op_name_type: _description_
+            path: _description_
+            method_name: _description_
+            method_val: _description_
+
+        Returns:
+            _description_
+        """
+        # For static/dynamic/fp32/bf16
+        if isinstance(path, str):
+            path = path = ('precision', path) if path in PRECISION_SET_V2_0 else (path, 'int8')
+        mode_item = self.get_item_by_path((op_name_type, *path))
+        if not mode_item: return None
+        method_item = mode_item.get_option_by_name(method_name)
+        return method_item is not None and method_val in method_item.options
+    
+    def query_item_option_bk(self, op_name_type, quant_mode, key, val):
         """Check if the option exit in the tuning item.
 
         Args:
@@ -707,7 +642,7 @@ class TuningSpace:
         tuning_item = quant_mode_item.get_option_by_name(key)
         return tuning_item is not None and val in tuning_item.options
     
-    def set_deafult_config(self, op_name_type, quant_mode):
+    def set_default_config(self, op_name_type, quant_mode):
         """Get the default tuning config.
 
         Args:
@@ -720,17 +655,197 @@ class TuningSpace:
         from .tuning_structs import OpTuningConfig
         op_item = self.op_items[op_name_type]
         # set the first option as the default if the not support the required quant mode
-        quant_mode_item = op_item.options[0]
-        for quant_item in op_item.options:
-            if quant_mode == quant_item.name or (isinstance(quant_mode, str) and quant_mode in quant_item.name):
-                quant_mode_item = quant_item
-                break
+        full_path = self._get_op_default_path(op_name_type, quant_mode)
+        config = {}
+        for att in full_path:
+            mode_item = self.query_quant_mode_item_by_full_path(op_name_type ,full_path[att])
+            config = {method_item.name: method_item.options[0] for method_item in mode_item.options}
+                
         # set the first option as the default for each tuning item
-        config = {item.name: item.options[0] for item in quant_mode_item.options}
         op_tuning_config = OpTuningConfig(op_name_type[0], 
                                           op_name_type[1], 
                                           quant_mode, 
                                           self,
                                           config)
         return op_tuning_config
+    
+    def get_default_op_config(self, op_name_type, mode) -> OpTuningConfig:
+        """Get the default tuning config with specified mode.
+
+        Args:
+            op_name_type: _description_
+            mode: quantization or low-precision mode
+        
+        op_tuning_cfg:
+
+        """
+        pass #TODO
+    
+    def get_tuning_items_and_options(self, op_name_type):
+        pass
+
+    
+    def get_item_by_path(self, path, default=None):
+        logger.info(f"Query item with path {path}")
+        item = self.root_item
+        for val in path:
+            if item is None:
+                logger.warning(f"Did not found the item according to the path {path}")
+                return default
+            item = item.get_option_by_name(val)
+        if item is None:
+            logger.warning(f"Did not found the item according to the path {path}")
+        return item
+    
+    def _get_op_default_path(self, op_name_type: Tuple, path: Tuple, default_dtype='int8') -> Tuple[Tuple, Tuple]:
+        """Complete the path.
+
+        Args:
+            op_name_type: op name and type
+            path: query path
+
+        Returns:
+            The complete path is ('static', (('int8', '', ''), ()))
+        """
+        # For static/dynamic/fp32/bf16
+        if isinstance(path, str):
+            path = path = ('precision', path) if path in PRECISION_SET_V2_0 else (path, default_dtype, default_dtype)
+        # For ('static', 'int8')
+        mode = path[0]
+        result = {'activation': [], 'weight': []}
+        logger.info(f"op_name_type: {op_name_type}, mode: {mode}")
+        op_item = self.get_item_by_path((op_name_type, mode))
+        logger.info(f"Got item : {op_item}")
+        full_path = {}
+        for att in ['activation', 'weight']:
+            op_att_item = op_item.get_option_by_name(att)
+            if not op_att_item:
+                continue
+            #TODO do handle a wider variety of path formats
+            # For path format: ('static', 'int8')
+            if len(path) == 2 and isinstance(path[1], str):
+                q_item = op_att_item.get_option_by_name(path[1])
+                if not q_item:
+                    logger.info(f"{path} not exist in {op_name_type}")
+                    return None
+                #TODO !! avoid infinite loop
+                while True:
+                    item_options = q_item.options
+                    if len(item_options) > 0 and isinstance(item_options[0], TuningItem) and \
+                        item_options[0].item_type != 'method':
+                        result[att].append(item_options[0].name)
+                        q_item = item_options[0]
+                    else:
+                        break
+            full_path[att] = (mode, att, path[1] , *result[att])
+        return full_path
+
+    
+    def _get_item_by_path(self, path):
+        return None
+
+    def query_quant_mode_item_by_full_path(self, op_name_type, path) -> Tuple[TuningItem, Tuple]:
+        """_summary_
+
+        Args:
+            op_name_type: _description_
+            path: _description_
+
+        Returns:
+            _description_
+        """
+        new_path = (op_name_type, *path)
+        item = self.get_item_by_path(new_path)
+        return item
+
+    def query_quant_mode_item(self, op_name_type, path, default_dtype='int8', default_att='activation') -> Tuple[TuningItem, Tuple]:
+        """Query the tuning item according to the path for specified.
+        
+        If the path is incomplete, it will return the default tuning item.
+        Args:
+            op_name_type: _description_
+            path: ('static', 'activation')
+            
+            For example:
+                ('static', (('int8', 'signed'),(...)){
+                                'scheme': ['sym'],
+                                'algorithm': ['minmax', 'kl'],
+                                'granularity': ['per_channel','per_tensor'],
+                            }
+        Returns:
+            (tuning item, complete path),Return the specified tuning item whose options can be unfolded and its path.
+        """
+        # Backward compatible v2.0
+        # For static/dynamic/fp32/bf16
+        if isinstance(path, str):
+            path = path = ('precision', path) if path in PRECISION_SET_V2_0 else (path, default_dtype)
+        path = (path[0], default_att, path[1])
+        new_path = (op_name_type, *path)
+        item = self.get_item_by_path(new_path)
+        return item
+    
+    
+    def _search_pattern_to_internal(self, pattern):
+        """_summary_
+
+        Args:
+            pattern: _description_
+        """
+        # For (mode, data_type), such as ('static', 'int8')
+        _act_pattern, _weight_pattern = (pattern[0], 'activation', pattern[1]), (pattern[0], 'weight', pattern[1])
+        return _act_pattern, _weight_pattern
+    
+    def query_items_by_quant_mode(self, pattern, default_dtype='int8'):
+        """Collect all op items that support the specified mode.
+
+        Args:
+            pattern: _description_
+
+        Returns:
+            _description_
+        """
+        # Backward compatible v2.0
+        if isinstance(pattern, str):
+            pattern = pattern = ('precision', pattern) if pattern in PRECISION_SET_V2_0 else (pattern, default_dtype)
+        # For (mode, data type), such as ('static', 'int8')
+        act_path, weight_path = self._search_pattern_to_internal(pattern)
+        op_info_set = set()
+        for op_info, path_set in self.ops_path_set.items():
+            act_matched = op_info not in self.ops_attr['activation']
+            weight_matched = op_info not in self.ops_attr['weight']
+            for path in path_set:
+                act_matched = act_matched or path[:len(act_path)] == act_path
+                weight_matched = weight_matched or path[:len(weight_path)] == weight_path
+                if act_matched and weight_matched:
+                    op_info_set.add(op_info)
+                    break
+        result = [self.op_items[op_info] for op_info in op_info_set]
+        logger.debug(result)
+        return result
+
+
+def get_op_mode_by_query_order(tuning_space: TuningSpace, query_order):
+    quant_mode_wise_items = OrderedDict() # mode, op_item_lst
+    pre_items = set()
+    # Collect op items supported the specified mode.
+    for quant_mode in query_order:
+        items = tuning_space.query_items_by_quant_mode(quant_mode)
+        filtered_items = list(filter(lambda item: item not in pre_items, items))
+        pre_items = pre_items.union(set(items))
+        quant_mode_wise_items[quant_mode] = filtered_items
+
+    def initial_op_quant_mode(items_lst, target_quant_mode, op_item_dtype_dict):
+        for item in items_lst:
+            op_item_dtype_dict[item.name] = target_quant_mode
+    # 
+    op_item_dtype_dict = OrderedDict()
+    for quant_mode, quant_mode_items in quant_mode_wise_items.items():
+        initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
+    
+    
+    print(op_item_dtype_dict)
+    return op_item_dtype_dict
+
+query_order = [('static', 'int8'), ('dynamic', 'int8'), ('precision', 'bf16'),\
+    ('precision', 'fp16'), ('precision', 'fp32')]
 

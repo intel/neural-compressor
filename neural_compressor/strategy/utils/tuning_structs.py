@@ -17,8 +17,9 @@
 
 """Tuning structure."""
 
+import os
 from typing import Dict, Any
-from .tuning_space import QUANT_MODE_SET
+from .constant import QUANT_MODE_SET
 from ...utils import logger
 
 class OpTuningConfig:
@@ -36,11 +37,21 @@ class OpTuningConfig:
         """
         self.op_name = op_name
         self.op_type = op_type
+        self.op_name_type = (self.op_name, self.op_type)
         self.op_quant_mode = op_quant_mode  # [static, dynamic]
         self.kwargs = kwargs
-        self._set_dtype(tuning_space)
+        self.has_weight = self.op_name_type in tuning_space.ops_attr['weight']
+        self._get_dtype(tuning_space, op_quant_mode)
+        
+    def _get_dtype(self, tuning_space, path):
+        full_path = tuning_space._get_op_default_path(self.op_name_type, path)
+        self.act_dtype = tuning_space.ops_data_type[self.op_name_type][full_path['activation']]
+        if self.has_weight:
+            self.weight_dtype = tuning_space.ops_data_type[self.op_name_type][full_path['weight']]
+        
     
     def _set_dtype(self, tuning_space, quant_bit='int8', act_quant_flag=None):
+        #TODO remove it
         quant_mode = self.op_quant_mode
         op_name_type = (self.op_name, self.op_type)
         if quant_mode in QUANT_MODE_SET:
@@ -71,7 +82,7 @@ class OpTuningConfig:
         """
         msg =  f"op name: {self.op_name}, op type : {self.op_type} \n"
         msg += f"\t activation dtype: {self.act_dtype} \n"
-        msg += f"\t weight dtype: {self.weight_dtype} \n"  if self.weight_dtype else ""
+        msg += f"\t weight dtype: {self.weight_dtype} \n"  if self.has_weight else ""
         for key, val in self.kwargs.items():
             msg += f"\t {key[0]} {key[1]}: {val}\n"
         return msg
@@ -83,13 +94,13 @@ class OpTuningConfig:
             Dict: The op tuning state.
         """
         result = {}
-        if self.weight_dtype:
+        if self.has_weight:
             result['weight'] = {
                 'dtype': self.weight_dtype,
             }
         result['activation'] = {
                 'dtype': self.act_dtype,
-                'quant_mode': self.op_quant_mode,
+                'quant_mode': self.op_quant_mode if isinstance(self.op_quant_mode, str) else self.op_quant_mode[0],
             }
         for key, val in self.kwargs.items():
             result[key[0]][key[1]] = val

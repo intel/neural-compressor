@@ -23,6 +23,7 @@ from collections import deque, OrderedDict, defaultdict
 from typing import List, Dict, Any
 from .tuning_space import TuningSpace
 from .tuning_structs import OpTuningConfig
+from .constant import PRECISION_SET_V2_0
 from ...utils import logger
 
 TUNING_ITEM_PRIORITY = [('activation','scheme'), ('activation','algorithm'),('activation','granularity'), 
@@ -44,9 +45,9 @@ class TuningSampler:
     Basic class of tuning sampler.
     """
 
-    def __init__(self, 
-                 tuning_space: TuningSpace, 
-                 tuning_order_lst: List[TuningOrder], 
+    def __init__(self,
+                 tuning_space: TuningSpace,
+                 tuning_order_lst: List[TuningOrder],
                  initial_op_tuning_cfg: Dict):
         """Init tuning sampler.
 
@@ -59,6 +60,8 @@ class TuningSampler:
         self.tuning_order_lst = tuning_order_lst
         self.initial_op_tuning_cfg = initial_op_tuning_cfg
         self.queue = deque()
+        # (op_name, op_type): [full_path1, full_path2,...]
+        self.op_complete_path = {}
 
     def __iter__(self):
         """Interface for generate the next tuning config."""
@@ -95,14 +98,20 @@ class ModelWiseTuningSampler(TuningSampler):
         self.default_op_config = {}
         tuning_items = defaultdict(set) # item name: options
         for op_name_type, quant_mode in op_dtype_dict.items():
+            full_path = self.tuning_space._get_op_default_path(op_name_type, quant_mode)
+            self.op_complete_path[op_name_type] = full_path
             op_name, op_type = op_name_type
             # step1, set the default config for each op
-            self.default_op_config[op_name_type] = tuning_space.set_deafult_config(op_name_type, quant_mode)
+            #TODO
+            self.default_op_config[op_name_type] = tuning_space.set_default_config(op_name_type, quant_mode)
+            if quant_mode[0] == 'precision': continue
+            mode_items = copy.deepcopy(full_path) # TODO refactor the initialization method
             # step2, collect all tuning items and their options
-            op_item = tuning_space.op_items[op_name_type]
-            quant_mode_item = tuning_space.query_quant_mode_item(op_name_type, quant_mode)
-            for tuning_item in quant_mode_item.options:
-                tuning_items[tuning_item.name] = tuning_items[tuning_item.name].union(tuning_item.options)
+            for att in mode_items:
+                if att not in full_path: continue
+                quant_mode_item = self.tuning_space.query_quant_mode_item_by_full_path(op_name_type ,full_path[att])
+                for tuning_item in quant_mode_item.options:
+                    tuning_items[tuning_item.name] = tuning_items[tuning_item.name].union(tuning_item.options)
         self.tuning_items = tuning_items
     
     def __iter__(self):
@@ -116,12 +125,15 @@ class ModelWiseTuningSampler(TuningSampler):
             # traverse all possible combinations by model-wise level
             tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
             for op_name_type, quant_mode in self.op_dtype_dict.items():
+                if quant_mode[0] == 'precision': continue
                 all_exist_flag = True
-                for key, val in zip(keys, vals):
-                    if not self.tuning_space.query_item_option(op_name_type, quant_mode, key, val):
+                for method_name, method_val in zip(keys, vals):
+                    full_path = self.op_complete_path[op_name_type]
+                    if method_name[0] not in full_path: continue
+                    if not self.tuning_space.query_item_option(op_name_type, full_path[method_name[0]], method_name, method_val):
                         all_exist_flag = False
                         tune_cfg[op_name_type] = self.default_op_config[op_name_type]
-                        logger.debug(f"{op_name_type} dose not support {val} for {key}, \
+                        logger.debug(f"{op_name_type} dose not support {method_name} for {method_val}, \
                                      using the default config instead")
                         break
                 if all_exist_flag:
@@ -153,19 +165,36 @@ class OpTypeWiseTuningSampler(TuningSampler):
         """
         super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg)
         tuning_items_priority = TUNING_ITEM_PRIORITY
+        # (op_type, quant_mode) : {tuning_item_name : [option1, option2]}
+        #  {('activation', 'scheme'): ['sym', 'sym'], ('activation', 'algorithm'): ['minmax', 'kl', 'minmax', 'kl']}
+        
         self.optype_quant_mode_option = {}
+        # (op_type, quant_mode): [tuning_item1, tuning_item2, ...] -> (op_type, path): [tuning_item1, tuning_item2]
+        # ('op_type1', 'static') -> ('op_type1', ('static', 'act', 'int8', 'signed'))
+        # ('op_type1', 'static') -> [tuning_item1, tuning_item2, ...] 
         self.optype_quant_mode_items_name = defaultdict(list)
         self.op_type_quant_mode_wise_combination = {}
         self.op_dtype_dict = op_dtype_dict
         self.default_op_config = {}
+        
         for op_name_type, quant_mode in op_dtype_dict.items():
-            self.default_op_config[op_name_type] = tuning_space.set_deafult_config(op_name_type, quant_mode)
+            full_path = self.tuning_space._get_op_default_path(op_name_type, quant_mode)
+            self.op_complete_path[op_name_type] = full_path
+            #TODO get the default config
+            #self.default_op_config[op_name_type] = tuning_space.get_default_op_config(op_name_type, quant_mode)
             op_name, op_type = op_name_type
             op_type_quant_mode = (op_type, quant_mode)
             op_item = tuning_space.op_items[op_name_type]
-            quant_mode_item = tuning_space.query_quant_mode_item(op_name_type, quant_mode)
+            if quant_mode[0] == 'precision': continue
+            mode_items = copy.deepcopy(full_path) # TODO refactor the initialization method
+            op_type_quant_mode = (op_type, quant_mode)
+            op_item = tuning_space.op_items[op_name_type]
             filtered_tuning_items = []
             for item_name in tuning_items_priority:
+                att, method_name = item_name
+                if att not in mode_items:
+                    continue
+                quant_mode_item = self.tuning_space.query_quant_mode_item_by_full_path(op_name_type ,full_path[att])
                 item = quant_mode_item.get_option_by_name(item_name)
                 if item:
                     if op_type_quant_mode not in self.optype_quant_mode_option:
@@ -200,11 +229,12 @@ class OpTypeWiseTuningSampler(TuningSampler):
                                            self.optype_quant_mode_items_name[op_type_quant_mode]]
                         op_tuning_item_vals = options_lst[index]
                         all_exist_flag = True
-                        for key, val in zip(op_tuning_items, op_tuning_item_vals):
-                            if not self.tuning_space.query_item_option(op_name_type, quant_mode, key, val):
+                        for method_name, method_val in zip(op_tuning_items, op_tuning_item_vals):
+                            full_path = self.op_complete_path[op_name_type]
+                            if not self.tuning_space.query_item_option(op_name_type, full_path[method_name[0]], method_name, method_val):
                                 all_exist_flag = False
                                 op_tuning_config = self.default_op_config[op_name_type]
-                                logger.debug(f"{op_name_type} dose not support {val} for {key}, \
+                                logger.debug(f"{op_name_type} dose not support {method_name} for {method_val}, \
                                              using the default config instead")
                                 break
                         if all_exist_flag:
@@ -244,11 +274,18 @@ class OpWiseTuningSampler(TuningSampler):
         self.op_options_combination = OrderedDict()
         self.op_tuning_items = {}
         for op_name_type, op_quant_mode in op_dtype_dict.items():
+            full_path = self.tuning_space._get_op_default_path(op_name_type, op_quant_mode)
+            mode_items = copy.deepcopy(full_path) # TODO refactor the initialization method
             op_item = tuning_space.op_items[op_name_type]
-            quant_mode_op = tuning_space.query_quant_mode_item(op_name_type, op_quant_mode)
+            if op_quant_mode[0] == 'precision': continue
+            # quant_mode_op = tuning_space.query_quant_mode_item(op_name_type, op_quant_mode)
             filtered_tuning_items = []
             for item_name in tuning_items_priority:
-                item = quant_mode_op.get_option_by_name(item_name)
+                att, method_name = item_name
+                if att not in mode_items:
+                    continue
+                quant_mode_item = self.tuning_space.query_quant_mode_item_by_full_path(op_name_type ,full_path[att])
+                item = quant_mode_item.get_option_by_name(item_name)
                 if item:
                     filtered_tuning_items.append(item)
             self.op_tuning_items[op_name_type] = filtered_tuning_items
@@ -327,6 +364,10 @@ class FallbackTuningSampler(TuningSampler):
         new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
         skip_first = self.skip_first
         for op_name_type, target_dtype in self.op_dtypes.items():
+            # For static/dynamic/fp32/bf16
+            if isinstance(target_dtype, str):
+                target_dtype = ('precision', target_dtype) if target_dtype in \
+                    PRECISION_SET_V2_0 else (target_dtype, 'int8')
             if not self.accumulate:
                 new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg)
             new_op_config = OpTuningConfig(op_name_type[0], op_name_type[1], target_dtype, self.tuning_space)

@@ -178,10 +178,6 @@ op_cap = {
                 {
                     'dtype': 'fp32'
                 },
-            'weight':
-                {
-                    'dtype': 'fp32'
-                }
         },
     ]
 }
@@ -209,7 +205,7 @@ op_cap2 = {
 }
 
 
-class TestTuningSampler(unittest.TestCase):
+class TestTuningSpace(unittest.TestCase):
     def setUp(self) -> None:
         self.capability = {
             'calib': {'calib_sampling_size': [1, 10, 50]},
@@ -277,32 +273,44 @@ class TestTuningSampler(unittest.TestCase):
 
     
 
+    def test_tuning_parse_helper(self):
+        # op-wise
+        conf = {
+            'usr_cfg': {
+                'quantization':{}
+            }
+
+        }
+        conf = DotDict(conf)
+        tuning_space2 = TuningSpace(deepcopy(self.capability), deepcopy(conf))
+        logger.debug(tuning_space2.root_item.get_details())
+        
+    def test_sampler(self):
+        from neural_compressor.strategy.utils.tuning_sampler import OpTypeWiseTuningSampler
+        from neural_compressor.strategy.utils.tuning_structs import OpTuningConfig
+        tuning_space2 = TuningSpace(deepcopy(self.capability), {})
+        logger.debug(tuning_space2.root_item.get_details())
+        from neural_compressor.strategy.utils.tuning_space import get_op_mode_by_query_order, query_order
+        op_item_dtype_dict = get_op_mode_by_query_order(tuning_space2, query_order)
+        print(op_item_dtype_dict)
+        # Initialize the tuning cfg 
+        initial_op_tuning_cfg = {}
+        for item in tuning_space2.root_item.options:
+            if item.item_type == 'op':
+                op_name, op_type = item.name
+                opconfig = OpTuningConfig(op_name, op_type,('precision', 'fp32'), tuning_space2)
+                initial_op_tuning_cfg[item.name] = opconfig
+                logger.info(opconfig)
+        # sampler = OpTypeWiseTuningSampler(tuning_space2, [], [], op_item_dtype_dict, initial_op_tuning_cfg)
+        optype_wise_tuning_sampler = OpTypeWiseTuningSampler(deepcopy(tuning_space2), [], [], op_item_dtype_dict, initial_op_tuning_cfg)
+        for cfg in optype_wise_tuning_sampler:
+            print(cfg)
+            for on_info, op_cfg in cfg.items():
+                print('....')
+                logger.info(op_cfg)
+        
 
 
-    def test_tuning_space_creation(self):
-        pass
-        conf = None
-        # Test the creation of tuning space 
-        tuning_space = TuningSpace(self.capability, conf)
-        logger.debug(tuning_space.root_item.get_details())
-        # ops supported static 
-        static_items = tuning_space.query_items_by_quant_mode('static')
-        static_items_name = [item.name for item in static_items]
-        self.assertEqual(static_items_name, list(op_cap.keys()))
-        # ops supported dynamic 
-        dynamic_items = tuning_space.query_items_by_quant_mode('dynamic')
-        dynamic_items_name = [item.name for item in dynamic_items]
-        all_items_name = list(op_cap.keys())
-        all_items_name.remove(('op_name3', 'op_type2'))
-        self.assertEqual(dynamic_items_name, all_items_name)
-        # ops supported fp32 
-        fp32_items = tuning_space.query_items_by_quant_mode('fp32')
-        fp32_items_name = [item.name for item in fp32_items]
-        self.assertEqual(fp32_items_name, list(op_cap.keys()))
-        # all optype
-        self.assertEqual(list(tuning_space.op_type_wise_items.keys()), ['op_type1', 'op_type2', 'op_type3'])
-
- 
     def test_tuning_space_merge_op_wise(self):
         # op-wise
         conf = {

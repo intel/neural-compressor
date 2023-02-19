@@ -146,10 +146,6 @@ op_cap = {
                 {
                     'dtype': 'fp32'
                 },
-            'weight':
-                {
-                    'dtype': 'fp32'
-                }
         },
     ]
 }
@@ -168,9 +164,9 @@ class TestTuningSampler(unittest.TestCase):
         for item in tuning_space.root_item.options:
             if item.item_type == 'op':
                 op_name, op_type = item.name
-                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
+                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, ('precision', 'fp32'), tuning_space)
         quant_mode_wise_items = OrderedDict()
-        query_order = ['static', 'dynamic', 'bf16', 'fp32']
+        query_order = [('static', 'int8'), ('dynamic', 'int8'), ('precision', 'bf16'), ('precision', 'fp32')]
         pre_items = set()
         for quant_mode in query_order:
             items = tuning_space.query_items_by_quant_mode(quant_mode)
@@ -185,7 +181,7 @@ class TestTuningSampler(unittest.TestCase):
         op_item_dtype_dict = OrderedDict()
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
-
+        
         op_wise_tuning_sampler = OpWiseTuningSampler(deepcopy(tuning_space), [], [],
                                                      op_item_dtype_dict, initial_op_tuning_cfg)
         self.assertEqual(len(list(op_wise_tuning_sampler)), 128)
@@ -203,8 +199,8 @@ class TestTuningSampler(unittest.TestCase):
         print(best_tune_cfg[('op_name1', 'op_type1')])
         
         # fallback test
-        quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
-        quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
+        quant_ops = quant_mode_wise_items.get(('static', 'int8'), [])
+        quant_ops += quant_mode_wise_items.get(('dynamic', 'int8'), [])
         target_dtype = 'fp32'
         target_type_lst = tuning_space.query_items_by_quant_mode(target_dtype)
         fallback_items_lst = [item for item in quant_ops if item in target_type_lst]
@@ -213,7 +209,6 @@ class TestTuningSampler(unittest.TestCase):
         fallback_items_name_lst = [item.name for item in fallback_items_lst]
         op_dtypes = OrderedDict(zip(fallback_items_name_lst[::-1], [target_dtype] * len(fallback_items_name_lst)))
         initial_op_tuning_cfg = deepcopy(best_tune_cfg)
-
         fallback_sampler = FallbackTuningSampler(tuning_space, tuning_order_lst=[],
                                                 initial_op_tuning_cfg=initial_op_tuning_cfg,
                                                 op_dtypes=op_dtypes, accumulate=False)
