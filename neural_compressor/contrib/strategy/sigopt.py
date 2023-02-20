@@ -168,12 +168,7 @@ class SigOptTuneStrategy(TuneStrategy):
 
         This is SigOpt version of traverse -- with additional constraints setting to HPO.
         """
-        #get fp32 model baseline
-        if self.baseline is None:
-            logger.info("Get FP32 model baseline.")
-            self.baseline = self._evaluate(self.model)
-            # record the FP32 baseline
-            self._add_tuning_history()
+        self._eval_baseline()
 
         baseline_msg = '[Accuracy: {:.4f}'.format(self.baseline[0]) + \
             ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
@@ -198,6 +193,11 @@ class SigOptTuneStrategy(TuneStrategy):
             self.last_qmodel = self.adaptor.quantize(
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)
             assert self.last_qmodel
+            # Return the last quantized model as a result. if performance only.
+            if self.cfg.tuning.exit_policy.performance_only:
+                self.best_qmodel = self.last_qmodel
+                self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
+                return
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             self.last_tune_result = self._evaluate(self.last_qmodel)
 

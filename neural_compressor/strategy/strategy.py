@@ -36,7 +36,6 @@ from ..utils.utility import Statistics, dump_data_to_local
 from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_train_func
 from ..utils import logger
-from ..utils import OPTIONS
 from ..version import __version__
 from ..conf.dotdict import DotDict, deep_get, deep_set
 from ..algorithm import AlgorithmScheduler
@@ -189,26 +188,7 @@ class TuneStrategy(object):
         
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
-        if not (self.cfg.evaluation and self.cfg.evaluation.accuracy and \
-            (self.cfg.evaluation.accuracy.metric or self.cfg.evaluation.accuracy.multi_metrics)) \
-            and self.eval_func is None:
-            logger.info("Neither evaluation function nor metric is defined." \
-                        " Generate a quantized model with default quantization configuration.")
-            self.cfg.tuning.exit_policy.performance_only = True
-            logger.info("Force setting 'tuning.exit_policy.performance_only = True'.")
-            logger.info("Generate a fake evaluation function.")
-            self.eval_func = self._fake_eval_func
-
-        # get fp32 model baseline
-        if self.baseline is None:
-            logger.info("Get FP32 model baseline.")
-            self._fp32_model = self.model
-            self.baseline = self._evaluate(self.model)       
-            self.objectives.baseline = self.baseline
-            # record the FP32 baseline
-            self._add_tuning_history()
-        self.show_baseline_info()
-
+        self._eval_baseline()
         trials_count = 0
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
@@ -226,9 +206,17 @@ class TuneStrategy(object):
             logger.debug(tune_cfg)
 
             self.tuning_times += 1
+            self.algo.calib_iter = tune_cfg['calib_iteration']
+            if self.cfg.quantization.recipes.smooth_quant:
+                try:
+                    self.algo.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
+                except:
+                    self.algo.alpha = 0.5
+                self.algo.tune_cfg = copy.deepcopy(tune_cfg)
+                self.algo.q_model = self.adaptor.pre_optimized_model
+                self.model = self.algo()
             q_model = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            self.algo.calib_iter = tune_cfg['calib_iteration']
             self.algo.q_model = q_model
             # TODO align the api to let strategy has access to pre_optimized model
             assert self.adaptor.pre_optimized_model
@@ -240,6 +228,11 @@ class TuneStrategy(object):
             # remove the algo to avoid it having a reference to qmodel
             self.algo.q_model = None
             assert self.last_qmodel
+            # Return the last quantized model as a result. if performance only.
+            if self.cfg.tuning.exit_policy.performance_only:
+                self.best_qmodel = self.last_qmodel
+                self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
+                return
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
             need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
@@ -296,6 +289,37 @@ class TuneStrategy(object):
         """
         self.last_qmodel = None
         self.best_qmodel = None
+
+    def _can_create_eval_func_from_cfg(self):
+        """Determines whether an eval function can be created from cfg.
+
+        Returns:
+            Returns True if the eval func can be created from config, False otherwise.
+        """
+        if self.cfg.evaluation and self.cfg.evaluation.accuracy and \
+            (self.cfg.evaluation.accuracy.metric or self.cfg.evaluation.accuracy.multi_metrics)\
+                and self.eval_dataloader:
+                    return True
+        return False
+        
+    def _eval_baseline(self):
+        """Evaluate the fp32 model if needed."""
+        if not self._can_create_eval_func_from_cfg() and not self.eval_func:
+            logger.info("Neither evaluation function nor metric is defined." \
+                        " Generate a quantized model with default quantization configuration.")
+            self.cfg.tuning.exit_policy.performance_only = True
+            logger.info("Force setting 'tuning.exit_policy.performance_only = True'.")
+            
+        if not self.cfg.tuning.exit_policy.performance_only:
+            # get fp32 model baseline
+            if self.baseline is None:
+                logger.info("Get FP32 model baseline.")
+                self._fp32_model = self.model
+                self.baseline = self._evaluate(self.model)       
+                self.objectives.baseline = self.baseline
+                # record the FP32 baseline
+                self._add_tuning_history()
+            self.show_baseline_info()
 
     def _recover_best_qmodel_from_tuning_cfg(self):
         """Recover the best quantized model from tuning config."""
@@ -582,6 +606,7 @@ class TuneStrategy(object):
         framework = self.cfg.model.framework.lower()
         framework_specific_info.update({'backend': self.cfg.model.get('backend', 'default')})
         framework_specific_info.update({'format': self.cfg.model.get('quant_format', 'default')})
+        framework_specific_info.update({'domain': self.cfg.model.get('domain', 'auto')})
 
         self.mixed_precision_mode = bool('mixed_precision' in self.cfg) or \
             bool('graph_optimization' in self.cfg)
@@ -608,9 +633,8 @@ class TuneStrategy(object):
             framework_specific_info.update({"deploy_path": os.path.dirname(self.deploy_path)})
             framework_specific_info.update({'workspace_path': self.cfg.tuning.workspace.path})
             framework_specific_info.update({'recipes': self.cfg.quantization.recipes})
-            framework_specific_info.update(
-                                {'graph_optimization': OPTIONS[framework].graph_optimization})
             framework_specific_info.update({'reduce_range': self.cfg.reduce_range})
+            framework_specific_info.update({'recipes': self.cfg.quantization.get('recipes', {})})
             if framework.lower() == 'onnxrt_qdq' or \
                 framework_specific_info['backend'] == 'onnxrt_trt_ep':
                 framework_specific_info.update({'format': 'QDQ'})
@@ -1090,9 +1114,6 @@ class TuneStrategy(object):
             self.tuning_history.append(tuning_history)
 
         self._save()
-
-    def _fake_eval_func(self, model):
-        return 1.
 
     def _collect_ops_by_quant_mode(self, tune_cfg, quant_mode):
         ops_lst = []
