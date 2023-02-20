@@ -75,7 +75,7 @@ class ConservativeTuneStrategy(TuneStrategy):
                 tmp_tune_cfg = deepcopy(tune_cfg)
                 for item, quant_mode in items_lst:
                     op_info = item.name
-                    op_config = tuning_space.set_default_config(op_info, quant_mode)
+                    op_config = tuning_space.get_default_config(op_info, quant_mode)
                     tmp_tune_cfg[op_info] = op_config
                 yield tmp_tune_cfg
                 if self.acc_meet_flag:
@@ -87,7 +87,7 @@ class ConservativeTuneStrategy(TuneStrategy):
                     logger.info(f"*** Try to convert {op_type} op into {dtype} one by one.")
                     for item, quant_mode in items_lst:
                         op_info = item.name
-                        op_config = tuning_space.set_default_config(op_info, quant_mode)
+                        op_config = tuning_space.get_default_config(op_info, quant_mode)
                         tmp_tune_cfg[op_info] = op_config
                         yield tmp_tune_cfg
                         if self.acc_meet_flag:
@@ -358,9 +358,9 @@ class ConservativeTuneStrategy(TuneStrategy):
                 for op_info in tmp_non_fp32_ops:
                     non_fp32_ops_dtype[op_info] = quant_mode
         for op_info in fp32_ops:
-            initial_tuning_cfg[op_info] = tuning_space.set_default_config(op_info, "fp32")
+            initial_tuning_cfg[op_info] = tuning_space.get_default_config(op_info, "fp32")
         for op_info, quant_mode in non_fp32_ops_dtype.items():
-            initial_tuning_cfg[op_info] = tuning_space.set_default_config(op_info, quant_mode)
+            initial_tuning_cfg[op_info] = tuning_space.get_default_config(op_info, quant_mode)
         return initial_tuning_cfg
             
     def _quant_items_pool(self, op_type_priority: List[str]) -> OrderedDict[

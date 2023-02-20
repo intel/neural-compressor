@@ -299,18 +299,12 @@ class TestTuningSpace(unittest.TestCase):
         for item in tuning_space2.root_item.options:
             if item.item_type == 'op':
                 op_name, op_type = item.name
-                opconfig = OpTuningConfig(op_name, op_type,('precision', 'fp32'), tuning_space2)
+                opconfig = OpTuningConfig(op_name, op_type, 'fp32', tuning_space2)
                 initial_op_tuning_cfg[item.name] = opconfig
                 logger.info(opconfig)
-        # sampler = OpTypeWiseTuningSampler(tuning_space2, [], [], op_item_dtype_dict, initial_op_tuning_cfg)
-        optype_wise_tuning_sampler = OpTypeWiseTuningSampler(deepcopy(tuning_space2), [], [], op_item_dtype_dict, initial_op_tuning_cfg)
-        for cfg in optype_wise_tuning_sampler:
-            print(cfg)
-            for on_info, op_cfg in cfg.items():
-                print('....')
-                logger.info(op_cfg)
-        
 
+        optype_wise_tuning_sampler = OpTypeWiseTuningSampler(deepcopy(tuning_space2), [], [], 
+                                                             op_item_dtype_dict, initial_op_tuning_cfg)
 
     def test_tuning_space_merge_op_wise(self):
         # op-wise

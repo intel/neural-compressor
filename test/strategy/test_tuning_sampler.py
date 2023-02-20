@@ -164,9 +164,9 @@ class TestTuningSampler(unittest.TestCase):
         for item in tuning_space.root_item.options:
             if item.item_type == 'op':
                 op_name, op_type = item.name
-                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, ('precision', 'fp32'), tuning_space)
+                initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
         quant_mode_wise_items = OrderedDict()
-        query_order = [('static', 'int8'), ('dynamic', 'int8'), ('precision', 'bf16'), ('precision', 'fp32')]
+        from neural_compressor.strategy.utils.constant import auto_query_order as query_order
         pre_items = set()
         for quant_mode in query_order:
             items = tuning_space.query_items_by_quant_mode(quant_mode)
@@ -187,7 +187,8 @@ class TestTuningSampler(unittest.TestCase):
         self.assertEqual(len(list(op_wise_tuning_sampler)), 128)
         optype_wise_tuning_sampler = OpTypeWiseTuningSampler(deepcopy(tuning_space), [], [],
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
-        self.assertEqual(len(list(optype_wise_tuning_sampler)), 16)
+        cfg_lst = list(optype_wise_tuning_sampler)
+        self.assertEqual(len(cfg_lst), 16)
         model_wise_tuning_sampler = ModelWiseTuningSampler(deepcopy(tuning_space), [], [],
                                                            op_item_dtype_dict, initial_op_tuning_cfg)
         model_wise_pool = []
@@ -199,8 +200,8 @@ class TestTuningSampler(unittest.TestCase):
         print(best_tune_cfg[('op_name1', 'op_type1')])
         
         # fallback test
-        quant_ops = quant_mode_wise_items.get(('static', 'int8'), [])
-        quant_ops += quant_mode_wise_items.get(('dynamic', 'int8'), [])
+        quant_ops = quant_mode_wise_items.get('static', [])
+        quant_ops += quant_mode_wise_items.get('dynamic', [])
         target_dtype = 'fp32'
         target_type_lst = tuning_space.query_items_by_quant_mode(target_dtype)
         fallback_items_lst = [item for item in quant_ops if item in target_type_lst]

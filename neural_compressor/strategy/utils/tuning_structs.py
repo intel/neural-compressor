@@ -17,9 +17,8 @@
 
 """Tuning structure."""
 
-import os
-from typing import Dict, Any
-from .constant import QUANT_MODE_SET
+from typing import Dict
+from .constant import QUANT_MODE_SET, TUNING_ITEMS_LST, PRECISION_SET
 from ...utils import logger
 
 class OpTuningConfig:
@@ -38,41 +37,27 @@ class OpTuningConfig:
         self.op_name = op_name
         self.op_type = op_type
         self.op_name_type = (self.op_name, self.op_type)
-        self.op_quant_mode = op_quant_mode  # [static, dynamic]
+        self.op_quant_mode = op_quant_mode  # static/dynamic/fp32/bf16/fp16
         self.kwargs = kwargs
+        self.act_dtype = None
+        self.weight_dtype = None
         self.has_weight = self.op_name_type in tuning_space.ops_attr['weight']
-        self._get_dtype(tuning_space, op_quant_mode)
+        self._set_dtype()
         
-    def _get_dtype(self, tuning_space, path):
-        full_path = tuning_space._get_op_default_path(self.op_name_type, path)
-        self.act_dtype = tuning_space.ops_data_type[self.op_name_type][full_path['activation']]
-        if self.has_weight:
-            self.weight_dtype = tuning_space.ops_data_type[self.op_name_type][full_path['weight']]
-        
-    
-    def _set_dtype(self, tuning_space, quant_bit='int8', act_quant_flag=None):
-        #TODO remove it
-        quant_mode = self.op_quant_mode
-        op_name_type = (self.op_name, self.op_type)
-        if quant_mode in QUANT_MODE_SET:
-            for act_quant_flag in [True, False]:
-                new_quant_mode = (quant_mode, quant_bit, act_quant_flag)
-                if new_quant_mode in tuning_space.ops_dtype[op_name_type]:
-                    quant_mode = new_quant_mode
-                    break
-        if quant_mode in tuning_space.ops_dtype[op_name_type]:
-            self.act_dtype = tuning_space.ops_dtype[op_name_type][quant_mode]['act_dtype']
-            q_dtype = tuning_space.ops_dtype[op_name_type][quant_mode]
-            self.weight_dtype = q_dtype['weight_dtype'] if 'weight_dtype' in q_dtype else None
+    def _set_dtype(self):
+        """Set the date type."""
+        if self.op_quant_mode in PRECISION_SET:
+            self.act_dtype, self.weight_dtype = self.op_quant_mode, self.op_quant_mode
         else:
-            first_quant_mode = list(tuning_space.ops_dtype[op_name_type].keys())[0]
-            logger.debug(f"The op {op_name_type} does not support {quant_mode}, \
-                         set as {first_quant_mode} instead.")
-            quant_mode = first_quant_mode
-            self.act_dtype = tuning_space.ops_dtype[op_name_type][quant_mode]['act_dtype']
-            q_dtype = tuning_space.ops_dtype[op_name_type][quant_mode]
-            self.weight_dtype = q_dtype['weight_dtype'] if 'weight_dtype' in q_dtype else None
-
+            self.act_dtype = self.kwargs.get('activation_dtype', None)
+            self.weight_dtype = self.kwargs.get('weight_dtype', None)
+        assert self.act_dtype and isinstance(self.act_dtype, str), (f"Didn't assign the activation data type for {self.op_name, self.op_type}", \
+            f"with quant_mode {self.op_quant_mode}")
+        # if self.has_weight:
+        #     assert self.weight_dtype, \
+        #         (f"Didn't assign the weight data type for {self.op_name, self.op_type}", \
+        #             f"with quant_mode {self.op_quant_mode}")
+        
 
     def __str__(self) -> str:
         """Display the tuning config as string.
@@ -81,10 +66,13 @@ class OpTuningConfig:
             msg: the tuning config as string.
         """
         msg =  f"op name: {self.op_name}, op type : {self.op_type} \n"
+        msg += f"activation_path: {self.kwargs.get('activation_path', None)} \n"
+        msg += f"weight_path: {self.kwargs.get('weight_path', None)} \n"
         msg += f"\t activation dtype: {self.act_dtype} \n"
         msg += f"\t weight dtype: {self.weight_dtype} \n"  if self.has_weight else ""
         for key, val in self.kwargs.items():
-            msg += f"\t {key[0]} {key[1]}: {val}\n"
+            if key in TUNING_ITEMS_LST:
+                msg += f"\t {key[0]} {key[1]}: {val}\n"
         return msg
 
     def get_state(self):
@@ -100,10 +88,11 @@ class OpTuningConfig:
             }
         result['activation'] = {
                 'dtype': self.act_dtype,
-                'quant_mode': self.op_quant_mode if isinstance(self.op_quant_mode, str) else self.op_quant_mode[0],
+                'quant_mode': self.op_quant_mode,
             }
         for key, val in self.kwargs.items():
-            result[key[0]][key[1]] = val
+            if key in TUNING_ITEMS_LST:
+                result[key[0]][key[1]] = val
         return result
 
     @classmethod

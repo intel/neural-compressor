@@ -17,7 +17,7 @@
 
 """Strategy constant."""
 
-PRECISION_SET = {'bf16', 'fp32'}
+PRECISION_SET = {'bf16', 'fp16' , 'fp32',}
 QUANT_MODE_SET = {'static', 'dynamic'}
 QUNAT_BIT_SET = {'int8', 'uint8', 'int4', 'uint4'}
 
@@ -29,10 +29,9 @@ TUNING_ITEM_SET = {'scheme', 'algorithm', 'granularity'}
 
 PRECISION_SET_V2_0 = {'fp32', 'bf16'}
 
-auto_query_order = [('static', 'int8'), ('dynamic', 'int8'), ('precision', 'bf16'), \
-                    ('precision', 'fp16'), ('precision', 'fp32')]
-static_query_order = [('static', 'int8'), ('precision', 'bf16'), ('precision', 'fp16'), ('precision', 'fp32')]
-dynamic_query_order = [('dynamic', 'int8'), ('precision', 'bf16'), ('precision', 'fp16'), ('precision', 'fp32')]
+auto_query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
+static_query_order = ['static', 'bf16', 'fp16', 'fp32']
+dynamic_query_order = ['dynamic', 'bf16', 'fp16', 'fp32']
 
 
 from enum import IntEnum
@@ -49,8 +48,7 @@ Query path format.
 ('static', (('int8', 'signed'), ('int4', 'unsigned')))
 ('static', (('int8', 'signed'),                     ))
 ('static', ( 'int8'                                  )
-('static', 'int8')
+'static'
 ('static')
-
 
 """
