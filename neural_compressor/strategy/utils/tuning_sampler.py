@@ -136,7 +136,9 @@ class ModelWiseTuningSampler(TuningSampler):
                 for method_name, method_val in zip(keys, vals):
                     full_path = self.op_complete_path[op_name_type]
                     if method_name[0] not in full_path: continue
-                    if not self.tuning_space.query_item_option(op_name_type, full_path[method_name[0]], method_name, method_val):
+                    if not self.tuning_space.query_item_option(op_name_type,
+                                                               full_path[method_name[0]],
+                                                               method_name, method_val):
                         all_exist_flag = False
                         tune_cfg[op_name_type] = self.default_op_config[op_name_type]
                         logger.debug(f"{op_name_type} dose not support {method_name} for {method_val}, \
@@ -233,7 +235,10 @@ class OpTypeWiseTuningSampler(TuningSampler):
                         all_exist_flag = True
                         for method_name, method_val in zip(op_tuning_items, op_tuning_item_vals):
                             full_path = self.op_complete_path[op_name_type]
-                            if not self.tuning_space.query_item_option(op_name_type, full_path[method_name[0]], method_name, method_val):
+                            if not self.tuning_space.query_item_option(op_name_type, 
+                                                                       full_path[method_name[0]], 
+                                                                       method_name, 
+                                                                       method_val):
                                 all_exist_flag = False
                                 op_tuning_config = self.default_op_config[op_name_type]
                                 logger.debug(f"{op_name_type} dose not support {method_name} for {method_val}, \

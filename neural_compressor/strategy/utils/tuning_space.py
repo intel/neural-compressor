@@ -603,7 +603,6 @@ class TuningSpace:
     
     def get_item_by_path(self, path, default=None):
         """Get the item according to the path."""
-        
         logger.info(f"Query item with path {path}")
         item = self.root_item
         for val in path:
@@ -615,12 +614,21 @@ class TuningSpace:
             logger.warning(f"Did not found the item according to the path {path}")
         return item
 
-    def get_default_full_path(self, op_name_type, path):
         """Complete the path.
 
         Args:
             path: incomplete path. ('precision', 'activation', 'fp32'),
               ('precision', 'activation'), ('static', 'activation', ...)
+        """
+    def get_default_full_path(self, op_name_type, path):
+        """Complete the path.
+
+        Args:
+            op_name_type: (op_name, op_path)
+            path: incomplete path.
+
+        Returns:
+            result: the complete path.
         """
         # For precision
         if path[0] == 'precision':
@@ -653,12 +661,14 @@ class TuningSpace:
 
     def query_quant_mode_item_by_full_path(self, op_name_type, path) -> Tuple[TuningItem, Tuple]:
         """Query the mode item by full path."""
-        
         new_path = (op_name_type, *path)
         item = self.get_item_by_path(new_path)
         return item
 
-    def query_quant_mode_item(self, op_name_type, path, default_dtype='int8', default_att='activation') -> Tuple[TuningItem, Tuple]:
+    def query_quant_mode_item(self, op_name_type,
+                              path,
+                              default_dtype='int8',
+                              default_att='activation') -> Tuple[TuningItem, Tuple]:
         """Query the tuning item according to the path for specified.
         
         If the path is incomplete, it will return the default tuning item.
@@ -672,6 +682,7 @@ class TuningSpace:
                                 'algorithm': ['minmax', 'kl'],
                                 'granularity': ['per_channel','per_tensor'],
                             }
+
         Returns:
             (tuning item, complete path),Return the specified tuning item whose options can be unfolded and its path.
         """
@@ -709,6 +720,7 @@ class TuningSpace:
         Args:
             op_name_type: (op_name, op_type)
             pattern: 'static', 'dynamic', ('static', 'int8'), ('precision', 'fp32')
+            
         Returns:
             result(Dict): The default full path of activation and weight if have. 
         """
@@ -720,9 +732,7 @@ class TuningSpace:
         att_lst = ['activation', 'weight'] if has_weight else ['activation']
         for att in att_lst:
             result[att] = self.get_default_full_path(op_name_type, full_path[att])
-        return result
-        
-        
+        return result        
         
 def get_op_mode_by_query_order(tuning_space: TuningSpace, query_order):
     """Get the op mode according to the query order."""
@@ -746,11 +756,9 @@ def get_op_mode_by_query_order(tuning_space: TuningSpace, query_order):
     print(op_item_dtype_dict)
     return op_item_dtype_dict
 
-
-
-
 def pattern_to_internal(pattern, default_dtype='int8'):
     """Convert pattern to internal format.
+    
     'static' -> ('static', (('int8'),('int8')))
     'dynamic' -> ('dynamic', (('int8'),('int8')))
     'fp32' -> ('precision', (('fp32'), ('fp32')))
@@ -769,37 +777,35 @@ def pattern_to_internal(pattern, default_dtype='int8'):
     return internal_pattern
 
 def pattern_to_path(pattern):
-    """Convert pattern to path"""
+    """Convert pattern to path."""
     act_path = (pattern[0], 'activation', *pattern[1][0])
     weight_path = (pattern[0], 'weight', *pattern[1][1])
     return act_path, weight_path
 
 def quant_mode_from_pattern(internal_pattern):
-    """"Get quant mode from internal pattern."""
+    """Get quant mode from internal pattern."""
     if internal_pattern[0] == 'precision':
         return internal_pattern[0][0]
     else:
         return internal_pattern[0]
 
-
-
-
 def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: TuningSpace) -> OpTuningConfig:
     """Initial the tuning cfg.
 
     Args:
-        op_name: op name
-        op_type: op type
-        quant_mode: dynamic/static/fp32/bf16/fp16; (dynamic, int8)/(precision, fp32)
+        op_name_type: (op name, op type)
+        quant_mode: dynamic/static/fp32/bf16/fp16
         tuning_space: tuning space.
-    
+        
     step1, convert the quant_mode into internal format.    
     step2, complete the path based.
     step3, get the mode item.
     step4, use the first option as value for method.
     step5, create the op tuning config.
-    """
     
+    Returns:
+        The initial tuning config. 
+    """
     internal_pattern = pattern_to_internal(quant_mode)
     full_path = {'activation': None, 'weight': None}
     full_path['activation'], full_path['weight'] = pattern_to_path(internal_pattern)

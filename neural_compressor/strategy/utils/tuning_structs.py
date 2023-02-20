@@ -51,8 +51,9 @@ class OpTuningConfig:
         else:
             self.act_dtype = self.kwargs.get('activation_dtype', None)
             self.weight_dtype = self.kwargs.get('weight_dtype', None)
-        assert self.act_dtype and isinstance(self.act_dtype, str), (f"Didn't assign the activation data type for {self.op_name, self.op_type}", \
-            f"with quant_mode {self.op_quant_mode}")
+        assert self.act_dtype and isinstance(self.act_dtype, str),\
+            (f"Didn't assign the activation data type for {self.op_name, self.op_type}", \
+                f"with quant_mode {self.op_quant_mode}")
         # if self.has_weight:
         #     assert self.weight_dtype, \
         #         (f"Didn't assign the weight data type for {self.op_name, self.op_type}", \
