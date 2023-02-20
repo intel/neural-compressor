@@ -2321,6 +2321,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 "INC support IPEX version >= 1.10.0"
 
         qscheme = self._cfg_to_qconfig(tune_cfg)
+        iterations = tune_cfg.get('calib_iteration', 1)
         model.model.eval()
 
         if self.performance_only:
@@ -2361,7 +2362,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 assert not self.version.release < Version("1.10.0").release, \
                     "INC support IPEX version >= 1.10.0"
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
-                    iterations = tune_cfg.get('calib_iteration', 1)
                     q_model = model.model
                     if self.version.release < Version("1.12.0").release:
                         ipex_conf = ipex.quantization.QuantConf(configure_file=self.ipex_config_path,  # pylint: disable=E1101
@@ -2469,7 +2469,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 self.calib_func(q_model, dataloader, tmp_iterations=2)
             else:
                 if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
-                    iterations = tune_cfg.get('calib_iteration', 1)
                     if self.version.release < Version("1.12.0").release:
                         try:
                             self.tmp_model = copy.deepcopy(model)
