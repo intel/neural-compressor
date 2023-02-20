@@ -44,8 +44,8 @@ class Quantizer():
 ## **Quantization Results**
 As for the structural sparsity results, please refer to below chart.
 
-<a target="_blank" href="./quantization_result.png">
-  <img src="./quantization_result.png" alt="Extension" width="80%" height="80%">
+<a target="_blank" href="./imgs/quantization_result.png">
+  <img src="./imgs/quantization_result.png" alt="Extension" width="80%" height="80%">
 </a>
 
 ## **Summary**
