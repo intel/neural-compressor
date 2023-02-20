@@ -213,8 +213,9 @@ class TuneStrategy(object):
                 except:
                     self.algo.alpha = 0.5
                 self.algo.tune_cfg = copy.deepcopy(tune_cfg)
-                self.algo.q_model = self.adaptor.pre_optimized_model
-                self.model = self.algo()
+            self.algo.q_model = self.adaptor.pre_optimized_model if self.adaptor.pre_optimized_model \
+                else self.model
+            self.model = self.algo('pre_quantize')
             q_model = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             self.algo.q_model = q_model
@@ -223,7 +224,7 @@ class TuneStrategy(object):
             self.algo.origin_model = self.adaptor.pre_optimized_model
             if self.cfg.quantization.recipes.fast_bias_correction:
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
-            self.last_qmodel = self.algo()
+            self.last_qmodel = self.algo('post_quantize')
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             # remove the algo to avoid it having a reference to qmodel
             self.algo.q_model = None

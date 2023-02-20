@@ -20,22 +20,26 @@
 from abc import abstractmethod
 from neural_compressor.utils.create_obj_from_config import get_algorithm
 
-registry_algorithms = {}
+registry_algorithms = {
+    "pre_quantize": {},
+    "post_quantize": {}
+}
 
-def algorithm_registry(algorithm_type):
+def algorithm_registry(algorithm_type, location):
     """Decorate and register all Algorithm subclasses.
 
     Args:
         cls (class): The class of register.
         algorithm_type (str): The algorithm registration name
+        location (str): The location to call algorithms
 
     Returns:
         cls: The class of register.
     """
     def decorator_algorithm(cls):
-        if algorithm_type in registry_algorithms:
+        if algorithm_type in registry_algorithms[location]:
             raise ValueError('Cannot have two algorithms with the same name')
-        registry_algorithms[algorithm_type] = cls
+        registry_algorithms[location][algorithm_type] = cls
         return cls
     return decorator_algorithm
 
@@ -53,18 +57,21 @@ class ALGORITHMS(object):
         Returns:
             cls (class): The class of algorithm.
         """
-        assert algorithm_type in self.algorithms, "algorithm type only support {}".\
-            format(self.algorithms.keys())
-        return self.algorithms[algorithm_type]
+        assert algorithm_type in self.algorithms["pre_quantize"] or \
+            algorithm_type in self.algorithms["post_quantize"], "algorithm type only support {}".\
+            format(list(self.algorithms["pre_quantize"].keys()) + list(self.algorithms["post_quantize"].keys()))
+        return self.algorithms["pre_quantize"][algorithm_type] \
+            if algorithm_type in self.algorithms["pre_quantize"] else \
+            self.algorithms["post_quantize"]
 
     @classmethod
-    def support_algorithms(self):
+    def support_algorithms(self, location):
         """Get all algorithms.
 
         Returns: 
             Set: A set of all algorithms.
         """
-        return set(self.algorithms.keys())
+        return set(self.algorithms[location].keys())
 
 class AlgorithmScheduler(object):
     """control the Algorithm in different phase."""
@@ -82,7 +89,7 @@ class AlgorithmScheduler(object):
         self._adaptor = None
         self._calib_iter = None
 
-    def __call__(self):
+    def __call__(self, location):
         """Return the processed model via algorithm.
 
         Returns:
@@ -95,7 +102,7 @@ class AlgorithmScheduler(object):
         assert self._dataloader, 'set dataloader for algorithm'
         assert self._adaptor, 'set adaptor for algorithm'
         assert self._calib_iter, 'set calibration iteration for algorithm'
-        for algo in self.algorithms:
+        for algo in self.algorithms[location]:
             self._q_model = algo(self._origin_model, 
                                  self._q_model, \
                                  self._adaptor, \
