@@ -1786,6 +1786,8 @@ class TensorflowQuery(QueryBackendCapability):
         Args:
             local_config_file: local configuration file name.
             performance_only: oob performance only mode.
+            itex_mode: check if itex mode.
+            quant_mode: quantization mode, static or dynamic.
         """
         import tensorflow as tf
 
