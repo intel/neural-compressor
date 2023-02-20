@@ -47,8 +47,8 @@ The json config file format is extended like below.
 
 As for the structural sparsity implementation in `compression` dir, let's taking `LinearLayer_Compress` class in `deepspeed/compression/basic_layer.py` as an example, this class is enhanced like this to support structural sparsity algorithm. 
 
-<a target="_blank" href="./pics/Linear_Example.png">
-  <img src="./pics/Linear_Example.png" alt="Extension" width="100%" height="100%">
+<a target="_blank" href="./pics/linear_example.png">
+  <img src="./pics/linear_example.png" alt="Extension" width="100%" height="100%">
 </a>
 
 **NOTE**: In this phase 1, the DeepSpeed user facing API keeps unchanged. The only change user need to be aware of is the extended Json file format. 
