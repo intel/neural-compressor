@@ -44,6 +44,7 @@ class BasicTuneStrategy(TuneStrategy):
         from copy import deepcopy
         tuning_space = self.tuning_space
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        rank = comm.Get_rank()
         for calib_sampling_size in calib_sampling_size_lst:
             # Initialize the tuning config for each op according to the quantization approach 
             op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
@@ -68,7 +69,6 @@ class BasicTuneStrategy(TuneStrategy):
             yield op_tuning_cfg_lst_stage_1
 
             #### Coordinate: only master knows cur best tune cfg
-            rank = comm.Get_rank()
             cur_best_tuning_cfg = self.cur_best_tuning_cfg if rank == 0 else None
             if rank == 0:
                 comm.bcast(cur_best_tuning_cfg, root=0)
@@ -96,7 +96,6 @@ class BasicTuneStrategy(TuneStrategy):
                 yield op_tuning_cfg_lst_stage_2
 
             #### Coordinate: only master knows cur best tune cfg
-            rank = comm.Get_rank()
             cur_best_tuning_cfg = self.cur_best_tuning_cfg if rank == 0 else None
             if rank == 0:
                 comm.bcast(cur_best_tuning_cfg, root=0)
@@ -130,14 +129,12 @@ class BasicTuneStrategy(TuneStrategy):
                 yield op_tuning_cfg_lst_stage_3
 
                 # Only master updates op_fallback_acc_impact
-                rank = comm.Get_rank()
                 if rank == 0:
                     for op_index, op_tuning_cfg in enumerate(fallback_sampler):
                         acc, _ = self.eval_results[op_index]
                         op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
 
                 #### Coordinate: only master knows op_fallback_acc_impact
-                rank = comm.Get_rank()
                 op_fallback_acc_impact = op_fallback_acc_impact if rank == 0 else None
                 if rank == 0:
                     comm.bcast(op_fallback_acc_impact, root=0)

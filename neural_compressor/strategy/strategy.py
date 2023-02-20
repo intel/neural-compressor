@@ -251,7 +251,7 @@ class TuneStrategy(object):
                     self.best_tune_cfg_id = self.requirements_met_min_cfg_id
             else:
                 # get the current best acc but not meet requirements
-                logger.info("##############len(tune_cfg-lst): {}, tag: {}".format(len(self.tune_cfg_lst), tag))
+                logger.info("~~~~~~master gets the current best acc: {} but not meet requirements".format(tag))
                 self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(self.tune_cfg_lst[tag])
 
             if self.best_tune_cfg_id is not None:
@@ -271,7 +271,7 @@ class TuneStrategy(object):
                 comm.send(obj=cur_cfg_id, dest=sender_rank, tag=cur_cfg_id)
                 cur_cfg_id += 1
             else:                    
-                logger.info("all tune configs are sent, no more sending, just collecting...")
+                logger.info("All tune configs are sent, no more sending, just collecting...")
 
             if len(self.tune_cfg_lst) == self.num_acks:    # all collected (ack should collected == acks)
                 # all processes ended
@@ -313,7 +313,6 @@ class TuneStrategy(object):
                     status=status   # sender (master)
                 )
             cfg_idx = status.Get_tag()
-            print("&" * 50, "cfg_idx:", cfg_idx, "len(self.tune_cfg_lst)", len(self.tune_cfg_lst))
             if status.Get_tag() >= len(self.tune_cfg_lst):
                 logger.info("~~~~~~slave {} receiving END signal in the current stage".format(comm.Get_rank()))
                 if task == "MET":
@@ -336,8 +335,8 @@ class TuneStrategy(object):
             self.last_tune_result = self._evaluate(self.last_qmodel)
 
             ##### send back the tuning statistics #########
-            logger.info("##### Slave sends back the tuning statistics #########")
-            logger.info(self.last_tune_result)
+            logger.debug("##### Slave sends back the tuning statistics #########")
+            logger.debug(self.last_tune_result)
             comm.send(
                 obj=self.last_tune_result,
                 dest=0, # rank 0 send to rank 1, 2, ...
@@ -369,8 +368,8 @@ class TuneStrategy(object):
                 self.master_worker_handle(comm)
             else:
                 self.slave_worker_handle(comm)
-            logger.info("# if self.met_flag or self.max_trial_flag or self.max_time_flag:")
-            logger.info(self.met_flag or self.max_trial_flag or self.max_time_flag)
+            logger.debug("# if self.met_flag or self.max_trial_flag or self.max_time_flag:" \
+                .format(self.met_flag or self.max_trial_flag or self.max_time_flag))
             if self.met_flag or self.max_trial_flag or self.max_time_flag:
                 break
 
