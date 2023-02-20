@@ -37,7 +37,6 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    # sed -i "/root:/s|root:.*|root: $dataset_location/val|g" conf.yaml
     sed -i "/valid=/s|valid=.*|valid=$dataset_location/coco/5k.txt|g" config/coco.data
     sed -i "/train=/s|train=.*|train=$dataset_location/coco/trainvalno5k.txt|g" config/coco.data
     sed -i "/names=/s|names=.*|names=$dataset_location/coco.names|g" config/coco.data
