@@ -3,38 +3,44 @@ Step-by-Step
 
 This document describes the step-by-step instructions for reproducing PyTorch YOLO v3 tuning results with Intel® Neural Compressor.
 
-> **Note**
->
-> PyTorch quantization implementation in imperative path has limitation on automatically execution.
-> It requires to manually add QuantStub and DequantStub for quantizable ops, it also requires to manually do fusion operation.
-> Neural Compressor requires users to complete these two manual steps before triggering auto-tuning process.
-> For details, please refer to https://pytorch.org/docs/stable/quantization.html
 
 # Prerequisite
 
 ### 1. Environmental
 
 ```shell
-cd examples/pytorch/object_detection/yolo_v3/quantization/ptq/eager
+cd examples/pytorch/object_detection/yolo_v3/quantization/ptq/fx
 pip install -r requirements.txt
 ```
 
 ### 2. Prepare Dataset
 
 ```bash
+cd data
 bash get_coco_dataset.sh
+# the data will save to `coco` folder.
 ```
-
 ### 3. Prepare Weights
 
 ```bash
+cd weights
 bash download_weights.sh
+# the weights will save to `yolov3.weights` file.
 ```
 
 # Run
 
-```shell
-python test.py --weights_path weights/yolov3.weights -t
+## Tune
+```bash
+bash run_tuning.sh --input_model=weights/yolov3.weights  --dataset_location=coco
+```
+## Benchmark
+```
+# performance
+bash run_benchmark.sh --input_model=weights/yolov3.weights --dataset_location=coco --mode=performance --int8=true
+
+## accuracy_only
+bash run_benchmark.sh --input_model=weights/yolov3.weights --dataset_location=coco --mode=accuracy --int8=true
 ```
 
 Examples Of Enabling Neural Compressor Auto Tuning On PyTorch YOLOV3
@@ -43,17 +49,11 @@ Examples Of Enabling Neural Compressor Auto Tuning On PyTorch YOLOV3
 This is a tutorial of how to enable a PyTorch model with Intel® Neural Compressor.
 
 
-### Prepare
-PyTorch quantization requires two manual steps:
 
-1. Add QuantStub and DeQuantStub for all quantizable ops.
-2. Fuse possible patterns, such as Conv + Relu and Conv + BN + Relu.
-
-The related code please refer to examples/pytorch/object_detection/yolo_v3/quantization/ptq/eager/models.py.
 
 ### Code Update
 
-After prepare step is done, we just need update test.py like below.
+We update test.py like below.
 
 ```python
 class yolo_dataLoader(object):
