@@ -1376,7 +1376,7 @@ class ONNXRTQuery(QueryBackendCapability):
                 self.config_version = k
                 break
 
-        # Generate specified version config according to quantization approach and format
+        # generate specified version config according to quantization approach and format
         config = {}
         for k, v in version_config.items():
             if k == 'version':
@@ -1395,6 +1395,19 @@ class ONNXRTQuery(QueryBackendCapability):
         if 'capabilities' not in config:
             config['capabilities'] = {} 
 
+        # generate other config content including precisions and ops 
+        precisions = [key for key in config['capabilities'].keys()]
+        if 'fp32' not in precisions:
+            precisions.append('fp32')
+        config['precisions'] = {'name': precisions}
+
+        op_types = {}
+        for precision, precision_config in config['capabilities'].items():
+            op_types[precision] = [op_type for op_type in precision_config.keys()]
+        if 'fp32' not in op_types:
+            op_types['fp32'] = ['*']
+        config['ops'] = op_types
+
         return config
 
     def get_version(self): # pragma: no cover
@@ -1411,10 +1424,7 @@ class ONNXRTQuery(QueryBackendCapability):
         Returns:
             [string list]: the precisions' name.
         """
-        precisions = [key for key in self.cur_config['capabilities'].keys()]
-        if 'fp32' not in precisions:
-            precisions.append('fp32')
-        return precisions
+        return [i.strip() for i in self.cur_config['precisions']['names'].split(',')]
 
     def get_op_types(self): # pragma: no cover
         """Get the supported op types by all precisions.
@@ -1423,12 +1433,7 @@ class ONNXRTQuery(QueryBackendCapability):
             [dictionary list]: A list composed of dictionary which key is precision
             and value is the op types.
         """
-        op_types = {}
-        for precision, precision_config in self.cur_config['capabilities'].items():
-            op_types[precision] = [op_type for op_type in precision_config.keys()]
-        if 'fp32' not in op_types:
-            op_types['fp32'] = ['*']
-        return op_types
+        return self.cur_config['ops']
 
     def get_quantization_capability(self):
         """Get the supported op types' quantization capability.
@@ -1448,8 +1453,9 @@ class ONNXRTQuery(QueryBackendCapability):
         Returns:
             [string list]: A list composed of op type.
         """
-        if precision in list(self.get_op_types().keys()):
-            return self.get_op_types()[precision]
+        #assert precision in list(self.cur_config['ops'].keys())
+        if precision in list(self.cur_config['ops'].keys()):
+            return self.cur_config['ops'][precision]
         else:
             return []
 
@@ -1460,7 +1466,7 @@ class ONNXRTQuery(QueryBackendCapability):
 
     def get_fallback_list(self):
         """Get fallback list."""
-        return list(self.get_op_types().keys() - self.cur_config['capabilities'].keys())
+        return list(self.cur_config['ops'].keys() - self.cur_config['capabilities'].keys())
 
     def get_specific_cfg_version(self):
         """Get version of the specific config."""
