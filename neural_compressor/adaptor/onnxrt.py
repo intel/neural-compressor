@@ -1399,7 +1399,7 @@ class ONNXRTQuery(QueryBackendCapability):
         precisions = [key for key in config['capabilities'].keys()]
         if 'fp32' not in precisions:
             precisions.append('fp32')
-        config['precisions'] = {'names': precisions}
+        config['precisions'] = {'names': ','.join(precisions)}
 
         op_types = {}
         for precision, precision_config in config['capabilities'].items():
