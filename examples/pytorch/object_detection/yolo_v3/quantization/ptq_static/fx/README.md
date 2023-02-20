@@ -16,28 +16,31 @@ pip install -r requirements.txt
 ### 2. Prepare Dataset
 
 ```bash
+cd data
 bash get_coco_dataset.sh
+# the data will save to `coco` folder.
 ```
-
 ### 3. Prepare Weights
 
 ```bash
+cd weights
 bash download_weights.sh
+# the weights will save to `yolov3.weights` file.
 ```
 
 # Run
 
 ## Tune
 ```bash
-bash run_tuning.sh --input_model=weights/yolov3.weights
+bash run_tuning.sh --input_model=weights/yolov3.weights  --dataset_location=coco
 ```
 ## Benchmark
 ```
 # performance
-bash run_benchmark.sh --input_model=weights/yolov3.weights --mode=performance --int8=true
+bash run_benchmark.sh --input_model=weights/yolov3.weights --dataset_location=coco --mode=performance --int8=true
 
 ## accuracy_only
-bash run_benchmark.sh --input_model=weights/yolov3.weights --mode=accuracy --int8=true
+bash run_benchmark.sh --input_model=weights/yolov3.weights --dataset_location=coco --mode=accuracy --int8=true
 ```
 
 Examples Of Enabling Neural Compressor Auto Tuning On PyTorch YOLOV3

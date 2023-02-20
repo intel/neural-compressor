@@ -44,14 +44,12 @@ function run_tuning {
     cd $dataset_location/coco
     paste <(awk "{print \"$PWD\"}" <5k.part) 5k.part | tr -d '\t' > 5k.txt
     cd $current_dir
-    extra_cmd=""
 
     python test.py \
             --tuned_checkpoint ${tuned_checkpoint} \
             --weights_path $input_model \
             --batch_size 128 \
-            -t \
-            ${extra_cmd}
+            -t
 
 }
 
