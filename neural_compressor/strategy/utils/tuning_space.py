@@ -495,6 +495,7 @@ class TuningSpace:
             parsed_op_cap['precision'] = OrderedDefaultDict()
             # WA for some op have extra weight dtype.
             has_weight = all(['weight' in op_cap for op_cap in op_cap_lst])
+            if has_weight: self.ops_attr['weight'].add(op_name_type)
             for op_cap in op_cap_lst:
                 if 'activation' in op_cap:
                     self.ops_attr['activation'].add(op_name_type)
@@ -514,7 +515,9 @@ class TuningSpace:
                                 parsed_op_cap[quant_mode][att][_data_type][signed_flag][item_name] = item_options
                     else:
                         # Parse the data info for item　with unique value.
-                        att_dtype = op_cap[att]['dtype']
+                        att_dtype = op_cap[att]['dtype'] 
+                        if isinstance(att_dtype):
+                            att_dtype = att_dtype[0]
                         parsed_op_cap['precision'][att][att_dtype] = {'dtype': att_dtype}
                         self.ops_data_type[op_name_type][('precision', att, att_dtype)] = att_dtype
 
@@ -603,7 +606,7 @@ class TuningSpace:
     
     def get_item_by_path(self, path, default=None):
         """Get the item according to the path."""
-        logger.info(f"Query item with path {path}")
+        logger.info(f"Query item with path {path}") #TODO replace it with debug before merge
         item = self.root_item
         for val in path:
             if item is None:
