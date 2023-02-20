@@ -76,6 +76,36 @@ function run_tuning {
         num_heads=12
         hidden_size=384
     fi
+    if [[ "${input_model}" =~ "bert-base-cased" ]]; then
+        model_name_or_path="bert-base-cased-finetuned-mrpc"
+        TASK_NAME='mrpc'
+        num_heads=12
+        hidden_size=384
+    fi
+    if [[ "${input_model}" =~ "xlnet-base-cased" ]]; then
+        model_name_or_path="Intel/xlnet-base-cased-mrpc"
+        TASK_NAME='mrpc'
+        num_heads=12
+        hidden_size=768
+    fi
+    if [[ "${input_model}" =~ "bert-mini" ]]; then
+        model_name_or_path="M-FAC/bert-mini-finetuned-mrpc"
+        TASK_NAME='mrpc'
+        num_heads=4
+        hidden_size=256
+    fi
+    if [[ "${input_model}" =~ "electra-small-discriminator" ]]; then
+        model_name_or_path="Intel/electra-small-discriminator-mrpc"
+        TASK_NAME='mrpc'
+        num_heads=4
+        hidden_size=256
+    fi
+    if [[ "${input_model}" =~ "bart" ]]; then
+        model_name_or_path="Intel/bart-large-mrpc"
+        TASK_NAME='mrpc'
+        num_heads=16
+        hidden_size=4096
+    fi
 
     python main.py \
             --model_name_or_path ${model_name_or_path} \

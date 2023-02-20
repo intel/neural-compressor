@@ -393,21 +393,31 @@ if __name__ == "__main__":
 
     if args.tune:
         from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-        opt_options = BertOptimizationOptions('bert')
-        opt_options.enable_embed_layer_norm = False
+        from onnxruntime.transformers.fusion_options import FusionOptions
 
+        model_type = 'bart' if args.model_name_or_path == 'Intel/bart-large-mrpc' else 'bert'
+        opt_options = FusionOptions(model_type)
+        opt_options.enable_embed_layer_norm = False
         model_optimizer = optimizer.optimize_model(
             args.model_path,
-            'bert',
+            model_type,
             num_heads=args.num_heads,
             hidden_size=args.hidden_size,
             optimization_options=opt_options)
         model = model_optimizer.model
 
-        from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.utils.constant import FP32
+        fp32_op_names = None
+        if args.model_name_or_path == 'Intel/xlnet-base-cased-mrpc':
+            fp32_op_names = ['/transformer/word_embedding/Gather']
+        elif args.model_name_or_path == 'Intel/bart-large-mrpc':
+            fp32_op_names = ['/model/(en|de)coder/layers.(3|4|5|6|8|1(0|1))/fc(1|2)/MatMul',
+                             '/model/(en|de)coder/layers.(6|7|1(0|1))/self_attn/.*MatMul']
         config = PostTrainingQuantConfig(approach='static',
-                                         quant_level=0)
+                                         quant_level='default' if fp32_op_names else 0,
+                                         op_name_list={op_name:FP32 for op_name in fp32_op_names} if fp32_op_names else None)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,

@@ -457,8 +457,8 @@ def main():
 
     if model_args.tune:
         from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-        opt_options = BertOptimizationOptions('bert')
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('bert')
         opt_options.enable_embed_layer_norm = False
 
         model_optimizer = optimizer.optimize_model(
@@ -470,12 +470,10 @@ def main():
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        calib_dataset = SQuADDataset(eval_dataset, model, label_names=["start_positions", "end_positions"])
         config = PostTrainingQuantConfig(approach='dynamic')
         q_model = quantization.fit(model, 
                                    config,
-                                   eval_func=eval_func
-                                   )
+                                   eval_func=eval_func)
         q_model.save(model_args.save_path)
 
     if model_args.benchmark:

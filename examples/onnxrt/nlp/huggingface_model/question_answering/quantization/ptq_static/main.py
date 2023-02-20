@@ -53,8 +53,6 @@ require_version(
 
 logger = logging.getLogger(__name__)
 
-FP32_CONFIG = {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}}
-
 @dataclass
 class ModelArguments:
     """
@@ -457,8 +455,8 @@ def main():
 
     if model_args.tune:
         from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-        opt_options = BertOptimizationOptions('bert')
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('bert')
         opt_options.enable_embed_layer_norm = False
 
         model_optimizer = optimizer.optimize_model(
@@ -470,19 +468,26 @@ def main():
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.utils.constant import FP32
         calib_dataset = SQuADDataset(eval_dataset, model, label_names=["start_positions", "end_positions"])
         fp32_op_names = None
         if model_args.model_name_or_path == 'mrm8488/spanbert-finetuned-squadv1':
-            fp32_op_names = ['Gather_94', 'MatMul_660', 'MatMul_754', 'MatMul_848', 'MatMul_1036']
+            fp32_op_names = ['Gather_94', 'MatMul_(660|754|848|1036)']
         elif model_args.model_name_or_path == 'salti/bert-base-multilingual-cased-finetuned-squad':
-            fp32_op_names = ['MatMul_660', 'MatMul_566', 'Unsqueeze_91']
+            fp32_op_names = ['MatMul_(566|660)', 'Unsqueeze_91']
+        elif model_args.model_name_or_path == 'deepset/roberta-large-squad2':
+            fp32_op_names = ['Attention_(0|1(|4)|2|3|4|5|8|9)', 
+                             'MatMul_(2(290|188|0(86|76))|1(9(84|74|60)|882|678))',
+                             'Squeeze_.*?', 'Split_.*?', 'Add_.*?', 'Gather_.*?']
+        elif model_args.model_name_or_path == 'distilbert-base-uncased-distilled-squad':
+            fp32_op_names = ['MatMul_(448|272|184)', 'Squeeze_.*?', 'Split_.*?', 'Add_.*?','Gather_.*?']
         config = PostTrainingQuantConfig(approach='static',
-                                         op_name_list={op_name:FP32_CONFIG for op_name in fp32_op_names if fp32_op_names})
+                                         quant_level='default' if fp32_op_names else 0,
+                                         op_name_list={op_name:FP32 for op_name in fp32_op_names} if fp32_op_names else None)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
-                                   calib_dataloader=DefaultDataLoader(calib_dataset, model_args.batch_size)
-                                   )
+                                   calib_dataloader=DefaultDataLoader(calib_dataset, model_args.batch_size))
         q_model.save(model_args.save_path)
 
     if model_args.benchmark:
