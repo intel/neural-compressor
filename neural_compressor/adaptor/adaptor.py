@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs.'''
+
 from abc import abstractmethod
 
 '''The framework backends supported by neural_compressor, including tensorflow, mxnet and pytorch.
@@ -31,8 +31,8 @@ FRAMEWORKS = {}
 def adaptor_registry(cls):
     '''The class decorator used to register all Adaptor subclasses.
 
-    Args:
-        cls (class): The class of register.
+       Args:
+           cls (class): The class of register.
     '''
     assert cls.__name__.endswith(
         'Adaptor'), "The name of subclass of Adaptor should end with \'Adaptor\' substring."
@@ -43,7 +43,10 @@ def adaptor_registry(cls):
 
 
 class Adaptor(object):
-    '''The base class of framework adaptor layer.'''
+    '''The base class of framework adaptor layer.
+
+    '''
+
     def __init__(self, framework_specific_info):
         pass
 
@@ -51,15 +54,11 @@ class Adaptor(object):
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
         '''The function is used to do calibration and quanitization in post-training quantization.
 
-        Quantization processing includes calibration and conversion processing for
-        post-training quantization, while for quantization-aware training,
-        it includes training and conversion processing.
-        
-        Args:
-            tune_cfg(dict): The chosen tuning configuration.
-            model (object): The model to do calibration.
-            dataloader(object): The dataloader used to load calibration dataset.
-            q_func (optional): training function for quantization aware training mode.
+           Args:
+               tune_cfg(dict): The chosen tuning configuration.
+               model (object): The model to do calibration.
+               dataloader(object): The dataloader used to load calibration dataset.
+               q_func (optional): training function for quantization aware training mode.
         '''
         raise NotImplementedError
 
@@ -67,18 +66,15 @@ class Adaptor(object):
     def evaluate(self, model, dataloader, postprocess=None,
                  metric=None, measurer=None, iteration=-1, tensorboard=False):
         '''The function is used to run evaluation on validation dataset.
-        
-        This is a built-in function, if user wants to use specific evaluation function,
-        he can pass the evaluation function to quantizer.
-        
-        Args:
-            model (object): The model to do calibration.
-            dataloader (generator): generate the data and labels.
-            postprocess (object, optional): process the result from the model
-            metric (object, optional): Depends on model category. Defaults to None.
-            measurer (object, optional): for precise benchmark measurement.
-            iteration(int, optional): control steps of mini-batch
-            tensorboard (boolean, optional): for tensorboard inspect tensor.
+
+           Args:
+               model (object): The model to do calibration.
+               dataloader (generator): generate the data and labels.
+               postprocess (object, optional): process the result from the model
+               metric (object, optional): Depends on model category. Defaults to None.
+               measurer (object, optional): for precise benchmark measurement.
+               iteration(int, optional): control steps of mini-batch
+               tensorboard (boolean, optional): for tensorboard inspect tensor.
         '''
         raise NotImplementedError
 
@@ -86,8 +82,8 @@ class Adaptor(object):
     def query_fw_capability(self, model):
         '''The function is used to return framework tuning capability.
 
-        Args:
-            model (object): The model to query quantization tuning capability.
+           Args:
+               model (object): The model to query quantization tuning capability.
         '''
         raise NotImplementedError
 
@@ -95,11 +91,11 @@ class Adaptor(object):
     def query_fused_patterns(self, model):
         '''The function is used to run fused patterns in framework.
 
-        Args:
-            model (object): The model to do calibration.
+           Args:
+               model (object): The model to do calibration.
 
-        Return:
-            [['conv', 'relu'], ['conv', 'relu', 'bn']]
+           Return:
+              [['conv', 'relu'], ['conv', 'relu', 'bn']]
         '''
         raise NotImplementedError
 
@@ -108,33 +104,33 @@ class Adaptor(object):
                        inspect_type='activation', save_to_disk=False):
         '''The function is used by tune strategy class for dumping tensor info.
 
-        Args:
-            model (object): The model to inspect.
-            dataloader (object): The dataloader used to feed into.
-            op_list (list): The op name in the fp32 model for dumpping.
-            iteration_list (list): The iteration list containing iterations to dump.
-            inspect_type (str): The valid value are 'weight', 'activation', 'all'.
-            save_to_disk (bool): Save to disk or memory.
+           Args:
+               model (object): The model to inspect.
+               dataloader (object): The dataloader used to feed into.
+               op_list (list): The op name in the fp32 model for dumpping.
+               iteration_list (list): The iteration list containing iterations to dump.
+               inspect_type (str): The valid value are 'weight', 'activation', 'all'.
+               save_to_disk (bool): Save to disk or memory.
 
-        Return:
-            Numpy Array Dict
-            {
-                'weight': {
-                'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
-                'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
-                ...
-                },
-                'activation': [
-                # iter 0
-                {
-                    'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
-                    'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
-                    ...
-                },
-                # iter 1
-                ...
-                ]
-            }
+           Return:
+               Numpy Array Dict
+               {
+                 'weight': {
+                   'node0_name': {'weight0_name': numpy.array, 'bias0_name': numpy.array, ...},
+                   'node1_name': {'weight1_name': numpy.array, 'bias1_name': numpy.array, ...},
+                   ...
+                 },
+                 'activation': [
+                   # iter 0
+                   {
+                     'node0_name': {'output0_name': numpy.array, 'output1_name': numpy.array, ...}
+                     'node1_name': {'output1_name': numpy.array, 'output1_name': numpy.array, ...}
+                     ...
+                   },
+                   # iter 1
+                   ...
+                 ]
+               }
         '''
         raise NotImplementedError
 
@@ -142,29 +138,29 @@ class Adaptor(object):
     def set_tensor(self, model, tensor_dict):
         '''The function is used by tune strategy class for setting tensor back to model.
 
-        Args:
-            model (object): The model to set tensor. Usually it is quantized model.
-            tensor_dict (dict): The tensor dict to set. Note the numpy array contains float
-                                value, adaptor layer has the responsibility to quantize to
-                                int8 or int32 to set into the quantized model if needed.
-                                The dict format is something like:
-                                {
-                                    'weight0_name': numpy.array,
-                                    'bias0_name': numpy.array,
-                                    ...
-                                }
+           Args:
+               model (object): The model to set tensor. Usually it is quantized model.
+               tensor_dict (dict): The tensor dict to set. Note the numpy array contains float
+                                   value, adaptor layer has the responsibility to quantize to
+                                   int8 or int32 to set into the quantized model if needed.
+                                   The dict format is something like:
+                                   {
+                                     'weight0_name': numpy.array,
+                                     'bias0_name': numpy.array,
+                                     ...
+                                   }
         '''
         raise NotImplementedError
 
     def quantize_input(self, model):
-        '''Quantize the model to be able to take quantized input
+        ''' quantize the model to be able to take quantized input
 
-        Args:
-            model (object): The model to quantize input
+            Args:
+                model (object): The model to quantize input
 
-        Return:
-            model (object): The quantized input model
-            scale (float): The scale for dataloader to generate quantized input
+            Return:
+                model (object): The quantized input model
+                scale (float): The scale for dataloader to generate quantized input
         '''
         return model, 1.
 
@@ -179,16 +175,17 @@ class Adaptor(object):
 
     @abstractmethod
     def _post_eval_hook(self, model, *args, **kwargs):
-        '''The function is used to do some post process after complete evaluation.'''
+        '''The function is used to do some post process after complete evaluation.
+        '''
         raise NotImplementedError
 
     @abstractmethod
     def save(self, model, path):
         '''The function is used by tune strategy class for saving model.
 
-        Args:
-            model (object): The model to saved.
-            path (string): The path where to save.
+           Args:
+               model (object): The model to saved.
+               path (string): The path where to save.
         '''
         raise NotImplementedError
 
@@ -196,9 +193,9 @@ class Adaptor(object):
     def convert(self, model, source, destinatin):
         '''The function is used to convert a source model format to another.
 
-        Args:
-            model (neural_compressor.model): base model to be converted.
-            source (string): The source model format.
-            destination (string): The destination model format.
+           Args:
+               model (neural_compressor.model): base model to be converted.
+               source (string): The source model format.
+               destination (string): The destination model format.
         '''
         raise NotImplementedError
