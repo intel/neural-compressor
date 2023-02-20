@@ -70,7 +70,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 "supported backends: {}".format(ONNXRT_BACKENDS[self.backend],
                 [ONNXRT_BACKENDS[i] for i in ort.get_all_providers()]))
 
-        # Get quantization format according to framework_specific_info
+        # get quantization format according to framework_specific_info
         if (not self.dynamic and "format" in framework_specific_info and \
             framework_specific_info["format"].lower() == 'qdq') or \
             self.backend == 'TensorrtExecutionProvider':
@@ -84,7 +84,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     framework_specific_info["format"].lower() == 'qdq':
                     logger.warning("Dynamic approach doesn't support QDQ format.")
         
-        # Get quantization config file according to backend
+        # get quantization config file according to backend
         if self.backend == 'CPUExecutionProvider':
             config_file = 'onnxrt.yaml'
         elif self.backend == 'TensorrtExecutionProvider':
@@ -95,7 +95,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.query_handler_ext = None
         if framework_specific_info["approach"] == 'post_training_auto_quant' and \
             self.format != "integerops":
-            # If approach is post_training_auto_quant, 
+            # if approach is post_training_auto_quant, 
             # both static and dynamic quantization will be performed
             self.query_handler = ONNXRTQuery(
                 static=True, 
@@ -618,14 +618,14 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 break
         
         # 2. according to input
-        # Typically, NLP models have multiple inputs, 
+        # typically, NLP models have multiple inputs, 
         # and the dimension of each input is usually 2 (batch_size, max_seq_len)
         sess = ort.InferenceSession(model.model.SerializeToString())
         input_shape_lens = [len(input.shape) for input in  sess.get_inputs()]
         if len(input_shape_lens) > 1 and all(shape_len == 2 for shape_len in input_shape_lens):
             is_nlp = True
 
-        # 3 according to attention structure
+        # 3. according to attention structure
         for node in model.model.graph.node:
             if node.op_type == 'Add':
                 start_node = node
@@ -668,7 +668,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     is_nlp = True
                     break
 
-        # 4 according to LSTM structure
+        # 4. according to LSTM structure
         if "LSTM" in [node.op_type for node in model.model.graph.node]:
             is_nlp = True
 
