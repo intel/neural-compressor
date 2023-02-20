@@ -196,10 +196,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/image_recognition/keras_models/xception/quantization/ptq">keras</a></td>
   </tr>
   <tr>
-    <td>*ResNet V2</td>
+    <td>ResNet V2</td>
     <td>Image Recognition</td>
     <td>Quantization-Aware Training</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/resnet_v2/quantization/qat">keras</a> </td>
+    <td><a href="./tensorflow/image_recognition/resnet_v2/quantization/qat">keras</a> </td>
   </tr>
   <tr>
     <td>*EfficientNet V2 B0</td>
@@ -322,7 +322,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Image Recognition</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="./tensorflow/image_recognition/inception_v3/pruning/magnitude">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/keras_models/inception_v3/pruning/magnitude">pb</a></td>
   </tr>
   <tr>
     <td>ResNet V2</td>
