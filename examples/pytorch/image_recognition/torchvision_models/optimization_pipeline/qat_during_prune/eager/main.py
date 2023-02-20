@@ -185,7 +185,7 @@ def main_worker(args):
         confs.append(q_conf)
 
     from neural_compressor.training import prepare_compression
-    compression_manager = prepare_compression(model, p_conf)
+    compression_manager = prepare_compression(model, confs)
     compression_manager.callbacks.on_train_begin()
     model = compression_manager.model
 
