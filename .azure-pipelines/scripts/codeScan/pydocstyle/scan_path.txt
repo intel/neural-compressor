@@ -6,7 +6,6 @@
 /neural-compressor/neural_compressor/utils
 /neural-compressor/neural_compressor/pruner
 /neural-compressor/neural_compressor/adaptor/mxnet_utils
-/neural-compressor/neural_compressor/adaptor/adaptor.py
 /neural-compressor/neural_compressor/adaptor/ox_utils
 /neural-compressor/neural_compressor/adaptor/tf_utils
 /neural-compressor/neural_compressor/adaptor/tensorflow.py
