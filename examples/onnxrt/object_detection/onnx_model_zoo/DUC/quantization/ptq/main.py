@@ -207,7 +207,8 @@ class IoU:
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
     batch_size = 1
-    label_path = args.data_path.split('/leftImg8bit/val')[0] + '/gtFine/val'
+    args.data_path = args.data_path.replace('\\', '/')
+    label_path = os.path.join(args.data_path.split('/leftImg8bit/val')[0], 'gtFine', 'val')    
     dataloader  = Dataloader(args.data_path, label_path, batch_size=batch_size)
     metric = IoU()
 

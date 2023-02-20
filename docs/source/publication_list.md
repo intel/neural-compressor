@@ -1,6 +1,7 @@
-Full Publications/Events (55)
+Full Publications/Events (56)
 ==========
-## 2023 (2)
+## 2023 (3)
+* Post on Social Media: [Training and Inference for Stable Diffusion | Intel Business](https://www.youtube.com/watch?v=emCgSTlJaAg) (Jan 2023)
 * Blog by Intel: [Intel® AMX Enhances AI Inference Performance](https://www.intel.com/content/www/us/en/products/docs/accelerator-engines/advanced-matrix-extensions/alibaba-solution-brief.html) (Jan 2023)
 * Blog by TensorFlow: [Optimizing TensorFlow for 4th Gen Intel Xeon Processors](https://blog.tensorflow.org/2023/01/optimizing-tensorflow-for-4th-gen-intel-xeon-processors.html) (Jan 2023)
 

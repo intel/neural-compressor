@@ -174,20 +174,26 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """
     device = kwargs.get('device')
     graph = tf.Graph()
+    if version1_lt_version2(tf.version.VERSION, '2.0.0'):
+        from tensorflow._api.v1.config import experimental
+        list_physical_devices = experimental.list_physical_devices
+    else:
+        list_physical_devices = tf.config.list_physical_devices
+
     try:
         with graph.as_default():
             if device == "cpu":
-                cpus = tf.config.list_physical_devices("CPU")
+                cpus = list_physical_devices("CPU")
                 node_device = cpus[0].name.replace('physical_device:', '')
                 with graph.device(node_device):
                     tf.import_graph_def(model, name='')
             else:
                 found_device = False
-                gpus = tf.config.list_physical_devices("GPU")
+                gpus = list_physical_devices("GPU")
                 for gpu in gpus:
                     if gpu.name.replace('physical_device:', '') == device:
                         found_device = True
-                xpus = tf.config.list_physical_devices("XPU")
+                xpus = list_physical_devices("XPU")
                 for xpu in xpus:
                     if xpu.name.replace('physical_device:', '') == device:
                         found_device = True
@@ -207,17 +213,17 @@ def graph_def_session(model, input_tensor_names, output_tensor_names, **kwargs):
         model = strip_unused_nodes(model, input_node_names, output_node_names)
         with graph.as_default():
             if device == "cpu":
-                cpus = tf.config.list_physical_devices("CPU")
+                cpus = list_physical_devices("CPU")
                 node_device = cpus[0].name.replace('physical_device:', '')
                 with graph.device(node_device):
                     tf.import_graph_def(model, name='')
             else:
                 found_device = False
-                gpus = tf.config.list_physical_devices("GPU")
+                gpus = list_physical_devices("GPU")
                 for gpu in gpus:
                     if gpu.name.replace('physical_device:', '') == device:
                         found_device = True
-                xpus = tf.config.list_physical_devices("XPU")
+                xpus = list_physical_devices("XPU")
                 for xpu in xpus:
                     if xpu.name.replace('physical_device:', '') == device:
                         found_device = True
@@ -567,21 +573,27 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     config.inter_op_parallelism_threads = 1
     graph = tf.Graph()
     sess = tf.compat.v1.Session(graph=graph, config=config)
+    if version1_lt_version2(tf.version.VERSION, '2.0.0'):
+        from tensorflow._api.v1.config import experimental
+        list_physical_devices = experimental.list_physical_devices
+    else:
+        list_physical_devices = tf.config.list_physical_devices
+
     with graph.as_default():
         device = kwargs.get('device')
         if device == "cpu":
-            cpus = tf.config.list_physical_devices("CPU")
+            cpus = list_physical_devices("CPU")
             node_device = cpus[0].name.replace('physical_device:', '')
             with graph.device(node_device):
                 saver = tf.compat.v1.train.import_meta_graph(\
                     os.path.join(model, ckpt_prefix + '.meta'), clear_devices=True)
         else:
             found_device = False
-            gpus = tf.config.list_physical_devices("GPU")
+            gpus = list_physical_devices("GPU")
             for gpu in gpus:
                 if gpu.name.replace('physical_device:', '') == device:
                     found_device = True
-            xpus = tf.config.list_physical_devices("XPU")
+            xpus = list_physical_devices("XPU")
             for xpu in xpus:
                 if xpu.name.replace('physical_device:', '') == device:
                     found_device = True

@@ -3,12 +3,10 @@
     "resnet18_fx": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "imagenet/img_raw",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
-    },
+      "input_model": "resnet18",
+      "main_script": "main.py",
+      "batch_size": 100
+    },    
     "resnet50": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/eager",
       "dataset_location": "imagenet/img_raw",

@@ -232,5 +232,24 @@ class TestBasicTuningStrategy(unittest.TestCase):
         q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_dataloader=dataloader)
         self.assertIsNotNone(q_model)
 
+    def test_no_tuning(self):
+        import torchvision
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data import Datasets, DATALOADERS
+        conf = PostTrainingQuantConfig()
+        conf.performance_only = True
+        # test performance_only without eval_func
+        # dataset and dataloader
+        dataset = Datasets("pytorch")["dummy"](((1, 3, 224, 224)))
+        dataloader = DATALOADERS["pytorch"](dataset)
+        # model
+        model = torchvision.models.resnet18()
+        #tuning and accuracy criterion
+        conf = PostTrainingQuantConfig()
+        # fit
+        q_model = fit(model=model, conf=conf, calib_dataloader=dataloader)
+        self.assertIsNotNone(q_model)
+
 if __name__ == "__main__":
     unittest.main()
