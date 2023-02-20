@@ -36,7 +36,7 @@ bash run_tuning.sh --input_model=weights/yolov3.weights
 # performance
 bash run_benchmark.sh --input_model=weights/yolov3.weights --mode=performance --int8=true
 
-##accuracy_only
+## accuracy_only
 bash run_benchmark.sh --input_model=weights/yolov3.weights --mode=accuracy --int8=true
 ```
 
