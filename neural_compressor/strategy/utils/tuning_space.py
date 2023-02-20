@@ -516,7 +516,7 @@ class TuningSpace:
                     else:
                         # Parse the data info for item　with unique value.
                         att_dtype = op_cap[att]['dtype'] 
-                        if isinstance(att_dtype):
+                        if isinstance(att_dtype, list):
                             att_dtype = att_dtype[0]
                         parsed_op_cap['precision'][att][att_dtype] = {'dtype': att_dtype}
                         self.ops_data_type[op_name_type][('precision', att, att_dtype)] = att_dtype
