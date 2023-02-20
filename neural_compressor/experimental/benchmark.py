@@ -221,20 +221,29 @@ class Benchmark(object):
 
     def call_one(self, cmd, log_file):
         """Execute one command for one instance in one thread and dump the log (for Windows)."""
+        logger.info("call one....")
         proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,
                                 shell=True)
+        logger.info("proc open....")
         with open(log_file, "w", 1, encoding="utf-8") as log_file:
+            logger.info("file open....")
             log_file.write(f"[ COMMAND ] {cmd} \n")
+            logger.info("command written....")
             for line in proc.stdout:
                 decoded_line = line.decode("utf-8", errors="ignore").strip()
+                logger.info(decoded_line)   # print to terminal
                 log_file.write(decoded_line + "\n")
+            logger.info("log written....")
+        logger.info("finish writting....")
         proc.wait()
         return_code = proc.returncode
         msg = "Exit code: {}".format(return_code)
+        logger.info("finish waiting....")
         if return_code != 0:
             raise Exception(msg)
+        logger.info("call one done....")
 
     def config_instance(self):
         """Configure the multi-instance commands and trigger benchmark with sub process."""
@@ -286,9 +295,11 @@ class Benchmark(object):
                     '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))))
             for command_thread in threads:
                 command_thread.start()
+                logger.info("threads start")
             # Wait for all of them to finish
             for command_thread in threads:
                 command_thread.join()
+                logger.info("threads join")
             return
         try:
             p.communicate()
