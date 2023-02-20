@@ -26,12 +26,14 @@ from collections import OrderedDict, UserDict
 from .query import QueryBackendCapability
 from .adaptor import adaptor_registry, Adaptor
 from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_elapsed_time
-from ..utils.utility import Statistics, GLOBAL_STATE, MODE, version1_lt_version2
+from ..utils.utility import Statistics, GLOBAL_STATE, MODE
+from ..utils.utility import version1_lt_version2, version1_gte_version2, version1_eq_version2
 from ..utils import logger
 from ..conf.dotdict import deep_get
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
 
 tensorflow = LazyImport('tensorflow')
+spr_base_verions = ('2.11.0202242', '2.11.0202250')
 
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
@@ -85,16 +87,17 @@ class TensorFlowAdaptor(Adaptor):
         self.dump_times = 0   # for tensorboard
 
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[:-len('Adaptor')].lower())
-        self.query_handler = TensorflowQuery(local_config_file=os.path.join(
-            os.path.dirname(__file__), cfg_yaml_name), performance_only=self.performance_only)
         self.itex_mode = self.backend == 'itex' or cfg_yaml_name == 'tensorflow_itex.yaml'
+        self.query_handler = TensorflowQuery(local_config_file=os.path.join(
+            os.path.dirname(__file__), cfg_yaml_name),
+            performance_only=self.performance_only,
+            itex_mode=self.itex_mode)
 
         from pkg_resources import parse_version
         import tensorflow as tf
-        self.new_api = tf.version.VERSION in ('2.11.0202242', '2.11.0202250')
+        self.new_api = tf.version.VERSION in spr_base_verions
         self.qdq_enabled = self.itex_mode or self.format == 'QDQ' or self.new_api
         self.op_wise_sequences = self.query_handler.get_eightbit_patterns(self.qdq_enabled)
-        self.optimization = self.query_handler.get_grappler_optimization_cfg()
 
         self.fp32_results = []
         self.fp32_preds_as_label = False
@@ -723,11 +726,11 @@ class TensorFlowAdaptor(Adaptor):
 
         valid_precision = self.query_handler.get_mixed_precision_combination()
         op_capability = self.query_handler.get_quantization_capability()
-        conv_config = copy.deepcopy(op_capability['uint8']['Conv2D'])
-        conv3d_config = copy.deepcopy(op_capability['uint8']['Conv3D']) if 'Conv3D' in op_capability['uint8'] else None
-        matmul_config = copy.deepcopy(op_capability['uint8']['MatMul'])
-        other_config = copy.deepcopy(op_capability['uint8']['default'])
-        
+        conv_config = copy.deepcopy(op_capability['Conv2D'])
+        conv3d_config = copy.deepcopy(op_capability['Conv3D']) if 'Conv3D' in op_capability else None
+        matmul_config = copy.deepcopy(op_capability['MatMul'])
+        other_config = copy.deepcopy(op_capability['default'])
+
         self.quantizable_op_details = OrderedDict()
 
         self._init_op_stat = {i: [] for i in tf_quantizable_op_type}
@@ -852,7 +855,7 @@ class TensorFlowAdaptor(Adaptor):
         """
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
 
-        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api, self.device)
+        self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
 
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
@@ -872,13 +875,11 @@ class TensorFlowAdaptor(Adaptor):
                     return True
             return False
 
-
         if (self.new_api and self.performance_only) or self.itex_mode or \
                     os.getenv('TF_FORCE_CONCAT_OPTS') == '1':
             self._filter_unquantizable_concat_performance_only(matched_nodes)
         else:
             self._filter_unquantizable_concat(matched_nodes)
-
         copied_matched_nodes = copy.deepcopy(matched_nodes)
         for i in copied_matched_nodes:
             if i[-1][0] in self.query_handler.get_op_types()['int8']:
@@ -1484,7 +1485,7 @@ class TensorFlowAdaptor(Adaptor):
             tf.compat.v1.GraphDef: the quantized model
         """
         from .tf_utils.graph_rewriter.generic.pre_optimize import PreOptimization
-        self.pre_optimizer_handle = PreOptimization(model, self.optimization, self.new_api, self.device)
+        self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
         self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
         model.graph_def = self.pre_optimized_model.graph_def
 
@@ -1779,7 +1780,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
 
 class TensorflowQuery(QueryBackendCapability):
     """Tensorflow Query Capability Class."""
-    def __init__(self, local_config_file=None, performance_only=False):
+    def __init__(self, local_config_file=None, performance_only=False, itex_mode=False, quant_mode='static'):
         """Initilization.
 
         Args:
@@ -1793,6 +1794,8 @@ class TensorflowQuery(QueryBackendCapability):
         self.cfg = local_config_file
         self.cur_config = None
         self.performance_only = performance_only
+        self.quant_mode = quant_mode
+        self.itex_mode = itex_mode
         self._one_shot_query()
 
     def _get_specified_version_cfg(self, data):
@@ -1863,17 +1866,9 @@ class TensorflowQuery(QueryBackendCapability):
                 if not self.performance_only:
                     remove_int8_ops = ['FusedBatchNorm', 'FusedBatchNormV2', 'FusedBatchNormV3',
                                        '_MklFusedInstanceNorm']
-                    for op in remove_int8_ops:
-                        while op in self.cur_config['ops']['int8']:
-                            self.cur_config['ops']['int8'].remove(op)
-                        if self.cur_config.get('capabilities'):
-                            self.cur_config['capabilities']['int8'].pop(op, None)
-                        patterns = [f'Dequantize + {op} + Relu + QuantizeV2',
-                                    f'Dequantize + {op} + LeakyRelu + QuantizeV2']
-                        for pattern in patterns:
-                            if self.cur_config.get('patterns'):
-                                while pattern in self.cur_config['patterns']['int8']:
-                                    self.cur_config['patterns']['int8'].remove(pattern)
+                    for op_type in remove_int8_ops:
+                        while op_type in self.cur_config['int8'][self.quant_mode].keys():
+                            self.cur_config['int8'][self.quant_mode].pop(op_type, None)
 
             except Exception as e:
                 logger.info("Fail to parse {} due to {}.".format(self.cfg, str(e)))
@@ -1896,14 +1891,6 @@ class TensorflowQuery(QueryBackendCapability):
         """
         return self.cur_config['version']['name']
 
-    def get_precisions(self):
-        """Get supported precisions for current backend.
-
-        Returns:
-            [string list]: the precisions' name.
-        """
-        return self.cur_config['precisions']['names']
-
     def get_op_types(self):
         """Get the supported op types by all precisions.
 
@@ -1911,7 +1898,9 @@ class TensorflowQuery(QueryBackendCapability):
             [dictionary list]: A list composed of dictionary which key is precision
             and value is the op types.
         """
-        return self.cur_config['ops']
+        return {'int8': self.get_op_types_by_precision('int8'),
+                'uint8': self.get_op_types_by_precision('uint8'),
+                'bf16': self.get_op_types_by_precision('bf16')}
 
     def get_fuse_patterns(self):
         """Get supported patterns by low precisions.
@@ -1920,7 +1909,254 @@ class TensorflowQuery(QueryBackendCapability):
             [dictionary list]: A list composed of dictionary which key is precision
             and value is the supported patterns.
         """
-        return self.cur_config['patterns']
+        spr_int8_pattern_list = [
+            'Conv2D + BiasAdd',
+            'Conv2D + BiasAdd + Add + Relu6 + Mul + Mul',
+            'Conv2D + Add + Relu6 + Mul + Mul',
+            'Conv2D + BiasAdd + swish_f32',
+            'Conv2D + Add + swish_f32',
+            'Conv2D + AddV2 + swish_f32',
+            'Conv2D + swish_f32',
+            'Conv2D + BiasAdd + Relu',
+            'Conv2D + Relu',
+            'Conv2D + BiasAdd + Elu',
+            'Conv2D + Elu',
+            'Conv2D + BiasAdd + Relu6',
+            'Conv2D + Relu6',
+            'Conv2D + BiasAdd + LeakyRelu',
+            'Conv2D + BiasAdd + Add + LeakyRelu',
+            'Conv2D + BiasAdd + AddV2 + LeakyRelu',
+            'Conv2D + Add + LeakyRelu',
+            'Conv2D + AddV2 + LeakyRelu',
+            'Conv2D + LeakyRelu',
+            'Conv2D + BiasAdd + Sigmoid',
+            'Conv2D + Sigmoid',
+            'Conv2D + BiasAdd + LeakyRelu + AddV2',
+            'Conv2D + BiasAdd + LeakyRelu + Add',
+            'Conv2D + LeakyRelu + AddV2',
+            'Conv2D + LeakyRelu + Add',
+            'Conv2D + BiasAdd + Relu + AddV2',
+            'Conv2D + BiasAdd + Relu + Add',
+            'Conv2D + Relu + AddV2',
+            'Conv2D + Relu + Add',
+            'Conv2D + Add',
+            'Conv2D + AddV2',
+            'Conv2D + AddV2 + Add',
+            'Conv2D + Add + Add',
+            'Conv2D + BiasAdd + Add',
+            'Conv3D + Add',
+            'Conv3D + AddV2',
+            'Conv3D + BiasAdd',
+            'Conv3D + BiasAdd + Add',
+            'Conv3D + BiasAdd + AddV2',
+            'Conv3D + AddV2 + AddV2',
+            'DepthwiseConv2dNative + BiasAdd + Add + Relu6 + Mul + Mul',
+            'DepthwiseConv2dNative + Add + Relu6 + Mul + Mul',
+            'DepthwiseConv2dNative + BiasAdd + swish_f32',
+            'DepthwiseConv2dNative + Add + swish_f32',
+            'DepthwiseConv2dNative + AddV2 + swish_f32',
+            'DepthwiseConv2dNative + swish_f32',
+            'DepthwiseConv2dNative + BiasAdd + LeakyRelu',
+            'DepthwiseConv2dNative + LeakyRelu',
+            'DepthwiseConv2dNative + BiasAdd + Relu6',
+            'DepthwiseConv2dNative + Relu6',
+            'DepthwiseConv2dNative + BiasAdd + Relu',
+            'DepthwiseConv2dNative + Relu',
+            'DepthwiseConv2dNative + Add + Relu6',
+            'DepthwiseConv2dNative + BiasAdd',
+            'FusedBatchNormV3 + Relu',
+            'FusedBatchNormV3 + LeakyRelu',
+            '_MklFusedInstanceNorm + Relu',
+            '_MklFusedInstanceNorm + LeakyRelu',
+            'Conv2DBackpropInput + BiasAdd',
+            'Conv3DBackpropInputV2 + BiasAdd'
+        ]
+
+        spr_uint8_pattern_list = [
+            'Conv2D + BiasAdd + AddN + Relu',
+            'Conv2D + AddN + Relu',
+            'Conv2D + BiasAdd + AddN + Relu6',
+            'Conv2D + AddN + Relu6',
+            'Conv2D + BiasAdd + AddV2 + Relu',
+            'Conv2D + AddV2 + Relu',
+            'Conv2D + BiasAdd + AddV2 + Relu6',
+            'Conv2D + AddV2 + Relu6',
+            'Conv2D + BiasAdd + Add + Relu',
+            'Conv2D + Add + Relu',
+            'Conv2D + BiasAdd + Add + Relu6',
+            'Conv2D + Add + Relu6',
+            'Conv2D + BiasAdd + Relu',
+            'Conv2D + BiasAdd + Relu6',
+            'Conv2D + Relu',
+            'Conv2D + Relu6',
+            'Conv2D + BiasAdd',
+            'Conv2D + Add + Add + Relu',
+            'DepthwiseConv2dNative + BiasAdd + Relu6',
+            'DepthwiseConv2dNative + Relu6',
+            'DepthwiseConv2dNative + BiasAdd + Relu',
+            'DepthwiseConv2dNative + Relu',
+            'DepthwiseConv2dNative + Add + Relu6',
+            'DepthwiseConv2dNative + BiasAdd',
+            'MatMul + BiasAdd',
+            'MatMul + BiasAdd + Add',
+            'MatMul + BiasAdd + AddV2',
+            'MatMul + BiasAdd + Relu',
+            'MatMul + BiasAdd + Relu6',
+            'MatMul + BiasAdd + LeakyRelu',
+            'MatMul + BiasAdd + Gelu',
+            'MatMul + BiasAdd + Elu',
+            'MatMul + BiasAdd + Tanh',
+            'MatMul + BiasAdd + Sigmoid',
+            'MatMul + Add',
+            'MatMul + AddV2',
+            'MatMul + Relu',
+            'MatMul + Relu6',
+            'MatMul + LeakyRelu',
+            'MatMul + Gelu',
+            'MatMul + Elu',
+            'MatMul + Tanh',
+            'MatMul + Sigmoid',
+            'BatchMatMul + Mul',
+            'BatchMatMulV2 + Mul',
+            'BatchMatMul + Add',
+            'BatchMatMulV2 + Add',
+            'BatchMatMul + AddV2',
+            'BatchMatMulV2 + AddV2',
+            'BatchMatMul + Mul + Add',
+            'BatchMatMulV2 + Mul + Add',
+            'BatchMatMul + Mul + AddV2',
+            'BatchMatMulV2 + Mul + AddV2',
+            'Conv3D + AddV2 + AddV2 + Relu',
+            'Conv3D + Add + Relu',
+            'Conv3D + AddV2 + Relu',
+            'Conv3D + Relu',
+            'Conv3D + Relu6',
+            'Conv3D + Add + Relu6',
+            'Conv3D + AddV2 + Relu6',
+            'Conv3D + Elu',
+            'Conv3D + LeakyRelu',
+            'Conv3D + BiasAdd + Relu',
+            'Conv3D + BiasAdd + Relu6',
+            'Conv3D + BiasAdd + Elu',
+            'Conv3D + BiasAdd + LeakyRelu',
+            'Conv3D + Add + Elu',
+            'Conv3D + Add + LeakyRelu',
+            'Conv2DBackpropInput + BiasAdd',
+            'Conv3DBackpropInputV2 + BiasAdd'
+        ]
+
+        tf_int8_pattern_list = [
+            'Conv2D + BiasAdd',
+            'Conv2D + BiasAdd + Relu',
+            'Conv2D + BiasAdd + Relu6'
+        ]
+        tf_uint8_pattern_list = [
+            'Conv2D + BiasAdd + AddN + Relu',
+            'Conv2D + BiasAdd + AddN + Relu6',
+            'Conv2D + BiasAdd + AddV2 + Relu',
+            'Conv2D + BiasAdd + AddV2 + Relu6',
+            'Conv2D + BiasAdd + Add + Relu',
+            'Conv2D + BiasAdd + Add + Relu6',
+            'Conv2D + BiasAdd + Relu',
+            'Conv2D + BiasAdd + Relu6',
+            'Conv2D + Add + Relu',
+            'Conv2D + Add + Relu6',
+            'Conv2D + Relu',
+            'Conv2D + Relu6',
+            'Conv2D + BiasAdd',
+            'DepthwiseConv2dNative + BiasAdd + Relu6',
+            'DepthwiseConv2dNative + BiasAdd + Relu',
+            'DepthwiseConv2dNative + Add + Relu6',
+            'DepthwiseConv2dNative + BiasAdd',
+            'MatMul + BiasAdd + Relu',
+            'MatMul + BiasAdd'
+        ]
+        tf1_15_up3_int8_pattern_list= [
+            'Conv2D + BiasAdd',
+            'Conv2D + BiasAdd + Relu',
+            'Conv2D + BiasAdd + LeakyRelu',
+            'Conv2D + BiasAdd + LeakyRelu + AddV2',
+            'Conv2D + BiasAdd + Relu6'
+            ]
+        tf1_15_up3_uint8_pattern_list = [
+            'Conv2D + BiasAdd + AddN + Relu',
+            'Conv2D + BiasAdd + AddN + Relu6',
+            'Conv2D + BiasAdd + AddV2 + Relu',
+            'Conv2D + BiasAdd + AddV2 + Relu6',
+            'Conv2D + BiasAdd + Add + Relu',
+            'Conv2D + BiasAdd + Add + Relu6',
+            'Conv2D + BiasAdd + Relu',
+            'Conv2D + BiasAdd + Relu6',
+            'Conv2D + Add + Relu',
+            'Conv2D + Add + Relu6',
+            'Conv2D + Relu',
+            'Conv2D + Relu6',
+            'Conv2D + BiasAdd',
+            'DepthwiseConv2dNative + BiasAdd + Relu6',
+            'DepthwiseConv2dNative + Add + Relu6',
+            'DepthwiseConv2dNative + BiasAdd',
+            'MatMul + BiasAdd + Relu',
+            'MatMul + BiasAdd',
+        ]
+        old_tf_int8_pattern_list = [
+            'MatMul + BiasAdd + Relu',
+            'MatMul + BiasAdd'
+            ]
+        old_tf_uint8_pattern_list = [
+            'Conv2D + BiasAdd + AddN + Relu',
+            'Conv2D + BiasAdd + AddN + Relu6',
+            'Conv2D + BiasAdd + AddV2 + Relu',
+            'Conv2D + BiasAdd + AddV2 + Relu6',
+            'Conv2D + BiasAdd + Add + Relu',
+            'Conv2D + BiasAdd + Add + Relu6',
+            'Conv2D + BiasAdd + Relu',
+            'Conv2D + BiasAdd + Relu6',
+            'Conv2D + Add + Relu',
+            'Conv2D + Add + Relu6',
+            'Conv2D + Relu',
+            'Conv2D + Relu6',
+            'Conv2D + BiasAdd',
+            'DepthwiseConv2dNative + BiasAdd + Relu6',
+            'DepthwiseConv2dNative + Add + Relu6',
+            'DepthwiseConv2dNative + BiasAdd',
+            'MatMul + BiasAdd + Relu',
+            'MatMul + BiasAdd'
+        ]
+
+        for index, pattern in enumerate(spr_int8_pattern_list):
+            spr_int8_pattern_list[index] = 'Dequantize + ' + pattern + ' + QuantizeV2'
+        for index, pattern in enumerate(spr_uint8_pattern_list):
+            spr_uint8_pattern_list[index] = 'Dequantize + ' + pattern + ' + QuantizeV2'
+
+        if not self.performance_only:
+            remove_int8_ops = ['FusedBatchNorm', 'FusedBatchNormV2', 'FusedBatchNormV3',
+                                '_MklFusedInstanceNorm']
+            for op_type in remove_int8_ops:
+                patterns = [f'Dequantize + {op_type} + Relu + QuantizeV2',
+                            f'Dequantize + {op_type} + LeakyRelu + QuantizeV2']
+                for pattern in patterns:
+                    while pattern in spr_int8_pattern_list:
+                        spr_int8_pattern_list.remove(pattern)
+                    while pattern in spr_uint8_pattern_list:
+                        spr_uint8_pattern_list.remove(pattern)
+
+        patterns = {}
+        import tensorflow as tf
+        if tf.version.VERSION in spr_base_verions or self.itex_mode:
+            patterns['int8'] = spr_int8_pattern_list
+            patterns['uint8'] = spr_uint8_pattern_list
+        elif version1_gte_version2(tf.version.VERSION, '2.1.0'):
+            patterns['int8'] = tf_int8_pattern_list
+            patterns['uint8'] = tf_uint8_pattern_list
+        elif version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
+            patterns['int8'] = tf1_15_up3_int8_pattern_list
+            patterns['uint8'] = tf1_15_up3_uint8_pattern_list
+        else:
+            patterns['int8'] = old_tf_int8_pattern_list
+            patterns['uint8'] = old_tf_uint8_pattern_list
+
+        return patterns
+
 
     def get_quantization_capability(self):
         """Get the supported op types' quantization capability.
@@ -1929,7 +2165,9 @@ class TensorflowQuery(QueryBackendCapability):
             [dictionary list]: A list composed of dictionary which key is precision
             and value is a dict that describes all op types' quantization capability.
         """
-        return self.cur_config['capabilities']
+        for op_type, _ in self.cur_config['int8'][self.quant_mode].items():
+            self.cur_config['int8'][self.quant_mode][op_type]['activation']['quant_mode'] = self.quant_mode
+        return self.cur_config['int8'][self.quant_mode]
 
     def get_op_types_by_precision(self, precision):
         """Get op types per precision.
@@ -1940,9 +2178,38 @@ class TensorflowQuery(QueryBackendCapability):
         Returns:
             [string list]: A list composed of op type.
         """
-        assert precision in list(self.cur_config['ops'].keys())
+        assert precision in ('bf16', 'uint8', 'int8')
 
-        return self.cur_config['ops'][precision]
+        import tensorflow as tf
+        if precision == 'int8':
+            if tf.version.VERSION in spr_base_verions or self.itex_mode:
+                op_type_list = [key for key in self.cur_config['int8'][self.quant_mode].keys()]
+                if not self.performance_only and not self.itex_mode:
+                    remove_int8_ops = ['FusedBatchNorm', 'FusedBatchNormV2', 'FusedBatchNormV3',
+                                    '_MklFusedInstanceNorm']
+                    for op_type in remove_int8_ops:
+                        while op_type in op_type_list:
+                            op_type_list.remove(op_type)
+                return op_type_list
+            if version1_gte_version2(tf.version.VERSION, '2.1.0') or \
+               version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
+                return ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+            return ['MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+        if precision == 'uint8':
+            if tf.version.VERSION in spr_base_verions:
+                return [key for key in self.cur_config['int8'][self.quant_mode].keys() if 'Norm' not in key]
+            if version1_gte_version2(tf.version.VERSION, '2.1.0') or \
+               version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
+                return ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool',
+                        'AvgPool', 'DepthwiseConv2dNative']
+            return ['Conv2D', 'MatMul', 'ConcatV2', 'MaxPool', 'AvgPool']
+        if precision == 'bf16':
+            if tf.version.VERSION in spr_base_verions:
+                return self.cur_config[precision]
+            if version1_gte_version2(tf.version.VERSION, '2.1.0') or \
+               version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
+                return ['Conv2D']
+            return []
 
     def get_mixed_precision_combination(self):
         """Get the valid mixed precisions.
@@ -1950,24 +2217,19 @@ class TensorflowQuery(QueryBackendCapability):
         Returns:
             [string list]: valid precision list.
         """
-        if self.cur_config['precisions']['valid_mixed_precisions']:
-            return [i.strip() for i in self.cur_config['precisions']['valid_mixed_precisions']]
-
-        return [i.strip() for i in self.get_precisions().split(',')]
-
-    def get_grappler_optimization_cfg(self):
-        """Get grappler optimization configuration."""
-        return self.cur_config['grappler_optimization']
+        import tensorflow as tf
+        if version1_gte_version2(tf.version.VERSION, '2.1.0') or \
+           version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
+            return ['int8', 'uint8', 'bf16', 'fp32']
+        return ['uint8', 'fp32']
 
     def get_bf16_patterns(self):
         """Get BF16 pattern list.
         
         Returns:
-            [List]: bf16 patter list.
+            [List]: bf16 pattern list.
         """
-        #int8_op_types = self.get_op_types_by_precision('int8') + self.get_op_types_by_precision('uint8')
         bf16_op_types = [i for i in self.get_op_types_by_precision('bf16')]
-        #bf16_op_types = [i for i in self.get_op_types_by_precision('bf16') if i not in int8_op_types]
         res = []
         for i in bf16_op_types:
             res.append([[i]])
@@ -1981,12 +2243,11 @@ class TensorflowQuery(QueryBackendCapability):
             [dictionary]: key is the op type while value is the list of sequences start
                         with the op type same as key value.
         """
-        quantizable_op_types = self.get_op_types_by_precision(
-            'int8') + self.get_op_types_by_precision('uint8')
+        quantizable_op_types = self.get_op_types_by_precision('int8') + \
+                               self.get_op_types_by_precision('uint8')
         int8_patterns = [i.replace(
-            '+', ' ').split() for i in list(set(self.get_fuse_patterns()['int8'] +
-                                                self.get_fuse_patterns()['uint8']))]
-
+                    '+', ' ').split() for i in list(set(self.get_fuse_patterns()['int8'] +
+                                                        self.get_fuse_patterns()['uint8']))]
         res = {}
         for i in quantizable_op_types:
             if qdq_enabled:

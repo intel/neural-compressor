@@ -266,7 +266,7 @@ class GraphConverter:
             if version1_gte_version2(tf.version.VERSION, '2.9.0'):
                 is_supported_version = True
 
-            if version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
+            if tf.version.VERSION == '1.15.0-up3':
                 is_supported_version = True
 
             if tf.version.VERSION in TF_SPR_BASE_VERSIONS:
