@@ -10,7 +10,7 @@ function main {
 
 # init params
 function init_params {
-  tuned_checkpoint=int8_model_dir
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
@@ -119,7 +119,6 @@ function run_tuning {
         --no_cuda \
         --output_dir ${tuned_checkpoint} \
         --tune \
-        --onnx \
         --overwrite_output_dir \
         ${extra_cmd}
 }

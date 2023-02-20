@@ -10,7 +10,7 @@ function main {
 
 # init params
 function init_params {
-  tuned_checkpoint=int8_model_dir
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in

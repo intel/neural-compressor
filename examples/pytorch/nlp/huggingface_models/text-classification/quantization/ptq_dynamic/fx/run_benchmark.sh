@@ -12,7 +12,7 @@ function main {
 function init_params {
   iters=100
   batch_size=16
-  tuned_checkpoint=int8_model_dir
+  tuned_checkpoint=saved_results
   for var in "$@"
   do
     case $var in
