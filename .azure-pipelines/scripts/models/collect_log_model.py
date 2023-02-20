@@ -16,6 +16,7 @@ print('====== collecting model test log =======')
 OS = 'linux'
 PLATFORM = 'icx'
 URL = 'https://dev.azure.com/lpot-inc/neural-compressor/_build/results?buildId='+args.build_id+'&view=artifacts&pathAsName=false&type=publishedArtifacts'
+OOB_MODEL_LIST = ["darknet19", "densenet-121", "resnet-101"]
 
 
 def get_model_tuning_dict_results():
@@ -113,7 +114,7 @@ def get_refer_data():
         for value in values:
             precision = value[keys.index("Precision")]
             Type = value[keys.index("Type")]
-            result[f"{precision}_{Type}"] = float(value[keys.index("Value")])
+            result[f"{precision}_{Type}"] = float(value[keys.index("Value")]) if value[keys.index("Value")]!="unknown" else "unknown"
         return result
     else:
         print(f"refer log file: {refer_log} not found")
@@ -132,6 +133,10 @@ def collect_log():
             for line in f:
                 parse_tuning_line(line, tmp)
         print(tmp)
+
+        # oob_model no need acc
+        if ((args.model in OOB_MODEL_LIST) and args.framework == "tensorflow"):
+            tmp['fp32_acc'], tmp['int8_acc'] = "unknown", "unknown"
 
         results.append('{};{};{};{};FP32;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework, args.fwk_ver, args.model, tmp['fp32_acc'], "<url>"))
         results.append('{};{};{};{};INT8;{};Inference;Accuracy;1;{};{}\n'.format(OS, PLATFORM, args.framework,  args.fwk_ver, args.model, tmp['int8_acc'], "<url>"))

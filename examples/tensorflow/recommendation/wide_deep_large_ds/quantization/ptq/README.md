@@ -4,20 +4,22 @@ Step-by-Step
 This document is used to list steps of reproducing TensorFlow Wide & Deep tuning zoo result.
 This example can run on Intel CPUs and GPUs.
 
-## Prerequisite
+# Prerequisite
 
-### 1. Installation
+## 1. Environment
+
+### Installation
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow
+### Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
-> Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
-### 3. Install Intel Extension for Tensorflow
+### Install Intel Extension for Tensorflow
 #### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
@@ -34,13 +36,18 @@ Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's no
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-### 4. Install Additional Dependency packages
+### Install Additional Dependency packages
 ```shell
 cd examples/tensorflow/recommendation/wide_deep_large_ds/quantization/ptq
 pip install -r requirements.txt
 ```
 
-### 5. Prepare Dataset
+### 2. Download Frozen PB
+```shell
+wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/wide_deep_fp32_pretrained_model.pb
+```
+
+### 3. Prepare Dataset
 Download training dataset: (8 million samples)
 ```bash
 $ wget https://storage.googleapis.com/dataset-uploader/criteo-kaggle/large_version/train.csv
@@ -50,7 +57,7 @@ Download evaluation dataset (2 million samples)
 $ wget https://storage.googleapis.com/dataset-uploader/criteo-kaggle/large_version/eval.csv
 ```
 
-### 6. Process Dataset
+### 4. Process Dataset
 Process calib dataset
 ```bash
 python preprocess_csv_tfrecords.py \
@@ -69,12 +76,15 @@ Two .tfrecords files are generated and will be used later on:
 1) train_processed_data.tfrecords
 2) eval_processed_data.tfrecords
 
-### 7. Download Frozen PB
-```shell
-wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/wide_deep_fp32_pretrained_model.pb
-```
 
-### 8. Quantization Config
+# Run Command
+
+## Quantization
+  ```shell
+  bash run_tuning.sh --dataset_location=/path/to/datasets --input_model=/path/to/wide_deep_fp32_pretrained_model.pb --output_model=./wnd_int8_opt.pb
+  ```
+
+### Quantization Config
 The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
 
 ```
@@ -85,13 +95,12 @@ config = PostTrainingQuantConfig(
         )
 ```
 
-### 9. Run Command
-  # The cmd of running WnD
-  ```shell
-  bash run_tuning.sh --dataset_location=/path/to/datasets --input_model=/path/to/wide_deep_fp32_pretrained_model.pb --output_model=./wnd_int8_opt.pb
+## Benchmark
+  ```
   bash run_benchmark.sh --dataset_location=/path/to/datasets --input_model=./wnd_int8_opt.pb --mode=accuracy --batch_size=500
   bash run_benchmark.sh --dataset_location=/path/to/datasets --input_model=./wnd_int8_opt.pb --mode=performance --batch_size=500
   ```
-### Other
+
+# Other
 This example takes the reference from https://github.com/IntelAI/models/tree/master/benchmarks/recommendation/tensorflow/wide_deep_large_ds.
 The pretrained model was trained with preprocessed data from dataset Criteo.

@@ -348,6 +348,8 @@ class _BaseQuantizationConfig:
                  inputs=[],
                  outputs=[],
                  backend="default",
+                 domain="auto",
+                 recipes={},
                  quant_format="default",
                  device="cpu",
                  calibration_sampling_size=[100],
@@ -364,9 +366,51 @@ class _BaseQuantizationConfig:
                  quant_level=1,
                  accuracy_criterion=accuracy_criterion,
                  use_distributed_tuning=False):
+        """Initialize _BaseQuantizationConfig class.
+
+        Args:
+            inputs: inputs of model
+            outputs: outputs of model
+            backend: backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
+            domain: model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
+                    Adaptor will use specific quantization settings for different domains automatically, and
+                    explicitly specified quantization settings will override the automatic setting.
+                    If users set domain as auto, automatic detection for domain will be executed.
+            recipes: recipes for quantiztaion, support list is as below.
+                     'smooth_quant': whether do smooth quant
+                     'smooth_quant_args': parameters for smooth_quant
+                     'fast_bias_correction': whether do fast bias correction
+                     'weight_correction': whether do weight correction
+                     'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
+                     'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
+                                               only valid for onnx models
+                     'first_conv_or_matmul_quant': whether quantize the first conv or matmul
+                     'last_conv_or_matmul_quant': whether quantize the last conv or matmul
+                     'pre_post_process_quant': whether quantize the ops in preprocess and postprocess
+                     'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
+                     'optypes_to_exclude_output_quant': don't quantize output of specified optypes
+                     'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
+            quant_format: support 'default', 'QDQ' and 'QOperator'
+            device: support 'cpu' and 'gpu'
+            calibration_sampling_size: number of calibration sample
+            op_type_list: tuning constraints on optype-wise
+            op_name_list: tuning constraints on op-wise
+            strategy: strategy name
+            strategy_kwargs: parameters for strategy
+            objective: objective with accuracy constraint guaranteed, support 'performance', 'modelsize', 'footprint'
+            timeout: tuning timeout (seconds). default value is 0 which means early stop
+            max_trials: max tune times. default value is 100. Combine with timeout field to decide when to exit
+            performance_only: whether do evaluation
+            reduce_range: whether use 7 bit
+            excluded_precisions: precisions to be excluded, support 'bf16'
+            quant_level: support 0 and 1, 0 is conservative strategy, 1 is basic(default) or user-specified strategy
+            accuracy_criterion: accuracy constraint settings
+        """
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
+        self.domain = domain
+        self.recipes = recipes
         self.quant_format = quant_format
         self.device = device
         self.op_type_list = op_type_list
@@ -384,6 +428,88 @@ class _BaseQuantizationConfig:
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
         self.use_distributed_tuning=use_distributed_tuning
+
+    @property
+    def domain(self):
+        """Get domain."""
+        return self._domain
+
+    @domain.setter
+    def domain(self, domain):
+        """Set domain."""
+        if check_value("domain", domain, str,
+            ["auto", "cv", "object_detection", "nlp", "recommendation_system"]):
+            self._domain = domain
+
+    @property
+    def recipes(self):
+        """Get recipes."""
+        return self._recipes
+
+    @recipes.setter
+    def recipes(self, recipes):
+        """Set recipes."""
+        if recipes is not None and not isinstance(recipes, dict):
+            raise ValueError("recipes should be a dict.")
+
+        def smooth_quant(val):
+            return check_value("smooth_quant", val, bool)
+
+        def smooth_quant_args(val):
+            check_value("smooth_quant_args", val, dict)
+            for k, v in val.items():
+                if k == "alpha":
+                    check_value("alpha", v, float)
+            return True
+
+        def fast_bias_correction(val):
+            return check_value("fast_bias_correction", val, bool)
+
+        def weight_correction(val):
+            return check_value("weight_correction", val, bool)
+
+        def gemm_to_matmul(val):
+            return check_value("gemm_to_matmul", val, bool)
+
+        def graph_optimization_level(val):
+            return check_value("graph_optimization_level", val, str,
+                ["DISABLE_ALL", "ENABLE_BASIC", "ENABLE_EXTENDED", "ENABLE_ALL"])
+
+        def first_conv_or_matmul_quant(val):
+            return check_value("first_conv_or_matmul_quant", val, bool)
+
+        def last_conv_or_matmul_quant(val):
+            return check_value("last_conv_or_matmul_quant", val, bool)
+
+        def pre_post_process_quant(val):
+            return check_value("pre_post_process_quant", val, bool)
+
+        def add_qdq_pair_to_weight(val):
+            return check_value("add_qdq_pair_to_weight", val, bool)
+
+        def optypes_to_exclude_output_quant(val):
+            return isinstance(val, list)
+
+        def dedicated_qdq_pair(val):
+            return check_value("dedicated_qdq_pair", val, bool)
+
+        RECIPES = {"smooth_quant": smooth_quant,
+                   "smooth_quant_args": smooth_quant_args,
+                   "fast_bias_correction": fast_bias_correction,
+                   "weight_correction": weight_correction,
+                   "gemm_to_matmul": gemm_to_matmul,
+                   "graph_optimization_level": graph_optimization_level,
+                   "first_conv_or_matmul_quant": first_conv_or_matmul_quant,
+                   "last_conv_or_matmul_quant": last_conv_or_matmul_quant,
+                   "pre_post_process_quant": pre_post_process_quant,
+                   "add_qdq_pair_to_weight": add_qdq_pair_to_weight,
+                   "optypes_to_exclude_output_quant": optypes_to_exclude_output_quant,
+                   "dedicated_qdq_pair": dedicated_qdq_pair
+                   }
+        self._recipes = {}
+        for k, v in recipes.items():
+            if k.lower() in RECIPES and RECIPES[k.lower()](v) is True:
+                self._recipes.update({k.lower(): v})
 
     @property
     def accuracy_criterion(self):
@@ -650,6 +776,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
     def __init__(self,
                  device="cpu",
                  backend="default",
+                 domain="auto",
+                 recipes={},
                  quant_format="default",
                  inputs=[],
                  outputs=[],
@@ -670,6 +798,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          outputs=outputs,
                          device=device,
                          backend=backend,
+                         domain=domain,
+                         recipes=recipes,
                          quant_format=quant_format,
                          calibration_sampling_size=calibration_sampling_size,
                          op_type_list=op_type_list,

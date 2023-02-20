@@ -29,7 +29,6 @@ from ..objective import MultiObjective
 from ..conf.config import BenchmarkConf
 from ..conf.dotdict import DotDict
 from ..utils import logger
-from ..utils import OPTIONS
 from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
@@ -299,6 +298,7 @@ class Benchmark(object):
                                    'approach': cfg.quantization.approach, \
                                    'random_seed': cfg.tuning.random_seed,
                                    'backend': cfg.model.get('backend', 'default'),
+                                   'domain': cfg.model.get('domain', 'auto'),
                                    'format': cfg.model.get('quant_format', 'default')}
         framework = cfg.model.framework.lower()
         if 'tensorflow' in framework:
@@ -311,9 +311,8 @@ class Benchmark(object):
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": self._b_dataloader})
         if 'onnx' in framework.lower():
-            framework_specific_info.update(
-                                 {'workspace_path': cfg.tuning.workspace.path, \
-                                 'graph_optimization': OPTIONS[framework].graph_optimization})
+            framework_specific_info.update({'workspace_path': cfg.tuning.workspace.path,
+                                            'recipes': cfg.quantization.get('recipes', {})})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
                                             "q_dataloader": None})

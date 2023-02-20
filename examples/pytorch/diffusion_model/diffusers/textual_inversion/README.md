@@ -15,16 +15,6 @@ pip install -r requirements.txt
 ```
 # Using Textual Inversion method to personalize text2image
 
-## Prepare Model
-
-[CompVis/stable-diffusion-v1-4](https://huggingface.co/CompVis/stable-diffusion-v1-4) require the Huggingface token to be downloaded. For more information on access tokens, please refer to [this section of the documentation](https://huggingface.co/docs/hub/security-tokens).
-
-Run the following command to authenticate your token after registering in Hugging Face Hub.
-
-```bash
-huggingface-cli login
-```
-
 ## Prepare Datasets
 
 One picture which is from the huggingface datasets [sd-concepts-library/dicoo2](https://huggingface.co/sd-concepts-library/dicoo2) is needed, and save it to the `./dicoo` directory. The picture show below:

@@ -71,7 +71,7 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
         #     Please assign it by strategy_kwargs({'hawq_v2_loss': hawq_v2_loss})."
         op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self._fp32_model,
                                                             dataloader = self.calib_dataloader,
-                                                            q_model = self.q_model,
+                                                            q_model = self.last_qmodel,
                                                             criterion =hawq_v2_criterion,
                                                             enable_act = False)
         sorted_op_to_traces = dict(sorted(op_to_traces.items(), key=lambda item: item[1], reverse=True))

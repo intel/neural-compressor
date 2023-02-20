@@ -12,6 +12,7 @@ The dependent packages are all in requirements, please install as following.
 ```
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 # Quantization
 

@@ -65,7 +65,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
             quant_level=quant_level,
             use_distributed_tuning=use_distributed_tuning
         )
-        self._approach = approach
+        self.approach = approach
 
     @property
     def approach(self):
@@ -78,7 +78,6 @@ class QuantizationConfig(_BaseQuantizationConfig):
             ['post_training_static_quant', 'post_training_dynamic_quant', 'quant_aware_training']
         ):
             self._approach = approach
-
 
 class WeightConf:
     def __init__(self, datatype=None, scheme=None, granularity=None, algorithm=None):

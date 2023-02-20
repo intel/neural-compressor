@@ -10,6 +10,7 @@ The script ```run_diffusion.py``` is based on [huggingface/diffusers](https://gi
 ```
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Datasets
 ### Metric and Ground Truth Image

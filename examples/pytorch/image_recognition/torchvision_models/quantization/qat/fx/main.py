@@ -7,14 +7,13 @@ import warnings
 import torch
 import torch.nn as nn
 import torch.nn.parallel
-import torch.distributed as dist
 import torch.optim
 import torch.multiprocessing as mp
 import torch.utils.data
-import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+from accelerate import Accelerator
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
@@ -36,9 +35,7 @@ parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
-                    help='mini-batch size (default: 256), this is the total '
-                         'batch size of all GPUs on the current node when '
-                         'using Data Parallel or Distributed Data Parallel')
+                    help='mini-batch size (default: 256)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
@@ -56,25 +53,8 @@ parser.add_argument('-t', '--tune', dest='tune', action='store_true',
                     help='tune best int8 model on calibration dataset')
 parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                     help='use pre-trained model')
-parser.add_argument('--world-size', default=-1, type=int,
-                    help='number of nodes for distributed training')
-parser.add_argument('--rank', default=-1, type=int,
-                    help='node rank for distributed training')
-parser.add_argument('--dist-url', default='tcp://224.66.41.62:23456', type=str,
-                    help='url used to set up distributed training')
-parser.add_argument('--dist-backend', default='nccl', type=str,
-                    help='distributed backend')
 parser.add_argument('--seed', default=None, type=int,
                     help='seed for initializing training. ')
-parser.add_argument('--gpu', default=None, type=int,
-                    help='GPU id to use.')
-parser.add_argument('--ppn', default=1, type=int,
-                    help='number of processes on each node of distributed training')
-parser.add_argument('--multiprocessing-distributed', action='store_true',
-                    help='Use multi-processing distributed training to launch '
-                         'N processes per node, which has N GPUs. This is the '
-                         'fastest way to use PyTorch for either single node or '
-                         'multi node data parallel training')
 parser.add_argument('-i', "--iter", default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('-w', "--warmup_iter", default=5, type=int,
@@ -87,12 +67,16 @@ parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, m
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark')
+parser.add_argument("--no_cuda", action='store_true', help='use cpu for training.')
+parser.add_argument('--local_rank', default=-1, type=int,
+                    help='local rank for distributed training')
 
 best_acc1 = 0
 
 
 def main():
     args = parser.parse_args()
+    accelerator = Accelerator(cpu=args.no_cuda)
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -119,9 +103,6 @@ def main():
             checkpoint = torch.load(args.resume)
             args.start_epoch = checkpoint['epoch']
             best_acc1 = checkpoint['best_acc1']
-            if args.gpu is not None:
-                # best_acc1 may be from a checkpoint from a different GPU
-                best_acc1 = best_acc1.to(args.gpu)
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
             print("=> loaded checkpoint '{}' (epoch {})"
@@ -160,15 +141,17 @@ def main():
         batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
 
+    model, train_loader, val_loader, optimizer = \
+        accelerator.prepare(model, train_loader, val_loader, optimizer)
+
     if args.evaluate:
-        validate(val_loader, model, criterion, args)
+        validate(val_loader, model, criterion, args, accelerator)
         return
 
     if args.tune:
         def train_func(model):
             epochs = 8
             iters = 30
-            optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
@@ -178,7 +161,7 @@ def main():
                     output = model(image)
                     loss = criterion(output, target)
                     optimizer.zero_grad()
-                    loss.backward()
+                    accelerator.backward(loss) # loss.backward()
                     optimizer.step()
                     if cnt >= iters:
                         break
@@ -222,11 +205,11 @@ def main():
                                      num_of_instance=1)
             benchmark.fit(new_model, b_conf, b_dataloader=val_loader)
         if args.accuracy:
-            validate(val_loader, new_model, criterion, args)
+            validate(val_loader, new_model, criterion, args, accelerator)
         return
 
 
-def train(train_loader, model, criterion, optimizer, epoch, args):
+def train(train_loader, model, criterion, optimizer, epoch, args, accelerator):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
@@ -243,23 +226,21 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # measure data loading time
         data_time.update(time.time() - end)
 
-        if args.gpu is not None:
-            input = input.cuda(args.gpu, non_blocking=True)
-            target = target.cuda(args.gpu, non_blocking=True)
-
         # compute output
         output = model(input)
         loss = criterion(output, target)
 
         # measure accuracy and record loss
+        output = accelerator.gather(output)
+        target = accelerator.gather(target)
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
-        losses.update(loss.item(), input.size(0))
+        losses.update(accelerator.gather(loss).sum().data.item(), input.size(0)*accelerator.num_processes)
         top1.update(acc1[0], input.size(0))
         top5.update(acc5[0], input.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
-        loss.backward()
+        accelerator.backward(loss) # loss.backward()
         optimizer.step()
 
         # measure elapsed time
@@ -270,7 +251,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             progress.print(i)
 
 
-def validate(val_loader, model, criterion, args):
+def validate(val_loader, model, criterion, args, accelerator):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
@@ -285,17 +266,15 @@ def validate(val_loader, model, criterion, args):
         for i, (input, target) in enumerate(val_loader):
             if i >= args.warmup_iter:
                 start = time.time()
-            if args.gpu is not None:
-                input = input.cuda(args.gpu, non_blocking=True)
-                target = target.cuda(args.gpu, non_blocking=True)
-
             # compute output
             output = model(input)
             loss = criterion(output, target)
 
             # measure accuracy and record loss
+            output = accelerator.gather(output)
+            target = accelerator.gather(target)
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
-            losses.update(loss.item(), input.size(0))
+            losses.update(accelerator.gather(loss).sum().data.item(), input.size(0)*accelerator.num_processes)
             top1.update(acc1[0], input.size(0))
             top5.update(acc5[0], input.size(0))
 

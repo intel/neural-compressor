@@ -14,43 +14,32 @@ Intel® Neural Compressor
 ---
 <div align="left">
 
-Intel® Neural Compressor, formerly known as Intel® Low Precision Optimization Tool, is an open-source Python library that runs on Intel CPUs and GPUs, which delivers unified interfaces across multiple deep-learning frameworks for popular network compression technologies such as quantization, pruning, and knowledge distillation. This tool supports automatic accuracy-driven tuning strategies to help the user quickly find out the best quantized model. It also implements different weight-pruning algorithms to generate a pruned model with predefined sparsity goal. It also supports knowledge distillation to distill the knowledge from the teacher model to the student model. 
-Intel® Neural Compressor is a critical AI software component in the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
+Intel® Neural Compressor aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as [TensorFlow](https://www.tensorflow.org/), [PyTorch](https://pytorch.org/), [ONNX Runtime](https://onnxruntime.ai/), and [MXNet](https://mxnet.apache.org/),
+as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). 
+In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
 
+* Support a wide range of Intel hardware such as [Intel Xeon Scalable processor](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html) with extensive testing; support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing
+
+* Validate more than 10,000 models such as [Stable Diffusion](https://github.com/intel/neural-compressor/tree/readme/update/examples/pytorch/nlp/huggingface_models/text-to-image/quantization), [GPT-J](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx), [BERT-Large](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx), and [ResNet50](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx) from popular model hubs such as [Hugging Face](https://huggingface.co/), [Torch Vision](https://pytorch.org/vision/stable/index.html), and [ONNX Model Zoo](https://github.com/onnx/models#models), by leveraging zero-code optimization solution [Neural Coder](https://github.com/intel/neural-compressor/tree/readme/update/neural_coder#what-do-we-offer) and automatic [accuracy-driven](https://github.com/intel/neural-compressor/blob/readme/update/docs/source/design.md#workflow) quantization strategies
+
+* Collaborate with cloud marketplace such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) and [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
 **Visit the Intel® Neural Compressor online document website at: <https://intel.github.io/neural-compressor>.**   
 
 ## Installation
 
-### Prerequisites
-
-Python version: 3.7, 3.8, 3.9, 3.10
-
-### Install on Linux
-- Release binary install 
-  ```Shell
-  # install stable basic version from pypi
-  pip install neural-compressor
-  # or install stable full version from pypi (including GUI)
-  pip install neural-compressor-full
-  ```
-- Nightly binary install
-  ```Shell
-  git clone https://github.com/intel/neural-compressor.git
-  cd neural-compressor
-  pip install -r requirements.txt
-  # install nightly basic version from pypi
-  pip install -i https://test.pypi.org/simple/ neural-compressor
-  # or install nightly full version from pypi (including GUI)
-  pip install -i https://test.pypi.org/simple/ neural-compressor-full
-  ```
-More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
+### Install from pypi
+```Shell
+pip install neural-compressor
+```
+> More installation methods can be found at [Installation Guide](./docs/source/installation_guide.md). Please check out our [FAQ](./docs/source/faq.md) for more details.
 
 ## Getting Started
 ### Quantization with Python API    
 
 ```shell
-# A TensorFlow Example
+# Install Intel Neural Compressor and TensorFlow
+pip install neural-compressor 
 pip install tensorflow
 # Prepare fp32 model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
@@ -64,99 +53,13 @@ dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
 dataloader = DataLoader(framework='tensorflow', dataset=dataset)
 
 from neural_compressor.quantization import fit
-config = PostTrainingQuantConfig()
 q_model = fit(
     model="./mobilenet_v1_1.0_224_frozen.pb",
-    conf=config,
+    conf=PostTrainingQuantConfig(),
     calib_dataloader=dataloader,
     eval_dataloader=dataloader)
 ```
-### Quantization with [JupyterLab Extension](./neural_coder/extensions/neural_compressor_ext_lab/README.md)
-Search for ```jupyter-lab-neural-compressor``` in the Extension Manager in JupyterLab and install with one click:
-
-<a target="_blank" href="./neural_coder/extensions/screenshots/extmanager.png">
-  <img src="./neural_coder/extensions/screenshots/extmanager.png" alt="Extension" width="35%" height="35%">
-</a>
-  
-### Quantization with [GUI](./docs/source/bench.md)
-```shell
-# An ONNX Example
-pip install onnx==1.12.0 onnxruntime==1.12.1 onnxruntime-extensions
-# Prepare fp32 model
-wget https://github.com/onnx/models/raw/main/vision/classification/resnet/model/resnet50-v1-12.onnx
-# Start GUI
-inc_bench
-```
-<a target="_blank" href="./docs/source/_static/imgs/INC_GUI.gif">
-  <img src="./docs/source/_static/imgs/INC_GUI.gif" alt="Architecture">
-</a>
-
-## System Requirements
-
-### Validated Hardware Environment
-#### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
-
-* Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, Ice Lake, and Sapphire Rapids)
-* Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM)
-
-#### Intel® Neural Compressor supports GPUs built on Intel's Xe architecture:
-
-* Intel Data Center GPU Flex Series (formerly Arctic Sound-M)
-* Intel Data Center GPU Max Series (formerly Ponte Vecchio)
-
-#### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
-
-* Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model [list](./docs/source/validated_model_list.md#Validated-ONNX-QDQ-INT8-models-on-multiple-hardware-through-ONNX-Runtime).
-
-### Validated Software Environment
-
-* OS version: CentOS 8.4, Ubuntu 20.04  
-* Python version: 3.7, 3.8, 3.9, 3.10  
-
-<table class="docutils">
-<thead>
-  <tr style="vertical-align: middle; text-align: center;">
-    <th>Framework</th>
-    <th>TensorFlow</th>
-    <th>Intel<br>TensorFlow</th>
-    <th>Intel®<br>Extension for<br>TensorFlow*</th>
-    <th>PyTorch</th>
-    <th>Intel®<br>Extension for<br>PyTorch*</th>
-    <th>ONNX<br>Runtime</th>
-    <th>MXNet</th>
-  </tr>
-</thead>
-<tbody>
-  <tr align="center">
-    <th>Version</th>
-    <td class="tg-7zrl"><a href=https://github.com/tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.10.1>2.10.1</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.9.3>2.9.3</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.11.0>2.11.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.10.0>2.10.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.9.1>2.9.1</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.0.0>1.0.0</a></td>
-    <td class="tg-7zrl"><a href=https://download.pytorch.org/whl/torch_stable.html>1.13.1+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.12.1+cpu</a><br>
-    <a href=https://download.pytorch.org/whl/torch_stable.html>1.11.0+cpu</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.13.0+cpu>1.13.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.12.100>1.12.1</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.11.0>1.11.0</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.13.1>1.13.1</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.12.1>1.12.1</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.11.0>1.11.0</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.9.1>1.9.1</a><br>
-    <a href=https://github.com/apache/incubator-mxnet/tree/1.8.0>1.8.0</a><br>
-    <a href=https://github.com/apache/incubator-mxnet/tree/1.7.0>1.7.0</a><br></td>
-  </tr>
-</tbody>
-</table>
-
-> **Note:**
-> Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow v2.6 to v2.8. oneDNN is the default for TensorFlow v2.9.
-
-### Validated Models
-Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo) with the performance speedup up to 4.2x on VNNI while minimizing the accuracy loss. Over 30 pruning and knowledge distillation samples are also available. More details for validated typical models are available [here](./docs/source/validated_model_list.md).
+> More quick samples and validated models can be find in [Get Started Page](./docs/source/get_started.md).
 
 ## Documentation
 
@@ -189,7 +92,7 @@ Intel® Neural Compressor validated the quantization for 10K+ models from popula
     <tr>
         <td colspan="2" align="center"><a href="./docs/source/quantization.md">Quantization</a></td>
         <td colspan="3" align="center"><a href="./docs/source/mixed_precision.md">Advanced Mixed Precision</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/pruning.md">Pruning(Sparsity)</a></td> 
+        <td colspan="2" align="center"><a href="./docs/source/pruning.md">Pruning (Sparsity)</a></td> 
         <td colspan="2" align="center"><a href="./docs/source/distillation.md">Distillation</a></td>
     </tr>
     <tr>
@@ -228,16 +131,13 @@ Intel® Neural Compressor validated the quantization for 10K+ models from popula
 </table>
 
 ## Selected Publications/Events
+* Post on Social Media: [Training and Inference for Stable Diffusion | Intel Business](https://www.youtube.com/watch?v=emCgSTlJaAg) (Jan 2023)
 * Blog by Intel: [Intel® AMX Enhances AI Inference Performance](https://www.intel.com/content/www/us/en/products/docs/accelerator-engines/advanced-matrix-extensions/alibaba-solution-brief.html) (Jan 2023)
 * Blog by TensorFlow: [Optimizing TensorFlow for 4th Gen Intel Xeon Processors](https://blog.tensorflow.org/2023/01/optimizing-tensorflow-for-4th-gen-intel-xeon-processors.html) (Jan 2023)
 * NeurIPS'2022: [Fast Distilbert on CPUs](https://arxiv.org/abs/2211.07715) (Oct 2022)
 * NeurIPS'2022: [QuaLA-MiniLM: a Quantized Length Adaptive MiniLM](https://arxiv.org/abs/2210.17114) (Oct 2022)
-* Blog on Medium: [MLefficiency — Optimizing transformer models for efficiency](https://medium.com/@kawapanion/mlefficiency-optimizing-transformer-models-for-efficiency-a9e230cff051) (Dec 2022)
-* Blog on Medium: [One-Click Acceleration of Hugging Face Transformers with Intel’s Neural Coder](https://medium.com/intel-analytics-software/one-click-acceleration-of-huggingface-transformers-with-optimum-intel-by-neural-coder-f35ca3b1a82f) (Dec 2022)
-* Blog on Medium: [One-Click Quantization of Deep Learning Models with the Neural Coder Extension](https://medium.com/intel-analytics-software/one-click-quantize-your-deep-learning-code-in-visual-studio-code-with-neural-coder-extension-8be1a0022c29) (Dec 2022)
-* Blog on Medium: [Accelerate Stable Diffusion with Intel Neural Compressor](https://medium.com/intel-analytics-software/accelerating-stable-diffusion-inference-through-8-bit-post-training-quantization-with-intel-neural-e28f3615f77c) (Dec 2022)
 
-> View our [full publication list](./docs/source/publication_list.md).
+> View our [Full Publication List](./docs/source/publication_list.md).
 
 ## Additional Content
 
@@ -245,8 +145,8 @@ Intel® Neural Compressor validated the quantization for 10K+ models from popula
 * [Contribution Guidelines](./docs/source/CONTRIBUTING.md)
 * [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
-* [Intel® Neural Compressor Website](https://intel.github.io/neural-compressor)
 
-## Hiring
+## Research Collaborations
 
-We are actively hiring. Send your resume to inc.maintainers@intel.com if you are interested in model compression techniques.
+Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (inc.maintainers@intel.com). Look forward to our collaborations on Intel Neural Compressor!
+
