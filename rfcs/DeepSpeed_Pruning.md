@@ -124,8 +124,8 @@ The user need to manually insert such hooks into their training code for fine-gr
 ## **Structural Sparsity Results**
 As for the structural sparsity results, please refer to below chart.
 
-<a target="_blank" href="./sparse_result.png">
-  <img src="./sparse_result.png" alt="Extension" width="80%" height="80%">
+<a target="_blank" href="./pics/sparse_result.png">
+  <img src="./pics/sparse_result.png" alt="Extension" width="80%" height="80%">
 </a>
 
 ## **Summary**
