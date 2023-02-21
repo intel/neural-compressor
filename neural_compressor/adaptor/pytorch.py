@@ -1032,7 +1032,7 @@ class TemplateAdaptor(Adaptor):
             if self.approach == "post_training_dynamic_quant" else \
             self.query_handler.get_quantization_capability()['quant_aware'] \
             if self.approach == "quant_aware_training" else \
-            self.query_handler.get_quantization_capability()['int8']
+            self.query_handler.get_quantization_capability()['static']
 
         q_capability = {}
         q_capability['optypewise'] = OrderedDict()
@@ -1046,10 +1046,10 @@ class TemplateAdaptor(Adaptor):
                 (self.query_handler.get_quantization_capability()['quant_aware'], 'static')]
         elif self.approach == "post_training_static_quant":
             capability_pair = [
-                (self.query_handler.get_quantization_capability()['int8'], 'static')]
+                (self.query_handler.get_quantization_capability()['static'], 'static')]
         else:
             capability_pair = [
-                (self.query_handler.get_quantization_capability()['int8'], 'static'),
+                (self.query_handler.get_quantization_capability()['static'], 'static'),
                 (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
         fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
         # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops,
@@ -3681,7 +3681,7 @@ class PyTorchQuery(QueryBackendCapability):
             [dictionary list]: A list composed of dictionary which key is precision
             and value is a dict that describes all op types' quantization capability.
         """
-        return self.cur_config['capabilities']
+        return self.cur_config['int8']
 
     def get_op_types(self):
         """Get the supported op types by all precisions.
