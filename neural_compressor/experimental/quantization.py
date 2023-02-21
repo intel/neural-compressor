@@ -173,8 +173,7 @@ class Quantization(Component):
     def execute(self):
         """Quantization execute routinue based on strategy design."""
         # check here the distributed flag
-        logger.info("..................use_distributed_tuning: {}".format(self.conf.usr_cfg.tuning.use_distributed_tuning))
-        # self.distributed_flag=True
+        logger.info("..............use_distributed_tuning: {}".format(self.conf.usr_cfg.tuning.use_distributed_tuning))
         if self.conf.usr_cfg.tuning.use_distributed_tuning:
             return self.distributed_execute()
         try:
@@ -203,7 +202,9 @@ class Quantization(Component):
     
     def distributed_execute(self):
         """Quantization distributed execute routinue based on strategy design."""
-        from mpi4py import MPI
+        from ..utils.utility import LazyImport
+        mpi4py = LazyImport('mpi4py')
+        MPI = LazyImport("mpi4py.MPI")
         comm = MPI.COMM_WORLD
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):

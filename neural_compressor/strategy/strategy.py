@@ -36,6 +36,7 @@ from ..adaptor import FRAMEWORKS
 from ..utils.utility import Statistics, dump_data_to_local
 from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_train_func
+from ..utils.utility import LazyImport
 from ..utils import logger
 from ..version import __version__
 from ..conf.dotdict import DotDict, deep_get, deep_set
@@ -184,6 +185,15 @@ class TuneStrategy(object):
         """
         raise NotImplementedError
 
+    def distributed_next_tune_cfg_lst(self):
+        """Interface for generate the distributed next tuning config list.
+        The generator of yielding next tuning config list to distributed traverse by concrete strategies or quantization level
+        according to tuning result and traverse logic.
+
+        It should be implemented by the sub-class. Currently, it is only implemented in the BasicTuneStrategy.
+        """
+        pass
+
     def meet_acc_req(self, eval_res):
         """Compare the result of last tuning with baseline to check whether the result meet requirements.
 
@@ -204,7 +214,8 @@ class TuneStrategy(object):
         Args:
             comm (MPI.COMM): The instance of comunication for MPI.
         """
-        from mpi4py import MPI
+        mpi4py = LazyImport('mpi4py')
+        MPI = LazyImport("mpi4py.MPI")
         size = comm.Get_size()
         for process_id in range(1, min(len(self.tune_cfg_lst) + 1, size)):
             tune_cfg_id = process_id - 1
@@ -245,7 +256,8 @@ class TuneStrategy(object):
             self.best_tune_cfg_id = None
             self.already_ack_id_lst.add(tag)
 
-            if(self.meet_acc_req(eval_res)):    # if meet accuracy requirement, then update minimum id that met requirement
+            # if meet accuracy requirement, then update minimum id that met requirement
+            if(self.meet_acc_req(eval_res)):
                 logger.info("~~~~~~master has one tuning cfg meet acc: {}".format(tag))
                 self.met_flag = True
                 self.requirements_met_min_cfg_id = min(self.requirements_met_min_cfg_id, tag)
@@ -254,13 +266,15 @@ class TuneStrategy(object):
                 # because a tune cfg (not acked yet) with lower id can have better acc
                 for i in range(self.requirements_met_min_cfg_id):
                     if i not in self.already_ack_id_lst:
-                        logger.info("~~~~~~master has one tuning cfg meet acc: {} but not collect all acks before".format(tag))
+                        logger.info("~~~~~~master has one tuning cfg meet acc: {} but not collect all acks before"\
+                                    .format(tag))
                         self.met_flag = False   # not completely collected yet!
                         break
                 
                 if self.met_flag:
                     # found the best tune cfg!
-                    logger.info("~~~~~~master has one tuning cfg meet acc: {} and also collect all acks before".format(tag))
+                    logger.info("~~~~~~master has one tuning cfg meet acc: {} and also collect all acks before"\
+                                .format(tag))
                     self.best_tune_cfg_id = self.requirements_met_min_cfg_id
             else:
                 # get the current best acc but not meet requirements
@@ -312,7 +326,8 @@ class TuneStrategy(object):
 
         if self.best_tune_cfg_id is not None:
             self.best_qmodel = self.adaptor.quantize(
-                    copy.deepcopy(self.tune_cfg_lst[self.best_tune_cfg_id]), self.model, self.calib_dataloader, self.q_func)
+                    copy.deepcopy(self.tune_cfg_lst[self.best_tune_cfg_id]), self.model, self.calib_dataloader, \
+                        self.q_func)
 
 
     def slave_worker_handle(self, comm):
@@ -323,7 +338,8 @@ class TuneStrategy(object):
         Args:
             comm (MPI.COMM): The instance of comunication for MPI.
         """
-        from mpi4py import MPI
+        mpi4py = LazyImport('mpi4py')
+        MPI = LazyImport("mpi4py.MPI")
         status = MPI.Status()
         while True:
             task = comm.recv(
@@ -367,7 +383,8 @@ class TuneStrategy(object):
 
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
-        from mpi4py import MPI
+        mpi4py = LazyImport('mpi4py')
+        MPI = LazyImport("mpi4py.MPI")
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
 
