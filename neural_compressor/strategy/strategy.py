@@ -182,6 +182,81 @@ class TuneStrategy(object):
         """
         raise NotImplementedError
 
+    def _register_post_process_algos(self, tune_cfg, fp32_model, q_model, calib_dataloader,
+                                     kwargs=None) -> AlgorithmScheduler:
+        """Register the post-process algos.
+        
+        Register the algo for post-process the quantized model, such as bias correction, weight correction.
+        Args:
+            tune_cfg: the tuning config.
+            fp32_model: the fp32 model.
+            q_model: the quantized model.
+            calib_dataloader: the calibration dataloader.
+            kwargs: other args. Defaults to None.
+
+        Returns:
+            Return a job scheduler.
+        """
+        post_algo_scheduler = AlgorithmScheduler({})
+        post_algo_scheduler.dataloader = calib_dataloader  # reuse the calibration iteration
+        post_algo_scheduler.origin_model = fp32_model
+        post_algo_scheduler.adaptor = self.adaptor
+        post_algo_scheduler.calib_iter = tune_cfg['calib_iteration']
+        post_algo_scheduler.tune_cfg = copy.deepcopy(tune_cfg)
+        # if no pre-process algos, return the fp32 model directly.
+        post_algo_scheduler.q_model = q_model
+        
+        recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        if recipe_cfgs:
+            # for fast_bias_correction
+            if recipe_cfgs.get('fast_bias_correction', False):
+                from ..algorithm.fast_bias_correction import FastBiasCorrection
+                fb_algo = FastBiasCorrection()
+                post_algo_scheduler.append_algoritm(fb_algo)
+            # for weight correction
+            if recipe_cfgs.get('weight_correction', False):
+                from ..algorithm.weight_correction import WeightCorrection
+                wc_algo = WeightCorrection()
+                post_algo_scheduler.append_algoritm(wc_algo)
+                
+        return post_algo_scheduler
+
+    
+    def _register_pre_process_algos(self, tune_cfg, fp32_model, calib_dataloader,
+                                    kwargs=None) -> AlgorithmScheduler:
+        """Register the pre-process algos.
+
+        Register the algo for pre-process the fp32 model, such as smooth quantization.
+        Args:
+            tune_cfg: the tuning config.
+            fp32_model: the fp32 model.
+            calib_dataloader: the calibration dataloader.
+            kwargs: other args. Defaults to None.
+
+        Returns:
+            Return a job scheduler.
+        """
+        pre_algo_scheduler = AlgorithmScheduler({})
+        pre_algo_scheduler.dataloader = calib_dataloader  # reuse the calibration iteration
+        pre_algo_scheduler.origin_model = fp32_model
+        pre_algo_scheduler.adaptor = self.adaptor
+        pre_algo_scheduler.calib_iter = tune_cfg['calib_iteration']
+        pre_algo_scheduler.tune_cfg = copy.deepcopy(tune_cfg)
+        pre_algo_scheduler.q_model = fp32_model
+        
+        recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        if recipe_cfgs:
+            # for smooth quant
+            if recipe_cfgs.get('smooth_quant', False):
+                # set the alpha to 0.5 by default
+                sq_alpha = 0.5
+                sq_args = recipe_cfgs.get('smooth_quant_args', {})
+                if sq_args:
+                    sq_alpha = sq_args.get('alpha', 0.5)
+                from ..algorithm.smooth_quant import SmoothQuant
+                sq_algo = SmoothQuant(alpha=sq_alpha)
+                pre_algo_scheduler.append_algoritm(sq_algo)
+        return pre_algo_scheduler
 
     def traverse(self):
         """Traverse the tuning space.
@@ -204,26 +279,20 @@ class TuneStrategy(object):
             self._remove_redundant_qmodel()
             logger.debug("Dump current tuning configuration:")
             logger.debug(tune_cfg)
-
             self.tuning_times += 1
-            self.algo_scheduler.calib_iter = tune_cfg['calib_iteration']
-            if self.cfg.quantization.recipes.smooth_quant:
-                try:
-                    self.algo_scheduler.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
-                except:
-                    self.algo_scheduler.alpha = 0.5
-                self.algo_scheduler.tune_cfg = copy.deepcopy(tune_cfg)
-                self.algo_scheduler.q_model = self.adaptor.pre_optimized_model
-                self.model = self.algo_scheduler()
-            q_model = self.adaptor.quantize(
-                copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            self.algo_scheduler.q_model = q_model
-            # TODO align the api to let strategy has access to pre_optimized model
-            assert self.adaptor.pre_optimized_model
-            self.algo_scheduler.origin_model = self.adaptor.pre_optimized_model
-            if self.cfg.quantization.recipes.fast_bias_correction:
-                self.algo_scheduler.algorithms[0].quantization_cfg = tune_cfg
-            self.last_qmodel = self.algo_scheduler()
+
+            # register the pre-process algorithms and run
+            pre_process_algo_sched = self._register_pre_process_algos(tune_cfg, self.model, self.calib_dataloader)
+            self.model = pre_process_algo_sched()
+            # quantize
+            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), 
+                                            self.model, 
+                                            self.calib_dataloader,
+                                            self.q_func)
+            # register the post-process algorithms and run
+            post_process_algo_sched = self._register_post_process_algos(tune_cfg, self.model,q_model,
+                                                                        self.calib_dataloader)
+            self.last_qmodel = post_process_algo_sched()
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             # remove the algo to avoid it having a reference to qmodel
             self.algo_scheduler.q_model = None

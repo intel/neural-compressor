@@ -60,3 +60,17 @@ UINT8_ASYM_KL_PERCHANNEL = {'dtype': ['uint8'],
                             'algorithm': ['kl'],
                             'granularity': ['per_channel']}
 
+
+# Options for recipes, the first options is the default value.
+SCALE_PROPAGATION_MAX_POOLING = [True, False]
+SCALE_PROPAGATION_CONCAT = [True, False]
+FIRST_CONV_OR_MATMUL_QUANTIZATION = [True, False]
+LAST_CONV_OR_MATMUL_QUANTIZATION = [True, False]
+PRE_POST_PROCESS_QUANTIZATION = [True, False]
+FAST_BIAS_CORRECTION = [False, True]
+WEIGHT_CORRECTION = [False, True]
+GEMM_TO_MATMUL = [False, True]
+GRAPH_OPTIMIZATION_LEVEL = ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']
+ADD_QDQ_PAIR_TO_WEIGHT = [False, True]
+OPTYPES_TO_EXCLUDE_OUTPUT_QUANT = [] # TODO
+DEDICATED_QDQ_PAIR = [True, False]

@@ -25,7 +25,7 @@ from ..utils import logger
 class SmoothQuant(Algorithm):
     """SmoothQuant algorithm class."""
     def __init__(self, percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'],
-                             scales_per_op=True):
+                             scales_per_op=True, alpha=1.0):
         """Initialize SmoothQuant class.
 
         Args:
@@ -33,11 +33,12 @@ class SmoothQuant(Algorithm):
             op_types: The op types whose input tensor will be dumped
             scales_per_op: True, each op will have an individual scale, mainly for accuracy
                            False, ops with the same input will share a scale, mainly for performance
+            alpha: migrate strength.
         """
         self.percentile = percentile
         self.op_types = op_types
         self.scales_per_op = scales_per_op
-        self.alpha = 1.0
+        self.alpha = alpha
         self.tune_cfg = None
 
     def __call__(self, origin_model, q_model, adaptor, dataloader, iterations):

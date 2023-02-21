@@ -102,6 +102,15 @@ class AlgorithmScheduler(object):
                                  self._dataloader, \
                                  self._calib_iter)
         return self._q_model
+    
+    def append_algoritm(self, algorithm) -> None:
+        """Add the algo to the algo list."""
+        self.algorithms.append(algorithm)
+        pass
+        
+    def remove_algorithm(self, algorithm_name) -> None:
+        """Remove the algo according to the name."""
+        pass
 
     @property
     def origin_model(self):
