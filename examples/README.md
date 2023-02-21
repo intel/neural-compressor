@@ -354,11 +354,11 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
   <tr>
-    <td>*MobileNet</td>
+    <td>MobileNet</td>
     <td>DenseNet201</td>
     <td>Image Recognition</td>
     <td>Knowledge Distillation</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/distillation">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/distillation">pb</a></td>
   </tr>
 </tbody>
 </table>
