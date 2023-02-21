@@ -650,7 +650,7 @@ class TuningSpace:
         
         If the path is incomplete, it will return the default tuning item.
         Args:
-            op_name_type: _description_
+            op_name_type: (op_name, op_type)
             path: ('static', 'activation')
             
             For example:
@@ -760,7 +760,7 @@ def pattern_to_path(pattern):
 def quant_mode_from_pattern(internal_pattern):
     """Get quant mode from internal pattern."""
     if internal_pattern[0] == 'precision':
-        return internal_pattern[0][0]
+        return internal_pattern[1][0]
     else:
         return internal_pattern[0]
 
