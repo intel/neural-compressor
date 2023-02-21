@@ -441,8 +441,8 @@ class TuneStrategy(object):
         elif self.cfg.quantization.approach == 'post_training_static_quant':
             query_order = static_query_order
         elif self.cfg.quantization.approach == 'quant_aware_training':
-            logger.info("Currently, the qat tuning is not supported by strategy.")
-            return 
+            logger.info("!!! Currently, the qat tuning is not supported by strategy.")
+            query_order = auto_query_order
 
         quant_mode_wise_items = OrderedDict() # mode, op_item_lst
         pre_items = set()
@@ -466,7 +466,6 @@ class TuneStrategy(object):
             initial_op_tuning_cfg[op_name_type] = initial_tuning_cfg_with_quant_mode(op_name_type,
                                                                                     quant_mode, 
                                                                                     self.tuning_space)
-        print(op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg)
         return op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg
 
     def show_baseline_info(self):

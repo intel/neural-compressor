@@ -283,8 +283,6 @@ class OpWiseTuningSampler(TuningSampler):
         self.op_tuning_items = {}
         for op_name_type, op_quant_mode in op_dtype_dict.items():
             full_path = self.tuning_space.get_op_default_path_by_pattern(op_name_type, op_quant_mode)
-            print(f"full path: {full_path}")
-            print(f"op_quant_mode: {op_quant_mode}")
             self.op_complete_path[op_name_type] = copy.deepcopy(full_path)
             mode_items = copy.deepcopy(full_path)
             internal_pattern = pattern_to_internal(op_quant_mode)

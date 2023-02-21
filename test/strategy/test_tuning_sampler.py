@@ -197,7 +197,6 @@ class TestTuningSampler(unittest.TestCase):
             best_tune_cfg = tune_cfg
             model_wise_pool.append(tune_cfg)
         self.assertEqual(len(model_wise_pool), 8)
-        print(best_tune_cfg[('op_name1', 'op_type1')])
         
         # fallback test
         quant_ops = quant_mode_wise_items.get('static', [])

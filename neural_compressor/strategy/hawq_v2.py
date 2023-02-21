@@ -51,8 +51,8 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
         # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
         early_stop_tuning = True
         stage1_cnt = 0
-        quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
-        quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
+        quant_ops = quant_mode_wise_items.get('static', [])
+        quant_ops += quant_mode_wise_items.get('dynamic', [])
         stage1_max = 1  # TODO set a more appropriate value
         op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],
                                                          op_item_dtype_dict, initial_op_tuning_cfg)

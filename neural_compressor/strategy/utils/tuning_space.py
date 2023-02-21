@@ -32,7 +32,6 @@ from .constant import (
     QUANT_MODE_SET,
     QUNAT_BIT_SET,
     TUNING_ITEMS_LST,
-    TUNING_ITEM_SET,
     PostTrainingQuantType,
     
     )
@@ -183,7 +182,6 @@ class TuningSpace:
             self.root_item.append(op_item)
             self.op_items[op_name_type] = op_item
             _parse(op_cap, op_item, [], op_name_type)
-            print( op_item.name)
             for q_option in op_item.options:
                 if q_option and q_option.name == 'precision':
                     acc_item = q_option.get_option_by_name('activation')
@@ -249,9 +247,11 @@ class TuningSpace:
                     new_op_cap = dict(filter(lambda item: item[0] == 'precision', new_op_cap.items()))
                     new_op_cap['precision'][att] = dict(filter(lambda item: item[0] in valid_precision_set,\
                         fw_op_cap['precision'][att].items()))
-                else:                    
+                else:
                     # Filter the valid options for tuning item
-                    for quant_mode in new_op_cap:
+                    for quant_mode in fw_op_cap:
+                        if quant_mode not in new_op_cap:
+                            new_op_cap[quant_mode] = deepcopy(fw_op_cap[quant_mode])
                         if quant_mode == 'precision': continue
                         for data_type in new_op_cap[quant_mode][att]:
                             for signed_flag in new_op_cap[quant_mode][att][data_type]:
@@ -272,6 +272,7 @@ class TuningSpace:
         for op_type, op_user_cfg in optype_wise_usr_cfg.items():
             op_lst = [op_name_type for op_name_type in cap['op'] if op_name_type[1] == op_type]
             for op_name_type in op_lst:
+                logger.debug(f"*** Start to merge user optype wise config for op: {op_name_type}.")
                 cap['op'][op_name_type] = self._merge_op_cfg(cap['op'][op_name_type], 
                                                              op_user_cfg,
                                                              fw_cap['op'][op_name_type])
@@ -505,10 +506,6 @@ class TuningSpace:
         logger.info(self.ops_data_type)
         return parsed_cap
     
-
-
-            
-    
     def _create_tuning_space(self, capability, usr_cfg):
         """Create tuning space.
         
@@ -519,8 +516,6 @@ class TuningSpace:
         :param usr_cfg:
         :return:
         """
-        
-        
         capability['op'] = self._parse_cap_helper(deepcopy(capability['op']))
         if usr_cfg:
             logger.info(f"#############  Before merged with user cfg")
@@ -534,17 +529,14 @@ class TuningSpace:
         """Query the method value, such as scheme, algorithm.
 
         Args:
-            op_name_type: _description_
-            path: _description_
-            method_name: _description_
-            method_val: _description_
+            op_name_type: (op_name, op_type)
+            path: full path
+            method_name: method name
+            method_val: method value
 
         Returns:
-            _description_
+            Return the query result if exist.
         """
-        # For static/dynamic/fp32/bf16
-        if isinstance(path, str):
-            path = ('precision', path) if path in PRECISION_SET_V2_0 else (path, 'int8')
         mode_item = self.get_item_by_path((op_name_type, *path))
         if not mode_item: return None
         method_item = mode_item.get_option_by_name(method_name)
@@ -574,7 +566,7 @@ class TuningSpace:
             mode_item = self.query_quant_mode_item_by_full_path(op_name_type ,full_path[att])
             if mode_item:
                 method_args = {method_item.name: method_item.options[0] for method_item in mode_item.options \
-                    if mode_item.name in TUNING_ITEM_SET}
+                    if method_item.name in TUNING_ITEMS_LST}
                 config_args.update(method_args)
 
         quant_mode = quant_mode if isinstance(quant_mode, str) else quant_mode[0]
@@ -737,8 +729,6 @@ def get_op_mode_by_query_order(tuning_space: TuningSpace, query_order):
     for quant_mode, quant_mode_items in quant_mode_wise_items.items():
         initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
     
-    
-    print(op_item_dtype_dict)
     return op_item_dtype_dict
 
 def pattern_to_internal(pattern, default_dtype='int8'):
@@ -803,10 +793,10 @@ def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: T
     for att in att_lst:
         att_full_path = tuning_space.get_default_full_path(op_name_type, full_path[att])
         config_args[att + '_dtype'] =  tuning_space.ops_data_type[op_name_type].get(att_full_path, None)
-        att_mode_item = tuning_space.get_item_by_path((op_name_type, *att_full_path))
-        if att_mode_item:
-            method_args = {att_mode_item.name: att_mode_item.options[0] for att_mode_item in att_mode_item.options \
-                            if att_mode_item.name in TUNING_ITEMS_LST}
+        mode_item = tuning_space.get_item_by_path((op_name_type, *att_full_path))
+        if mode_item:
+            method_args = {method_item.name: method_item.options[0] for method_item in mode_item.options \
+                if method_item.name in TUNING_ITEMS_LST}
             config_args.update(method_args) 
     quant_mode = internal_pattern[0]
     # set the first option as the default for each tuning item
