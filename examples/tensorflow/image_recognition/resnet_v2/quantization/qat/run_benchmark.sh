@@ -32,9 +32,9 @@ function run_benchmark {
 
     python main.py \
             --input_model ${input_model} \
-            --benchmark \
             --mode ${mode} \
             --batch_size ${batch_size} \
+            --benchmark
 }
 
 main "$@"
