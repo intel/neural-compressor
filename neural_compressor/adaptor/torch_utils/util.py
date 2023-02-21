@@ -854,7 +854,7 @@ def get_mse_order_per_int8(adaptor, fp32_model, example_input, tune_cfg):
     for k, v in tune_cfg['op'].items():
         if k[1] in ['LayerNorm', 'Dropout', 'InstanceNorm3d']:
             continue
-        if 'weight' in v and v['weight']['dtype'] == 'fp32':
+        if v['weight']['dtype'] == 'fp32':
             quant_list.append(k)
     fallback_order = {}
     logger.info('Evaluate the sensitivity for each fp32 operation')
