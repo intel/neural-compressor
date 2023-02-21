@@ -183,11 +183,10 @@ class Benchmark(object):
 
         logger.info("Start to run Benchmark.")
         if os.environ.get('NC_ENV_CONF') == 'True':
-            return self.run_instance(mode)
-        else:
-            self.config_instance()
-            self.summary_benchmark()
-            return None
+            return self.run_instance('performance')
+        self.config_instance()
+        self.summary_benchmark()
+        return None
 
     fit = __call__
 
@@ -576,5 +575,5 @@ def fit(model, config=None, b_dataloader=None, b_func=None):
         benchmarker.b_func = b_func
     if b_dataloader is not None:
         benchmarker.b_dataloader = b_dataloader
-    benchmarker()
+    benchmarker(model)
     return benchmarker.results
