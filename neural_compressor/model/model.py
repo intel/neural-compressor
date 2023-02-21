@@ -23,7 +23,6 @@ import importlib
 import sys
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.utils import logger
-from neural_compressor.conf import config as cfg
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.model.mxnet_model import MXNetModel
