@@ -53,6 +53,10 @@ python -u ./run_glue.py \
 ``` 
 
 You can also try to use INC distributed tuning (Take mrpc as an example).
+In code, set `config.use_distributed_tuning` to True by the  following statement.
+```python
+conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion, use_distributed_tuning=True)
+```
 For example, bash command will look like the following, where *`<NUM_PROCESS>`* is the number of processes, it is recommended to set to the number of hosts, *`<MAX_NUM_THREADS>`* is the number of threads, it is recommended to set to
 the number of CPUs on node, *`<HOSTNAME>`* is the host name,  argument `--host <HOSTNAME>,<HOSTNAME>` can be replaced with `--hostfile <HOSTFILE>`, each line is a host name in *`<HOSTFILE>`*.
 Argument `-mca btl_tcp_if_include` set the network communication interface between hosts, for example, *`<NETWORK_INTERFACE>`* set to 192.168.20.0/24.

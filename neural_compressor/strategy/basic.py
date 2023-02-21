@@ -39,7 +39,7 @@ class BasicTuneStrategy(TuneStrategy):
             3. Fallback Multiple OPs Accumulated
 
         Yields:
-            tune_config (dict): A dict containing the tuning configuration for quantization.
+            tuning_config_list (list): A list containing dicts of the tuning configuration for quantization.
         """
         from copy import deepcopy
         tuning_space = self.tuning_space
