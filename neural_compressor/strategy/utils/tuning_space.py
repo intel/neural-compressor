@@ -123,7 +123,7 @@ class TuningSpace:
         self.capability = capability
         self.conf = conf
         self.root_item = TuningItem(name='root', options=[], item_type='root')
-        self.quant_mode_wise_items = defaultdict(set)  # quant_mode/precision_name: {(op_name, op_type),...}
+        self.quant_mode_wise_items = defaultdict(list)  # quant_mode/precision_name: {(op_name, op_type),...}
         self.op_type_wise_items = defaultdict(list)  # op_type: {(op_name, op_type), ...}
         self.framework = framework
         self.ops_dtype = defaultdict(OrderedDict)
@@ -176,9 +176,9 @@ class TuningSpace:
                     acc_item = q_option.get_option_by_name('activation')
                     if acc_item and acc_item.options:
                         for dtype_item in acc_item.options:
-                            self.quant_mode_wise_items[dtype_item.name].add(op_item)
+                            self.quant_mode_wise_items[dtype_item.name].append(op_item)
                 else:
-                    self.quant_mode_wise_items[q_option.name].add(op_item)
+                    self.quant_mode_wise_items[q_option.name].append(op_item)
 
         logger.info("Constructed tuning space.")
         logger.info(self.root_item.get_details())
@@ -626,7 +626,7 @@ class TuningSpace:
         Returns:
             The op item set that support quant model.
         """
-        return self.quant_mode_wise_items.get(quant_mode, set())
+        return self.quant_mode_wise_items.get(quant_mode, [])
 
     def get_op_default_path_by_pattern(self, op_name_type, pattern):
         """Get the default path by quant mode.
