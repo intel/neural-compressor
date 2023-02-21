@@ -238,9 +238,9 @@ class MixedPrecision:
                     {topk: 1,
                      MSE: {compare_label: False},
                     }
-            For the built-in metrics, you can refer to [Supported Built-in Metric Matrix](https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix)
+            Refer to this [file](../docs/source/metric.md#supported-built-in-metric-matrix) for built-in metric list
         2. User also can set specific metric through this api. The metric class should take the outputs of the model or
-           postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels) as inputs 
+           postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels) as inputs
            for update, and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
         Args:
             user_metric(neural_compressor.metric.Metric or a dict of built-in metric configures):
