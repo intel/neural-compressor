@@ -139,6 +139,7 @@ class Benchmark(object):
     """Benchmark class can be used to evaluate the model performance.
 
     With the objective setting, user can get the data of what they configured in yaml.
+
     Args:
         conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
             Benchmark_Conf class containing accuracy goal, tuning objective and preferred
