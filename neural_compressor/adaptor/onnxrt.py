@@ -63,6 +63,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.domain = framework_specific_info["domain"]
         self.recipes = framework_specific_info["recipes"]
         self.backend = PROVIDERS[framework_specific_info["backend"]]
+        self.performance_only = framework_specific_info.get("performance_only", False)
 
         if self.backend not in ort.get_all_providers():
             logger.warning("{} backend is not supported in current environment, "
@@ -242,7 +243,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
 
-        tmp_model = copy.deepcopy(model)
+        if self.performance_only:
+            tmp_model = model
+        else:
+            try:
+                tmp_model = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                tmp_model = model
         iterations = tune_cfg.get('calib_iteration', 1)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if not self.dynamic:
@@ -289,7 +298,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.quantize_params = quantize_params
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
         from neural_compressor import options
-        quantizer = Quantizer(copy.deepcopy(model),
+        quantizer = Quantizer(tmp_model,
             quantize_config,
             format,
             self.static,
@@ -631,7 +640,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             model = self._revert_conv_add_fusion(model)
         model = split_shared_bias(model)
         model.topological_sort()
-        self.pre_optimized_model = copy.deepcopy(model)
+        self.pre_optimized_model = model
 
     def _revert_conv_add_fusion(self, model):
         from onnx import numpy_helper
