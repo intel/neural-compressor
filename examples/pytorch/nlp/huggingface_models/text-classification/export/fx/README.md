@@ -52,7 +52,7 @@ bash run_export.sh --input_model=[model_name_or_path] --dataset_location=mrpc --
 ### 2. To get the benchmark of exported and tuned models, includes Batch_size and Throughput: 
 ```bash
 # benchmark ONNX model
-bash run_benchmark.sh --input_model=[fp32-model.onnx|int8-QDQ-model.onnx|int8-QLinear-model.onnx] --dataset_location=/path/to/onnx-imagenet-validation --mode=[accuracy|performance] --batch_size=[16]
+bash run_benchmark.sh --input_model=[fp32-model.onnx|int8-QDQ-model.onnx|int8-QLinear-model.onnx] --dataset_location=/path/to/onnx-imagenet-validation --tokenizer=[model_name_or_path] --mode=[accuracy|performance] --batch_size=[16]
 # benchmark PyTorch model
 bash run_benchmark.sh --input_model=[model_name_or_path|/path/to/saved_results] --dataset_location=/path/to/pytorch-imagenet --mode=[accuracy|performance] --int8=[true|false] --batch_size=[16]
 ```

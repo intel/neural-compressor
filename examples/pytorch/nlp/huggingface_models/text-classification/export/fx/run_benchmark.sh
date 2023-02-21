@@ -34,8 +34,8 @@ function init_params {
       --int8=*)
           int8=$(echo ${var} |cut -f2 -d=)
       ;;
-      --config=*)
-          tuned_checkpoint=$(echo $var |cut -f2 -d=)
+      --tokenizer=*)
+          tokenizer=$(echo $var |cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -62,9 +62,9 @@ function run_benchmark {
 
     if [[ ${input_model: -5:5} == ".onnx" ]]; then
         # fetch tokenizer configuration for dataset.
-        model_name_or_path=${tuned_checkpoint}
+        model_name_or_path=${tokenizer}
         python onnx_evaluation.py \
-                --model_name_or_path ${model_name_or_path} \
+                --model_name_or_path ${tokenizer} \
                 --model_path ${input_model} \
                 --task ${dataset_location} \
                 --batch_size=${batch_size} \
