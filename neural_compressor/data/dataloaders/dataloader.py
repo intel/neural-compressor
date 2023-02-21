@@ -35,21 +35,15 @@ DATALOADERS = {"tensorflow": TensorflowDataLoader,
                }
 
 class DataLoader(object):
-    """A wrapper of the information needed to construct a dataloader.
+    """Entrance of all configured DataLoaders."""
 
-    This class can't yield batched data and only in this Quantization/Benchmark 
-    object's setter method a 'real' calib_dataloader will be created, the reason 
-    is we have to know the framework info and only after the Quantization/Benchmark
-    object created then framework infomation can be known. Future we will support
-    creating iterable dataloader from neural_compressor.data.DataLoader
-    """
-
-    def __init__(self, dataset, batch_size=1, collate_fn=None,
+    def __new__(cls, framework, dataset, batch_size=1, collate_fn=None,
                  last_batch='rollover', sampler=None, batch_sampler=None,
                  num_workers=0, pin_memory=False, shuffle=False, distributed=False):
         """Initialize a Dataloader with needed information.
 
         Args:
+            framework (str): different frameworks, such as tensorflow, pytorch, onnx.
             dataset (object): A dataset object from which to get data. Dataset must implement 
                 __iter__ or __getitem__ method.
             batch_size (int, optional): How many samples per batch to load. Defaults to 1.
@@ -71,19 +65,20 @@ class DataLoader(object):
             distributed (bool, optional): Set to ``True`` to support distributed computing. 
                 Defaults to False.
         """
-        assert hasattr(dataset, '__iter__') or \
-               hasattr(dataset, '__getitem__'), \
-               "dataset must implement __iter__ or __getitem__ magic method!"
-        self.dataset = dataset
-        self.batch_size = batch_size
-        self.collate_fn = collate_fn
-        self.last_batch = last_batch
-        self.sampler = sampler
-        self.batch_sampler = batch_sampler
-        self.num_workers = num_workers
-        self.pin_memory = pin_memory
-        self.shuffle = shuffle
-        self.distributed = distributed
+        assert framework in ('tensorflow', 'tensorflow_itex', \
+                             'pytorch', 'pytorch_ipex', 'pytorch_fx', 'onnxrt_qdqops', \
+                             'onnxrt_qlinearops', 'onnxrt_integerops', 'mxnet'), \
+                             "framework support tensorflow pytorch mxnet onnxruntime"
+        return DATALOADERS[framework](dataset=dataset,
+                                      batch_size=batch_size,
+                                      last_batch=last_batch,
+                                      collate_fn=collate_fn,
+                                      sampler=sampler,
+                                      batch_sampler=batch_sampler,
+                                      num_workers=num_workers,
+                                      pin_memory=pin_memory,
+                                      shuffle=shuffle,
+                                      distributed=distributed)
 
 def _generate_common_dataloader(dataloader, framework, distributed=False):
     """Generate common dataloader.
