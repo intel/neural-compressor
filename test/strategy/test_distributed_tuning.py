@@ -8,13 +8,17 @@ import os
 import numpy as np
 
 from neural_compressor.utils import logger
-
-from mpi4py import MPI
-
 from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.data import Datasets, DATALOADERS
 import torchvision
+
+import importlib
+if importlib.util.find_spec("mpi4py") is None:
+    CONDITION = True
+else:
+    from mpi4py import MPI
+    CONDITION = False
 
 def save_acc_perf_to_local(acc_lst, perf_lst, acc_perf_data_file_path):
     import json
@@ -34,6 +38,8 @@ def next_acc_and_perf(acc_perf_data_file_path):
     new_perf_lst = data['perf_lst'][1:]
     save_acc_perf_to_local(new_acc_lst, new_perf_lst, acc_perf_data_file_path)
     return acc, perf
+
+@unittest.skipIf(CONDITION , "missing the mpi4py package")
 class TestDistributedTuning(unittest.TestCase):
     """Run: mpirun -np 2 python test_distributed_tuning.py TestDistributedTuning.test_pt_stage_1_met"""
     @classmethod
