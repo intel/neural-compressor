@@ -16,15 +16,12 @@
 # under the License.
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 
-
 import logging
 import argparse
-
 import numpy as np
 import onnx
-import re
 import os
-from PIL import Image
+import hashlib
 import onnxruntime as ort
 from sklearn.metrics import accuracy_score
 
@@ -33,11 +30,6 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     datefmt = '%m/%d/%Y %H:%M:%S',
                     level = logging.WARN)
 
-class Squeeze:
-    def __call__(self, sample):
-        preds, labels = sample
-        return np.squeeze(preds), labels
-    
 def _topk_shape_validate(preds, labels):
     # preds shape can be Nxclass_num or class_num(N=1 by default)
     # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
@@ -120,47 +112,146 @@ class TopK:
             return 0
         return self.num_correct / self.num_sample
 
-class Dataloader:
-    def __init__(self, dataset_location, image_list):
-        self.batch_size = 1
-        self.image_list = []
-        self.label_list = []
-        with open(image_list, 'r') as f:
-            for s in f:
-                image_name, label = re.split(r"\s+", s.strip())
-                src = os.path.join(dataset_location, image_name)
-                if not os.path.exists(src):
-                    continue
+def gen_bar_updater():
+    """Generate progress bar."""
+    from tqdm import tqdm
+    pbar = tqdm(total=None)
 
-                self.image_list.append(src)
-                self.label_list.append(int(label))
+    def bar_update(count, block_size, total_size):
+        """Update progress bar."""
+        if pbar.total is None and total_size:
+            pbar.total = total_size
+        progress_bytes = count * block_size
+        pbar.update(progress_bytes - pbar.n)
+    return bar_update
+
+
+def check_integrity(fpath, md5):
+    """Check MD5 checksum."""
+    if not os.path.isfile(fpath):
+        return False
+    if md5 is None:
+        return True
+    return md5 == calculate_md5(fpath)
+
+
+def calculate_md5(fpath, chunk_size=1024*1024):
+    """Generate MD5 checksum for a file."""
+    md5 = hashlib.md5()
+    with open(fpath, 'rb') as f:
+        for chunk in iter(lambda: f.read(chunk_size), b''):
+            md5.update(chunk)
+    return md5.hexdigest()
+
+def download_url(url, root, filename=None, md5=None):  # pragma: no cover
+    """Download from url.
+    Args:
+        url (str): the address to download from.
+        root (str): the path for saving.
+        filename (str): the file name for saving.
+        md5 (str): the md5 string.
+    """
+    import urllib
+    root = os.path.expanduser(root)
+    if not filename:
+        filename = os.path.basename(url)
+    fpath = os.path.join(root, filename)
+
+    os.makedirs(root, exist_ok=True)
+
+    if check_integrity(fpath, md5):
+        print('Using downloaded and verified file: ' + fpath)
+    else:
+        try:
+            print('Downloading ' + url + ' to ' + fpath)
+            urllib.request.urlretrieve(
+                url, fpath,
+                reporthook=gen_bar_updater()
+            )
+        except (urllib.error.URLError, IOError) as e:
+            if url[:5] == 'https':
+                url = url.replace('https:', 'http:')
+                print('Failed download. Trying https -> http instead.'
+                      ' Downloading ' + url + ' to ' + fpath)
+                urllib.request.urlretrieve(
+                    url, fpath,
+                    reporthook=gen_bar_updater()
+                )
+            else:
+                raise e
+        if not check_integrity(fpath, md5):
+            raise RuntimeError("File not found or corrupted.")
+
+class Dataloader:
+    def __init__(self, dataset_location, download=True):
+        self.root = dataset_location
+        if download:
+            self.download()
+
+        self.read_data()
+
+    def read_data(self):
+        """Read data from a file."""
+        for file_name, checksum in self.resource:
+            file_path = os.path.join(self.root, os.path.basename(file_name))
+            if not os.path.exists(file_path):
+                raise RuntimeError(
+                    'Dataset not found. You can use download=True to download it')
+            with np.load(file_path, allow_pickle=True) as f:
+                if self.train:
+                    self.data, self.targets = f['x_train'], f['y_train']
+                else:
+                    self.data, self.targets = f['x_test'], f['y_test']
+
+    def __len__(self):
+        """Length of the dataset."""
+        return len(self.data)
+
+    def __getitem__(self, index):
+        """Magic method.
+        x[i] is roughly equivalent to type(x).__getitem__(x, index)
+        """
+        image, label = self.data[index], int(self.targets[index])
+        image = np.expand_dims(image, -1)
+        if self.transform is not None:
+            image, label = self.transform((image, label))
+        return image, label
+
+    @property
+    def class_to_idx(self):
+        """Return a dict of class."""
+        return {_class: i for i, _class in enumerate(self.classes)}
+
+    def download(self):
+        """Download a file."""
+        for url, md5 in self.resource:
+            filename = os.path.basename(url)
+            if os.path.exists(os.path.join(self.root, filename)):
+                continue
+            else:
+                download_url(url, root=self.root,
+                            filename=filename, md5=md5)
 
     def __iter__(self):
-        for src, label in zip(self.image_list, self.label_list):
-            with Image.open(src) as image:
-                image = np.array(image.convert('RGB').resize((224, 224))).astype(np.float32)
-                image[:, :, 0] -= 123.68
-                image[:, :, 1] -= 116.779
-                image[:, :, 2] -= 103.939
-                image[:,:,[0,1,2]] = image[:,:,[2,1,0]]
-                image = image.transpose((2, 0, 1))
-                image = np.expand_dims(image, axis=0)
-            yield image, label
+        for image, label in zip(self.data, self.targets):
+            image = np.expand_dims(image, -1)
+            image = image.transpose(2, 0, 1)
+            yield image.astype('float32'), int(label)
 
-def eval_func(model, dataloader, metric, postprocess):
+def eval_func(model, dataloader, metric):
     metric.reset()
     sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
     input_names = [i.name for i in sess.get_inputs()]
     for input_data, label in dataloader:
         output = sess.run(None, dict(zip(input_names, [input_data])))
-        output, label = postprocess((output, label))
         metric.update(output, label)
     return metric.result()
+
 
 if __name__ == "__main__":
     logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
     parser = argparse.ArgumentParser(
-        description="Googlenet fine-tune examples for image classification tasks.",
+        description="MNIST - Handwritten Digit Recognition quantization example.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
@@ -204,13 +295,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model = onnx.load(args.model_path)
-    data_path = os.path.join(args.dataset_location, 'ILSVRC2012_img_val')
-    label_path = os.path.join(args.dataset_location, 'val.txt')
-    dataloader = Dataloader(data_path, label_path)
+    dataloader = Dataloader(args.dataset_location)
     top1 = TopK()
-    postprocess = Squeeze()
+
     def eval(onnx_model):
-        return eval_func(onnx_model, dataloader, top1, postprocess)
+        return eval_func(onnx_model, dataloader, top1)
 
     if args.benchmark:
         if args.mode == 'performance':

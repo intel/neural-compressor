@@ -25,7 +25,6 @@ import onnx
 import re
 import os
 from PIL import Image
-import onnxruntime as ort
 from sklearn.metrics import accuracy_score
 
 logger = logging.getLogger(__name__)
@@ -33,11 +32,6 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     datefmt = '%m/%d/%Y %H:%M:%S',
                     level = logging.WARN)
 
-class Squeeze:
-    def __call__(self, sample):
-        preds, labels = sample
-        return np.squeeze(preds), labels
-    
 def _topk_shape_validate(preds, labels):
     # preds shape can be Nxclass_num or class_num(N=1 by default)
     # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
@@ -131,7 +125,6 @@ class Dataloader:
                 src = os.path.join(dataset_location, image_name)
                 if not os.path.exists(src):
                     continue
-
                 self.image_list.append(src)
                 self.label_list.append(int(label))
 
@@ -144,18 +137,7 @@ class Dataloader:
                 image[:, :, 2] -= 103.939
                 image[:,:,[0,1,2]] = image[:,:,[2,1,0]]
                 image = image.transpose((2, 0, 1))
-                image = np.expand_dims(image, axis=0)
-            yield image, label
-
-def eval_func(model, dataloader, metric, postprocess):
-    metric.reset()
-    sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
-    input_names = [i.name for i in sess.get_inputs()]
-    for input_data, label in dataloader:
-        output = sess.run(None, dict(zip(input_names, [input_data])))
-        output, label = postprocess((output, label))
-        metric.update(output, label)
-    return metric.result()
+            yield image.astype('float32'), label
 
 if __name__ == "__main__":
     logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
@@ -208,9 +190,9 @@ if __name__ == "__main__":
     label_path = os.path.join(args.dataset_location, 'val.txt')
     dataloader = Dataloader(data_path, label_path)
     top1 = TopK()
-    postprocess = Squeeze()
+
     def eval(onnx_model):
-        return eval_func(onnx_model, dataloader, top1, postprocess)
+        return eval_func(onnx_model, dataloader, top1)
 
     if args.benchmark:
         if args.mode == 'performance':

@@ -16,10 +16,9 @@
 # under the License.
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 
-
 import logging
 import argparse
-
+import cv2
 import numpy as np
 import onnx
 import re
@@ -33,11 +32,6 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     datefmt = '%m/%d/%Y %H:%M:%S',
                     level = logging.WARN)
 
-class Squeeze:
-    def __call__(self, sample):
-        preds, labels = sample
-        return np.squeeze(preds), labels
-    
 def _topk_shape_validate(preds, labels):
     # preds shape can be Nxclass_num or class_num(N=1 by default)
     # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
@@ -125,6 +119,12 @@ class Dataloader:
         self.batch_size = 1
         self.image_list = []
         self.label_list = []
+        self.random_crop = False
+        self.resize_side= 256
+        self.mean_value = [0.485, 0.456, 0.406]
+        self.std_value = [0.229, 0.224, 0.225]
+        self.height = 224
+        self.width = 224
         with open(image_list, 'r') as f:
             for s in f:
                 image_name, label = re.split(r"\s+", s.strip())
@@ -138,29 +138,43 @@ class Dataloader:
     def __iter__(self):
         for src, label in zip(self.image_list, self.label_list):
             with Image.open(src) as image:
-                image = np.array(image.convert('RGB').resize((224, 224))).astype(np.float32)
-                image[:, :, 0] -= 123.68
-                image[:, :, 1] -= 116.779
-                image[:, :, 2] -= 103.939
-                image[:,:,[0,1,2]] = image[:,:,[2,1,0]]
-                image = image.transpose((2, 0, 1))
-                image = np.expand_dims(image, axis=0)
-            yield image, label
+                image = np.array(image.convert('RGB')).astype(np.float32)
+                
+                height, width = image.shape[0], image.shape[1]
+                scale = self.resize_side / width if height > width else self.resize_side / height
+                new_height = int(height*scale)
+                new_width = int(width*scale)
+                image = cv2.resize(image, (new_height, new_width))
+                image = image / 255.
+                shape = image.shape
+                if self.random_crop:
+                    y0 = np.random.randint(low=0, high=(shape[0] - self.height +1))
+                    x0 = np.random.randint(low=0, high=(shape[1] - self.width +1))
+                else:
+                    y0 = (shape[0] - self.height) // 2
+                    x0 = (shape[1] - self.width) // 2
+                if len(image.shape) == 2:
+                    image = np.array([image])
+                    image = np.repeat(image, 3, axis=0)
+                    image = image.transpose(1, 2, 0)
+                image = image[y0:y0+self.height, x0:x0+self.width, :]
+                image = ((image - self.mean_value)/self.std_value).astype(np.float32)
 
-def eval_func(model, dataloader, metric, postprocess):
+            yield image.transpose(2, 0, 1), label
+
+def eval_func(model, dataloader, metric):
     metric.reset()
     sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
     input_names = [i.name for i in sess.get_inputs()]
     for input_data, label in dataloader:
         output = sess.run(None, dict(zip(input_names, [input_data])))
-        output, label = postprocess((output, label))
         metric.update(output, label)
     return metric.result()
 
 if __name__ == "__main__":
     logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
     parser = argparse.ArgumentParser(
-        description="Googlenet fine-tune examples for image classification tasks.",
+        description="Resnet50 fine-tune examples for image classification tasks.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
@@ -208,9 +222,9 @@ if __name__ == "__main__":
     label_path = os.path.join(args.dataset_location, 'val.txt')
     dataloader = Dataloader(data_path, label_path)
     top1 = TopK()
-    postprocess = Squeeze()
+
     def eval(onnx_model):
-        return eval_func(onnx_model, dataloader, top1, postprocess)
+        return eval_func(onnx_model, dataloader, top1)
 
     if args.benchmark:
         if args.mode == 'performance':

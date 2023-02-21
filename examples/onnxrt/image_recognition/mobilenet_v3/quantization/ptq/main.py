@@ -17,9 +17,10 @@
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 
 
+
 import logging
 import argparse
-
+import cv2
 import numpy as np
 import onnx
 import re
@@ -33,11 +34,6 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     datefmt = '%m/%d/%Y %H:%M:%S',
                     level = logging.WARN)
 
-class Squeeze:
-    def __call__(self, sample):
-        preds, labels = sample
-        return np.squeeze(preds), labels
-    
 def _topk_shape_validate(preds, labels):
     # preds shape can be Nxclass_num or class_num(N=1 by default)
     # it's more suitable for 'Accuracy' with preds shape Nx1(or 1) output from argmax
@@ -125,6 +121,11 @@ class Dataloader:
         self.batch_size = 1
         self.image_list = []
         self.label_list = []
+        self.height = 224
+        self.width = 224
+        self.central_fraction = 0.875
+        self.mean_value = [0.0, 0.0, 0.0]
+        self.scale=1.0
         with open(image_list, 'r') as f:
             for s in f:
                 image_name, label = re.split(r"\s+", s.strip())
@@ -138,29 +139,44 @@ class Dataloader:
     def __iter__(self):
         for src, label in zip(self.image_list, self.label_list):
             with Image.open(src) as image:
-                image = np.array(image.convert('RGB').resize((224, 224))).astype(np.float32)
-                image[:, :, 0] -= 123.68
-                image[:, :, 1] -= 116.779
-                image[:, :, 2] -= 103.939
-                image[:,:,[0,1,2]] = image[:,:,[2,1,0]]
-                image = image.transpose((2, 0, 1))
-                image = np.expand_dims(image, axis=0)
-            yield image, label
+                image = np.array(image.convert('RGB')).astype(np.float32)
+                image = image.astype('float32') / 255. 
+                img_shape = image.shape
 
-def eval_func(model, dataloader, metric, postprocess):
+                img_hd = float(img_shape[0])
+                bbox_h_start = int((img_hd - img_hd * self.central_fraction) / 2)
+                img_wd = float(img_shape[1])
+                bbox_w_start = int((img_wd - img_wd * self.central_fraction) / 2)
+
+                bbox_h_size = img_shape[0] - bbox_h_start * 2
+                bbox_w_size = img_shape[1] - bbox_w_start * 2
+
+                image = image[bbox_h_start:bbox_h_start+bbox_h_size, bbox_w_start:bbox_w_start+bbox_w_size]
+
+                if self.height and self.width:
+                    image = cv2.resize(image, (self.width, self.height), interpolation=cv2.INTER_LINEAR)
+
+                image = np.subtract(image, 0.5)
+                image = np.multiply(image, 2.0)
+                means = np.broadcast_to(self.mean_value, image.shape)
+                image = (image - means) * self.scale
+                image = image.astype(np.float32)
+            yield image, label + 1
+
+def eval_func(model, dataloader, metric):
     metric.reset()
     sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+
     input_names = [i.name for i in sess.get_inputs()]
     for input_data, label in dataloader:
         output = sess.run(None, dict(zip(input_names, [input_data])))
-        output, label = postprocess((output, label))
         metric.update(output, label)
     return metric.result()
 
 if __name__ == "__main__":
     logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
     parser = argparse.ArgumentParser(
-        description="Googlenet fine-tune examples for image classification tasks.",
+        description="Mobilenet_v3 fine-tune examples for image classification tasks.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
@@ -208,9 +224,8 @@ if __name__ == "__main__":
     label_path = os.path.join(args.dataset_location, 'val.txt')
     dataloader = Dataloader(data_path, label_path)
     top1 = TopK()
-    postprocess = Squeeze()
     def eval(onnx_model):
-        return eval_func(onnx_model, dataloader, top1, postprocess)
+        return eval_func(onnx_model, dataloader, top1)
 
     if args.benchmark:
         if args.mode == 'performance':
