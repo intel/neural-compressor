@@ -100,7 +100,8 @@ class INCDataloader():
                 yield batched_input, batched_label
                 batched_input = {k: None for k in self.example_input}
                 batched_label = None
-        yield batched_input, batched_label
+        if (idx+1) % self.batch_size != 0:
+            yield batched_input, batched_label
 
     def __len__(self):
         return self.length
@@ -242,20 +243,12 @@ if __name__ == "__main__":
 
     model = onnx.load(args.model_path)
     if args.benchmark:
-        session = ort.InferenceSession(args.model_path, None)
-        input_tensors = session.get_inputs()
-        shape = []
-        for i in range(len(input_tensors)):
-            shape.append((1, 128))
-        dummy_dataset = DummyDataset(shape=shape, low=1, high=1, dtype='int64', label=True)
-        dummy_dataloader = DefaultDataLoader(dummy_dataset, args.batch_size)
-        
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         conf = BenchmarkConfig(iteration=100,
-                                cores_per_instance=28,
+                                cores_per_instance=4,
                                 num_of_instance=1)
-        fit(model, conf, b_dataloader=dummy_dataloader)
+        fit(model, conf, b_dataloader=dataloader)
     elif args.accuracy:
         acc_result = eval_func(model)
         print("Batch size = %d" % args.batch_size)

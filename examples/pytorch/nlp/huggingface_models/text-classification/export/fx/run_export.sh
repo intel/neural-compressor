@@ -11,6 +11,7 @@ function main {
 # init params
 function init_params {
     dtype='fp32'
+    quant_format='QDQ' # or QLinear
     for var in "$@"
     do
         case $var in
@@ -45,7 +46,6 @@ function run_tuning {
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
-    quant_format='QDQ' # or QLinear
     model_name_or_path=${input_model}
     TASK_NAME=${dataset_location}
 

@@ -198,7 +198,7 @@ class ModelArguments:
     benchmark: bool = field(
         default=False, metadata={"help": "get benchmark instead of accuracy"}
     )
-    accuracy_only: bool = field(
+    accuracy: bool = field(
         default=False, metadata={"help": "get accuracy"}
     )
     iters: int = field(
@@ -536,8 +536,16 @@ def main():
     if model_args.export_dtype == 'int8':
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
-        tuning_criterion = TuningCriterion(max_trials=600)
-        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion)
+        tuning_criterion = TuningCriterion(
+            strategy="mse_v2",
+            strategy_kwargs={"confidence_batches": 1},
+            max_trials=600,
+        )
+        conf = PostTrainingQuantConfig(
+            approach="static", 
+            tuning_criterion=tuning_criterion,
+            calibration_sampling_size=[300],
+        )
         q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
         from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
         save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
@@ -559,18 +567,17 @@ def main():
         )
         return
 
-    if model_args.benchmark or model_args.accuracy_only:
-        if model_args.benchmark:
-            from neural_compressor.config import BenchmarkConfig
-            from neural_compressor import benchmark
-            b_conf = BenchmarkConfig(warmup=5,
-                                     iteration=model_args.iters,
-                                     cores_per_instance=4,
-                                     num_of_instance=1)
-            benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
-        else:
-            eval_func(model)
-        return
+    if model_args.benchmark:
+        from neural_compressor.config import BenchmarkConfig
+        from neural_compressor import benchmark
+        b_conf = BenchmarkConfig(warmup=5,
+                                iteration=model_args.iters,
+                                cores_per_instance=4,
+                                num_of_instance=1)
+        benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
+    elif model_args.accuracy:
+        eval_func(model)
+
 
     if training_args.push_to_hub:
         kwargs = {"finetuned_from": model_args.model_name_or_path, "tasks": "text-classification"}
