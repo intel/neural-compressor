@@ -450,67 +450,6 @@ class PostTrainingQuant(BaseQuant):
         self._calib_dataloader = dataloader
 
 
-class AwareTrainingQuant(BaseQuant):
-    def __init__(self, conf: QuantizationAwareTrainingConfig, **kwargs):
-        super(AwareTrainingQuant, self).__init__(conf, **kwargs)
-
-    def prepare(self, callbacks):
-        cfg = self.conf.usr_cfg
-        framework_specific_info = {'device': cfg.device,
-                                   'random_seed': cfg.tuning.random_seed,
-                                   'workspace_path': cfg.tuning.workspace.path,
-                                   'q_dataloader': None}
-        if cfg.quantization.approach is not None:
-            framework_specific_info['approach'] = cfg.quantization.approach
-
-        if 'tensorflow' in cfg.model.framework:
-            framework_specific_info.update(
-                {"inputs": cfg.model.inputs, "outputs": cfg.model.outputs})
-
-        self.adaptor = FRAMEWORKS[cfg.model.framework](framework_specific_info)
-        self.adaptor.model = self.model
-        callbacks.register_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
-        callbacks.register_hook("on_train_end", self.adaptor._post_hook_for_qat)
-        self.callbacks = callbacks
-
-    def pre_proccess(self):
-        """Create strategy to optimize model."""
-        if self.callbacks is not None and hasattr(self.adaptor, "_pre_hook_for_qat"):
-            self.callbacks.remove_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
-            self.callbacks.remove_hook("on_train_end", self.adaptor._post_hook_for_qat)
-
-        super(AwareTrainingQuant, self).pre_proccess()
-
-    def __call__(self):
-        """Execute this class.
-
-        For derived classes(Pruning, Quantization, etc.), an override function is required.
-        """
-        return super(AwareTrainingQuant, self).__call__()
-
-    fit = __call__
-
-    @property
-    def train_func(self):
-        """Not support get train_func."""
-        assert False, 'Should not try to get the value of `train_func` attribute.'
-
-    @train_func.setter
-    def train_func(self, user_train_func):
-        """Training function.
-
-        Args:
-            user_train_func: This function takes "model" as input parameter
-                         and executes entire training process with self
-                         contained training hyper-parameters. If training_func set,
-                         an evaluation process must be triggered and user should
-                         set eval_dataloader with metric configured or directly eval_func
-                         to make evaluation of the model executed. training_func will return
-                         a trained model.
-        """
-        self._train_func = user_train_func
-
-
 def fit(model,
         conf,
         calib_dataloader=None,

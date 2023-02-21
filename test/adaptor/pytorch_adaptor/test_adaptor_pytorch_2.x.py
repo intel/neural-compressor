@@ -330,6 +330,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
             model_fx = load("./saved", model_origin)
+            self.assertTrue("quantize" in str(type(q_model.model.fc)))
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
             if approach != "qat":
@@ -363,6 +364,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
             model_fx = load("./saved", model_origin)
+            self.assertTrue("quantize" in str(type(model_fx.conv)))
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
             shutil.rmtree("./saved", ignore_errors=True)
 
