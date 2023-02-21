@@ -28,7 +28,6 @@ from .model.model import BaseModel, get_model_fwk_name, get_model_type, Model, M
 from .strategy import STRATEGIES
 from .utils import logger
 from .utils.utility import time_limit
-from neural_compressor import PostTrainingQuantConfig
 
 
 class PostTrainingQuant:
@@ -321,77 +320,6 @@ class PostTrainingQuant:
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
 
         self._metric = user_metric
-
-    @property
-    def calib_func(self):
-        """Not support get calib_func."""
-        assert False, 'Should not try to get the value of `calib_func` attribute.'
-
-    @calib_func.setter
-    def calib_func(self, calib_func):
-        """Calibrate scale and zero for quantization.
-
-        Args:
-            calib_func: This function takes "model" as input parameter
-                         and executes entire evaluation process. If calib_func set,
-                         an evaluation process must be triggered and user should
-                         set eval_dataloader with metric configured or directly eval_func
-                         to make evaluation of the model executed.
-        """
-        self._train_func = calib_func
-
-    @property
-    def calib_dataloader(self):
-        """Get `calib_dataloader` attribute."""
-        return self._calib_dataloader
-
-    @calib_dataloader.setter
-    def calib_dataloader(self, dataloader):
-        """Set Data loader for calibration, mandatory for post-training quantization.
-
-        If calib_func is not be set then user must set calibration dataloader,
-        and calibration is iterable and the batched data should consists of a tuple like
-        (input, label) if the calibration dataset containing label, or yield (input, _)
-        for label-free calibration dataset, the input in the batched data will be used for
-        model inference, so it should satisfy the input format of specific model.
-        In calibration process, label of data loader will not be used and
-        neither the postprocess and metric. User only need to set
-        calib_dataloader when calib_dataloader can not be configured from yaml file.
-
-        Args:
-            dataloader(generator): user are supported to set a user defined dataloader
-                                    which meet the requirements that can yield tuple of
-                                    (input, label)/(input, _) batched data. Another good
-                                    practice is to use neural_compressor.data.DataLoader
-                                    to initialize a neural_compressor dataloader object. Notice
-                                    neural_compressor.data.DataLoader is just a wrapper of the
-                                    information needed to build a dataloader, it can't yield
-                                    batched data and only in this setter method
-                                    a 'real' calib_dataloader will be created,
-                                    the reason is we have to know the framework info
-                                    and only after the Quantization object created then
-                                    framework infomation can be known.
-                                    Future we will support creating iterable dataloader
-                                    from neural_compressor.data.DataLoader
-        """
-        assert hasattr(dataloader, '__iter__') and \
-            hasattr(dataloader, 'batch_size'), \
-            'dataloader must implement __iter__ method and batch_size attribute'
-        self._calib_dataloader = dataloader
-
-
-class PostTrainingQuant(BaseQuant):
-    def __init__(self, conf: PostTrainingQuantConfig, **kwargs):
-        super(PostTrainingQuant, self).__init__(conf, **kwargs)
-
-    def __call__(self):
-        """Execute this class.
-
-        For derived classes(Pruning, Quantization, etc.), an override function is required.
-        """
-        return super(PostTrainingQuant, self).__call__()
-
-    fit = __call__
 
     @property
     def calib_func(self):

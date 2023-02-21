@@ -155,8 +155,7 @@ class CompressionManager:
 
     @metric.setter
     def metric(self, user_metric):
-        """Set metric class or a dict of built-in metric configures,
-        and neural_compressor will initialize this class when evaluation.
+        """Set metric class or a dict of built-in metric configures.
 
         1. neural_compressor have many built-in metrics,
            user can pass a metric configure dict to tell neural compressor what metric will be use.
@@ -184,7 +183,7 @@ class CompressionManager:
         self.quantizer.metric = user_metric
 
     def fit(self):
-        """Compress model with tuning for quantization"""
+        """Compress model with tuning for quantization."""
         self.model = self.quantizer.fit()
         return self.model
 
