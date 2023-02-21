@@ -151,7 +151,7 @@ class TestTFQueryYaml(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.tf_yaml_path = os.path.join(os.getcwd() + "/../../../neural_compressor/adaptor/tensorflow.yaml")
+        self.tf_yaml_path = os.path.join(os.getcwd() + "/../neural_compressor/adaptor/tensorflow.yaml")
 
         with open(self.tf_yaml_path) as f:
             self.content = yaml.safe_load(f)
