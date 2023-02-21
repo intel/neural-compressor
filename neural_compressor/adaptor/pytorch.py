@@ -3698,6 +3698,8 @@ class PyTorchQuery(QueryBackendCapability):
         Returns:
             [string list]: A list composed of op type.
         """
-        assert precision in list(self.cur_config.keys())
+        precision_list = [p for p in self.cur_config.keys()]
+        assert precision in precision_list, "Please check the precision \
+         whether in ['int8', 'uint8', 'bf16', 'fp32']"
 
         return self.cur_config[precision]
