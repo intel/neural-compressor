@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: FuseNodeStartWithConcatV2(**kwargs)
+.. py:class:: FuseNodeStartWithConcatV2
 
    Bases: :py:obj:`neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_base.QuantizeNodeBase`
 
