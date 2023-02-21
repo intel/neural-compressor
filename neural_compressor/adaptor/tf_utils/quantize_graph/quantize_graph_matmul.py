@@ -179,11 +179,12 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             self.output_graph = self.input_graph
             return []
 
-        weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+        if weight_node.op == 'Const':
+            weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
 
-        if np.any(np.isnan(weights_content)):
-            self.output_graph = self.input_graph
-            return []
+            if np.any(np.isnan(weights_content)):
+                self.output_graph = self.input_graph
+                return []
 
         for i in self.node_name_mapping:
             if weight_node.input and not weight_node.input[0].startswith('^') \
@@ -191,9 +192,16 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.output_graph = self.input_graph
                 return []
 
-        is_shared_output = True if len(
-              matched_node.output
-        ) > 1 else False
+        len_output = len(matched_node.output)
+        is_shared_output = False
+        if len_output == 2:
+            if self.node_name_mapping[matched_node.output[0]].node.op == 'Reshape' or \
+                self.node_name_mapping[matched_node.output[1]].node.op == 'Reshape':
+                is_shared_output = False
+            else:
+                is_shared_output = True
+        elif len_output > 1:
+            is_shared_output = True
 
         need_insert_dummy_biasadd = 1
         if len(match_node_name) == 1:
@@ -236,6 +244,19 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     bias_node = helper.create_constant_node(
                         bias_node_name, [0] * bias_size, dtypes.float32, shape=[bias_size]
                     )
+                    if enter_node:
+                        bias_enter_node = helper.create_node(
+                            'Enter', bias_node_name + '_enter', [bias_node_name])
+                        helper.set_attr_string(bias_enter_node,
+                            'frame_name', enter_node.attr['frame_name'].s)
+                        helper.set_attr_dtype(bias_enter_node, 'T', dtypes.float32)
+                        helper.set_attr_bool(bias_enter_node, 'is_constant', True)
+                        helper.set_attr_int(bias_enter_node, 'parallel_iterations',
+                               enter_node.attr['parallel_iterations'].i)
+
+                        self.add_output_graph_node(bias_enter_node)
+                        bias_node_name = bias_enter_node.name
+
                     self.add_output_graph_node(bias_node)
                 else:
                     bias_node_name = self.node_name_mapping[match_node_name[1]].node.input[1]
