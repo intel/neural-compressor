@@ -155,9 +155,11 @@ class CompressionManager:
 
     @metric.setter
     def metric(self, user_metric):
-        """Set metric class or a dict of built-in metric configures, and neural_compressor will initialize this class when evaluation.
+        """Set metric class or a dict of built-in metric configures,
+        and neural_compressor will initialize this class when evaluation.
 
-        1. neural_compressor have many built-in metrics, user can pass a metric configure dict to tell neural compressor what metric will be use.
+        1. neural_compressor have many built-in metrics,
+           user can pass a metric configure dict to tell neural compressor what metric will be use.
            You can set multi-metrics to evaluate the performance of a specific model.
                 Single metric:
                     {topk: 1}
@@ -166,11 +168,12 @@ class CompressionManager:
                     {topk: 1,
                      MSE: {compare_label: False},
                     }
-            For the built-in metrics, you can refer to [Supported Built-in Metric Matrix](https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix)
+        For the built-in metrics, please refer to below link:
+        https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.
 
         2. User also can set specific metric through this api. The metric class should take the outputs of the model or
-           postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels) as inputs for update,
-           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
+           postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels)
+           as inputs for update, and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
 
         Args:
             user_metric(neural_compressor.metric.Metric or a dict of built-in metric configures):

@@ -28,6 +28,7 @@ from .model.model import BaseModel, get_model_fwk_name, get_model_type, Model, M
 from .strategy import STRATEGIES
 from .utils import logger
 from .utils.utility import time_limit
+from neural_compressor import PostTrainingQuantConfig
 
 
 class PostTrainingQuant:
