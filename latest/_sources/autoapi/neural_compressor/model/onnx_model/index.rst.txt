@@ -247,4 +247,64 @@ Classes
       :param tensor_names: The names of tensors to be removed.
 
 
+   .. py:method:: match_first_parent(node, parent_op_type, output_name_to_node, exclude=[])
+
+      Find parent node based on constraints on op_type.
+
+      :param node: current node name.
+      :type node: str
+      :param parent_op_type: constraint of parent node op_type.
+      :type parent_op_type: str
+      :param output_name_to_node: dictionary with output name as key, and node as value.
+      :type output_name_to_node: dict
+      :param exclude: list of nodes that are excluded (not allowed to match as parent).
+      :type exclude: list
+
+      :returns: The matched parent node. None if not found.
+                index: The input index of matched parent node. None if not found.
+      :rtype: parent
+
+
+   .. py:method:: match_parent(node, parent_op_type, input_index=None, output_name_to_node=None, exclude=[], return_indice=None)
+
+      Find parent node based on constraints on op_type and index.
+
+      :param node: current node name.
+      :type node: str
+      :param parent_op_type: constraint of parent node op_type.
+      :type parent_op_type: str
+      :param input_index: only check the parent given input index of current node.
+      :type input_index: int or None
+      :param output_name_to_node: dictionary with output name as key, and node as value.
+      :type output_name_to_node: dict
+      :param exclude: list of nodes that are excluded (not allowed to match as parent).
+      :type exclude: list
+      :param return_indice: a list to append the input index when input_index is None.
+      :type return_indice: list
+
+      :returns: The matched parent node.
+      :rtype: parent
+
+
+   .. py:method:: match_parent_path(node, parent_op_types, parent_input_index, output_name_to_node=None, return_indice=None)
+
+      Find a sequence of input edges based on constraints on parent op_type and index.
+
+      :param node: current node name.
+      :type node: str
+      :param parent_op_types: constraint of parent node op_type of each input edge.
+      :type parent_op_types: str
+      :param parent_input_index: constraint of input index of each input edge.
+                                 None means no constraint.
+      :type parent_input_index: list
+      :param output_name_to_node: dictionary with output name as key, and node as value.
+      :type output_name_to_node: dict
+      :param return_indice: a list to append the input index when there is
+                            no constraint on input index of an edge.
+      :type return_indice: list
+
+      :returns: a list of matched parent node.
+      :rtype: parents
+
+
 

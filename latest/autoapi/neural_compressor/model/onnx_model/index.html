@@ -374,6 +374,78 @@
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.match_first_parent">
+<span class="sig-name descname"><span class="pre">match_first_parent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_op_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name_to_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.match_first_parent" title="Permalink to this definition"></a></dt>
+<dd><p>Find parent node based on constraints on op_type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<em>str</em>) – current node name.</p></li>
+<li><p><strong>parent_op_type</strong> (<em>str</em>) – constraint of parent node op_type.</p></li>
+<li><p><strong>output_name_to_node</strong> (<em>dict</em>) – dictionary with output name as key, and node as value.</p></li>
+<li><p><strong>exclude</strong> (<em>list</em>) – list of nodes that are excluded (not allowed to match as parent).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The matched parent node. None if not found.
+index: The input index of matched parent node. None if not found.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>parent</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.match_parent">
+<span class="sig-name descname"><span class="pre">match_parent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_op_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name_to_node</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_indice</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.match_parent" title="Permalink to this definition"></a></dt>
+<dd><p>Find parent node based on constraints on op_type and index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<em>str</em>) – current node name.</p></li>
+<li><p><strong>parent_op_type</strong> (<em>str</em>) – constraint of parent node op_type.</p></li>
+<li><p><strong>input_index</strong> (<em>int</em><em> or </em><em>None</em>) – only check the parent given input index of current node.</p></li>
+<li><p><strong>output_name_to_node</strong> (<em>dict</em>) – dictionary with output name as key, and node as value.</p></li>
+<li><p><strong>exclude</strong> (<em>list</em>) – list of nodes that are excluded (not allowed to match as parent).</p></li>
+<li><p><strong>return_indice</strong> (<em>list</em>) – a list to append the input index when input_index is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The matched parent node.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>parent</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.onnx_model.ONNXModel.match_parent_path">
+<span class="sig-name descname"><span class="pre">match_parent_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_op_types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_input_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name_to_node</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_indice</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.onnx_model.ONNXModel.match_parent_path" title="Permalink to this definition"></a></dt>
+<dd><p>Find a sequence of input edges based on constraints on parent op_type and index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<em>str</em>) – current node name.</p></li>
+<li><p><strong>parent_op_types</strong> (<em>str</em>) – constraint of parent node op_type of each input edge.</p></li>
+<li><p><strong>parent_input_index</strong> (<em>list</em>) – constraint of input index of each input edge.
+None means no constraint.</p></li>
+<li><p><strong>output_name_to_node</strong> (<em>dict</em>) – dictionary with output name as key, and node as value.</p></li>
+<li><p><strong>return_indice</strong> (<em>list</em>) – a list to append the input index when there is
+no constraint on input index of an edge.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a list of matched parent node.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>parents</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
