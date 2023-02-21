@@ -185,12 +185,25 @@ class TuneStrategy(object):
         raise NotImplementedError
 
     def meet_acc_req(self, eval_res):
+        """Compare the result of last tuning with baseline to check whether the result meet requirements.
+
+        Args:
+            eval_res: The evaluation result of tuning.
+
+        Returns:
+            Return True if the accuracy meets requirements else False.
+        """
         self.last_tune_result = eval_res
         return self.objectives.accuracy_meet_req(deepcopy(self.last_tune_result))
 
     def master_worker_handle(self, comm):
-        # send all task ids to all free nodes, and wait until any result
-        # when receiving any result, directly send a new task id to the sender (it's free)
+        """Matster worker handles the task assignment and result management.
+        Master node send all task ids to all free nodes, and wait until any result.
+        When receiving any result, directly send a new task id to the sender (it's free).
+
+        Args:
+            comm (MPI.COMM): The instance of comunication for MPI.
+        """
         from mpi4py import MPI
         size = comm.Get_size()
         for process_id in range(1, min(len(self.tune_cfg_lst) + 1, size)):
@@ -303,7 +316,13 @@ class TuneStrategy(object):
 
 
     def slave_worker_handle(self, comm):
-        # when receiving any task id, find it in self.tune_cfg_lst and do it
+        """Slave worker handles the task processing.
+        When receiving any task id, slave node finds it in self.tune_cfg_lst and run it.
+        Then slave node sends back the tune result to master node.
+
+        Args:
+            comm (MPI.COMM): The instance of comunication for MPI.
+        """
         from mpi4py import MPI
         status = MPI.Status()
         while True:
@@ -344,6 +363,10 @@ class TuneStrategy(object):
             )
 
     def distributed_traverse(self):
+        """Disributed traverse the tuning space.
+
+        The main traverse logic which could be override by some concrete strategy which needs more hooks.
+        """
         from mpi4py import MPI
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()

@@ -202,6 +202,7 @@ class Quantization(Component):
             return self.strategy.best_qmodel
     
     def distributed_execute(self):
+        """Quantization distributed execute routinue based on strategy design."""
         from mpi4py import MPI
         comm = MPI.COMM_WORLD
         try:
