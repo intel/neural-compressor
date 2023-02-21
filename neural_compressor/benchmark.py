@@ -137,15 +137,14 @@ def get_bounded_threads(core_ids, threads, sockets):
 
 class Benchmark(object):
     """Benchmark class can be used to evaluate the model performance.
-    
-    With the objective setting, user can get the data of what they configured in yaml.
 
+    With the objective setting, user can get the data of what they configured in yaml.
     Args:
         conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
             Benchmark_Conf class containing accuracy goal, tuning objective and preferred
             calibration & quantization tuning space etc.
-
     """
+
     def __init__(self, conf_fname_or_obj):
         """Init a Benchmark object."""
         self.framework = None
@@ -284,6 +283,7 @@ class Benchmark(object):
         """Run the instance with the configuration.
 
         Args:
+            mode: benchmark mode, performance or accuracy.
             runs benchmarking with numactl on specific cores and instances set
                 by user config and returns model performance
         """
