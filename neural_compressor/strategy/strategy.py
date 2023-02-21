@@ -187,6 +187,7 @@ class TuneStrategy(object):
 
     def distributed_next_tune_cfg_lst(self):
         """Interface for generate the distributed next tuning config list.
+
         The generator of yielding next tuning config list to distributed traverse by concrete strategies or quantization level
         according to tuning result and traverse logic.
 
@@ -208,6 +209,7 @@ class TuneStrategy(object):
 
     def master_worker_handle(self, comm):
         """Matster worker handles the task assignment and result management.
+
         Master node send all task ids to all free nodes, and wait until any result.
         When receiving any result, directly send a new task id to the sender (it's free).
 
@@ -332,6 +334,7 @@ class TuneStrategy(object):
 
     def slave_worker_handle(self, comm):
         """Slave worker handles the task processing.
+
         When receiving any task id, slave node finds it in self.tune_cfg_lst and run it.
         Then slave node sends back the tune result to master node.
 
