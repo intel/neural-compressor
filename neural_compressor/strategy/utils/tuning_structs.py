@@ -67,8 +67,6 @@ class OpTuningConfig:
             msg: the tuning config as string.
         """
         msg =  f"op name: {self.op_name}, op type : {self.op_type} \n"
-        msg += f"activation_path: {self.kwargs.get('activation_path', None)} \n"
-        msg += f"weight_path: {self.kwargs.get('weight_path', None)} \n"
         msg += f"\t activation dtype: {self.act_dtype} \n"
         msg += f"\t weight dtype: {self.weight_dtype} \n"  if self.has_weight else ""
         for key, val in self.kwargs.items():
