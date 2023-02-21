@@ -26,15 +26,7 @@ from ...utils import logger
 from .util import OrderedDefaultDict
 from .tuning_structs import OpTuningConfig
 
-from .constant import (
-    PRECISION_SET,
-    PRECISION_SET_V2_0,
-    QUANT_MODE_SET,
-    QUNAT_BIT_SET,
-    TUNING_ITEMS_LST,
-    PostTrainingQuantType,
-    
-    )
+from .constant import TUNING_ITEMS_LST
 
 class TuningItem:
     """Not displayed in API Docs."""
@@ -117,7 +109,7 @@ class TuningSpace:
     """Not displayed in API Docs.
     
     1) capability -> internal format -> merge -> tuning space (tree)
-    
+
     """
     
     def __init__(self, capability, conf, framework=None):
@@ -133,13 +125,10 @@ class TuningSpace:
         self.root_item = TuningItem(name='root', options=[], item_type='root')
         self.quant_mode_wise_items = defaultdict(set)  # quant_mode/precision_name: {(op_name, op_type),...}
         self.op_type_wise_items = defaultdict(list)  # op_type: {(op_name, op_type), ...}
-        # (op_name, op_type): {quant_mode/precision_name: {'act_dtype': ..., 'weight_dtype': ...}}
         self.framework = framework
-        self.ops_dtype = defaultdict(OrderedDict) 
+        self.ops_dtype = defaultdict(OrderedDict)
         usr_cfg = conf.usr_cfg if conf else None
         self.op_items = {}
-
-        # New tuning space
         # {(op_name, op_type): {(path): data type}}
         self.ops_data_type = OrderedDefaultDict()
         self.ops_attr = {'activation': set(), 'weight': set()}
@@ -215,9 +204,6 @@ class TuningSpace:
             
         Step1. merge dtype, get the intersection between fw_op_cap and op_user_cfg.
         Step2. merge method options.
-        
-        1) the intersection(fw_op_cap.dtype, op_user_cfg.data)) is None, use the cur_op_cap.
-        2) the intersection(fw_op_cap.dtype, op_user_cfg.data)) is not None, use the merge result.
         
         # if dtype and type intersection with precision set -> only keep the intersection precision
         # and remove the quantization.
@@ -412,10 +398,6 @@ class TuningSpace:
         """Convert the cpa to internal format.
         
         Parsed result:
-        (q/p_type, ((a_bits, a_signed), (w_bits,  w_signed )))
-        ('static', (('int8', 'signed'), ('int4', 'unsigned')))
-        ('static', (('int8', 'signed'),                     ))
-        ('static', ( 'int8'                                  )
         (op_name, op_type):
             {
                 'static':{
@@ -437,7 +419,7 @@ class TuningSpace:
                             ...
                         }
                         'int4':{
-                            'signed':{ # (op_name, op_type): ('static', ((...), ('int4', 'signed')))
+                            'signed':{
                                 'dtype': 'int4'
                                 'scheme': ['asym'],
                                 ...
@@ -450,7 +432,7 @@ class TuningSpace:
                 }
                 'precision':{
                     'act':{
-                        'fp32':{} #(op_name, op_type): ('precision', ('fp32',)) or ('precision', ('fp32','fp32'))
+                        'fp32':{}
                         'bf16':{}
                     },
                     'weight':{
@@ -518,10 +500,10 @@ class TuningSpace:
         """
         capability['op'] = self._parse_cap_helper(deepcopy(capability['op']))
         if usr_cfg:
-            logger.info(f"#############  Before merged with user cfg")
+            logger.info(f"*********** Before merged with user cfg ***********")
             logger.info(capability)
             self._merge_with_user_cfg(capability, usr_cfg['quantization'])
-            logger.info(f"#############  After Merged with user cfg")
+            logger.info(f"***********  After Merged with user cfg ***********")
             logger.info(capability)
         self._parse_capability(capability)
 
@@ -591,12 +573,6 @@ class TuningSpace:
             logger.warning(f"Did not found the item according to the path {path}")
         return item
 
-        """Complete the path.
-
-        Args:
-            path: incomplete path. ('precision', 'activation', 'fp32'),
-              ('precision', 'activation'), ('static', 'activation', ...)
-        """
     def get_default_full_path(self, op_name_type, path):
         """Complete the path.
 
@@ -605,7 +581,7 @@ class TuningSpace:
             path: incomplete path.
 
         Returns:
-            result: the complete path.
+            new_path: the complete path.
         """
         # For precision
         if path[0] == 'precision':
@@ -625,7 +601,6 @@ class TuningSpace:
             item = self.get_item_by_path((op_name_type, *path))
             new_path = path
             # For path ('static', 'activation', ...)
-            #TODO !! double check to avoid infinite loop
             while item:
                 item_options = item.options
                 if len(item_options) > 0 and isinstance(item_options[0], TuningItem) and \
@@ -641,44 +616,6 @@ class TuningSpace:
         new_path = (op_name_type, *path)
         item = self.get_item_by_path(new_path)
         return item
-
-    def query_quant_mode_item(self, op_name_type,
-                              path,
-                              default_dtype='int8',
-                              default_att='activation') -> Tuple[TuningItem, Tuple]:
-        """Query the tuning item according to the path for specified.
-        
-        If the path is incomplete, it will return the default tuning item.
-        Args:
-            op_name_type: (op_name, op_type)
-            path: ('static', 'activation')
-            
-            For example:
-                ('static', (('int8', 'signed'),(...)){
-                                'scheme': ['sym'],
-                                'algorithm': ['minmax', 'kl'],
-                                'granularity': ['per_channel','per_tensor'],
-                            }
-
-        Returns:
-            (tuning item, complete path),Return the specified tuning item whose options can be unfolded and its path.
-        """
-        # Backward compatible v2.0
-        # For static/dynamic/fp32/bf16
-        if isinstance(path, str):
-            path = ('precision', path) if path in PRECISION_SET_V2_0 else (path, default_dtype)
-        path = (path[0], default_att, path[1])
-        new_path = (op_name_type, *path)
-        item = self.get_item_by_path(new_path)
-        return item
-    
-    
-    def _search_pattern_to_internal(self, pattern):
-        """Convert the pattern to internal format."""
-        # For (mode, data_type), such as ('static', 'int8')
-        _act_pattern, _weight_pattern = (pattern[0], 'activation', pattern[1]), (pattern[0], 'weight', pattern[1])
-        return _act_pattern, _weight_pattern
-    
     
     def query_items_by_quant_mode(self, quant_mode):
         """Collect all op items that support the specified mode.
@@ -765,7 +702,7 @@ def quant_mode_from_pattern(internal_pattern):
         return internal_pattern[0]
 
 def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: TuningSpace) -> OpTuningConfig:
-    """Initial the tuning cfg.
+    """Initialize the tuning cfg.
 
     Args:
         op_name_type: (op name, op type)
@@ -784,10 +721,10 @@ def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: T
     internal_pattern = pattern_to_internal(quant_mode)
     full_path = {'activation': None, 'weight': None}
     full_path['activation'], full_path['weight'] = pattern_to_path(internal_pattern)
-    logger.debug(f"Convert quant_mode: {quant_mode} into \n \
-        \tinternal act_path {full_path['activation']} \n \t weight_path: {full_path['weight']}.")
+    logger.debug(f"Convert quant_mode: {quant_mode} into internal act_path {full_path['activation']}" + \
+        f" weight_path: {full_path['weight']}.")
     has_weight = op_name_type in tuning_space.ops_attr['weight']
-    
+
     config_args = {}
     att_lst = ['activation', 'weight'] if has_weight else ['activation']
     for att in att_lst:
@@ -797,7 +734,7 @@ def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: T
         if mode_item:
             method_args = {method_item.name: method_item.options[0] for method_item in mode_item.options \
                 if method_item.name in TUNING_ITEMS_LST}
-            config_args.update(method_args) 
+            config_args.update(method_args)
     quant_mode = internal_pattern[0]
     # set the first option as the default for each tuning item
     op_tuning_config = OpTuningConfig(op_name_type[0],

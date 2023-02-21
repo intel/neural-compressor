@@ -22,31 +22,10 @@ QUANT_MODE_SET = {'static', 'dynamic'}
 QUNAT_BIT_SET = {'int8', 'uint8', 'int4', 'uint4'}
 
 TUNING_ITEMS_LST = [('activation','scheme'), ('activation','algorithm'), ('activation','granularity'),
-                    ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'),
-                    'sampling_size']
+                    ('weight','scheme'), ('weight','algorithm'), ('weight','granularity'), 'sampling_size']
 
 PRECISION_SET_V2_0 = {'fp32', 'bf16'}
 
 auto_query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
 static_query_order = ['static', 'bf16', 'fp16', 'fp32']
 dynamic_query_order = ['dynamic', 'bf16', 'fp16', 'fp32']
-
-
-from enum import IntEnum
-
-class PostTrainingQuantType(IntEnum):
-    """Post training quantization type."""
-    STATIC = 0
-    DYNAMIC = 1
-    WEIGHT_ONLY = 2
-
-"""
-Query path format.
-(q/p_type, ((a_bits, a_signed), (w_bits,  w_signed )))
-('static', (('int8', 'signed'), ('int4', 'unsigned')))
-('static', (('int8', 'signed'),                     ))
-('static', ( 'int8'                                  )
-'static'
-('static')
-
-"""

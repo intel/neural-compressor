@@ -288,7 +288,6 @@ class OpWiseTuningSampler(TuningSampler):
             internal_pattern = pattern_to_internal(op_quant_mode)
             op_quant_mode = quant_mode_from_pattern(internal_pattern)
             if internal_pattern[0] == 'precision': continue
-            # quant_mode_op = tuning_space.query_quant_mode_item(op_name_type, op_quant_mode)
             filtered_tuning_items = []
             for item_name in tuning_items_priority:
                 att, method_name = item_name

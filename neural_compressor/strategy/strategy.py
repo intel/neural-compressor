@@ -291,7 +291,7 @@ class TuneStrategy(object):
         self.best_qmodel = None
 
     def _can_create_eval_func_from_cfg(self):
-        """Determines whether an eval function can be created from cfg.
+        """Determine whether an eval function can be created from cfg.
 
         Returns:
             Returns True if the eval func can be created from config, False otherwise.
