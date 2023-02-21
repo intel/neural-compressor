@@ -153,10 +153,10 @@ class TuneStrategy(object):
         logger.debug(self.capability)
         self.set_tuning_space(conf)
 
-        self.algo = AlgorithmScheduler(self.cfg.quantization.recipes)
-        self.algo.dataloader = self.calib_dataloader  # reuse the calibration iteration
-        self.algo.origin_model = self.model
-        self.algo.adaptor = self.adaptor
+        self.algo_scheduler = AlgorithmScheduler(self.cfg.quantization.recipes)
+        self.algo_scheduler.dataloader = self.calib_dataloader  # reuse the calibration iteration
+        self.algo_scheduler.origin_model = self.model
+        self.algo_scheduler.adaptor = self.adaptor
 
         self._optype_statistics = None
         self.fallback_stats_baseline = None
@@ -206,27 +206,27 @@ class TuneStrategy(object):
             logger.debug(tune_cfg)
 
             self.tuning_times += 1
-            self.algo.calib_iter = tune_cfg['calib_iteration']
+            self.algo_scheduler.calib_iter = tune_cfg['calib_iteration']
             if self.cfg.quantization.recipes.smooth_quant:
                 try:
-                    self.algo.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
+                    self.algo_scheduler.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
                 except:
-                    self.algo.alpha = 0.5
-                self.algo.tune_cfg = copy.deepcopy(tune_cfg)
-                self.algo.q_model = self.adaptor.pre_optimized_model
-                self.model = self.algo()
+                    self.algo_scheduler.alpha = 0.5
+                self.algo_scheduler.tune_cfg = copy.deepcopy(tune_cfg)
+                self.algo_scheduler.q_model = self.adaptor.pre_optimized_model
+                self.model = self.algo_scheduler()
             q_model = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            self.algo.q_model = q_model
+            self.algo_scheduler.q_model = q_model
             # TODO align the api to let strategy has access to pre_optimized model
             assert self.adaptor.pre_optimized_model
-            self.algo.origin_model = self.adaptor.pre_optimized_model
+            self.algo_scheduler.origin_model = self.adaptor.pre_optimized_model
             if self.cfg.quantization.recipes.fast_bias_correction:
-                self.algo.algorithms[0].quantization_cfg = tune_cfg
-            self.last_qmodel = self.algo()
+                self.algo_scheduler.algorithms[0].quantization_cfg = tune_cfg
+            self.last_qmodel = self.algo_scheduler()
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             # remove the algo to avoid it having a reference to qmodel
-            self.algo.q_model = None
+            self.algo_scheduler.q_model = None
             assert self.last_qmodel
             # Return the last quantized model as a result. if performance only.
             if self.cfg.tuning.exit_policy.performance_only:

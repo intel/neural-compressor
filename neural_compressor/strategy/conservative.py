@@ -118,14 +118,14 @@ class ConservativeTuneStrategy(TuneStrategy):
             logger.debug(tune_cfg)
             self.tuning_times += 1
             q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            self.algo.calib_iter = tune_cfg['calib_iteration']
-            self.algo.q_model = q_model
+            self.algo_scheduler.calib_iter = tune_cfg['calib_iteration']
+            self.algo_scheduler.q_model = q_model
             # TODO align the api to let strategy has access to pre_optimized model
             assert self.adaptor.pre_optimized_model
-            self.algo.origin_model = self.adaptor.pre_optimized_model
+            self.algo_scheduler.origin_model = self.adaptor.pre_optimized_model
             if self.cfg.quantization.recipes.fast_bias_correction:
-                self.algo.algorithms[0].quantization_cfg = tune_cfg
-            self.last_qmodel = self.algo()
+                self.algo_scheduler.algorithms[0].quantization_cfg = tune_cfg
+            self.last_qmodel = self.algo_scheduler()
             assert self.last_qmodel
             # Return the last quantized model as a result. if performance only.
             if self.cfg.tuning.exit_policy.performance_only:
