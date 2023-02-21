@@ -3639,7 +3639,7 @@ class PyTorchQuery(QueryBackendCapability):
         self._one_shot_query()
 
     def _get_specified_version_cfg(self, data):
-        """Get the configuration for the current runtime。
+        """Get the configuration for the current runtime.
         If there's no matched configuration in the input yaml, we'll
         use the `default` field of yaml.
 
@@ -3689,7 +3689,7 @@ class PyTorchQuery(QueryBackendCapability):
             [dictionary list]: A list composed of dictionary which key is precision
             and value is the op types.
         """
-        return self.cur_config['ops']
+        return self.cur_config
 
     def get_op_types_by_precision(self, precision):
         """Get op types per precision
@@ -3698,6 +3698,6 @@ class PyTorchQuery(QueryBackendCapability):
         Returns:
             [string list]: A list composed of op type.
         """
-        assert precision in list(self.cur_config['ops'].keys())
+        assert precision in list(self.cur_config.keys())
 
-        return self.cur_config['ops'][precision]
+        return self.cur_config[precision]
