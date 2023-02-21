@@ -68,7 +68,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if self.backend not in ort.get_all_providers():
             logger.warning("{} backend is not supported in current environment, "
                 "supported backends: {}".format(ONNXRT_BACKENDS[self.backend],
-                [ONNXRT_BACKENDS[i] for i in ort.get_all_providers()]))
+                [ONNXRT_BACKENDS[i] for i in ort.get_all_providers() if i in ONNXRT_BACKENDS]))
 
         # get quantization format according to framework_specific_info
         if (not self.dynamic and "format" in framework_specific_info and \
@@ -91,6 +91,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             config_file = 'onnxrt_trt.yaml'
         elif self.backend == 'CUDAExecutionProvider':
             config_file == 'onnxrt_cuda.yaml'
+        else: # pragma: no cover
+            assert False, "{} provider is not supported in current environment, " \
+                "supported providers: {}".format(self.backend,
+                [provider for provider in PROVIDERS.values()])
 
         self.query_handler_ext = None
         if framework_specific_info["approach"] == 'post_training_auto_quant' and \
@@ -672,9 +676,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if "LSTM" in [node.op_type for node in model.model.graph.node]:
             is_nlp = True
 
-        logger.warning("The model is automatically detected as {}belonging to NLP domain. "
+        logger.warning("The model is automatically detected as {} model. "
             "You can use 'domain' argument in 'PostTrainingQuantConfig' "
-            "to overwrite it".format("" if is_nlp else "not "))
+            "to overwrite it".format("an NLP" if is_nlp else "a non-NLP"))
         return is_nlp
 
     def _pre_optimize(self, model, level=1):
