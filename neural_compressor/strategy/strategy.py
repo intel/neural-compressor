@@ -185,11 +185,11 @@ class TuneStrategy(object):
         """
         raise NotImplementedError
 
-    def distributed_next_tune_cfg_lst(self):
+    def distributed_next_tune_cfg_lst(self, comm):
         """Interface for generate the distributed next tuning config list.
 
-        The generator of yielding next tuning config list to distributed traverse by concrete strategies or quantization level
-        according to tuning result and traverse logic.
+        The generator of yielding next tuning config list to distributed traverse by concrete strategies or
+        quantization level according to tuning result and traverse logic.
 
         It should be implemented by the sub-class. Currently, it is only implemented in the BasicTuneStrategy.
         """
