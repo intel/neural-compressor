@@ -220,6 +220,17 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                  self.apply_matmul_biasadd_fusion(match_node_name[:1])
                  return match_node_name[:1]
 
+        if self.frame_info and not enter_node:
+            if match_node_name[0] in self.frame_info and self.frame_info[match_node_name[0]]:
+                enter_node = helper.create_node(
+                    'Enter', weight_name+'_enter', [weight_name])
+                helper.set_attr_string(enter_node,
+                        'frame_name', self.frame_info[weight_name].attr['frame_name'].s)
+                helper.set_attr_dtype(enter_node, 'T', dtypes.float32)
+                helper.set_attr_bool(enter_node, 'is_constant', True)
+                helper.set_attr_int(enter_node, 'parallel_iterations',
+                        self.frame_info[weight_name].attr['parallel_iterations'].i)
+
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
                 matched_node.node.op, self.node_name_mapping[weight_name].node,
@@ -260,6 +271,16 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     self.add_output_graph_node(bias_node)
                 else:
                     bias_node_name = self.node_name_mapping[match_node_name[1]].node.input[1]
+                    if self.node_name_mapping[bias_node_name].node.op == 'Enter':
+                        bias_enter_node = helper.create_node(
+                            'Enter', bias_node_name+'_enter', [bias_node_name])
+                        helper.set_attr_string(bias_enter_node, 'frame_name',
+                                     self.node_name_mapping[bias_node_name].node.attr['frame_name'].s)
+                        helper.set_attr_dtype(bias_enter_node, 'T', dtypes.float32)
+                        helper.set_attr_bool(bias_enter_node, 'is_constant', True)
+                        helper.set_attr_int(bias_enter_node, 'parallel_iterations', \
+                             self.node_name_mapping[bias_node_name].node.attr['parallel_iterations'].i)
+                        self.add_output_graph_node(bias_enter_node)
 
                 all_input_names = self._add_eightbit_prologue_nodes(matched_node.node.name)
                 all_input_names = all_input_names[:1] + [q_weights_name] + all_input_names[1:]
