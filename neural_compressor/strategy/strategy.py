@@ -97,6 +97,7 @@ class TuneStrategy(object):
         """
         self.model = model
         self.cfg = conf.usr_cfg
+        self.cfg_bk = copy.deepcopy(self.cfg)
         self.history_path = self._create_path(self.cfg.tuning.workspace.path, './history.snapshot')
         self.deploy_path = self._create_path(self.cfg.tuning.workspace.path, 'deploy.yaml')
         self.eval_dataloader = eval_dataloader
@@ -164,7 +165,11 @@ class TuneStrategy(object):
         self.tuning_times = 0
         self.fallback_start_point = 0
         self.metric_met_point = 0
-
+        
+        # for recipes
+        self._tuning_recipes = OrderedDict()
+        self._not_tuning_recipes = OrderedDict()
+        self._check_recipe()
         if resume is not None: self.setup_resume(resume)
 
 
@@ -181,6 +186,38 @@ class TuneStrategy(object):
             tune_config (dict): It's a dict containing the tuning configuration to traverse.
         """
         raise NotImplementedError
+    
+    def _check_recipe(self):
+        """Divide the recipe into two categories tuning/not tuning."""
+        from .utils.utility import get_adaptor_name
+        from ..utils.constant import RECIPES as fwk_recipes
+        from ..utils.constant import RECIPES_PRIORITY as fwk_recipes_priority
+        # get all recipes supported by adaptor.
+        adaptor_name = get_adaptor_name(self.adaptor)
+        adaptor_recipes = fwk_recipes['common']
+        for adaptor_name_key, adaptor_recipes_val in fwk_recipes.items():
+            if adaptor_name_key.startswith(adaptor_name):
+                adaptor_recipes.update(adaptor_recipes_val)
+        # divide it into two categories.
+        usr_recipes_cfg = self.cfg_bk.quantization.recipes if self.cfg_bk.quantization.recipes else {}
+        not_tuning_recipes = {item[0]: item[1] for item in usr_recipes_cfg.items() if item[0] in adaptor_recipes}
+        for recipe_name in fwk_recipes_priority:
+            if recipe_name in usr_recipes_cfg:
+                self._not_tuning_recipes[recipe_name] = not_tuning_recipes[recipe_name]
+            elif recipe_name in adaptor_recipes:
+                self._tuning_recipes[recipe_name] = adaptor_recipes[recipe_name]
+        logger.info(f"There are {len(self._not_tuning_recipes)} recipes that specified by user.")
+        logger.info(self._not_tuning_recipes)
+        logger.info(f"There are {len(self._tuning_recipes)} recipes that will be tuned latter.")
+        logger.info(self._tuning_recipes)
+        
+    def _apply_all_recipes(self):
+        applied_recipes = {}
+        for recipe_name, recipe_val_lst in self._tuning_recipes.items():
+            applied_recipes[recipe_name] = recipe_val_lst[-1]
+        logger.info("Applied all recipes.")
+        logger.info(applied_recipes)
+        
 
     def _register_post_process_algos(self, tune_cfg, fp32_model, q_model, calib_dataloader,
                                      kwargs=None) -> AlgorithmScheduler:

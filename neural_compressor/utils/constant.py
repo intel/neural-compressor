@@ -62,15 +62,40 @@ UINT8_ASYM_KL_PERCHANNEL = {'dtype': ['uint8'],
 
 
 # Options for recipes, the first options is the default value.
-SCALE_PROPAGATION_MAX_POOLING = [True, False]
-SCALE_PROPAGATION_CONCAT = [True, False]
-FIRST_CONV_OR_MATMUL_QUANTIZATION = [True, False]
-LAST_CONV_OR_MATMUL_QUANTIZATION = [True, False]
-PRE_POST_PROCESS_QUANTIZATION = [True, False]
-FAST_BIAS_CORRECTION = [False, True]
-WEIGHT_CORRECTION = [False, True]
-GEMM_TO_MATMUL = [False, True]
-GRAPH_OPTIMIZATION_LEVEL = ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']
-ADD_QDQ_PAIR_TO_WEIGHT = [False, True]
-OPTYPES_TO_EXCLUDE_OUTPUT_QUANT = [] # TODO
-DEDICATED_QDQ_PAIR = [True, False]
+RECIPES = {
+    "common":{
+        'smooth_quant': [False, True],
+        'fast_bias_correction' : [False, True],
+        'weight_correction' : [False, True],},
+    "tensorflow": {
+        'first_conv_or_matmul_quantization' : [True, False],
+        'last_conv_or_matmul_quantization' : [True, False],
+        'scale_propagation_max_pooling' : [True, False],
+        'scale_propagation_concat' : [True, False],
+        },
+    "onnxruntime": {
+        'first_conv_or_matmul_quantization' : [True, False],
+        'last_conv_or_matmul_quantization' : [True, False],
+        'pre_post_process_quantization' : [True, False],
+        'gemm_to_matmul' : [False, True],
+        'graph_optimization_level' : ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'],
+        'add_qdq_pair_to_weight' : [False, True],
+        'optypes_to_exclude_output_quant' : [[]], # TODO
+        'dedicated_qdq_pair' : [True, False]},
+    "pytorch": {},
+}
+
+RECIPES_PRIORITY = [
+    "smooth_quant",
+    "scale_propagation_max_pooling",
+    "scale_propagation_concat",
+    "first_conv_or_matmul_quantization",
+    "last_conv_or_matmul_quantization",
+    "pre_post_process_quantization",
+    "fast_bias_correction",
+    "weight_correction",
+    "gemm_to_matmul",
+    "graph_optimization_level",
+    "add_qdq_pair_to_weight",
+    "optypes_to_exclude_output_quan",
+    "dedicated_qdq_pair"]
