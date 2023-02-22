@@ -221,15 +221,17 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                  return match_node_name[:1]
 
         if self.frame_info and not enter_node:
-            if match_node_name[0] in self.frame_info and self.frame_info[match_node_name[0]]:
+            from collections import OrderedDict
+            frame_info = OrderedDict(self.frame_info)
+            if match_node_name[0] in frame_info and frame_info[match_node_name[0]]:
                 enter_node = helper.create_node(
                     'Enter', weight_name+'_enter', [weight_name])
                 helper.set_attr_string(enter_node,
-                        'frame_name', self.frame_info[weight_name].attr['frame_name'].s)
+                        'frame_name', frame_info[weight_name].attr['frame_name'].s)
                 helper.set_attr_dtype(enter_node, 'T', dtypes.float32)
                 helper.set_attr_bool(enter_node, 'is_constant', True)
                 helper.set_attr_int(enter_node, 'parallel_iterations',
-                        self.frame_info[weight_name].attr['parallel_iterations'].i)
+                        frame_info[weight_name].attr['parallel_iterations'].i)
 
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
