@@ -225,6 +225,7 @@ class Benchmark(object):
             log_file.write(f"[ COMMAND ] {cmd} \n")
             for line in proc.stdout:
                 decoded_line = line.decode("utf-8", errors="ignore").strip()
+                logger.info(decoded_line)   # redirect to terminal
                 log_file.write(decoded_line + "\n")
 
     def config_instance(self):
