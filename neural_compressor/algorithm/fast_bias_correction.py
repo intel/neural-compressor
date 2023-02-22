@@ -21,7 +21,7 @@ import numpy as np
 from .algorithm import Algorithm, algorithm_registry
 from ..utils import logger
 
-@algorithm_registry(algorithm_type='fast_bias_correction', location='post_quantize')
+@algorithm_registry(algorithm_type='fast_bias_correction', location='post_quantization')
 class FastBiasCorrection(Algorithm):
     """FastBiasCorrection algorithm class."""
 

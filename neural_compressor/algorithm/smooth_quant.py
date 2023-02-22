@@ -22,7 +22,7 @@ from .algorithm import Algorithm, algorithm_registry
 from ..utils import logger
 
 
-@algorithm_registry(algorithm_type='smooth_quant', location='pre_quantize')
+@algorithm_registry(algorithm_type='smooth_quant', location='pre_quantization')
 class SmoothQuant(Algorithm):
     """Fake input channel quantization.
 

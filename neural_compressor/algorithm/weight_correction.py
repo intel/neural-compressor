@@ -20,7 +20,7 @@
 import numpy as np
 from .algorithm import Algorithm, algorithm_registry
 
-@algorithm_registry(algorithm_type='weight_correction', location='post_quantize')
+@algorithm_registry(algorithm_type='weight_correction', location='post_quantization')
 class WeightCorrection(Algorithm):
     """FastBiasCorrection algorithm class.
 

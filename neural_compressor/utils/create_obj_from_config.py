@@ -60,11 +60,9 @@ def get_postprocess(postprocesses, cfg, compose=True):
 def get_algorithm(algorithms, cfg, compose=False):
     """Get the algorithms from configuration."""
     # recipes contains quantization part, only use algorithms in that
-    pre_algo_conf = algorithms.support_algorithms('pre_quantize').intersection(set(cfg.keys()))
-    post_algo_conf = algorithms.support_algorithms('post_quantize').intersection(set(cfg.keys()))
+    algo_conf = algorithms.support_algorithms().intersection(set(cfg.keys()))
     #(TODO) only support open/close according to cfg
-    return {'pre_quantize': [algorithms()[algo]() for algo in pre_algo_conf if cfg[algo]],
-            'post_quantize': [algorithms()[algo]() for algo in post_algo_conf if cfg[algo]]}
+    return [algorithms()[algo] for algo in algo_conf if cfg[algo]]
 
 def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
     """Create the dataset from the data source."""
