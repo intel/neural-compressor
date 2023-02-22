@@ -385,7 +385,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet18</td>
     <td>Image Recognition</td>
     <td>Quantization-Aware Training</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed">distributed</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a></td>
   </tr>
   <tr>
     <td>ResNet50</td>
@@ -397,7 +397,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet50</td>
     <td>Image Recognition</td>
     <td>Quantization-Aware Training</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed">distributed</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a></td>
   </tr>
   <tr>
     <td>ResNeXt101_32x16d_wsl</td>
