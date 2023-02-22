@@ -203,7 +203,6 @@ class Quantization(Component):
     def distributed_execute(self):
         """Quantization distributed execute routinue based on strategy design."""
         from ..utils.utility import LazyImport
-        mpi4py = LazyImport('mpi4py')
         MPI = LazyImport("mpi4py.MPI")
         comm = MPI.COMM_WORLD
         try:

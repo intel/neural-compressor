@@ -216,7 +216,6 @@ class TuneStrategy(object):
         Args:
             comm (MPI.COMM): The instance of comunication for MPI.
         """
-        mpi4py = LazyImport('mpi4py')
         MPI = LazyImport("mpi4py.MPI")
         size = comm.Get_size()
         for process_id in range(1, min(len(self.tune_cfg_lst) + 1, size)):
@@ -341,7 +340,6 @@ class TuneStrategy(object):
         Args:
             comm (MPI.COMM): The instance of comunication for MPI.
         """
-        mpi4py = LazyImport('mpi4py')
         MPI = LazyImport("mpi4py.MPI")
         status = MPI.Status()
         while True:
@@ -386,7 +384,6 @@ class TuneStrategy(object):
 
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
-        mpi4py = LazyImport('mpi4py')
         MPI = LazyImport("mpi4py.MPI")
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
