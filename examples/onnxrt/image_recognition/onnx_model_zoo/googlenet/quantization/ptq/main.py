@@ -25,6 +25,7 @@ import onnx
 import re
 import os
 from PIL import Image
+import onnxruntime as ort
 from sklearn.metrics import accuracy_score
 
 logger = logging.getLogger(__name__)
@@ -138,6 +139,15 @@ class Dataloader:
                 image[:,:,[0,1,2]] = image[:,:,[2,1,0]]
                 image = image.transpose((2, 0, 1))
             yield image.astype('float32'), label
+
+def eval_func(model, dataloader, metric):
+    metric.reset()
+    sess = ort.InferenceSession(model.SerializeToString(), providers=ort.get_available_providers())
+    input_names = [i.name for i in sess.get_inputs()]
+    for input_data, label in dataloader:
+        output = sess.run(None, dict(zip(input_names, [input_data])))
+        metric.update(output, label)
+    return metric.result()
 
 if __name__ == "__main__":
     logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")

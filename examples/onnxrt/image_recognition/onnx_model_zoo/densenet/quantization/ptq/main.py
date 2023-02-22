@@ -147,8 +147,9 @@ class Dataloader:
                 y0 = (h - 224) // 2
                 x0 = (w - 224) // 2
                 image = image[y0:y0 + 224, x0:x0 + 224, :]
-                image (image - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]
+                image = (image - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]
                 image = image.transpose((2, 0, 1))
+                image = np.expand_dims(image, axis=0)
             yield image.astype('float32'), label
 
 def eval_func(model, dataloader, metric, postprocess):

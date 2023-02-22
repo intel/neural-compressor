@@ -161,6 +161,7 @@ class Dataloader:
                 means = np.broadcast_to(self.mean_value, image.shape)
                 image = (image - means) * self.scale
                 image = image.astype(np.float32)
+                image = np.expand_dims(image, axis=0)
             yield image, label + 1
 
 def eval_func(model, dataloader, metric):

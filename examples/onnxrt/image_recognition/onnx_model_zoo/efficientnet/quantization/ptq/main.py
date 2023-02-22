@@ -151,6 +151,7 @@ class Dataloader:
                     w = int(new_width * width / height)
                 image = cv2.resize(image, (w, h), interpolation=cv2.INTER_AREA)
                 image = (image - [123.68, 116.78, 103.94]) / [128.0, 128.0, 128.0]
+                image = np.expand_dims(image, axis=0)
             yield image.astype('float32'), label
 
 def eval_func(model, dataloader, metric):

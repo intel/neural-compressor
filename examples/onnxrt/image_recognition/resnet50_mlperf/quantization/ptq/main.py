@@ -152,6 +152,7 @@ class Dataloader:
                 image = cv2.resize(image, (w, h), interpolation=cv2.INTER_AREA)
                 image = image - [123.68, 116.78, 103.94]
                 image = image.transpose(2, 0, 1)
+                image = np.expand_dims(image, axis=0)
             yield image.astype('float32'), label
 
 def eval_func(model, dataloader, metric):

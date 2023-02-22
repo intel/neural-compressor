@@ -143,6 +143,7 @@ class Dataloader:
                 image = image[y0:y0 + 224, x0:x0 + 224, :]
                 image (image - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]
                 image = image.transpose((2, 0, 1))
+                image = np.expand_dims(image, axis=0)
             yield image.astype('float32'), label
 
 def eval_func(model, dataloader, metric):
@@ -160,6 +161,7 @@ if __name__ == "__main__":
         description="Shufflenet fine-tune examples for image classification tasks.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
+    parser.add_argument(
         '--model_path',
         type=str,
         help="Pre-trained model on onnx file"

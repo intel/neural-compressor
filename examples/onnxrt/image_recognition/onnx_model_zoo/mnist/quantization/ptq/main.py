@@ -183,6 +183,12 @@ def download_url(url, root, filename=None, md5=None):  # pragma: no cover
             raise RuntimeError("File not found or corrupted.")
 
 class Dataloader:
+    classes = ['0 - zero', '1 - one', '2 - two', '3 - three', '4 - four',
+                   '5 - five', '6 - six', '7 - seven', '8 - eight', '9 - nine']
+    resource = [
+        ('https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz',
+            '8a61469f7ea1b51cbae51d4f78837e45')
+    ]
     def __init__(self, dataset_location, download=True):
         self.root = dataset_location
         if download:
@@ -203,20 +209,6 @@ class Dataloader:
                 else:
                     self.data, self.targets = f['x_test'], f['y_test']
 
-    def __len__(self):
-        """Length of the dataset."""
-        return len(self.data)
-
-    def __getitem__(self, index):
-        """Magic method.
-        x[i] is roughly equivalent to type(x).__getitem__(x, index)
-        """
-        image, label = self.data[index], int(self.targets[index])
-        image = np.expand_dims(image, -1)
-        if self.transform is not None:
-            image, label = self.transform((image, label))
-        return image, label
-
     @property
     def class_to_idx(self):
         """Return a dict of class."""
@@ -236,6 +228,7 @@ class Dataloader:
         for image, label in zip(self.data, self.targets):
             image = np.expand_dims(image, -1)
             image = image.transpose(2, 0, 1)
+            image = np.expand_dims(image, axis=0)
             yield image.astype('float32'), int(label)
 
 def eval_func(model, dataloader, metric):
