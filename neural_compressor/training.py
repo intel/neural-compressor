@@ -308,7 +308,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
             elif isinstance(conf, WeightPruningConfig):
                 callbacks_list.append(PruningCallbacks(conf))
             elif isinstance(conf, DistillationConfig):
-                callbacks_list.append(DistillationCallbacks(conf))
+                callbacks_list.append(DistillationCallbacks(conf, model=model))
             else:
                 assert False, "Unsupported configure: {}".format(type(conf))
     else:
@@ -321,7 +321,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         elif isinstance(confs, WeightPruningConfig):
             callbacks_list.append(PruningCallbacks(confs))
         elif isinstance(confs, DistillationConfig):
-            callbacks_list.append(DistillationCallbacks(confs))
+            callbacks_list.append(DistillationCallbacks(confs, model=model))
         else:
             assert False, logger.error(
                 "confs should be one of QuantizationAwareTrainingConfig, "
@@ -374,7 +374,7 @@ class CallBacks:
         """Be called on the end of loss computation."""
         loss_list = []
         for callbacks in self.callbacks_list:
-            loss_list.extend(callbacks.on_after_compute_loss(input, student_output, student_loss, teacher_output))
+            loss_list.append(callbacks.on_after_compute_loss(input, student_output, student_loss, teacher_output))
         return loss_list[0] if len(loss_list) == 1 else loss_list
 
     def on_before_optimizer_step(self):

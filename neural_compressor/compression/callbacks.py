@@ -20,12 +20,14 @@
 The Component class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
 """
 
+import copy
 import numpy as np
 import os
 import pickle
 import random
+from .distillation.criterions import Criterions
 from ..adaptor import FRAMEWORKS
-from ..conf.config import QuantConf
+from ..conf.config import QuantConf, DistillationConf
 from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..conf.pythonic_config import Config
 from ..utils import logger
@@ -501,4 +503,300 @@ class PruningCallbacks(BaseCallbacks):
 
 
 class DistillationCallbacks(BaseCallbacks):
-    pass
+    """Distillation class derived from Component class.
+
+    Distillation class abstracted the pipeline of knowledge distillation,
+    transfer the knowledge of the teacher model to the student model.
+
+    Args:
+        conf: Distillation_Conf containing teacher model, distillation criterion etc.
+        model: Student model.
+
+    Attributes:
+        _epoch_ran: A integer indicating how much epochs ran.
+        eval_frequency: The frequency for doing evaluation of the student model
+            in terms of epoch.
+        best_score: The best metric of the student model in the training.
+        best_model: The best student model found in the training.
+    """
+
+    def __init__(self, conf=None, model=None):
+        """Initialize the attributes."""
+        super(DistillationCallbacks, self).__init__()
+        conf = Config(quantization=None, benchmark=None, pruning=None, distillation=conf, nas=None)
+        self.conf = DistillationConf()
+        self.conf.map_pyconfig_to_cfg(conf)
+        self.cfg = self.conf.usr_cfg
+        self.model = model
+
+        self._teacher_model = None
+        self._criterion = None
+        self._epoch_ran = 0
+        self._train_cfg = None
+        self.eval_frequency = 1
+        self.best_score = 0
+        self.best_model = None
+        self.hooks_registered = False
+        if hasattr(conf, "distillation") and hasattr(conf.distillation, "teacher_model"):
+            self.teacher_model = conf.distillation.teacher_model
+            self.pre_process()
+        else:
+            assert False, "Please assign teacher model in DistillationConfig."
+
+    def _on_train_begin(self, dataloader=None):
+        """Operations called on the begining of the training.
+
+        Called before training, evaluate the teacher model and the student model.
+        """
+        assert self._model, 'student_model must be set.'
+        if self._eval_func is not None:
+            if self.teacher_model:
+                score = self._eval_func(
+                    self.teacher_model if getattr(self._eval_func, 'builtin', None)
+                    else self.teacher_model.model
+                )
+                logger.info("teacher model score is {}.".format(str(score)))
+
+            score = self._eval_func(
+                self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
+            )
+            logger.info("initial model score is {}.".format(str(score)))
+            if self.eval_frequency > 0:
+                self.best_score = score
+                if self.framework == "pytorch":
+                    self.best_model = copy.deepcopy(self._model)
+                else:
+                    self.best_model = self._model
+
+    def _on_step_begin(self, batch_id):
+        """Operations called on the beginning of batches."""
+        if self.criterion is not None and hasattr(self.criterion, 'clear_features'):
+            self.criterion.clear_features()
+
+    def _on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
+        """Set or compute output of teacher model.
+
+        Called after student model forward, calculate the output of the teacher model
+        with the same input of the student model.
+
+        Args:
+            input (tensor or list or dict): The input of the student model.
+            student_output (tensor): The output logits of the student model.
+            student_loss (tensor or float): The original loss of the student model.
+            teacher_output (tensor, optional): The output logits of the teacher model.
+        """
+        if self.criterion is None:
+            self.create_criterion()
+        assert self.criterion, \
+            'criterion must be set in yaml config file.'
+        if teacher_output is None:
+            assert self.teacher_model, 'teacher_model must be set.'
+            teacher_output = self.criterion.teacher_model_forward(
+                input, teacher_model=self.teacher_model._model
+            )
+        return self.criterion.loss_cal_sloss(student_output, teacher_output, student_loss)
+
+    def _on_epoch_end(self):
+        """Operations called on the end of every epochs.
+
+        Called on the end of every epochs, evaluate the student model
+         and record the best one regularly.
+        """
+        self._epoch_ran += 1
+        if self._eval_func is not None and self.eval_frequency > 0 and \
+           self._epoch_ran % self.eval_frequency == 0:
+            score = self._eval_func(
+                self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
+            )
+            logger.info("model score of epoch {} is {}.".format(self._epoch_ran, str(score)))
+            if (isinstance(score, list) and all([s > b_s for s, b_s in
+                zip(score, self.best_score)])) or score > self.best_score:
+                self.best_score = score
+                if self.framework == "pytorch":
+                    self.best_model = copy.deepcopy(self._model)
+                else:
+                    self.best_model = self._model
+
+    def init_train_cfg(self):
+        """Initialize the training configuration."""
+        if self._train_cfg is None:
+            # train section of distillation section in yaml file should be configured.
+            self._train_cfg = self.cfg.distillation.train
+        assert self._train_cfg, "train field of distillation section in yaml file must " \
+                                "be configured for distillation if train_func is NOT set."
+
+    def create_criterion(self):
+        """Create the criterion for training."""
+        self.init_train_cfg()
+        if self.criterion is None:
+            assert 'criterion' in self._train_cfg.keys(), \
+                "criterion part in train field of distillation section in yaml file " \
+                "must be configured for distillation if criterion is NOT set."
+            criterion_cfg = self._train_cfg.criterion
+            assert len(criterion_cfg) == 1, "There must be exactly one loss in " \
+                "criterion part, instead got {} loss.".format(len(criterion_cfg))
+            loss = list(criterion_cfg.keys())[0]
+            loss_cfg = criterion_cfg[loss]
+            criterion_builder = Criterions(self.framework)[loss](loss_cfg)
+            criterion_tuple = criterion_builder()
+            if self.teacher_model and self.student_model:
+                if self.framework == 'tensorflow':  # new, for tf
+                    teacher_model = self.teacher_model._model
+                    student_model = self.student_model._model
+                else:  # for pytorch and other frameworks
+                    teacher_model = self.teacher_model.model
+                    student_model = self.student_model.model
+                criterion_tuple[1]["student_model"] = student_model
+                criterion_tuple[1]["teacher_model"] = teacher_model
+            self.criterion = criterion_tuple[0](**criterion_tuple[1])
+        else:
+            logger.warning("Use user defined criterion, "
+                           "ignoring the criterion setting in yaml file.")
+
+        self._train_cfg.criterion = self.criterion
+
+    def pre_process(self):
+        """Preprocessing before the disillation pipeline.
+
+        Initialize necessary parts for distillation pipeline.
+        """
+        framework_specific_info = {'device': self.cfg.device,
+                                   'random_seed': self.cfg.tuning.random_seed,
+                                   'workspace_path': self.cfg.tuning.workspace.path,
+                                   'q_dataloader': None,
+                                   'format': 'default',
+                                   'backend': 'default'}
+
+        if self.framework == 'tensorflow':
+            framework_specific_info.update(
+                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+
+        self.generate_hooks()
+        self.create_criterion()
+        assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for distillation....'
+
+    def execute(self):
+        """Do distillation pipeline.
+
+        First train the student model with the teacher model, after training,
+        evaluating the best student model if any.
+
+        Returns:
+            Best distilled model found.
+        """
+        self._train_func(
+            self._model if getattr(self._train_func, 'builtin', None) else self._model.model
+        )
+        if self.criterion is not None and hasattr(self.criterion, 'remove_all_hooks'):
+            self.criterion.remove_all_hooks()
+        logger.info("Model distillation is done.")
+        if self._eval_func is not None:
+            logger.info("Start to evaluate the distilled model.")
+            self._model = self.best_model if self.best_model else self._model
+            score = self._eval_func(
+                self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
+            )
+
+            logger.info("distilled model score is {}.".format(str(score)))
+        return self._model
+
+    def generate_hooks(self):
+        """Register hooks for distillation.
+
+        Register necessary hooks for distillation pipeline.
+        """
+        if not self.hooks_registered:
+            self.register_hook('on_train_begin', self._on_train_begin)
+            self.register_hook('on_step_begin', self._on_step_begin)
+            self.register_hook('on_after_compute_loss', self._on_after_compute_loss)
+            self.register_hook('on_epoch_end', self._on_epoch_end)
+            self.hooks_registered = True
+
+    def __call__(self):
+        """Do distillation workflow.
+
+        Returns:
+            distilled model: best distilled model found, otherwise return None
+
+        """
+        self.pre_process()
+        results = self.execute()
+        return results
+
+    fit = __call__
+
+    @property
+    def criterion(self):
+        """Getter of criterion.
+
+        Returns:
+            The criterion used in the distillation process.
+        """
+        return self._criterion
+
+    @criterion.setter
+    def criterion(self, user_criterion):
+        """Setter of criterion used in the distillation process.
+
+        Set the user defined criterion. When using built-in train_func, user can
+         specify the customized criterion through this setter.
+
+        Args:
+            user_criterion (criterion object): User defined criterion.
+        """
+        self._criterion = user_criterion
+
+    @property
+    def teacher_model(self):
+        """Getter of the teacher model.
+
+        Returns:
+            The teacher model used in the distillation process.
+        """
+        return self._teacher_model
+
+    @teacher_model.setter
+    def teacher_model(self, user_model):
+        """Set the user model and dispatch to framework specific internal model object.
+
+        Args:
+           user_model: user are supported to set model from original framework model format
+                       (eg, tensorflow frozen_pb or path to a saved model),
+                       but not recommended. Best practice is to set from a initialized
+                       neural_compressor.experimental.common.Model.
+                       If tensorflow model is used, model's inputs/outputs will be
+                       auto inferenced, but sometimes auto inferenced
+                       inputs/outputs will not meet your requests,
+                       set them manually in config yaml file.
+                       Another corner case is slim model of tensorflow,
+                       be careful of the name of model configured in yaml file,
+                       make sure the name is in supported slim model list.
+
+        """
+        if not isinstance(user_model, BaseModel):
+            logger.warning("Force convert framework model to neural_compressor model.")
+            self._teacher_model = Model(user_model, backend=self.framework)
+        else:
+            self._teacher_model = user_model
+
+    @property
+    def student_model(self):
+        """Getter of the student model.
+
+        Returns:
+            The student model used in the distillation process.
+        """
+        return self._model
+
+    @property
+    def train_cfg(self):
+        """Getter of the train configuration.
+
+        Returns:
+            The train configuration used in the distillation process.
+        """
+        return self._train_cfg
+
+    def __repr__(self):
+        """Class representation."""
+        return 'Distillation Callbacks'
