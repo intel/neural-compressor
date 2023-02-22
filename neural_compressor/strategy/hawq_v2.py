@@ -24,7 +24,7 @@ from .strategy import strategy_registry, TuneStrategy
 
 from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler, ModelWiseTuningSampler
 from .utils.tuning_structs import OpTuningConfig
-from .utils.tuning_space import TUNING_ITEMS_LST
+from .utils.constant import TUNING_ITEMS_LST
 from ..utils import logger
 
 @strategy_registry
@@ -51,8 +51,8 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
         # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
         early_stop_tuning = True
         stage1_cnt = 0
-        quant_ops = quant_mode_wise_items['static'] if 'static' in quant_mode_wise_items else []
-        quant_ops += quant_mode_wise_items['dynamic'] if 'dynamic' in quant_mode_wise_items else []
+        quant_ops = quant_mode_wise_items.get('static', [])
+        quant_ops += quant_mode_wise_items.get('dynamic', [])
         stage1_max = 1  # TODO set a more appropriate value
         op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [],
                                                          op_item_dtype_dict, initial_op_tuning_cfg)
@@ -110,24 +110,3 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
             op_tuning_cfg['calib_sampling_size'] = calib_size
             yield op_tuning_cfg
 
-    def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg: OpTuningConfig):
-        op_state = op_static_cfg.get_state()
-        op_name = op_static_cfg.op_name
-        op_type = op_static_cfg.op_type
-        op_quant_mode = 'dynamic'
-        tuning_space = self.tuning_space
-        dynamic_state = {}
-        for att in ['weight', 'activation']:
-            if att not in op_state:
-                continue
-            for item_name, item_val in op_state[att].items():
-                att_item = (att, item_name)
-                if att_item not in TUNING_ITEMS_LST:
-                    continue
-                if tuning_space.query_item_option((op_name, op_type), op_quant_mode, att_item, item_val):
-                    dynamic_state[att_item] = item_val
-                else:
-                    quant_mode_item = tuning_space.query_quant_mode_item((op_name, op_type), op_quant_mode)
-                    tuning_item = quant_mode_item.get_option_by_name(att_item)
-                    dynamic_state[att_item] = tuning_item.options[0] if tuning_item else None
-        return OpTuningConfig(op_name, op_type, op_quant_mode, tuning_space, kwargs=dynamic_state)

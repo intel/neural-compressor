@@ -291,7 +291,7 @@ class TuneStrategy(object):
         self.best_qmodel = None
 
     def _can_create_eval_func_from_cfg(self):
-        """Determines whether an eval function can be created from cfg.
+        """Determine whether an eval function can be created from cfg.
 
         Returns:
             Returns True if the eval func can be created from config, False otherwise.
@@ -432,20 +432,24 @@ class TuneStrategy(object):
             quant_mode_wise_items (OrderedDict): key is quant_mode/precision; value is item list.
             initial_op_tuning_cfg (OrderedDict): key is (op_name, op_type); value is the initialized tuning config.
         """
+        from .utils.constant import auto_query_order, static_query_order, dynamic_query_order
+        from .utils.tuning_space import initial_tuning_cfg_with_quant_mode
         if self.cfg.quantization.approach == 'post_training_auto_quant':
-            query_order = ['static', 'dynamic', 'bf16', 'fp32']
+            query_order = auto_query_order
         elif self.cfg.quantization.approach == 'post_training_dynamic_quant':
-            query_order = ['dynamic', 'bf16', 'fp32']
+            query_order = dynamic_query_order
         elif self.cfg.quantization.approach == 'post_training_static_quant':
-            query_order = ['static', 'bf16', 'fp32']
+            query_order = static_query_order
         elif self.cfg.quantization.approach == 'quant_aware_training':
-            query_order = ['static', 'dynamic', 'bf16', 'fp32']
+            logger.info("!!! Currently, the qat tuning is not supported by strategy.")
+            query_order = auto_query_order
 
-        quant_mode_wise_items = OrderedDict()
+        quant_mode_wise_items = OrderedDict() # mode, op_item_lst
         pre_items = set()
+        # Collect op items supported the specified mode.
         for quant_mode in query_order:
             items = self.tuning_space.query_items_by_quant_mode(quant_mode)
-            filtered_items = [item for item in items if item not in pre_items]
+            filtered_items = list(filter(lambda item: item not in pre_items, items))
             pre_items = pre_items.union(set(items))
             quant_mode_wise_items[quant_mode] = filtered_items
 
@@ -456,11 +460,12 @@ class TuneStrategy(object):
         op_item_dtype_dict = OrderedDict()
         for quant_mode, quant_mode_items in quant_mode_wise_items.items():
             initial_op_quant_mode(quant_mode_items, quant_mode, op_item_dtype_dict)
-
+        
         initial_op_tuning_cfg = {}
-        for op_name_dtype, quant_mode in op_item_dtype_dict.items():
-            initial_op_tuning_cfg[op_name_dtype] = OpTuningConfig(op_name_dtype[0], op_name_dtype[1], 
-                                                                  quant_mode, self.tuning_space)
+        for op_name_type, quant_mode in op_item_dtype_dict.items():
+            initial_op_tuning_cfg[op_name_type] = initial_tuning_cfg_with_quant_mode(op_name_type,
+                                                                                     quant_mode, 
+                                                                                     self.tuning_space)
         return op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg
 
     def show_baseline_info(self):
