@@ -52,19 +52,30 @@ python -u ./run_glue.py \
         --overwrite_output_dir
 ``` 
 
-You can also try to use INC distributed tuning (Take mrpc as an example).
-In code, set `config.use_distributed_tuning` to True by the  following statement.
+You can also try to use INC distributed tuning (Take mrpc task as an example) as follows:
+
+In `run_glue.py`, set `config.use_distributed_tuning` to True by the following statement.
+
 ```python
 conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion, use_distributed_tuning=True)
 ```
-For example, bash command will look like the following, where *`<NUM_PROCESS>`* is the number of processes, it is recommended to set to the number of hosts, *`<MAX_NUM_THREADS>`* is the number of threads, it is recommended to set to
-the number of CPUs on node, *`<HOSTNAME>`* is the host name,  argument `--host <HOSTNAME>,<HOSTNAME>` can be replaced with `--hostfile <HOSTFILE>`, each line is a host name in *`<HOSTFILE>`*.
-Argument `-mca btl_tcp_if_include` set the network communication interface between hosts, for example, *`<NETWORK_INTERFACE>`* set to 192.168.20.0/24.
+
+And then, run the following command:
+
 ```
 mpirun -np <NUM_PROCESS> -mca btl_tcp_if_include <NETWORK_INTERFACE> -x OMP_NUM_THREADS=<MAX_NUM_THREADS> --host <HOSTNAME1>,<HOSTNAME2>,<HOSTNAME3> bash run_distributed_tuning.sh
 ```
 
-### 2. Get the benchmark of tuned model, including Batch_size and Throughput: 
+* *`<NUM_PROCESS>`* is the number of processes, which is recommended to set to be equal to the number of hosts.
+
+* *`<MAX_NUM_THREADS>`* is the number of threads, which is recommended to set to be equal to
+the number of physical cores on one node.
+
+* *`<HOSTNAME>`* is the host name, and argument `--host <HOSTNAME>,<HOSTNAME>...` can be replaced with `--hostfile <HOSTFILE>`, when each line in *`<HOSTFILE>`* is a host name.
+
+* `-mca btl_tcp_if_include <NETWORK_INTERFACE>` is used to set the network communication interface between hosts. For example, *`<NETWORK_INTERFACE>`* can be set to 192.168.20.0/24 to allow the MPI communication between all hosts under the 192.168.20.* network segment.
+
+### 2. Get the benchmark of the tuned model
 
 ```bash
 python -u ./run_glue.py \
