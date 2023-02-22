@@ -50,6 +50,7 @@ Quantize model with static quantization:
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune
+                   --dataset_location=path/to/glue/data
 ```
 
 ## 2. Benchmark

@@ -31,64 +31,50 @@
       "model_src_dir": "object_detection/ssd_mobilenet_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/onnx/ssd_mobilenet_v1/ssd_mobilenet_v1_frozen.onnx",
-      "yaml": "ssd_mobilenet_v1.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "ssd_mobilenet_v2": {
       "model_src_dir": "object_detection/ssd_mobilenet_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/onnx/ssd_mobilenet_v2/ssd_mobilenet_v2_frozen.onnx",
-      "yaml": "ssd_mobilenet_v2.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "bert_base_MRPC_static": {
       "model_src_dir": "nlp/bert/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/bert_base_MRPC/bert.onnx",
-      "yaml": "bert_static.yaml",
-      "strategy": "basic",
-      "batch_size": 8,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "bert_base_MRPC_dynamic": {
       "model_src_dir": "nlp/bert/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/bert_base_MRPC/bert.onnx",
-      "yaml": "bert_dynamic.yaml",
-      "strategy": "basic",
-      "batch_size": 8,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "distilbert_base_MRPC": {
       "model_src_dir": "nlp/distilbert/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/distilbert_base_MRPC/distilbert-base-uncased.onnx",
-      "yaml": "distilbert.yaml",
-      "strategy": "basic",
-      "batch_size": 8,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "mobilebert_MRPC": {
       "model_src_dir": "nlp/mobilebert/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/mobilebert_MRPC/mobilebert-uncased.onnx",
-      "yaml": "mobilebert.yaml",
-      "strategy": "basic",
-      "batch_size": 8,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "roberta_base_MRPC": {
       "model_src_dir": "nlp/roberta/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/roberta_base_MRPC/roberta-base.onnx",
-      "yaml": "roberta.yaml",
-      "strategy": "basic",
-      "batch_size": 8,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "resnet50-v1-12": {
       "model_src_dir": "image_recognition/onnx_model_zoo/resnet50/quantization/ptq",
@@ -230,10 +216,8 @@
       "model_src_dir": "object_detection/onnx_model_zoo/ssd/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/onnx/ssd/ssd-12.onnx",
-      "yaml": "ssd.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "fcn": {
       "model_src_dir": "image_recognition/onnx_model_zoo/fcn/quantization/ptq",
@@ -255,19 +239,15 @@
       "model_src_dir": "object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/faster_rcnn/FasterRCNN-12.onnx",
-      "yaml": "faster_rcnn.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "mask_rcnn": {
       "model_src_dir": "object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/mask_rcnn/MaskRCNN-12.onnx",
-      "yaml": "mask_rcnn.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "densenet": {
       "model_src_dir": "image_recognition/onnx_model_zoo/densenet/quantization/ptq",
@@ -327,55 +307,43 @@
       "model_src_dir": "object_detection/ssd_mobilenet_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/onnx/ssd_mobilenet_v1/ssd_mobilenet_v1_frozen-13.onnx",
-      "yaml": "ssd_mobilenet_v1_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "ssd_mobilenet_v2_qdq": {
       "model_src_dir": "object_detection/ssd_mobilenet_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/onnx/ssd_mobilenet_v2/ssd_mobilenet_v2_frozen-13.onnx",
-      "yaml": "ssd_mobilenet_v2_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "bert_base_MRPC_static_qdq": {
       "model_src_dir": "nlp/bert/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/bert_base_MRPC/bert.onnx",
-      "yaml": "bert_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 8,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "distilbert_base_MRPC_qdq": {
       "model_src_dir": "nlp/distilbert/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/distilbert_base_MRPC/distilbert-base-uncased.onnx",
-      "yaml": "distilbert_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 8,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "mobilebert_MRPC_qdq": {
       "model_src_dir": "nlp/mobilebert/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/mobilebert_MRPC/mobilebert-uncased.onnx",
-      "yaml": "mobilebert_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 8,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "roberta_base_MRPC_qdq": {
       "model_src_dir": "nlp/roberta/quantization/ptq",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/roberta_base_MRPC/roberta-base.onnx",
-      "yaml": "roberta_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 8,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 8
     },
     "resnet50-v1-12_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/resnet50/quantization/ptq",
@@ -503,10 +471,8 @@
       "model_src_dir": "object_detection/onnx_model_zoo/ssd/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/onnx/ssd/ssd-12.onnx",
-      "yaml": "ssd_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "fcn_qdq": {
       "model_src_dir": "image_recognition/onnx_model_zoo/fcn/quantization/ptq",
@@ -528,19 +494,15 @@
       "model_src_dir": "object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/faster_rcnn/FasterRCNN-12.onnx",
-      "yaml": "faster_rcnn_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "mask_rcnn_qdq": {
       "model_src_dir": "object_detection/onnx_model_zoo/mask_rcnn/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/mask_rcnn/MaskRCNN-12.onnx",
-      "yaml": "mask_rcnn_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "yolov4": {
       "model_src_dir": "object_detection/onnx_model_zoo/yolov4/quantization/ptq",

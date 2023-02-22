@@ -18,17 +18,20 @@
 
 import logging
 import argparse
-import onnx
-import onnxruntime as ort
-import transformers
 import os
+import onnx
+import onnxruntime
+import transformers
 import torch
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Union
 from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
-from neural_compressor.data.datasets.dummy_dataset import DummyDataset
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+                    datefmt = '%m/%d/%Y %H:%M:%S',
+                    level = logging.WARN)
 
 class ONNXRTBertDataset:
     """Dataset used for model Bert.
@@ -227,7 +230,7 @@ class ONNXRTGLUE:
         self.task = task
         self.return_key = {
             "cola": "mcc",
-            "mrpc": "f1",
+            "mrpc": "acc",
             "sts-b": "corr",
             "qqp": "acc",
             "mnli": "mnli/acc",
@@ -267,11 +270,6 @@ class ONNXRTGLUE:
             self.task, processed_preds, self.label_list)
         return result[self.return_key[self.task]]
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-                    datefmt = '%m/%d/%Y %H:%M:%S',
-                    level = logging.WARN)
-
 if __name__ == "__main__":
     logger.info('Evaluating ONNXRuntime full precision accuracy and performance:')
     parser = argparse.ArgumentParser(
@@ -294,20 +292,19 @@ if __name__ == "__main__":
         help="whether quantize the model"
     )
     parser.add_argument(
-       '--config',
-       type=str,
-       help="config yaml path"
-    )
-    parser.add_argument(
         '--output_model',
         type=str,
-        default=None,
         help="output model path"
     )
     parser.add_argument(
         '--mode',
         type=str,
         help="benchmark mode of performance or accuracy"
+    )
+    parser.add_argument(
+        '--model_name_or_path',
+        type=str,
+        help="pretrained model name or path"
     )
     parser.add_argument(
         '--data_path',
@@ -320,43 +317,13 @@ if __name__ == "__main__":
         type=int,
     )
     parser.add_argument(
-        '--model_name_or_path',
-        type=str,
-        choices=['Intel/bert-base-uncased-mrpc',
-                'Intel/roberta-base-mrpc',
-                'Intel/xlm-roberta-base-mrpc',
-                'Intel/camembert-base-mrpc',
-                'distilbert-base-uncased-finetuned-sst-2-english',
-                'Alireza1044/albert-base-v2-sst2',
-                'philschmid/MiniLM-L6-H384-uncased-sst2',
-                'Intel/MiniLM-L12-H384-uncased-mrpc'],
-        help="pretrained model name or path"
-    )
-    parser.add_argument(
         '--task',
         type=str,
+        default='mrpc',
         choices=['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
                 'mnli', 'wnli', 'sst-2'],
         help="GLUE task name"
     )
-    parser.add_argument(
-        '--num_heads',
-        default=12,
-        type=int,
-    )
-    parser.add_argument(
-        '--hidden_size',
-        default=768,
-        type=int,
-    )
-    parser.add_argument(
-        '--quant_format',
-        type=str,
-        default='default', 
-        choices=['default', 'QDQ', 'QOperator'],
-        help="quantization format"
-    )
- 
     args = parser.parse_args()
 
     dataset = ONNXRTBertDataset(args.model_path,
@@ -366,10 +333,9 @@ if __name__ == "__main__":
     dataloader = DefaultDataLoader(dataset, args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
-    def eval_func(model, *args):
+    def eval_func(model):
         metric.reset()
-        import tqdm
-        session = ort.InferenceSession(model.SerializeToString(), None)
+        session = onnxruntime.InferenceSession(model.SerializeToString(), None)
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
@@ -389,7 +355,7 @@ if __name__ == "__main__":
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             conf = BenchmarkConfig(iteration=100,
-                                   cores_per_instance=28,
+                                   cores_per_instance=4,
                                    num_of_instance=1)
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
@@ -397,26 +363,23 @@ if __name__ == "__main__":
             print("Batch size = %d" % args.batch_size)
             print("Accuracy: %.5f" % acc_result)
 
-
     if args.tune:
         from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-        opt_options = BertOptimizationOptions('bert')
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('bert')
         opt_options.enable_embed_layer_norm = False
 
         model_optimizer = optimizer.optimize_model(
             args.model_path,
             'bert',
-            num_heads=args.num_heads,
-            hidden_size=args.hidden_size,
+            num_heads=12,
+            hidden_size=768,
             optimization_options=opt_options)
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='static',
-                                         quant_level=0)
+        config = PostTrainingQuantConfig(approach='dynamic')
         q_model = quantization.fit(model, 
                                    config,
-                                   eval_func=eval_func,
-                                   calib_dataloader=dataloader)
+                                   eval_func=eval_func)
         q_model.save(args.output_model)

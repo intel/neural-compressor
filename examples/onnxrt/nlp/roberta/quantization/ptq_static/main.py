@@ -18,17 +18,20 @@
 
 import logging
 import argparse
-import onnx
-import onnxruntime as ort
-import transformers
 import os
+import onnx
+import onnxruntime
+import transformers
 import torch
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Union
 from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
-from neural_compressor.data.datasets.dummy_dataset import DummyDataset
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(format = "%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+                    datefmt = "%m/%d/%Y %H:%M:%S",
+                    level = logging.WARN)
 
 class ONNXRTBertDataset:
     """Dataset used for model Bert.
@@ -42,8 +45,8 @@ class ONNXRTBertDataset:
           task (str, default=mrpc): The name of the task to fine-tune.
                                     Choices include mrpc, qqp, qnli, rte,
                                     sts-b, cola, mnli, wnli.
-          model_type (str, default='bert'): model type, support 'distilbert', 'bert',
-                                            'mobilebert', 'roberta'.
+          model_type (str, default="bert"): model type, support "distilbert", "bert",
+                                            "mobilebert", "roberta".
           dynamic_length (bool, default=False): Whether to use fixed sequence length.
           evaluate (bool, default=True): Whether do evaluation or training.
           transform (transform object, default=None):  transform to process input data.
@@ -51,15 +54,15 @@ class ONNXRTBertDataset:
                                                  to specific conditions.
     """
     def __init__(self, model, data_dir, model_name_or_path, max_seq_length=128,\
-                do_lower_case=True, task='mrpc', model_type='bert', dynamic_length=False,\
+                do_lower_case=True, task="mrpc", model_type="bert", dynamic_length=False,\
                 evaluate=True, transform=None, filter=None):
         self.inputs = [inp.name for inp in onnx.load(model).graph.input]
         task = task.lower()
         model_type = model_type.lower()
-        assert task in ['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
-            'mnli', 'wnli', 'sst-2'], 'Unsupported task type'
-        assert model_type in ['distilbert', 'bert', 'mobilebert', 'roberta'], 'Unsupported \
-            model type'
+        assert task in ["mrpc", "qqp", "qnli", "rte", "sts-b", "cola", \
+            "mnli", "wnli", "sst-2"], "Unsupported task type"
+        assert model_type in ["distilbert", "bert", "mobilebert", "roberta"], "Unsupported \
+            model type"
         self.dynamic_length = dynamic_length
         self.model_type = model_type
         self.max_seq_length = max_seq_length
@@ -84,9 +87,9 @@ def load_and_cache_examples(data_dir, model_name_or_path, max_seq_length, task, 
     # Load data features from cache or dataset file
     if not os.path.exists("./dataset_cached"):
         os.makedirs("./dataset_cached")
-    cached_features_file = os.path.join("./dataset_cached", 'cached_{}_{}_{}_{}'.format(
-        'dev' if evaluate else 'train',
-        list(filter(None, model_name_or_path.split('/'))).pop(),
+    cached_features_file = os.path.join("./dataset_cached", "cached_{}_{}_{}_{}".format(
+        "dev" if evaluate else "train",
+        list(filter(None, model_name_or_path.split("/"))).pop(),
         str(max_seq_length),
         str(task)))
     if os.path.exists(cached_features_file):
@@ -219,15 +222,15 @@ class ONNXRTGLUE:
                                   sts-b, cola, mnli, wnli.
 
     """
-    def __init__(self, task='mrpc'):
-        assert task in ['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
-            'mnli', 'wnli', 'sst-2'], 'Unsupported task type'
+    def __init__(self, task="mrpc"):
+        assert task in ["mrpc", "qqp", "qnli", "rte", "sts-b", "cola", \
+            "mnli", "wnli", "sst-2"], "Unsupported task type"
         self.pred_list = None
         self.label_list = None
         self.task = task
         self.return_key = {
             "cola": "mcc",
-            "mrpc": "f1",
+            "mrpc": "acc",
             "sts-b": "corr",
             "qqp": "acc",
             "mnli": "mnli/acc",
@@ -267,109 +270,94 @@ class ONNXRTGLUE:
             self.task, processed_preds, self.label_list)
         return result[self.return_key[self.task]]
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-                    datefmt = '%m/%d/%Y %H:%M:%S',
-                    level = logging.WARN)
-
 if __name__ == "__main__":
-    logger.info('Evaluating ONNXRuntime full precision accuracy and performance:')
+    logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
     parser = argparse.ArgumentParser(
-    description='BERT fine-tune examples for classification/regression tasks.',
+    description="BERT fine-tune examples for classification/regression tasks.",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '--model_path',
+        "--model_path",
         type=str,
-        help="Pre-trained resnet50 model on onnx file"
+        help="Pre-trained model on onnx file"
     )
     parser.add_argument(
-        '--benchmark',
-        action='store_true', \
+        "--benchmark",
+        action="store_true", \
         default=False
     )
     parser.add_argument(
-        '--tune',
-        action='store_true', \
+        "--tune",
+        action="store_true", \
         default=False,
         help="whether quantize the model"
     )
     parser.add_argument(
-       '--config',
-       type=str,
-       help="config yaml path"
-    )
-    parser.add_argument(
-        '--output_model',
+        "--output_model",
         type=str,
-        default=None,
         help="output model path"
     )
     parser.add_argument(
-        '--mode',
+        "--mode",
         type=str,
         help="benchmark mode of performance or accuracy"
     )
     parser.add_argument(
-        '--data_path',
+        "--model_name_or_path",
+        type=str,
+        help="pretrained model name or path"
+    )
+    parser.add_argument(
+        "--data_path",
         type=str,
         help="input data path"
     )
     parser.add_argument(
-        '--batch_size',
+        "--batch_size",
         default=8,
         type=int,
     )
     parser.add_argument(
-        '--model_name_or_path',
+        "--task",
         type=str,
-        choices=['Intel/bert-base-uncased-mrpc',
-                'Intel/roberta-base-mrpc',
-                'Intel/xlm-roberta-base-mrpc',
-                'Intel/camembert-base-mrpc',
-                'distilbert-base-uncased-finetuned-sst-2-english',
-                'Alireza1044/albert-base-v2-sst2',
-                'philschmid/MiniLM-L6-H384-uncased-sst2',
-                'Intel/MiniLM-L12-H384-uncased-mrpc'],
-        help="pretrained model name or path"
-    )
-    parser.add_argument(
-        '--task',
-        type=str,
-        choices=['mrpc', 'qqp', 'qnli', 'rte', 'sts-b', 'cola', \
-                'mnli', 'wnli', 'sst-2'],
+        default="mrpc",
+        choices=["mrpc", "qqp", "qnli", "rte", "sts-b", "cola", \
+                "mnli", "wnli", "sst-2"],
         help="GLUE task name"
     )
     parser.add_argument(
-        '--num_heads',
-        default=12,
-        type=int,
-    )
-    parser.add_argument(
-        '--hidden_size',
-        default=768,
-        type=int,
-    )
-    parser.add_argument(
-        '--quant_format',
+        "--quant_format",
         type=str,
-        default='default', 
-        choices=['default', 'QDQ', 'QOperator'],
+        default="QOperator", 
+        choices=["QDQ", "QOperator"],
         help="quantization format"
     )
- 
+    parser.add_argument(
+        "--dynamic_length",
+        type=bool,
+        default=False, 
+        help="dynamic length"
+    )
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        default="bert", 
+        choices=["distilbert", "bert", "mobilebert", "roberta"],
+        help="model type"
+    )
     args = parser.parse_args()
 
     dataset = ONNXRTBertDataset(args.model_path,
                                 data_dir=args.data_path,
                                 model_name_or_path=args.model_name_or_path,
-                                task=args.task)
+                                task=args.task,
+                                model_type=args.model_type,
+                                dynamic_length=args.dynamic_length)
     dataloader = DefaultDataLoader(dataset, args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
-    def eval_func(model, *args):
+    def eval_func(model):
         metric.reset()
-        import tqdm
-        session = ort.InferenceSession(model.SerializeToString(), None)
+        session = onnxruntime.InferenceSession(model.SerializeToString(), None)
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
@@ -385,38 +373,39 @@ if __name__ == "__main__":
 
     if args.benchmark:
         model = onnx.load(args.model_path)
-        if args.mode == 'performance':            
+        if args.mode == "performance":            
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             conf = BenchmarkConfig(iteration=100,
-                                   cores_per_instance=28,
+                                   cores_per_instance=4,
                                    num_of_instance=1)
             fit(model, conf, b_dataloader=dataloader)
-        elif args.mode == 'accuracy':
+        elif args.mode == "accuracy":
             acc_result = eval_func(model)
             print("Batch size = %d" % args.batch_size)
             print("Accuracy: %.5f" % acc_result)
 
-
     if args.tune:
         from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-        opt_options = BertOptimizationOptions('bert')
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions("bert")
         opt_options.enable_embed_layer_norm = False
 
         model_optimizer = optimizer.optimize_model(
             args.model_path,
-            'bert',
-            num_heads=args.num_heads,
-            hidden_size=args.hidden_size,
+            "bert",
+            num_heads=12,
+            hidden_size=768,
             optimization_options=opt_options)
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach='static',
-                                         quant_level=0)
+        config = PostTrainingQuantConfig(approach="static",
+                                         quant_format=args.quant_format,
+                                         recipes={"optypes_to_exclude_output_quant": ["MatMul", "Gemm", "Attention", "FusedGemm"]})
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
                                    calib_dataloader=dataloader)
         q_model.save(args.output_model)
+
