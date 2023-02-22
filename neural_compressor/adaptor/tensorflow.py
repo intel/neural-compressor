@@ -1829,6 +1829,8 @@ class TensorflowQuery(QueryBackendCapability):
             if self.version in sub_data['version']['name']:
                 return sub_data
             else:
+                if sub_data['version']['name'] == ['2.11.0202242', '2.11.0202250']:
+                    continue
                 sorted_list = copy.deepcopy(sub_data['version']['name'])
                 sorted_list.remove('default') if 'default' in sorted_list else None
                 if isinstance(sorted_list, list):
