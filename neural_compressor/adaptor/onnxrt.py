@@ -624,7 +624,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         # 2. according to input
         # typically, NLP models have multiple inputs, 
         # and the dimension of each input is usually 2 (batch_size, max_seq_len)
-        sess = ort.InferenceSession(model.model.SerializeToString())
+        if not model.is_large_model:
+            sess = ort.InferenceSession(model.model.SerializeToString())
+        elif model.model_path is not None: # pragma: no cover
+            sess = ort.InferenceSession(model.model_path)
+        else: # pragma: no cover
+            assert False, "Please use model path instead of onnx model object to quantize."
         input_shape_lens = [len(input.shape) for input in  sess.get_inputs()]
         if len(input_shape_lens) > 1 and all(shape_len == 2 for shape_len in input_shape_lens):
             is_nlp = True
