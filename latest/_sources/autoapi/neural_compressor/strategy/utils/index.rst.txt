@@ -15,9 +15,11 @@ Submodules
    :titlesonly:
    :maxdepth: 1
 
+   constant/index.rst
    tuning_sampler/index.rst
    tuning_space/index.rst
    tuning_structs/index.rst
+   util/index.rst
 
 
 Package Contents
@@ -106,6 +108,11 @@ Classes
 
       :returns: All options.
 
+   .. py:method:: get_options_name()
+
+      Return the name list of the options.
+
+
    .. py:method:: append(option)
 
       Append option.
@@ -144,41 +151,22 @@ Classes
 
    Not displayed in API Docs.
 
-   .. py:method:: query_items_by_quant_mode(quant_mode)
-
-      Collect all op items that support the specific quantization/precision mode.
-
-      :param quant_mode: fp32/bf16/dynamic/static
-      :type quant_mode: str
-
-      :returns: the list of op items
-      :rtype: List
+   1) capability -> internal format -> merge -> tuning space (tree)
 
 
-   .. py:method:: query_quant_mode_item(op_name_type, quant_mode)
+   .. py:method:: query_item_option(op_name_type, path, method_name, method_val)
 
-      Interface for query the quantization item.
+      Query the method value, such as scheme, algorithm.
 
       :param op_name_type: (op_name, op_type)
-      :param quant_mode: The quantization mode.
+      :param path: full path
+      :param method_name: method name
+      :param method_val: method value
 
-      :returns: Return queried quantization item.
-
-
-   .. py:method:: query_item_option(op_name_type, quant_mode, key, val)
-
-      Check if the option exit in the tuning item.
-
-      :param op_name_type: (op_name, op_type)
-      :param quant_mode: The quantization mode.
-      :param key: tuning item name.
-      :param val: option of tuning item .
-
-      :returns: Return True if the option exit in the tuning item else False.
-      :rtype: bool
+      :returns: Return the query result if exist.
 
 
-   .. py:method:: set_deafult_config(op_name_type, quant_mode)
+   .. py:method:: get_default_config(op_name_type, quant_mode)
 
       Get the default tuning config.
 
@@ -187,6 +175,47 @@ Classes
 
       :returns: the default config according to the specified quantization mode.
       :rtype: op_tuning_config
+
+
+   .. py:method:: get_item_by_path(path, default=None)
+
+      Get the item according to the path.
+
+
+   .. py:method:: get_default_full_path(op_name_type, path)
+
+      Complete the path.
+
+      :param op_name_type: (op_name, op_path)
+      :param path: incomplete path.
+
+      :returns: the complete path.
+      :rtype: new_path
+
+
+   .. py:method:: query_quant_mode_item_by_full_path(op_name_type, path) -> Tuple[TuningItem, Tuple]
+
+      Query the mode item by full path.
+
+
+   .. py:method:: query_items_by_quant_mode(quant_mode)
+
+      Collect all op items that support the specified mode.
+
+      :param quant_mode: dynamic/static/bf16/fp32/fp16
+
+      :returns: The op item set that support quant model.
+
+
+   .. py:method:: get_op_default_path_by_pattern(op_name_type, pattern)
+
+      Get the default path by quant mode.
+
+      :param op_name_type: (op_name, op_type)
+      :param pattern: 'static', 'dynamic', ('static', 'int8'), ('precision', 'fp32')
+
+      :returns: The default full path of activation and weight if have.
+      :rtype: result(Dict)
 
 
 

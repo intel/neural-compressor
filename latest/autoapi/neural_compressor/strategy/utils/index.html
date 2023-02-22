@@ -88,9 +88,11 @@
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="constant/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.constant</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="tuning_sampler/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.tuning_sampler</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="tuning_space/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.tuning_space</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="tuning_structs/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.tuning_structs</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="util/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.utils.util</span></code></a></li>
 </ul>
 </div>
 </section>
@@ -212,6 +214,12 @@
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningItem.get_options_name">
+<span class="sig-name descname"><span class="pre">get_options_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningItem.get_options_name" title="Permalink to this definition"></a></dt>
+<dd><p>Return the name list of the options.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningItem.append">
 <span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">option</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningItem.append" title="Permalink to this definition"></a></dt>
 <dd><p>Append option.</p>
@@ -270,65 +278,31 @@
 <dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.utils.</span></span><span class="sig-name descname"><span class="pre">TuningSpace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capability</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace" title="Permalink to this definition"></a></dt>
 <dd><p>Not displayed in API Docs.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.query_items_by_quant_mode">
-<span class="sig-name descname"><span class="pre">query_items_by_quant_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.query_items_by_quant_mode" title="Permalink to this definition"></a></dt>
-<dd><p>Collect all op items that support the specific quantization/precision mode.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>quant_mode</strong> (<em>str</em>) – fp32/bf16/dynamic/static</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>the list of op items</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.query_quant_mode_item">
-<span class="sig-name descname"><span class="pre">query_quant_mode_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.query_quant_mode_item" title="Permalink to this definition"></a></dt>
-<dd><p>Interface for query the quantization item.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>op_name_type</strong> – (op_name, op_type)</p></li>
-<li><p><strong>quant_mode</strong> – The quantization mode.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Return queried quantization item.</p>
-</dd>
-</dl>
-</dd></dl>
-
+<ol class="arabic simple">
+<li><p>capability -&gt; internal format -&gt; merge -&gt; tuning space (tree)</p></li>
+</ol>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.query_item_option">
-<span class="sig-name descname"><span class="pre">query_item_option</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.query_item_option" title="Permalink to this definition"></a></dt>
-<dd><p>Check if the option exit in the tuning item.</p>
+<span class="sig-name descname"><span class="pre">query_item_option</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_val</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.query_item_option" title="Permalink to this definition"></a></dt>
+<dd><p>Query the method value, such as scheme, algorithm.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>op_name_type</strong> – (op_name, op_type)</p></li>
-<li><p><strong>quant_mode</strong> – The quantization mode.</p></li>
-<li><p><strong>key</strong> – tuning item name.</p></li>
-<li><p><strong>val</strong> – option of tuning item .</p></li>
+<li><p><strong>path</strong> – full path</p></li>
+<li><p><strong>method_name</strong> – method name</p></li>
+<li><p><strong>method_val</strong> – method value</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Return True if the option exit in the tuning item else False.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
+<dd class="field-even"><p>Return the query result if exist.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.set_deafult_config">
-<span class="sig-name descname"><span class="pre">set_deafult_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.set_deafult_config" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.get_default_config">
+<span class="sig-name descname"><span class="pre">get_default_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.get_default_config" title="Permalink to this definition"></a></dt>
 <dd><p>Get the default tuning config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -342,6 +316,72 @@
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>op_tuning_config</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.get_item_by_path">
+<span class="sig-name descname"><span class="pre">get_item_by_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.get_item_by_path" title="Permalink to this definition"></a></dt>
+<dd><p>Get the item according to the path.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.get_default_full_path">
+<span class="sig-name descname"><span class="pre">get_default_full_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.get_default_full_path" title="Permalink to this definition"></a></dt>
+<dd><p>Complete the path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op_name_type</strong> – (op_name, op_path)</p></li>
+<li><p><strong>path</strong> – incomplete path.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the complete path.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>new_path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.query_quant_mode_item_by_full_path">
+<span class="sig-name descname"><span class="pre">query_quant_mode_item_by_full_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neural_compressor.strategy.utils.TuningItem" title="neural_compressor.strategy.utils.TuningItem"><span class="pre">TuningItem</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.query_quant_mode_item_by_full_path" title="Permalink to this definition"></a></dt>
+<dd><p>Query the mode item by full path.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.query_items_by_quant_mode">
+<span class="sig-name descname"><span class="pre">query_items_by_quant_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.query_items_by_quant_mode" title="Permalink to this definition"></a></dt>
+<dd><p>Collect all op items that support the specified mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>quant_mode</strong> – dynamic/static/bf16/fp32/fp16</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The op item set that support quant model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.utils.TuningSpace.get_op_default_path_by_pattern">
+<span class="sig-name descname"><span class="pre">get_op_default_path_by_pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_name_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.utils.TuningSpace.get_op_default_path_by_pattern" title="Permalink to this definition"></a></dt>
+<dd><p>Get the default path by quant mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>op_name_type</strong> – (op_name, op_type)</p></li>
+<li><p><strong>pattern</strong> – ‘static’, ‘dynamic’, (‘static’, ‘int8’), (‘precision’, ‘fp32’)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The default full path of activation and weight if have.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>result(Dict)</p>
 </dd>
 </dl>
 </dd></dl>
