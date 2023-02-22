@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This example load an image classification model from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads).
+This example load an image classification model exported from PyTorch and confirm its accuracy and speed based on [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads). You need to download this dataset yourself.
 
 # Prerequisite
 
@@ -13,10 +13,12 @@ pip install -r requirements.txt
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Model
-Download model from [ONNX Model Zoo](https://github.com/onnx/models).
+Use [tf2onnx tool](https://github.com/onnx/tensorflow-onnx) to convert tflite to onnx model.
 
-```shell
-wget https://github.com/onnx/models/raw/main/vision/classification/squeezenet/model/squeezenet1.0-12.onnx
+```bash
+wget https://github.com/mlcommons/mobile_models/blob/main/v0_7/tflite/mobilenet_edgetpu_224_1.0_float.tflite
+
+python -m tf2onnx.convert --opset 11 --tflite mobilenet_edgetpu_224_1.0_float.tflite --output mobilenet_v3.onnx
 ```
 
 ## 3. Prepare Dataset

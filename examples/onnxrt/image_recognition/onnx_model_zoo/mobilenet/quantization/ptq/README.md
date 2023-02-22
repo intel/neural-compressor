@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This example load an image classification model from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads).
+This example load an image classification model from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads). You need to download this dataset yourself.
 
 # Prerequisite
 
@@ -13,10 +13,10 @@ pip install -r requirements.txt
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Model
-Download model from [ONNX Model Zoo](https://github.com/onnx/models).
+Download model from [ONNX Model Zoo](https://github.com/onnx/models)
 
 ```shell
-wget https://github.com/onnx/models/raw/main/vision/classification/squeezenet/model/squeezenet1.0-12.onnx
+wget https://github.com/onnx/models/raw/main/vision/classification/mobilenet/model/mobilenetv2-12.onnx
 ```
 
 ## 3. Prepare Dataset
@@ -60,3 +60,4 @@ bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
                       --dataset_location=/path/to/imagenet \
                       --mode=performance # or accuracy
 ```
+
