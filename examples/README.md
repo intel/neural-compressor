@@ -885,55 +885,55 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>*ResNet50 V1.5</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/resnet50/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/resnet50/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/resnet50_torchvision/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/resnet50_torchvision/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*ResNet50 V1.5 MLPerf</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/resnet50/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/resnet50/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/resnet50_mlperf/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/resnet50_mlperf/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*VGG16</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/vgg16/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/vgg16/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/vgg16/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/vgg16/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*MobileNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/mobilenet_v2/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/mobilenet_v2/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/mobilenet_v2/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/mobilenet_v2/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*MobileNet V3 MLPerf</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/mobilenet_v3/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/mobilenet_v3/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/mobilenet_v3/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/mobilenet_v3/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*AlexNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*CaffeNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*DenseNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/densenet/quantization/ptq">qlinearops</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/densenet/quantization/ptq">qlinearops</a></td>
   </tr>
   <tr>
     <td>*EfficientNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>FCN</td>
@@ -945,37 +945,37 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>*GoogleNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*Inception V1</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*MNIST</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/mnist/quantization/ptq">qlinearops</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/mnist/quantization/ptq">qlinearops</a></td>
   </tr>
   <tr>
     <td>*MobileNet V2 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*ResNet50 V1.5 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*ShuffleNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>SqueezeNet</td>
@@ -987,13 +987,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>*VGG16 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>*ZFNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qlinearops</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qdq</a></td>
   </tr>
   <tr>
     <td>ArcFace</td>
