@@ -51,6 +51,8 @@ flags.DEFINE_bool(
 flags.DEFINE_integer(
     'batch_size', 32, 'batch_size of evaluation')
     
+flags.DEFINE_integer(
+    'iters', 100, 'iteration of evaluation')
 
 def lr_schedule(epoch):
     """Learning Rate Schedule
@@ -345,7 +347,7 @@ def evaluate(model):
                         model.output_tensor[0]
     iteration = -1
     if FLAGS.benchmark and FLAGS.mode == 'performance':
-        iteration = 100
+        iteration = FLAGS.iters
     metric = TensorflowTopK(k=1)
 
     def eval_func(dataloader):
