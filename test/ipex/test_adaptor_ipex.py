@@ -152,5 +152,17 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         quantizer.eval_dataloader = dataloader
         nc_model = quantizer.fit()
 
+    def test_example_inputs(self):
+        from neural_compressor.experimental import Quantization
+        model = M()
+        config.quantization.example_inputs = torch.randn([1, 3, 224, 224])
+        quantizer = Quantization(config)
+        quantizer.model = model
+        quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = False
+        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+        dataloader = torch.utils.data.DataLoader(dataset)
+        quantizer.calib_dataloader = dataloader
+        nc_model = quantizer.fit()
+
 if __name__ == "__main__":
     unittest.main()

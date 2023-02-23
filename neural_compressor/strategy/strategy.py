@@ -896,6 +896,7 @@ class TuneStrategy(object):
                 framework_specific_info.update(
                     {"default_qconfig": self.cfg['quantization']['op_wise']['default_qconfig']})
             framework_specific_info.update({"q_func": q_func})
+            framework_specific_info.update({"example_inputs": self.cfg.quantization.example_inputs})
         return framework, framework_specific_info
 
     def _set_objectives(self):

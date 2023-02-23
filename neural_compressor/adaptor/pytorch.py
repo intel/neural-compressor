@@ -774,6 +774,7 @@ class TemplateAdaptor(Adaptor):
         self.sub_module_list = None
         self.default_qconfig = framework_specific_info.get('default_qconfig', None)
         self.performance_only = framework_specific_info.get("performance_only", False)
+        self.example_inputs = framework_specific_info.get("example_inputs", None)
 
         if 'approach' in framework_specific_info:  # pragma: no cover
             self.approach = framework_specific_info['approach']
@@ -2298,7 +2299,6 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         except:
             logger.warning('Fail to remove {}.'.format(self.ipex_config_path))
         self.device = 'ipex'
-        self.example_inputs = None
         self.tmp_model = None
 
     @dump_elapsed_time("Pass quantize model")
@@ -2723,7 +2723,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
         if hasattr(model, "save_qconf_summary"):
             os.makedirs(os.path.dirname(self.ipex_config_path), exist_ok=True)
             model.save_qconf_summary(qconf_summary=self.ipex_config_path)
-            self.example_inputs = get_example_inputs(model, self.q_dataloader)
+            if self.example_inputs is None:
+                self.example_inputs = get_example_inputs(model, self.q_dataloader)
         else:
             if self.performance_only:
                 tmp_model = model
@@ -2759,7 +2760,8 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                         qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                         weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, \
                                    qscheme=torch.per_channel_symmetric))
-                    self.example_inputs = get_example_inputs(tmp_model, self.q_dataloader)
+                    if self.example_inputs is None:
+                        self.example_inputs = get_example_inputs(tmp_model, self.q_dataloader)
                     tmp_model = ipex.quantization.prepare(tmp_model, static_qconfig, \
                                             example_inputs=self.example_inputs, inplace=True)
                 if self.q_func is None:
@@ -2953,7 +2955,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
         # so set it to None.
-        example_inputs = None
+        self.example_inputs = None
 
         if self.default_qconfig is not None:
             default_qconfig = copy.deepcopy(self.default_qconfig)
@@ -2996,7 +2998,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     q_model._model = prepare_qat_fx(
                         q_model._model,
                         self.fx_op_cfgs,
-                        example_inputs=example_inputs,
+                        example_inputs=self.example_inputs,
                         prepare_custom_config=self.prepare_custom_config_dict)
                 else:
                     q_model._model = prepare_qat_fx(
@@ -3011,7 +3013,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                     q_model._model,
                                                     prefix='',
                                                     is_qat=True,
-                                                    example_inputs=example_inputs)
+                                                    example_inputs=self.example_inputs)
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept
             # neural_compressor model and user defined func should accept framework model.
@@ -3029,7 +3031,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     q_model._model = prepare_fx(
                         q_model._model,
                         self.fx_op_cfgs,
-                        example_inputs=example_inputs,
+                        example_inputs=self.example_inputs,
                         prepare_custom_config=self.prepare_custom_config_dict)
                 else:
                     q_model._model = prepare_fx(
@@ -3043,7 +3045,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                     self.fx_op_cfgs,
                                                     q_model._model,
                                                     prefix='',
-                                                    example_inputs=example_inputs)
+                                                    example_inputs=self.example_inputs)
             if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
                 # For export API
                 hook_list = torch_utils.util._set_input_scale_hook(q_model._model, op_cfgs)
@@ -3179,7 +3181,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
 
         # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
         # so set it to None.
-        example_inputs = None
+        self.example_inputs = None
 
         # For export API, deepcopy fp32_model
         try:
@@ -3194,7 +3196,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 self.model._model = prepare_qat_fx(
                     self.model._model,
                     fx_op_cfgs,
-                    example_inputs=example_inputs,
+                    example_inputs=self.example_inputs,
                     prepare_custom_config=self.model.kwargs.get(
                         'prepare_custom_config_dict', None) if self.model.kwargs is not None else None)
             else:
@@ -3211,7 +3213,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                 self.model._model,
                                                 prefix='',
                                                 is_qat=True,
-                                                example_inputs=example_inputs)
+                                                example_inputs=self.example_inputs)
         # This is a flag for reloading
         self.model.q_config = {
             'calib_sampling_size': 100, # tmp arg for export API

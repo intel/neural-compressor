@@ -1402,6 +1402,7 @@ class Conf(object):
                 'model.domain': pythonic_config.quantization.domain,
                 'quantization.recipes': pythonic_config.quantization.recipes,
                 'quantization.approach': pythonic_config.quantization.approach,
+                'quantization.example_inputs': pythonic_config.quantization.example_inputs,
                 'quantization.calibration.sampling_size': 
                     pythonic_config.quantization.calibration_sampling_size,
                 'quantization.optype_wise': pythonic_config.quantization.op_type_list,

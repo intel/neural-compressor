@@ -322,6 +322,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             else:
                 conf = PostTrainingQuantConfig(
                   op_name_list=ptq_fx_op_name_list)
+                conf.example_inputs = torch.randn([1, 3, 224, 224])
                 set_workspace("./saved")
                 q_model = quantization.fit(model_origin,
                                            conf,
