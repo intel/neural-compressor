@@ -19,6 +19,7 @@
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 from neural_compressor.utils.utility import dump_elapsed_time
+from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
 
 from .quantize_graph_base import QuantizeGraphBase
@@ -47,7 +48,13 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
         input_output_names = input_node_names + output_node_names
         self.input_graph = QuantizeGraphHelper().remove_training_nodes(
             self.input_graph, protected_nodes=input_output_names)
-        
+
+        self.graph_analyzer = GraphAnalyzer()
+        self.graph_analyzer.graph = self.input_graph
+
+        self.graph_info = self.graph_analyzer.parse_graph()
+        self.graph_analyzer.get_frame_info()
+
         self.op_wise_seq = op_wise_sequences
 
         self.device = device
@@ -90,7 +97,8 @@ class QuantizeGraphForIntel(QuantizeGraphBase):
                     start_node_name=node.name, device=self.device, \
                     fake_quant=self.fake_quant, new_api=self.new_api,
                     performance_only=self.performance_only,
-                    itex_mode=self.itex_mode).apply_the_transform()
+                    itex_mode=self.itex_mode,
+                    frame_info=self.graph_analyzer.parent_frame_details).apply_the_transform()
                 if quantizable_node_names:
                     if node.op in ('ConcatV2', 'MaxPool', 'MaxPool3D', 'AvgPool'):
                         self.all_quantizable_node.extend([[i] for i in quantizable_node_names])
