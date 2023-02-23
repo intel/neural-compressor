@@ -140,8 +140,7 @@ class Benchmark(object):
     With the objective setting, user can get the data of what they configured in yaml.
 
     Args:
-        conf_fname_or_obj (string or obj): The Benchmark_Conf class containing accuracy goal, tuning objective and preferred
-            calibration & quantization tuning space etc.
+        conf_fname_or_obj (string or obj): The Benchmark_Conf class containing accuracy goal, tuning objective etc.
     """
 
     def __init__(self, conf_fname_or_obj):

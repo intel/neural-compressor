@@ -455,6 +455,12 @@ class BaseCallbacks(object):
 
         self._metric = user_metric
 
+    def remove_hook(self, scope, hook):
+        """Remove hooks if user want to tune accuracy with train_func."""
+        for registed_hook in self.hooks_dict[scope]:
+            if type(hook) == type(registed_hook):
+                self.hooks_dict[scope].remove(registed_hook)
+
 
 class AwareTrainingQuantCallbacks(BaseCallbacks):
     """This is the class for callbacks of quantization aware training.
@@ -502,12 +508,6 @@ class AwareTrainingQuantCallbacks(BaseCallbacks):
     def __repr__(self):
         """Represent this class."""
         return "Quantization Aware Training Callbacks"
-
-    def remove_hook(self, scope, hook):
-        """Remove hooks if user want to tune accuracy with train_func."""
-        for registed_hook in self.hooks_dict[scope]:
-            if type(hook) == type(registed_hook):
-                self.hooks_dict[scope].remove(registed_hook)
 
 
 class PruningCallbacks(BaseCallbacks):
