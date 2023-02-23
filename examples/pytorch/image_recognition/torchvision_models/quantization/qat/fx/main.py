@@ -184,6 +184,7 @@ def main():
         model = compression_manager.model
         train_func(model)
         compression_manager.callbacks.on_train_end()
+        model._model = accelerator.unwrap_model(model._model)
         compression_manager.save(args.tuned_checkpoint)
         return
 
