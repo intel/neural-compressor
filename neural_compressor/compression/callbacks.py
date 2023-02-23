@@ -38,7 +38,6 @@ from ..model.tensorflow_model import TensorflowQATModel
 from ..strategy import STRATEGIES
 from .pruner.utils import process_config, parse_to_prune, generate_pruner_config, get_sparsity_ratio
 from .pruner.pruners import get_pruner, PRUNERS
-# from .pruner.pruner_legacy import PRUNERS
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 
@@ -99,12 +98,12 @@ class BaseCallbacks(object):
         }
 
     def on_train_begin(self, dataloader=None):
-        """Be called before the beginning of epochs."""
+        """Be called before the beginning of training."""
         for on_train_begin_hook in self.hooks_dict['on_train_begin']:
             on_train_begin_hook(dataloader)
 
     def on_train_end(self):
-        """Be called after the end of epochs."""
+        """Be called after the end of training."""
         for on_train_end_hook in self.hooks_dict['on_train_end']:
             on_train_end_hook()
 
@@ -503,17 +502,16 @@ class AwareTrainingQuantCallbacks(BaseCallbacks):
 
 
 class PruningCallbacks(BaseCallbacks):
-    """This is the class for callbacks of quantization aware training.
+    """This is the class for callbacks of pruning object.
 
-    This design is mainly for Quantization-Aware Training.
-    In this class will apply all hooks for Quantization-Aware Training.
+    In this class will apply all hooks for Pruning.
     """
 
     def __init__(self, conf=None, model=None):
         """Construct all the necessary attributes for the callbacks object.
 
         Args:
-            conf: A QuantizationAwareTrainingConfig object which definds the compressor behavior.
+            conf: A WeightPruningConfig object which definds the compressor behavior.
             model: Model to be Pruning in this object.
         """
         super(PruningCallbacks, self).__init__(conf=None)
@@ -528,21 +526,20 @@ class PruningCallbacks(BaseCallbacks):
         self.pre_process()
         
     def on_train_begin(self, dataloader=None):
-        """Be called before the beginning of epochs."""
+        """Be called before the beginning of training."""
         for on_train_begin_hook in self.hooks_dict['on_train_begin']:
             on_train_begin_hook()
             
     def on_train_end(self):
-        """Be called after the end of epochs."""
+        """Be called after the end of training."""
         for on_train_end_hook in self.hooks_dict['on_train_end']:
             on_train_end_hook()
         if isinstance(self._model.model, torch.nn.Module):
             get_sparsity_ratio(self.pruners, self._model)
 
     def pre_process(self):
-        # """Functions called before pruning begins, usually set up pruners."""
+        """Functions called before pruning begins, usually set up pruners."""
         assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for pruning....'
-        """Create strategy to optimize model."""
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,
