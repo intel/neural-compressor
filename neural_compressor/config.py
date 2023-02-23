@@ -479,46 +479,82 @@ class _BaseQuantizationConfig:
         if recipes is not None and not isinstance(recipes, dict):
             raise ValueError("recipes should be a dict.")
 
-        def smooth_quant(val):
-            return check_value("smooth_quant", val, bool)
+        def smooth_quant(val=None):
+            if val is not None:
+                return check_value("smooth_quant", val, bool)
+            else:
+                return False
 
-        def smooth_quant_args(val):
-            check_value("smooth_quant_args", val, dict)
-            for k, v in val.items():
-                if k == "alpha":
-                    check_value("alpha", v, float)
-            return True
+        def smooth_quant_args(val=None):
+            if val is not None:
+                check_value("smooth_quant_args", val, dict)
+                for k, v in val.items():
+                    if k == "alpha":
+                        check_value("alpha", v, float)
+                return True
+            else:
+                return {}
 
-        def fast_bias_correction(val):
-            return check_value("fast_bias_correction", val, bool)
+        def fast_bias_correction(val=None):
+            if val is not None:
+                return check_value("fast_bias_correction", val, bool)
+            else:
+                return False
 
-        def weight_correction(val):
-            return check_value("weight_correction", val, bool)
+        def weight_correction(val=None):
+            if val is not None:
+                return check_value("weight_correction", val, bool)
+            else:
+                return False
 
-        def gemm_to_matmul(val):
-            return check_value("gemm_to_matmul", val, bool)
+        def gemm_to_matmul(val=None):
+            if val is not None:
+                return check_value("gemm_to_matmul", val, bool)
+            else:
+                return True
 
-        def graph_optimization_level(val):
-            return check_value("graph_optimization_level", val, str,
-                ["DISABLE_ALL", "ENABLE_BASIC", "ENABLE_EXTENDED", "ENABLE_ALL"])
+        def graph_optimization_level(val=None):
+            if val is not None:
+                return check_value("graph_optimization_level", val, str,
+                    ["DISABLE_ALL", "ENABLE_BASIC", "ENABLE_EXTENDED", "ENABLE_ALL"])
+            else:
+                return "ENABLE_BASIC"
 
-        def first_conv_or_matmul_quant(val):
-            return check_value("first_conv_or_matmul_quant", val, bool)
+        def first_conv_or_matmul_quant(val=None):
+            if val is not None:
+                return check_value("first_conv_or_matmul_quant", val, bool)
+            else:
+                return True
 
-        def last_conv_or_matmul_quant(val):
-            return check_value("last_conv_or_matmul_quant", val, bool)
+        def last_conv_or_matmul_quant(val=None):
+            if val is not None:
+                return check_value("last_conv_or_matmul_quant", val, bool)
+            else:
+                return True
 
-        def pre_post_process_quant(val):
-            return check_value("pre_post_process_quant", val, bool)
+        def pre_post_process_quant(val=None):
+            if val is not None:
+                return check_value("pre_post_process_quant", val, bool)
+            else:
+                return True
 
-        def add_qdq_pair_to_weight(val):
-            return check_value("add_qdq_pair_to_weight", val, bool)
+        def add_qdq_pair_to_weight(val=None):
+            if val is not None:
+                return check_value("add_qdq_pair_to_weight", val, bool)
+            else:
+                return False
 
-        def optypes_to_exclude_output_quant(val):
-            return isinstance(val, list)
+        def optypes_to_exclude_output_quant(val=None):
+            if val is not None:
+                return isinstance(val, list)
+            else:
+                return []
 
-        def dedicated_qdq_pair(val):
-            return check_value("dedicated_qdq_pair", val, bool)
+        def dedicated_qdq_pair(val=None):
+            if val is not None:
+                return check_value("dedicated_qdq_pair", val, bool)
+            else:
+                return False
 
         RECIPES = {"smooth_quant": smooth_quant,
                    "smooth_quant_args": smooth_quant_args,
@@ -534,9 +570,11 @@ class _BaseQuantizationConfig:
                    "dedicated_qdq_pair": dedicated_qdq_pair
                    }
         self._recipes = {}
-        for k, v in recipes.items():
-            if k.lower() in RECIPES and RECIPES[k.lower()](v) is True:
-                self._recipes.update({k.lower(): v})
+        for k in RECIPES.keys():
+            if k in recipes and RECIPES[k](recipes[k]):
+                self._recipes.update({k: recipes[k]})
+            else:
+                self._recipes.update({k: RECIPES[k]()})
 
     @property
     def accuracy_criterion(self):
