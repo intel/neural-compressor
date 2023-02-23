@@ -146,17 +146,17 @@ caused by unsupported model or inappropriate framework installation.'
 
 class Model(object):
     """A wrapper to construct a Neural Compressor Model."""
-    
+
     def __new__(cls, root, **kwargs):
         """Create a new instance object of Model.
-        
+
         Args:
             root (object): raw model format. For Tensorflow model, could be path to frozen pb file, 
                 path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras model object.
                 For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol 
                 or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto 
                 model object.
-                
+
         Returns:
             BaseModel: neural_compressor built-in model
         """
