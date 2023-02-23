@@ -405,6 +405,7 @@ class _BaseQuantizationConfig:
             excluded_precisions: precisions to be excluded, support 'bf16'
             quant_level: support 0 and 1, 0 is conservative strategy, 1 is basic(default) or user-specified strategy
             accuracy_criterion: accuracy constraint settings
+            use_distributed_tuning: whether use distributed tuning or not
         """
         self.inputs = inputs
         self.outputs = outputs

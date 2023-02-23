@@ -477,8 +477,10 @@ class TuneStrategy(object):
         tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
         for recipe_name, recipe_val_lst in self._tuning_recipes.items():
             tune_cfg['recipe_cfgs'][recipe_name] = recipe_val_lst[-1]
-            if recipe_name in FALLBACK_RECIPES_SET:
-                tune_cfg = self._fallback_ops(tune_cfg, recipe_name, self.capability, self.tuning_space)
+            if recipe_name in FALLBACK_RECIPES_SET and 'recipes_ops' in self.capability and \
+                (self.capability['recipes_ops'].get(recipe_name, [])) > 0:
+                logger.info(f"Applied recipe {recipe_name}.")
+                tune_cfg = self._fallback_ops(tune_cfg, self.capability['recipes_ops'][recipe_name], self.tuning_space)
         return tune_cfg
         
     def apply_recipe_one_by_one(self, tune_cfg):
@@ -493,13 +495,16 @@ class TuneStrategy(object):
             if recipe_name in FALLBACK_RECIPES_SET and 'recipes_ops' in self.capability and \
                 (self.capability['recipes_ops'].get(recipe_name, [])) > 0:
                 logger.info(f"Applied recipe {recipe_name} with value {recipe_vals[-1]}")
-                tune_cfg = self._fallback_ops(tune_cfg, self.capability['recipes_ops'][recipe_name], self.tuning_space)
-                yield tune_cfg
+                new_tune_cfg = self._fallback_ops(copy.deepcopy(tune_cfg), \
+                    self.capability['recipes_ops'][recipe_name], self.tuning_space)
+                yield new_tune_cfg
             if recipe_name in all_registered_samplers:
                 recipe_sampler = all_registered_samplers[recipe_name](tuning_space=None,
-                                                                        tuning_order_lst=[],
-                                                                        initial_op_tuning_cfg=tune_cfg,
-                                                                        kwargs={recipe_name: recipe_vals})
+                                                                      tuning_order_lst=[],
+                                                                      initial_op_tuning_cfg=copy.deepcopy(tune_cfg),
+                                                                      kwargs={recipe_name: recipe_vals})
+                for new_tune_cfg in recipe_sampler:
+                    yield new_tune_cfg
 
     def set_param_for_pre_quantization_algos(self, algo_scheduler, tune_cfg, fp32_model) -> None:
         """Set the parameter for pre-quantization algos, such as smooth quantization.
