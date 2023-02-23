@@ -482,7 +482,6 @@ def main():
         elif model_args.model_name_or_path == 'distilbert-base-uncased-distilled-squad':
             fp32_op_names = ['MatMul_(448|272|184)', 'Squeeze_.*?', 'Split_.*?', 'Add_.*?','Gather_.*?']
         config = PostTrainingQuantConfig(approach='static',
-                                         quant_level='default' if fp32_op_names else 0,
                                          op_name_list={op_name:FP32 for op_name in fp32_op_names} if fp32_op_names else None)
         q_model = quantization.fit(model, 
                                    config,

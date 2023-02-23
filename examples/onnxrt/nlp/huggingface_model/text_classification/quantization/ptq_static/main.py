@@ -329,7 +329,12 @@ if __name__ == "__main__":
                 'distilbert-base-uncased-finetuned-sst-2-english',
                 'Alireza1044/albert-base-v2-sst2',
                 'philschmid/MiniLM-L6-H384-uncased-sst2',
-                'Intel/MiniLM-L12-H384-uncased-mrpc'],
+                'Intel/MiniLM-L12-H384-uncased-mrpc',
+                'bert-base-cased-finetuned-mrpc',
+                'Intel/electra-small-discriminator-mrpc',
+                'M-FAC/bert-mini-finetuned-mrpc',
+                'Intel/xlnet-base-cased-mrpc',
+                'Intel/bart-large-mrpc'],
         help="pretrained model name or path"
     )
     parser.add_argument(
