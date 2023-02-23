@@ -109,7 +109,7 @@ Functions
       :rtype: calib_iter
 
 
-.. py:function:: algorithm_registry(algorithm_type)
+.. py:function:: algorithm_registry(algorithm_type, location)
 
    Decorate and register all Algorithm subclasses.
 
@@ -117,6 +117,8 @@ Functions
    :type cls: class
    :param algorithm_type: The algorithm registration name
    :type algorithm_type: str
+   :param location: The location to call algorithms
+   :type location: str
 
    :returns: The class of register.
    :rtype: cls

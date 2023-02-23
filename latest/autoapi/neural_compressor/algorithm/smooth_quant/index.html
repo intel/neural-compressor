@@ -91,15 +91,21 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.algorithm.smooth_quant.SmoothQuant" title="neural_compressor.algorithm.smooth_quant.SmoothQuant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SmoothQuant</span></code></a></p></td>
-<td><p>SmoothQuant algorithm class.</p></td>
+<td><p>Fake input channel quantization.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.algorithm.smooth_quant.SmoothQuant">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.algorithm.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">SmoothQuant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">percentile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">99.999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['MatMul',</span> <span class="pre">'Linear',</span> <span class="pre">'Conv']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scales_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.algorithm.smooth_quant.SmoothQuant" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.algorithm.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">SmoothQuant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.algorithm.smooth_quant.SmoothQuant" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../algorithm/index.html#neural_compressor.algorithm.algorithm.Algorithm" title="neural_compressor.algorithm.algorithm.Algorithm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.algorithm.algorithm.Algorithm</span></code></a></p>
-<p>SmoothQuant algorithm class.</p>
+<p>Fake input channel quantization.</p>
+<p>for more details please refer to
+[1] SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models
+[2] SPIQ: Data-Free Per-Channel Static Input Quantization
+For torch backend, we only handle the layers whose smooth scale could be absorbed, we will support other layers
+later. For onnx backend, we insert MUL layer before conv/linear layers, the op fusing and kernel will be
+supported in the future.</p>
 </dd></dl>
 
 </section>

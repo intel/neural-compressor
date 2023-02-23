@@ -31,7 +31,7 @@ Classes
    :param framework_specific_info: framework specific configuration for quantization.
    :type framework_specific_info: dict
 
-   .. py:method:: smooth_quant(model, dataloader, iterations, tune_cfg, alpha, percentile, op_types, scales_per_op)
+   .. py:method:: smooth_quant(model, dataloader, iterations, tune_cfg, alpha=0.5, percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'], scales_per_op=True)
 
       Get augmented model with smooth quant.
 

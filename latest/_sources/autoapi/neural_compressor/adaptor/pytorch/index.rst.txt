@@ -80,6 +80,24 @@ Functions
       :rtype: hessian_trace(Dict[Tuple, float]), key
 
 
+   .. py:method:: smooth_quant(model, dataloader, calib_iter, tune_cfg=None, alpha=0.5, percentile=None, op_types=None, scales_per_op=None, force_re_smooth=False)
+
+      convert the model by smooth quant.
+
+      :param model: origin FP32 model
+      :param dataloader: calib dataloader
+      :param calib_iter: calib iters
+      :param tune_cfg: quantization config
+      :param alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+      :param percentile: Percentile of calibration to remove outliers, not supported now
+      :param op_types: The op types whose input tensor will be dumped
+      :param scales_per_op: True, each op will have an individual scale, mainly for accuracy
+                            False, ops with the same input will share a scale, mainly for performance
+
+      :returns: A modified fp32 model
+      :rtype: model
+
+
 
 .. py:class:: PyTorchAdaptor(framework_specific_info)
 

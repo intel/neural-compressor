@@ -190,6 +190,33 @@
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.TemplateAdaptor.smooth_quant">
+<span class="sig-name descname"><span class="pre">smooth_quant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scales_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_re_smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.TemplateAdaptor.smooth_quant" title="Permalink to this definition"></a></dt>
+<dd><p>convert the model by smooth quant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – origin FP32 model</p></li>
+<li><p><strong>dataloader</strong> – calib dataloader</p></li>
+<li><p><strong>calib_iter</strong> – calib iters</p></li>
+<li><p><strong>tune_cfg</strong> – quantization config</p></li>
+<li><p><strong>alpha</strong> – smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ</p></li>
+<li><p><strong>percentile</strong> – Percentile of calibration to remove outliers, not supported now</p></li>
+<li><p><strong>op_types</strong> – The op types whose input tensor will be dumped</p></li>
+<li><p><strong>scales_per_op</strong> – True, each op will have an individual scale, mainly for accuracy
+False, ops with the same input will share a scale, mainly for performance</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A modified fp32 model</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>model</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
