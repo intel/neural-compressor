@@ -148,6 +148,6 @@ if __name__ == "__main__":
                                          accuracy_criterion=accuracy_criterion,
                                          quant_format=args.quant_format,
                                          calibration_sampling_size=[50],
-                                         op_name_list={op_name:FP32 for op_name in fp32_op_names if fp32_op_names})
+                                         op_name_list={op_name:FP32 for op_name in fp32_op_names})
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

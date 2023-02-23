@@ -43,6 +43,7 @@ function run_benchmark {
 
     model_name_or_path="bert-base-uncased"
     task_name="mrpc"
+    model_type="bert"
 
     python main.py \
            --model_path ${input_model} \

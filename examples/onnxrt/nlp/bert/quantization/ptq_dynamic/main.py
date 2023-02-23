@@ -324,12 +324,34 @@ if __name__ == "__main__":
                 'mnli', 'wnli', 'sst-2'],
         help="GLUE task name"
     )
+    parser.add_argument(
+        "--dynamic_length",
+        type=bool,
+        default=False, 
+        help="dynamic length"
+    )
+    parser.add_argument(
+        "--max_seq_length",
+        type=int,
+        default=128, 
+        help="max sequence length"
+    )
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        default="bert", 
+        choices=["distilbert", "bert", "mobilebert", "roberta"],
+        help="model type"
+    )
     args = parser.parse_args()
 
     dataset = ONNXRTBertDataset(args.model_path,
                                 data_dir=args.data_path,
                                 model_name_or_path=args.model_name_or_path,
-                                task=args.task)
+                                max_seq_length=args.max_seq_length,
+                                task=args.task,
+                                model_type=args.model_type,
+                                dynamic_length=args.dynamic_length)
     dataloader = DefaultDataLoader(dataset, args.batch_size)
     metric = ONNXRTGLUE(args.task)
 

@@ -33,6 +33,7 @@ function run_tuning {
     model_name_or_path="bert-base-uncased"
     batch_size=8
     task_name="mrpc"
+    model_type="bert"
 
     python main.py \
            --model_path ${input_model} \
@@ -41,6 +42,7 @@ function run_tuning {
            --data_path ${dataset_location} \
            --task ${task_name} \
            --batch_size ${batch_size} \
+           --model_type ${model_type} \
            --quant_format ${quant_format} \
            --tune
 }

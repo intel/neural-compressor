@@ -338,6 +338,12 @@ if __name__ == "__main__":
         help="dynamic length"
     )
     parser.add_argument(
+        "--max_seq_length",
+        type=int,
+        default=128, 
+        help="max sequence length"
+    )
+    parser.add_argument(
         "--model_type",
         type=str,
         default="bert", 
@@ -349,6 +355,7 @@ if __name__ == "__main__":
     dataset = ONNXRTBertDataset(args.model_path,
                                 data_dir=args.data_path,
                                 model_name_or_path=args.model_name_or_path,
+                                max_seq_length=args.max_seq_length,
                                 task=args.task,
                                 model_type=args.model_type,
                                 dynamic_length=args.dynamic_length)

@@ -139,6 +139,7 @@ if __name__ == "__main__":
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
         config = PostTrainingQuantConfig(approach='static', 
-                                         quant_format=args.quant_format)
+                                         quant_format=args.quant_format,
+                                         recipes={'pre_post_process_quant': False})
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

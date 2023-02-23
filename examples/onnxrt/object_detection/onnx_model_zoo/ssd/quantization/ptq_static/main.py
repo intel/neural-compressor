@@ -145,7 +145,8 @@ if __name__ == "__main__":
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
-        accuracy_criterion = AccuracyCriterion(higher_is_better=False, criterion='absolute')
+        accuracy_criterion = AccuracyCriterion()
+        accuracy_criterion.absolute = 0.01
         config = PostTrainingQuantConfig(approach='static', 
                                          accuracy_criterion=accuracy_criterion,
                                          quant_format=args.quant_format,
