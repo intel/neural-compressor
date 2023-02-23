@@ -202,6 +202,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/image_recognition/resnet_v2/quantization/qat">keras</a> </td>
   </tr>
   <tr>
+    <td>ResNet50</td>
+    <td>Image Recognition</td>
+    <td>Quantization-Aware Training</td>
+    <td><a href="./tensorflow/image_recognition/keras_models/resnet50/quantization/qat">keras</a> </td>
+  </tr>
+  <tr>
     <td>*EfficientNet V2 B0</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
@@ -322,7 +328,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Image Recognition</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/inception_v3/pruning/magnitude">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/keras_models/inception_v3/pruning/magnitude">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2</td>
