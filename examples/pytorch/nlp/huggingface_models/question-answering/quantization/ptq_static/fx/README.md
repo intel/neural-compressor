@@ -9,20 +9,18 @@ This document is used to list steps of reproducing Huggingface models tuning zoo
 Recommend python 3.6 or higher version.
 ```shell
 cd examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx
-pip install transformers==4.10.0
 pip install -r requirements.txt
 pip install torch
 ```
-> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment). 
 
 # Quantization
 ```shell
 python -u ./run_qa.py \
-        --model_name_or_path "bert-large-uncased-whole-word-masking-finetuned-squad" \
-        --dataset_name "squad" \
+        --model_name_or_path bert-large-uncased-whole-word-masking-finetuned-squad \
+        --dataset_name squad \
         --do_eval \
         --do_train \
-        --max_seq_length 128 \
+        --max_seq_length 384 \
         --per_device_eval_batch_size ${batch_size} \
         --no_cuda \
         --output_dir /path/to/checkpoint/dir \

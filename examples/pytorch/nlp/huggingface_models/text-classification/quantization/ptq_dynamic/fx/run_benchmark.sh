@@ -57,9 +57,9 @@ function run_benchmark {
     TASK_NAME='rte'
     model_name_or_path=${input_model}
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
+        mode_cmd=" --accuracy"
     elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --benchmark --iters "${iters}
+        mode_cmd=" --performance --iters "${iters}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
@@ -68,7 +68,9 @@ function run_benchmark {
     if  [ "${topology}" = "bert_large_RTE" ]; then
         TASK_NAME='rte'
         model_name_or_path=${input_model}
-
+    elif [ "${topology}" = "xlm_roberta_MRPC" ]; then
+        TASK_NAME='MRPC'
+        model_name_or_path=${input_model}
     fi
 
     extra_cmd='--model_name_or_path '${input_model}
