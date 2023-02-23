@@ -306,7 +306,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
                 AwareTrainingQuantCallbacks(conf, model=nc_model)
                 callbacks_list.append(AwareTrainingQuantCallbacks(conf, model=nc_model))
             elif isinstance(conf, WeightPruningConfig):
-                callbacks_list.append(PruningCallbacks(conf))
+                callbacks_list.append(PruningCallbacks(conf, model=model))
             elif isinstance(conf, DistillationConfig):
                 callbacks_list.append(DistillationCallbacks(conf, model=model))
             else:
@@ -319,7 +319,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
             qat = AwareTrainingQuantCallbacks(confs, model=nc_model)
             callbacks_list.append(qat)
         elif isinstance(confs, WeightPruningConfig):
-            callbacks_list.append(PruningCallbacks(confs))
+            callbacks_list.append(PruningCallbacks(confs, model=model))
         elif isinstance(confs, DistillationConfig):
             callbacks_list.append(DistillationCallbacks(confs, model=model))
         else:
@@ -410,4 +410,5 @@ class CallBacks:
         for callbacks in self.callbacks_list:
             res_list.extend(callbacks.on_epoch_end())
         return res_list
+
 

@@ -27,16 +27,20 @@ import pickle
 import random
 from .distillation.criterions import Criterions
 from ..adaptor import FRAMEWORKS
-from ..conf.config import QuantConf, DistillationConf
+from ..conf.config import QuantConf, DistillationConf, PruningConf
 from ..conf.dotdict import deep_get, deep_set, DotDict
 from ..conf.pythonic_config import Config
 from ..utils import logger
-from ..utils.utility import time_limit
+from ..utils.utility import time_limit, LazyImport
 from ..model import BaseModel, Model
 from ..model.model import get_model_fwk_name
 from ..model.tensorflow_model import TensorflowQATModel
 from ..strategy import STRATEGIES
-
+from .pruner.utils import process_config, parse_to_prune, generate_pruner_config, get_sparsity_ratio
+from .pruner.pruners import get_pruner, PRUNERS
+# from .pruner.pruner_legacy import PRUNERS
+LazyImport('torch.nn')
+torch = LazyImport('torch')
 
 class BaseCallbacks(object):
     """This is base class of Neural Compressor Callbacks.
@@ -499,7 +503,280 @@ class AwareTrainingQuantCallbacks(BaseCallbacks):
 
 
 class PruningCallbacks(BaseCallbacks):
-    pass
+    """This is the class for callbacks of quantization aware training.
+
+    This design is mainly for Quantization-Aware Training.
+    In this class will apply all hooks for Quantization-Aware Training.
+    """
+
+    def __init__(self, conf=None, model=None):
+        """Construct all the necessary attributes for the callbacks object.
+
+        Args:
+            conf: A QuantizationAwareTrainingConfig object which definds the compressor behavior.
+            model: Model to be Pruning in this object.
+        """
+        super(PruningCallbacks, self).__init__(conf=None)
+        conf_ = Config(pruning=conf, quantization=None, benchmark=None, distillation=None, nas=None)
+        self.cfg = PruningConf()
+        self.cfg.map_pyconfig_to_cfg(conf_)
+        self.cfg = self.cfg.usr_cfg
+        self.conf = conf_.pruning
+        self.model = model
+        self.pruners_info = process_config(self.conf)
+        self.pruners = []
+        self.pre_process()
+        
+    def on_train_begin(self, dataloader=None):
+        """Be called before the beginning of epochs."""
+        for on_train_begin_hook in self.hooks_dict['on_train_begin']:
+            on_train_begin_hook()
+            
+    def on_train_end(self):
+        """Be called after the end of epochs."""
+        for on_train_end_hook in self.hooks_dict['on_train_end']:
+            on_train_end_hook()
+        if isinstance(self._model.model, torch.nn.Module):
+            get_sparsity_ratio(self.pruners, self._model)
+
+    def pre_process(self):
+        # """Functions called before pruning begins, usually set up pruners."""
+        assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for pruning....'
+        """Create strategy to optimize model."""
+        framework_specific_info = {'device': self.cfg.device,
+                                   'random_seed': self.cfg.tuning.random_seed,
+                                   'workspace_path': self.cfg.tuning.workspace.path,
+                                   'q_dataloader': None,
+                                   'format': 'default',
+                                   'backend': 'default'}
+
+        if 'tensorflow' in self.framework:
+            framework_specific_info.update(
+                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+        self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
+        self.adaptor.model = self.model
+        self._generate_pruners()
+        self.generate_hooks()
+        
+    def execute(self):
+        """Functions that execute the pruning process.
+
+        Follow the working flow: evaluate the dense model -> train/prune the model, evaluate the sparse model.
+        """
+        if self._train_func is not None:
+            modified_model = self._train_func(self._model \
+                    if getattr(self._train_func, 'builtin', None) else self._model.model)
+            # for the cases that model is changed not inplaced during training, for example,
+            # oneshot with torch_fx QAT interfaces. Needs to reset model afterwards.
+            if modified_model is not None:
+                self._model.model = modified_model
+            
+        logger.info("Start to get the baseline model's score before pruning.")
+        self.baseline_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
+                                                  else self._model.model)
+        logger.info("Baseline model's score is {}.".format(str(self.baseline_score)))
+        logger.info("Model pruning begins.")
+        self._train_func(self._model if getattr(self._train_func, 'builtin', None) \
+                             else self._model.model)
+        logger.info("Model pruning is done. Start to evaluate the pruned model.")
+        self.last_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
+                                              else self._model.model)
+        logger.info("Pruned model score is {}.".format(str(self.last_score)))
+        return self._model
+
+    def __call__(self):
+        """Execute this class.
+
+        For derived classes(Pruning, Quantization, etc.), an override function is required.
+        """
+        self.pre_process()
+        results = self.execute()
+        return results
+    
+    fit = __call__
+
+    def __repr__(self):
+        """Return the class's string representation."""
+        return 'Pruning'
+
+    def generate_hooks(self):
+        """Register hooks for pruning."""
+        for pruner in self.pruners:
+            for key in self.hooks.keys():
+                if hasattr(pruner, key):
+                    self.register_hook(key, getattr(pruner, key))
+                
+    def _generate_pruners(self):
+        """Obtain Pruner objects."""
+        if isinstance(self._model.model, torch.nn.Module):
+            for info in self.pruners_info:
+                modules = parse_to_prune(info, self._model.model)
+                if modules == {}:
+                    logger.warning("one pruner hooks no layers, please have a check")
+
+                self.pruners.append(get_pruner(info, modules))
+                info['modules'] = [key for key in modules.keys()]
+                info['len_of_modules'] = len(info['modules'])
+                logger.info(info)
+        else:
+            for info in self.pruners_info:
+                pruner = generate_pruner_config(info)
+                if info.prune_type == 'magnitude':
+                    self.pruners.append(PRUNERS['BasicMagnitude'](\
+                                            self._model, \
+                                            pruner,
+                                            None))
+                elif info.prune_type == 'pattern_lock':
+                    self.pruners.append(PRUNERS['PatternLock'](\
+                                            self._model, \
+                                            pruner,
+                                            None))
+                elif info.prune_type == 'gradient_sensitivity':
+                    self.pruners.append(PRUNERS['GradientSensitivity'](\
+                                            self._model, \
+                                            pruner,
+                                            None))
+                elif info.prune_type == 'group_lasso':
+                    self.pruners.append(PRUNERS['GroupLasso'](\
+                                            self._model, \
+                                            pruner,
+                                            None))
+                else:
+                    ##print(pruner.prune_type)
+                    assert False, 'now only support {}'.format(PRUNERS.keys())
+                logger.info(info)
+
+    @property
+    def train_func(self):
+        """Not support get train_func."""
+        assert False, 'Should not try to get the value of `train_func` attribute.'
+        return None
+
+    @train_func.setter
+    def train_func(self, user_train_func):
+        """Training function.
+
+        Args:
+            user_train_func: This function takes "model" as input parameter
+                         and executes entire training process with self
+                         contained training hyper-parameters. If training_func set,
+                         an evaluation process must be triggered and user should
+                         set eval_dataloader with metric configured or directly eval_func
+                         to make evaluation of the model executed. training_func will return
+                         a trained model.
+        """
+        self._train_func = user_train_func
+
+    @property
+    def eval_func(self):
+        """Not support get eval_func."""
+        assert False, 'Should not try to get the value of `eval_func` attribute.'
+        return None
+
+    @eval_func.setter
+    def eval_func(self, user_eval_func):
+        """Eval function for component.
+
+        Args:
+            user_eval_func: This function takes "model" as input parameter
+                         and executes entire evaluation process with self
+                         contained metrics. If eval_func set,
+                         an evaluation process must be triggered
+                         to make evaluation of the model executed.
+        """
+        self._eval_func = user_eval_func
+
+    @property
+    def eval_dataloader(self):
+        """Getter to eval dataloader."""
+        return self._eval_dataloader
+
+    @eval_dataloader.setter
+    def eval_dataloader(self, dataloader):
+        """Set Data loader for evaluation of component.
+
+        It is iterable and the batched data should consists of yield (input, _).
+        the input in the batched data will be used for model inference, so it
+        should satisfy the input format of specific model.
+        User only need to set eval_dataloader when eval_dataloader can not be
+        configured from yaml file.
+
+        Args:
+            dataloader(generator): user are supported to set a user defined dataloader
+                                   which meet the requirements that can yield tuple of
+                                   (input, label)/(input, _) batched data. Another good
+                                   practice is to use neural_compressor.experimental.common.DataLoader
+                                   to initialize a neural_compressor dataloader object. Notice
+                                   neural_compressor.experimental.common.DataLoader is just a wrapper of the
+                                   information needed to build a dataloader, it can't yield
+                                   batched data and only in this setter method
+                                   a 'real' train_dataloader will be created,
+                                   the reason is we have to know the framework info
+                                   and only after the Component object created then
+                                   framework information can be known.
+                                   Future we will support creating iterable dataloader
+                                   from neural_compressor.experimental.common.DataLoader.
+        """
+        assert hasattr(dataloader, '__iter__') and \
+            hasattr(dataloader, 'batch_size'), \
+            'dataloader must implement __iter__ method and batch_size attribute'
+        self._eval_dataloader = dataloader
+
+    @property
+    def metric(self):
+        """Get `metric` attribute."""
+        assert False, 'Should not try to get the value of `metric` attribute.'
+        return None
+
+    @metric.setter
+    def metric(self, user_metric):
+        """Set metric class or a dict of built-in metric configures, and neural_compressor will initialize this class when evaluation.
+
+        1. neural_compressor have many built-in metrics, user can pass a metric configure dict to tell neural compressor what metric will be use.
+           You can set multi-metrics to evaluate the performance of a specific model.
+                Single metric:
+                    {topk: 1}
+
+                Multi-metrics:
+                    {topk: 1,
+                     MSE: {compare_label: False},
+                    }
+            For the built-in metrics, you can refer to [Supported Built-in Metric Matrix](https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix)
+
+        2. User also can set specific metric through this api. The metric class should take the outputs of the model or
+           postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels) as inputs for update,
+           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
+
+        Args:
+            user_metric(neural_compressor.metric.Metric or a dict of built-in metric configures):
+
+        """
+        if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
+            logger.warning("Override the value of `metric` field defined in yaml file" \
+                           " as user defines the value of `metric` attribute by code.")
+
+        from ..metric import Metric as NCMetric, METRICS
+        if isinstance(user_metric, dict):
+            metric_cfg = user_metric
+        else:
+            if isinstance(user_metric, NCMetric):
+                name = user_metric.name
+                metric_cls = user_metric.metric_cls
+                metric_cfg = {name: {**user_metric.kwargs}}
+            else:
+                for i in ['reset', 'update', 'result']:
+                    assert hasattr(user_metric, i), 'Please realise {} function' \
+                                                    'in user defined metric'.format(i)
+                metric_cls = type(user_metric).__name__
+                name = 'user_' + metric_cls
+                metric_cfg = {name: id(user_metric)}
+            metrics = METRICS(self.conf.usr_cfg.model.framework)
+            metrics.register(name, metric_cls)
+
+        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
+        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+
+        self._metric = user_metric
 
 
 class DistillationCallbacks(BaseCallbacks):
