@@ -134,11 +134,14 @@ def main_worker():
         distil_loss = KnowledgeDistillationLossConfig()
         conf = DistillationConfig(teacher_model=teacher_model, criterion=distil_loss)
         compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
         model = compression_manager.model
 
         train(model, adaptor, compression_manager)
-        evaluate(model, adaptor)
-        model.save(args.output_model)
+        print("Accuracy of the distilled model is ",evaluate(model, adaptor))
+
+        compression_manager.callbacks.on_train_end()
+        compression_manager.save(args.output_model)
         return
 
 

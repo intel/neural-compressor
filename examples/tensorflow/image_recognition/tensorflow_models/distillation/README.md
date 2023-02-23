@@ -19,9 +19,9 @@ Recommend python 3.8 or higher version.
 pip install neural-compressor
 ```
 
-### Install Intel Tensorflow
+### Install Tensorflow
 ```shell
-pip install intel-tensorflow
+pip install tensorflow
 ```
 
 ### Install Intel Extension for Tensorflow
@@ -42,16 +42,8 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 
 ## 2. Prepare Dataset
 
-  TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
-  We also prepared related scripts in ` examples/tensorflow/image_recognition/tensorflow_models/imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
-
-  ```shell
-  cd examples/tensorflow/image_recognition/tensorflow_models/
-  # convert validation subset
-  bash prepare_dataset.sh --output_dir=./distillation/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
-  # convert train subset
-  bash prepare_dataset.sh --output_dir=./distillation/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
-  ```
+  TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download. 
+  This example uses the raw ImageNet data. Therefore, users do not need to convert the data to TF Record format.
 
 # Run
 
