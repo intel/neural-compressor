@@ -154,11 +154,6 @@ class TuneStrategy(object):
         logger.debug(self.capability)
         self.set_tuning_space(conf)
 
-        self.algo_scheduler = AlgorithmScheduler(self.cfg.quantization.recipes)
-        self.algo_scheduler.dataloader = self.calib_dataloader  # reuse the calibration iteration
-        self.algo_scheduler.origin_model = self.model
-        self.algo_scheduler.adaptor = self.adaptor
-
         self._optype_statistics = None
         self.fallback_stats_baseline = None
         self.fallback_stats = None
@@ -167,9 +162,14 @@ class TuneStrategy(object):
         self.metric_met_point = 0
         
         # for recipes
+        # {recipe name: the list of supported value}
         self._tuning_recipes = OrderedDict()
-        self._not_tuning_recipes = OrderedDict()
-        self._check_recipe()
+        # {recipe name: the default value when not tuning}
+        self._tuning_recipes_default_values = {}
+        # {recipe name: the value specified by user}
+        self._not_tuning_recipes_values = {}
+        self._initialize_recipe()
+        self.applied_all_recipes_flag = False
         if resume is not None: self.setup_resume(resume)
 
 
@@ -187,7 +187,7 @@ class TuneStrategy(object):
         """
         raise NotImplementedError
     
-    def _check_recipe(self):
+    def _initialize_recipe(self):
         """Divide the recipe into two categories tuning/not tuning."""
         from .utils.utility import get_adaptor_name
         from ..utils.constant import RECIPES as fwk_recipes
@@ -195,29 +195,76 @@ class TuneStrategy(object):
         # get all recipes supported by adaptor.
         adaptor_name = get_adaptor_name(self.adaptor)
         adaptor_recipes = fwk_recipes['common']
+        # TODO WA due to smooth quant only supported by ort currently.
+        if not adaptor_name.startswith('onnx'):
+            adaptor_recipes.pop('smooth_quant', None)
         for adaptor_name_key, adaptor_recipes_val in fwk_recipes.items():
             if adaptor_name_key.startswith(adaptor_name):
                 adaptor_recipes.update(adaptor_recipes_val)
         # divide it into two categories.
         usr_recipes_cfg = self.cfg_bk.quantization.recipes if self.cfg_bk.quantization.recipes else {}
+        # for not tuning recipes, use the value specified by user.
         not_tuning_recipes = {item[0]: item[1] for item in usr_recipes_cfg.items() if item[0] in adaptor_recipes}
         for recipe_name in fwk_recipes_priority:
-            if recipe_name in usr_recipes_cfg:
-                self._not_tuning_recipes[recipe_name] = not_tuning_recipes[recipe_name]
+            if recipe_name in not_tuning_recipes:
+                self._not_tuning_recipes_values[recipe_name] = not_tuning_recipes[recipe_name]
             elif recipe_name in adaptor_recipes:
                 self._tuning_recipes[recipe_name] = adaptor_recipes[recipe_name]
-        logger.info(f"There are {len(self._not_tuning_recipes)} recipes that specified by user.")
-        logger.info(self._not_tuning_recipes)
-        logger.info(f"There are {len(self._tuning_recipes)} recipes that will be tuned latter.")
+                self._tuning_recipes_default_values[recipe_name] = adaptor_recipes[recipe_name][0]
+        logger.info(f"{len(self._not_tuning_recipes_values)} recipes specified by user.")
+        logger.info(self._not_tuning_recipes_values)
+        logger.info(f"{len(self._tuning_recipes)} recipes require future tuning.")
         logger.info(self._tuning_recipes)
         
-    def _apply_all_recipes(self):
-        applied_recipes = {}
+    def _open_all_recipes(self):
+        """Open all tunable recipes."""
+        opened_recipes = {}
         for recipe_name, recipe_val_lst in self._tuning_recipes.items():
-            applied_recipes[recipe_name] = recipe_val_lst[-1]
-        logger.info("Applied all recipes.")
-        logger.info(applied_recipes)
+            opened_recipes[recipe_name] = recipe_val_lst[-1]
+        logger.info("Opened all recipes.")
+        logger.info(opened_recipes)
+    
+    def apply_all_tuning_recipes(self, tune_cfg):
+        """Apply all tunable recipes with their value."""
+        tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
+        for recipe_name, recipe_val_lst in self._tuning_recipes.items():
+            tune_cfg['recipe_cfgs'][recipe_name] = recipe_val_lst[-1]
+        return tune_cfg
+            
+    def _check_recipe(self, recipe_name, recipe_vals):
+        """Check whether to use this recipe or not.
+
+        Args:
+            recipe_name: the recipe name.
+            recipe_vals: the args of recipes.
+
+        Returns:
+            Return True if this recipe is needed else False.
+        """
+        return True
         
+    def apply_recipe_one_by_one(self, tune_cfg):
+        """Apply the tunable recipes one by one.
+        
+        For recipes only have two options, apply the last one.
+        For recipes with multiple values. such as alpha of smooth quant, apply it one by one.
+        """
+        from .utils.tuning_sampler import TuningSamplerRegistry
+        all_registered_samplers = TuningSamplerRegistry.sampler_dict
+        for recipe_name, recipe_vals in self._tuning_recipes.items():
+            if self._check_recipe(recipe_name, recipe_vals):
+                if recipe_name in all_registered_samplers:
+                    recipe_sampler = all_registered_samplers[recipe_name](tuning_space=None,
+                                                                       tuning_order_lst=[],
+                                                                       initial_op_tuning_cfg=tune_cfg,
+                                                                       kwargs={recipe_name: recipe_vals})
+                    for tune_cfg in recipe_sampler:
+                        yield tune_cfg
+                else:
+                    logger.info(f"Open recipe {recipe_name} with value {recipe_vals[-1]}")
+                    tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
+                    tune_cfg['recipe_cfgs'][recipe_name] = recipe_vals[-1]
+                    yield tune_cfg
 
     def _register_post_process_algos(self, tune_cfg, fp32_model, q_model, calib_dataloader,
                                      kwargs=None) -> AlgorithmScheduler:
@@ -247,6 +294,7 @@ class TuneStrategy(object):
         if recipe_cfgs:
             # for fast_bias_correction
             if recipe_cfgs.get('fast_bias_correction', False):
+                # TODO replace it with a algo registry
                 from ..algorithm.fast_bias_correction import FastBiasCorrection
                 fb_algo = FastBiasCorrection()
                 post_algo_scheduler.append_algoritm(fb_algo)
@@ -285,14 +333,15 @@ class TuneStrategy(object):
         if recipe_cfgs:
             # for smooth quant
             if recipe_cfgs.get('smooth_quant', False):
+                from ..algorithm.smooth_quant import SmoothQuant
                 # set the alpha to 0.5 by default
                 sq_alpha = 0.5
                 sq_args = recipe_cfgs.get('smooth_quant_args', {})
                 if sq_args:
                     sq_alpha = sq_args.get('alpha', 0.5)
-                from ..algorithm.smooth_quant import SmoothQuant
                 sq_algo = SmoothQuant(alpha=sq_alpha)
                 pre_algo_scheduler.append_algoritm(sq_algo)
+                logger.debug(f"Register smooth quant with alpha {sq_alpha} into the pre-process algo scheduler.")
         return pre_algo_scheduler
 
     def traverse(self):
@@ -322,17 +371,15 @@ class TuneStrategy(object):
             pre_process_algo_sched = self._register_pre_process_algos(tune_cfg, self.model, self.calib_dataloader)
             self.model = pre_process_algo_sched()
             # quantize
-            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), 
-                                            self.model, 
-                                            self.calib_dataloader,
-                                            self.q_func)
+            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             # register the post-process algorithms and run
-            post_process_algo_sched = self._register_post_process_algos(tune_cfg, self.model,q_model,
+            post_process_algo_sched = self._register_post_process_algos(tune_cfg, self.model,q_model, 
                                                                         self.calib_dataloader)
             self.last_qmodel = post_process_algo_sched()
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             # remove the algo to avoid it having a reference to qmodel
-            self.algo_scheduler.q_model = None
+            pre_process_algo_sched = None
+            post_process_algo_sched = None
             assert self.last_qmodel
             # Return the last quantized model as a result. if performance only.
             if self.cfg.tuning.exit_policy.performance_only:
@@ -397,7 +444,7 @@ class TuneStrategy(object):
         self.best_qmodel = None
 
     def _can_create_eval_func_from_cfg(self):
-        """Determines whether an eval function can be created from cfg.
+        """Determine whether an eval function can be created from cfg.
 
         Returns:
             Returns True if the eval func can be created from config, False otherwise.
@@ -638,6 +685,14 @@ class TuneStrategy(object):
             tune_cfg['calib_iteration'] = 1
         tune_cfg['advance'] = self.cfg.quantization.advance
         tune_cfg['approach'] = self.cfg.quantization.approach
+        # Add the recipe config
+        tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
+        # For not tuning recipe, tune cfg use it directly.
+        tune_cfg['recipe_cfgs'].update(self._not_tuning_recipes_values)
+        # For tuning recipe, use the default value if it not specified by recipe tuning sampler.
+        for recipe_name, recipe_val in self._tuning_recipes_default_values.items():
+            if recipe_name not in tune_cfg['recipe_cfgs']:
+                tune_cfg['recipe_cfgs'][recipe_name] = recipe_val
         return tune_cfg
 
     def set_tuning_space(self, conf):

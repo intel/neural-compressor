@@ -64,14 +64,13 @@ UINT8_ASYM_KL_PERCHANNEL = {'dtype': ['uint8'],
 # Options for recipes, the first options is the default value.
 RECIPES = {
     "common":{
-        'smooth_quant': [False, True],
-        'fast_bias_correction' : [False, True],
-        'weight_correction' : [False, True],},
+        'smooth_quant': [False, True], # Only support ort currently
+        # 'fast_bias_correction' : [False, True], # Disable it first
+        # 'weight_correction' : [False, True], # Disable it first
+        },
     "tensorflow": {
         'first_conv_or_matmul_quantization' : [True, False],
         'last_conv_or_matmul_quantization' : [True, False],
-        'scale_propagation_max_pooling' : [True, False],
-        'scale_propagation_concat' : [True, False],
         },
     "onnxruntime": {
         'first_conv_or_matmul_quantization' : [True, False],
@@ -81,21 +80,20 @@ RECIPES = {
         'graph_optimization_level' : ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'],
         'add_qdq_pair_to_weight' : [False, True],
         'optypes_to_exclude_output_quant' : [[]], # TODO
-        'dedicated_qdq_pair' : [True, False]},
+        'dedicated_qdq_pair' : [True, False]
+        },
     "pytorch": {},
 }
 
 RECIPES_PRIORITY = [
-    "smooth_quant",
-    "scale_propagation_max_pooling",
-    "scale_propagation_concat",
-    "first_conv_or_matmul_quantization",
-    "last_conv_or_matmul_quantization",
-    "pre_post_process_quantization",
-    "fast_bias_correction",
-    "weight_correction",
-    "gemm_to_matmul",
+    "smooth_quant",  #Only support ort currently
+    # "fast_bias_correction", # Disable it first
+    # "weight_correction", # Disable it first
+    "first_conv_or_matmul_quantization", # Need to align the name
+    "last_conv_or_matmul_quantization",# Need to align the name
+    "pre_post_process_quantization",# Need to align the name
     "graph_optimization_level",
+    "gemm_to_matmul",
     "add_qdq_pair_to_weight",
-    "optypes_to_exclude_output_quan",
+    "optypes_to_exclude_output_quant",
     "dedicated_qdq_pair"]
