@@ -190,6 +190,7 @@ class TestPruning(unittest.TestCase):
         os.remove('fx_fake3.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
+        shutil.rmtree('nc_workspace', ignore_errors=True)
 
     def test_prune_qat_oneshot(self):
         from neural_compressor.experimental import Pruning, Quantization
