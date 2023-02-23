@@ -73,7 +73,7 @@ parser.add_argument(
 parser.add_argument(
     '--quant_format',
     type=str,
-    choices=['QLinear', 'QDQ'],
+    choices=['QOperator', 'QDQ'],
     help="quantization format"
 )
 parser.add_argument(
