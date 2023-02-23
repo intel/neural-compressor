@@ -26,21 +26,18 @@ import psutil
 from .adaptor import FRAMEWORKS
 from .objective import MultiObjective
 from .conf.config import BenchmarkConf
-from .conf.dotdict import DotDict
 from .utils import logger
 from .utils import OPTIONS
 from .utils.utility import GLOBAL_STATE, MODE
-from .utils.create_obj_from_config import create_eval_func, create_dataloader
 from .conf.dotdict import deep_get, deep_set
 from .model import BaseModel
-from .metric import METRICS
 from .model import Model as NCModel
-from .metric import Metric as NCMetric
 from .model.model import get_model_fwk_name
 from .conf.pythonic_config import Config
 from .utils import logger
 from .conf.pythonic_config import Config
 from .config import BenchmarkConfig
+
 
 def set_env_var(env_var, value, overwrite_existing=False):
     """Set the specified environment variable.
@@ -51,6 +48,7 @@ def set_env_var(env_var, value, overwrite_existing=False):
     """
     if overwrite_existing or not os.environ.get(env_var):
         os.environ[env_var] = str(value)
+
 
 def set_all_env_var(conf, overwrite_existing=False):
     """Set all the environment variables with the configuration dict.
@@ -72,6 +70,7 @@ def set_all_env_var(conf, overwrite_existing=False):
     for var, value in conf.items():
         set_env_var(var.upper(), value, overwrite_existing)
 
+
 def get_architecture():
     """Get the architecture name of the system."""
     p1 = subprocess.Popen("lscpu", stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -81,6 +80,7 @@ def get_architecture():
     for line in iter(p3.stdout.readline, b''):
         res=line.decode("utf-8").strip()
     return res
+
 
 def get_threads_per_core():
     """Get the threads per core."""
@@ -92,6 +92,7 @@ def get_threads_per_core():
         res=line.decode("utf-8").strip()
     return res
 
+
 def get_threads():
     """Get the list of threads."""
     p1 = subprocess.Popen(["cat","/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -101,6 +102,7 @@ def get_threads():
     for line in iter(p3.stdout.readline, b''):
         res.append(line.decode("utf-8").strip())
     return res
+
 
 def get_physical_ids():
     """Get the list of sockets."""
@@ -112,6 +114,7 @@ def get_physical_ids():
         res.append(line.decode("utf-8").strip())
     return res
 
+
 def get_core_ids():
     """Get the ids list of the cores."""
     p1 = subprocess.Popen(["cat","/proc/cpuinfo"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -121,6 +124,7 @@ def get_core_ids():
     for line in iter(p3.stdout.readline, b''):
         res.append(line.decode("utf-8").strip())
     return res
+
 
 def get_bounded_threads(core_ids, threads, sockets):
     """Return the threads id list that we will bind instances to."""
@@ -140,29 +144,25 @@ class Benchmark(object):
     With the objective setting, user can get the data of what they configured in yaml.
 
     Args:
-        conf_fname_or_obj (string or obj): The Benchmark_Conf class containing accuracy goal, tuning objective etc.
+        conf (obj): The config.BenchmarkConfig class containing accuracy goal, tuning objective etc.
     """
 
-    def __init__(self, conf_fname_or_obj):
+    def __init__(self, conf):
         """Init a Benchmark object."""
         self.framework = None
         self._model = None
         self._b_dataloader = None
         self._b_func = None
-        self._custom_b_func = False
-        self._metric = None
         self._results = {}
-        if isinstance(conf_fname_or_obj, BenchmarkConf):
-            self.conf = conf_fname_or_obj
-        elif isinstance(conf_fname_or_obj, Config):
-            self.conf = BenchmarkConf()
-            self.conf.map_pyconfig_to_cfg(conf_fname_or_obj)
-        else:
-            self.conf = BenchmarkConf(conf_fname_or_obj)
+        assert isinstance(conf, BenchmarkConfig), \
+            "The config object should be config.BenchmarkConfig, not {}".format(type(conf))
+        conf = Config(quantization=None, benchmark=conf, pruning=None, distillation=None, nas=None)
+        self.conf = BenchmarkConf()
+        self.conf.map_pyconfig_to_cfg(conf)
         if self.conf.usr_cfg.model.framework != 'NA':
             self.framework = self.conf.usr_cfg.model.framework.lower()
 
-    def __call__(self, model, b_dataloader=None, b_func=None):
+    def __call__(self):
         """Directly call a Benchmark object.
 
         Args:
@@ -180,7 +180,7 @@ class Benchmark(object):
 
         logger.info("Start to run Benchmark.")
         if os.environ.get('NC_ENV_CONF') == 'True':
-            return self.run_instance('performance')
+            return self.run_instance()
         self.config_instance()
         self.summary_benchmark()
         return None
@@ -277,115 +277,89 @@ class Benchmark(object):
         else:
             return ''
 
-    def run_instance(self, mode):
+    def run_instance(self):
         """Run the instance with the configuration.
 
         Args:
-            mode: benchmark mode, performance or accuracy.
             runs benchmarking with numactl on specific cores and instances set
                 by user config and returns model performance
         """
-        cfg = self.conf.usr_cfg
-        GLOBAL_STATE.STATE = MODE.BENCHMARK
-        framework_specific_info = {'device': cfg.device, \
-                                   'approach': cfg.quantization.approach, \
-                                   'random_seed': cfg.tuning.random_seed,
-                                   'backend': cfg.model.get('backend', 'default'),
-                                   'format': cfg.model.get('quant_format', 'default')}
-        framework = cfg.model.framework.lower()
-        if 'tensorflow' in framework:
-            framework_specific_info.update({"inputs": cfg.model.inputs, \
-                                            "outputs": cfg.model.outputs, \
-                                            "recipes": cfg.model.recipes, \
-                                            'workspace_path': cfg.tuning.workspace.path})
-        if framework == 'keras':
-            framework_specific_info.update({'workspace_path': cfg.tuning.workspace.path})
-        if framework == 'mxnet':
-            framework_specific_info.update({"b_dataloader": self._b_dataloader})
-        if 'onnx' in framework.lower():
-            framework_specific_info.update(
-                                 {'workspace_path': cfg.tuning.workspace.path, \
-                                 'graph_optimization': OPTIONS[framework].graph_optimization})
-        if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
-            framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
-                                            "q_dataloader": None})
-
-        assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for quantization....'
-
-        adaptor = FRAMEWORKS[framework](framework_specific_info)
-
-        if deep_get(cfg, 'evaluation.performance.iteration') == -1 and 'dummy_v2' in \
-            deep_get(cfg, 'evaluation.performance.dataloader.dataset', {}):
-            deep_set(cfg, 'evaluation.performance.iteration', 10)
-
-        iteration = -1 if deep_get(cfg, 'evaluation.performance.iteration') is None \
-            else deep_get(cfg, 'evaluation.performance.iteration')
-
-        metric = [self._metric] if self._metric else \
-                    deep_get(cfg, 'evaluation.performance.metric')
-        b_postprocess_cfg = deep_get(cfg, 'evaluation.performance.postprocess')
-
-        if self._b_func is None and self._b_dataloader is None:
-            assert deep_get(cfg, 'evaluation.performance.dataloader') is not None, \
-                'dataloader field of yaml file is missing'
-
-            b_dataloader_cfg = deep_get(cfg, 'evaluation.performance.dataloader')
-            self._b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
-
-        is_measure = False
         if self._b_func is None:
-            is_measure = True
+            cfg = self.conf.usr_cfg
+            GLOBAL_STATE.STATE = MODE.BENCHMARK
+            framework_specific_info = {'device': cfg.device, \
+                                       'approach': cfg.quantization.approach, \
+                                       'random_seed': cfg.tuning.random_seed,
+                                       'backend': cfg.model.get('backend', 'default'),
+                                       'format': cfg.model.get('quant_format', 'default')}
+            framework = cfg.model.framework.lower()
+            if 'tensorflow' in framework:
+                framework_specific_info.update({"inputs": cfg.model.inputs, \
+                                                "outputs": cfg.model.outputs, \
+                                                "recipes": cfg.model.recipes, \
+                                                'workspace_path': cfg.tuning.workspace.path})
+            if framework == 'keras':
+                framework_specific_info.update({'workspace_path': cfg.tuning.workspace.path})
+            if framework == 'mxnet':
+                framework_specific_info.update({"b_dataloader": self._b_dataloader})
+            if 'onnx' in framework.lower():
+                framework_specific_info.update(
+                                     {'workspace_path': cfg.tuning.workspace.path, \
+                                     'graph_optimization': OPTIONS[framework].graph_optimization})
+            if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
+                framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
+                                                "q_dataloader": None})
+
+            assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for quantization....'
+
+            adaptor = FRAMEWORKS[framework](framework_specific_info)
+
+            if deep_get(cfg, 'evaluation.performance.iteration') == -1 and 'dummy_v2' in \
+                deep_get(cfg, 'evaluation.performance.dataloader.dataset', {}):
+                deep_set(cfg, 'evaluation.performance.iteration', 10)
+
+            iteration = -1 if deep_get(cfg, 'evaluation.performance.iteration') is None \
+                else deep_get(cfg, 'evaluation.performance.iteration')
+
+            b_postprocess_cfg = deep_get(cfg, 'evaluation.performance.postprocess')
+
+            assert self._b_dataloader is not None, "dataloader should not be None"
+
             self._b_func = create_eval_func(self.framework, \
                                     self._b_dataloader, \
                                     adaptor, \
-                                    metric, \
+                                    None, \
                                     b_postprocess_cfg,
                                     iteration=iteration)
-        else:
-            self._custom_b_func = True
 
-        objectives = [i.lower() for i in cfg.tuning.multi_objectives.objective] if \
-            deep_get(cfg, 'tuning.multi_objectives') else [cfg.tuning.objective]
-        assert len(objectives) == 1, 'benchmark supports one objective at a time'
-        self.objectives = MultiObjective(objectives,
-                              cfg.tuning.accuracy_criterion,
-                              is_measure=is_measure)
+            self.objectives = MultiObjective(["performance"],
+                                             {'relative': 0.1},
+                                             is_measure=True)
 
-        if self._custom_b_func:
-            val = self.objectives.evaluate(self._b_func, self._model.model)
-            return
-        else:
             val = self.objectives.evaluate(self._b_func, self._model)
-        # measurer contain info not only performance(eg, memory, model_size)
-        # also measurer have result list among steps
-        acc, _ = val
-        batch_size = self._b_dataloader.batch_size
-        warmup = 0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
-            else deep_get(cfg, 'evaluation.{}.warmup'.format(mode))
+            # measurer contain info not only performance(eg, memory, model_size)
+            # also measurer have result list among steps
+            acc, _ = val
+            batch_size = self._b_dataloader.batch_size
+            warmup = deep_get(cfg, "evaluation.performance.warmup")
+            if len(self.objectives.objectives[0].result_list()) < warmup:
+                if len(self.objectives.objectives[0].result_list()) > 1 and warmup != 0:
+                    warmup = 1
+                else:
+                    warmup = 0
 
-        if len(self.objectives.objectives[0].result_list()) < warmup:
-            if len(self.objectives.objectives[0].result_list()) > 1 and warmup != 0:
-                warmup = 1
-            else:
-                warmup = 0
+            result_list = self.objectives.objectives[0].result_list()[warmup:]
+            latency = np.array(result_list).mean() / batch_size
+            self._results["performance"] = acc, batch_size, result_list
 
-        result_list = self.objectives.objectives[0].result_list()[warmup:]
-        latency = np.array(result_list).mean() / batch_size
-        self._results[mode] = acc, batch_size, result_list
-
-        logger.info("\n{} mode benchmark result:".format(mode))
-        for i, res in enumerate(result_list):
-            logger.debug("Iteration {} result {}:".format(i, res))
-        if mode == 'accuracy':
-            logger.info("Batch size = {}".format(batch_size))
-            if isinstance(acc, list):
-                logger.info("Accuracy is" + "".join([" {:.4f}".format(i) for i in acc]))
-            else:
-                logger.info("Accuracy is {:.4f}".format(acc))
-        elif mode == 'performance':
+            logger.info("\nbenchmark result:")
+            for i, res in enumerate(result_list):
+                logger.debug("Iteration {} result {}:".format(i, res))
             logger.info("Batch size = {}".format(batch_size))
             logger.info("Latency: {:.3f} ms".format(latency * 1000))
             logger.info("Throughput: {:.3f} images/sec".format(1. / latency))
+        else:
+            self._b_func(self._model.model)
 
     @property
     def results(self):
@@ -509,45 +483,6 @@ class Benchmark(object):
             self._model.input_tensor_names = cfg.model.inputs
             self._model.workspace_path = cfg.tuning.workspace.path
 
-    @property
-    def metric(self):
-        """Not support getting metric."""
-        assert False, 'Should not try to get the value of `metric` attribute.'
-        return None
-
-    @metric.setter
-    def metric(self, user_metric):
-        """Set the metric class and Neural Compressor will initialize this class when evaluation.
-
-        Neural Compressor has many built-in metrics, but users can set specific metrics through
-        this api. The metric class should take the outputs of the model or
-        postprocess (if have) as inputs. Neural Compressor built-in metrics always take
-        (predictions, labels) as inputs for update,
-        and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric
-        or user-defined metric object
-
-        Args:
-            user_metric: user_metric should be an object initialized from
-                neural_compressor.metric.Metric, and in this method the
-                user_metric.metric_cls will be registered to
-                specific frameworks and initialized.
-        """
-        if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
-            logger.warning("Override the value of `metric` field defined in yaml file" \
-                           " as user defines the value of `metric` attribute by code.")
-
-        if isinstance(user_metric, NCMetric):
-            metric_cfg = {user_metric.name : {**user_metric.kwargs}}
-            deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
-            self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
-            metrics = METRICS(self.framework)
-            metrics.register(user_metric.name, user_metric.metric_cls)
-        else:
-            for i in ['reset', 'update', 'result']:
-                assert hasattr(user_metric, i), 'Please realize {} function' \
-                                                'in user defined metric'.format(i)
-            self._metric = user_metric
-
     def __repr__(self):
         """Get the object representation in string format."""
         return 'Benchmark'
@@ -571,13 +506,11 @@ def fit(model, config=None, b_dataloader=None, b_func=None):
         conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
         fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
     """
-    if isinstance(config, BenchmarkConfig):
-        config = Config(benchmark=config)
     benchmarker = Benchmark(config)
     benchmarker.model = model
     if b_func is not None:
         benchmarker.b_func = b_func
     if b_dataloader is not None:
         benchmarker.b_dataloader = b_dataloader
-    benchmarker(model)
+    benchmarker()
     return benchmarker.results

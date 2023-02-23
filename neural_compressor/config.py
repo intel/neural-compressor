@@ -151,7 +151,7 @@ options = Options()
 
 class BenchmarkConfig:
     """Config Class for Benchmark.
-    
+
     Example:
         # Run benchmark according to config
         from neural_compressor.benchmark import fit
