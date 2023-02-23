@@ -141,14 +141,14 @@ def main():
         batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
 
-    model, train_loader, val_loader, optimizer = \
-        accelerator.prepare(model, train_loader, val_loader, optimizer)
-
     if args.evaluate:
         validate(val_loader, model, criterion, args, accelerator)
         return
 
     if args.tune:
+        model, train_loader, val_loader, optimizer = \
+            accelerator.prepare(model, train_loader, val_loader, optimizer)
+
         def train_func(model):
             epochs = 8
             iters = 30
