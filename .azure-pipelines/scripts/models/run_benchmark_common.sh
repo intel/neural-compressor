@@ -72,7 +72,6 @@ main() {
 function check_perf_gap() {
     python -u ${SCRIPTS_PATH}/collect_log_model.py \
         --framework=${framework} \
-        --fwk_ver=${fwk_ver} \
         --model=${model} \
         --logs_dir="${log_dir}" \
         --output_dir="${log_dir}" \
@@ -82,9 +81,11 @@ function check_perf_gap() {
 }
 
 function run_performance() {
-    cmd="${benchmark_cmd} --input_model=${input_model}"
+    cmd="${benchmark_cmd} --input_model=${input_model} --mode=performance"
     if [ "${new_benchmark}" == "true" ]; then
         $BOLD_YELLOW && echo "run with internal benchmark..." && $RESET
+        export NUM_OF_INSTANCE=2
+        export CORES_PER_INSTANCE=4
         eval ${cmd} 2>&1 | tee ${log_dir}/${framework}-${model}-performance-${precision}.log
     else
         $BOLD_YELLOW && echo "run with external multiInstance benchmark..." && $RESET
