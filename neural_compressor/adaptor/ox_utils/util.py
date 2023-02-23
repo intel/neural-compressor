@@ -141,6 +141,7 @@ def split_shared_bias(model):
     return model    
 
 def float_to_float16(tensor):
+    """Convert float to float16."""
     min_val = 5.96e-08
     max_val = 65504.0
     tensor[(tensor > max_val) & (tensor < float('inf'))] = max_val
@@ -150,6 +151,7 @@ def float_to_float16(tensor):
     return np.float16(tensor)
 
 def float_to_bfloat16(tensor):
+    """Convert float to bfloat16."""
     min_val = 9.2e-41
     max_val = 3.38953139e38
     tensor[(tensor > max_val) & (tensor < float('inf'))] = max_val

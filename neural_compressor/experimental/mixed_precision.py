@@ -113,7 +113,7 @@ class MixedPrecision(GraphOptimization):
                                "doesn't support bf16 instruction.")
                 self._precisions.remove('bf16')
 
-        if 'fp16' in self._precisions and 'gpu' nor in self.conf.usr_cfg.device:
+        if 'fp16' in self._precisions and 'gpu' not in self.conf.usr_cfg.device:
             if os.getenv('FORCE_FP16') == '1':
                 logger.warning("Mixed precision will generate fp16 graph although " \
                                "the hardware doesn't support fp16 instruction.")
