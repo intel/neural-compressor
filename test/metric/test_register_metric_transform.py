@@ -4,7 +4,7 @@ import unittest
 import platform
 import os
 import yaml
-     
+
 def build_fake_yaml():
     fake_yaml = '''
         model:
@@ -42,7 +42,7 @@ class TestRegisterMetric(unittest.TestCase):
         resize_image = resize_image - mean
         images = np.expand_dims(resize_image, axis=0)
         labels = [768]
-        from neural_compressor import Benchmark
+        from neural_compressor.experimental.benchmark import Benchmark
         from neural_compressor.data.transforms.imagenet_transform import LabelShift
         from neural_compressor.metric import TensorflowTopK
         os.environ['NC_ENV_CONF'] = 'True'
