@@ -161,7 +161,7 @@ Functions
       Get teacher_model.
 
 
-.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_list=None, op_name_list=None, reduce_range=None, excluded_precisions=[], quant_level=1, tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion)
+.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_list=None, op_name_list=None, reduce_range=None, excluded_precisions=[], quant_level=1, tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, use_distributed_tuning=False)
 
    Bases: :py:obj:`_BaseQuantizationConfig`
 

@@ -28,6 +28,17 @@ Classes
 
    The basic tuning strategy.
 
+   .. py:method:: distributed_next_tune_cfg_lst(comm)
+
+      Generate and yield the next tuning config list with below order.
+
+          1. OP Type Wise Tuning
+          2. Fallback OP One by One
+          3. Fallback Multiple OPs Accumulated
+
+      :Yields: *tuning_config_list (list)* -- A list containing dicts of the tuning configuration for quantization.
+
+
    .. py:method:: next_tune_cfg()
 
       Generate and yield the next tuning config with below order.

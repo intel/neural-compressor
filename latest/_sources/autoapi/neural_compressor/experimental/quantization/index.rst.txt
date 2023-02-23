@@ -77,6 +77,11 @@ Classes
       Quantization execute routinue based on strategy design.
 
 
+   .. py:method:: distributed_execute()
+
+      Quantization distributed execute routinue based on strategy design.
+
+
    .. py:method:: dataset(dataset_type, *args, **kwargs)
 
       Get dataset according to dataset_type.

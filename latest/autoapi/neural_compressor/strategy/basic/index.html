@@ -101,6 +101,24 @@
 <dd><p>Bases: <a class="reference internal" href="../strategy/index.html#neural_compressor.strategy.strategy.TuneStrategy" title="neural_compressor.strategy.strategy.TuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.strategy.strategy.TuneStrategy</span></code></a></p>
 <p>The basic tuning strategy.</p>
 <dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.basic.BasicTuneStrategy.distributed_next_tune_cfg_lst">
+<span class="sig-name descname"><span class="pre">distributed_next_tune_cfg_lst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">comm</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.basic.BasicTuneStrategy.distributed_next_tune_cfg_lst" title="Permalink to this definition"></a></dt>
+<dd><p>Generate and yield the next tuning config list with below order.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>OP Type Wise Tuning</p></li>
+<li><p>Fallback OP One by One</p></li>
+<li><p>Fallback Multiple OPs Accumulated</p></li>
+</ol>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Yields<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>tuning_config_list (list)</em> – A list containing dicts of the tuning configuration for quantization.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.strategy.basic.BasicTuneStrategy.next_tune_cfg">
 <span class="sig-name descname"><span class="pre">next_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.basic.BasicTuneStrategy.next_tune_cfg" title="Permalink to this definition"></a></dt>
 <dd><p>Generate and yield the next tuning config with below order.</p>

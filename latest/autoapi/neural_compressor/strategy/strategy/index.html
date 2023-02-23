@@ -153,6 +153,62 @@ according to last tuning result and traverse logic.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.distributed_next_tune_cfg_lst">
+<span class="sig-name descname"><span class="pre">distributed_next_tune_cfg_lst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">comm</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.distributed_next_tune_cfg_lst" title="Permalink to this definition"></a></dt>
+<dd><p>Interface for generate the distributed next tuning config list.</p>
+<p>The generator of yielding next tuning config list to distributed traverse by concrete strategies or
+quantization level according to tuning result and traverse logic.</p>
+<p>It should be implemented by the sub-class. Currently, it is only implemented in the BasicTuneStrategy.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.meet_acc_req">
+<span class="sig-name descname"><span class="pre">meet_acc_req</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eval_res</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.meet_acc_req" title="Permalink to this definition"></a></dt>
+<dd><p>Compare the result of last tuning with baseline to check whether the result meet requirements.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eval_res</strong> – The evaluation result of tuning.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Return True if the accuracy meets requirements else False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.master_worker_handle">
+<span class="sig-name descname"><span class="pre">master_worker_handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">comm</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.master_worker_handle" title="Permalink to this definition"></a></dt>
+<dd><p>Matster worker handles the task assignment and result management.</p>
+<p>Master node send all task ids to all free nodes, and wait until any result.
+When receiving any result, directly send a new task id to the sender (it’s free).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>comm</strong> (<em>MPI.COMM</em>) – The instance of comunication for MPI.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.slave_worker_handle">
+<span class="sig-name descname"><span class="pre">slave_worker_handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">comm</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.slave_worker_handle" title="Permalink to this definition"></a></dt>
+<dd><p>Slave worker handles the task processing.</p>
+<p>When receiving any task id, slave node finds it in self.tune_cfg_lst and run it.
+Then slave node sends back the tune result to master node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>comm</strong> (<em>MPI.COMM</em>) – The instance of comunication for MPI.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.distributed_traverse">
+<span class="sig-name descname"><span class="pre">distributed_traverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.distributed_traverse" title="Permalink to this definition"></a></dt>
+<dd><p>Disributed traverse the tuning space.</p>
+<p>The main traverse logic which could be override by some concrete strategy which needs more hooks.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.traverse">
 <span class="sig-name descname"><span class="pre">traverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.traverse" title="Permalink to this definition"></a></dt>
 <dd><p>Traverse the tuning space.</p>

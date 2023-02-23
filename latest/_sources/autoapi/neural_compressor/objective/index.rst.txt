@@ -199,6 +199,16 @@ Functions
       Verify the new model performance is better than the previous model performance.
 
 
+   .. py:method:: accuracy_meet_req(last_result: Tuple[float, List[float]]) -> bool
+
+      Compare the result of last tuning with baseline to check whether the result meet requirements.
+
+      :param last_result: The evaluation result of the last tuning.
+
+      :returns: Return True if the accuracy meets requirements else False.
+      :rtype: check_result
+
+
    .. py:method:: evaluate(eval_func, model)
 
       The interface of calculating the objective.

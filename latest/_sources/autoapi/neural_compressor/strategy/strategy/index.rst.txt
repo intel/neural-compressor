@@ -66,6 +66,54 @@ Functions
       :Yields: *tune_config (dict)* -- It's a dict containing the tuning configuration to traverse.
 
 
+   .. py:method:: distributed_next_tune_cfg_lst(comm)
+
+      Interface for generate the distributed next tuning config list.
+
+      The generator of yielding next tuning config list to distributed traverse by concrete strategies or
+      quantization level according to tuning result and traverse logic.
+
+      It should be implemented by the sub-class. Currently, it is only implemented in the BasicTuneStrategy.
+
+
+   .. py:method:: meet_acc_req(eval_res)
+
+      Compare the result of last tuning with baseline to check whether the result meet requirements.
+
+      :param eval_res: The evaluation result of tuning.
+
+      :returns: Return True if the accuracy meets requirements else False.
+
+
+   .. py:method:: master_worker_handle(comm)
+
+      Matster worker handles the task assignment and result management.
+
+      Master node send all task ids to all free nodes, and wait until any result.
+      When receiving any result, directly send a new task id to the sender (it's free).
+
+      :param comm: The instance of comunication for MPI.
+      :type comm: MPI.COMM
+
+
+   .. py:method:: slave_worker_handle(comm)
+
+      Slave worker handles the task processing.
+
+      When receiving any task id, slave node finds it in self.tune_cfg_lst and run it.
+      Then slave node sends back the tune result to master node.
+
+      :param comm: The instance of comunication for MPI.
+      :type comm: MPI.COMM
+
+
+   .. py:method:: distributed_traverse()
+
+      Disributed traverse the tuning space.
+
+      The main traverse logic which could be override by some concrete strategy which needs more hooks.
+
+
    .. py:method:: traverse()
 
       Traverse the tuning space.
