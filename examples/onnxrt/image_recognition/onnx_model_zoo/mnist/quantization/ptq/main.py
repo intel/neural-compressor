@@ -204,10 +204,7 @@ class Dataloader:
                 raise RuntimeError(
                     'Dataset not found. You can use download=True to download it')
             with np.load(file_path, allow_pickle=True) as f:
-                if self.train:
-                    self.data, self.targets = f['x_train'], f['y_train']
-                else:
-                    self.data, self.targets = f['x_test'], f['y_test']
+                self.data, self.targets = f['x_test'], f['y_test']
 
     @property
     def class_to_idx(self):

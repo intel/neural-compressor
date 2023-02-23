@@ -215,7 +215,7 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(quant_format=args.quant_format)
+        config = PostTrainingQuantConfig(quant_format=args.quant_format, recipes={'gemm_to_matmul': False})
  
         q_model = quantization.fit(model, config, calib_dataloader=dataloader,
 			     eval_func=eval)

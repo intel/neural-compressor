@@ -138,6 +138,7 @@ class Dataloader:
                 image[:, :, 2] -= 103.939
                 image[:,:,[0,1,2]] = image[:,:,[2,1,0]]
                 image = image.transpose((2, 0, 1))
+                image = np.expand_dims(image, axis=0)
             yield image.astype('float32'), label
 
 def eval_func(model, dataloader, metric):

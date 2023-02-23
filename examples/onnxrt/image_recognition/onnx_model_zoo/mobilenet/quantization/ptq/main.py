@@ -16,6 +16,7 @@
 # under the License.
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 
+import logging
 import argparse
 import cv2
 import numpy as np
