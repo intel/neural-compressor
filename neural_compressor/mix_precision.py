@@ -336,6 +336,13 @@ def fit(model,
 
     Raises:
         AssertionError.
+
+    Example:
+        from neural_compressor import mix_precision
+        from neural_compressor.config import MixedPrecisionConfig
+
+        conf = MixedPrecisionConfig()
+        converted_model = mix_precision.fit(model, config=conf)
     """
     converter = MixedPrecision(config)
     precisions = ["bf16", "fp16", "fp32"]

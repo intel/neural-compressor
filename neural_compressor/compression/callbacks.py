@@ -114,10 +114,13 @@ class BaseCallbacks(object):
 
     def on_step_begin(self, batch_id):
         """Be called on the beginning of batches."""
-        res_list = []
-        for on_step_begin_hook in self.hooks_dict['on_step_begin']:
-            res_list.append(on_step_begin_hook(batch_id))
-        return res_list
+        if len(self.hooks_dict['on_step_begin']) > 0:
+            res_list = []
+            for on_step_begin_hook in self.hooks_dict['on_step_begin']:
+                res_list.append(on_step_begin_hook(batch_id))
+            return res_list
+        else:
+            return None
 
     def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
         """Be called on the end of loss computation."""

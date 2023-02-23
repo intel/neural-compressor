@@ -14,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Benchmark is used for evaluating the model performance."""
 
 import os
@@ -141,8 +140,7 @@ class Benchmark(object):
     With the objective setting, user can get the data of what they configured in yaml.
 
     Args:
-        conf_fname_or_obj (string or obj): The path to the YAML configuration file or 
-            Benchmark_Conf class containing accuracy goal, tuning objective and preferred
+        conf_fname_or_obj (string or obj): The Benchmark_Conf class containing accuracy goal, tuning objective and preferred
             calibration & quantization tuning space etc.
     """
 
@@ -539,7 +537,7 @@ class Benchmark(object):
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
                            " as user defines the value of `metric` attribute by code.")
- 
+
         if isinstance(user_metric, NCMetric):
             metric_cfg = {user_metric.name : {**user_metric.kwargs}}
             deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
@@ -565,8 +563,15 @@ def fit(model, config=None, b_dataloader=None, b_func=None):
                                   tuning objective and preferred calibration & quantization
                                   tuning space etc.
         b_dataloader:             The dataloader for frameworks.
-        b_func:                   customized benchmark function. if user passes the dataloader,
+        b_func:                   Customized benchmark function. If user passes the dataloader,
                                   then b_func is not needed.
+
+    Example:
+        # Run benchmark according to config
+        from neural_compressor.benchmark import fit
+
+        conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
     """
     if isinstance(config, BenchmarkConfig):
         config = Config(benchmark=config)

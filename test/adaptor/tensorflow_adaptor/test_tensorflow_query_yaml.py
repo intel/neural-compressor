@@ -54,17 +54,93 @@ def build_fake_framework_yaml():
   version:
     name: ['2.1.0', '2.2.0', '2.3.0', '2.4.0', '2.5.0', '2.6.0', '2.7.0']  
 
-  ops:
-    int8: ['Conv2D', 'MatMul']
-    uint8: ['MatMul']
+  int8: { 
+    'static': {
+        'Conv2D': {
+          'weight': {
+                      'dtype': ['int8'],
+                      'scheme': ['sym'],
+                      'granularity': ['per_channel','per_tensor'],
+                      'algorithm': ['minmax']
+                      },
+          'activation': {
+                      'dtype': ['int8', 'uint8'],
+                      'scheme': ['sym'],
+                      'granularity': ['per_tensor'],
+                      'algorithm': ['minmax', 'kl']
+                      }
+                  },
+        'MatMul': {
+          'weight': {
+                      'dtype': ['int8'],
+                      'scheme': ['sym'],
+                      'granularity': ['per_tensor'],
+                      'algorithm': ['minmax']
+                      },
+          'activation': {
+                      'dtype': ['int8', 'uint8'],
+                      'scheme': ['asym', 'sym'],
+                      'granularity': ['per_tensor'],
+                      'algorithm': ['minmax']
+                      }
+                  }
+    },
+    'dynamic': {
+    }
+  }
 
 -
   version:
     name: ['default']  
 
-  ops:
-    int8: ['BatchMatMul', 'BatchMatMulV2']
-    uint8: ['Conv2D']
+  int8: { 
+    'static': {
+        'Conv2D': {
+          'weight': {
+                      'dtype': ['int8'],
+                      'scheme': ['sym'],
+                      'granularity': ['per_channel','per_tensor'],
+                      'algorithm': ['minmax']
+                      },
+          'activation': {
+                      'dtype': ['int8', 'uint8'],
+                      'scheme': ['sym'],
+                      'granularity': ['per_tensor'],
+                      'algorithm': ['minmax', 'kl']
+                      }
+                  },
+        'BatchMatMul': {
+          'weight': {
+                      'dtype': ['int8', 'fp32'],
+                      'scheme': ['sym'],
+                      'granularity': ['per_tensor'],
+                      'algorithm': ['minmax']
+                      },
+          'activation': {
+                      'dtype': ['int8', 'fp32'],
+                      'scheme': ['sym'],
+                      'granularity': ['per_tensor'],
+                      'algorithm': ['minmax']
+                      }
+                  },
+        'BatchMatMulV2': {
+          'weight': {
+                      'dtype': ['int8'],
+                      'scheme': ['sym'],
+                      'granularity': ['per_tensor'],
+                      'algorithm': ['minmax']
+                      },
+          'activation': {
+                      'dtype': ['int8', 'uint8'],
+                      'scheme': ['asym', 'sym'],
+                      'granularity': ['per_tensor'],
+                      'algorithm': ['minmax']
+                      }
+                  }
+    },
+    'dynamic': {
+    }
+  }
         '''
     y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
     with open('fake_framework.yaml', "w", encoding="utf-8") as f:

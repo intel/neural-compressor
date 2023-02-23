@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The configuration of the training loop."""
-
 import copy
 from .compression.callbacks import AwareTrainingQuantCallbacks, DistillationCallbacks, PruningCallbacks
 from .model.model import Model
@@ -279,6 +277,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
 
     Examples:
         import neural_compressor.training.prepare_compression
+        
         compression_manager = prepare_compression(conf, model)
         train_loop:
             compression_manager.on_train_begin()
@@ -366,7 +365,9 @@ class CallBacks:
         """Be called on the beginning of batches."""
         res_list = []
         for callbacks in self.callbacks_list:
-            res_list.extend(callbacks.on_step_begin(batch_id))
+            res = callbacks.on_step_begin(batch_id)
+            if res is not None:
+                res_list.append()
         return res_list
 
     def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
