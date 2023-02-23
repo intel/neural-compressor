@@ -12,7 +12,7 @@ function main {
 function init_params {
     dtype='fp32'
     quant_format='QDQ' # or QLinear
-    output_model=saved_results
+    tuned_checkpoint=saved_results
     for var in "$@"
     do
         case $var in
@@ -47,7 +47,8 @@ function run_tuning {
             -t \
             -a ${input_model} \
             -b 30 \
-            --tuned_checkpoint ${output_model} \
+            --tuned_checkpoint ${tuned_checkpoint} \
+            --output_model ${output_model} \
             --export \
             --export_dtype ${dtype} \
             --quant_format ${quant_format} \

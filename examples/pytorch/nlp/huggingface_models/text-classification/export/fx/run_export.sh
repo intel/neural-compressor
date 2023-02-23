@@ -58,6 +58,7 @@ function run_tuning {
         --per_device_eval_batch_size ${batch_size} \
         --no_cuda \
         --output_dir ${tuned_checkpoint} \
+        --output_model ${output_model} \
         --export \
         --export_dtype ${dtype} \
         --quant_format ${quant_format} \

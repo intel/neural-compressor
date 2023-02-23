@@ -87,6 +87,8 @@ parser.add_argument('-r', "--accuracy", dest='accuracy', action='store_true',
                     help='For accuracy measurement only.')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
+parser.add_argument("--output_model", default='./model.onnx', type=str, metavar='PATH',
+                    help='path to onnx model exported by Neural Compressor (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true', help='run benchmark')
 parser.add_argument('--export', dest='export', action='store_true', help='run export')
 parser.add_argument('--export_dtype', default='fp32', choices=['fp32', 'int8'],
@@ -186,11 +188,7 @@ def main():
             dynamic_axes={"input": {0: "batch_size"},
                             "output": {0: "batch_size"}},
         )
-        inc_model.export('{}-model.onnx'.format(
-                args.export_dtype,
-            ), 
-            fp32_onnx_config
-        )
+        inc_model.export(args.output_model, fp32_onnx_config)
 
     if args.export and args.export_dtype == 'int8':
         from neural_compressor import PostTrainingQuantConfig
@@ -218,12 +216,7 @@ def main():
             dynamic_axes={"input": {0: "batch_size"},
                             "output": {0: "batch_size"}},
         )
-        q_model.export('{}-{}-model.onnx'.format(
-                args.export_dtype, 
-                args.quant_format
-            ), 
-            int8_onnx_config
-        )
+        q_model.export(args.output_model, int8_onnx_config)
         return
 
     if args.performance or args.accuracy:

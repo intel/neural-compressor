@@ -192,6 +192,9 @@ class ModelArguments:
     quant_format: str = field(
         default="QDQ", metadata={"help": "choose the format [QDQ/QLinear] of int8 ONNX model exported."}
     )
+    output_model: str = field(
+        default="model.onnx", metadata={"help": "the name of exported model."}
+    )
     int8: bool = field(
         default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
     )
@@ -526,11 +529,7 @@ def main():
             output_names=['labels'],
             dynamic_axes=dynamic_axes,
         )
-        inc_model.export('{}-model.onnx'.format(
-                model_args.export_dtype,
-            ), 
-            fp32_onnx_config
-        )
+        inc_model.export(model_args.output_model, fp32_onnx_config)
 
     # optimize and quantize with Neural Compressor
     if model_args.export_dtype == 'int8':
@@ -559,12 +558,7 @@ def main():
             output_names=['labels'],
             dynamic_axes=dynamic_axes,
         )
-        q_model.export('{}-{}-model.onnx'.format(
-                model_args.export_dtype, 
-                model_args.quant_format
-            ), 
-            int8_onnx_config
-        )
+        q_model.export(model_args.output_model, int8_onnx_config)
         return
 
     if model_args.benchmark:

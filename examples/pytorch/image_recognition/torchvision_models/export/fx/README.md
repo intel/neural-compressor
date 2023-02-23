@@ -32,20 +32,18 @@ img val.txt
 Run run_export.sh to get ONNX model from PyTorch model.
 ```bash
 # export fp32 model
-bash run_export.sh --input_model=resnet18 --dtype=fp32 --dataset_location=/path/to/pytorch-imagenet
+bash run_export.sh --input_model=resnet50 --dtype=fp32 --dataset_location=/path/to/pytorch-imagenet --output_model=resnet50-fp32.onnx
 # export int8 model
-bash run_export.sh --input_model=resnet18 --dtype=int8 --quant_format=[QDQ|QLinear] --dataset_location=/path/to/pytorch-imagenet
+bash run_export.sh --input_model=resnet50 --dtype=int8 --quant_format=[QDQ|QLinear] --dataset_location=/path/to/pytorch-imagenet --output_model=resnet50-int8.onnx
 ```
-By default, ONNX models will be saved in current work path and named as: [fp32-model.onnx|int8-QDQ-model.onnx|int8-QLinear-model.onnx]
 
 ### 2. To get the benchmark of exported and tuned models, includes Batch_size and Throughput: 
 Run run_benchmark.sh to benchmark the accuracy and performance of ONNX models and PyTorch model.
 ```bash
 # benchmark ONNX model
-bash run_benchmark.sh --input_model=[fp32-model.onnx|int8-QDQ-model.onnx|int8-QLinear-model.onnx] --dataset_location=/path/to/onnx-imagenet-validation --mode=[accuracy|performance] --batch_size=[16]
+bash run_benchmark.sh --input_model=[resnet50-fp32.onnx|resnet50-int8.onnx] --dataset_location=/path/to/onnx-imagenet-validation --mode=[accuracy|performance] --batch_size=[16]
 # benchmark PyTorch model
-bash run_benchmark.sh --input_model=[resnet18|/path/to/saved_results] --dataset_location=/path/to/pytorch-imagenet --mode=[accuracy|performance] --int8=[true|false] --batch_size=[16]
+bash run_benchmark.sh --input_model=[resnet50|/path/to/saved_results] --dataset_location=/path/to/pytorch-imagenet --mode=[accuracy|performance] --int8=[true|false] --batch_size=[16]
 ```
-
 
 > Note: All torchvision model names can be passed as long as they are included in `torchvision.models`, below are some examples.
