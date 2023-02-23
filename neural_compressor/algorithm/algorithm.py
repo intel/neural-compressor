@@ -22,20 +22,24 @@ from neural_compressor.utils.create_obj_from_config import get_algorithm
 
 registry_algorithms = {}
 
-def algorithm_registry(algorithm_type):
+def algorithm_registry(algorithm_type, location):
     """Decorate and register all Algorithm subclasses.
 
     Args:
         cls (class): The class of register.
         algorithm_type (str): The algorithm registration name
+        location (str): The location to call algorithms
 
     Returns:
         cls: The class of register.
     """
     def decorator_algorithm(cls):
-        if algorithm_type in registry_algorithms:
+        if algorithm_type in registry_algorithms and location in registry_algorithms[algorithm_type]:
             raise ValueError('Cannot have two algorithms with the same name')
-        registry_algorithms[algorithm_type] = cls
+
+        if algorithm_type not in registry_algorithms:
+            registry_algorithms[algorithm_type] = {}
+        registry_algorithms[algorithm_type][location] = cls()
         return cls
     return decorator_algorithm
 
@@ -82,7 +86,7 @@ class AlgorithmScheduler(object):
         self._adaptor = None
         self._calib_iter = None
 
-    def __call__(self):
+    def __call__(self, location):
         """Return the processed model via algorithm.
 
         Returns:
@@ -96,11 +100,12 @@ class AlgorithmScheduler(object):
         assert self._adaptor, 'set adaptor for algorithm'
         assert self._calib_iter, 'set calibration iteration for algorithm'
         for algo in self.algorithms:
-            self._q_model = algo(self._origin_model, 
-                                 self._q_model, \
-                                 self._adaptor, \
-                                 self._dataloader, \
-                                 self._calib_iter)
+            if location in algo:
+                self._q_model = algo[location](self._origin_model, 
+                                               self._q_model, \
+                                               self._adaptor, \
+                                               self._dataloader, \
+                                               self._calib_iter)
         return self._q_model
 
     @property

@@ -364,7 +364,8 @@ class _BaseQuantizationConfig:
                  reduce_range=None,
                  excluded_precisions=[],
                  quant_level=1,
-                 accuracy_criterion=accuracy_criterion):
+                 accuracy_criterion=accuracy_criterion,
+                 use_distributed_tuning=False):
         """Initialize _BaseQuantizationConfig class.
 
         Args:
@@ -426,6 +427,7 @@ class _BaseQuantizationConfig:
         self.accuracy_criterion = accuracy_criterion
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
+        self.use_distributed_tuning=use_distributed_tuning
 
     @property
     def domain(self):
@@ -535,6 +537,15 @@ class _BaseQuantizationConfig:
     @quant_level.setter
     def quant_level(self, quant_level):
         self._quant_level = quant_level
+
+    @property
+    def use_distributed_tuning(self):
+        return self._use_distributed_tuning
+
+    @use_distributed_tuning.setter
+    def use_distributed_tuning(self, use_distributed_tuning):
+        if check_value('use_distributed_tuning', use_distributed_tuning, bool):
+            self._use_distributed_tuning = use_distributed_tuning
 
     @property
     def reduce_range(self):
@@ -779,6 +790,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  quant_level=1,
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
+                 use_distributed_tuning=False,
     ):
         """Init a PostTrainingQuantConfig object."""
         self.tuning_criterion = tuning_criterion
@@ -800,7 +812,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,
-                         accuracy_criterion=accuracy_criterion)
+                         accuracy_criterion=accuracy_criterion,
+                         use_distributed_tuning=use_distributed_tuning)
         self.approach = approach
 
     @property

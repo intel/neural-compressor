@@ -75,7 +75,7 @@ class ConservativeTuneStrategy(TuneStrategy):
                 tmp_tune_cfg = deepcopy(tune_cfg)
                 for item, quant_mode in items_lst:
                     op_info = item.name
-                    op_config = tuning_space.set_deafult_config(op_info, quant_mode)
+                    op_config = tuning_space.get_default_config(op_info, quant_mode)
                     tmp_tune_cfg[op_info] = op_config
                 yield tmp_tune_cfg
                 if self.acc_meet_flag:
@@ -87,7 +87,7 @@ class ConservativeTuneStrategy(TuneStrategy):
                     logger.info(f"*** Try to convert {op_type} op into {dtype} one by one.")
                     for item, quant_mode in items_lst:
                         op_info = item.name
-                        op_config = tuning_space.set_deafult_config(op_info, quant_mode)
+                        op_config = tuning_space.get_default_config(op_info, quant_mode)
                         tmp_tune_cfg[op_info] = op_config
                         yield tmp_tune_cfg
                         if self.acc_meet_flag:
@@ -117,15 +117,23 @@ class ConservativeTuneStrategy(TuneStrategy):
             logger.debug("Dump current tuning configuration:")
             logger.debug(tune_cfg)
             self.tuning_times += 1
-            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             self.algo.calib_iter = tune_cfg['calib_iteration']
-            self.algo.q_model = q_model
             # TODO align the api to let strategy has access to pre_optimized model
             assert self.adaptor.pre_optimized_model
             self.algo.origin_model = self.adaptor.pre_optimized_model
+            if self.cfg.quantization.recipes.smooth_quant:
+                try:
+                    self.algo.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
+                except:
+                    self.algo.alpha = 0.5
+                self.algo.tune_cfg = copy.deepcopy(tune_cfg)
+            self.algo.q_model = self.model
+            self.model = self.algo('pre_quantization')
+            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
+            self.algo.q_model = q_model
             if self.cfg.quantization.recipes.fast_bias_correction:
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
-            self.last_qmodel = self.algo()
+            self.last_qmodel = self.algo('post_quantization')
             assert self.last_qmodel
             # Return the last quantized model as a result. if performance only.
             if self.cfg.tuning.exit_policy.performance_only:
@@ -358,9 +366,9 @@ class ConservativeTuneStrategy(TuneStrategy):
                 for op_info in tmp_non_fp32_ops:
                     non_fp32_ops_dtype[op_info] = quant_mode
         for op_info in fp32_ops:
-            initial_tuning_cfg[op_info] = tuning_space.set_deafult_config(op_info, "fp32")
+            initial_tuning_cfg[op_info] = tuning_space.get_default_config(op_info, "fp32")
         for op_info, quant_mode in non_fp32_ops_dtype.items():
-            initial_tuning_cfg[op_info] = tuning_space.set_deafult_config(op_info, quant_mode)
+            initial_tuning_cfg[op_info] = tuning_space.get_default_config(op_info, quant_mode)
         return initial_tuning_cfg
             
     def _quant_items_pool(self, op_type_priority: List[str]) -> OrderedDict[

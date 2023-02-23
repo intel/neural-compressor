@@ -24,6 +24,8 @@ import time
 import numpy as np
 from copy import deepcopy
 
+from typing import List, Tuple
+
 import tracemalloc
 from .utils.utility import get_size
 
@@ -325,6 +327,29 @@ class MultiObjective:
         all_lower = all([_last < _target for _last, _target in zip(last_acc, self.accuracy_target) ]) 
         got_better_result = (all_higher and self.higher_is_better) or (all_lower and not self.higher_is_better)
         return got_better_result
+    
+    def accuracy_meet_req(self, last_result: Tuple[float, List[float]]) -> bool:
+        """Compare the result of last tuning with baseline to check whether the result meet requirements.
+
+        Args:
+            last_result: The evaluation result of the last tuning.
+            
+        Returns:
+            check_result: Return True if the accuracy meets requirements else False.
+        """
+        check_result = False
+        last_acc, _ = last_result
+        if not isinstance(last_acc, list):
+            last_acc = [last_acc]
+    
+        if self.metric_weight is not None and len(last_acc) > 1:
+            last_acc = [np.mean(np.array(last_acc) * self.metric_weight)]
+        if not self._accuracy_target:
+            self.accuracy_target = self._get_accuracy_target()
+        all_higher = all([_last > _target for _last, _target in zip(last_acc, self.accuracy_target) ]) 
+        all_lower = all([_last < _target for _last, _target in zip(last_acc, self.accuracy_target) ]) 
+        check_result = (all_higher and self.higher_is_better) or (all_lower and not self.higher_is_better)
+        return check_result
 
     def evaluate(self, eval_func, model):
         """The interface of calculating the objective.

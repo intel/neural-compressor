@@ -21,26 +21,37 @@ import numpy as np
 from .algorithm import Algorithm, algorithm_registry
 from ..utils import logger
 
-@algorithm_registry(algorithm_type='smooth_quant')
+
+@algorithm_registry(algorithm_type='smooth_quant', location='pre_quantization')
 class SmoothQuant(Algorithm):
-    """SmoothQuant algorithm class."""
-    def __init__(self, percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'],
-                             scales_per_op=True):
+    """Fake input channel quantization.
+
+    for more details please refer to
+    [1] SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models
+    [2] SPIQ: Data-Free Per-Channel Static Input Quantization
+    For torch backend, we only handle the layers whose smooth scale could be absorbed, we will support other layers
+    later. For onnx backend, we insert MUL layer before conv/linear layers, the op fusing and kernel will be
+    supported in the future.
+    """
+
+    def __init__(self, alpha=0.5):
         """Initialize SmoothQuant class.
 
         Args:
-            percentile:Percentile of calibration to remove outliers
-            op_types: The op types whose input tensor will be dumped
-            scales_per_op: True, each op will have an individual scale, mainly for accuracy
-                           False, ops with the same input will share a scale, mainly for performance
+            alpha:Alpha value to balance the quantization difficulty of activation and weight,
+                please refer to the paper for more details
         """
-        self.percentile = percentile
-        self.op_types = op_types
-        self.scales_per_op = scales_per_op
-        self.alpha = 1.0
+        # percentile:Percentile of calibration to remove outliers,float(0->100)
+        # op_types: The op types whose input tensor will be dumped,['Conv', 'Linear']
+        # scales_per_op: True, each op will have an individual scale, mainly for accuracy
+        #                False, ops with the same input will share a scale, mainly for performance
+        self.alpha = alpha
+        self.percentile = None
+        self.op_types = None
+        self.scales_per_op = None
         self.tune_cfg = None
 
-    def __call__(self, origin_model, q_model, adaptor, dataloader, iterations):
+    def __call__(self, origin_model, q_model, adaptor, dataloader, calib_iter):
         """Return the processed model via SmoothQuant algorithm.
 
         Fake input channel quantization, for more details please refer to:
@@ -53,11 +64,18 @@ class SmoothQuant(Algorithm):
             q_model: q_model
             adaptor: adaptor
             dataloader: dataloader
-            iterations: iterations
+            calib_iter: calib_iter
 
         Returns:
             model: A modified onnx model
         """
-        q_model = adaptor.smooth_quant(origin_model, dataloader, iterations, self.tune_cfg, self.alpha,
-                                        self.percentile, self.op_types, self.scales_per_op)
+        args = {}  ##different backends may have different default values
+        if self.op_types != None:
+            args["op_types"] = self.op_types
+        if self.percentile != None:
+            args['percentile'] = self.percentile
+        if self.scales_per_op != None:
+            args['scales_per_op'] = self.scales_per_op
+        q_model = adaptor.smooth_quant(origin_model, dataloader, calib_iter, self.tune_cfg, self.alpha,
+                                       **args)
         return q_model

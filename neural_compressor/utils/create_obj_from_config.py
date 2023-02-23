@@ -62,7 +62,7 @@ def get_algorithm(algorithms, cfg, compose=False):
     # recipes contains quantization part, only use algorithms in that
     algo_conf = algorithms.support_algorithms().intersection(set(cfg.keys()))
     #(TODO) only support open/close according to cfg
-    return [algorithms()[algo]() for algo in algo_conf if cfg[algo]]
+    return [algorithms()[algo] for algo in algo_conf if cfg[algo]]
 
 def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
     """Create the dataset from the data source."""

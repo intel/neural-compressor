@@ -98,8 +98,8 @@
       "main_script": "main.py",
       "batch_size": 100
     },
-    "resnet101_qat_fx": {
-      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
+    "resnet101_qat": {
+      "model_src_dir": "image_recognition/torchvision_models/quantization/qat/eager",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnext101_32x8d",
       "main_script": "main.py",
