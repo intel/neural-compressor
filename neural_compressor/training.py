@@ -176,7 +176,7 @@ class CompressionManager:
 
         Args:
             user_metric(neural_compressor.metric.Metric or a dict of built-in metric configurations):
-+                The object of Metric or a dict of built-in metric configurations.
+                The object of Metric or a dict of built-in metric configurations.
         """
         assert self.quantizer is not None, "There is no quantizer to tune, " \
                                            "please pass a QuantizationAwareTrainingConfig."
