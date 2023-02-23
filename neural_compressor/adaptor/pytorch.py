@@ -29,7 +29,7 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..data.dataloaders.base_dataloader import BaseDataLoader
-
+from .torch_utils.smooth_quant import TorchSmoothQuant
 torch = LazyImport("torch")
 json = LazyImport("json")
 hvd = LazyImport("horovod.torch")
@@ -1182,7 +1182,37 @@ class TemplateAdaptor(Adaptor):
                               criterion=criterion,
                               enable_act=enable_act)
         return op_to_traces
-        pass
+
+    def smooth_quant(self, model, dataloader, calib_iter, tune_cfg=None, alpha=0.5,
+                     percentile=None, op_types=None, scales_per_op=None, force_re_smooth=False):
+        """ convert the model by smooth quant.
+
+        Args:
+            model: origin FP32 model
+            dataloader: calib dataloader
+            calib_iter: calib iters
+            tune_cfg: quantization config
+            alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+            percentile:Percentile of calibration to remove outliers, not supported now
+            op_types: The op types whose input tensor will be dumped
+            scales_per_op: True, each op will have an individual scale, mainly for accuracy
+                           False, ops with the same input will share a scale, mainly for performance
+
+        Returns:
+            model: A modified fp32 model
+        """
+        if not hasattr(self, 'sq') or force_re_smooth:
+            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader)
+        args = {}  ##different backends may have different default values
+        if op_types != None:
+            args["op_types"] = op_types
+        if percentile != None:
+            args['percentile'] = percentile
+        if scales_per_op != None:
+            args['scales_per_op'] = scales_per_op
+        model._model = self.sq.transform(alpha=alpha, calib_iter=calib_iter, **args)
+        return model
+
 
 
 unify_op_type_mapping = {
