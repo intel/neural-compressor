@@ -190,6 +190,7 @@ class Dataloader:
             '8a61469f7ea1b51cbae51d4f78837e45')
     ]
     def __init__(self, dataset_location, download=True):
+        self.batch_size = 1
         self.root = dataset_location
         if download:
             self.download()

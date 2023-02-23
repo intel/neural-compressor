@@ -157,7 +157,6 @@ class Dataloader:
                 if len(image.shape) == 2:
                     image = np.array([image])
                     image = np.repeat(image, 3, axis=0)
-                    image = image.transpose(1, 2, 0)
                 image = image[y0:y0+self.height, x0:x0+self.width, :]
                 image = ((image - self.mean_value)/self.std_value).astype(np.float32)
                 image = np.expand_dims(image, axis=0)

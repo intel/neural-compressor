@@ -150,6 +150,11 @@ class Dataloader:
                     h = new_height
                     w = int(new_width * width / height)
                 image = cv2.resize(image, (w, h), interpolation=cv2.INTER_AREA)
+                h, w = image.shape[0], image.shape[1]
+                if h > 224 or w > 224:
+                    y0 = (h - 224) // 2
+                    x0 = (w - 244) // 2
+                    image = image[y0:y0 + 224, x0:x0 + 224, :]
                 image = image - [123.68, 116.78, 103.94]
                 image = image.transpose(2, 0, 1)
                 image = np.expand_dims(image, axis=0)
