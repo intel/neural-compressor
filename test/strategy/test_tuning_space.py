@@ -125,7 +125,7 @@ op_cap = {
                 }
         },
     ],
-    # op have both weight and activation and support dynamic/fp32
+    # op only have activation and support dynamic/fp32
     ('op_name4', 'op_type3'): [
         {
             'activation':
@@ -152,10 +152,6 @@ op_cap = {
                 {
                     'dtype': 'fp32'
                 },
-            'weight':
-                {
-                    'dtype': 'fp32'
-                }
         },
     ]
 }
@@ -189,7 +185,7 @@ class TestTuningSampler(unittest.TestCase):
             'calib': {'calib_sampling_size': [1, 10, 50]},
             'op': deepcopy(op_cap)
         }
-
+        # for optype1,'algorithm': ['minmax', 'kl'] -> ['minmax']
         self.optype_wise_user_config = {
             'op_type1': {
                 'activation': {
@@ -203,7 +199,7 @@ class TestTuningSampler(unittest.TestCase):
                 'granularity': ['per_channel'],
             }
         }
-
+        # fallback op_name4
         self.op_wise_user_config = {
             'op_name4': {
                 'activation': {
@@ -247,17 +243,17 @@ class TestTuningSampler(unittest.TestCase):
         # ops supported static 
         static_items = tuning_space.query_items_by_quant_mode('static')
         static_items_name = [item.name for item in static_items]
-        self.assertEqual(static_items_name, list(op_cap.keys()))
+        self.assertEqual(set(static_items_name), set(op_cap.keys()))
         # ops supported dynamic 
         dynamic_items = tuning_space.query_items_by_quant_mode('dynamic')
         dynamic_items_name = [item.name for item in dynamic_items]
         all_items_name = list(op_cap.keys())
         all_items_name.remove(('op_name3', 'op_type2'))
-        self.assertEqual(dynamic_items_name, all_items_name)
+        self.assertEqual(set(dynamic_items_name), set(all_items_name))
         # ops supported fp32 
         fp32_items = tuning_space.query_items_by_quant_mode('fp32')
         fp32_items_name = [item.name for item in fp32_items]
-        self.assertEqual(fp32_items_name, list(op_cap.keys()))
+        self.assertEqual(set(fp32_items_name), set(op_cap.keys()))
         # all optype
         self.assertEqual(list(tuning_space.op_type_wise_items.keys()), ['op_type1', 'op_type2', 'op_type3'])
 
@@ -281,11 +277,12 @@ class TestTuningSampler(unittest.TestCase):
         found_per_tensor = False
         for quant_mode in ['static', 'dynamic']:
             for op_item in tuning_space2.query_items_by_quant_mode(quant_mode):
-                quant_mode_item = tuning_space2.query_quant_mode_item(op_item.name, quant_mode)
-                activation_granularity = quant_mode_item.get_option_by_name(('activation', 'granularity'))
-                if activation_granularity and 'per_tensor' in activation_granularity.options:
-                    found_per_tensor = True
-                    break
+                for path in tuning_space2.ops_path_set[op_item.name]:
+                    mode_item = tuning_space2.query_quant_mode_item_by_full_path(op_item.name, path)
+                    act_algo_item = mode_item.get_option_by_name(('activation', 'granularity'))
+                    if act_algo_item and 'per_tensor' in act_algo_item.options:
+                        found_per_tensor = True
+                        break
         self.assertFalse(found_per_tensor)
 
     def test_tuning_space_merge_optype_wise(self):
@@ -304,13 +301,14 @@ class TestTuningSampler(unittest.TestCase):
         found_act_algo_kl_others = False
         for quant_mode in ['static', 'dynamic']:
             for op_item in tuning_space2.query_items_by_quant_mode(quant_mode):
-                quant_mode_item = tuning_space2.query_quant_mode_item(op_item.name, quant_mode)
-                item = quant_mode_item.get_option_by_name(('activation', 'algorithm'))
-                if op_item.name[1] == 'op_type1' and 'kl' in item.options:
-                    found_act_algo_kl_optype1 = True
-                    break
-                if op_item.name[1] != 'op_type1' and 'kl' in item.options:
-                    found_act_algo_kl_others = True
+                for path in tuning_space2.ops_path_set[op_item.name]:
+                    mode_item = tuning_space2.query_quant_mode_item_by_full_path(op_item.name, path)
+                    act_algo_item = mode_item.get_option_by_name(('activation', 'algorithm'))
+                    if act_algo_item and op_item.name[1] == 'op_type1' and 'kl' in act_algo_item.options:
+                        found_act_algo_kl_optype1 = True
+                        break
+                    if act_algo_item and op_item.name[1] != 'op_type1' and 'kl' in act_algo_item.options:
+                        found_act_algo_kl_others = True
         self.assertFalse(found_act_algo_kl_optype1)
         self.assertTrue(found_act_algo_kl_others)
 
@@ -360,11 +358,12 @@ class TestTuningSampler(unittest.TestCase):
         found_per_tensor = False
         for quant_mode in ['static', 'dynamic']:
             for op_item in tuning_space2.query_items_by_quant_mode(quant_mode):
-                quant_mode_item = tuning_space2.query_quant_mode_item(op_item.name, quant_mode)
-                activation_granularity = quant_mode_item.get_option_by_name(('activation', 'granularity'))
-                if activation_granularity and 'per_tensor' in activation_granularity.options:
-                    found_per_tensor = True
-                    break
+                for path in tuning_space2.ops_path_set[op_item.name]:
+                    mode_item = tuning_space2.query_quant_mode_item_by_full_path(op_item.name, path)
+                    act_algo_item = mode_item.get_option_by_name(('activation', 'granularity'))
+                    if act_algo_item and 'per_tensor' in act_algo_item.options:
+                        found_per_tensor = True
+                        break
         self.assertTrue(found_per_tensor)
 
 
