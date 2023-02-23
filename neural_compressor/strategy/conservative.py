@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The conservative tuning strategy for quantization level 0."""
-
 import copy
 import os
 import numpy as np
@@ -57,7 +55,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         accuracy meets the requirements else continue
         5. For bf16 and fp16 operators, do the same as int8 operators.
 
-        Yields:
+        Returns:
             tune_config (dict): It's a dict containing the tuning configuration to run.
         """
         tuning_space = self.tuning_space
