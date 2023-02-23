@@ -504,12 +504,16 @@ def main():
     text_encoder.train()
     if args.use_bf16:
         text_encoder,optimizer = ipex.optimize(text_encoder, optimizer=optimizer, dtype=torch.bfloat16)
+        amp_enabled = True
+    else:
+        text_encoder,optimizer = ipex.optimize(text_encoder, optimizer=optimizer, dtype=torch.float32)
+        amp_enabled = False
 
     for epoch in range(args.num_train_epochs):
         
         for step, batch in enumerate(train_dataloader):
             # with accelerator.accumulate(text_encoder):
-            with torch.cpu.amp.autocast(enabled=True, dtype=torch.bfloat16):
+            with torch.cpu.amp.autocast(enabled=amp_enabled, dtype=torch.bfloat16):
                 # Convert images to latent space
                 latents = vae.encode(batch["pixel_values"]).latent_dist.sample().detach()
                 latents = latents * 0.18215
@@ -533,21 +537,21 @@ def main():
                 noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample
 
                 loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
-                loss.backward()
+            loss.backward()
 
-                # Zero out the gradients for all token embeddings except the newly added
-                # embeddings for the concept, as we only want to optimize the concept embeddings
-                # if accelerator.num_processes > 1:
-                #     grads = text_encoder.module.get_input_embeddings().weight.grad
-                # else:
-                grads = text_encoder.get_input_embeddings().weight.grad
-                # Get the index for tokens that we want to zero the grads for
-                index_grads_to_zero = torch.arange(len(tokenizer)) != placeholder_token_id
-                grads.data[index_grads_to_zero, :] = grads.data[index_grads_to_zero, :].fill_(0)
+            # Zero out the gradients for all token embeddings except the newly added
+            # embeddings for the concept, as we only want to optimize the concept embeddings
+            # if accelerator.num_processes > 1:
+            #     grads = text_encoder.module.get_input_embeddings().weight.grad
+            # else:
+            grads = text_encoder.get_input_embeddings().weight.grad
+            # Get the index for tokens that we want to zero the grads for
+            index_grads_to_zero = torch.arange(len(tokenizer)) != placeholder_token_id
+            grads.data[index_grads_to_zero, :] = grads.data[index_grads_to_zero, :].fill_(0)
 
-                optimizer.step()
-                lr_scheduler.step()
-                optimizer.zero_grad()
+            optimizer.step()
+            lr_scheduler.step()
+            optimizer.zero_grad()
 
             # Checks if the accelerator has performed an optimization step behind the scenes
             # if accelerator.sync_gradients:
