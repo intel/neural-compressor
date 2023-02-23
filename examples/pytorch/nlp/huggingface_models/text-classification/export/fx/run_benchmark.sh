@@ -40,10 +40,6 @@ function init_params {
       --tokenizer=*)
           tokenizer=$(echo $var |cut -f2 -d=)
       ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
-      ;;
     esac
   done
 
@@ -65,9 +61,8 @@ function run_benchmark {
 
     if [[ ${input_model: -5:5} == ".onnx" ]]; then
         # fetch tokenizer configuration for dataset.
-        model_name_or_path=${tokenizer}
         python onnx_evaluation.py \
-                --model_name_or_path ${tokenizer} \
+                --model_name_or_path ${tuned_checkpoint} \
                 --model_path ${input_model} \
                 --task ${dataset_location} \
                 --batch_size=${batch_size} \

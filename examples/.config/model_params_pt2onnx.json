@@ -3,7 +3,7 @@
     "resnet18": {
       "model_src_dir": "image_recognition/torchvision_models/export/fx",
       "source_model_dataset": "/tf_dataset/pytorch/ImageNet/raw",
-      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
+      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ImagenetRaw_small_5000",
       "input_model": "resnet18",
       "main_script": "main.py",
       "batch_size": 100
@@ -11,7 +11,7 @@
     "resnet50": {
       "model_src_dir": "image_recognition/torchvision_models/export/fx",
       "source_model_dataset": "/tf_dataset/pytorch/ImageNet/raw",
-      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ILSVRC2012_img_val",
+      "target_model_dataset": "/tf_dataset2/datasets/imagenet/ImagenetRaw/ImagenetRaw_small_5000",
       "input_model": "resnet50",
       "main_script": "main.py",
       "batch_size": 100

@@ -37,10 +37,6 @@ function init_params {
       --config=*)
           tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
-      ;;
     esac
   done
 
