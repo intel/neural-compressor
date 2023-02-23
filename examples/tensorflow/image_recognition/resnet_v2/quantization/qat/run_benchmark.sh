@@ -3,6 +3,8 @@ set -x
 
 function main {
   batch_size=32
+  input_model="./baseline_model"
+  iters=100
   init_params "$@"
   run_benchmark
 
@@ -10,8 +12,6 @@ function main {
 
 # init params
 function init_params {
-  batch_size=32
-
   for var in "$@"
   do
     case $var in
@@ -21,26 +21,29 @@ function init_params {
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)    
       ;;
-      --dataset_location=*)
-          dataset_location=$(echo $var |cut -f2 -d=)    
-      ;;
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)    
+      ;;
+      --iters=*)
+          iters=$(echo $var |cut -f2 -d=)    
       ;;
     esac
   done
 
+  if [ ! -n "${input_model}" ] ;then
+    input_model="./baseline_model"
+  fi
 }
 
 # run_tuning
 function run_benchmark {
 
     python main.py \
-            --input_model ${input_model} \
-            --benchmark \
-            --mode ${mode} \
-            --batch_size ${batch_size} \
-            --dataset_location ${dataset_location}
+            --input_model=${input_model} \
+            --mode=${mode} \
+            --batch_size=${batch_size} \
+            --iters=${iters} \
+            --benchmark
 }
 
 main "$@"
