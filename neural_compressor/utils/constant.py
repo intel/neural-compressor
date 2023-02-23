@@ -64,7 +64,6 @@ UINT8_ASYM_KL_PERCHANNEL = {'dtype': ['uint8'],
 # Options for recipes, the first options is the default value.
 RECIPES = {
     "common":{
-        'smooth_quant': [False, True], # Only support ort currently
         # 'fast_bias_correction' : [False, True], # Disable it first
         # 'weight_correction' : [False, True], # Disable it first
         },
@@ -73,27 +72,27 @@ RECIPES = {
         'last_conv_or_matmul_quantization' : [True, False],
         },
     "onnxruntime": {
+        'smooth_quant': [False, True],
         'first_conv_or_matmul_quantization' : [True, False],
         'last_conv_or_matmul_quantization' : [True, False],
         'pre_post_process_quantization' : [True, False],
-    #     'gemm_to_matmul' : [False, True],
-    #     'graph_optimization_level' : ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'],
-    #     'add_qdq_pair_to_weight' : [False, True],
-    #     'optypes_to_exclude_output_quant' : [[]], # TODO
-    #     'dedicated_qdq_pair' : [True, False]
         },
-    "pytorch": {},
+    "pytorch": {
+        'smooth_quant': [False, True],
+        },
 }
 
 RECIPES_PRIORITY = [
-    "smooth_quant",  #Only support ort currently
+    "smooth_quant",  #Only support by ort/pt currently
     # "fast_bias_correction", # Disable it first
     # "weight_correction", # Disable it first
-    "first_conv_or_matmul_quantization", # Need to align the name
-    "last_conv_or_matmul_quantization",# Need to align the name
-    "pre_post_process_quantization",# Need to align the name
-    "graph_optimization_level",
-    "gemm_to_matmul",
-    "add_qdq_pair_to_weight",
-    "optypes_to_exclude_output_quant",
-    "dedicated_qdq_pair"]
+    "first_conv_or_matmul_quantization",
+    "last_conv_or_matmul_quantization",
+    "pre_post_process_quantization",
+    # determined by adaptor
+    # "graph_optimization_level", 
+    # "gemm_to_matmul",
+    # "add_qdq_pair_to_weight",
+    # "optypes_to_exclude_output_quant",
+    # "dedicated_qdq_pair"
+    ]

@@ -729,6 +729,7 @@ class TensorFlowAdaptor(Adaptor):
         other_config = copy.deepcopy(op_capability['uint8']['default'])
         
         self.quantizable_op_details = OrderedDict()
+        self.recipes_ops = {}
 
         self._init_op_stat = {i: [] for i in tf_quantizable_op_type}
 
@@ -751,6 +752,8 @@ class TensorFlowAdaptor(Adaptor):
                     self.unify_op_type_mapping[node_op].find("matmul") != -1):
                     exclude_first_quantizable_op = False
                     self.exclude_node_names.append(node_name)
+                    self.recipes_ops['first_conv_or_matmul_quantization'] = [(node_name,\
+                        self.unify_op_type_mapping[node_op])]
                     continue
                 self._init_op_stat[node_op].append(node_name)
                 if self.unify_op_type_mapping[node_op].find("conv2d") != -1:
@@ -902,6 +905,7 @@ class TensorFlowAdaptor(Adaptor):
         self._query_bf16_ops(matched_bf16_nodes)
         capability = {
             'optypewise': self.get_optype_wise_ability(),
+            'recipes_ops': self.recipes_ops
         }
         capability['opwise'] = copy.deepcopy(self.quantizable_op_details)
         capability['opwise'].update(self.bf16_op_details)

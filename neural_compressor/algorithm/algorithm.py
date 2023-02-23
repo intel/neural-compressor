@@ -94,10 +94,17 @@ class AlgorithmScheduler(object):
         self._calib_iter = None
         
     def append_algorithm(self, location, algorithm):
+        """Append algorithm to list of executed algorithms.
+
+        Args:
+            location: The location to call algorithm
+            algorithm: algorithm instance
+        """
         self._exec_algorithms[location] = self._exec_algorithms.get(location, [])
         self._exec_algorithms[location].append(algorithm)
         
     def reset_exec_algorithms(self):
+        """Reset the list of executed algorithms."""
         self._exec_algorithms = {}
 
     def __call__(self, location):
