@@ -154,7 +154,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
             white_nodes = [node for node in quantize_config if quantize_config[node] != 'fp32']
         
-        augment = ONNXRTAugment(model,
+        augment = ONNXRTAugment(self.pre_optimized_model,
                                 dataloader, self.quantizable_op_types,
                                 black_nodes=black_nodes, white_nodes=white_nodes,
                                 iterations=list(range(0, iterations)),
@@ -167,14 +167,14 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         for name in max_vals_per_channel.keys():
             curr_tensor_to_weight = []
             curr_tensor_to_weight_nodes = []
-            nodes = model.input_name_to_nodes[name]
+            nodes = self.pre_optimized_model.input_name_to_nodes[name]
             for node in nodes:
                 if node.op_type not in op_types:
                     continue
                 if len(node.input) >= 2:
                     input = node.input[1]  ##TODO always dump the index 1 to get the weight
-                    if model.get_initializer(input):
-                        weight = numpy_helper.to_array(model.get_initializer(input))
+                    if self.pre_optimized_model.get_initializer(input):
+                        weight = numpy_helper.to_array(self.pre_optimized_model.get_initializer(input))
                         curr_tensor_to_weight.append(weight)
                         curr_tensor_to_weight_nodes.append(node)
             input_tensors_2_weights[name] = curr_tensor_to_weight
@@ -187,22 +187,22 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                                     input_tensors_2_weights_nodes, alpha)
             new_added_mul_nodes, new_init_tensors, op_nodes = insert_smooth_mul_op_per_op(scales, shape_infos,
                                                                                 input_tensors_2_weights_nodes)
-            adjust_weights_per_op(model, op_nodes, scales)
+            adjust_weights_per_op(self.pre_optimized_model, op_nodes, scales)
         else:
             from neural_compressor.adaptor.ox_utils.util import get_smooth_scales_per_input, \
                 insert_smooth_mul_op_per_input, adjust_weights_per_input
             scales = get_smooth_scales_per_input(max_vals_per_channel, input_tensors_2_weights, alpha)
             new_added_mul_nodes, new_init_tensors = insert_smooth_mul_op_per_input(scales, shape_infos,
                                                                             input_tensors_2_weights_nodes)
-            adjust_weights_per_input(model, input_tensors_2_weights_nodes, scales)
+            adjust_weights_per_input(self.pre_optimized_model, input_tensors_2_weights_nodes, scales)
 
-        model.add_nodes(new_added_mul_nodes)
-        model.add_initializers(new_init_tensors)
-        model.update()
-        model.topological_sort()
-        model.remove_unused_constant()
-        self.smooth_quant_model = model
-        return model
+        self.pre_optimized_model.add_nodes(new_added_mul_nodes)
+        self.pre_optimized_model.add_initializers(new_init_tensors)
+        self.pre_optimized_model.update()
+        self.pre_optimized_model.topological_sort()
+        self.pre_optimized_model.remove_unused_constant()
+        self.smooth_quant_model = self.pre_optimized_model
+        return self.smooth_quant_model
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):

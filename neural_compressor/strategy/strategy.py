@@ -213,8 +213,7 @@ class TuneStrategy(object):
                 except:
                     self.algo.alpha = 0.5
                 self.algo.tune_cfg = copy.deepcopy(tune_cfg)
-            self.algo.q_model = self.adaptor.pre_optimized_model if self.adaptor.pre_optimized_model \
-                else self.model
+            self.algo.q_model = self.model
             self.model = self.algo('pre_quantization')
             q_model = self.adaptor.quantize(
                 copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
