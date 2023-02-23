@@ -8,8 +8,8 @@ sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
-from neural_compressor.compression.pruner.pruning import Pruning
-
+from neural_compressor.training import prepare_compression
+from neural_compressor.utils import logger
 
 class TestPytorchPruning(unittest.TestCase):
     model = torchvision.models.resnet18()
@@ -36,8 +36,8 @@ class TestPytorchPruning(unittest.TestCase):
             pruning_frequency=2,
             target_sparsity=0.8,
         )
-        prune = Pruning(config)
-        prune.model = self.model
+        compression_manager = prepare_compression(model=self.model, confs=config)
+        compression_manager.callbacks.on_train_begin()
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
@@ -45,35 +45,35 @@ class TestPytorchPruning(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(12, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        prune.update_config(pruning_frequency=4)
-        prune.on_train_begin()
-        assert prune.pruners[0].config['pruning_frequency'] == 4
-        assert prune.pruners[0].config['target_sparsity'] == 0.6
-        assert prune.pruners[1].config['target_sparsity'] == 0.8
-        assert prune.pruners[0].config['pattern'] == "channelx1"
-        assert prune.pruners[1].config['pruning_type'] == 'pattern_lock'
+        # prune.update_config(pruning_frequency=4)
+        compression_manager.callbacks.on_train_begin()
+        logger.info(compression_manager.callbacks.callbacks_list[0].pruners)
+        assert compression_manager.callbacks.callbacks_list[0].pruners[0].config['pruning_frequency'] == 2
+        assert compression_manager.callbacks.callbacks_list[0].pruners[0].config['target_sparsity'] == 0.6
+        assert compression_manager.callbacks.callbacks_list[0].pruners[1].config['target_sparsity'] == 0.8
+        assert compression_manager.callbacks.callbacks_list[0].pruners[0].config['pattern'] == "channelx1"
+        assert compression_manager.callbacks.callbacks_list[0].pruners[1].config['pruning_type'] == 'pattern_lock'
 
         for epoch in range(1):
             self.model.train()
-            prune.on_epoch_begin(epoch)
+            compression_manager.callbacks.on_epoch_begin(epoch)
             local_step = 0
             for image, target in dummy_dataloader:
-                prune.on_step_begin(local_step)
+                compression_manager.callbacks.on_step_begin(local_step)
                 output = self.model(image)
                 loss = criterion(output, target)
                 optimizer.zero_grad()
                 loss.backward()
-                prune.on_before_optimizer_step()
+                compression_manager.callbacks.on_before_optimizer_step()
                 optimizer.step()
-                prune.on_after_optimizer_step()
-                prune.on_step_end()
+                compression_manager.callbacks.on_after_optimizer_step()
+                compression_manager.callbacks.on_step_end()
                 local_step += 1
 
-            prune.on_epoch_end()
-        prune.get_sparsity_ratio()
-        prune.on_train_end()
-        prune.on_before_eval()
-        prune.on_after_eval()
+            compression_manager.callbacks.on_epoch_end()
+        compression_manager.callbacks.on_train_end()
+        compression_manager.callbacks.on_before_eval()
+        compression_manager.callbacks.on_after_eval()
 
 
 if __name__ == "__main__":

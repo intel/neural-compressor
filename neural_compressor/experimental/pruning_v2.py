@@ -26,18 +26,17 @@ from ..conf.config import PruningConf
 from ..conf.pythonic_config import Config
 from ..config import WeightPruningConfig
 
-from ..pruner.pruner_legacy import PRUNERS
-from ..pruner.utils import generate_pruner_config
-from ..pruner.utils import process_config, parse_to_prune, check_config, update_params
+from .pruner_legacy import PRUNERS
+from ..compression.pruner.utils import generate_pruner_config
+from ..compression.pruner.utils import process_config, parse_to_prune, check_config, update_params
 from ..utils.utility import LazyImport
-from ..pruner.pruners import get_pruner
+from ..compression.pruner.pruners import get_pruner
 from ..conf.pythonic_config import Config
 
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 
 from deprecated import deprecated
-import importlib
 import re
 
 
@@ -528,3 +527,4 @@ class TfPruningCallback(object):
     def on_batch_end(self, logs=None):  # pragma: no cover
         """Call the same-name function from hooks."""
         self.on_step_end(logs)
+

@@ -41,7 +41,6 @@ from .pruner.pruners import get_pruner, PRUNERS
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 
-
 class BaseCallbacks(object):
     """This is base class of Neural Compressor Callbacks.
 
@@ -525,12 +524,12 @@ class PruningCallbacks(BaseCallbacks):
         self.pruners_info = process_config(self.conf)
         self.pruners = []
         self.pre_process()
-
+        
     def on_train_begin(self, dataloader=None):
         """Be called before the beginning of training."""
         for on_train_begin_hook in self.hooks_dict['on_train_begin']:
             on_train_begin_hook()
-
+            
     def on_train_end(self):
         """Be called after the end of training."""
         for on_train_end_hook in self.hooks_dict['on_train_end']:
@@ -555,7 +554,7 @@ class PruningCallbacks(BaseCallbacks):
         self.adaptor.model = self.model
         self._generate_pruners()
         self.generate_hooks()
-
+        
     def execute(self):
         """Functions that execute the pruning process.
 
@@ -568,7 +567,7 @@ class PruningCallbacks(BaseCallbacks):
             # oneshot with torch_fx QAT interfaces. Needs to reset model afterwards.
             if modified_model is not None:
                 self._model.model = modified_model
-
+            
         logger.info("Start to get the baseline model's score before pruning.")
         self.baseline_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
                                                   else self._model.model)
@@ -590,7 +589,7 @@ class PruningCallbacks(BaseCallbacks):
         self.pre_process()
         results = self.execute()
         return results
-
+    
     fit = __call__
 
     def __repr__(self):
@@ -603,7 +602,7 @@ class PruningCallbacks(BaseCallbacks):
             for key in self.hooks.keys():
                 if hasattr(pruner, key):
                     self.register_hook(key, getattr(pruner, key))
-
+                
     def _generate_pruners(self):
         """Obtain Pruner objects."""
         if isinstance(self._model.model, torch.nn.Module):
@@ -617,32 +616,8 @@ class PruningCallbacks(BaseCallbacks):
                 info['len_of_modules'] = len(info['modules'])
                 logger.info(info)
         else:
-            for info in self.pruners_info:
-                pruner = generate_pruner_config(info)
-                if info.prune_type == 'magnitude':
-                    self.pruners.append(PRUNERS['BasicMagnitude'](\
-                                            self._model, \
-                                            pruner,
-                                            None))
-                elif info.prune_type == 'pattern_lock':
-                    self.pruners.append(PRUNERS['PatternLock'](\
-                                            self._model, \
-                                            pruner,
-                                            None))
-                elif info.prune_type == 'gradient_sensitivity':
-                    self.pruners.append(PRUNERS['GradientSensitivity'](\
-                                            self._model, \
-                                            pruner,
-                                            None))
-                elif info.prune_type == 'group_lasso':
-                    self.pruners.append(PRUNERS['GroupLasso'](\
-                                            self._model, \
-                                            pruner,
-                                            None))
-                else:
-                    ##print(pruner.prune_type)
-                    assert False, 'now only support {}'.format(PRUNERS.keys())
-                logger.info(info)
+            ##print(pruner.prune_type)
+            assert False, 'now only support {}'.format(PRUNERS.keys())
 
     @property
     def train_func(self):
