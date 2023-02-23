@@ -206,7 +206,7 @@ class BasePruner:
         self.mask_weights()
         self.global_step += 1
 
-    def on_train_begin(self):
+    def on_train_begin(self, dataloader=None):
         """Implement at the beginning of training phase."""
         pass
 
@@ -224,10 +224,10 @@ class BasePruner:
 
     def check_is_pruned_step(self, step):
         """Check if a pruning process should be performed at the current step.
-        
+
         Args:
             step: an integer representing the number of current step.
-            
+
         Returns: 
             A Boolean.
         """

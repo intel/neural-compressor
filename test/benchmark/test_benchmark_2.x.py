@@ -1,7 +1,8 @@
 """Tests for neural_compressor benchmark"""
-import psutil
-import unittest
 import os
+import psutil
+import shutil
+import unittest
 import numpy as np
 import tensorflow as tf
 import tempfile
@@ -133,6 +134,7 @@ class TestObjective(unittest.TestCase):
             os.remove('fake_data_15.py')
         if os.path.exists('fake_data_25.py'):
             os.remove('fake_data_25.py')
+        shutil.rmtree('nc_workspace', ignore_errors=True)
 
     def test_benchmark(self):
         os.system("python fake.py --input_model={}".format(self.graph_path))

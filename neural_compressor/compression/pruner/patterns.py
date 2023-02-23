@@ -195,7 +195,7 @@ class BasePattern:
 
     def get_block_size_dict(self, data):
         """Get pattern size for each module.
-        
+
         This is mainly for per-channel pruning when each module has different pruning size.
         
         Args:
@@ -274,7 +274,7 @@ class BasePattern:
 
     def get_sparsity_ratio_each_layer(self, masks):
         """Calculate the sparsity ratio of each layer.
-        
+
         Args:
             masks: The current weight masks.
 

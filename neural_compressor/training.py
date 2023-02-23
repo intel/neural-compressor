@@ -347,7 +347,6 @@ class CallBacks:
         assert len(callbacks_list) >= 1, "The length of callbacks list must be greater than 1."
         self.callbacks_list = callbacks_list
 
-
     def on_train_begin(self, dataloader=None):
         """Be called before the beginning of epochs."""
         for callbacks in self.callbacks_list:
@@ -374,7 +373,9 @@ class CallBacks:
         """Be called on the end of loss computation."""
         loss_list = []
         for callbacks in self.callbacks_list:
-            loss_list.append(callbacks.on_after_compute_loss(input, student_output, student_loss, teacher_output))
+            loss = callbacks.on_after_compute_loss(input, student_output, student_loss, teacher_output)
+            if loss is not None:
+                loss_list.append(loss)
         return loss_list[0] if len(loss_list) == 1 else loss_list
 
     def on_before_optimizer_step(self):
@@ -401,7 +402,9 @@ class CallBacks:
         """Be called on the end of batches."""
         res_list = []
         for callbacks in self.callbacks_list:
-            res_list.extend(callbacks.on_step_end())
+            res = callbacks.on_step_end()
+            if res is not None:
+                res_list.append(res)
         return res_list
 
     def on_epoch_end(self):
@@ -410,5 +413,3 @@ class CallBacks:
         for callbacks in self.callbacks_list:
             res_list.extend(callbacks.on_epoch_end())
         return res_list
-
-

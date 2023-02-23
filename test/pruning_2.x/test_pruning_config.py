@@ -45,8 +45,6 @@ class TestPytorchPruning(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(12, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        # prune.update_config(pruning_frequency=4)
-        compression_manager.callbacks.on_train_begin()
         logger.info(compression_manager.callbacks.callbacks_list[0].pruners)
         assert compression_manager.callbacks.callbacks_list[0].pruners[0].config['pruning_frequency'] == 2
         assert compression_manager.callbacks.callbacks_list[0].pruners[0].config['target_sparsity'] == 0.6

@@ -6,45 +6,53 @@ import torch.nn as nn
 
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.conf.pythonic_config import Config
 from neural_compressor.config import WeightPruningConfig
-from neural_compressor.pruner.pruning import Pruning
+from neural_compressor.experimental.pruning_v2 import Pruning
 
-local_schedulers_config = [
+local_types_config = [
     {
         "start_step": 0,
-        "end_step": 2,
-        "pruning_type": "magnitude",
+        "end_step": 0,
+        "pruning_type": "pattern_lock",
         "op_names": ['layer1.*'],
         "excluded_op_names": ['layer2.*'],
-        "pruning_scope": "global",
-        "target_sparsity": 0.5,
-        "pattern": "4x1"
+        "pruning_scope": "global"
     },
     {
         "start_step": 1,
-        "end_step": 10,
+        "end_step": 1,
         "target_sparsity": 0.5,
-        "pruning_type": "snip_momentum",
+        "pruning_type": "snip_momentum_progressive",
         "pruning_frequency": 2,
         "op_names": ['layer2.*'],
         "pruning_scope": "local",
-        "target_sparsity": 0.75,
-        "pattern": "32x1",
+        "pattern": "4x1",
         "sparsity_decay_type": "exp"
+    },
+    {
+        "start_step": 2,
+        "end_step": 8,
+        "target_sparsity": 0.8,
+        "pruning_type": "snip_progressive",
+        "pruning_frequency": 1,
+        "op_names": ['layer3.*'],
+        "pruning_scope": "local",
+        "pattern": "16x1",
+        "sparsity_decay_type": "cube"
     }
 ]
 
-fake_snip_config = WeightPruningConfig(local_schedulers_config, target_sparsity=0.9, start_step=0, \
-                                       end_step=10, pruning_frequency=1, sparsity_decay_type="exp")
+fake_snip_config = WeightPruningConfig(local_types_config, target_sparsity=0.9, start_step=0, \
+                                       end_step=10, pruning_frequency=3, sparsity_decay_type="exp")
 
 
-class TestPruningCriteria(unittest.TestCase):
+class TestPruningTypes(unittest.TestCase):
     model = torchvision.models.resnet18()
 
-    def test_pruning_schedulers(self):
-
-        prune = Pruning(fake_snip_config)
-        prune.update_config(start_step=1)
+    def test_pruning_types(self):
+        config = Config(quantization=None, benchmark=None, pruning=fake_snip_config, distillation=None)
+        prune = Pruning(config)
         prune.model = self.model
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)

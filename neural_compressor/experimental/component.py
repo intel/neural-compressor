@@ -206,7 +206,7 @@ class Component(object):
                                                self.adaptor,
                                                metric,
                                                self.cfg.evaluation.accuracy.postprocess,
-                                               fp32_baseline = False)
+                                               fp32_baseline=False)
 
         self.prepare()
         # strategy will be considered in future

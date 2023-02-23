@@ -313,9 +313,6 @@ class TestPruning(unittest.TestCase):
         model = copy.deepcopy(self.model)
         distillation_criterion = KnowledgeDistillationLossConfig(loss_types=['CE', 'KL'])
         d_conf = DistillationConfig(copy.deepcopy(self.model), distillation_criterion)
-        # pruner1 = Pruner(start_epoch=1, end_epoch=3, names=['layer1.0.conv1.weight'])
-        # pruner2 = Pruner(target_sparsity=0.6, update_frequency=2, names=['layer1.0.conv2.weight'])
-        # p_conf = PruningConfig(pruners=[pruner1, pruner2], end_epoch=3)
         p_conf = WeightPruningConfig(
             [{'start_step': 0, 'end_step': 2}], target_sparsity=0.64, pruning_scope="local")
         compression_manager = prepare_compression(model=model, confs=[d_conf, p_conf])
@@ -363,8 +360,8 @@ class TestPruning(unittest.TestCase):
                                0.64,
                                delta=0.05)
         self.assertEqual(
-            compression_manager.callbacks.callbacks.combination,
-            ['Distillation', 'Pruning']
+            str(compression_manager.callbacks.callbacks_list),
+            "[Distillation Callbacks, Pruning Callbacks]"
         )
 
     def test_prune_qat_distillation_oneshot(self):

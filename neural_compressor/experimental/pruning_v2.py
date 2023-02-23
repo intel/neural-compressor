@@ -31,7 +31,6 @@ from ..compression.pruner.utils import generate_pruner_config
 from ..compression.pruner.utils import process_config, parse_to_prune, check_config, update_params
 from ..utils.utility import LazyImport
 from ..compression.pruner.pruners import get_pruner
-from ..conf.pythonic_config import Config
 
 LazyImport('torch.nn')
 torch = LazyImport('torch')

@@ -6,8 +6,9 @@ import torch.nn as nn
 
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.conf.pythonic_config import Config
 from neural_compressor.config import WeightPruningConfig
-from neural_compressor.pruner.pruning import Pruning
+from neural_compressor.experimental.pruning_v2 import Pruning
 
 local_regs_config = [
     {

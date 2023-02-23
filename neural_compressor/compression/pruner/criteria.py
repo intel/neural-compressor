@@ -45,7 +45,7 @@ class PruningCriterion:
     Args:
         config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
-    
+
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """

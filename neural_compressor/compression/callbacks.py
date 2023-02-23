@@ -121,10 +121,13 @@ class BaseCallbacks(object):
 
     def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
         """Be called on the end of loss computation."""
-        loss = student_loss
-        for on_after_compute_loss_hook in self.hooks_dict['on_after_compute_loss']:
-            loss = on_after_compute_loss_hook(input, student_output, loss, teacher_output)
-        return loss
+        if len(self.hooks_dict['on_after_compute_loss']) > 0:
+            loss = student_loss
+            for on_after_compute_loss_hook in self.hooks_dict['on_after_compute_loss']:
+                loss = on_after_compute_loss_hook(input, student_output, loss, teacher_output)
+            return loss
+        else:
+            return None
 
     def on_before_optimizer_step(self):
         """Be called before optimizer step."""
@@ -148,10 +151,13 @@ class BaseCallbacks(object):
 
     def on_step_end(self):
         """Be called on the end of batches."""
-        res_list = []
-        for on_step_end_hook in self.hooks_dict['on_step_end']:
-            res_list.append(on_step_end_hook())
-        return res_list
+        if len(self.hooks_dict['on_step_end']) > 0:
+            res_list = []
+            for on_step_end_hook in self.hooks_dict['on_step_end']:
+                res_list.append(on_step_end_hook())
+            return res_list
+        else:
+            return None
 
     def on_epoch_end(self):
         """Be called on the end of epochs."""
@@ -234,54 +240,10 @@ class BaseCallbacks(object):
             self._model.input_tensor_names = self.cfg.model.inputs
             self._model.workspace_path = self.cfg.tuning.workspace.path
 
-
-class AwareTrainingQuantCallbacks(BaseCallbacks):
-    """This is the class for callbacks of quantization aware training.
-
-    This design is mainly for Quantization-Aware Training.
-    In this class will apply all hooks for Quantization-Aware Training.
-    """
-
-    def __init__(self, conf=None, model=None):
-        """Construct all the necessary attributes for the callbacks object.
-
-        Args:
-            conf: A QuantizationAwareTrainingConfig object which definds the compressor behavior.
-            model: Model to be quantized in this object.
-        """
-        super(AwareTrainingQuantCallbacks, self).__init__(conf=None)
-        conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
-        self.conf = QuantConf()
-        self.conf.map_pyconfig_to_cfg(conf)
-        self.cfg = self.conf.usr_cfg
-        self.model = model
-
-        seed = self.conf.usr_cfg.tuning.random_seed
-        random.seed(seed)
-        np.random.seed(seed)
-
-        framework_specific_info = {'device': self.cfg.device,
-                                   'random_seed': self.cfg.tuning.random_seed,
-                                   'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None,
-                                   'backend': self.cfg.model.get('backend', 'default'),
-                                   'format': self.cfg.model.get('quant_format', 'default'),
-                                   'performance_only': self.cfg.model.get('tuning.exit_policy.performance_only', False)}
-        if self.cfg.quantization.approach is not None:
-            framework_specific_info['approach'] = self.cfg.quantization.approach
-
-        if 'tensorflow' in self.framework:
-            framework_specific_info.update(
-                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
-        self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
-        self.adaptor.model = self.model
-        self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
-        self.register_hook('on_train_end', self.adaptor._post_hook_for_qat)
-
     def pre_process(self):
         """Create strategy to optimize model."""
         # Remove qat hooks if user want to tune accuracy with train function.
-        if hasattr(self.adaptor, "_pre_hook_for_qat"):
+        if self.adaptor is not None and hasattr(self.adaptor, "_pre_hook_for_qat"):
             self.remove_hook("on_train_begin", self.adaptor._pre_hook_for_qat)
             self.remove_hook("on_train_end", self.adaptor._post_hook_for_qat)
 
@@ -354,16 +316,6 @@ class AwareTrainingQuantCallbacks(BaseCallbacks):
         return results
 
     fit = __call__
-
-    def __repr__(self):
-        """Represent this class."""
-        return "Quantization Aware Training"
-
-    def remove_hook(self, scope, hook):
-        """Remove hooks if user want to tune accuracy with train_func."""
-        for registed_hook in self.hooks_dict[scope]:
-            if type(hook) == type(registed_hook):
-                self.hooks_dict[scope].remove(registed_hook)
 
     @property
     def train_func(self):
@@ -501,6 +453,60 @@ class AwareTrainingQuantCallbacks(BaseCallbacks):
         self._metric = user_metric
 
 
+class AwareTrainingQuantCallbacks(BaseCallbacks):
+    """This is the class for callbacks of quantization aware training.
+
+    This design is mainly for Quantization-Aware Training.
+    In this class will apply all hooks for Quantization-Aware Training.
+    """
+
+    def __init__(self, conf=None, model=None):
+        """Construct all the necessary attributes for the callbacks object.
+
+        Args:
+            conf: A QuantizationAwareTrainingConfig object which definds the compressor behavior.
+            model: Model to be quantized in this object.
+        """
+        super(AwareTrainingQuantCallbacks, self).__init__(conf=None)
+        conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
+        self.conf = QuantConf()
+        self.conf.map_pyconfig_to_cfg(conf)
+        self.cfg = self.conf.usr_cfg
+        self.model = model
+
+        seed = self.conf.usr_cfg.tuning.random_seed
+        random.seed(seed)
+        np.random.seed(seed)
+
+        framework_specific_info = {'device': self.cfg.device,
+                                   'random_seed': self.cfg.tuning.random_seed,
+                                   'workspace_path': self.cfg.tuning.workspace.path,
+                                   'q_dataloader': None,
+                                   'backend': self.cfg.model.get('backend', 'default'),
+                                   'format': self.cfg.model.get('quant_format', 'default'),
+                                   'performance_only': self.cfg.model.get('tuning.exit_policy.performance_only', False)}
+        if self.cfg.quantization.approach is not None:
+            framework_specific_info['approach'] = self.cfg.quantization.approach
+
+        if 'tensorflow' in self.framework:
+            framework_specific_info.update(
+                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
+        self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
+        self.adaptor.model = self.model
+        self.register_hook('on_train_begin', self.adaptor._pre_hook_for_qat)
+        self.register_hook('on_train_end', self.adaptor._post_hook_for_qat)
+
+    def __repr__(self):
+        """Represent this class."""
+        return "Quantization Aware Training Callbacks"
+
+    def remove_hook(self, scope, hook):
+        """Remove hooks if user want to tune accuracy with train_func."""
+        for registed_hook in self.hooks_dict[scope]:
+            if type(hook) == type(registed_hook):
+                self.hooks_dict[scope].remove(registed_hook)
+
+
 class PruningCallbacks(BaseCallbacks):
     """This is the class for callbacks of pruning object.
 
@@ -523,13 +529,9 @@ class PruningCallbacks(BaseCallbacks):
         self.model = model
         self.pruners_info = process_config(self.conf)
         self.pruners = []
-        self.pre_process()
-        
-    def on_train_begin(self, dataloader=None):
-        """Be called before the beginning of training."""
-        for on_train_begin_hook in self.hooks_dict['on_train_begin']:
-            on_train_begin_hook()
-            
+        self._generate_pruners()
+        self.generate_hooks()
+
     def on_train_end(self):
         """Be called after the end of training."""
         for on_train_end_hook in self.hooks_dict['on_train_end']:
@@ -537,64 +539,9 @@ class PruningCallbacks(BaseCallbacks):
         if isinstance(self._model.model, torch.nn.Module):
             get_sparsity_ratio(self.pruners, self._model)
 
-    def pre_process(self):
-        """Functions called before pruning begins, usually set up pruners."""
-        assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for pruning....'
-        framework_specific_info = {'device': self.cfg.device,
-                                   'random_seed': self.cfg.tuning.random_seed,
-                                   'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None,
-                                   'format': 'default',
-                                   'backend': 'default'}
-
-        if 'tensorflow' in self.framework:
-            framework_specific_info.update(
-                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
-        self.adaptor = FRAMEWORKS[self.framework](framework_specific_info)
-        self.adaptor.model = self.model
-        self._generate_pruners()
-        self.generate_hooks()
-        
-    def execute(self):
-        """Functions that execute the pruning process.
-
-        Follow the working flow: evaluate the dense model -> train/prune the model, evaluate the sparse model.
-        """
-        if self._train_func is not None:
-            modified_model = self._train_func(self._model \
-                    if getattr(self._train_func, 'builtin', None) else self._model.model)
-            # for the cases that model is changed not inplaced during training, for example,
-            # oneshot with torch_fx QAT interfaces. Needs to reset model afterwards.
-            if modified_model is not None:
-                self._model.model = modified_model
-            
-        logger.info("Start to get the baseline model's score before pruning.")
-        self.baseline_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
-                                                  else self._model.model)
-        logger.info("Baseline model's score is {}.".format(str(self.baseline_score)))
-        logger.info("Model pruning begins.")
-        self._train_func(self._model if getattr(self._train_func, 'builtin', None) \
-                             else self._model.model)
-        logger.info("Model pruning is done. Start to evaluate the pruned model.")
-        self.last_score = self._eval_func(self._model if getattr(self._eval_func, 'builtin', None) \
-                                              else self._model.model)
-        logger.info("Pruned model score is {}.".format(str(self.last_score)))
-        return self._model
-
-    def __call__(self):
-        """Execute this class.
-
-        For derived classes(Pruning, Quantization, etc.), an override function is required.
-        """
-        self.pre_process()
-        results = self.execute()
-        return results
-    
-    fit = __call__
-
     def __repr__(self):
         """Return the class's string representation."""
-        return 'Pruning'
+        return 'Pruning Callbacks'
 
     def generate_hooks(self):
         """Register hooks for pruning."""
@@ -602,7 +549,7 @@ class PruningCallbacks(BaseCallbacks):
             for key in self.hooks.keys():
                 if hasattr(pruner, key):
                     self.register_hook(key, getattr(pruner, key))
-                
+
     def _generate_pruners(self):
         """Obtain Pruner objects."""
         if isinstance(self._model.model, torch.nn.Module):
@@ -616,84 +563,7 @@ class PruningCallbacks(BaseCallbacks):
                 info['len_of_modules'] = len(info['modules'])
                 logger.info(info)
         else:
-            ##print(pruner.prune_type)
             assert False, 'now only support {}'.format(PRUNERS.keys())
-
-    @property
-    def train_func(self):
-        """Not support get train_func."""
-        assert False, 'Should not try to get the value of `train_func` attribute.'
-        return None
-
-    @train_func.setter
-    def train_func(self, user_train_func):
-        """Training function.
-
-        Args:
-            user_train_func: This function takes "model" as input parameter
-                         and executes entire training process with self
-                         contained training hyper-parameters. If training_func set,
-                         an evaluation process must be triggered and user should
-                         set eval_dataloader with metric configured or directly eval_func
-                         to make evaluation of the model executed. training_func will return
-                         a trained model.
-        """
-        self._train_func = user_train_func
-
-    @property
-    def eval_func(self):
-        """Not support get eval_func."""
-        assert False, 'Should not try to get the value of `eval_func` attribute.'
-        return None
-
-    @eval_func.setter
-    def eval_func(self, user_eval_func):
-        """Eval function for component.
-
-        Args:
-            user_eval_func: This function takes "model" as input parameter
-                         and executes entire evaluation process with self
-                         contained metrics. If eval_func set,
-                         an evaluation process must be triggered
-                         to make evaluation of the model executed.
-        """
-        self._eval_func = user_eval_func
-
-    @property
-    def eval_dataloader(self):
-        """Getter to eval dataloader."""
-        return self._eval_dataloader
-
-    @eval_dataloader.setter
-    def eval_dataloader(self, dataloader):
-        """Set Data loader for evaluation of component.
-
-        It is iterable and the batched data should consists of yield (input, _).
-        the input in the batched data will be used for model inference, so it
-        should satisfy the input format of specific model.
-        User only need to set eval_dataloader when eval_dataloader can not be
-        configured from yaml file.
-
-        Args:
-            dataloader(generator): user are supported to set a user defined dataloader
-                                   which meet the requirements that can yield tuple of
-                                   (input, label)/(input, _) batched data. Another good
-                                   practice is to use neural_compressor.experimental.common.DataLoader
-                                   to initialize a neural_compressor dataloader object. Notice
-                                   neural_compressor.experimental.common.DataLoader is just a wrapper of the
-                                   information needed to build a dataloader, it can't yield
-                                   batched data and only in this setter method
-                                   a 'real' train_dataloader will be created,
-                                   the reason is we have to know the framework info
-                                   and only after the Component object created then
-                                   framework information can be known.
-                                   Future we will support creating iterable dataloader
-                                   from neural_compressor.experimental.common.DataLoader.
-        """
-        assert hasattr(dataloader, '__iter__') and \
-            hasattr(dataloader, 'batch_size'), \
-            'dataloader must implement __iter__ method and batch_size attribute'
-        self._eval_dataloader = dataloader
 
 
 class DistillationCallbacks(BaseCallbacks):
@@ -731,36 +601,10 @@ class DistillationCallbacks(BaseCallbacks):
         self.best_score = 0
         self.best_model = None
         self.hooks_registered = False
-        if hasattr(conf, "distillation") and hasattr(conf.distillation, "teacher_model"):
-            self.teacher_model = conf.distillation.teacher_model
-            self.pre_process()
-        else:
-            assert False, "Please assign teacher model in DistillationConfig."
-
-    def _on_train_begin(self, dataloader=None):
-        """Operations called on the begining of the training.
-
-        Called before training, evaluate the teacher model and the student model.
-        """
-        assert self._model, 'student_model must be set.'
-        if self._eval_func is not None:
-            if self.teacher_model:
-                score = self._eval_func(
-                    self.teacher_model if getattr(self._eval_func, 'builtin', None)
-                    else self.teacher_model.model
-                )
-                logger.info("teacher model score is {}.".format(str(score)))
-
-            score = self._eval_func(
-                self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
-            )
-            logger.info("initial model score is {}.".format(str(score)))
-            if self.eval_frequency > 0:
-                self.best_score = score
-                if self.framework == "pytorch":
-                    self.best_model = copy.deepcopy(self._model)
-                else:
-                    self.best_model = self._model
+        assert hasattr(conf.distillation, "teacher_model"), "Please assign teacher model in DistillationConfig."
+        self.teacher_model = conf.distillation.teacher_model
+        self.generate_hooks()
+        self.create_criterion()
 
     def _on_step_begin(self, batch_id):
         """Operations called on the beginning of batches."""
@@ -789,27 +633,6 @@ class DistillationCallbacks(BaseCallbacks):
                 input, teacher_model=self.teacher_model._model
             )
         return self.criterion.loss_cal_sloss(student_output, teacher_output, student_loss)
-
-    def _on_epoch_end(self):
-        """Operations called on the end of every epochs.
-
-        Called on the end of every epochs, evaluate the student model
-         and record the best one regularly.
-        """
-        self._epoch_ran += 1
-        if self._eval_func is not None and self.eval_frequency > 0 and \
-           self._epoch_ran % self.eval_frequency == 0:
-            score = self._eval_func(
-                self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
-            )
-            logger.info("model score of epoch {} is {}.".format(self._epoch_ran, str(score)))
-            if (isinstance(score, list) and all([s > b_s for s, b_s in
-                zip(score, self.best_score)])) or score > self.best_score:
-                self.best_score = score
-                if self.framework == "pytorch":
-                    self.best_model = copy.deepcopy(self._model)
-                else:
-                    self.best_model = self._model
 
     def init_train_cfg(self):
         """Initialize the training configuration."""
@@ -844,55 +667,9 @@ class DistillationCallbacks(BaseCallbacks):
                 criterion_tuple[1]["teacher_model"] = teacher_model
             self.criterion = criterion_tuple[0](**criterion_tuple[1])
         else:
-            logger.warning("Use user defined criterion, "
-                           "ignoring the criterion setting in yaml file.")
+            logger.warning("Use user defined criterion.")
 
         self._train_cfg.criterion = self.criterion
-
-    def pre_process(self):
-        """Preprocessing before the disillation pipeline.
-
-        Initialize necessary parts for distillation pipeline.
-        """
-        framework_specific_info = {'device': self.cfg.device,
-                                   'random_seed': self.cfg.tuning.random_seed,
-                                   'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None,
-                                   'format': 'default',
-                                   'backend': 'default'}
-
-        if self.framework == 'tensorflow':
-            framework_specific_info.update(
-                {"inputs": self.cfg.model.inputs, "outputs": self.cfg.model.outputs})
-
-        self.generate_hooks()
-        self.create_criterion()
-        assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for distillation....'
-
-    def execute(self):
-        """Do distillation pipeline.
-
-        First train the student model with the teacher model, after training,
-        evaluating the best student model if any.
-
-        Returns:
-            Best distilled model found.
-        """
-        self._train_func(
-            self._model if getattr(self._train_func, 'builtin', None) else self._model.model
-        )
-        if self.criterion is not None and hasattr(self.criterion, 'remove_all_hooks'):
-            self.criterion.remove_all_hooks()
-        logger.info("Model distillation is done.")
-        if self._eval_func is not None:
-            logger.info("Start to evaluate the distilled model.")
-            self._model = self.best_model if self.best_model else self._model
-            score = self._eval_func(
-                self._model if getattr(self._eval_func, 'builtin', None) else self._model.model
-            )
-
-            logger.info("distilled model score is {}.".format(str(score)))
-        return self._model
 
     def generate_hooks(self):
         """Register hooks for distillation.
@@ -900,24 +677,9 @@ class DistillationCallbacks(BaseCallbacks):
         Register necessary hooks for distillation pipeline.
         """
         if not self.hooks_registered:
-            self.register_hook('on_train_begin', self._on_train_begin)
             self.register_hook('on_step_begin', self._on_step_begin)
             self.register_hook('on_after_compute_loss', self._on_after_compute_loss)
-            self.register_hook('on_epoch_end', self._on_epoch_end)
             self.hooks_registered = True
-
-    def __call__(self):
-        """Do distillation workflow.
-
-        Returns:
-            distilled model: best distilled model found, otherwise return None
-
-        """
-        self.pre_process()
-        results = self.execute()
-        return results
-
-    fit = __call__
 
     @property
     def criterion(self):
