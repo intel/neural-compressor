@@ -20,8 +20,9 @@ Quantize model with QLinearOps:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --config=ssd_mobilenet_v1.yaml \ 
-                   --output_model=path/to/save
+                   --output_model=path/to/save \
+                   --dataset_location=path/to/coco/dataset \
+                   --quant_format="QOperator"
 ```
 Make sure **anno_path** in ssd_mobilenet_v1.yaml is the path of label_map.yaml.
 
@@ -29,8 +30,9 @@ Quantize model with QDQ mode:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --config=ssd_mobilenet_v1_qdq.yaml \ 
-                   --output_model=path/to/save
+                   --output_model=path/to/save \
+                   --dataset_location=path/to/coco/dataset \
+                   --quant_format="QDQ"
 ```
 Make sure **anno_path** in ssd_mobilenet_v1_qdq.yaml is the path of label_map.yaml.
 

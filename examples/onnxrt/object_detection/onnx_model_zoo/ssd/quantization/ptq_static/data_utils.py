@@ -453,3 +453,19 @@ class Post:
         preds, labels = sample
         preds[0][0][:, [0, 1, 2, 3]] = preds[0][0][:, [1, 0, 3, 2]]
         return preds, labels
+
+class LabelBalanceCOCORawFilter(object):
+    """The label balance filter for COCO raw data."""
+
+    def __init__(self, size=1):
+        """Initialize the attribute of class."""
+        self.size = size
+
+    def __call__(self, image, label):
+        """Execute the filter.
+
+        Args:
+            image: Not used.
+            label: label of a sample.
+        """
+        return len(label) == self.size

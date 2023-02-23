@@ -227,13 +227,11 @@
       "batch_size": 1
     },
     "ssd_mobilenet_v1-2": {
-      "model_src_dir": "object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq",
+      "model_src_dir": "object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq_static",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/onnx/ssdmb/ssd_mobilenet_v1_12.onnx",
-      "yaml": "ssd_mobilenet_v1.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "faster_rcnn": {
       "model_src_dir": "object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq_static",
@@ -268,13 +266,11 @@
       "new_benchmark": true
     },
     "yolov3": {
-      "model_src_dir": "object_detection/onnx_model_zoo/yolov3/quantization/ptq",
+      "model_src_dir": "object_detection/onnx_model_zoo/yolov3/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/yolov3/yolov3-12.onnx",
-      "yaml": "yolov3.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "resnet50_v1_5_qdq": {
       "model_src_dir": "image_recognition/resnet50/quantization/ptq",
@@ -482,13 +478,11 @@
       "batch_size": 1
     },
     "ssd_mobilenet_v1-2_qdq": {
-      "model_src_dir": "object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq",
+      "model_src_dir": "object_detection/onnx_model_zoo/ssd_mobilenet_v1/quantization/ptq_static",
       "dataset_location": "/tf_dataset/dataset/coco_dataset/raw-data",
       "input_model": "/tf_dataset2/models/onnx/ssdmb/ssd_mobilenet_v1_13.onnx",
-      "yaml": "ssd_mobilenet_v1_qdq.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "faster_rcnn_qdq": {
       "model_src_dir": "object_detection/onnx_model_zoo/faster_rcnn/quantization/ptq_static",
@@ -505,22 +499,18 @@
       "batch_size": 1
     },
     "yolov4": {
-      "model_src_dir": "object_detection/onnx_model_zoo/yolov4/quantization/ptq",
+      "model_src_dir": "object_detection/onnx_model_zoo/yolov4/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/yolov4/yolov4-12.onnx",
-      "yaml": "yolov4.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "tiny_yolov3": {
-      "model_src_dir": "object_detection/onnx_model_zoo/tiny_yolov3/quantization/ptq",
+      "model_src_dir": "object_detection/onnx_model_zoo/tiny_yolov3/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
       "input_model": "/tf_dataset2/models/onnx/tiny_yolov3/tiny-yolov3-12.onnx",
-      "yaml": "tiny_yolov3.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
+      "main_script": "main.py",
+      "batch_size": 1
     },
     "duc": {
       "model_src_dir": "object_detection/onnx_model_zoo/DUC/quantization/ptq",

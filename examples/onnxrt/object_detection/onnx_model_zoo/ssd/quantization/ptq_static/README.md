@@ -39,7 +39,7 @@ Make sure **anno_path** in ssd_qdq.yaml is updated to the path of label_map.yaml
 ### Benchmark
 
 ```bash
-bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --config=ssd.yaml \
+bash run_benchmark.sh --input_model=path/to/model  \ # model path as *.onnx
+                      --dataset_location=path/to/coco/dataset \
                       --mode=performance # or accuracy
 ```

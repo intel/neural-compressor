@@ -25,7 +25,7 @@ import onnxruntime as ort
 import numpy as np
 
 from data_utils import COCORawDataloader, COCORawDataset, COCOmAPv2
-from data_utils import ComposeTransform, ResizeTransform
+from data_utils import ComposeTransform, ResizeTransform, LabelBalanceCOCORawFilter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -88,7 +88,8 @@ args = parser.parse_args()
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
     transform = ComposeTransform([ResizeTransform(size=300)])
-    dataset = COCORawDataset(args.data_path, transform=transform)
+    filter = LabelBalanceCOCORawFilter()
+    dataset = COCORawDataset(args.data_path, transform=transform, filter=filter)
     dataloader = COCORawDataloader(dataset, batch_size=args.batch_size)
     metric = COCOmAPv2(output_index_mapping={'num_detections': 0,
                                              'boxes': 1,
@@ -146,6 +147,7 @@ if __name__ == "__main__":
         config = PostTrainingQuantConfig(approach='static', 
                                          accuracy_criterion=accuracy_criterion,
                                          quant_format=args.quant_format,
+                                         calibration_sampling_size=[50],
                                          op_name_list={op_name:FP32 for op_name in fp32_op_names if fp32_op_names})
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

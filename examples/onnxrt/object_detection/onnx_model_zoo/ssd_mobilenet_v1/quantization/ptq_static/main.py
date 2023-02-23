@@ -80,21 +80,20 @@ parser.add_argument(
 parser.add_argument(
     '--batch_size',
     type=int,
-    default=16,
+    default=1,
     help="quantization format"
 )
 args = parser.parse_args()
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    transform = ComposeTransform([ResizeTransform(size=300)])
     filter = LabelBalanceCOCORawFilter()
-    dataset = COCORawDataset(args.data_path, transform=transform, filter=filter)
+    dataset = COCORawDataset(args.data_path, filter=filter)
     dataloader = COCORawDataloader(dataset, batch_size=args.batch_size)
-    metric = COCOmAPv2(output_index_mapping={'num_detections': 0,
-                                             'boxes': 1,
-                                             'scores': 2,
-                                             'classes': 3})
+    metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes': 0,
+                                                                         'classes': 1,
+                                                                         'scores': 2,
+                                                                         'num_detections': 3})
 
     def eval_func(model):
         metric.reset()
@@ -138,16 +137,8 @@ if __name__ == "__main__":
 
     if args.tune:
         from neural_compressor import quantization
-        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
-        from neural_compressor.utils.constant import FP32
-        accuracy_criterion = AccuracyCriterion()
-        accuracy_criterion.absolute = 0.01
-        fp32_op_names = ['BoxPredictor_(1|2)/BoxEncodingPredictor/BiasAdd', 'Gather__.*?', 'add'
-                         'Postprocessor/BatchMultiClassNonMaxSuppression/mul', 'Mul__(157|152)']
+        from neural_compressor.config import PostTrainingQuantConfig
         config = PostTrainingQuantConfig(approach='static', 
-                                         accuracy_criterion=accuracy_criterion,
-                                         quant_format=args.quant_format,
-                                         calibration_sampling_size=[50],
-                                         op_name_list={op_name:FP32 for op_name in fp32_op_names if fp32_op_names})
+                                         quant_format=args.quant_format)
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

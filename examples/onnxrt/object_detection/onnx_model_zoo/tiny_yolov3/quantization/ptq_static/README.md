@@ -18,18 +18,16 @@ wget https://github.com/onnx/models/raw/main/vision/object_detection_segmentatio
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --config=tiny_yolov3.yaml \ 
-                   --data_path=path/to/COCO2017 \
-                   --output_model=path/to/save
+                   --output_model=path/to/save \
+                   --dataset_location=path/to/coco/dataset \
+                   --quant_format="QOperator"
 ```
-Make sure **anno_path** in yolov4.yaml is updated to the path of label_map.yaml.
 
 ### Performance
 
 ```bash
-bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --config=tiny_yolov3.yaml \
-                      --data_path=path/to/COCO2017 \
-                      --mode=performance
+bash run_benchmark.sh --input_model=path/to/model  \ # model path as *.onnx
+                      --dataset_location=path/to/coco/dataset \
+                      --mode=performance # or accuracy
 ```
 
