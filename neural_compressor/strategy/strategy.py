@@ -40,8 +40,7 @@ from ..utils.utility import LazyImport
 from ..utils import logger
 from ..version import __version__
 from ..conf.dotdict import DotDict, deep_get, deep_set
-from ..algorithm import AlgorithmScheduler
-from ..algorithm.fast_bias_correction import FastBiasCorrection
+from ..algorithm import AlgorithmScheduler, ALGORITHMS
 
 import copy
 import numpy as np
@@ -158,10 +157,10 @@ class TuneStrategy(object):
         self.set_tuning_space(conf)
         
         #For algo scheduler
-        self.algo = AlgorithmScheduler(self.cfg.quantization.recipes)
-        self.algo.dataloader = self.calib_dataloader  # reuse the calibration iteration
-        self.algo.origin_model = self.model
-        self.algo.adaptor = self.adaptor
+        self.algo_scheduler = AlgorithmScheduler(self.cfg.quantization.recipes)
+        self.algo_scheduler.dataloader = self.calib_dataloader  # reuse the calibration iteration
+        self.algo_scheduler.origin_model = self.model
+        self.algo_scheduler.adaptor = self.adaptor
 
         self._optype_statistics = None
         self.fallback_stats_baseline = None
@@ -225,55 +224,6 @@ class TuneStrategy(object):
         logger.info(f"{len(self._tuning_recipes)} recipes require future tuning.")
         logger.info(self._tuning_recipes)
         
-    def _open_all_recipes(self):
-        """Open all tunable recipes."""
-        opened_recipes = {}
-        for recipe_name, recipe_val_lst in self._tuning_recipes.items():
-            opened_recipes[recipe_name] = recipe_val_lst[-1]
-        logger.info("Opened all recipes.")
-        logger.info(opened_recipes)
-    
-    def apply_all_tuning_recipes(self, tune_cfg):
-        """Apply all tunable recipes with their value."""
-        tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
-        for recipe_name, recipe_val_lst in self._tuning_recipes.items():
-            tune_cfg['recipe_cfgs'][recipe_name] = recipe_val_lst[-1]
-        return tune_cfg
-            
-    def _check_recipe(self, recipe_name, recipe_vals):
-        """Check whether to use this recipe or not.
-
-        Args:
-            recipe_name: the recipe name.
-            recipe_vals: the args of recipes.
-
-        Returns:
-            Return True if this recipe is needed else False.
-        """
-        return True
-        
-    def apply_recipe_one_by_one(self, tune_cfg):
-        """Apply the tunable recipes one by one.
-        
-        For recipes only have two options, apply the last one.
-        For recipes with multiple values. such as alpha of smooth quant, apply it one by one.
-        """
-        from .utils.tuning_sampler import TuningSamplerRegistry
-        all_registered_samplers = TuningSamplerRegistry.sampler_dict
-        for recipe_name, recipe_vals in self._tuning_recipes.items():
-            if self._check_recipe(recipe_name, recipe_vals):
-                if recipe_name in all_registered_samplers:
-                    recipe_sampler = all_registered_samplers[recipe_name](tuning_space=None,
-                                                                       tuning_order_lst=[],
-                                                                       initial_op_tuning_cfg=tune_cfg,
-                                                                       kwargs={recipe_name: recipe_vals})
-                    for tune_cfg in recipe_sampler:
-                        yield tune_cfg
-                else:
-                    logger.info(f"Open recipe {recipe_name} with value {recipe_vals[-1]}")
-                    tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
-                    tune_cfg['recipe_cfgs'][recipe_name] = recipe_vals[-1]
-                    yield tune_cfg
 
     def distributed_next_tune_cfg_lst(self, comm):
         """Interface for generate the distributed next tuning config list.
@@ -447,16 +397,19 @@ class TuneStrategy(object):
                 break
             tune_cfg = self.tune_cfg_lst[cfg_idx]
 
-            self.q_model = self.adaptor.quantize(
-                copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            self.algo.calib_iter = tune_cfg['calib_iteration']
-            self.algo.q_model = self.q_model
-            # TODO align the api to let strategy has access to pre_optimized model
+            # set the parameter for pre quantization algos and run
+            self.set_param_for_pre_quantization_algos(self.algo_scheduler, tune_cfg, self.model)
+            self.model = self.algo_scheduler('pre_quantization')
+            # quantize
+            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             assert self.adaptor.pre_optimized_model
-            self.algo.origin_model = self.adaptor.pre_optimized_model
-            if self.cfg.quantization.recipes.fast_bias_correction:
-                self.algo.algorithms[0].quantization_cfg = tune_cfg
-            self.last_qmodel = self.algo()
+            # set the parameter for post quantization algos and run
+            self.set_param_for_post_quantization_algos(self.algo_scheduler, tune_cfg, self.adaptor.pre_optimized_model,
+                                                       q_model)
+            self.last_qmodel = self.algo_scheduler('post_quantization')
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
+            # Remove the reference to model
+            self.algo_scheduler.reset_exec_algorithms()
             assert self.last_qmodel
             self.last_tune_result = self._evaluate(self.last_qmodel)
 
@@ -503,6 +456,92 @@ class TuneStrategy(object):
             if self.met_flag or self.max_trial_flag or self.max_time_flag:
                 break
 
+    def _open_all_recipes(self):
+        """Open all tunable recipes."""
+        opened_recipes = {}
+        for recipe_name, recipe_val_lst in self._tuning_recipes.items():
+            opened_recipes[recipe_name] = recipe_val_lst[-1]
+        logger.info("Opened all recipes.")
+        logger.info(opened_recipes)
+    
+    def apply_all_tuning_recipes(self, tune_cfg):
+        """Apply all tunable recipes with their value."""
+        tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
+        for recipe_name, recipe_val_lst in self._tuning_recipes.items():
+            tune_cfg['recipe_cfgs'][recipe_name] = recipe_val_lst[-1]
+        return tune_cfg
+        
+    def apply_recipe_one_by_one(self, tune_cfg):
+        """Apply the tunable recipes one by one.
+        
+        For recipes only have two options, apply the last one.
+        For recipes with multiple values. such as alpha of smooth quant, apply it one by one.
+        """
+        from .utils.tuning_sampler import TuningSamplerRegistry
+        all_registered_samplers = TuningSamplerRegistry.sampler_dict
+        for recipe_name, recipe_vals in self._tuning_recipes.items():
+            if recipe_name in all_registered_samplers:
+                recipe_sampler = all_registered_samplers[recipe_name](tuning_space=None,
+                                                                        tuning_order_lst=[],
+                                                                        initial_op_tuning_cfg=tune_cfg,
+                                                                        kwargs={recipe_name: recipe_vals})
+                for tune_cfg in recipe_sampler:
+                    yield tune_cfg
+            else:
+                logger.info(f"Open recipe {recipe_name} with value {recipe_vals[-1]}")
+                tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
+                tune_cfg['recipe_cfgs'][recipe_name] = recipe_vals[-1]
+                yield tune_cfg
+
+    def set_param_for_pre_quantization_algos(self, algo_scheduler, tune_cfg, fp32_model) -> None:
+        """Set the parameter for pre-quantization algos, such as smooth quantization.
+
+        Args:
+            algo_scheduler: algo scheduler
+            tune_cfg: the tuning config
+            fp32_model: the fp32 model
+        """
+        algo_scheduler.origin_model = fp32_model
+        algo_scheduler.calib_iter = tune_cfg['calib_iteration']
+        algo_scheduler.q_model = fp32_model
+
+        recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        algo_scheduler.reset_exec_algorithms()
+        if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
+            # set the alpha to 0.5 by default
+            alpha = recipe_cfgs.get('smooth_quant_args', 0.5)
+            sq_algo = ALGORITHMS()['smooth_quant']
+            algo_scheduler.append_algorithm('pre_quantization', sq_algo)
+            logger.debug(f"Set smooth quant with alpha {alpha} as the pre-quantization algo.")
+            
+    def set_param_for_post_quantization_algos(self, algo_scheduler, tune_cfg, pre_optimized_model, q_model) -> None:
+        """Set the parameter for post-quantization algos, such as bias correction, weight correction.
+
+        Args:
+            algo_scheduler:  algo scheduler
+            tune_cfg:  the tuning config.
+            pre_optimized_model: the pre-optimized model
+            q_model: the quantized model
+        """
+        algo_scheduler.origin_model = pre_optimized_model
+        # if no pre-process algos, return the fp32 model directly.
+        algo_scheduler.q_model = q_model
+        
+        algo_scheduler.reset_exec_algorithms()
+        recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
+        # for fast_bias_correction
+        if recipe_cfgs and recipe_cfgs.get('fast_bias_correction', False):
+            fbc_algo = ALGORITHMS()['fast_bias_correction']
+            fbc_algo.quantization_cfg = deepcopy(tune_cfg)
+            algo_scheduler.append_algorithm('post_quantization', fbc_algo)
+            logger.debug(f"Add fast bias correction as the post quantization algo.")
+        # for weight correction
+        if recipe_cfgs and recipe_cfgs.get('weight_correction', False):
+            w_algo = ALGORITHMS()['weight_correction']
+            w_algo.quantization_cfg = deepcopy(tune_cfg)
+            algo_scheduler.append_algorithm('post_quantization', w_algo)
+            logger.debug(f"Add weight correction as the post quantization algo.")
+
     def traverse(self):
         """Traverse the tuning space.
         
@@ -528,28 +567,19 @@ class TuneStrategy(object):
             logger.debug("Dump current tuning configuration:")
             logger.debug(tune_cfg)
             self.tuning_times += 1
-            self.algo.calib_iter = tune_cfg['calib_iteration']
-            if self.cfg.quantization.recipes.smooth_quant:
-                try:
-                    self.algo.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
-                except:
-                    self.algo.alpha = 0.5
-                self.algo.tune_cfg = copy.deepcopy(tune_cfg)
-            self.algo.q_model = self.model
-            self.model = self.algo('pre_quantization')
-            q_model = self.adaptor.quantize(
-                copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            self.algo.q_model = q_model
-            # TODO align the api to let strategy has access to pre_optimized model
+            # set the parameter for pre quantization algos and run
+            self.set_param_for_pre_quantization_algos(self.algo_scheduler, tune_cfg, self.model)
+            self.model = self.algo_scheduler('pre_quantization')
+            # quantize
+            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
             assert self.adaptor.pre_optimized_model
-            self.algo.origin_model = self.adaptor.pre_optimized_model
-            if self.cfg.quantization.recipes.fast_bias_correction:
-                self.algo.algorithms[0].quantization_cfg = tune_cfg
-            self.last_qmodel = self.algo('post_quantization')
+            # set the parameter for post quantization algos and run
+            self.set_param_for_post_quantization_algos(self.algo_scheduler, tune_cfg, self.adaptor.pre_optimized_model,
+                                                       q_model)
+            self.last_qmodel = self.algo_scheduler('post_quantization')
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
-            # remove the algo to avoid it having a reference to qmodel
-            pre_process_algo_sched = None
-            post_process_algo_sched = None
+            # Remove the reference to model
+            self.algo_scheduler.reset_exec_algorithms()
             assert self.last_qmodel
             # Return the last quantized model as a result. if performance only.
             if self.cfg.tuning.exit_policy.performance_only:

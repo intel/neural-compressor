@@ -76,11 +76,11 @@ RECIPES = {
         'first_conv_or_matmul_quantization' : [True, False],
         'last_conv_or_matmul_quantization' : [True, False],
         'pre_post_process_quantization' : [True, False],
-        'gemm_to_matmul' : [False, True],
-        'graph_optimization_level' : ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'],
-        'add_qdq_pair_to_weight' : [False, True],
-        'optypes_to_exclude_output_quant' : [[]], # TODO
-        'dedicated_qdq_pair' : [True, False]
+    #     'gemm_to_matmul' : [False, True],
+    #     'graph_optimization_level' : ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'],
+    #     'add_qdq_pair_to_weight' : [False, True],
+    #     'optypes_to_exclude_output_quant' : [[]], # TODO
+    #     'dedicated_qdq_pair' : [True, False]
         },
     "pytorch": {},
 }
