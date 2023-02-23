@@ -73,6 +73,7 @@ class TuningSampler:
             tuning_space: The tuning space.
             tuning_order_lst: The traverse orders.
             initial_op_tuning_cfg: The initialized tuning config.
+            kwargs: other args.
         """
         self.tuning_space = tuning_space
         self.tuning_order_lst = tuning_order_lst

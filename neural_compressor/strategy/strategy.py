@@ -294,7 +294,6 @@ class TuneStrategy(object):
         if recipe_cfgs:
             # for fast_bias_correction
             if recipe_cfgs.get('fast_bias_correction', False):
-                # TODO replace it with a algo registry
                 from ..algorithm.fast_bias_correction import FastBiasCorrection
                 fb_algo = FastBiasCorrection()
                 post_algo_scheduler.append_algoritm(fb_algo)
