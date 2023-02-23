@@ -277,7 +277,6 @@ class TestMixedPrecision(unittest.TestCase):
             del result[0]
             return result[0]
 
-        from neural_compressor import conf
         conf = MixedPrecisionConfig(
             inputs="input",
             outputs="final",

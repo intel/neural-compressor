@@ -29,8 +29,30 @@ from .conf.dotdict import deep_get, deep_set, DotDict
 from .model.model import BaseModel, get_model_fwk_name, Model, MODELS
 
 class MixedPrecision:
+    """Class used for generating low precision model.
+
+    MixedPrecision class automatically generates low precision model across various DL
+    frameworks including tensorflow, pytorch and onnxruntime.
+
+    Example:
+        from neural_compressor.config import MixedPrecisionConfig
+        def eval_func(model):
+            ...
+            return accuracy
+
+        conf = MixedPrecisionConfig()
+        output_model = mix_precision.fit(
+            model,
+            conf,
+            eval_func=eval_func,
+        )
+    """
     def __init__(self, conf=None):
-        """Initialize `MixedPrecision` class."""
+        """Initialize `MixedPrecision` class.
+
+        Args:
+            conf (obj): The MixedPrecisionConfig class containing accuracy goal, tuning objective etc.
+        """
         conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
         self.conf = MixedPrecision_Conf()
         self.conf.map_pyconfig_to_cfg(conf)
@@ -44,6 +66,7 @@ class MixedPrecision:
         self._model = None
 
     def pre_process(self):
+        """Create strategy object for tuning."""
         cfg = self.conf.usr_cfg
         strategy = 'automixedprecision'
         _resume = None
@@ -67,7 +90,7 @@ class MixedPrecision:
             _resume)
 
     def execute(self):
-        """MixedPrecision execute routinue based on strategy design."""
+        """Execute routinue based on strategy design."""
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
                 self.strategy.traverse()
@@ -93,7 +116,7 @@ class MixedPrecision:
     def __call__(self):
         """Execute this class.
 
-        For derived classes(Pruning, Quantization, etc.), an override function is required.
+        For derived classes, an override function is required.
         """
         self.pre_process()
         results = self.execute()
@@ -128,7 +151,7 @@ class MixedPrecision:
         when eval_dataloader is set, user should configure postprocess(optional) and metric 
         in yaml file or set postprocess and metric cls. Notice evaluation dataloader will be 
         used to generate data for model inference, make sure the input data can be feed to model.
-        
+
         Args:
             dataloader(generator): user are supported to set a user defined dataloader
                                     which meet the requirements that can yield tuple of
@@ -158,7 +181,7 @@ class MixedPrecision:
     @model.setter
     def model(self, user_model):
         """Set the user model and dispatch to framework specific internal model object.
-        
+
         Args:
            user_model: user are supported to set model from original framework model format
                        (eg, tensorflow frozen_pb or path to a saved model), but not recommended.
@@ -233,7 +256,7 @@ class MixedPrecision:
            You can set multi-metrics to evaluate the performance of a specific model.
                 Single metric:
                     {topk: 1}
-                
+
                 Multi-metrics:
                     {topk: 1,
                      MSE: {compare_label: False},
@@ -242,13 +265,15 @@ class MixedPrecision:
         2. User also can set specific metric through this api. The metric class should take the outputs of the model or
            postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels) as inputs
            for update, and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
+
         Args:
             user_metric(neural_compressor.metric.Metric or a dict of built-in metric configures):
+                The object of Metric or a dict of built-in metric configurations.
         """
         if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
             logger.warning("Override the value of `metric` field defined in yaml file" \
                            " as user defines the value of `metric` attribute by code.")
- 
+
         from .metric import Metric as NCMetric, METRICS
         if isinstance(user_metric, dict):
             metric_cfg = user_metric
@@ -278,7 +303,7 @@ class MixedPrecision:
     @eval_func.setter
     def eval_func(self, user_eval_func):
         """Set evaluation function provided by user.
-        
+
         Args:
             user_eval_func: This function takes "model" as input parameter
                             and executes entire evaluation process with self
