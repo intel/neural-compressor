@@ -22,6 +22,7 @@ from enum import EnumMeta
 import os
 import math
 import copy
+from copy import deepcopy
 import pickle
 from collections import OrderedDict, defaultdict
 from pathlib import Path
@@ -35,6 +36,7 @@ from ..adaptor import FRAMEWORKS
 from ..utils.utility import Statistics, dump_data_to_local
 from ..utils.utility import fault_tolerant_file, equal_dicts, GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_train_func
+from ..utils.utility import LazyImport
 from ..utils import logger
 from ..version import __version__
 from ..conf.dotdict import DotDict, deep_get, deep_set
@@ -46,6 +48,7 @@ import numpy as np
 from collections import OrderedDict
 from time import time
 from ..utils import logger
+import sys
 
 
 from .utils.tuning_space import TuningItem, TuningSpace
@@ -266,82 +269,233 @@ class TuneStrategy(object):
                     tune_cfg['recipe_cfgs'][recipe_name] = recipe_vals[-1]
                     yield tune_cfg
 
-    def _register_post_process_algos(self, tune_cfg, fp32_model, q_model, calib_dataloader,
-                                     kwargs=None) -> AlgorithmScheduler:
-        """Register the post-process algos.
-        
-        Register the algo for post-process the quantized model, such as bias correction, weight correction.
+    def distributed_next_tune_cfg_lst(self, comm):
+        """Interface for generate the distributed next tuning config list.
+
+        The generator of yielding next tuning config list to distributed traverse by concrete strategies or
+        quantization level according to tuning result and traverse logic.
+
+        It should be implemented by the sub-class. Currently, it is only implemented in the BasicTuneStrategy.
+        """
+        pass
+
+    def meet_acc_req(self, eval_res):
+        """Compare the result of last tuning with baseline to check whether the result meet requirements.
+
         Args:
-            tune_cfg: the tuning config.
-            fp32_model: the fp32 model.
-            q_model: the quantized model.
-            calib_dataloader: the calibration dataloader.
-            kwargs: other args. Defaults to None.
+            eval_res: The evaluation result of tuning.
 
         Returns:
-            Return a job scheduler.
+            Return True if the accuracy meets requirements else False.
         """
-        post_algo_scheduler = AlgorithmScheduler({})
-        post_algo_scheduler.dataloader = calib_dataloader  # reuse the calibration iteration
-        post_algo_scheduler.origin_model = fp32_model
-        post_algo_scheduler.adaptor = self.adaptor
-        post_algo_scheduler.calib_iter = tune_cfg['calib_iteration']
-        post_algo_scheduler.tune_cfg = copy.deepcopy(tune_cfg)
-        # if no pre-process algos, return the fp32 model directly.
-        post_algo_scheduler.q_model = q_model
-        
-        recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
-        if recipe_cfgs:
-            # for fast_bias_correction
-            if recipe_cfgs.get('fast_bias_correction', False):
-                from ..algorithm.fast_bias_correction import FastBiasCorrection
-                fb_algo = FastBiasCorrection()
-                post_algo_scheduler.append_algoritm(fb_algo)
-            # for weight correction
-            if recipe_cfgs.get('weight_correction', False):
-                from ..algorithm.weight_correction import WeightCorrection
-                wc_algo = WeightCorrection()
-                post_algo_scheduler.append_algoritm(wc_algo)
+        self.last_tune_result = eval_res
+        return self.objectives.accuracy_meet_req(deepcopy(self.last_tune_result))
+
+    def master_worker_handle(self, comm):
+        """Matster worker handles the task assignment and result management.
+
+        Master node send all task ids to all free nodes, and wait until any result.
+        When receiving any result, directly send a new task id to the sender (it's free).
+
+        Args:
+            comm (MPI.COMM): The instance of comunication for MPI.
+        """
+        MPI = LazyImport("mpi4py.MPI")
+        size = comm.Get_size()
+        for process_id in range(1, min(len(self.tune_cfg_lst) + 1, size)):
+            tune_cfg_id = process_id - 1
+            logger.info("~~~~~~master sending tune cfg: {} to rank {}".format(tune_cfg_id, process_id))
+            comm.send(
+                obj=tune_cfg_id, # just send the tune cfg id is enough
+                dest=process_id, # rank 0 send to rank 1, 2, ...
+                tag=tune_cfg_id # tag, the index of tune cfg 0,1,2,3
+            )
+            import time as ttime
+            ttime.sleep(0.5) # WA for UT
+
+        cur_cfg_id = min(len(self.tune_cfg_lst), size - 1)   # 4 master should be aware of the next config id to send
+        self.eval_results = {}  # record all results
+        self.num_acks = 0 # number of all response acks, break when it equals to len()
+        status = MPI.Status() # used to obtain the source and the tag for each received message
+
+        self.already_ack_id_lst = set()
+        self.requirements_met_min_cfg_id = sys.maxsize
+
+        # stuck here to receive any result
+        while True:
+            eval_res = comm.recv(
+                source=MPI.ANY_SOURCE,
+                tag=MPI.ANY_TAG,
+                status=status   # get MPI status object
+            )
+            self.num_acks += 1
+            sender_rank = status.Get_source() # sender rank
+            tag = status.Get_tag() # the task id that is finished
+
+            logger.info("~~~~~~master receiving eval result: {} from rank {}".format(eval_res, sender_rank))
+
+            self.last_tune_result = eval_res    # for context coordination of stage 3
+            self.eval_results[tag] = eval_res
+            
+            self.overall_trials += 1
+            self.best_tune_cfg_id = None
+            self.already_ack_id_lst.add(tag)
+
+            # if meet accuracy requirement, then update minimum id that met requirement
+            if(self.meet_acc_req(eval_res)):
+                logger.info("~~~~~~master has one tuning cfg meet acc: {}".format(tag))
+                self.met_flag = True
+                self.requirements_met_min_cfg_id = min(self.requirements_met_min_cfg_id, tag)
                 
-        return post_algo_scheduler
+                # must ensure every id lower than current min_id has been acknowledged
+                # because a tune cfg (not acked yet) with lower id can have better acc
+                for i in range(self.requirements_met_min_cfg_id):
+                    if i not in self.already_ack_id_lst:
+                        logger.info("~~~~~~master has one tuning cfg meet acc: {} but not collect all acks before"\
+                                    .format(tag))
+                        self.met_flag = False   # not completely collected yet!
+                        break
+                
+                if self.met_flag:
+                    # found the best tune cfg!
+                    logger.info("~~~~~~master has one tuning cfg meet acc: {} and also collect all acks before"\
+                                .format(tag))
+                    self.best_tune_cfg_id = self.requirements_met_min_cfg_id
+            else:
+                # get the current best acc but not meet requirements
+                logger.info("~~~~~~master gets the current best acc: {} but not meet requirements".format(tag))
+                self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(self.tune_cfg_lst[tag])
 
-    
-    def _register_pre_process_algos(self, tune_cfg, fp32_model, calib_dataloader,
-                                    kwargs=None) -> AlgorithmScheduler:
-        """Register the pre-process algos.
+            if self.best_tune_cfg_id is not None:
+                #### we find the best tune cfg id that meet requirements!!
+                logger.info("~~~~~~master finds best tune cfg id~~~~~~~")
+                logger.info(self.best_tune_cfg_id)
+                logger.info(self.tune_cfg_lst[self.best_tune_cfg_id])
+                break
+            
+            # send the next cfg if not exceed max trials
+            if self.overall_trials > self.cfg.tuning.exit_policy.max_trials:
+                self.max_trial_flag = True
+            # elif time.time() - self.overall_time_start > self.cfg.tuning.exit_policy.timeout:
+            #     self.max_time_flag = True
+            elif cur_cfg_id < len(self.tune_cfg_lst):
+                logger.info("~~~~~~master sends new tuning cfg {} to rank: {}".format(cur_cfg_id, sender_rank))
+                comm.send(obj=cur_cfg_id, dest=sender_rank, tag=cur_cfg_id)
+                cur_cfg_id += 1
+            else:                    
+                logger.info("All tune configs are sent, no more sending, just collecting...")
 
-        Register the algo for pre-process the fp32 model, such as smooth quantization.
+            if len(self.tune_cfg_lst) == self.num_acks:    # all collected (ack should collected == acks)
+                # all processes ended
+                # return self.requirements_met_min_cfg_id  if it has been updated
+                if self.requirements_met_min_cfg_id == sys.maxsize:
+                    logger.info("~~~~~~Not found any tune cfg that meet requirements~~~~~~")
+                    self.cur_best_tuning_cfg = self.tune_cfg_lst[0] # TODO select cur_best_tuning_cfg
+                else:
+                    logger.info("~~~~~~Find best tune cfg id~~~~~~")
+                    logger.info(self.requirements_met_min_cfg_id)
+                    self.met_flag = True
+                    self.best_tune_cfg_id = self.requirements_met_min_cfg_id
+                    logger.info(self.tune_cfg_lst[self.best_tune_cfg_id])
+                break
+
+        # send END signal to all other slaves
+        logger.info("~~~~~~master sends END signal to all other slaves~~~~")
+        for process_id in range(1, size):
+            logger.info("~~~~~~master sends END signal to rank: {}".format(process_id))
+            comm.send(
+                obj="MET" if self.met_flag else "NOT MET", # send whether met criterion in the current stage
+                dest=process_id, # rank 0 send to rank 1, 2, ...
+                tag=len(self.tune_cfg_lst)
+            )
+
+        if self.best_tune_cfg_id is not None:
+            self.best_qmodel = self.adaptor.quantize(
+                    copy.deepcopy(self.tune_cfg_lst[self.best_tune_cfg_id]), self.model, self.calib_dataloader, \
+                        self.q_func)
+
+
+    def slave_worker_handle(self, comm):
+        """Slave worker handles the task processing.
+
+        When receiving any task id, slave node finds it in self.tune_cfg_lst and run it.
+        Then slave node sends back the tune result to master node.
+
         Args:
-            tune_cfg: the tuning config.
-            fp32_model: the fp32 model.
-            calib_dataloader: the calibration dataloader.
-            kwargs: other args. Defaults to None.
-
-        Returns:
-            Return a job scheduler.
+            comm (MPI.COMM): The instance of comunication for MPI.
         """
-        pre_algo_scheduler = AlgorithmScheduler({})
-        pre_algo_scheduler.dataloader = calib_dataloader  # reuse the calibration iteration
-        pre_algo_scheduler.origin_model = fp32_model
-        pre_algo_scheduler.adaptor = self.adaptor
-        pre_algo_scheduler.calib_iter = tune_cfg['calib_iteration']
-        pre_algo_scheduler.tune_cfg = copy.deepcopy(tune_cfg)
-        pre_algo_scheduler.q_model = fp32_model
-        
-        recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
-        if recipe_cfgs:
-            # for smooth quant
-            if recipe_cfgs.get('smooth_quant', False):
-                from ..algorithm.smooth_quant import SmoothQuant
-                # set the alpha to 0.5 by default
-                sq_alpha = 0.5
-                sq_args = recipe_cfgs.get('smooth_quant_args', {})
-                if sq_args:
-                    sq_alpha = sq_args.get('alpha', 0.5)
-                sq_algo = SmoothQuant(alpha=sq_alpha)
-                pre_algo_scheduler.append_algoritm(sq_algo)
-                logger.debug(f"Register smooth quant with alpha {sq_alpha} into the pre-process algo scheduler.")
-        return pre_algo_scheduler
+        MPI = LazyImport("mpi4py.MPI")
+        status = MPI.Status()
+        while True:
+            task = comm.recv(
+                    source=MPI.ANY_SOURCE,
+                    tag=MPI.ANY_TAG,
+                    status=status   # sender (master)
+                )
+            cfg_idx = status.Get_tag()
+            if status.Get_tag() >= len(self.tune_cfg_lst):
+                logger.info("~~~~~~slave {} receiving END signal in the current stage".format(comm.Get_rank()))
+                if task == "MET":
+                    logger.info("~~~~~~met criterion in this stage!")
+                    self.met_flag = True
+                break
+            tune_cfg = self.tune_cfg_lst[cfg_idx]
+
+            self.q_model = self.adaptor.quantize(
+                copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
+            self.algo.calib_iter = tune_cfg['calib_iteration']
+            self.algo.q_model = self.q_model
+            # TODO align the api to let strategy has access to pre_optimized model
+            assert self.adaptor.pre_optimized_model
+            self.algo.origin_model = self.adaptor.pre_optimized_model
+            if self.cfg.quantization.recipes.fast_bias_correction:
+                self.algo.algorithms[0].quantization_cfg = tune_cfg
+            self.last_qmodel = self.algo()
+            assert self.last_qmodel
+            self.last_tune_result = self._evaluate(self.last_qmodel)
+
+            ##### send back the tuning statistics #########
+            logger.debug("##### Slave sends back the tuning statistics #########")
+            logger.debug(self.last_tune_result)
+            comm.send(
+                obj=self.last_tune_result,
+                dest=0, # rank 0 send to rank 1, 2, ...
+                tag=cfg_idx
+            )
+
+    def distributed_traverse(self):
+        """Disributed traverse the tuning space.
+
+        The main traverse logic which could be override by some concrete strategy which needs more hooks.
+        """
+        MPI = LazyImport("mpi4py.MPI")
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+
+        self.met_flag = False
+        self.max_trial_flag = False # whether exceed max trials
+        self.max_time_flag = False # whether exceed max time
+        self.overall_trials = 0
+        self.overall_time_start = time()
+
+        # for all the stages, handle the tune cfg lst
+        # the tune cfg lst is generated/yielded each time by distributed_next_self.tune_cfg_lst
+        # we must pass the comm to the specific strategy because slaves may not know
+        # contexts such as the best_tune_cfg
+        # master should make sure slaves have all the contexts needed before going to the next computation stage
+        for op_tuning_cfg_lst in self.distributed_next_tune_cfg_lst(comm):
+            self.tune_cfg_lst = [self._tune_cfg_converter(op_tuning_cfg) for op_tuning_cfg in op_tuning_cfg_lst]
+            if self.tune_cfg_lst == []:
+                # skip empty list at some stages
+                continue
+            if rank == 0:
+                self.master_worker_handle(comm)
+            else:
+                self.slave_worker_handle(comm)
+            logger.debug("# if self.met_flag or self.max_trial_flag or self.max_time_flag:" \
+                .format(self.met_flag or self.max_trial_flag or self.max_time_flag))
+            if self.met_flag or self.max_trial_flag or self.max_time_flag:
+                break
 
     def traverse(self):
         """Traverse the tuning space.
@@ -349,6 +503,9 @@ class TuneStrategy(object):
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
         self._eval_baseline()
+        logger.info("use distributed traverse: {}".format(self.cfg.tuning.use_distributed_tuning))
+        if self.cfg.tuning.use_distributed_tuning:
+            return self.distributed_traverse()
         trials_count = 0
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
@@ -365,16 +522,24 @@ class TuneStrategy(object):
             logger.debug("Dump current tuning configuration:")
             logger.debug(tune_cfg)
             self.tuning_times += 1
-
-            # register the pre-process algorithms and run
-            pre_process_algo_sched = self._register_pre_process_algos(tune_cfg, self.model, self.calib_dataloader)
-            self.model = pre_process_algo_sched()
-            # quantize
-            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            # register the post-process algorithms and run
-            post_process_algo_sched = self._register_post_process_algos(tune_cfg, self.model,q_model, 
-                                                                        self.calib_dataloader)
-            self.last_qmodel = post_process_algo_sched()
+            self.algo.calib_iter = tune_cfg['calib_iteration']
+            if self.cfg.quantization.recipes.smooth_quant:
+                try:
+                    self.algo.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
+                except:
+                    self.algo.alpha = 0.5
+                self.algo.tune_cfg = copy.deepcopy(tune_cfg)
+            self.algo.q_model = self.model
+            self.model = self.algo('pre_quantization')
+            q_model = self.adaptor.quantize(
+                copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
+            self.algo.q_model = q_model
+            # TODO align the api to let strategy has access to pre_optimized model
+            assert self.adaptor.pre_optimized_model
+            self.algo.origin_model = self.adaptor.pre_optimized_model
+            if self.cfg.quantization.recipes.fast_bias_correction:
+                self.algo.algorithms[0].quantization_cfg = tune_cfg
+            self.last_qmodel = self.algo('post_quantization')
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
             # remove the algo to avoid it having a reference to qmodel
             pre_process_algo_sched = None
