@@ -47,10 +47,6 @@ class ConservativeTuneStrategy(TuneStrategy):
         super().__init__(model, conf, q_dataloader, q_func, eval_dataloader, 
                          eval_func, dicts, q_hooks)
         self.acc_meet_flag = False
-        self.algo_scheduler = AlgorithmScheduler(self.cfg.quantization.recipes)
-        self.algo_scheduler.dataloader = self.calib_dataloader  # reuse the calibration iteration
-        self.algo_scheduler.origin_model = self.model
-        self.algo_scheduler.adaptor = self.adaptor
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.

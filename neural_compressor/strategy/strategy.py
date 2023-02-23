@@ -156,6 +156,12 @@ class TuneStrategy(object):
         self.capability = self.adaptor.query_fw_capability(model)
         logger.debug(self.capability)
         self.set_tuning_space(conf)
+        
+        #For algo scheduler
+        self.algo = AlgorithmScheduler(self.cfg.quantization.recipes)
+        self.algo.dataloader = self.calib_dataloader  # reuse the calibration iteration
+        self.algo.origin_model = self.model
+        self.algo.adaptor = self.adaptor
 
         self._optype_statistics = None
         self.fallback_stats_baseline = None
