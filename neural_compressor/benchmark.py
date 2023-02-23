@@ -361,7 +361,7 @@ class Benchmark(object):
         # also measurer have result list among steps
         acc, _ = val
         batch_size = self._b_dataloader.batch_size
-        warmup =  0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
+        warmup = 0 if deep_get(cfg, 'evaluation.{}.warmup'.format(mode)) is None \
             else deep_get(cfg, 'evaluation.{}.warmup'.format(mode))
 
         if len(self.objectives.objectives[0].result_list()) < warmup:
@@ -387,7 +387,6 @@ class Benchmark(object):
             logger.info("Batch size = {}".format(batch_size))
             logger.info("Latency: {:.3f} ms".format(latency * 1000))
             logger.info("Throughput: {:.3f} images/sec".format(1. / latency))
-
 
     @property
     def results(self):
