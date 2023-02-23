@@ -695,62 +695,6 @@ class PruningCallbacks(BaseCallbacks):
             'dataloader must implement __iter__ method and batch_size attribute'
         self._eval_dataloader = dataloader
 
-    @property
-    def metric(self):
-        """Get `metric` attribute."""
-        assert False, 'Should not try to get the value of `metric` attribute.'
-        return None
-
-    @metric.setter
-    def metric(self, user_metric):
-        """Set metric class or a dict of built-in metric configures, and neural_compressor will initialize this class when evaluation.
-
-        1. neural_compressor have many built-in metrics, user can pass a metric configure dict to tell neural compressor what metric will be use.
-           You can set multi-metrics to evaluate the performance of a specific model.
-                Single metric:
-                    {topk: 1}
-
-                Multi-metrics:
-                    {topk: 1,
-                     MSE: {compare_label: False},
-                    }
-            For the built-in metrics, you can refer to [Supported Built-in Metric Matrix](https://github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix)
-
-        2. User also can set specific metric through this api. The metric class should take the outputs of the model or
-           postprocess(if have) as inputs, neural_compressor built-in metric always take(predictions, labels) as inputs for update,
-           and user_metric.metric_cls should be sub_class of neural_compressor.metric.BaseMetric.
-
-        Args:
-            user_metric(neural_compressor.metric.Metric or a dict of built-in metric configures):
-
-        """
-        if deep_get(self.conf.usr_cfg, "evaluation.accuracy.metric"):
-            logger.warning("Override the value of `metric` field defined in yaml file" \
-                           " as user defines the value of `metric` attribute by code.")
-
-        from ..metric import Metric as NCMetric, METRICS
-        if isinstance(user_metric, dict):
-            metric_cfg = user_metric
-        else:
-            if isinstance(user_metric, NCMetric):
-                name = user_metric.name
-                metric_cls = user_metric.metric_cls
-                metric_cfg = {name: {**user_metric.kwargs}}
-            else:
-                for i in ['reset', 'update', 'result']:
-                    assert hasattr(user_metric, i), 'Please realise {} function' \
-                                                    'in user defined metric'.format(i)
-                metric_cls = type(user_metric).__name__
-                name = 'user_' + metric_cls
-                metric_cfg = {name: id(user_metric)}
-            metrics = METRICS(self.conf.usr_cfg.model.framework)
-            metrics.register(name, metric_cls)
-
-        deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
-        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
-
-        self._metric = user_metric
-
 
 class DistillationCallbacks(BaseCallbacks):
     """Distillation class derived from Component class.
