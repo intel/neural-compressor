@@ -222,14 +222,7 @@ def main():
     if args.tune:
         from neural_compressor import PostTrainingQuantConfig
         from neural_compressor import quantization
-        if 'efficient' in args.arch:
-            # To reduce tuning time and get the result faster, the efficient net series model
-            # use the MSE_V2 strategy by default.
-            from neural_compressor.config import TuningCriterion
-            tuning_criterion = TuningCriterion(strategy="mse_v2")
-            conf = PostTrainingQuantConfig(tuning_criterion=tuning_criterion)
-        else:
-            conf = PostTrainingQuantConfig()
+        conf = PostTrainingQuantConfig()
         q_model = quantization.fit(model,
                                     conf,
                                     calib_dataloader=val_loader,
