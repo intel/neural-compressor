@@ -97,10 +97,10 @@
       'LSTM': *default_dynamic,
     }
   }
-  fp16: &common_fp16 ['Concat', 'Gather', 'Reshape', 'Slice', 'Squeeze', 'Transpose', 'Unsqueeze',
+  fp16: &common_fp16 ['Concat', 'Gather', 'Reshape', 'Squeeze', 'Transpose', 'Unsqueeze',
     'EmbedLayerNormalization', 'Attention', 'Split', 'Sigmoid', 'Relu', 'Mul', 'Pad', 'MaxPool',
     'MatMul', 'LeakyRelu',  'GlobalAveragePool', 'Gemm', 'Conv', 'AveragePool', 'Add', 'Clip']
-  bf16: &common_bf16 ['Concat', 'Gather', 'Reshape', 'Slice', 'Squeeze', 'Transpose', 'Unsqueeze',
+  bf16: &common_bf16 ['Concat', 'Gather', 'Reshape', 'Squeeze', 'Transpose', 'Unsqueeze',
     'Split', 'Sigmoid', 'Relu', 'Mul', 'MatMul', 'Gemm', 'Add']
   recipes: &default_optimization
     graph_optimization:   # from onnxruntime graph_optimization_level
