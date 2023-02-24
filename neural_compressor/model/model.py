@@ -165,7 +165,7 @@ class Model(object):
             backend_tmp = get_model_fwk_name(root)
             if backend_tmp == "pytorch" and backend == "default":
                 backend = "pytorch_fx"
-            elif "tensorflow" in backend_tmp:
+            else:
                 backend = backend_tmp
         elif backend == "ipex":
             backend = "pytorch_ipex"
