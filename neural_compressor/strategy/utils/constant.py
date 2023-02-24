@@ -29,3 +29,5 @@ PRECISION_SET_V2_0 = {'fp32', 'bf16'}
 auto_query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
 static_query_order = ['static', 'bf16', 'fp16', 'fp32']
 dynamic_query_order = ['dynamic', 'bf16', 'fp16', 'fp32']
+
+COMPUTATION_INTENSIVE_OPS_TYPE_LST = ['conv', 'matmul', 'linear']

@@ -183,20 +183,21 @@ class BasicTuneStrategy(TuneStrategy):
             # Initialize the tuning config for each op according to the quantization approach.
             op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
             # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
-            early_stop_tuning = False
             stage1_cnt = 0
             quant_ops = quant_mode_wise_items.get('static', [])
             quant_ops += quant_mode_wise_items.get('dynamic', [])
-            stage1_max = 1e9  # TODO set a more appropriate value
-            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
-                                                             op_item_dtype_dict, initial_op_tuning_cfg)
-            for op_tuning_cfg in op_wise_tuning_sampler:
-                stage1_cnt += 1
-                if early_stop_tuning and stage1_cnt > stage1_max:
-                    logger.info("Early stopping the stage 1.")
-                    break
+            op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], op_item_dtype_dict,\
+                initial_op_tuning_cfg)
+            for index, op_tuning_cfg in enumerate(op_wise_tuning_sampler):
+                if index == 1 and self._quant_level == 'auto':
+                    self._quant_level = None 
+                self._quantize_by_optype_wise()
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
+            
+            if self._quant_level == 'auto':
+                self._quant_level = None
+            self._quantize_by_optype_wise(stage1_cnt, self._quant_level)
             # Fallback the ops supported both static and dynamic from static to dynamic
             # Tuning items: None
             if self.cfg.quantization.approach == 'post_training_auto_quant':
@@ -250,6 +251,27 @@ class BasicTuneStrategy(TuneStrategy):
                     for op_tuning_cfg in fallback_sampler:
                         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                         yield op_tuning_cfg
+
+    def _collect_quantizable_ops(self, op_type_lst):
+        """Collect all quantizable ops at given list.
+
+        Args:
+            op_type_lst: op type list
+        """
+        result = {op_type : set() for op_type in op_type_lst}
+        for op in quant_ops:
+            if op[1] in op_type_lst:
+                result[op[1]].add(op)
+        return result
+        
+    
+    def _quantize_by_optype_wise(self):
+        """Quantize ops by op type wise."""
+        from .utils.constant import COMPUTATION_INTENSIVE_OPS_TYPE_LST as quant_op_type_lst
+        fp32_amap_tune_cfg = self._initialize_tune_cfg_with_fp32()
+        quant_ops = self._collect_op_by_type(quant_op_type_lst)
+            
+            
                         
     def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
         op_state = op_static_cfg.get_state()

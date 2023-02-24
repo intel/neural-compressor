@@ -100,6 +100,7 @@ class TuneStrategy(object):
         """
         self.model = model
         self.cfg = conf.usr_cfg
+        self._quant_lvel = 'auto' if self.cfg.quantization.quant_level else None
         self.history_path = self._create_path(self.cfg.tuning.workspace.path, './history.snapshot')
         self.deploy_path = self._create_path(self.cfg.tuning.workspace.path, 'deploy.yaml')
         self.eval_dataloader = eval_dataloader
@@ -184,6 +185,37 @@ class TuneStrategy(object):
             tune_config (dict): It's a dict containing the tuning configuration to traverse.
         """
         raise NotImplementedError
+    
+    def _initialize_tune_cfg_with_fp32(self):
+        """Initialize the tuning config with fp32 AMAP.
+
+        Returns:
+            The intialized tuning config.
+        """
+        tuning_space = self.tuning_space
+        quant_mode_wise_items = tuning_space.quant_mode_wise_items
+        # Initialize the tuning config
+        initial_tuning_cfg = {}
+        all_ops = set()
+        fp32_ops = []
+        for quant_mode, items_lst in quant_mode_wise_items.items():
+            items_name_lst = [item.name for item in items_lst]
+            all_ops = all_ops.union(set(items_name_lst))
+            if quant_mode == "fp32":
+                fp32_ops += [item.name for item in items_lst]
+        non_fp32_ops_dtype = {}
+        fp32_ops_set = set(fp32_ops)
+        for quant_mode, items_lst in quant_mode_wise_items.items():
+            items_name_set = set([item.name for item in items_lst])
+            tmp_non_fp32_ops = items_name_set.difference(fp32_ops_set)
+            if tmp_non_fp32_ops:
+                for op_info in tmp_non_fp32_ops:
+                    non_fp32_ops_dtype[op_info] = quant_mode
+        for op_info in fp32_ops:
+            initial_tuning_cfg[op_info] = tuning_space.get_default_config(op_info, "fp32")
+        for op_info, quant_mode in non_fp32_ops_dtype.items():
+            initial_tuning_cfg[op_info] = tuning_space.get_default_config(op_info, quant_mode)
+        return initial_tuning_cfg
 
     def distributed_next_tune_cfg_lst(self, comm):
         """Interface for generate the distributed next tuning config list.
