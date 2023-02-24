@@ -52,9 +52,9 @@ python -u ./run_glue.py \
         --overwrite_output_dir
 ``` 
 
-You can also try to use INC distributed tuning (Take mrpc task as an example) as follows:
+#### Try distributed tuning (take mrpc task as an example) as follows:
 
-You need to install mpi4py.
+Install mpi4py: 
 
 ```shell
 # Build Open MPI
