@@ -91,7 +91,7 @@ if __name__ == "__main__":
     eval_dataset = COCORawDataset(args.data_path)
     calib_dataset = COCORawDataset(args.data_path, filter=filter)
     eval_dataloader = COCORawDataloader(eval_dataset, batch_size=args.batch_size)
-    calib_dataloader = COCORawDataloader(calib_dataset, batch_size=args.batch_size)
+    calib_dataloader = COCORawDataloader(calib_dataset, 1)
     metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes': 0,
                                                                          'classes': 1,
                                                                          'scores': 2,

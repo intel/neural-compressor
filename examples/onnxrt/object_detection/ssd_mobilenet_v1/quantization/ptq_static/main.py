@@ -16,8 +16,6 @@
 # under the License.
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 
-import sys
-sys.path.append('/home/yuwenzho/example_new_api/neural-compressor')
 import logging
 import argparse
 
@@ -93,7 +91,7 @@ if __name__ == "__main__":
     eval_dataset = COCORawDataset(args.data_path, transform=transform)
     calib_dataset = COCORawDataset(args.data_path, transform=transform, filter=filter)
     eval_dataloader = COCORawDataloader(eval_dataset, batch_size=args.batch_size)
-    calib_dataloader = COCORawDataloader(calib_dataset, batch_size=args.batch_size)
+    calib_dataloader = COCORawDataloader(calib_dataset, 1)
     metric = COCOmAPv2(output_index_mapping={'num_detections': 0,
                                              'boxes': 1,
                                              'scores': 2,
