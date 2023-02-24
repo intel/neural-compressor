@@ -37,6 +37,8 @@ Tuning Strategies
 
  4. [Customize a New Tuning Strategy](#customize-a-new-tuning-strategy)
 
+ 5. [Distributed Tuning](#distributed-tuning)
+
 ## Introduction
 
 Intel® Neural Compressor aims to help users quickly deploy
@@ -409,3 +411,45 @@ The `next_tune_cfg` function is used to yield the next tune configuration accord
 The `traverse` function can be overridden optionally if the traverse process required by the new strategy is different from the one `TuneStrategy` base class implemented.
 
 An example of customizing a new tuning strategy can be reached at [TPE Strategy](../../neural_compressor/contrib/strategy/tpe.py).
+
+## Distributed Tuning
+
+### Design
+
+Intel® Neural Compressor supports distributed tuning config level parallel tuning on multi nodes. The Distributed Tuning is designed for speedup quantizing most models. After generating a tuning config list at each stage, Distributed Tuning start parallel execution tuning at each stage, and the tuning process ends once the condition meets the exit policy.
+
+### Implementation
+
+```python
+@strategy_registry
+class AbcTuneStrategy(TuneStrategy):
+    def __init__(self, model, conf, q_dataloader, q_func=None,
+                 eval_dataloader=None, eval_func=None, dicts=None):
+        ...
+
+    def distributed_next_tune_cfg_lst(self):
+        # generate the next tuning config list
+        ...
+
+    def traverse(self):
+        # if select distributed tuning
+        self.distributed_traverse()
+        ...
+
+    def distributed_traverse(self):
+         for tune_cfg_lst in self.distributed_next_tune_cfg_lst():
+            # distributed do quantization
+            ...
+
+```
+
+### Usage
+
+To use Distributed Tuning, user can set `use_distributed_tuning` to True in `PostTrainingQuantConfig`.
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig
+
+conf = PostTrainingQuantConfig(use_distributed_tuning=True)
+```
+An example of distributed tuning can be reached at [ptq_static_mrpc](../../examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx).
