@@ -133,7 +133,7 @@ class Dataloader:
                     continue
 
                 self.image_list.append(src)
-                self.label_list.append(int(label))
+                self.label_list.append(int(label + 1))
 
     def __iter__(self):
         for src, label in zip(self.image_list, self.label_list):
