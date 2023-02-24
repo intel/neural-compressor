@@ -1468,9 +1468,11 @@ class RescaleKerasPretrainTransform(BaseTransform):
     def __call__(self, sample):
         """Scale the values of the image in sample."""
         image, label = sample
-        if self.rescale:
-            image /= self.rescale[0]
-            image -= self.rescale[1] 
+        if image.dtype == np.dtype('uint8'):
+            self.rescale = np.array(self.rescale).astype('uint8')
+        if len(self.rescale) == 2:
+            image = image / self.rescale[0]
+            image = image - self.rescale[1] 
         return (image, label)
 
 @transform_registry(transform_type='Rescale', process="preprocess", \

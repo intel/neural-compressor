@@ -118,12 +118,19 @@ class GraphConverter:
         self.fake_quant = fake_quant
         self.itex_mode = itex_mode
         self.qdq_enabled = qdq_enabled
+        self.performance_only = performance_only
         self.quantized_node_info = []
         self._calibration_data = []
         self._fp32_print_data = []
         self.data_loader = data_loader
         self._check_tf_version()
         self._check_args()
+
+        self._fp32_model = Model(self.model._model, **self.model.kwargs)
+        self._fp32_model.graph_def = self.model.graph_def
+        self._fp32_model.output_tensor_names = self.output_tensor_names
+        self._fp32_model.input_tensor_names = self.input_tensor_names
+
         self._gen_tmp_filenames()
         self._kl_op_dict = {}
         self._kl_keys = []
@@ -138,18 +145,16 @@ class GraphConverter:
         self.scale_info.update({'bf16_ops': self.bf16_ops})
         self.scale_info.update({'fp32_ops': self.fp32_ops})
 
-        self._fp32_model = Model(self.model._model, **self.model.kwargs)
-        self._fp32_model.graph_def = self.model.graph_def
-        self._fp32_model.output_tensor_names = self.output_tensor_names
-        self._fp32_model.input_tensor_names = self.input_tensor_names
-
         self._sampling_model = Model(self.model._model, **self.model.kwargs)
         self._sampling_model.output_tensor_names = self.output_tensor_names
         self._sampling_model.input_tensor_names = self.input_tensor_names
 
-        self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
+        if self.performance_only:
+            # reuse the fp32 model for performance only mode
+            self._tmp_graph_def = self.model.graph_def
+        else:
+            self._tmp_graph_def = copy.deepcopy(self.model.graph_def)
         self.new_api = new_api #bool(version1_gte_version2(tf.version.VERSION, '2.8.0'))
-        self.performance_only = performance_only
         self.use_bf16 = use_bf16
         self.exclude_node_names = []
 
@@ -266,7 +271,7 @@ class GraphConverter:
             if version1_gte_version2(tf.version.VERSION, '2.9.0'):
                 is_supported_version = True
 
-            if version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
+            if tf.version.VERSION == '1.15.0-up3':
                 is_supported_version = True
 
             if tf.version.VERSION in TF_SPR_BASE_VERSIONS:
@@ -316,11 +321,15 @@ class GraphConverter:
                                                         'int8_bf16_mixed_precision_graph')
 
         self.output_graph = os.path.join(self._output_path, 'int8_final_fused_graph')
-        # to keep temp model
-        self._tmp_model = Model(self.model._model, **self.model.kwargs)
-        self._tmp_model.graph_def = self.model.graph_def
-        self._tmp_model.output_tensor_names = self.output_tensor_names
-        self._tmp_model.input_tensor_names = self.input_tensor_names
+        if self.performance_only:
+            # reuse the fp32 model for performance only mode
+            self._tmp_model = self._fp32_model
+        else:
+            # to keep temp model
+            self._tmp_model = Model(self.model._model, **self.model.kwargs)
+            self._tmp_model.graph_def = self.model.graph_def
+            self._tmp_model.output_tensor_names = self.output_tensor_names
+            self._tmp_model.input_tensor_names = self.input_tensor_names
 
     def convert(self):
         """Do convertion.

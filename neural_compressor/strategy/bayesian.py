@@ -79,7 +79,7 @@ class BayesianTuneStrategy(TuneStrategy):
         function with the tuning history and then finds the tuning configuration that maximizes 
         the expected improvement.
 
-        Yields:
+        Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         params = None
