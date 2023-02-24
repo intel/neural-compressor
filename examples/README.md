@@ -428,15 +428,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a></td>
-<<<<<<< HEAD
-=======
   </tr>
   <tr>
     <td>MobileNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a></td>
->>>>>>> a486f94fb8c7eb44ddca19ef3181aca3336d1831
   </tr>
   <tr>
     <td>*PeleeNet</td>
