@@ -2528,3 +2528,5 @@ MobilenetV
 InceptionResnetV
 zalandoresearch
 emCgSTlJaAg
+matsubara
+yoshitomo
