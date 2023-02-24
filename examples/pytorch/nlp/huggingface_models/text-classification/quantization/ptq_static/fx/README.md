@@ -4,9 +4,7 @@ Step-by-Step
 This document is used to list the steps of reproducing quantization and benchmarking results.
 Original BERT documents please refer to [BERT README](../../../../common/README.md) and [README](../../../../common/examples/text-classification/README.md).
 
-> **Note**
->
-> Dynamic Quantization is the recommended method for huggingface models. 
+> **Note** Dynamic Quantization is the recommended method for huggingface models. 
 
 # Prerequisite
 ## 1. Environment
@@ -32,9 +30,7 @@ python run_glue.py \
         --tune \
         --overwrite_output_dir
 ```
-> NOTE
->
-> /path/to/checkpoint/dir is the path to finetune output_dir
+> NOTE: /path/to/checkpoint/dir is the path to finetune output_dir
 
 or
 ```bash
