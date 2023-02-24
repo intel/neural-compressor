@@ -538,6 +538,7 @@ eg
 eightbit
 einstein
 el
+EleutherAI
 elif
 eltwise
 emb
