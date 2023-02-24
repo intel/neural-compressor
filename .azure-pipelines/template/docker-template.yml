@@ -20,8 +20,8 @@ parameters:
 steps:
 
   - script: |
-      if [[ $(docker ps -a | grep ${{ parameters.dockerConfigName }}) ]]; then
-         docker exec ${{ parameters.dockerConfigName }} bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
+      if [[ $(docker ps -a | grep ${{ parameters.containerName }}) ]]; then
+         docker exec ${{ parameters.containerName }} bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
       fi
     displayName: "Clean docker container"
 
