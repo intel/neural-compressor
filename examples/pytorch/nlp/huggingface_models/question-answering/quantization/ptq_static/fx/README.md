@@ -31,7 +31,9 @@ python -u ./run_qa.py \
 > NOTE
 >
 > /path/to/checkpoint/dir is the path to finetune output_dir
+
 or
+
 ```bash
 sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
 ```
@@ -60,7 +62,7 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
 </tbody>
 </table>
 
-# Tutorial of Enabling NLP Models with Intel® Neural Compressor.
+# Tutorial of Enabling NLP Models with Intel® Neural Compressor
 ## 1. Intel® Neural Compressor supports two usages:
 1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics.
 2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
