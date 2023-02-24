@@ -176,6 +176,8 @@ class Model(object):
             else:
                 model_type = get_model_type(root)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
+        elif backend == 'keras':
+            model = MODELS['keras'](root, **kwargs)
         else:
             model = MODELS[backend](root, **kwargs)
         return model

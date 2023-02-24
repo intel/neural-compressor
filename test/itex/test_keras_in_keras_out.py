@@ -150,12 +150,12 @@ class TestKerasInKerasOut(unittest.TestCase):
         self.assertEqual(found_quantize, True)
         self.assertEqual(found_dequantize, True)
 
-        # from neural_compressor.benchmark import fit
-        # from neural_compressor.config import BenchmarkConfig
-        # conf = BenchmarkConfig(backend='itex', iteration=100, cores_per_instance=1, num_of_instance=1)
-        # logger.info("=================Run BenchMark...")
-        # test_mode = 'performance'
-        # fit(model, conf, b_func=eval_func)
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
+        conf = BenchmarkConfig(backend='itex', iteration=100, cores_per_instance=1, num_of_instance=1)
+        logger.info("=================Run BenchMark...")
+        test_mode = 'performance'
+        fit(model, conf, b_func=eval_func)
 
     def test_keras_model_interface(self):
         logger.info("Run test_keras_model_interface case...")

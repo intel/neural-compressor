@@ -466,9 +466,9 @@ class Benchmark(object):
         if not isinstance(user_model, BaseModel):
             logger.warning("Force convert framework model to neural_compressor model.")
             if "tensorflow" in self.framework or self.framework == "keras":
-                self._model = NCModel(user_model, framework=self.framework, device=cfg.device)
+                self._model = NCModel(user_model, backend=self.framework, device=cfg.device)
             else:
-                self._model = NCModel(user_model, framework=self.framework)
+                self._model = NCModel(user_model, backend=self.framework)
         else:
             # It is config of neural_compressor version < 2.0, no need in 2.0
             if cfg.model.framework == "pytorch_ipex":
