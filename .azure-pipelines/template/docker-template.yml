@@ -18,14 +18,16 @@ parameters:
     default: "https://github.com/intel/neural-compressor"
 
 steps:
-
-  - script: |
-      docker ps -a
-      if [[ $(docker ps -q) ]]; then
-         echo "in remove ..."
-         docker exec $(docker ps -q) bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
-      fi
-    displayName: "Clean docker container"
+  - task: Bash@3
+    inputs:
+      targetType: "inline"
+      script: |
+        docker ps -a
+        if [[ $(docker ps -q) ]]; then
+            echo "in remove ..."
+            docker exec ${{ parameters.modelContainerName }} bash -c "ls -a /neural-compressor && rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* && ls -a /neural-compressor  || true"
+        fi
+    displayName: "Docker clean up"
 
   - ${{ if eq(parameters.dockerConfigName, 'commonDockerConfig') }}:
       - script: |
