@@ -72,13 +72,13 @@ RECIPES = {
         'last_conv_or_matmul_quantization' : [True, False],
         },
     "onnxruntime": {
-        'smooth_quant': [False, True],
+        # 'smooth_quant': [False, True], disable it first to align with algo.
         'first_conv_or_matmul_quantization' : [True, False],
         'last_conv_or_matmul_quantization' : [True, False],
         'pre_post_process_quantization' : [True, False],
         },
     "pytorch": {
-        'smooth_quant': [False, True],
+        # 'smooth_quant': [False, True], # disable it first to align with algo.
         },
 }
 
