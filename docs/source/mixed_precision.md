@@ -35,12 +35,29 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
 To get a bf16/fp16 model, users can use the Mixed Precision API as follows.
 
 
+Supported precisions for mix precision inlcude bf16 and fp16. If users want to get a pure fp16 or bf16 model, they should add another precision in excluded_precisions.
+
+- BF16:
+
 ```python
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 
-conf = MixedPrecisionConfig()
+conf = MixedPrecisionConfig(excluded_precisions=['fp16'])
+converted_model = mix_precision.fit(model, config=conf)
+converted_model.save('./path/to/save/')
+```
 
+- FP16:
+
+```python
+from neural_compressor import mix_precision
+from neural_compressor.config import MixedPrecisionConfig
+
+conf = MixedPrecisionConfig(
+        backend='onnxrt_cuda_ep',
+        device='gpu',
+        excluded_precisions=['bf16'])
 converted_model = mix_precision.fit(model, config=conf)
 converted_model.save('./path/to/save/')
 ```
@@ -63,4 +80,4 @@ converted_model.save('./path/to/save/')
 
     Currently Intel® Neural Compressor only support FP16 mixed precision for ONNX models.
     
-    To run FP16 mixed precision examples, users need to set 'device' of config to 'gpu'. 
+    To run FP16 mixed precision examples, users need to set 'device' of config to 'gpu' and 'backend' to 'onnxrt_cuda_ep'. 
