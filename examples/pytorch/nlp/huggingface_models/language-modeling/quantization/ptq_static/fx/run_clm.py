@@ -124,6 +124,9 @@ class ModelArguments:
     int8: bool = field(
         default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
     )
+    iters: int = field(
+        default=100, metadata={"help": "The inference iterations to run for benchmark."}
+    )
     performance: bool = field(
         default=False, metadata={"help": "get benchmark instead of accuracy"}
     )

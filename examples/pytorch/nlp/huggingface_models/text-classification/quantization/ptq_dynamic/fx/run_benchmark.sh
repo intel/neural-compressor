@@ -65,7 +65,7 @@ function run_benchmark {
         exit 1
     fi
 
-    if  [ "${topology}" = "bert_large_RTE" ]; then
+    if  [ "${topology}" = "bert_large_RTE_dynamic" ]; then
         TASK_NAME='rte'
         model_name_or_path=${input_model}
     elif [ "${topology}" = "xlm_roberta_MRPC" ]; then
