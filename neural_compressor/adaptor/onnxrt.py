@@ -1414,12 +1414,17 @@ class ONNXRTQuery(QueryBackendCapability):
             config['capabilities'] = {} 
 
         # generate other config content including precisions and ops 
-        precisions = [key for key in config['capabilities'].keys()]
+        precisions = list(version_config.keys() - {'version', 'recipes'})
         if 'fp32' not in precisions:
             precisions.append('fp32')
         config['precisions'] = {'names': ','.join(precisions)}
 
         op_types = {}
+        for precision in precisions:
+            if precision in config['capabilities']:
+                op_types[precision] = [op_type for op_type in config['capabilities'][precision].keys()]
+            elif precision in version_config:
+                op_types[precision] = version_config[precision]
         for precision, precision_config in config['capabilities'].items():
             op_types[precision] = [op_type for op_type in precision_config.keys()]
         if 'fp32' not in op_types:

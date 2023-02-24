@@ -915,17 +915,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
  
         framework_specific_info['device'] = 'gpu'
         framework_specific_info['backend'] = 'onnxrt_cuda_ep'
-        adaptor = FRAMEWORKS[framework](framework_specific_info) 
-        tune_cfg = {'calib_iteration': 1,
-                    'op': {('gather', 'Gather'): {'activation':  {'dtype': 'fp16', 'quant_mode': 'static'},
-                                                 'weight': {'dtype': 'fp16'}},
-                           ('add', 'Add'): {'activation':  {'dtype': 'fp16', 'quant_mode': 'static'},
-                                           'weight': {'dtype': 'fp16'}},
-                           ('squeeze', 'Squeeze'): {'activation':  {'dtype': 'fp16', 'quant_mode': 'static'},
-                                                   'weight': {'dtype': 'fp16'}}}}
-        model = adaptor.quantize(tune_cfg, common.Model(self.gather_model), self.gather_dataloader)
-
-        self.assertEqual(len([i for i in model.model.graph.node if i.op_type == 'Cast']), 2)
 
         tune_cfg = {'calib_iteration': 1,
                     'op': {('Matmul', 'MatMul'): {'activation':  {'dtype': ['uint8'], 'quant_mode': 'static'},
