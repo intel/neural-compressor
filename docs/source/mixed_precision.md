@@ -35,7 +35,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
 To get a bf16/fp16 model, users can use the Mixed Precision API as follows.
 
 
-Supported precisions for mix precision inlcude bf16 and fp16. If users want to get a pure fp16 or bf16 model, they should add another precision in excluded_precisions.
+Supported precisions for mix precision include bf16 and fp16. If users want to get a pure fp16 or bf16 model, they should add another precision into excluded_precisions.
 
 - BF16:
 
