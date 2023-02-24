@@ -38,6 +38,8 @@ steps:
   - ${{ if eq(parameters.dockerConfigName, 'gitCloneDockerConfig') }}:
       - script: |
           rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
+          mkdir ${BUILD_SOURCESDIRECTORY}
+          chmod 777 ${BUILD_SOURCESDIRECTORY}
           echo y | docker system prune
         displayName: "Clean workspace"
 
