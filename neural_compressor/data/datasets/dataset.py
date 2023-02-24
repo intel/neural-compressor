@@ -965,7 +965,7 @@ class MXNetImageFolder(ImageFolder):    # pragma: no cover
 
 
 @dataset_registry(dataset_type="ImageFolder", framework="tensorflow, tensorflow_itex", dataset_format='')
-class TensorflowImageFolder(ImageFolder):    # pragma: no cover 
+class Tensorflow(ImageFolder):    # pragma: no cover 
     """The Tensorflow Dataset for image folder.
 
     Expects the data folder to contain subfolders representing the classes to which

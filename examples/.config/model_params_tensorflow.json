@@ -163,6 +163,13 @@
       "main_script": "main.py",
       "batch_size": 32
     },
+    "resnetv2_keras_qat": {
+      "model_src_dir": "image_recognition/resnet_v2/quantization/qat",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
     "resnetv2_101": {
       "model_src_dir": "image_recognition/tensorflow_models/resnet_v2_101/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",

@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The configuration of the training loop."""
-
 import copy
 from .conf.pythonic_config import Config
 from .config import DistillationConfig, QuantizationAwareTrainingConfig, WeightPruningConfig
@@ -35,6 +33,7 @@ class CompressionManager:
 
     Examples:
         import neural_compressor.training.prepare_compression
+        
         compression_manager = prepare_compression(conf, model)
         compression_manager.callbacks.on_train_begin()
         model = compression_manager.model
@@ -68,7 +67,22 @@ class CompressionManager:
             self.fp32_model = None
 
     class CallBacks:
-        """Define the basic command for the training loop."""
+        """Define the basic command for the training loop.
+        
+        Example:
+            from neural_compressor.training import Pruning, prepare_compression
+            from neural_compressor.training import WeightPruningConfig
+            
+            configs = WeightPruningConfig(
+                pruning_type=args.pruning_type,
+                target_sparsity=args.target_sparsity,
+                start_step=num_warm,
+                end_step=num_iterations
+            )
+            compression_manager = prepare_compression(model=model, confs=configs)
+            compression_manager.callbacks.on_train_begin()
+            model = compression_manager.model
+        """
         def __init__(self, component):
             """Callbacks are used for execute the training procedure."""
             self.callbacks = \
@@ -150,6 +164,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
 
     Examples:
         import neural_compressor.training.prepare_compression
+        
         compression_manager = prepare_compression(conf, model)
         train_loop:
             compression_manager.on_train_begin()

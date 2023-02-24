@@ -64,6 +64,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.domain = framework_specific_info["domain"]
         self.recipes = framework_specific_info["recipes"]
         self.backend = PROVIDERS[framework_specific_info["backend"]]
+        self.performance_only = framework_specific_info.get("performance_only", False)
 
         if self.backend not in ort.get_all_providers():
             logger.warning("{} backend is not supported in current environment, "
@@ -148,8 +149,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.optype_statistics = None
 
-    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha,
-                                    percentile, op_types, scales_per_op):
+    def smooth_quant(self, model, dataloader, iterations, tune_cfg, alpha=0.5,
+                                    percentile=99.999, op_types=['MatMul', 'Linear', 'Conv'], scales_per_op=True):
         """Get augmented model with smooth quant.
 
         Args:
@@ -177,7 +178,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             black_nodes = [node for node in quantize_config if quantize_config[node] == 'fp32']
             white_nodes = [node for node in quantize_config if quantize_config[node] != 'fp32']
         
-        augment = ONNXRTAugment(model,
+        augment = ONNXRTAugment(self.pre_optimized_model,
                                 dataloader, self.quantizable_op_types,
                                 black_nodes=black_nodes, white_nodes=white_nodes,
                                 iterations=list(range(0, iterations)),
@@ -190,14 +191,14 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         for name in max_vals_per_channel.keys():
             curr_tensor_to_weight = []
             curr_tensor_to_weight_nodes = []
-            nodes = model.input_name_to_nodes[name]
+            nodes = self.pre_optimized_model.input_name_to_nodes[name]
             for node in nodes:
                 if node.op_type not in op_types:
                     continue
                 if len(node.input) >= 2:
                     input = node.input[1]  ##TODO always dump the index 1 to get the weight
-                    if model.get_initializer(input):
-                        weight = numpy_helper.to_array(model.get_initializer(input))
+                    if self.pre_optimized_model.get_initializer(input):
+                        weight = numpy_helper.to_array(self.pre_optimized_model.get_initializer(input))
                         curr_tensor_to_weight.append(weight)
                         curr_tensor_to_weight_nodes.append(node)
             input_tensors_2_weights[name] = curr_tensor_to_weight
@@ -210,22 +211,22 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                                                     input_tensors_2_weights_nodes, alpha)
             new_added_mul_nodes, new_init_tensors, op_nodes = insert_smooth_mul_op_per_op(scales, shape_infos,
                                                                                 input_tensors_2_weights_nodes)
-            adjust_weights_per_op(model, op_nodes, scales)
+            adjust_weights_per_op(self.pre_optimized_model, op_nodes, scales)
         else:
             from neural_compressor.adaptor.ox_utils.util import get_smooth_scales_per_input, \
                 insert_smooth_mul_op_per_input, adjust_weights_per_input
             scales = get_smooth_scales_per_input(max_vals_per_channel, input_tensors_2_weights, alpha)
             new_added_mul_nodes, new_init_tensors = insert_smooth_mul_op_per_input(scales, shape_infos,
                                                                             input_tensors_2_weights_nodes)
-            adjust_weights_per_input(model, input_tensors_2_weights_nodes, scales)
+            adjust_weights_per_input(self.pre_optimized_model, input_tensors_2_weights_nodes, scales)
 
-        model.add_nodes(new_added_mul_nodes)
-        model.add_initializers(new_init_tensors)
-        model.update()
-        model.topological_sort()
-        model.remove_unused_constant()
-        self.smooth_quant_model = model
-        return model
+        self.pre_optimized_model.add_nodes(new_added_mul_nodes)
+        self.pre_optimized_model.add_initializers(new_init_tensors)
+        self.pre_optimized_model.update()
+        self.pre_optimized_model.topological_sort()
+        self.pre_optimized_model.remove_unused_constant()
+        self.smooth_quant_model = self.pre_optimized_model
+        return self.smooth_quant_model
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
@@ -265,7 +266,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
 
-        tmp_model = copy.deepcopy(model)
+        if self.performance_only:
+            tmp_model = model
+        else:
+            try:
+                tmp_model = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                tmp_model = model
         iterations = tune_cfg.get('calib_iteration', 1)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if not self.dynamic:
@@ -312,7 +321,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.quantize_params = quantize_params
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
         from neural_compressor import options
-        quantizer = Quantizer(copy.deepcopy(model),
+        quantizer = Quantizer(tmp_model,
             quantize_config,
             format,
             self.static,
@@ -736,7 +745,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             model = self._revert_conv_add_fusion(model)
         model = split_shared_bias(model)
         model.topological_sort()
-        self.pre_optimized_model = copy.deepcopy(model)
+        self.pre_optimized_model = model
 
     def _revert_conv_add_fusion(self, model):
         from onnx import numpy_helper

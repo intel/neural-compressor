@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The exhaustive tuning strategy."""
-
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 
@@ -31,9 +29,12 @@ class ExhaustiveTuneStrategy(TuneStrategy):
     def next_tune_cfg(self):
         """Generate and yield the next tuning config using exhaustive search in tuning space.
         
-        It sequentially traverse all possible quantization tuning configurations in a tuning space.
+        It sequentially traverse all possible quantization tuning configurations
+        in a tuning space. From the perspective of the impact on performance,
+        we currently only traverse all possible quantization tuning configs.
+        Same reason as Bayesian, fallback datatypes are not included for now.
         
-        Yields:
+        Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         tuning_space = self.tuning_space

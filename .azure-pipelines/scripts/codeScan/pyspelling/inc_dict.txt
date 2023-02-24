@@ -2500,6 +2500,7 @@ SelfKnowledgeDistillationLossConfig
 DistillationConfig
 KnowledgeDistillationLossConfig
 confs
+TensorflowQATModel
 HBM
 Ponte
 SmoothQuant
