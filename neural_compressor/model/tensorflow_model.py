@@ -1088,7 +1088,7 @@ class TensorflowQATModel(TensorflowSavedModelModel):
                 self.keras_model = self._model
             else:
                 self.keras_model = tf.keras.models.load_model(self._model)
-                
+
         return self.keras_model
 
     @model.setter
