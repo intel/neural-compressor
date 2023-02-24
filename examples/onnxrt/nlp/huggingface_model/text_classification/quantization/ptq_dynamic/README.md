@@ -45,7 +45,7 @@ bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 
 ## 1. Quantization
 
-Quantize model with dynamic quantization:
+Dynamic quantization:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
