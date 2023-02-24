@@ -40,17 +40,11 @@ function run_tuning {
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
-    model_type='bert'
-    approach='post_training_dynamic_quant'
-    TASK_NAME='rte'
-    model_name_or_path=${input_model}
     
     if  [ "${topology}" = "bert_large_RTE_dynamic" ]; then
         TASK_NAME='rte'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "xlm_roberta_MRPC" ]; then
-        TASK_NAME='MRPC'
-        model_name_or_path=${input_model}
+    elif [ "${topology}" = "xlm-roberta-base_MRPC_dynamic" ]; then
+        TASK_NAME='mrpc'
     fi
 
     python -u ./run_glue.py \

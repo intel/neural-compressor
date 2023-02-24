@@ -54,8 +54,6 @@ function init_params {
 function run_benchmark {
     extra_cmd=''
     MAX_SEQ_LENGTH=128
-    TASK_NAME='rte'
-    model_name_or_path=${input_model}
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy"
     elif [[ ${mode} == "performance" ]]; then
@@ -67,10 +65,8 @@ function run_benchmark {
 
     if  [ "${topology}" = "bert_large_RTE_dynamic" ]; then
         TASK_NAME='rte'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "xlm_roberta_MRPC" ]; then
-        TASK_NAME='MRPC'
-        model_name_or_path=${input_model}
+    elif [ "${topology}" = "xlm-roberta-base_MRPC_dynamic" ]; then
+        TASK_NAME='mrpc'
     fi
 
     extra_cmd='--model_name_or_path '${input_model}

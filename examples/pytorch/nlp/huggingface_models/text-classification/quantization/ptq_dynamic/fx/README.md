@@ -60,10 +60,10 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
   <tr>
     <td>bert_large_RTE_dynamic</td>
     <td><a href="https://huggingface.co/yoshitomo-matsubara/bert-large-uncased-rte">yoshitomo-matsubara/bert-large-uncased-rte</a></td>
-    <td>rte</a></td>
+    <td>rte</td>
   </tr>
   <tr>
-    <td>xlm_roberta_MRPC</td>
+    <td>xlm-roberta-base_MRPC_dynamic</td>
     <td><a href="https://huggingface.co/Intel/xlm-roberta-base-mrpc">Intel/xlm-roberta-base-mrpc</a></td>
     <td>mrpc</td>
   </tr>

@@ -40,16 +40,11 @@ function run_tuning {
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
-    model_type='bert'
-    TASK_NAME='mrpc'
-    model_name_or_path=${input_model}
     
     if [ "${topology}" = "bert_large_RTE" ]; then
         TASK_NAME='rte'
-        model_name_or_path=${input_model}
     elif [ "${topology}" = "xlm-roberta-base_MRPC" ]; then
-        TASK_NAME='MRPC'
-        model_name_or_path=${input_model}
+        TASK_NAME='mrpc'
     fi
 
     python -u ./run_glue.py \

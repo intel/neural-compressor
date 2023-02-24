@@ -584,7 +584,7 @@
       "batch_size": 64,
       "new_benchmark": false
     },
-    "xlm_roberta_MRPC": {
+    "xlm-roberta-base_MRPC_dynamic": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
       "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/xlm_roberta_MRPC",
