@@ -138,7 +138,7 @@ class Quantization(Component):
         if cfg.quantization.quant_level == 0:
             strategy = "conservative"
             logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
-            
+
         if strategy == "mse_v2":
             if not (self.framework.startswith("tensorflow") or self.framework == 'pytorch_fx'):
                 strategy = "basic"
@@ -166,7 +166,7 @@ class Quantization(Component):
             self._eval_func,
             _resume,
             self.hooks)
-        
+
         if getattr(self._calib_dataloader, 'distributed', False):
             self.register_hook('on_train_begin', self.strategy.adaptor._pre_hook_for_hvd)
 
@@ -199,7 +199,7 @@ class Quantization(Component):
                     "Not found any quantized model which meet accuracy goal. Exit.")
 
             return self.strategy.best_qmodel
-    
+
     def distributed_execute(self):
         """Quantization distributed execute routinue based on strategy design."""
         from ..utils.utility import LazyImport

@@ -301,8 +301,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
     if isinstance(confs, List) and len(confs) > 1:
         for conf in confs:
             if isinstance(conf, QuantizationAwareTrainingConfig):
-                nc_model = Model(model, backend=conf.backend)
-                AwareTrainingQuantCallbacks(conf, model=nc_model)
+                nc_model = Model(model, backend=conf.backend, approach="quant_aware_training")
                 callbacks_list.append(AwareTrainingQuantCallbacks(conf, model=nc_model))
             elif isinstance(conf, WeightPruningConfig):
                 callbacks_list.append(PruningCallbacks(conf, model=model))
@@ -314,9 +313,8 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         if isinstance(confs, List):
             confs = confs[0]
         if isinstance(confs, QuantizationAwareTrainingConfig):
-            nc_model = Model(model, backend=confs.backend)
-            qat = AwareTrainingQuantCallbacks(confs, model=nc_model)
-            callbacks_list.append(qat)
+            nc_model = Model(model, backend=confs.backend, approach="quant_aware_training")
+            callbacks_list.append(AwareTrainingQuantCallbacks(confs, model=nc_model))
         elif isinstance(confs, WeightPruningConfig):
             callbacks_list.append(PruningCallbacks(confs, model=model))
         elif isinstance(confs, DistillationConfig):
@@ -367,7 +365,7 @@ class CallBacks:
         for callbacks in self.callbacks_list:
             res = callbacks.on_step_begin(batch_id)
             if res is not None:
-                res_list.append()
+                res_list.append(res)
         return res_list
 
     def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):

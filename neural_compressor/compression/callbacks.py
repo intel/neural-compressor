@@ -213,9 +213,12 @@ class BaseCallbacks(object):
             self.framework = get_model_fwk_name(
                 user_model.model if isinstance(user_model, BaseModel) else user_model)
             if self.framework == "tensorflow":
-                from ..model.tensorflow_model import get_model_type
-                if get_model_type(user_model) == 'keras' and self.cfg.model.backend == 'itex':
-                    self.framework = 'keras'
+                if self.cfg.quantization.approach == "quant_aware_training":
+                    self.framework = 'tensorflow_itex'
+                else:
+                    from ..model.tensorflow_model import get_model_type
+                    if get_model_type(user_model) == 'keras' and self.cfg.model.backend == 'itex':
+                        self.framework = 'keras'
             if self.framework == "pytorch":
                 if self.cfg.model.backend == "default":
                     self.framework = "pytorch_fx"

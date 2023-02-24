@@ -30,6 +30,7 @@ from neural_compressor.model.keras_model import KerasModel
 from neural_compressor.model.tensorflow_model import (
      TensorflowBaseModel,
      TensorflowModel,
+     TensorflowQATModel,
      get_model_type
      )
 
@@ -50,6 +51,7 @@ np = LazyImport('numpy')
 MODELS = {'tensorflow': TensorflowModel,
           'tensorflow_itex': TensorflowModel,
           'keras': KerasModel,
+          'tensorflow_qat': TensorflowQATModel,
           'mxnet': MXNetModel,
           'pytorch': PyTorchModel if TORCH else None,
           'pytorch_ipex': IPEXModel if TORCH else None,
@@ -171,6 +173,9 @@ class Model(object):
             backend = "pytorch_ipex"
 
         if 'tensorflow' in backend:
+            if kwargs.get("approach", None) == "quant_aware_training":
+                return TensorflowQATModel(root, **kwargs)
+
             if 'modelType' in kwargs:
                 model_type = kwargs['modelType']
             else:
