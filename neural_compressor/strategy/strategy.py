@@ -100,7 +100,10 @@ class TuneStrategy(object):
         """
         self.model = model
         self.cfg = conf.usr_cfg
-        self._quant_lvel = 'auto' if self.cfg.quantization.quant_level else None
+        if self.cfg.quantization.quant_level:
+            self._quant_level = self.cfg.quantization.quant_level
+        if self.cfg.quant_level:
+            self._quant_level = self.cfg.quant_level
         self.history_path = self._create_path(self.cfg.tuning.workspace.path, './history.snapshot')
         self.deploy_path = self._create_path(self.cfg.tuning.workspace.path, 'deploy.yaml')
         self.eval_dataloader = eval_dataloader
@@ -450,9 +453,10 @@ class TuneStrategy(object):
         
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
+        logger.info(f"Start tuning with quant level: {self._quant_level}")
         self._eval_baseline()
-        logger.info("use distributed traverse: {}".format(self.cfg.tuning.use_distributed_tuning))
         if self.cfg.tuning.use_distributed_tuning:
+            logger.info("use distributed traverse: {}".format(self.cfg.tuning.use_distributed_tuning))
             return self.distributed_traverse()
         trials_count = 0
         traverse_start_time = time()

@@ -818,7 +818,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
 
         conf = PostTrainingQuantConfig(
-            quant_level=0,  # the quantization level.
+            quant_level='auto',  # the quantization level.
             tuning_criterion=TuningCriterion(
                 timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
                 max_trials=100,  # optional. max tuning times.

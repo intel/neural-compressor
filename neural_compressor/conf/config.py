@@ -806,7 +806,6 @@ schema = Schema({
                                                       'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
-                                      'quant_level': 'auto',
                                       }): {
         Optional('approach', default='post_training_static_quant'): And(
             str,

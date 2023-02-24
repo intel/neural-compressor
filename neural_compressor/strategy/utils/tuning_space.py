@@ -562,7 +562,6 @@ class TuningSpace:
     
     def get_item_by_path(self, path, default=None):
         """Get the item according to the path."""
-        logger.info(f"Query item with path {path}") #TODO replace it with debug before merge
         item = self.root_item
         for val in path:
             if item is None:
@@ -685,7 +684,6 @@ def pattern_to_internal(pattern, default_dtype='int8'):
     if isinstance(pattern, str):
         pattern = ('precision', pattern) if pattern in PRECISION_SET_V2_0 else (pattern, (None))
     internal_pattern = (pattern[0], ((pattern[1],), (pattern[1],)))
-    logger.debug(f"# Convert pattern: {pattern_bk} into internal pattern {internal_pattern}.")
     return internal_pattern
 
 def pattern_to_path(pattern):
@@ -721,8 +719,6 @@ def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: T
     internal_pattern = pattern_to_internal(quant_mode)
     full_path = {'activation': None, 'weight': None}
     full_path['activation'], full_path['weight'] = pattern_to_path(internal_pattern)
-    logger.debug(f"Convert quant_mode: {quant_mode} into internal act_path {full_path['activation']}" + \
-        f" weight_path: {full_path['weight']}.")
     has_weight = op_name_type in tuning_space.ops_attr['weight']
 
     config_args = {}

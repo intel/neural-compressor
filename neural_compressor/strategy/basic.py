@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The basic tuning strategy."""
-import copy
+from copy import deepcopy
 import numpy as np
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
@@ -179,27 +179,36 @@ class BasicTuneStrategy(TuneStrategy):
         from copy import deepcopy
         tuning_space = self.tuning_space
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        self.basic_last_quant_config = None
+        self.early_stopping = False
+        # flag to record whether need to the op-type-wise quantized have been done
+        self._optype_wise_quant_flag = self._quant_level == 'auto'
         for calib_sampling_size in calib_sampling_size_lst:
             # Initialize the tuning config for each op according to the quantization approach.
             op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()
             # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
-            stage1_cnt = 0
             quant_ops = quant_mode_wise_items.get('static', [])
             quant_ops += quant_mode_wise_items.get('dynamic', [])
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], op_item_dtype_dict,\
                 initial_op_tuning_cfg)
             for index, op_tuning_cfg in enumerate(op_wise_tuning_sampler):
-                if index == 1 and self._quant_level == 'auto':
-                    self._quant_level = None 
-                self._quantize_by_optype_wise()
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                self.basic_last_quant_config = deepcopy(op_tuning_cfg)
+                if index == 1 and self._optype_wise_quant_flag:
+                    self._optype_wise_quant_flag = False
+                    for tune_cfg in self._quantize_by_optype_wise(deepcopy(self.basic_last_quant_config)):
+                        yield tune_cfg
+                    if self.early_stopping: return
                 yield op_tuning_cfg
             
-            if self._quant_level == 'auto':
-                self._quant_level = None
-            self._quantize_by_optype_wise(stage1_cnt, self._quant_level)
+            # To handle the case that only one trial at stage 1.
+            if self._optype_wise_quant_flag:
+                self._optype_wise_quant_flag = False
+                for tune_cfg in self._quantize_by_optype_wise(deepcopy(self.basic_last_quant_config)):
+                    yield tune_cfg
+                if self.early_stopping: return
+    
             # Fallback the ops supported both static and dynamic from static to dynamic
-            # Tuning items: None
             if self.cfg.quantization.approach == 'post_training_auto_quant':
                 static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
                                         item in tuning_space.query_items_by_quant_mode('dynamic')]
@@ -251,28 +260,39 @@ class BasicTuneStrategy(TuneStrategy):
                     for op_tuning_cfg in fallback_sampler:
                         op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                         yield op_tuning_cfg
-
-    def _collect_quantizable_ops(self, op_type_lst):
-        """Collect all quantizable ops at given list.
+    
+    def _quantize_by_optype_wise(self, quant_tune_cfg):
+        """Quantize ops by op type wise.
 
         Args:
-            op_type_lst: op type list
+            quant_tune_cfg: quantization config
+            calib_sampling_size: calibration sampling size
         """
-        result = {op_type : set() for op_type in op_type_lst}
-        for op in quant_ops:
-            if op[1] in op_type_lst:
-                result[op[1]].add(op)
-        return result
-        
-    
-    def _quantize_by_optype_wise(self):
-        """Quantize ops by op type wise."""
         from .utils.constant import COMPUTATION_INTENSIVE_OPS_TYPE_LST as quant_op_type_lst
+        self.re_quant = True
         fp32_amap_tune_cfg = self._initialize_tune_cfg_with_fp32()
-        quant_ops = self._collect_op_by_type(quant_op_type_lst)
-            
-            
-                        
+        fp32_amap_tune_cfg['calib_sampling_size'] = quant_tune_cfg['calib_sampling_size']
+        got_quant_model_meet_acc = False
+        for op_type in quant_op_type_lst:
+            quant_ops_cnt = 0
+            new_tune_cfg = deepcopy(fp32_amap_tune_cfg)
+            for op_info, op_config in quant_tune_cfg.items():
+                if op_info[1].lower().startswith(op_type):
+                    quant_ops_cnt += 1
+                    new_tune_cfg.update({op_info: deepcopy(op_config)})
+            if quant_ops_cnt:
+                logger.info(f"*** Try to quantize all {op_type} ops({quant_ops_cnt}).")
+                yield new_tune_cfg
+                if self.objectives.accuracy_meets():
+                    logger.info(f"*** Quantize all {op_type} ops({quant_ops_cnt}) and accuracy meet requirement.")
+                    self.best_qmodel = self.last_qmodel
+                    fp32_amap_tune_cfg = new_tune_cfg
+                else:
+                    logger.info(f"*** Quantize all {op_type} ops({quant_ops_cnt}) but accuracy not meet requirement.")
+        if got_quant_model_meet_acc:
+            self.early_stopping = True
+        self.re_quant = False
+
     def _initial_dynamic_cfg_based_on_static_cfg(self, op_static_cfg:OpTuningConfig):
         op_state = op_static_cfg.get_state()
         op_name = op_static_cfg.op_name
