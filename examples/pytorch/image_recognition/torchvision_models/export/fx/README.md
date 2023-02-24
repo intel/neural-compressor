@@ -23,7 +23,7 @@ Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagen
 ls /path/to/pytorch-imagenet
 train  val
 ls /path/to/onnx-imagenet-validation
-img val.txt
+ILSVRC2012_img_val val.txt
 ```
 
 # Run

@@ -229,6 +229,11 @@ if __name__ == "__main__":
         help="batch_size of dataloader"
     )
     parser.add_argument(
+        '--iters',
+        type=int,
+        help="iters of dataloader"
+    )
+    parser.add_argument(
         '--mode',
         type=str,
         help="benchmark mode of performance or accuracy"
@@ -243,7 +248,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model = onnx.load(args.model_path)
-    data_path = os.path.join(args.dataset_location, 'img')
+    data_path = os.path.join(args.dataset_location, 'ILSVRC2012_img_val')
     label_path = os.path.join(args.dataset_location, 'val.txt')
     dataloader = Dataloader(data_path, label_path, args.batch_size)
     top1 = TopK()
@@ -255,7 +260,12 @@ if __name__ == "__main__":
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(warmup=10, iteration=1000, cores_per_instance=4, num_of_instance=1)
+            conf = BenchmarkConfig(
+                warmup=10, 
+                iteration=args.iters, 
+                cores_per_instance=4, 
+                num_of_instance=1
+            )
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval(model)
