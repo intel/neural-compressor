@@ -146,12 +146,12 @@ if args.int8:
         q_model = quantization.fit(model,
                                    conf,
                                    calib_dataloader=calib_dataloader,
+                                   recipes={"smooth_quant": True},
                                    eval_func=eval_func)
     else:
         q_model = quantization.fit(model,
                                    conf,
                                    calib_dataloader=calib_dataloader,
-                                   recipes={"smooth_quant": True},
                                    eval_func=eval_func)
     save_model_name = args.model_name.split("/")[-1]
     q_model.save(f"{save_model_name}")
