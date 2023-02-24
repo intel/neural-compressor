@@ -364,9 +364,11 @@ class BasePattern:
         else:
             new_zero_cnt = adjust_zero_cnt - (gap_cnt - remaining_cnt)
             new_sparsity_ratio = float(new_zero_cnt) / adjust_total_cnt
-            ##adjust_zero_cnt = new_zero_cnt
             adjust_sparsity_ratio = new_sparsity_ratio
-            return True, adjust_sparsity_ratio
+            if adjust_sparsity_ratio <= 0:
+                return False, 0.0
+            else:
+                return True, adjust_sparsity_ratio
 
 
 @register_pattern('NxM')
@@ -659,7 +661,10 @@ class PatternNxM(BasePattern):
                     masks[key] = masks[key].repeat_interleave(block_size[0], 0).repeat_interleave(block_size[1], -1)
                     if keep_exact_sparsity_ratio:
                         zero_cnt = self.get_sparsity_ratio({key: masks[key]}, return_dict=True)["zero_cnt"]
-                        residual_k -= zero_cnt
+                        if residual_k <= zero_cnt:
+                            keep_exact_sparsity_ratio = False
+                        else:
+                            residual_k -= zero_cnt
                 else:
                     masks[key] = mask
             if not keep_exact_sparsity_ratio:
