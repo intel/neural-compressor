@@ -1,20 +1,35 @@
-# Evaluate performance of ONNX Runtime(YOLOv4) 
->ONNX runtime quantization is under active development. please use 1.6.0+ to get more quantization support. 
+Step-by-Step
+============
 
-This example load an object detection model converted from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [MS COCO 2017 dataset](https://cocodataset.org/#download). You need to download this dataset yourself.
+This example load an object detection model converted from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [MS COCO 2017 dataset](https://cocodataset.org/#download).
 
-### Environment
-onnx: 1.9.0
-onnxruntime: 1.10.0
+# Prerequisite
 
-### Prepare model
+## 1. Environment
+
+```shell
+pip install neural-compressor
+pip install -r requirements.txt
+```
+> Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
+
+## 2. Prepare Model
+
 Download model from [ONNX Model Zoo](https://github.com/onnx/models)
 
 ```shell
 wget https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/yolov4/model/yolov4.onnx
 ```
 
-### Quantization
+## 3. Prepare Dataset
+
+Download [MS COCO 2017 dataset](https://cocodataset.org/#download).
+
+# Run
+
+## 1. Quantization
+
+Static quantization with QOperator format:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
@@ -22,9 +37,8 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
                    --dataset_location=path/to/coco/dataset \
                    --quant_format="QOperator"
 ```
-Make sure **anno_path** in yolov4.yaml is updated to the path of label_map.yaml.
 
-### Performance
+## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model  \ # model path as *.onnx

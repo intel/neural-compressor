@@ -36,21 +36,12 @@ Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQu
 
 ## 1. Quantization
 
-Quantize model with dynamic quantization:
+Dynamic quantization:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
                    --dataset_location=/path/to/SQuAD/dataset 
-```
-
-Quantize model with QDQ mode:
-
-```bash
-bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
-                   --output_model=/path/to/model_tune \
-                   --dataset_location=/path/to/SQuAD/dataset \
-                   --quant_format='QDQ'
 ```
 
 ## 2. Benchmark

@@ -352,8 +352,8 @@ if __name__ == "__main__":
     parser.add_argument(
         '--quant_format',
         type=str,
-        default='default', 
-        choices=['default', 'QDQ', 'QOperator'],
+        default='QOperator', 
+        choices=['QOperator', 'QDQ'],
         help="quantization format"
     )
  
@@ -414,6 +414,7 @@ if __name__ == "__main__":
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(approach='static',
+                                         quant_format=args.quant_format,
                                          quant_level=0)
         q_model = quantization.fit(model, 
                                    config,

@@ -6,48 +6,30 @@ import os
 from run_onnx_squad import *
 import json
 from run_onnx_squad import read_squad_examples, convert_examples_to_features, write_predictions
+import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import tqdm
 from squad_evaluate import evaluate
+import sys
 
-max_seq_length = 384
+max_seq_length = 256
 doc_stride = 128
 max_query_length = 64
 n_best_size = 20
 max_answer_length = 30
 
-def parse_dummy_input(model, benchmark_nums, max_seq_length):
-    session = onnxruntime.InferenceSession(model.SerializeToString(), None,
-        providers=onnxruntime.get_available_providers())
-    shapes = []
-    lows = []
-    highs = []
-    for i in range(len(session.get_inputs())):
-        input_name = session.get_inputs()[i].name
-        input_shapes = session.get_inputs()[i].shape
-        shape = [benchmark_nums]
-        shape.append(max_seq_length)
-        if input_name == "input_ids":
-            low = 0.0
-            high = 1000.0
-        else:
-            low = 0.0
-            high = 2.0
-        shapes.append(tuple(shape))
-        lows.append(low)
-        highs.append(high)
-    return shapes, lows, highs
-
 class squadDataset(Dataset):
-    def __init__(self, input_ids, input_mask, segment_ids, bs):
+    def __init__(self, unique_ids, input_ids, input_mask, segment_ids, bs):
+        self.unique_ids = unique_ids
         self.input_ids = input_ids
         self.input_mask = input_mask
         self.segment_ids = segment_ids
         self.bs = bs
-    
+
     def __getitem__(self, index):
-        return (self.input_ids[index:index + self.bs][0], self.input_mask[index:index + self.bs][0], self.segment_ids[index:index + self.bs][0]), 0
+        return (list(range(index, index + self.bs)), self.input_ids[index:index + self.bs][0].astype(np.int64), 
+            self.input_mask[index:index + self.bs][0].astype(np.int64), self.segment_ids[index:index + self.bs][0].astype(np.int64)), 0
 
     def __len__(self):
         assert len(self.input_ids) == len(self.input_mask)
@@ -66,13 +48,14 @@ def evaluate_squad(model, dataloader, input_ids, eval_examples, extra_data, inpu
     all_results = []
     start = timer()
     for idx, (batch, label) in tqdm.tqdm(enumerate(dataloader), desc="eval"):
-        data = {"input_ids": np.array(batch[0]),
-                "input_mask": np.array(batch[1]),
-                "segment_ids": np.array(batch[2])}
-        result = session.run(["end_logits","start_logits"], data)
+        data = {"unique_ids_raw_output___9:0": np.array(batch[0], dtype=np.int64),
+                "input_ids:0": np.array(batch[1], dtype=np.int64),
+                "input_mask:0": np.array(batch[2], dtype=np.int64),
+                "segment_ids:0": np.array(batch[3], dtype=np.int64)}
+        result = session.run(["unique_ids:0","unstack:0", "unstack:1"], data)
         in_batch = result[0].shape[0]
         start_logits = [float(x) for x in result[1][0].flat]
-        end_logits = [float(x) for x in result[0][0].flat]
+        end_logits = [float(x) for x in result[2][0].flat]
         for i in range(0, in_batch):
             unique_id = len(all_results)
             all_results.append(RawResult(unique_id=unique_id, start_logits=start_logits,end_logits=end_logits))
@@ -97,28 +80,24 @@ def evaluate_squad(model, dataloader, input_ids, eval_examples, extra_data, inpu
     with open(output_prediction_file) as prediction_file:
         predictions = json.load(prediction_file)
     res = evaluate(dataset, predictions)
-    return res['f1']
+    return res['exact_match']
 
 def main():
     parser = argparse.ArgumentParser(description='onnx squad')
-    parser.add_argument('--model_path', required=True, type=str,
-                        help='model path')
-    parser.add_argument('--save_path', type=str, default='mobilbert_tune.onnx', 
+    parser.add_argument('--model_path', required=True, help='model path')
+    parser.add_argument('--save_path', type=str, default='bertsquad_tune.onnx', 
                         help='save tuned model path')
     parser.add_argument('--data_path', type=str,
                         help='datseset path')
     parser.add_argument('--tune', action='store_true', default=False, 
                         help='run neural_compressor tune')
-    parser.add_argument('--benchmark', action='store_true', default=False, 
+    parser.add_argument('--benchmark', action='store_true', default=False,
                         help='run benchmark')
     parser.add_argument('--mode', type=str, default='performance',
                         help="benchmark mode of performance or accuracy")
     parser.add_argument('--benchmark_nums', type=int, default=1000,
                         help="Benchmark numbers of samples")
-    parser.add_argument('--quant_format', type=str, default='Default',
-                        choices=['default', 'QDQ'],
-                        help="quantization format")
-    parser.add_argument('--batch_size', type=int, default=1,
+    parser.add_argument('--batch_size', type=int, default=1, 
                         help="batch size for benchmark")
     args = parser.parse_args()
 
@@ -133,7 +112,7 @@ def main():
     input_ids, input_mask, segment_ids, extra_data = convert_examples_to_features(eval_examples, tokenizer, 
                                                                             max_seq_length, doc_stride, max_query_length)
 
-    dataset = squadDataset(input_ids, input_mask, segment_ids, 1) 
+    dataset = squadDataset(eval_examples, input_ids, input_mask, segment_ids, 1) 
     eval_dataloader = DataLoader(dataset, batch_size=args.batch_size)
 
     def eval_func(model):
@@ -141,26 +120,23 @@ def main():
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        if args.quant_format == 'QDQ':
-            config = PostTrainingQuantConfig(approach='static', 
-                                            calibration_sampling_size=[8],
-                                            quant_format=args.quant_format)
-        else:
-            config = PostTrainingQuantConfig(approach='dynamic', 
-                                            calibration_sampling_size=[8])
+        from neural_compressor.utils.constant import FP32
+        config = PostTrainingQuantConfig(approach='dynamic',
+                                         op_name_list={'bert/encoder/layer_2/output/dense/MatMul': FP32,
+                                                       'bert/encoder/layer_10/output/dense/MatMul': FP32})
         q_model = quantization.fit(model, 
                                    config,
-                                   calib_dataloader=eval_dataloader,
                                    eval_func=eval_func)
         q_model.save(args.save_path)
 
     if args.benchmark:
+        model = onnx.load(args.model_path)
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             conf = BenchmarkConfig(iteration=100,
-                                   cores_per_instance=4,
-                                   num_of_instance=7)
+                                cores_per_instance=4,
+                                num_of_instance=7)
             fit(model, conf, b_dataloader=eval_dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)

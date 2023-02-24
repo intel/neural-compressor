@@ -143,13 +143,13 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        from neural_compressor import quantization, PostTrainingQuantConfig
-        from neural_compressor.config import AccuracyCriterion
+        from neural_compressor import quantization
+        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.absolute = 0.01
         config = PostTrainingQuantConfig(approach='static', 
                                          accuracy_criterion=accuracy_criterion,
                                          quant_format=args.quant_format,
-                                         recipes={'pre_post_process_quant': False})
+                                         recipes={'pre_post_process_quantization': False})
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

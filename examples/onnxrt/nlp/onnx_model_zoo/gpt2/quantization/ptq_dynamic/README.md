@@ -28,7 +28,7 @@ Please download [WikiText-2 dataset](https://s3.amazonaws.com/research.metamind.
 
 ## 1. Quantization
 
-Quantize model with dynamic quantization:
+Dynamic quantization:
 
 ```bash
 bash run_tuning.sh --dataset_location=/path/to/wikitext-2-raw/ \ 

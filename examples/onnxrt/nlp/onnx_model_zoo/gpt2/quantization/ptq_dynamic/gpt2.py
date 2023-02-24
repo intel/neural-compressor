@@ -258,16 +258,14 @@ def main():
             optimization_options=opt_options)
         model = model_optimizer.model  
 
-        from neural_compressor import quantization, PostTrainingQuantConfig
-        from neural_compressor.config import AccuracyCriterion
+        from neural_compressor import quantization
+        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
+        from neural_compressor.utils.constant import FP32
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.higher_is_better = False
         accuracy_criterion.relative = 0.11
         config = PostTrainingQuantConfig(approach='dynamic', 
-                                         op_name_list={'MatMul_2924': {
-                                                            'activation':  {'dtype': ['fp32']},
-                                                            'weight': {'dtype': ['fp32']}
-                                                        }},
+                                         op_name_list={'MatMul_2924': FP32},
                                          accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model, 
                                    config,

@@ -410,9 +410,9 @@ class _BaseQuantizationConfig:
                      'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
                      'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
                                                only valid for onnx models
-                     'first_conv_or_matmul_quant': whether quantize the first conv or matmul
-                     'last_conv_or_matmul_quant': whether quantize the last conv or matmul
-                     'pre_post_process_quant': whether quantize the ops in preprocess and postprocess
+                     'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
+                     'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
+                     'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
                      'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
                      'optypes_to_exclude_output_quant': don't quantize output of specified optypes
                      'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
@@ -501,14 +501,14 @@ class _BaseQuantizationConfig:
             return check_value("graph_optimization_level", val, str,
                 ["DISABLE_ALL", "ENABLE_BASIC", "ENABLE_EXTENDED", "ENABLE_ALL"])
 
-        def first_conv_or_matmul_quant(val):
-            return check_value("first_conv_or_matmul_quant", val, bool)
+        def first_conv_or_matmul_quantization(val):
+            return check_value("first_conv_or_matmul_quantization", val, bool)
 
-        def last_conv_or_matmul_quant(val):
-            return check_value("last_conv_or_matmul_quant", val, bool)
+        def last_conv_or_matmul_quantization(val):
+            return check_value("last_conv_or_matmul_quantization", val, bool)
 
-        def pre_post_process_quant(val):
-            return check_value("pre_post_process_quant", val, bool)
+        def pre_post_process_quantization(val):
+            return check_value("pre_post_process_quantization", val, bool)
 
         def add_qdq_pair_to_weight(val):
             return check_value("add_qdq_pair_to_weight", val, bool)
@@ -525,9 +525,9 @@ class _BaseQuantizationConfig:
                    "weight_correction": weight_correction,
                    "gemm_to_matmul": gemm_to_matmul,
                    "graph_optimization_level": graph_optimization_level,
-                   "first_conv_or_matmul_quant": first_conv_or_matmul_quant,
-                   "last_conv_or_matmul_quant": last_conv_or_matmul_quant,
-                   "pre_post_process_quant": pre_post_process_quant,
+                   "first_conv_or_matmul_quantization": first_conv_or_matmul_quantization,
+                   "last_conv_or_matmul_quantization": last_conv_or_matmul_quantization,
+                   "pre_post_process_quantization": pre_post_process_quantization,
                    "add_qdq_pair_to_weight": add_qdq_pair_to_weight,
                    "optypes_to_exclude_output_quant": optypes_to_exclude_output_quant,
                    "dedicated_qdq_pair": dedicated_qdq_pair

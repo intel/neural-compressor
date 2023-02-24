@@ -91,7 +91,7 @@ class Dataloader:
         import os
         import numpy as np
         from pycocotools.coco import COCO
-        from neural_compressor.experimental.metric.coco_label_map import category_map
+        from coco_label_map import category_map
         self.batch_size = batch_size
         self.image_list = []
         img_path = os.path.join(root, img_dir)
@@ -386,6 +386,6 @@ if __name__ == "__main__":
         config = PostTrainingQuantConfig(approach='static', 
                                          accuracy_criterion=accuracy_criterion,
                                          quant_format=args.quant_format,
-                                         recipes={'pre_post_process_quant': False})
+                                         recipes={'pre_post_process_quantization': False})
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

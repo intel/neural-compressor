@@ -53,8 +53,6 @@ require_version(
 
 logger = logging.getLogger(__name__)
 
-FP32_CONFIG = {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}}
-
 @dataclass
 class ModelArguments:
     """
@@ -114,6 +112,10 @@ class ModelArguments:
     batch_size: int = field(
         default=1,
         metadata={"help": ("batch size for benchmark")},
+    )
+    quant_format: str = field(
+        default="QOperator",
+        metadata={"help": ("quant format")},
     )
 
 
@@ -470,6 +472,7 @@ def main():
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.utils.constant import FP32
         calib_dataset = SQuADDataset(eval_dataset, model, label_names=["start_positions", "end_positions"])
         fp32_op_names = None
         if model_args.model_name_or_path == 'mrm8488/spanbert-finetuned-squadv1':
@@ -477,7 +480,8 @@ def main():
         elif model_args.model_name_or_path == 'salti/bert-base-multilingual-cased-finetuned-squad':
             fp32_op_names = ['MatMul_660', 'MatMul_566', 'Unsqueeze_91']
         config = PostTrainingQuantConfig(approach='static',
-                                         op_name_list={op_name:FP32_CONFIG for op_name in fp32_op_names if fp32_op_names})
+                                         quant_format=model_args.quant_format,
+                                         op_name_list={op_name:FP32 for op_name in fp32_op_names if fp32_op_names})
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,

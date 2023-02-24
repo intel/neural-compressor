@@ -911,20 +911,14 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         """
         # optype_wise and op_wise capability
         self._pre_optimize(model)
-        exclude_first_quantizable_op = True if ('first_conv_or_matmul_quant' in \
-            self.recipes and not self.recipes['first_conv_or_matmul_quant']) or \
-            ('first_conv_or_matmul_quantization' in self.recipes and \
-            not self.recipes['first_conv_or_matmul_quantization']) \
+        exclude_first_quantizable_op = True if 'first_conv_or_matmul_quantization' in \
+            self.recipes and not self.recipes['first_conv_or_matmul_quantization'] \
             else False
-        exclude_last_quantizable_op = True if ('last_conv_or_matmul_quant' in \
-            self.recipes and not self.recipes['last_conv_or_matmul_quant']) or \
-            ('last_conv_or_matmul_quantization' in self.recipes and \
-            not self.recipes['last_conv_or_matmul_quantization']) \
+        exclude_last_quantizable_op = True if 'last_conv_or_matmul_quantization' in \
+            self.recipes and not self.recipes['last_conv_or_matmul_quantization'] \
             else False
-        exclude_pre_post_process = True if ('pre_post_process_quant' in \
-            self.recipes and not self.recipes['pre_post_process_quant']) or \
-            ('pre_post_process_quantization' in self.recipes and \
-            not self.recipes['pre_post_process_quantization']) \
+        exclude_pre_post_process = True if 'pre_post_process_quantization' in \
+            self.recipes and not self.recipes['pre_post_process_quantization'] \
             else False
  
         quantizable_optype = set([i.op_type for i in self.pre_optimized_model.nodes()])

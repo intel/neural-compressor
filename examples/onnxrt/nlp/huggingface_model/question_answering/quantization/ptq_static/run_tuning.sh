@@ -17,6 +17,9 @@ function init_params {
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
+      --quant_format=*)
+          quant_format=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -41,7 +44,8 @@ function run_tuning {
             --save_path ${output_model} \
             --output_dir './output' \
             --overwrite_output_dir \
-            --model_name_or_path=${model_name_or_path} \
+            --model_name_or_path ${model_name_or_path} \
+            --quant_format ${quant_format} \
             --num_heads ${num_heads} \
             --hidden_size ${hidden_size} \
             --tune 

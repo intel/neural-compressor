@@ -104,7 +104,7 @@ class Dataloader:
         import os
         import numpy as np
         from pycocotools.coco import COCO
-        from neural_compressor.experimental.metric.coco_label_map import category_map
+        from coco_label_map import category_map
         self.batch_size = batch_size
         self.image_list = []
         img_path = os.path.join(root, img_dir)
@@ -524,16 +524,16 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        from neural_compressor import quantization, PostTrainingQuantConfig
-        from neural_compressor.config import AccuracyCriterion
+        from neural_compressor import quantization
+        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.absolute = 0.02
         config = PostTrainingQuantConfig(approach='static', 
                                          quant_format=args.quant_format,
                                          calibration_sampling_size=[1],
                                          accuracy_criterion=accuracy_criterion,
-                                         recipes={'first_conv_or_matmul_quant': False,
-                                                  'last_conv_or_matmul_quant': False,
-                                                  'pre_post_process_quant': False})
+                                         recipes={'first_conv_or_matmul_quantization': False,
+                                                  'last_conv_or_matmul_quantization': False,
+                                                  'pre_post_process_quantization': False})
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

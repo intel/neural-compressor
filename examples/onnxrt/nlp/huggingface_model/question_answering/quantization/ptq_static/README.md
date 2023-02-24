@@ -32,11 +32,12 @@ Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQu
 
 ## 1. Quantization
 
-Quantize model with static quantization:
+Static quantization with QOperator format:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
-                   --output_model=/path/to/model_tune 
+                   --output_model=/path/to/model_tune \
+                   --quant_format="QOperator"
 ```
 
 

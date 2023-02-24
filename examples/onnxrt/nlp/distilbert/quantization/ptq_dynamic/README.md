@@ -1,13 +1,20 @@
-# Evaluate performance of ONNX Runtime(DistilBERT) 
->ONNX runtime quantization is under active development. please use 1.6.0+ to get more quantization support. 
+Step-by-Step
+============
 
-This example load a language translation model and confirm its accuracy and speed based on [GLUE data](https://gluebenchmark.com/). 
+This example load a DistilBERT model and confirm its accuracy and speed based on [GLUE data](https://gluebenchmark.com/). 
 
-### Environment
-onnx: 1.7.0
-onnxruntime: 1.6.0+
+# Prerequisite
 
-### Prepare dataset
+## 1. Environment
+
+```shell
+pip install neural-compressor
+pip install -r requirements.txt
+```
+> Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
+
+## 2. Prepare Dataset
+
 download the GLUE data with `prepare_data.sh` script.
 ```shell
 export GLUE_DIR=/path/to/glue_data
@@ -16,7 +23,8 @@ export TASK_NAME=MRPC
 bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 ```
 
-### Prepare model
+## 3. Prepare Model
+
 Please refer to [Bert-GLUE_OnnxRuntime_quantization guide](https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/notebooks/Bert-GLUE_OnnxRuntime_quantization.ipynb) for detailed model export. The following is a simple example.
 
 Use [Huggingface Transformers](https://github.com/huggingface/transformers/tree/v2.2.1) to fine-tune the model based on the [MRPC](https://github.com/huggingface/transformers/tree/master/examples/text-classification#mrpc) example with command like:
@@ -49,9 +57,11 @@ bash prepare_model.sh --input_dir=$OUT_DIR \
                       --output_model=path/to/model # model path as *.onnx
 ```
 
-### Quantization
+# Run
 
-Quantize model with dynamic quantization:
+## 1. Quantization
+
+Dynamic quantization:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
@@ -59,7 +69,7 @@ bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
                    --dataset_location=path/to/glue/data 
 ```
 
-### Benchmark
+## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx

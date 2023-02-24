@@ -73,6 +73,18 @@ parser.add_argument(
     type=str,
     help="benchmark mode of performance or accuracy"
 )
+parser.add_argument(
+    '--quant_format',
+    type=str,
+    choices=['QOperator', 'QDQ'],
+    help="quantization format"
+)
+parser.add_argument(
+    '--batch_size',
+    type=int,
+    default=1,
+    help="quantization format"
+)
 args = parser.parse_args()
 crop_sz = (800, 800)
 cell_width = 2
@@ -206,10 +218,9 @@ class IoU:
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    batch_size = 1
     args.data_path = args.data_path.replace('\\', '/')
     label_path = os.path.join(args.data_path.split('/leftImg8bit/val')[0], 'gtFine', 'val')    
-    dataloader  = Dataloader(args.data_path, label_path, batch_size=batch_size)
+    dataloader  = Dataloader(args.data_path, label_path, batch_size=args.batch_size)
     metric = IoU()
 
     def eval_func(model):
@@ -249,14 +260,16 @@ if __name__ == "__main__":
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
-            print("Batch size = %d" % batch_size)
+            print("Batch size = %d" % args.batch_size)
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.config import AccuracyCriterion
-        accuracy_criterion = AccuracyCriterion(higher_is_better=False, criterion='absolute')
+        accuracy_criterion = AccuracyCriterion()
+        accuracy_criterion.absolute = 0.01
         config = PostTrainingQuantConfig(approach='static', 
+                                         quant_format=args.quant_format,
                                          accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

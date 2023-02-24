@@ -104,21 +104,21 @@
       "new_benchmark": true
     },
     "bert_squad_model_zoo_dynamic": {
-      "model_src_dir": "nlp/onnx_model_zoo/bert-squad/quantization/ptq",
+      "model_src_dir": "nlp/onnx_model_zoo/bert-squad/quantization/ptq_dynamic",
       "dataset_location": "/tf_dataset2/datasets/squad",
       "input_model": "/tf_dataset2/models/onnx/bert_squad/bert_squad_model_zoo.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "mobilebert_squad_mlperf_dynamic": {
-      "model_src_dir": "nlp/onnx_model_zoo/mobilebert/quantization/ptq",
+      "model_src_dir": "nlp/onnx_model_zoo/mobilebert/quantization/ptq_dynamic",
       "dataset_location": "/tf_dataset2/datasets/squad",
       "input_model": "/tf_dataset2/models/onnx/mobilebert_squad/mobilebert_squad_mlperf.onnx",
       "main_script": "main.py",
       "batch_size": 1
     },
     "gpt2_lm_head_wikitext_model_zoo_dynamic": {
-      "model_src_dir": "nlp/onnx_model_zoo/gpt2/quantization/ptq",
+      "model_src_dir": "nlp/onnx_model_zoo/gpt2/quantization/ptq_dynamic",
       "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/",
       "input_model": "/tf_dataset2/models/onnx/gpt2/gpt2_lm_head_wikitext_model_zoo.onnx",
       "main_script": "gpt2.py",
@@ -369,7 +369,7 @@
       "new_benchmark": true
     },
     "mobilebert_squad_mlperf_qdq": {
-      "model_src_dir": "nlp/onnx_model_zoo/mobilebert/quantization/ptq",
+      "model_src_dir": "nlp/onnx_model_zoo/mobilebert/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/squad",
       "input_model": "/tf_dataset2/models/onnx/mobilebert_squad/mobilebert_squad_mlperf-13.onnx",
       "main_script": "main.py",
@@ -513,7 +513,7 @@
       "batch_size": 1
     },
     "duc": {
-      "model_src_dir": "object_detection/onnx_model_zoo/DUC/quantization/ptq",
+      "model_src_dir": "object_detection/onnx_model_zoo/DUC/quantization/ptq_static",
       "dataset_location": "/tf_dataset2/datasets/leftImg8bit/val",
       "input_model": "/tf_dataset2/models/onnx/DUC/ResNet101-DUC-12.onnx",
       "main_script": "main.py",
@@ -550,7 +550,7 @@
       "new_benchmark": true
     },
     "BiDAF_dynamic": {
-      "model_src_dir": "nlp/onnx_model_zoo/BiDAF/quantization/ptq",
+      "model_src_dir": "nlp/onnx_model_zoo/BiDAF/quantization/ptq_dynamic",
       "dataset_location": "/tf_dataset2/datasets/squad/dev-v1.1.json",
       "input_model": "/tf_dataset2/models/onnx/BiDAF/bidaf-11.onnx",
       "main_script": "main.py",
