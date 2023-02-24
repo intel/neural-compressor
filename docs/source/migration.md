@@ -156,7 +156,7 @@ Similar to PTQ, it requires a `conf.yaml` (https://github.com/intel/neural-compr
 
 **Quantization with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, this `conf.yaml` is set via the `QuantizationAwareTrainingConfig`. The corresponding information should be written as follows (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.)
+In Intel Neural Compressor 2.X, this `conf.yaml` is set via the `QuantizationAwareTrainingConfig`. The corresponding information should be written as follows (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.)，
 
 ```python
 from neural_compressor.config import QuantizationAwareTrainingConfig
