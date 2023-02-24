@@ -63,8 +63,6 @@ def set_all_env_var(conf, overwrite_existing=False):
         conf['num_of_instance'] = 1
         conf['cores_per_instance'] = cpu_counts
     if 'cores_per_instance' in conf:
-        print("====cores_per_instance======", conf['cores_per_instance'])
-        print("====num_of_instance======", conf['num_of_instance'])
         assert conf['cores_per_instance'] * conf['num_of_instance'] <= cpu_counts,\
             'num_of_instance * cores_per_instance should <= cpu physical cores'
     else:

@@ -82,7 +82,7 @@ function check_perf_gap() {
 }
 
 function run_performance() {
-    cmd="${benchmark_cmd} --input_model=${input_model} --mode=performance"
+    cmd="${benchmark_cmd} --input_model=${input_model}"
     if [ "${new_benchmark}" == "true" ]; then
         $BOLD_YELLOW && echo "run with internal benchmark..." && $RESET
         export NUM_OF_INSTANCE=2

@@ -33,27 +33,23 @@ if [ "${model}" == "resnet50v1.5" ]; then
     new_benchmark=true
     inc_new_api=true
     tuning_cmd="bash run_tuning.sh --dataset_location=${dataset_location} --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --dataset_location=${dataset_location} --batch_size=1"
+    benchmark_cmd="bash run_benchmark.sh --dataset_location=${dataset_location} --batch_size=1 --mode=performance"
 elif [ "${model}" == "ssd_resnet50_v1" ];then
-    model_src_dir="object_detection/tensorflow_models/quantization/ptq"
+    model_src_dir="object_detection/tensorflow_models/ssd_resnet50_v1/quantization/ptq"
     dataset_location="/tf_dataset/tensorflow/mini-coco-100.record"
     input_model="/tf_dataset/pre-train-model-oob/object_detection/ssd_resnet50_v1/frozen_inference_graph.pb"
-    yaml="ssd_resnet50_v1.yaml"
-    strategy="basic"
-    batch_size=1
     new_benchmark=true
-    tuning_cmd="bash run_tuning.sh --config=${yaml} --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
+    inc_new_api=true
+    tuning_cmd="bash run_tuning.sh --dataset_location=${dataset_location} --input_model=${input_model}"
+    benchmark_cmd="bash run_benchmark.sh --dataset_location=${dataset_location} --batch_size=1 --mode=performance"
 elif [ "${model}" == "ssd_mobilenet_v1_ckpt" ];then
-    model_src_dir="object_detection/tensorflow_models/quantization/ptq"
+    model_src_dir="object_detection/tensorflow_models/ssd_mobilenet_v1/quantization/ptq"
     dataset_location="/tf_dataset/tensorflow/mini-coco-100.record"
     input_model="/tf_dataset/pre-train-model-oob/object_detection/ssd_mobilenet_v1"
-    yaml="ssd_mobilenet_v1.yaml"
-    strategy="basic"
-    batch_size=1
     new_benchmark=true
-    tuning_cmd="bash run_tuning.sh --config=${yaml} --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --config=${yaml} --mode=performance"
+    inc_new_api=true
+    tuning_cmd="bash run_tuning.sh --dataset_location=${dataset_location} --input_model=${input_model}"
+    benchmark_cmd="bash run_benchmark.sh --dataset_location=${dataset_location} --batch_size=1 --mode=performance"
 elif [ "${model}" == "inception_v1" ]; then
     model_src_dir="image_recognition/tensorflow_models/quantization/ptq"
     dataset_location="/tf_dataset/dataset/TF_mini_imagenet"
