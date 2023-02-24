@@ -118,6 +118,8 @@ class PostTrainingQuant:
         """Quantization execute routinue based on strategy design."""
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
+                logger.debug("Dump user configuration:")
+                logger.debug(self.conf.usr_cfg)
                 self.strategy.traverse()
         except KeyboardInterrupt:
             pass
