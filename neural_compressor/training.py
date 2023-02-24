@@ -365,7 +365,7 @@ class CallBacks:
         for callbacks in self.callbacks_list:
             res = callbacks.on_step_begin(batch_id)
             if res is not None:
-                res_list.append()
+                res_list.append(res)
         return res_list
 
     def on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
