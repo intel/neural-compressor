@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # for test
+
 """Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques."""
 from .benchmark import Benchmark
 from .version import __version__
