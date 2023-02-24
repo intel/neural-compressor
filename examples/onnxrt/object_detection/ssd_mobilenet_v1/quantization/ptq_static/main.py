@@ -16,7 +16,8 @@
 # under the License.
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 
-
+import sys
+sys.path.append('/home/yuwenzho/example_new_api/neural-compressor')
 import logging
 import argparse
 
@@ -89,8 +90,10 @@ if __name__ == "__main__":
     model = onnx.load(args.model_path)
     transform = ComposeTransform([ResizeTransform(size=300)])
     filter = LabelBalanceCOCORawFilter()
-    dataset = COCORawDataset(args.data_path, transform=transform, filter=filter)
-    dataloader = COCORawDataloader(dataset, batch_size=args.batch_size)
+    eval_dataset = COCORawDataset(args.data_path, transform=transform)
+    calib_dataset = COCORawDataset(args.data_path, transform=transform, filter=filter)
+    eval_dataloader = COCORawDataloader(eval_dataset, batch_size=args.batch_size)
+    calib_dataloader = COCORawDataloader(calib_dataset, batch_size=args.batch_size)
     metric = COCOmAPv2(output_index_mapping={'num_detections': 0,
                                              'boxes': 1,
                                              'scores': 2,
@@ -102,7 +105,7 @@ if __name__ == "__main__":
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
-        for idx, (inputs, labels) in enumerate(dataloader):
+        for idx, (inputs, labels) in enumerate(eval_dataloader):
             if not isinstance(labels, list):
                 labels = [labels]
             if len_inputs == 1:
@@ -130,7 +133,7 @@ if __name__ == "__main__":
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=4,
                                    num_of_instance=1)
-            fit(model, conf, b_dataloader=dataloader)
+            fit(model, conf, b_dataloader=eval_dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)
             print("Batch size = %d" % args.batch_size)
@@ -149,5 +152,5 @@ if __name__ == "__main__":
                                          quant_format=args.quant_format,
                                          calibration_sampling_size=[50],
                                          op_name_list={op_name:FP32 for op_name in fp32_op_names})
-        q_model = quantization.fit(model, config, calib_dataloader=dataloader, eval_func=eval_func)
+        q_model = quantization.fit(model, config, calib_dataloader=calib_dataloader, eval_func=eval_func)
         q_model.save(args.output_model)

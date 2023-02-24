@@ -328,7 +328,7 @@
       "batch_size": 8
     },
     "mobilebert_MRPC_qdq": {
-      "model_src_dir": "nlp/mobilebert/quantization/ptq_staitc",
+      "model_src_dir": "nlp/mobilebert/quantization/ptq_static",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/mobilebert_MRPC/mobilebert-uncased.onnx",
       "main_script": "main.py",
