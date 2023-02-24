@@ -1,0 +1,207 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node`
+==========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node
+
+.. autoapi-nested-parse::
+
+   ONNX Node wrapper for Tensorflow model converting to ONNX model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode
+
+
+
+
+.. py:class:: OnnxNode(node, graph, skip_conversion=False)
+
+   A ONNX Node Wrapper used for graph manipulations.
+
+   .. py:property:: input
+
+      Get node input.
+
+   .. py:property:: output
+
+      Get node output.
+
+   .. py:property:: inputs
+
+      Input node objects.
+
+   .. py:property:: attr
+
+      Get node attributes.
+
+   .. py:property:: name
+
+      Get op name.
+
+   .. py:property:: op
+
+      Get node's op.
+
+   .. py:property:: type
+
+      Return Op type.
+
+   .. py:property:: domain
+
+      Return Op domain.
+
+   .. py:property:: data_format
+
+      Return data_format.
+
+   .. py:property:: summary
+
+      Return node summary information.
+
+   .. py:property:: skip_conversion
+
+      Get skip conversion setting.
+
+   .. py:property:: output_shapes
+
+      Get output shapes.
+
+   .. py:property:: output_dtypes
+
+      Get output dtypes.
+
+   .. py:method:: get_value_attr()
+
+      Return onnx attr for value property of node.
+
+
+   .. py:method:: get_onnx_attrs()
+
+      Return onnx valid attributes.
+
+
+   .. py:method:: child_name()
+
+      Set child name.
+
+
+   .. py:method:: is_nhwc()
+
+      Return True if node is in NHWC format.
+
+
+   .. py:method:: is_const()
+
+      Return True if node is a constant.
+
+
+   .. py:method:: is_scalar()
+
+      Return True if node is a constant with a scalar value.
+
+
+   .. py:method:: is_graph_input()
+
+      Check if the node is the input of the graph.
+
+
+   .. py:method:: is_graph_input_default_const()
+
+      Check if the node is the input of the graph and const.
+
+
+   .. py:method:: is_while()
+
+      Check if the node is while op.
+
+
+   .. py:method:: get_attr(name, default=None)
+
+      Get raw attribute value.
+
+
+   .. py:method:: get_attr_value(name, default=None)
+
+      Get attribute value.
+
+
+   .. py:method:: get_attr_int(name)
+
+      Get attribute value as int.
+
+
+   .. py:method:: get_attr_str(name, encoding='utf-8')
+
+      Get attribute value as string.
+
+
+   .. py:method:: set_attr(name, value)
+
+      Set node's attribute.
+
+
+   .. py:method:: set_attr_onnx(value)
+
+      Set node's onnx attributes.
+
+
+   .. py:method:: need_skip()
+
+      Check if need to skip conversion.
+
+
+   .. py:method:: get_tensor_value(as_list=True)
+
+      Get value for onnx tensor.
+
+      :param as_list: whether return numpy ndarray in list.
+
+      :returns: If as_list=True, return the array as a (possibly nested) list.
+                Otherwise, return data of type np.ndarray.
+
+                If a tensor is a scalar having value 1,
+                    when as_list=False, return np.array(1), type is <class 'numpy.ndarray'>
+                    when as_list=True, return 1, type is <class 'int'>.
+
+
+   .. py:method:: scalar_to_dim1()
+
+      Get value for onnx tensor.
+
+
+   .. py:method:: set_tensor_value(new_val)
+
+      Set new value for existing onnx tensor.
+
+      :param new_val: value of type numpy ndarray
+
+
+   .. py:method:: get_body_graphs()
+
+      Get body graphs.
+
+
+   .. py:method:: set_body_graph_as_attr(attr_name, graph)
+
+      Set body graphs as attribute.
+
+
+   .. py:method:: update_proto()
+
+      Update protobuf from internal structure.
+
+
+   .. py:method:: get_implicit_inputs(recursive=True)
+
+      Get implicit inputs if the node has attributes being GraphProto.
+
+
+

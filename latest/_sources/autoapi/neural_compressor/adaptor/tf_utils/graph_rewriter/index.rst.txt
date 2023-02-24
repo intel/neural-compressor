@@ -18,6 +18,7 @@ Subpackages
    bf16/index.rst
    generic/index.rst
    int8/index.rst
+   onnx/index.rst
    qdq/index.rst
 
 

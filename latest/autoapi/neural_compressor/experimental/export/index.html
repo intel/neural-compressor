@@ -89,6 +89,7 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="qlinear2qdq/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.qlinear2qdq</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="tf2onnx/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.tf2onnx</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="torch2onnx/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.torch2onnx</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.export.utils</span></code></a></li>
 </ul>
@@ -108,6 +109,12 @@
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.export.onnx_qlinear_to_qdq" title="neural_compressor.experimental.export.onnx_qlinear_to_qdq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">onnx_qlinear_to_qdq</span></code></a>(model, input_name_to_nodes)</p></td>
 <td><p>Export ONNX QLinearops model into QDQ model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.export.tf_to_fp32_onnx" title="neural_compressor.experimental.export.tf_to_fp32_onnx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tf_to_fp32_onnx</span></code></a>(graph_def, save_path[, opset_version, ...])</p></td>
+<td><p>Export FP32 Tensorflow model into FP32 ONNX model using tf2onnx tool.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.export.tf_to_int8_onnx" title="neural_compressor.experimental.export.tf_to_int8_onnx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tf_to_int8_onnx</span></code></a>(int8_model, save_path[, ...])</p></td>
+<td><p>Export INT8 Tensorflow model into INT8 ONNX model.</p></td>
 </tr>
 </tbody>
 </table>
@@ -172,6 +179,42 @@ Defaults to ‘QDQ_OP_FP32_BIAS’.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>ModelProto</em>) – int8 onnx model.</p></li>
 <li><p><strong>input_name_to_nodes</strong> (<em>dict</em>) – the mapping of tensor name and its destination nodes.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.export.tf_to_fp32_onnx">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.</span></span><span class="sig-name descname"><span class="pre">tf_to_fp32_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs_as_nchw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.tf_to_fp32_onnx" title="Permalink to this definition"></a></dt>
+<dd><p>Export FP32 Tensorflow model into FP32 ONNX model using tf2onnx tool.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_def</strong> (<em>graph_def to convert</em>) – fp32 graph_def.</p></li>
+<li><p><strong>save_path</strong> (<em>str</em>) – save path of ONNX model.</p></li>
+<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – opset version. Defaults to 14.</p></li>
+<li><p><strong>input_names</strong> (<em>list</em><em>, </em><em>optional</em>) – input names. Defaults to None.</p></li>
+<li><p><strong>output_names</strong> (<em>list</em><em>, </em><em>optional</em>) – output names. Defaults to None.</p></li>
+<li><p><strong>inputs_as_nchw</strong> (<em>list</em><em>, </em><em>optional</em>) – transpose the input. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.export.tf_to_int8_onnx">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.export.</span></span><span class="sig-name descname"><span class="pre">tf_to_int8_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">int8_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs_as_nchw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.export.tf_to_int8_onnx" title="Permalink to this definition"></a></dt>
+<dd><p>Export INT8 Tensorflow model into INT8 ONNX model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int8_model</strong> (<em>tensorflow ITEX QDQ model</em>) – int8 model.</p></li>
+<li><p><strong>save_path</strong> (<em>str</em>) – save path of ONNX model.</p></li>
+<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – opset version. Defaults to 14.</p></li>
+<li><p><strong>input_names</strong> (<em>list</em><em>, </em><em>optional</em>) – input names. Defaults to None.</p></li>
+<li><p><strong>output_names</strong> (<em>list</em><em>, </em><em>optional</em>) – output names. Defaults to None.</p></li>
+<li><p><strong>inputs_as_nchw</strong> (<em>list</em><em>, </em><em>optional</em>) – transpose the input. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>

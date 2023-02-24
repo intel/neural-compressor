@@ -318,6 +318,11 @@ Functions
       Save Tensorflow model.
 
 
+   .. py:method:: export(save_path, conf)
+
+      Export the Tensorflow fp32/int8 model to ONNX fp32/int8 model.
+
+
 
 .. py:class:: TensorflowSavedModelModel(model, **kwargs)
 

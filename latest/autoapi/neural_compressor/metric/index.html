@@ -122,6 +122,9 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.metric.SquadF1" title="neural_compressor.metric.SquadF1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SquadF1</span></code></a></p></td>
 <td><p>Evaluate for v1.1 of the SQuAD dataset.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.metric.GeneralTopK" title="neural_compressor.metric.GeneralTopK"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralTopK</span></code></a></p></td>
+<td><p>Compute Top-k Accuracy classification score.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -395,6 +398,70 @@ as one of tensorflow, pytorch, mxnet, onnxrt.</p>
 <dt class="sig sig-object py" id="neural_compressor.metric.SquadF1.result">
 <span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.SquadF1.result" title="Permalink to this definition"></a></dt>
 <dd><p>Compute F1 score.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.metric.GeneralTopK">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.</span></span><span class="sig-name descname"><span class="pre">GeneralTopK</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.GeneralTopK" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neural_compressor.metric.BaseMetric" title="neural_compressor.metric.BaseMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseMetric</span></code></a></p>
+<p>Compute Top-k Accuracy classification score.</p>
+<p>This metric computes the number of times where the correct label is among
+the top k labels predicted.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.metric.GeneralTopK.k">
+<span class="sig-name descname"><span class="pre">k</span></span><a class="headerlink" href="#neural_compressor.metric.GeneralTopK.k" title="Permalink to this definition"></a></dt>
+<dd><p>The number of most likely outcomes considered to find the correct label.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.metric.GeneralTopK.num_correct">
+<span class="sig-name descname"><span class="pre">num_correct</span></span><a class="headerlink" href="#neural_compressor.metric.GeneralTopK.num_correct" title="Permalink to this definition"></a></dt>
+<dd><p>The number of predictions that were correct classified.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.metric.GeneralTopK.num_sample">
+<span class="sig-name descname"><span class="pre">num_sample</span></span><a class="headerlink" href="#neural_compressor.metric.GeneralTopK.num_sample" title="Permalink to this definition"></a></dt>
+<dd><p>The total number of predictions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.metric.GeneralTopK.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.GeneralTopK.update" title="Permalink to this definition"></a></dt>
+<dd><p>Add the predictions and labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>preds</strong> – The predictions.</p></li>
+<li><p><strong>labels</strong> – The labels corresponding to the predictions.</p></li>
+<li><p><strong>sample_weight</strong> – The sample weight.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.metric.GeneralTopK.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.GeneralTopK.reset" title="Permalink to this definition"></a></dt>
+<dd><p>Reset the number of samples and correct predictions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.metric.GeneralTopK.result">
+<span class="sig-name descname"><span class="pre">result</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.metric.GeneralTopK.result" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the top-k score.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The top-k score.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

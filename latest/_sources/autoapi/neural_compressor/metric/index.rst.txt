@@ -38,6 +38,7 @@ Classes
    neural_compressor.metric.TensorflowTopK
    neural_compressor.metric.COCOmAPv2
    neural_compressor.metric.SquadF1
+   neural_compressor.metric.GeneralTopK
 
 
 
@@ -237,6 +238,51 @@ Functions
    .. py:method:: result()
 
       Compute F1 score.
+
+
+
+.. py:class:: GeneralTopK(k=1)
+
+   Bases: :py:obj:`BaseMetric`
+
+   Compute Top-k Accuracy classification score.
+
+   This metric computes the number of times where the correct label is among
+   the top k labels predicted.
+
+   .. attribute:: k
+
+      The number of most likely outcomes considered to find the correct label.
+
+      :type: int
+
+   .. attribute:: num_correct
+
+      The number of predictions that were correct classified.
+
+   .. attribute:: num_sample
+
+      The total number of predictions.
+
+   .. py:method:: update(preds, labels, sample_weight=None)
+
+      Add the predictions and labels.
+
+      :param preds: The predictions.
+      :param labels: The labels corresponding to the predictions.
+      :param sample_weight: The sample weight.
+
+
+   .. py:method:: reset()
+
+      Reset the number of samples and correct predictions.
+
+
+   .. py:method:: result()
+
+      Compute the top-k score.
+
+      :returns: The top-k score.
 
 
 

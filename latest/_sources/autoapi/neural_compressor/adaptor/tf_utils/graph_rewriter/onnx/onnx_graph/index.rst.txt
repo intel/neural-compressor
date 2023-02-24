@@ -1,0 +1,334 @@
+:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_graph`
+===========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_graph
+
+.. autoapi-nested-parse::
+
+   ONNX Graph wrapper for Tensorflow model converting to ONNX model.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_graph.OnnxGraph
+
+
+
+
+.. py:class:: OnnxGraph(nodes, output_shapes=None, dtypes=None, target=None, opset=None, extra_opset=None, input_names=None, output_names=None, is_subgraph=False, graph_name=None)
+
+   Class that provides graph manipulation and matching.
+
+   .. py:property:: input_names
+
+      Placeholder node outputs.
+
+   .. py:property:: opset
+
+      Get opset.
+
+   .. py:property:: extra_opset
+
+      Get extra opset.
+
+   .. py:method:: set_config(target=None, opset=None, extra_opset=None)
+
+      Set graph fields containing conversion options.
+
+
+   .. py:method:: is_target(*names)
+
+      Return True if target platform contains any name.
+
+
+   .. py:method:: make_const(name, np_val, skip_conversion=False, raw=True)
+
+      Make a new constant node in the graph.
+
+      :param name: const node name, must be unique.
+      :param np_val: value of type numpy ndarray.
+      :param skip_conversion: bool, indicate whether this created node would be mapped during conversion.
+      :param raw: whether to store data at field of raw_data or the specific field according to its dtype
+
+
+   .. py:method:: make_node(op_type, inputs, attr=None, output_count=1, outputs=None, skip_conversion=True, op_name_scope=None, name=None, shapes=None, dtypes=None, domain=utils.ONNX_DOMAIN, infer_shape_dtype=True, branches=None)
+
+      Make a new onnx node in the graph.
+
+
+   .. py:method:: append_node(node)
+
+      Add a node to the graph.
+
+
+   .. py:method:: remove_node(node_name)
+
+      Remove node in current graph.
+
+
+   .. py:method:: safe_remove_nodes(to_delete)
+
+      Delete nodes in `to_delete` without third-party node consuming it.
+
+
+   .. py:method:: reset_nodes(ops)
+
+      Reset the graph with node list.
+
+
+   .. py:method:: create_new_graph_with_same_config()
+
+      Create a clean graph inheriting current graph's configuration.
+
+
+   .. py:method:: is_empty_input(name)
+
+      Check if the input is empty.
+
+      in ONNX, operation may have optional input and an empty string may be used
+      in the place of an actual argument's name to indicate a missing argument.
+
+
+   .. py:method:: update_node_shape_dtype(node, override=False)
+
+      Try the best to infer shapes and dtypes for outputs of the node.
+
+
+   .. py:method:: update_proto()
+
+      Update the onnx protobuf from out internal Node structure.
+
+
+   .. py:method:: get_nodes()
+
+      Get node list.
+
+
+   .. py:method:: get_node_by_output(output, search_in_parent_graphs=True)
+
+      Get node by node output id recursively going through nested graphs.
+
+      :param output: node's output
+      :param search_in_parent_graphs: search in all parent graphs
+
+
+   .. py:method:: get_node_by_output_in_current_graph(output)
+
+      Get node by node output id.
+
+
+   .. py:method:: get_node_by_name(name)
+
+      Get node by name.
+
+
+   .. py:method:: set_node_by_name(node)
+
+      Set node by name.
+
+
+   .. py:method:: is_const(output)
+
+      Check if the node is const.
+
+
+   .. py:method:: get_tensor_value(output, as_list=True)
+
+      Get the tensor value of the node.
+
+
+   .. py:method:: get_dtype(name)
+
+      Get dtype for node.
+
+
+   .. py:method:: set_dtype(name, dtype)
+
+      Set dtype for node.
+
+
+   .. py:method:: copy_dtype(src_name, dst_name)
+
+      Copy dtype from another node.
+
+
+   .. py:method:: get_shape(name)
+
+      Get shape for node.
+
+
+   .. py:method:: get_rank(name)
+
+      Returns len(get_shape(name)) or None if shape is None.
+
+
+   .. py:method:: set_shape(name, val)
+
+      Set new shape of node.
+
+
+   .. py:method:: copy_shape(input_name, output_name)
+
+      Copy shape from another node.
+
+
+   .. py:method:: add_graph_output(name, dtype=None, shape=None)
+
+      Add node output as graph's output.
+
+
+   .. py:method:: topological_sort(ops)
+
+      Topological sort of graph.
+
+
+   .. py:method:: make_graph(doc, graph_name=None)
+
+      Create GraphProto for onnx from internal graph.
+
+      :param doc: text for doc string of the graph
+      :param graph_name: optimize graph name
+
+
+   .. py:method:: make_model(graph_doc, graph_name='tfqdq_to_onnxqdq', **kwargs)
+
+      Create final ModelProto for onnx from internal graph.
+
+      :param graph_doc: text for doc string of the model
+      :param graph_name: optimize graph name
+
+
+   .. py:method:: make_onnx_graph_io(ids)
+
+      Create tensor_value_info for passed input/output ids.
+
+
+   .. py:method:: dump_graph()
+
+      Dump graph with shapes (helpful for debugging).
+
+
+   .. py:method:: dump_node_statistics(include_attrs=False, include_subgraphs=True)
+
+      Return a counter of op types (and optionally attribute names) within the graph.
+
+
+   .. py:method:: remove_input(node, to_be_removed, input_index=None)
+
+      Remove input from Node.
+
+      :param node: the node we expect the input on
+      :param to_be_removed: the node name we want to remove
+      :param input_index: if not None, index of the input to be removed,
+                          the method is more efficient if *input_index* is specified,
+                          otherwise, it has to look for every input named *old_input*.
+
+
+   .. py:method:: insert_new_node_on_input(node, op_type, input_name, name=None, domain=None, input_index=None, **kwargs)
+
+      Create and insert a new node into the graph.
+
+      :param node: we want to replace the input for this node
+      :param op_type: type for new operation
+      :param input_name: the name(s) of the outputs above us
+                         if scalar, new node placed above input_name
+                         if list, new node placed above input_name[0]. list is inputs into new node
+      :param name: the name of the new op
+      :param kwargs: attributes of the new node
+
+      :returns: node that was inserted
+
+
+   .. py:method:: add_graph_input(name, dtype=None, shape=None)
+
+      Add placeholder node as graph's input. Order matters only for subgraph.
+
+      Placeholders in original graph are assumed for main graph, order not matters.
+
+
+   .. py:method:: insert_node_on_output(node, output_name=None)
+
+      Insert a node into the graph.
+
+      The inserted node takes the *output_name* as input and produces a
+      new output. The function goes through every node taking *output_name*
+      and replaces it by the new output name.
+
+
+   .. py:method:: insert_new_node_on_output(op_type, output_name=None, name=None, inputs=None, domain=None, **kwargs)
+
+      Create and insert a new node into the graph. It then calls insert_node_on_output.
+
+      :param op_type: type for new operation
+      :param output_name: the names of the outputs above us
+      :param name: the name of the new op
+      :param kwargs: attributes of the new node
+
+      :returns: node that was inserted
+
+
+   .. py:method:: find_output_consumers(output_name)
+
+      Find all nodes consuming a given output.
+
+
+   .. py:method:: replace_all_inputs(old_input, new_input, ops=None)
+
+      Replace all inputs pointing to old_input with new_input.
+
+      *ops* is used if defined, otherwise `_output_to_consumers` is used to determine the impacted nodes.
+
+
+   .. py:method:: replace_input(node, old_input, new_input, input_index=None)
+
+      Replace one input in a node.
+
+      The method is more efficient if *input_index* is specified.
+      Otherwise, it renames every output named *old_input*.
+
+
+   .. py:method:: replace_inputs(node, new_inputs)
+
+      Replace node inputs.
+
+
+   .. py:method:: extract_sub_graph_nodes(outputs_name, input_checker=None, remove_unused_inputs=True)
+
+      Return nodes of subgraph having output_ids as outputs.
+
+      :param outputs_name: output node name of the subgraph to find.
+      :param input_checker: customized input check function: bool func(node).
+      :param remove_unused_inputs: bool, indicates whether unused placeholder inputs will be removed.
+                                   in the resulting nodes.
+
+      :returns: a list of nodes.
+
+
+   .. py:method:: delete_unused_nodes(outputs_name)
+
+      Delete nodes not in subgraph ending with output_names.
+
+
+   .. py:method:: safe_to_remove_nodes(to_delete)
+
+      List of nodes that safe to delete, i.e. outputs not consumed by other nodes.
+
+
+   .. py:method:: convert_qdq_nodes(q_node, dq_node)
+
+      Convert tensorflow QuantizeV2/Dequantize nodes to QuantizeLinear/DequantizeLinear.
+
+
+   .. py:method:: delete_qdq_nodes(q_node, dq_node)
+
+      Delete tensorflow QuantizeV2/Dequantize in the onnx graph.
+
+
+
