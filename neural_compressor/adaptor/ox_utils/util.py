@@ -41,6 +41,8 @@ support_pair = {
     '2 2': True,
     'float16 float16': True,
     '10 10': True,
+    'bfloat16 bfloat16': True,
+    '16 16': True,
     'float32 float16': True,
     '1 10': True,
     'float16 float32': True,
