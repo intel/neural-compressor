@@ -20,8 +20,10 @@ parameters:
 steps:
 
   - script: |
-      if [[ $(docker ps -a | grep ${{ parameters.containerName }}) ]]; then
-         docker exec ${{ parameters.containerName }} bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
+      docker ps -a
+      if [[ $(docker ps -q) ]]; then
+         echo "in remove ..."
+         docker exec $(docker ps -q) bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
       fi
     displayName: "Clean docker container"
 
