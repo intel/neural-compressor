@@ -381,11 +381,12 @@ class TorchSmoothQuant:
                 if self.absorb_to_layer == None and no_absorb_layers == None:
                     logger.warning("sorry, could not trace the model, smooth quant is ignored")
                     logger.warning("if you are using huggingface model, "
-                                   "you could set torchscript to Ture when loading the model or set the retrun dict to False")
+                                   "you could set torchscript to Ture when loading the model or set the retrun_dict to False")
                     return self.model
 
                 input_maxes = self._calibrate(self.absorb_to_layer, calib_iter)
 
+            self.recover()
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer, input_maxes,
                                                                                       alpha)
             return self.model
@@ -400,6 +401,8 @@ class TorchSmoothQuant:
                 self._scale_layer_weight(key, 1.0 / self.weight_scale_info[key])
             for key in self.absorb_scales_info:
                 self._absorb_scales(key, 1.0 / self.absorb_scales_info[key])
+            self.weight_scale_info = {} ##clear the data
+            self.absorb_scales_info = {}
 
     def _trace(self, op_types):
         """
