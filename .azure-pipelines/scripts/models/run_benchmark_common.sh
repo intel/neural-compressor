@@ -72,6 +72,7 @@ main() {
 function check_perf_gap() {
     python -u ${SCRIPTS_PATH}/collect_log_model.py \
         --framework=${framework} \
+        --fwk_ver=${fwk_ver} \
         --model=${model} \
         --logs_dir="${log_dir}" \
         --output_dir="${log_dir}" \
