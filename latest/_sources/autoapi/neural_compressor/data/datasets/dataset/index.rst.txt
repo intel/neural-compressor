@@ -45,7 +45,7 @@ Classes
    neural_compressor.data.datasets.dataset.TensorflowFashionMNIST
    neural_compressor.data.datasets.dataset.ImageFolder
    neural_compressor.data.datasets.dataset.MXNetImageFolder
-   neural_compressor.data.datasets.dataset.TensorflowImageFolder
+   neural_compressor.data.datasets.dataset.Tensorflow
    neural_compressor.data.datasets.dataset.TensorflowTFRecordDataset
    neural_compressor.data.datasets.dataset.TensorflowImageRecord
    neural_compressor.data.datasets.dataset.TensorflowVOCRecord
@@ -494,7 +494,7 @@ Attributes
                                                 conditions.
 
 
-.. py:class:: TensorflowImageFolder(root, transform=None, filter=None)
+.. py:class:: Tensorflow(root, transform=None, filter=None)
 
    Bases: :py:obj:`ImageFolder`
 

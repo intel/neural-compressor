@@ -388,6 +388,10 @@ Functions
 
       Return model itself.
 
+   .. py:property:: frozen_graph_def
+
+      Get frozen graph_def.
+
    .. py:method:: save(root=None)
 
       Save Tensorflow QAT model.
