@@ -27,6 +27,7 @@ python run_clm.py \
 > NOTE
 >
 > /path/to/checkpoint/dir is the path to finetune output_dir
+
 or
 ```bash
 sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path

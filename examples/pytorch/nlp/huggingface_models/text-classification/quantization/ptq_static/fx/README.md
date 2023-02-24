@@ -35,6 +35,7 @@ python run_glue.py \
 > NOTE
 >
 > /path/to/checkpoint/dir is the path to finetune output_dir
+
 or
 ```bash
 sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
@@ -94,7 +95,7 @@ model = OptimizedModel.from_pretrained(
 We also upstreamed several int8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.
 ----
 
-# Tutorial of Enabling NLP Models with Intel® Neural Compressor.
+# Tutorial of Enabling NLP Models with Intel® Neural Compressor
 ## 1. Intel® Neural Compressor supports two usages:
 1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics.
 2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
