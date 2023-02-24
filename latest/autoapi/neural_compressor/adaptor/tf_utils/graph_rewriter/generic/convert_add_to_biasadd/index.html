@@ -91,7 +91,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd.ConvertAddToBiasAddOptimizer" title="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd.ConvertAddToBiasAddOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConvertAddToBiasAddOptimizer</span></code></a></p></td>
-<td><p>Convert MatMul + Add(AddV2) to MatMul + BiasAdd.</p></td>
+<td><p>Convert MatMul/Conv2D + Add(AddV2) to MatMul + BiasAdd.</p></td>
 </tr>
 </tbody>
 </table>
@@ -99,7 +99,7 @@
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd.ConvertAddToBiasAddOptimizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd.</span></span><span class="sig-name descname"><span class="pre">ConvertAddToBiasAddOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd.ConvertAddToBiasAddOptimizer" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../graph_base/index.html#neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase" title="neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.tf_utils.graph_rewriter.graph_base.GraphRewriterBase</span></code></a></p>
-<p>Convert MatMul + Add(AddV2) to MatMul + BiasAdd.</p>
+<p>Convert MatMul/Conv2D + Add(AddV2) to MatMul + BiasAdd.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd.ConvertAddToBiasAddOptimizer.do_transformation">
 <span class="sig-name descname"><span class="pre">do_transformation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd.ConvertAddToBiasAddOptimizer.do_transformation" title="Permalink to this definition"></a></dt>
