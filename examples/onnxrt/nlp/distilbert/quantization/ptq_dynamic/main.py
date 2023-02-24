@@ -393,7 +393,7 @@ if __name__ == "__main__":
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(approach="dyanmic")
+        config = PostTrainingQuantConfig(approach="dynamic")
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)
