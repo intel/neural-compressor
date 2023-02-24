@@ -78,12 +78,12 @@ The user can get a quick understand about design structure and workflow of Intel
           <td colspan="1" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
           <td colspan="2" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
           <td colspan="3" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
-          <td colspan="3" align="center">SmoothQuant (Coming Soon)</td>
+          <td colspan="3" align="center"><a href="./docs/source/metric.md">Metric</a></td>    
       </tr>
-      <tr>
-        <td colspan="3" align="center"><a href="./docs/source/metric.md">Metric</a></td>        
+      <tr>     
         <td colspan="3" align="center"><a href="./docs/source/objective.md">Objective</a></td>
         <td colspan="3" align="center"><a href="./docs/source/migration.md">Code Migration</a></td>
+        <td colspan="3" align="center">SmoothQuant (Coming Soon)</td>
       </tr>
   </tbody>
 </table>
