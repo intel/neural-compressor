@@ -54,6 +54,27 @@ python -u ./run_glue.py \
 
 You can also try to use INC distributed tuning (Take mrpc task as an example) as follows:
 
+You need to install mpi4py.
+
+```shell
+# Build Open MPI
+
+# download openmpi-<version> from https://www.open-mpi.org/
+tar xf openmpi-<version>.tar.bz2
+cd openmpi-<version>
+mkdir build
+cd build
+../configure --prefix=<path> 2>&1 | tee config.out
+make all
+make install
+
+# add `Export PATH=<path>` into `~/.bashrc`
+source ~/.bashrc
+
+# Install mpi4py
+pip install mpi4py
+```
+
 In `run_glue.py`, set `config.use_distributed_tuning` to True by the following statement.
 
 ```python
