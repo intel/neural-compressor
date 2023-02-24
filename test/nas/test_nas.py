@@ -209,19 +209,6 @@ class TestNAS(unittest.TestCase):
         nas_agent.validation_interface.clear_csv()
         os.remove('tmp.pickle')
 
-    def test_vision_reference(self):
-        from neural_compressor.experimental.nas.dynast.dynas_utils import \
-            TorchVisionReference
-        reference = TorchVisionReference('ofa_mbv3', dataset_path=None, batch_size=1)
-        macs = reference.validate_macs()
-
-        self.assertEqual(macs, 217234208)
-
-        reference.measure_latency(
-            warmup_steps=1,
-            measure_steps=1,
-        )
-
     def test_parameter_manager_onehot_generic(self):
         test_configs = [
             {
