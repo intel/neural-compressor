@@ -39,7 +39,6 @@ Functions
    .. rubric:: Examples
 
    import neural_compressor.training.prepare_compression
-
    compression_manager = prepare_compression(conf, model)
    compression_manager.callbacks.on_train_begin()
    model = compression_manager.model
@@ -63,21 +62,6 @@ Functions
    .. py:class:: CallBacks(component)
 
       Define the basic command for the training loop.
-
-      .. rubric:: Example
-
-      from neural_compressor.training import Pruning, prepare_compression
-      from neural_compressor.training import WeightPruningConfig
-
-      configs = WeightPruningConfig(
-          pruning_type=args.pruning_type,
-          target_sparsity=args.target_sparsity,
-          start_step=num_warm,
-          end_step=num_iterations
-      )
-      compression_manager = prepare_compression(model=model, confs=configs)
-      compression_manager.callbacks.on_train_begin()
-      model = compression_manager.model
 
       .. py:method:: on_train_begin(dataloader=None)
 
@@ -162,7 +146,6 @@ Functions
    .. rubric:: Examples
 
    import neural_compressor.training.prepare_compression
-
    compression_manager = prepare_compression(conf, model)
    train_loop:
        compression_manager.on_train_begin()

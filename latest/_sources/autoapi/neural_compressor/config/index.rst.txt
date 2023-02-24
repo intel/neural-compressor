@@ -49,14 +49,6 @@ Functions
 
    Check if the given object is the given supported type and in the given supported value.
 
-   .. rubric:: Example
-
-   from neural_compressor.config import check_value
-
-   def datatype(self, datatype):
-       if check_value('datatype', datatype, list, ['fp32', 'bf16', 'uint8', 'int8']):
-           self._datatype = datatype
-
 
 .. py:class:: Options(random_seed=1978, workspace=default_workspace, resume_from=None, tensorboard=False)
 
@@ -82,14 +74,6 @@ Functions
 .. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', warmup=5, iteration=-1, cores_per_instance=None, num_of_instance=None, inter_num_of_threads=None, intra_num_of_threads=None)
 
    Config Class for Benchmark.
-
-   .. rubric:: Example
-
-   # Run benchmark according to config
-   from neural_compressor.benchmark import fit
-
-   conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
-   fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
 
    .. py:property:: backend
 
@@ -132,16 +116,6 @@ Functions
 
    Class of Accuracy Criterion.
 
-   .. rubric:: Example
-
-   from neural_compressor.config import AccuracyCriterion
-
-   accuracy_criterion = AccuracyCriterion(
-       higher_is_better=True,  # optional.
-       criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
-       tolerable_loss=0.01,  # optional.
-   )
-
    .. py:property:: higher_is_better
 
       Get higher_is_better.
@@ -166,18 +140,6 @@ Functions
 .. py:class:: TuningCriterion(strategy='basic', strategy_kwargs=None, timeout=0, max_trials=100, objective='performance')
 
    Class for Tuning Criterion.
-
-   .. rubric:: Example
-
-   from neural_compressor.config import TuningCriterion
-
-   tuning_criterion=TuningCriterion(
-       timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-       max_trials=100, # optional. max tuning times.
-                           # combined with the `timeout` field to decide when to exit tuning.
-       strategy="basic", # optional. name of the tuning strategy.
-       strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.
-   )
 
    .. py:property:: max_trials
 
@@ -206,19 +168,6 @@ Functions
 
    Config Class for Post Training Quantization.
 
-   .. rubric:: Example
-
-   from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
-
-   conf = PostTrainingQuantConfig(
-       quant_level=0,  # the quantization level.
-       tuning_criterion=TuningCriterion(
-           timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-           max_trials=100,  # optional. max tuning times.
-                           # combined with the `timeout` field to decide when to exit tuning.
-       ),
-   )
-
    .. py:property:: approach
 
       Get approach.
@@ -234,17 +183,6 @@ Functions
 
    Config Class for Quantization Aware Training.
 
-   .. rubric:: Example
-
-   from neural_compressor.config import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
-
-   if approach == "qat":
-       model = copy.deepcopy(model_origin)
-       conf = QuantizationAwareTrainingConfig(
-           op_name_list=qat_op_name_list
-       )
-       compression_manager = prepare_compression(model, conf)
-
    .. py:property:: approach
 
       Get approach.
@@ -253,18 +191,6 @@ Functions
 .. py:class:: WeightPruningConfig(pruning_configs=[{}], target_sparsity=0.9, pruning_type='snip_momentum', pattern='4x1', op_names=[], excluded_op_names=[], start_step=0, end_step=0, pruning_scope='global', pruning_frequency=1, min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98, sparsity_decay_type='exp', pruning_op_types=['Conv', 'Linear'], **kwargs)
 
    Similiar to torch optimizer's interface.
-
-   .. rubric:: Example
-
-   from neural_compressor.config import WeightPruningConfig
-
-   config = WeightPruningConfig(
-       local_configs,
-       target_sparsity=0.8
-   )
-   prune = Pruning(config)
-   prune.update_config(start_step=1, end_step=10)
-   prune.model = self.model
 
    .. py:property:: weight_compression
 
@@ -275,55 +201,15 @@ Functions
 
    Config Class for Knowledge Distillation Loss.
 
-   .. rubric:: Example
-
-   from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
-   from neural_compressor import QuantizationAwareTrainingConfig
-   from neural_compressor.training import prepare_compression
-
-   combs = []
-   distillation_criterion = KnowledgeDistillationLossConfig()
-   d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
-   combs.append(d_conf)
-   q_conf = QuantizationAwareTrainingConfig()
-   combs.append(q_conf)
-   compression_manager = prepare_compression(model, combs)
-   model = compression_manager.model
-
 
 .. py:class:: IntermediateLayersKnowledgeDistillationLossConfig(layer_mappings=[], loss_types=[], loss_weights=[], add_origin_loss=False)
 
    Config Class for Intermediate Layers Knowledge Distillation Loss.
 
-   .. rubric:: Example
-
-   from neural_compressor.config import DistillationConfig, IntermediateLayersKnowledgeDistillationLossConfig
-
-   distillation_criterion = IntermediateLayersKnowledgeDistillationLossConfig(
-       layer_mappings=layer_mappings,
-       loss_types=['MSE']*len(layer_mappings),
-       loss_weights=[1.0 / len(layer_mappings)]*len(layer_mappings),
-       add_origin_loss=True
-   )
-   d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
-   confs.append(d_conf)
-
 
 .. py:class:: SelfKnowledgeDistillationLossConfig(layer_mappings=[], temperature=1.0, loss_types=[], loss_weights=[], add_origin_loss=False)
 
    Config Class for Self Knowledge Distillation Loss.
-
-   .. rubric:: Example
-
-   from neural_compressor.training import prepare_compression
-   from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
-
-   distil_loss = SelfKnowledgeDistillationLossConfig()
-   conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
-   criterion = nn.CrossEntropyLoss()
-   optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-   compression_manager = prepare_compression(model, conf)
-   model = compression_manager.model
 
 
 .. py:class:: DistillationConfig(teacher_model=None, criterion=criterion, optimizer={'SGD': {'learning_rate': 0.0001}})
@@ -339,18 +225,6 @@ Functions
    :type criterion: Callable, optional
    :param optimizer: Optimizer configure.
    :type optimizer: dictionary, optional
-
-   .. rubric:: Example
-
-   from neural_compressor.training import prepare_compression
-   from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
-
-   distil_loss = SelfKnowledgeDistillationLossConfig()
-   conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
-   criterion = nn.CrossEntropyLoss()
-   optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-   compression_manager = prepare_compression(model, conf)
-   model = compression_manager.model
 
    .. py:property:: criterion
 
@@ -370,14 +244,6 @@ Functions
    Bases: :py:obj:`PostTrainingQuantConfig`
 
    Config Class for MixedPrecision.
-
-   .. rubric:: Example
-
-   from neural_compressor import mix_precision
-   from neural_compressor.config import MixedPrecisionConfig
-
-   conf = MixedPrecisionConfig()
-   converted_model = mix_precision.fit(model, config=conf)
 
 
 .. py:class:: ExportConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None)

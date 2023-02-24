@@ -54,8 +54,7 @@ Classes
 
       Generate and yield the next tuning config.
 
-      :returns: A dict containing the tuning configuration for quantization.
-      :rtype: tune_config (dict)
+      :Yields: *tune_config (dict)* -- A dict containing the tuning configuration for quantization.
 
 
 

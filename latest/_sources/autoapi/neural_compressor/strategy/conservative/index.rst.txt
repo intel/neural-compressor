@@ -43,8 +43,7 @@ Classes
       accuracy meets the requirements else continue
       5. For bf16 and fp16 operators, do the same as int8 operators.
 
-      :returns: It's a dict containing the tuning configuration to run.
-      :rtype: tune_config (dict)
+      :Yields: *tune_config (dict)* -- It's a dict containing the tuning configuration to run.
 
 
    .. py:method:: traverse()

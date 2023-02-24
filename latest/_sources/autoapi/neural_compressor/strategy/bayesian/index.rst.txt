@@ -47,8 +47,7 @@ Functions
       function with the tuning history and then finds the tuning configuration that maximizes
       the expected improvement.
 
-      :returns: A dict containing the tuning configuration for quantization.
-      :rtype: tune_config (dict)
+      :Yields: *tune_config (dict)* -- A dict containing the tuning configuration for quantization.
 
 
 

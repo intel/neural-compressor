@@ -73,11 +73,14 @@ Functions
 
    Bases: :py:obj:`object`
 
-   Benchmark class measures the model performance with objective settings.
+   Benchmark class can be used to evaluate the model performance.
 
-   :param object: containing accuracy goal, tuning objective
-                  and preferred calibration & quantization tuning space etc.
-   :type object: string or obj
+   With the objective setting, user can get the data of what they configured in yaml.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             Benchmark_Conf class containing accuracy goal, tuning objective and preferred
+                             calibration & quantization tuning space etc.
+   :type conf_fname_or_obj: string or obj
 
    .. py:method:: dataloader(dataset, batch_size=1, collate_fn=None, last_batch='rollover', sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
 
@@ -109,10 +112,10 @@ Functions
       The postprocess function should take the outputs of the model as inputs, and
       outputs (predictions, labels) as inputs for metric updates.
 
-      :param name: Name for postprocess.
-      :type name: str, optional
-      :param postprocess_cls: Should be a sub_class of neural_compressor.data.transforms.postprocess.
-      :type postprocess_cls: cls
+      Args:
+      name (str, optional): Name for postprocess.
+      postprocess_cls (cls): Should be a sub_class of neural_compressor.data.transforms.postprocess.
+
 
 
 
@@ -145,18 +148,6 @@ Functions
    :param optimizer: Optimizer configure.
    :type optimizer: dictionary, optional
 
-   .. rubric:: Example
-
-   from neural_compressor.training import prepare_compression
-   from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
-
-   distil_loss = SelfKnowledgeDistillationLossConfig()
-   conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
-   criterion = nn.CrossEntropyLoss()
-   optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-   compression_manager = prepare_compression(model, conf)
-   model = compression_manager.model
-
    .. py:property:: criterion
 
       Get criterion.
@@ -176,19 +167,6 @@ Functions
 
    Config Class for Post Training Quantization.
 
-   .. rubric:: Example
-
-   from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
-
-   conf = PostTrainingQuantConfig(
-       quant_level=0,  # the quantization level.
-       tuning_criterion=TuningCriterion(
-           timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-           max_trials=100,  # optional. max tuning times.
-                           # combined with the `timeout` field to decide when to exit tuning.
-       ),
-   )
-
    .. py:property:: approach
 
       Get approach.
@@ -202,18 +180,6 @@ Functions
 
    Similiar to torch optimizer's interface.
 
-   .. rubric:: Example
-
-   from neural_compressor.config import WeightPruningConfig
-
-   config = WeightPruningConfig(
-       local_configs,
-       target_sparsity=0.8
-   )
-   prune = Pruning(config)
-   prune.update_config(start_step=1, end_step=10)
-   prune.model = self.model
-
    .. py:property:: weight_compression
 
       Get weight_compression.
@@ -224,17 +190,6 @@ Functions
    Bases: :py:obj:`_BaseQuantizationConfig`
 
    Config Class for Quantization Aware Training.
-
-   .. rubric:: Example
-
-   from neural_compressor.config import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
-
-   if approach == "qat":
-       model = copy.deepcopy(model_origin)
-       conf = QuantizationAwareTrainingConfig(
-           op_name_list=qat_op_name_list
-       )
-       compression_manager = prepare_compression(model, conf)
 
    .. py:property:: approach
 

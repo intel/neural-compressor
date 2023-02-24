@@ -32,12 +32,9 @@ Classes
 
       Generate and yield the next tuning config by random searching in tuning space.
 
-      Random strategy is used to randomly choose quantization tuning configurations
-      from the tuning space. As with the Exhaustive strategy, it also only considers
-      quantization tuning configs to generate a better-performance quantized model.
+      Random strategy is used to randomly choose quantization tuning configurations from the tuning space.
 
-      :returns: A dict containing the tuning configuration for quantization.
-      :rtype: tune_config (dict)
+      :Yields: *tune_config (dict)* -- A dict containing the tuning configuration for quantization.
 
 
 

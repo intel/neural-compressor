@@ -32,13 +32,9 @@ Classes
 
       Generate and yield the next tuning config using exhaustive search in tuning space.
 
-      It sequentially traverse all possible quantization tuning configurations
-      in a tuning space. From the perspective of the impact on performance,
-      we currently only traverse all possible quantization tuning configs.
-      Same reason as Bayesian, fallback datatypes are not included for now.
+      It sequentially traverse all possible quantization tuning configurations in a tuning space.
 
-      :returns: A dict containing the tuning configuration for quantization.
-      :rtype: tune_config (dict)
+      :Yields: *tune_config (dict)* -- A dict containing the tuning configuration for quantization.
 
 
 

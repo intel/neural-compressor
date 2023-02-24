@@ -115,8 +115,8 @@
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p>import neural_compressor.training.prepare_compression</p>
-<p>compression_manager = prepare_compression(conf, model)
+<p>import neural_compressor.training.prepare_compression
+compression_manager = prepare_compression(conf, model)
 compression_manager.callbacks.on_train_begin()
 model = compression_manager.model
 train_loop:</p>
@@ -143,20 +143,6 @@ compression_manager.save(“path_to_save”)</p>
 <dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CallBacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks" title="Permalink to this definition"></a></dt>
 <dd><p>Define the basic command for the training loop.</p>
-<p class="rubric">Example</p>
-<p>from neural_compressor.training import Pruning, prepare_compression
-from neural_compressor.training import WeightPruningConfig</p>
-<dl class="simple">
-<dt>configs = WeightPruningConfig(</dt><dd><p>pruning_type=args.pruning_type,
-target_sparsity=args.target_sparsity,
-start_step=num_warm,
-end_step=num_iterations</p>
-</dd>
-</dl>
-<p>)
-compression_manager = prepare_compression(model=model, confs=configs)
-compression_manager.callbacks.on_train_begin()
-model = compression_manager.model</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks.on_train_begin">
 <span class="sig-name descname"><span class="pre">on_train_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks.on_train_begin" title="Permalink to this definition"></a></dt>
@@ -259,8 +245,8 @@ resume path and tensorboard flag.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p>import neural_compressor.training.prepare_compression</p>
-<p>compression_manager = prepare_compression(conf, model)
+<p>import neural_compressor.training.prepare_compression
+compression_manager = prepare_compression(conf, model)
 train_loop:</p>
 <blockquote>
 <div><p>compression_manager.on_train_begin()
