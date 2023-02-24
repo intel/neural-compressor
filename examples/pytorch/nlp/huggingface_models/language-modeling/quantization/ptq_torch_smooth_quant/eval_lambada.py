@@ -6,14 +6,14 @@ from tqdm import tqdm
 import os
 import sys
 import argparse
+
 sys.path.append('./')
 
-
 parser = argparse.ArgumentParser()
-parser.add_argument('--int8', action='store_true', default=False)
-parser.add_argument('--sq', action='store_true', default=False)
-parser.add_argument('--calib_num', type=int, default=100)
-parser.add_argument('--model_name', type=str, default='bigscience/bloom-560')
+parser.add_argument('--int8', action='store_true', default=False, help="eval fp32 model or int8 model")
+parser.add_argument('--sq', action='store_true', default=False, help="whether to use smooth quant")
+parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
+parser.add_argument('--model_name', type=str, default='bigscience/bloom-560m')
 parser.add_argument('--log_frequency', type=int, default=100)
 args = parser.parse_args()
 
@@ -123,7 +123,7 @@ eval_dataset = load_dataset('lambada', split='validation')
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
 model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
-                                                          torchscript=True##FIXME
+                                                          torchscript=True  ##FIXME
                                                           )
 model.eval()
 
@@ -131,6 +131,7 @@ if args.int8:
     calib_dataset = load_dataset('lambada', split='train')
     calib_dataset = calib_dataset.shuffle(seed=42)
     calib_dataloader = INCDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
+
 
     def eval_func(model):
         acc = evaluator.evaluate(model)
@@ -141,7 +142,7 @@ if args.int8:
     from neural_compressor import quantization
 
     conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"])
-    conf.performance_only = True
+    ##conf.performance_only = True
     if args.sq:
         q_model = quantization.fit(model,
                                    conf,
