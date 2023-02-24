@@ -57,7 +57,7 @@ We formulate the `conf.yaml` as in (https://github.com/intel/neural-compressor/b
 
 **Quantization with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, we integrate the `conf.yaml` into `main.py` to save the user's effort to write the `conf.yaml`, that most of config information could be set via the `PostTrainingQuantConfig`. The corresponding information should be written as follows,
+In Intel Neural Compressor 2.X, we integrate the `conf.yaml` into `main.py` to save the user's effort to write the `conf.yaml`, that most of config information could be set via the `PostTrainingQuantConfig`. The corresponding information should be written as follows (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.),
 ```python
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
 
@@ -156,7 +156,7 @@ Similar to PTQ, it requires a `conf.yaml` (https://github.com/intel/neural-compr
 
 **Quantization with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, this `conf.yaml` is set via the `QuantizationAwareTrainingConfig`. The corresponding information should be written as follows,
+In Intel Neural Compressor 2.X, this `conf.yaml` is set via the `QuantizationAwareTrainingConfig`. The corresponding information should be written as follows (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.)
 
 ```python
 from neural_compressor.config import QuantizationAwareTrainingConfig
@@ -280,7 +280,7 @@ def pruning_func(model):
 
 **Pruning with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, the training process is activated by a `compression manager`. And the configuration information is included in the `WeightPruningConfig`. The corresponding config should be set via:
+In Intel Neural Compressor 2.X, the training process is activated by a `compression manager`. And the configuration information is included in the `WeightPruningConfig`. The corresponding config should be set via (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.):
 ```python
 from neural_compressor.config import WeightPruningConfig
 
@@ -448,7 +448,7 @@ model = distiller.fit()
 
 **Distillation with Intel Neural Compressor 2.X**
 
-The new distillation API also introduce `compression manager` to conduct the training process. We continuously use the hooks in `compression manager` to activate the distillation process. We replace the `conf.yaml` with `DistillationConfig` API.
+The new distillation API also introduce `compression manager` to conduct the training process. We continuously use the hooks in `compression manager` to activate the distillation process. We replace the `conf.yaml` with `DistillationConfig` API and clean the uncessary parameters (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.). The dataloader is directly inputed via `train_fun`. The updated code is shown as follows,
 
 ```python
 from neural_compressor.config import DistillationConfig
@@ -461,7 +461,7 @@ DistillationConfig(
 
 The newly updated distillation code is shown as follows,
 ```python
-def training_func_for_nc(model):
+def training_func(model, dataloader):
     compression_manager.on_train_begin()
     for epoch in range(epochs):
         compression_manager.on_epoch_begin(epoch)
@@ -488,7 +488,7 @@ optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
 compression_manager = prepare_compression(model, conf)
 model = compression_manager.model
 
-model = training_func_for_nc(model)
+model = training_func(model, dataloader)
 eval_func(model)
 ```
 
@@ -541,7 +541,7 @@ tuning:
 
 **Mix Precision with Intel Neural Compressor 2.X**
 
-In 2.X version, we integrate the config information in `MixedPrecisionConfig`, leading to the updates in the code as follows,
+In 2.X version, we integrate the config information in `MixedPrecisionConfig`, leading to the updates in the code as follows (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.),
 
 ```python
 from neural_compressor.config import MixedPrecisionConfig, TuningCriterion, AccuracyCriterion
@@ -681,7 +681,7 @@ results = evaluator()
 
 **Benchmark with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, we optimize the code to make it simple and clear for the user. We replace `conf.yaml` with `BenchmarkConfig`. The corresponding information should be defined as:
+In Intel Neural Compressor 2.X, we optimize the code to make it simple and clear for the user. We replace `conf.yaml` with `BenchmarkConfig`. The corresponding information should be defined as (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.):
 ```python
 from neural_compressor.config import BenchmarkConfig
 
