@@ -381,7 +381,8 @@ class TorchSmoothQuant:
                 if self.absorb_to_layer == None and no_absorb_layers == None:
                     logger.warning("sorry, could not trace the model, smooth quant is ignored")
                     logger.warning("if you are using huggingface model, "
-                                   "you could set torchscript to Ture when loading the model or set the retrun_dict to False")
+                                   "you could set torchscript to Ture when \
+                                   loading the model or set the retrun_dict to False")
                     return self.model
 
                 input_maxes = self._calibrate(self.absorb_to_layer, calib_iter)
