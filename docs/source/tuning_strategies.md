@@ -427,7 +427,7 @@ class AbcTuneStrategy(TuneStrategy):
                  eval_dataloader=None, eval_func=None, dicts=None):
         ...
 
-    def distributed_next_tune_cfg_lst(self):
+    def distributed_next_tune_cfg_list(self):
         # generate the next tuning config list
         ...
 
@@ -437,7 +437,7 @@ class AbcTuneStrategy(TuneStrategy):
         ...
 
     def distributed_traverse(self):
-         for tune_cfg_lst in self.distributed_next_tune_cfg_lst():
+         for tune_cfg_list in self.distributed_next_tune_cfg_list():
             # distributed do quantization
             ...
 
