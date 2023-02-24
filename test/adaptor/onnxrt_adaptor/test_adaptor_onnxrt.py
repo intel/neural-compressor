@@ -1010,7 +1010,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             return sub_eval(model, result)
 
         from neural_compressor.experimental import Quantization
-        conf.quantization.recipes = {'smooth_quant': False}
+        conf.quantization.recipes = {'smooth_quant': False, 'smooth_quant_args': {'alpha': 0.5}}
         quantizer = Quantization(conf)
         quantizer.model = self.matmul_model
         quantizer.calib_dataloader = self.matmul_dataloader
