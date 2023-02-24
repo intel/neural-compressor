@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: PreOptimization(model, optimization, new_api, device)
+.. py:class:: PreOptimization(model, new_api, device)
 
    Pre optimization for the FP32 models.
 

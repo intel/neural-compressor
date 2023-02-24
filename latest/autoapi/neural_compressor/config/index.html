@@ -154,6 +154,15 @@
 <dt class="sig sig-object py" id="neural_compressor.config.check_value">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">check_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supported_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supported_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.check_value" title="Permalink to this definition"></a></dt>
 <dd><p>Check if the given object is the given supported type and in the given supported value.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.config import check_value</p>
+<dl class="simple">
+<dt>def datatype(self, datatype):</dt><dd><dl class="simple">
+<dt>if check_value(‘datatype’, datatype, list, [‘fp32’, ‘bf16’, ‘uint8’, ‘int8’]):</dt><dd><p>self._datatype = datatype</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -190,6 +199,11 @@
 <dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">BenchmarkConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cores_per_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_of_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inter_num_of_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intra_num_of_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Benchmark.</p>
+<p class="rubric">Example</p>
+<p># Run benchmark according to config
+from neural_compressor.benchmark import fit</p>
+<p>conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+fit(model=’./int8.pb’, config=conf, b_dataloader=eval_dataloader)</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.config.BenchmarkConfig.backend">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backend</span></span><a class="headerlink" href="#neural_compressor.config.BenchmarkConfig.backend" title="Permalink to this definition"></a></dt>
@@ -250,6 +264,15 @@
 <dt class="sig sig-object py" id="neural_compressor.config.AccuracyCriterion">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">AccuracyCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">higher_is_better</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'relative'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerable_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.AccuracyCriterion" title="Permalink to this definition"></a></dt>
 <dd><p>Class of Accuracy Criterion.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.config import AccuracyCriterion</p>
+<dl class="simple">
+<dt>accuracy_criterion = AccuracyCriterion(</dt><dd><p>higher_is_better=True,  # optional.
+criterion=’relative’,  # optional. Available values are ‘relative’ and ‘absolute’.
+tolerable_loss=0.01,  # optional.</p>
+</dd>
+</dl>
+<p>)</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.config.AccuracyCriterion.higher_is_better">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">higher_is_better</span></span><a class="headerlink" href="#neural_compressor.config.AccuracyCriterion.higher_is_better" title="Permalink to this definition"></a></dt>
@@ -286,6 +309,19 @@
 <dt class="sig sig-object py" id="neural_compressor.config.TuningCriterion">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">TuningCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'basic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'performance'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.TuningCriterion" title="Permalink to this definition"></a></dt>
 <dd><p>Class for Tuning Criterion.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.config import TuningCriterion</p>
+<dl>
+<dt>tuning_criterion=TuningCriterion(</dt><dd><p>timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+max_trials=100, # optional. max tuning times.</p>
+<blockquote>
+<div><p># combined with the <cite>timeout</cite> field to decide when to exit tuning.</p>
+</div></blockquote>
+<p>strategy=”basic”, # optional. name of the tuning strategy.
+strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.</p>
+</dd>
+</dl>
+<p>)</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.config.TuningCriterion.max_trials">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">max_trials</span></span><a class="headerlink" href="#neural_compressor.config.TuningCriterion.max_trials" title="Permalink to this definition"></a></dt>
@@ -323,6 +359,22 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">PostTrainingQuantConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recipes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approach</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'static'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_sampling_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuning_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_distributed_tuning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.PostTrainingQuantConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">_BaseQuantizationConfig</span></code></p>
 <p>Config Class for Post Training Quantization.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.config PostTrainingQuantConfig, TuningCriterion</p>
+<dl>
+<dt>conf = PostTrainingQuantConfig(</dt><dd><p>quant_level=0,  # the quantization level.
+tuning_criterion=TuningCriterion(</p>
+<blockquote>
+<div><p>timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+max_trials=100,  # optional. max tuning times.</p>
+<blockquote>
+<div><p># combined with the <cite>timeout</cite> field to decide when to exit tuning.</p>
+</div></blockquote>
+</div></blockquote>
+<p>),</p>
+</dd>
+</dl>
+<p>)</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.config.PostTrainingQuantConfig.approach">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">approach</span></span><a class="headerlink" href="#neural_compressor.config.PostTrainingQuantConfig.approach" title="Permalink to this definition"></a></dt>
@@ -342,6 +394,18 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">QuantizationAwareTrainingConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.QuantizationAwareTrainingConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">_BaseQuantizationConfig</span></code></p>
 <p>Config Class for Quantization Aware Training.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.config import PostTrainingQuantConfig, QuantizationAwareTrainingConfig</p>
+<dl>
+<dt>if approach == “qat”:</dt><dd><p>model = copy.deepcopy(model_origin)
+conf = QuantizationAwareTrainingConfig(</p>
+<blockquote>
+<div><p>op_name_list=qat_op_name_list</p>
+</div></blockquote>
+<p>)
+compression_manager = prepare_compression(model, conf)</p>
+</dd>
+</dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.config.QuantizationAwareTrainingConfig.approach">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">approach</span></span><a class="headerlink" href="#neural_compressor.config.QuantizationAwareTrainingConfig.approach" title="Permalink to this definition"></a></dt>
@@ -354,6 +418,17 @@
 <dt class="sig sig-object py" id="neural_compressor.config.WeightPruningConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">WeightPruningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pruning_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[{}]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'snip_momentum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'4x1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_scope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.98</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparsity_decay_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_op_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Conv',</span> <span class="pre">'Linear']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.WeightPruningConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Similiar to torch optimizer’s interface.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.config import WeightPruningConfig</p>
+<dl class="simple">
+<dt>config = WeightPruningConfig(</dt><dd><p>local_configs,
+target_sparsity=0.8</p>
+</dd>
+</dl>
+<p>)
+prune = Pruning(config)
+prune.update_config(start_step=1, end_step=10)
+prune.model = self.model</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.config.WeightPruningConfig.weight_compression">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">weight_compression</span></span><a class="headerlink" href="#neural_compressor.config.WeightPruningConfig.weight_compression" title="Permalink to this definition"></a></dt>
@@ -366,18 +441,51 @@
 <dt class="sig sig-object py" id="neural_compressor.config.KnowledgeDistillationLossConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">KnowledgeDistillationLossConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CE',</span> <span class="pre">'CE']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.5,</span> <span class="pre">0.5]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.KnowledgeDistillationLossConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Knowledge Distillation Loss.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+from neural_compressor import QuantizationAwareTrainingConfig
+from neural_compressor.training import prepare_compression</p>
+<p>combs = []
+distillation_criterion = KnowledgeDistillationLossConfig()
+d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+combs.append(d_conf)
+q_conf = QuantizationAwareTrainingConfig()
+combs.append(q_conf)
+compression_manager = prepare_compression(model, combs)
+model = compression_manager.model</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">IntermediateLayersKnowledgeDistillationLossConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_mappings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_origin_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.IntermediateLayersKnowledgeDistillationLossConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Intermediate Layers Knowledge Distillation Loss.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.config import DistillationConfig, IntermediateLayersKnowledgeDistillationLossConfig</p>
+<dl class="simple">
+<dt>distillation_criterion = IntermediateLayersKnowledgeDistillationLossConfig(</dt><dd><p>layer_mappings=layer_mappings,
+loss_types=[‘MSE’]*len(layer_mappings),
+loss_weights=[1.0 / len(layer_mappings)]*len(layer_mappings),
+add_origin_loss=True</p>
+</dd>
+</dl>
+<p>)
+d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+confs.append(d_conf)</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.config.SelfKnowledgeDistillationLossConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">SelfKnowledgeDistillationLossConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_mappings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_origin_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.SelfKnowledgeDistillationLossConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Config Class for Self Knowledge Distillation Loss.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.training import prepare_compression
+from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig</p>
+<p>distil_loss = SelfKnowledgeDistillationLossConfig()
+conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+compression_manager = prepare_compression(model, conf)
+model = compression_manager.model</p>
 </dd></dl>
 
 <dl class="py class">
@@ -395,6 +503,15 @@ Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
+<p class="rubric">Example</p>
+<p>from neural_compressor.training import prepare_compression
+from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig</p>
+<p>distil_loss = SelfKnowledgeDistillationLossConfig()
+conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+compression_manager = prepare_compression(model, conf)
+model = compression_manager.model</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neural_compressor.config.DistillationConfig.criterion">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">criterion</span></span><a class="headerlink" href="#neural_compressor.config.DistillationConfig.criterion" title="Permalink to this definition"></a></dt>
@@ -420,6 +537,11 @@ Defaults to None.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.config.</span></span><span class="sig-name descname"><span class="pre">MixedPrecisionConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tuning_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tuning_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_precisions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.config.MixedPrecisionConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.config.PostTrainingQuantConfig" title="neural_compressor.config.PostTrainingQuantConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code></a></p>
 <p>Config Class for MixedPrecision.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor import mix_precision
+from neural_compressor.config import MixedPrecisionConfig</p>
+<p>conf = MixedPrecisionConfig()
+converted_model = mix_precision.fit(model, config=conf)</p>
 </dd></dl>
 
 <dl class="py class">

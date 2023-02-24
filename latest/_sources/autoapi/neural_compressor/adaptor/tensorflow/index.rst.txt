@@ -304,7 +304,7 @@ Classes
 
 
 
-.. py:class:: TensorflowQuery(local_config_file=None, performance_only=False)
+.. py:class:: TensorflowQuery(local_config_file=None, performance_only=False, itex_mode=False, quant_mode='static')
 
    Bases: :py:obj:`neural_compressor.adaptor.query.QueryBackendCapability`
 
@@ -316,14 +316,6 @@ Classes
 
       :returns: version string.
       :rtype: [string]
-
-
-   .. py:method:: get_precisions()
-
-      Get supported precisions for current backend.
-
-      :returns: the precisions' name.
-      :rtype: [string list]
 
 
    .. py:method:: get_op_types()
@@ -372,16 +364,11 @@ Classes
       :rtype: [string list]
 
 
-   .. py:method:: get_grappler_optimization_cfg()
-
-      Get grappler optimization configuration.
-
-
    .. py:method:: get_bf16_patterns()
 
       Get BF16 pattern list.
 
-      :returns: bf16 patter list.
+      :returns: bf16 pattern list.
       :rtype: [List]
 
 

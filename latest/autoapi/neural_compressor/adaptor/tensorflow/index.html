@@ -475,7 +475,7 @@ which not enabled for tensorflow yet.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tensorflow.</span></span><span class="sig-name descname"><span class="pre">TensorflowQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_config_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tensorflow.</span></span><span class="sig-name descname"><span class="pre">TensorflowQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_config_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itex_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'static'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../query/index.html#neural_compressor.adaptor.query.QueryBackendCapability" title="neural_compressor.adaptor.query.QueryBackendCapability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.adaptor.query.QueryBackendCapability</span></code></a></p>
 <p>Tensorflow Query Capability Class.</p>
 <dl class="py method">
@@ -488,20 +488,6 @@ which not enabled for tensorflow yet.</p></li>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>[string]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_precisions">
-<span class="sig-name descname"><span class="pre">get_precisions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_precisions" title="Permalink to this definition"></a></dt>
-<dd><p>Get supported precisions for current backend.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>the precisions’ name.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>[string list]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -583,18 +569,12 @@ and value is a dict that describes all op types’ quantization capability.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_grappler_optimization_cfg">
-<span class="sig-name descname"><span class="pre">get_grappler_optimization_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_grappler_optimization_cfg" title="Permalink to this definition"></a></dt>
-<dd><p>Get grappler optimization configuration.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.tensorflow.TensorflowQuery.get_bf16_patterns">
 <span class="sig-name descname"><span class="pre">get_bf16_patterns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.tensorflow.TensorflowQuery.get_bf16_patterns" title="Permalink to this definition"></a></dt>
 <dd><p>Get BF16 pattern list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bf16 patter list.</p>
+<dd class="field-odd"><p>bf16 pattern list.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>[List]</p>

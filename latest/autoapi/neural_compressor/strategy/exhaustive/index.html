@@ -104,10 +104,16 @@
 <dt class="sig sig-object py" id="neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy.next_tune_cfg">
 <span class="sig-name descname"><span class="pre">next_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy.next_tune_cfg" title="Permalink to this definition"></a></dt>
 <dd><p>Generate and yield the next tuning config using exhaustive search in tuning space.</p>
-<p>It sequentially traverse all possible quantization tuning configurations in a tuning space.</p>
+<p>It sequentially traverse all possible quantization tuning configurations
+in a tuning space. From the perspective of the impact on performance,
+we currently only traverse all possible quantization tuning configs.
+Same reason as Bayesian, fallback datatypes are not included for now.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Yields<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>tune_config (dict)</em> – A dict containing the tuning configuration for quantization.</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dict containing the tuning configuration for quantization.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tune_config (dict)</p>
 </dd>
 </dl>
 </dd></dl>

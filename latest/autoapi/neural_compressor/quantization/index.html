@@ -160,6 +160,17 @@ this class when evaluation.</p></li>
 </ul>
 </dd>
 </dl>
+<p class="rubric">Example</p>
+<p># Quantization code for PTQ
+from neural_compressor import quantization
+from neural_compressor.config import PostTrainingQuantConfig</p>
+<p>conf = PostTrainingQuantConfig()
+q_model = quantization.fit(model=model,</p>
+<blockquote>
+<div><p>conf=conf,
+calib_dataloader=val_dataloader)</p>
+</div></blockquote>
+<p>q_model.save(‘./output’)</p>
 </dd></dl>
 
 </section>
