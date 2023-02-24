@@ -18,6 +18,13 @@ parameters:
     default: "https://github.com/intel/neural-compressor"
 
 steps:
+
+  - script: |
+      if [[ $(docker ps -a | grep ${{ parameters.dockerConfigName }}) ]]; then
+         docker exec ${{ parameters.dockerConfigName }} bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
+      fi
+    displayName: "Clean docker container"
+
   - ${{ if eq(parameters.dockerConfigName, 'commonDockerConfig') }}:
       - script: |
           rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
@@ -31,8 +38,7 @@ steps:
   - ${{ if eq(parameters.dockerConfigName, 'gitCloneDockerConfig') }}:
       - script: |
           rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-          mkdir ${BUILD_SOURCESDIRECTORY}
-          chmod 777 ${BUILD_SOURCESDIRECTORY}
+          echo y | docker system prune
         displayName: "Clean workspace"
 
       - checkout: none
