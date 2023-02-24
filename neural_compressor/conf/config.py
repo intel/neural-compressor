@@ -843,12 +843,6 @@ schema = Schema({
                     And(bool, lambda s: s in [True, False]),
             Optional('weight_correction', default=False):
                     And(bool, lambda s: s in [True, False]),
-            Optional('smooth_quant', default=False):
-                    And(bool, lambda s: s in [True, False]),
-            Optional('smooth_quant_args', default=[]):And(
-                Or(float, list),
-                Use(input_to_list_float),
-                lambda s: all(0.0 < i <= 1.0 for i in s)),
         },
         Optional('model_wise', default={'weight': {'bit': [7.0]}, 'activation': {}}): {
             Optional('weight', default= {'bit': [7.0]}): {

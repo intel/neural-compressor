@@ -72,13 +72,13 @@ RECIPES = {
         'last_conv_or_matmul_quantization' : [True, False],
         },
     "onnxruntime": {
-        # 'smooth_quant': [False, True], disable it first to align with algo.
+        'smooth_quant': [False, True],
         'first_conv_or_matmul_quantization' : [True, False],
         'last_conv_or_matmul_quantization' : [True, False],
         'pre_post_process_quantization' : [True, False],
         },
     "pytorch": {
-        # 'smooth_quant': [False, True], # disable it first to align with algo.
+        'smooth_quant': [False, True],
         },
 }
 
@@ -89,10 +89,4 @@ RECIPES_PRIORITY = [
     "first_conv_or_matmul_quantization",
     "last_conv_or_matmul_quantization",
     "pre_post_process_quantization",
-    # determined by adaptor
-    # "graph_optimization_level", 
-    # "gemm_to_matmul",
-    # "add_qdq_pair_to_weight",
-    # "optypes_to_exclude_output_quant",
-    # "dedicated_qdq_pair"
     ]

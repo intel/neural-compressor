@@ -204,20 +204,25 @@ class TuneStrategy(object):
         # get all recipes supported by adaptor.
         adaptor_name = get_adaptor_name(self.adaptor)
         adaptor_recipes = fwk_recipes['common']
-        # TODO WA due to smooth quant only supported by ort currently.
-        if not adaptor_name.startswith('onnx'):
+        # TODO WA due to smooth quant only supported by ort/pt currently.
+        if not adaptor_name.startswith('tensorflow'):
             adaptor_recipes.pop('smooth_quant', None)
         for adaptor_name_key, adaptor_recipes_val in fwk_recipes.items():
             if adaptor_name_key.startswith(adaptor_name):
                 adaptor_recipes.update(adaptor_recipes_val)
-        # divide it into two categories.
+        # divide it into two categories:
+        # tuning lst: the value is equal to the default value
+        # not tuning list: the value is not equal to the default value
         usr_recipes_cfg = self.cfg_bk.quantization.recipes if self.cfg_bk.quantization.recipes else {}
-        # for not tuning recipes, use the value specified by user.
-        not_tuning_recipes = {item[0]: item[1] for item in usr_recipes_cfg.items() if item[0] in adaptor_recipes}
+        for recipe_name, recipe_val in usr_recipes_cfg.items():
+            # for not tuning recipes, use the value specified by user.
+            if recipe_name in adaptor_recipes and recipe_val != adaptor_recipes[recipe_name][0]:
+                self._not_tuning_recipes_values[recipe_name] = recipe_val
+        # sorted the recipes and set the default value to be used before recipe tuning
         for recipe_name in fwk_recipes_priority:
-            if recipe_name in not_tuning_recipes:
-                self._not_tuning_recipes_values[recipe_name] = not_tuning_recipes[recipe_name]
-            elif recipe_name in adaptor_recipes:
+            if recipe_name in adaptor_recipes and recipe_name not in self._not_tuning_recipes_values:
+                # TODO skip tuning smooth_quant first
+                if recipe_name == 'smooth_quant': continue
                 self._tuning_recipes[recipe_name] = adaptor_recipes[recipe_name]
                 self._tuning_recipes_default_values[recipe_name] = adaptor_recipes[recipe_name][0]
         logger.info(f"{len(self._not_tuning_recipes_values)} recipes specified by user.")
@@ -522,10 +527,11 @@ class TuneStrategy(object):
         algo_scheduler.reset_exec_algorithms()
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
             # set the alpha to 0.5 by default
-            alpha = recipe_cfgs.get('smooth_quant_args', 0.5)
+            smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
             sq_algo = ALGORITHMS()['smooth_quant']
+            sq_algo.alpha = smooth_quant_args['alpha']
             algo_scheduler.append_algorithm('pre_quantization', sq_algo)
-            logger.debug(f"Set smooth quant with alpha {alpha} as the pre-quantization algo.")
+            logger.debug(f"Set smooth quant with alpha {smooth_quant_args['alpha']} as the pre-quantization algo.")
             
     def set_param_for_post_quantization_algos(self, algo_scheduler, tune_cfg, pre_optimized_model, q_model) -> None:
         """Set the parameter for post-quantization algos, such as bias correction, weight correction.
@@ -905,8 +911,11 @@ class TuneStrategy(object):
         tune_cfg['approach'] = self.cfg.quantization.approach
         # Add the recipe config
         tune_cfg['recipe_cfgs'] = tune_cfg.get('recipe_cfgs', {})
-        # For not tuning recipe, tune cfg use it directly.
+        # For not tuning recipe, tune cfg use it directly
         tune_cfg['recipe_cfgs'].update(self._not_tuning_recipes_values)
+        # WA for get the smooth quant args
+        if 'smooth_quant_args' in self.cfg_bk.quantization.recipes:
+            tune_cfg['recipe_cfgs']['smooth_quant_args'] = self.cfg_bk.quantization.recipes['smooth_quant_args']
         # For tuning recipe, use the default value if it not specified by recipe tuning sampler.
         for recipe_name, recipe_val in self._tuning_recipes_default_values.items():
             if recipe_name not in tune_cfg['recipe_cfgs']:
