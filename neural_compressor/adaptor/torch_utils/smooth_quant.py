@@ -330,11 +330,9 @@ class TorchSmoothQuant:
                 weight_scales_info[layer_name] = scale
         return weight_scales_info, absorb_scales_info
 
-    def _check_is_same_parameters(self, alpha, percentile, op_types,
+    def _check_same_hyperparameters(self, percentile, op_types,
                                   scales_per_op, calib_iter):
         """
-
-        :param alpha:
         :param percentile:
         :param op_types:
         :param scales_per_op:
@@ -342,15 +340,13 @@ class TorchSmoothQuant:
         :return:
         """
         if len(self.input_maxes) == 0:
-            self.alpha = alpha
             self.percentile = percentile
             self.op_types = op_types
             self.scales_per_op = scales_per_op
             self.calib_iter = calib_iter
             return False
-        if alpha != self.alpha or self.percentile != percentile or self.op_types != op_types \
+        if self.percentile != percentile or self.op_types != op_types \
                 or self.scales_per_op != scales_per_op or self.calib_iter != calib_iter:
-            self.alpha = alpha
             self.percentile = percentile
             self.op_types = op_types
             self.scales_per_op = scales_per_op
@@ -375,19 +371,22 @@ class TorchSmoothQuant:
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smooth quant is ignored since the model is not a torch module")
             return self.model
-        matched = self._check_is_same_parameters(alpha, percentile, op_types, scales_per_op, calib_iter)
+        matched = self._check_same_hyperparameters(percentile, op_types, scales_per_op, calib_iter)
         with torch.no_grad():
             input_maxes = self.input_maxes
-            if matched == False:  ##avoid multiple calibaration during tuning
+            if matched == False:  ##avoid multiple calibaration during tuning if the only difference is alpha
                 self.recover()
                 self.absorb_to_layer, no_absorb_layers = self._trace(
                     op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                 if self.absorb_to_layer == None and no_absorb_layers == None:
                     logger.warning("sorry, could not trace the model, smooth quant is ignored")
+                    logger.warning("if you are using huggingface model, "
+                                   "you could set torchscript to Ture when loading the model or set the retrun_dict to False")
                     return self.model
 
                 input_maxes = self._calibrate(self.absorb_to_layer, calib_iter)
 
+            self.recover()
             self.weight_scale_info, self.absorb_scales_info = self._adjust_parameters(self.absorb_to_layer, input_maxes,
                                                                                       alpha)
             return self.model
@@ -402,6 +401,8 @@ class TorchSmoothQuant:
                 self._scale_layer_weight(key, 1.0 / self.weight_scale_info[key])
             for key in self.absorb_scales_info:
                 self._absorb_scales(key, 1.0 / self.absorb_scales_info[key])
+            self.weight_scale_info = {} ##clear the data
+            self.absorb_scales_info = {}
 
     def _trace(self, op_types):
         """
