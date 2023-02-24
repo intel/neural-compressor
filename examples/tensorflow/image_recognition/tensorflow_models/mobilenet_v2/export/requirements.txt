@@ -1,0 +1,6 @@
+tensorflow
+intel-extension-for-tensorflow[cpu]
+tf2onnx
+onnx
+onnxruntime
+onnxruntime-extensions; python_version < '3.10'
