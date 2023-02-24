@@ -37,7 +37,8 @@ Classes
 
       Generate and yield the next tuning config using HAWQ v2 search in tuning space.
 
-      :Yields: *tune_config (dict)* -- A dict containing the tuning configuration for quantization.
+      :returns: A dict containing the tuning configuration for quantization.
+      :rtype: tune_config (dict)
 
 
 

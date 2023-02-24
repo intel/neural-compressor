@@ -122,6 +122,11 @@ Functions
       Get the summary of the benchmark.
 
 
+   .. py:method:: call_one(cmd, log_file)
+
+      Execute one command for one instance in one thread and dump the log (for Windows).
+
+
    .. py:method:: config_instance()
 
       Configure the multi-instance commands and trigger benchmark with sub process.

@@ -86,4 +86,16 @@ Functions
                        this class when evaluation.
    :type eval_metric: str or obj
 
+   .. rubric:: Example
+
+   # Quantization code for PTQ
+   from neural_compressor import quantization
+   from neural_compressor.config import PostTrainingQuantConfig
+
+   conf = PostTrainingQuantConfig()
+   q_model = quantization.fit(model=model,
+                           conf=conf,
+                           calib_dataloader=val_dataloader)
+   q_model.save('./output')
+
 

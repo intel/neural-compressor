@@ -34,14 +34,11 @@ Functions
 
    Bases: :py:obj:`object`
 
-   Benchmark class can be used to evaluate the model performance.
+   Benchmark class measures the model performance with objective settings.
 
-   With the objective setting, user can get the data of what they configured in yaml.
-
-   :param conf_fname_or_obj: The path to the YAML configuration file or
-                             Benchmark_Conf class containing accuracy goal, tuning objective and preferred
-                             calibration & quantization tuning space etc.
-   :type conf_fname_or_obj: string or obj
+   :param object: containing accuracy goal, tuning objective
+                  and preferred calibration & quantization tuning space etc.
+   :type object: string or obj
 
    .. py:method:: dataloader(dataset, batch_size=1, collate_fn=None, last_batch='rollover', sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
 
@@ -73,10 +70,10 @@ Functions
       The postprocess function should take the outputs of the model as inputs, and
       outputs (predictions, labels) as inputs for metric updates.
 
-      Args:
-      name (str, optional): Name for postprocess.
-      postprocess_cls (cls): Should be a sub_class of neural_compressor.data.transforms.postprocess.
-
+      :param name: Name for postprocess.
+      :type name: str, optional
+      :param postprocess_cls: Should be a sub_class of neural_compressor.data.transforms.postprocess.
+      :type postprocess_cls: cls
 
 
 
@@ -91,7 +88,15 @@ Functions
                   tuning space etc.
    :type config: BenchmarkConfig
    :param b_dataloader: The dataloader for frameworks.
-   :param b_func: customized benchmark function. if user passes the dataloader,
+   :param b_func: Customized benchmark function. If user passes the dataloader,
                   then b_func is not needed.
+
+   .. rubric:: Example
+
+   # Run benchmark according to config
+   from neural_compressor.benchmark import fit
+
+   conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+   fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
 
 

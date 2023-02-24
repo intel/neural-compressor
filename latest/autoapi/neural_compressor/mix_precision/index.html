@@ -143,6 +143,11 @@ quantization.</p></li>
 <dd class="field-odd"><p><strong>AssertionError.</strong> – </p>
 </dd>
 </dl>
+<p class="rubric">Example</p>
+<p>from neural_compressor import mix_precision
+from neural_compressor.config import MixedPrecisionConfig</p>
+<p>conf = MixedPrecisionConfig()
+converted_model = mix_precision.fit(model, config=conf)</p>
 </dd></dl>
 
 </section>

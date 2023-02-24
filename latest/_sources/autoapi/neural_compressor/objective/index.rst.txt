@@ -53,12 +53,28 @@ Functions
 
    Register a customized objective.
 
+   .. rubric:: Example
+
+   from eural_compressor.objective import objective_custom_registry
+
+   objective_cls = type(user_objective)
+   name = user_objective.__class__.__name__
+   objective_cfg = name if deep_get(self.conf.usr_cfg, "tuning.objective") else [name]
+   deep_set(self.conf.usr_cfg, user_obj_cfg, objective_cfg)
+   self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+   objective_custom_registry(name, objective_cls)
+
 
 .. py:class:: Objective
 
    Bases: :py:obj:`object`
 
    The base class for precise benchmark supported by neural_compressor.
+
+   With built-in objectives, users can compress models with different objectives easily.
+   In special cases, users can also register their own objective classes.
+
+
 
    .. py:property:: model
 
@@ -108,7 +124,7 @@ Functions
 
    Bases: :py:obj:`Objective`
 
-   Configuration Accuracy class.
+   Configuration Accuracy class. Evaluate the accuracy.
 
    .. py:method:: start()
 
@@ -125,7 +141,7 @@ Functions
 
    Bases: :py:obj:`Objective`
 
-   Configuration Performance class.
+   Configuration Performance class. Evaluate the inference time.
 
    .. py:method:: start()
 
@@ -144,6 +160,8 @@ Functions
 
    Configuration Footprint class.
 
+   Evaluate the peak size of memory blocks during inference.
+
    .. py:method:: start()
 
       Record the space allocation.
@@ -159,7 +177,7 @@ Functions
 
    Bases: :py:obj:`Objective`
 
-   Configuration ModelSize class.
+   Configuration ModelSize class. Evaluate the model size.
 
    .. py:method:: start()
 
@@ -175,6 +193,15 @@ Functions
 .. py:class:: MultiObjective(objectives, accuracy_criterion, metric_criterion=[True], metric_weight=None, obj_criterion=None, obj_weight=None, is_measure=False)
 
    The base class for multiple benchmarks supported by neural_compressor.
+
+   .. rubric:: Example
+
+   from neural_compressor.objective import MultiObjective
+   obj = MultiObjective(
+       objectives=['accuracy', 'modelsize', 'performance'],
+       accuracy_criterion={'relative': 0.1},
+       obj_criterion=[True, False, False],
+       obj_weight=[0.7, 0.2, 0.1])
 
    .. py:property:: baseline
 
@@ -248,17 +275,19 @@ Functions
 
       Calculate the best results.
 
-      metric + multi-objectives case:
-          tune_data = [
-              [acc1, [obj1, obj2, ...]],
-              [acc2, [obj1, obj2, ...]],
-              ...
-          ]
-          multi-metrics + multi-objectives case:
-          tune_data = [
-              [[acc1, acc2], [[acc1, acc2], obj1, obj2]],
-              [[acc1, acc2], [[acc1, acc2], obj1, obj2]]
-          ]
+      .. rubric:: Example
+
+      # metric + multi-objectives case:
+      tune_data = [
+          [acc1, [obj1, obj2, ...]],
+          [acc2, [obj1, obj2, ...]],
+          ...
+      ]
+      # multi-metrics + multi-objectives case:
+      tune_data = [
+          [[acc1, acc2], [[acc1, acc2], obj1, obj2]],
+          [[acc1, acc2], [[acc1, acc2], obj1, obj2]]
+      ]
 
 
 
