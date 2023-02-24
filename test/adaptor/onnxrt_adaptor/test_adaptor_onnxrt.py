@@ -914,6 +914,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.assertTrue(len(adaptor.quantizable_ops), 2)
  
         framework_specific_info['device'] = 'gpu'
+        framework_specific_info['backend'] = 'onnxrt_cuda_ep'
         adaptor = FRAMEWORKS[framework](framework_specific_info) 
         tune_cfg = {'calib_iteration': 1,
                     'op': {('gather', 'Gather'): {'activation':  {'dtype': 'fp16', 'quant_mode': 'static'},

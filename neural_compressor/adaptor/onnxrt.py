@@ -86,12 +86,13 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     logger.warning("Dynamic approach doesn't support QDQ format.")
         
         # get quantization config file according to backend
+        config_file = None
         if self.backend == 'CPUExecutionProvider':
             config_file = 'onnxrt.yaml'
         elif self.backend == 'TensorrtExecutionProvider':
             config_file = 'onnxrt_trt.yaml'
         elif self.backend == 'CUDAExecutionProvider':
-            config_file == 'onnxrt_cuda.yaml'
+            config_file = 'onnxrt_cuda.yaml'
         else: # pragma: no cover
             assert False, "{} provider is not supported in current environment, " \
                 "supported providers: {}".format(self.backend,
