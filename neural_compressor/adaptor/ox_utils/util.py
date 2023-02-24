@@ -687,6 +687,7 @@ def insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nod
     return new_added_mul_nodes, new_init_tensors, name_2_nodes
 
 def trt_env_setup(model):
+    """Set environment variable for Tensorrt Execution Provider."""
     is_int8 = False
     for node in model.graph.node:
         if node.op_type in ["QuantizeLinear", "DequantizeLinear"]:
