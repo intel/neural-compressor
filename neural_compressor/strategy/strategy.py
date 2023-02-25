@@ -857,6 +857,9 @@ class TuneStrategy(object):
                  'recipes': self.cfg.quantization.recipes,
                  'performance_only': self.cfg.tuning.exit_policy.performance_only,
                  'use_bf16': self.cfg.use_bf16 if self.cfg.use_bf16 is not None else False})
+            for item in ['scale_propagation_max_pooling', 'scale_propagation_concat']:
+                if item not in framework_specific_info['recipes']:
+                    framework_specific_info['recipes'].update({item: True})
             if self.cfg.model.backend == 'itex':
                 self.cfg.model.framework = 'tensorflow_itex'
                 framework = 'tensorflow_itex'
