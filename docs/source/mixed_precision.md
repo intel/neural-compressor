@@ -27,7 +27,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
 |ONNX          |plan to support in the future |
 |MXNet         |&#10004;     |
 
-> **During quantization, BF16 conversion can be executed if force enabled. Please refer to this [document](./quantization_mixed_precision.md) for its workflow.**
+> **During quantization, BF16 conversion is default enabled. Please refer to this [document](./quantization_mixed_precision.md) for its workflow.**
 
 ## Get Started with Mixed Precision API
 
