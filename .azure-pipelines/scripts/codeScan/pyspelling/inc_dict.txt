@@ -1102,6 +1102,7 @@ mobilenet
 MobileNet
 mobilenetv
 Mobilenetv
+MobilenetV
 MobileNetv
 MobileNetV
 modalities
