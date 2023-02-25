@@ -187,6 +187,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op" title="neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op"><code class="xref py py-obj docutils literal notranslate"><span class="pre">insert_smooth_mul_op_per_op</span></code></a>(scales, shape_infos, ...)</p></td>
 <td><p>Insert the mul layer before op.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.trt_env_setup" title="neural_compressor.adaptor.ox_utils.util.trt_env_setup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">trt_env_setup</span></code></a>(model)</p></td>
+<td><p>Set environment variable for Tensorrt Execution Provider.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -514,6 +517,12 @@ name_2_nodes: a dict, key is the node name, value is the node</p>
 <dd class="field-odd"><p>new_added_mul_nodes</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.trt_env_setup">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">trt_env_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.trt_env_setup" title="Permalink to this definition"></a></dt>
+<dd><p>Set environment variable for Tensorrt Execution Provider.</p>
 </dd></dl>
 
 </section>

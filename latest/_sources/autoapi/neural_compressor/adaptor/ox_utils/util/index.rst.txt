@@ -55,6 +55,7 @@ Functions
    neural_compressor.adaptor.ox_utils.util.adjust_weights_per_op
    neural_compressor.adaptor.ox_utils.util.adjust_weights_per_input
    neural_compressor.adaptor.ox_utils.util.insert_smooth_mul_op_per_op
+   neural_compressor.adaptor.ox_utils.util.trt_env_setup
 
 
 
@@ -307,5 +308,10 @@ Functions
              new_init_tensors: added scales tensor
              name_2_nodes: a dict, key is the node name, value is the node
    :rtype: new_added_mul_nodes
+
+
+.. py:function:: trt_env_setup(model)
+
+   Set environment variable for Tensorrt Execution Provider.
 
 
