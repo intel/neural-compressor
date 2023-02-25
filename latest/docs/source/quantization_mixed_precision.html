@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Turn ON Auto Mixed Precision during Quantization &mdash; Intel® Neural Compressor 2.0 documentation</title>
+  <title>Turn OFF Auto Mixed Precision during Quantization &mdash; Intel® Neural Compressor 2.0 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
@@ -71,7 +71,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Turn ON Auto Mixed Precision during Quantization</li>
+      <li class="breadcrumb-item active">Turn OFF Auto Mixed Precision during Quantization</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../_sources/docs/source/quantization_mixed_precision.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -81,8 +81,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="turn-on-auto-mixed-precision-during-quantization">
-<h1>Turn ON Auto Mixed Precision during Quantization<a class="headerlink" href="#turn-on-auto-mixed-precision-during-quantization" title="Permalink to this heading"></a></h1>
+  <section id="turn-off-auto-mixed-precision-during-quantization">
+<h1>Turn OFF Auto Mixed Precision during Quantization<a class="headerlink" href="#turn-off-auto-mixed-precision-during-quantization" title="Permalink to this heading"></a></h1>
 <p>BF16 conversion during quantization is default ON. To force disable it, users need to exclude “bf16” in PostTrainingQuantConfig and QuantizationAwareTrainingConfig:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostPostTrainingQuantConfig</span>
 <span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span>
