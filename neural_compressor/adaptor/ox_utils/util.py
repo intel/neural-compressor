@@ -685,3 +685,16 @@ def insert_smooth_mul_op_per_op(scales, shape_infos, input_tensors_2_weights_nod
                 if input == input_key:
                     node.input[index] = mul_output_name
     return new_added_mul_nodes, new_init_tensors, name_2_nodes
+
+def trt_env_setup(model):
+    """Set environment variable for Tensorrt Execution Provider."""
+    is_int8 = False
+    for node in model.graph.node:
+        if node.op_type in ["QuantizeLinear", "DequantizeLinear"]:
+            is_int8 = True
+            break
+    if is_int8:
+        os.environ["ORT_TENSORRT_INT8_ENABLE"] = "1"
+    else:
+        os.environ["ORT_TENSORRT_INT8_ENABLE"] = "0"
+        
