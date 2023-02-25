@@ -519,7 +519,7 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from neural_compressor.metric import METRICS
+            from neural_compressor.metric import Metric
             from neural_compressor.experimental import Graph_Optimization, common
             graph_optimizer = Graph_Optimization('fake_yaml_3.yaml')
             graph_optimizer.metric = Metric(MyMetric)
