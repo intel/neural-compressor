@@ -1151,6 +1151,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                             convert_attribute=False)
         sess_options = ort.SessionOptions()
         if self.backend == 'TensorrtExecutionProvider':
+            from neural_compressor.adaptor.ox_utils.util import trt_env_setup
+            trt_env_setup(input_graph.model)
             sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL 
         if measurer:
             # https://github.com/microsoft/onnxruntime/issues/7347
