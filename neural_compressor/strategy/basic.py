@@ -285,11 +285,14 @@ class BasicTuneStrategy(TuneStrategy):
                 yield new_tune_cfg
                 if self.objectives.accuracy_meets():
                     logger.info(f"*** Quantize all {op_type} ops({quant_ops_cnt}) and accuracy meet requirement.")
+                    got_quant_model_meet_acc = True
                     self.best_qmodel = self.last_qmodel
                     fp32_amap_tune_cfg = new_tune_cfg
                 else:
                     logger.info(f"*** Quantize all {op_type} ops({quant_ops_cnt}) but accuracy not meet requirement.")
+        logger.info("*** Have tried all op type.")
         if got_quant_model_meet_acc:
+            logger.info("*** Found the model with quantized ops, early stopping.")
             self.early_stopping = True
         self.re_quant = False
 

@@ -177,8 +177,9 @@ class Quantization(Component):
     def execute(self):
         """Quantization execute routinue based on strategy design."""
         # check here the distributed flag
-        logger.info("..............use_distributed_tuning: {}".format(self.conf.usr_cfg.tuning.use_distributed_tuning))
+        
         if self.conf.usr_cfg.tuning.use_distributed_tuning:
+            logger.info("use distributed tuning: {}".format(self.conf.usr_cfg.tuning.use_distributed_tuning))
             return self.distributed_execute()
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):

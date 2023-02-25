@@ -180,8 +180,8 @@ class TuningSpace:
                 else:
                     self.quant_mode_wise_items[q_option.name].append(op_item)
 
-        logger.info("Constructed tuning space.")
-        logger.info(self.root_item.get_details())
+        logger.debug("Constructed tuning space.")
+        logger.debug(self.root_item.get_details())
 
     def _create_tuning_item(self, tuning_items: Dict, attr_name: str, quant_mode_item: TuningItem):
         for tuning_item_name, options in tuning_items.items():
@@ -482,10 +482,10 @@ class TuningSpace:
                         self.ops_data_type[op_name_type][('precision', att, att_dtype)] = att_dtype
 
             parsed_cap[op_name_type] = parsed_op_cap
-        logger.info(f"Parsed cap ............")
-        logger.info(parsed_cap)
-        logger.info(f"Data type info...")
-        logger.info(self.ops_data_type)
+        logger.debug(f"Parsed cap ............")
+        logger.debug(parsed_cap)
+        logger.debug(f"Data type info...")
+        logger.debug(self.ops_data_type)
         return parsed_cap
     
     def _create_tuning_space(self, capability, usr_cfg):
@@ -500,11 +500,11 @@ class TuningSpace:
         """
         capability['op'] = self._parse_cap_helper(deepcopy(capability['op']))
         if usr_cfg:
-            logger.info(f"*********** Before merged with user cfg ***********")
-            logger.info(capability)
+            logger.debug(f"*********** Before merged with user cfg ***********")
+            logger.debug(capability)
             self._merge_with_user_cfg(capability, usr_cfg['quantization'])
-            logger.info(f"***********  After Merged with user cfg ***********")
-            logger.info(capability)
+            logger.debug(f"***********  After Merged with user cfg ***********")
+            logger.debug(capability)
         self._parse_capability(capability)
 
     def query_item_option(self, op_name_type, path, method_name, method_val):
@@ -589,7 +589,7 @@ class TuningSpace:
             assert len(path) == 2, f"Got the path: {path}, please provide the path include activation or weight."
             att_item = self.get_item_by_path((op_name_type, *path))
             if not att_item or len(att_item.options) == 0: 
-                logger.info(f"Could not found item for {op_name_type} with path {path}")
+                logger.debug(f"Could not found item for {op_name_type} with path {path}")
                 return None
             dtype = att_item.options[0].name
             return (*path, dtype)
