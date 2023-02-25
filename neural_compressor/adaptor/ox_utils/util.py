@@ -183,6 +183,7 @@ def cast_tensor(tensor, dtype): # pragma: no cover
         tensor.float_data[:] = []
         tensor.int32_data[:] = []
         tensor.raw_data = new_val.tostring()
+        tensor.data_type = dtype_mapping[dtype]
         return True
     return False
 

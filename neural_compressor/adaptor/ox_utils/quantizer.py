@@ -355,8 +355,6 @@ class Quantizer:
 
     def dtype_cast(self, node, cfg, keep_io_types=True): # pragma: no cover
         """Cast node dtype."""
-        min_positive_val = 1e-7
-        max_finite_val = 1e4
         for idx, tensor_name in enumerate(node.input):
             initializer = find_by_name(tensor_name, self.model.initializer())
             if initializer is not None:

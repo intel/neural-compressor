@@ -1051,7 +1051,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     else: # pragma: no cover
                         op_wise.update(
                             {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
-        
+
         return {'optypewise': optype_wise, 'opwise': op_wise}
 
     def _optypewise_filter_for_qdq(self, optype_wise):

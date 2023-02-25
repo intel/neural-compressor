@@ -70,7 +70,7 @@ def fit(model, config=None, eval_func=None, eval_dataloader=None, eval_metric=No
         converted_model = mix_precision.fit(model, config=conf)
     """
     assert isinstance(config, MixedPrecisionConfig), "Please provide MixedPrecisionConfig!"
-    conf = Config(quantization=config)
+    conf = Config(quantization=config, benchmark=None, pruning=None, distillation=None, nas=None)
     converter = MixedPrecision(conf)
     precisions = ["bf16", "fp16", "fp32"]
     precisions = list(set(precisions) - set(config.excluded_precisions))
