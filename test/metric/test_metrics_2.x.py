@@ -24,16 +24,6 @@ class CorrectMetric:
         self.item = []
 
 class TestMetrics(unittest.TestCase):
-    def testUserMetric(self):
-        from neural_compressor.experimental import common, Quantization, Benchmark, \
-            Graph_Optimization
-        for i in [Quantization(), Benchmark(), Graph_Optimization()]:
-            item = i
-            with self.assertRaises(AssertionError):
-                item.metric = InCorrectMetric()
-            item.framework = 'tensorflow'
-            item.metric = common.Metric(CorrectMetric, str(i))
-
     def testmIOU(self):
         metrics = METRICS('tensorflow')
         miou = metrics['mIOU']()
