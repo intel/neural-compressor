@@ -366,7 +366,7 @@ if __name__ == "__main__":
         return metric.result()
 
     if args.benchmark:
-        if args.mode == 'performace':
+        if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             conf = BenchmarkConfig(iteration=100,

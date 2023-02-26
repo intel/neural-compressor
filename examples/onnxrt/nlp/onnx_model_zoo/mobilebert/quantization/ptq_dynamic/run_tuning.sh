@@ -22,9 +22,6 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
-      --quant_format=*)
-          quant_format=$(echo $var |cut -f2 -d=)
-      ;;
     esac
   done
 
@@ -36,7 +33,6 @@ function run_tuning {
             --model_path ${input_model} \
             --save_path ${output_model} \
             --data_path ${dataset_location} \
-            --quant_format ${quant_format} \
             --tune
 }
 
