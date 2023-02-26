@@ -1,20 +1,11 @@
 User Guide
 ===========================
 
-Intel® Neural Compressor aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as [TensorFlow](https://www.tensorflow.org/), [PyTorch](https://pytorch.org/), [ONNX Runtime](https://onnxruntime.ai/), and [MXNet](https://mxnet.apache.org/),
-as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch). 
-In addition, the tool showcases the key features, typical examples, and broad collaborations as below:
-
-* Support a wide range of Intel hardware such as [Intel Xeon Scalable processor](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html) with extensive testing; support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing
-
-* Validate more than 10,000 models such as [Stable Diffusion](https://github.com/intel/neural-compressor/tree/readme/update/examples/pytorch/nlp/huggingface_models/text-to-image/quantization), [GPT-J](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx), [BERT-Large](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx), and [ResNet50](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx) from popular model hubs such as [Hugging Face](https://huggingface.co/), [Torch Vision](https://pytorch.org/vision/stable/index.html), and [ONNX Model Zoo](https://github.com/onnx/models#models), by leveraging zero-code optimization solution [Neural Coder](https://github.com/intel/neural-compressor/tree/readme/update/neural_coder#what-do-we-offer) and automatic [accuracy-driven](https://github.com/intel/neural-compressor/blob/readme/update/docs/source/design.md#workflow) quantization strategies
-
-* Collaborate with cloud marketplace such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html) and [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
+Intel® Neural Compressor aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search to help the user optimize their model. The below documents could help you to get familiar with concepts and modules in Intel® Neural Compressor. Learn how to utilize the APIs in Intel® Neural Compressor to conduct quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks.
 
 ## Documentation
-The below documents could help you to get familiar with concepts and modules in Intel® Neural Compressor. Learn how to utilize the APIs in Intel® Neural Compressor to conduct quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks.
 
-The user can get a quick understand about design structure and workflow of Intel® Neural Compressor in the `Overview` part. This part has provided a wide range examples to help the user to get a quick start of using Intel® Neural Compressor. `Python-based APIs` contains more details about the functional APIs in Intel® Neural Compressor, which introduces the mechanism of each function and tutorial to help the user write their own code step by step. `Neural Coder` show our special Python launcher to help the user to achieve automatic deep learning optimization. If you're familiar with our Intel® Neural Compressor, you can find more advanced usages to help you optimize your code and improve the model performance in `Advanced Topics`. We also provide a comprehensive migration document to help the user update their code from our previous 1.X version to the new 2.X version. 
+The user can get a quick understand about design structure and workflow of Intel® Neural Compressor in the `Overview` part. This part has provided a wide range examples to help the user to get a quick start of using Intel® Neural Compressor. `Python-based APIs` contains more details about the functional APIs in Intel® Neural Compressor, which introduces the mechanism of each function and tutorial to help the user write their own code step by step. `Neural Conder` show our special Python launcher to help the user to achieve automatic deep learning optimization. If you're familiar with our Intel® Neural Compressor, you can find more advanced usages to help you optimize your code and improve the model performance in `Advanced Topics`. We also provide a comprehensive migration document to help the user update their code from our previous 1.X version to the new 2.X version. 
 
 <table class="docutils">
   <thead>
@@ -78,12 +69,12 @@ The user can get a quick understand about design structure and workflow of Intel
           <td colspan="1" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
           <td colspan="2" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
           <td colspan="3" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
-          <td colspan="3" align="center"><a href="./docs/source/metric.md">Metric</a></td>    
+          <td colspan="3" align="center">SmoothQuant (Coming Soon)</td>
       </tr>
-      <tr>     
+      <tr>
+        <td colspan="3" align="center"><a href="./docs/source/metric.md">Metric</a></td>        
         <td colspan="3" align="center"><a href="./docs/source/objective.md">Objective</a></td>
         <td colspan="3" align="center"><a href="./docs/source/migration.md">Code Migration</a></td>
-        <td colspan="3" align="center">SmoothQuant (Coming Soon)</td>
       </tr>
   </tbody>
 </table>
