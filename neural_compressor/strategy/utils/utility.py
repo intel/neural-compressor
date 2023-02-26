@@ -49,4 +49,9 @@ def get_adaptor_name(adaptor):
     Args:
         adaptor: adaptor instance.
     """
-    return type(adaptor).__name__[:-len('Adaptor')].lower()
+    adaptor_name = type(adaptor).__name__.lower()
+    adaptor_name_lst = ['onnx', 'tensorflow', 'pytorch']
+    for name in adaptor_name_lst:
+        if adaptor_name.startswith(name):
+            return name
+    return ""

@@ -745,15 +745,21 @@ class TensorFlowAdaptor(Adaptor):
                 'sequence': [[','.join(patterns[:pat_length - i]) for i in range(pat_length)][0]],
                 'precision': ['int8']
             }
+            first_conv_or_matmul_node = []
             if node_op in tf_quantizable_op_type and node_name not in self.exclude_node_names and (
                 node_name, self.unify_op_type_mapping[node_op]) not in self.quantizable_op_details:
+                if (self.unify_op_type_mapping[node_op].find("conv2d") != -1 or \
+                    self.unify_op_type_mapping[node_op].find("matmul") != -1) and \
+                        len(first_conv_or_matmul_node) == 0:
+                            first_conv_or_matmul_node.append((node_name, \
+                                self.unify_op_type_mapping[node_op]))
+                            self.recipes_ops['first_conv_or_matmul_quantization'] = \
+                                first_conv_or_matmul_node
                 if exclude_first_quantizable_op and \
                     (self.unify_op_type_mapping[node_op].find("conv2d") != -1 or \
                     self.unify_op_type_mapping[node_op].find("matmul") != -1):
                     exclude_first_quantizable_op = False
                     self.exclude_node_names.append(node_name)
-                    self.recipes_ops['first_conv_or_matmul_quantization'] = [(node_name,\
-                        self.unify_op_type_mapping[node_op])]
                     continue
                 self._init_op_stat[node_op].append(node_name)
                 if self.unify_op_type_mapping[node_op].find("conv2d") != -1:

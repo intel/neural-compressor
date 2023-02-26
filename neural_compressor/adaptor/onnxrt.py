@@ -986,8 +986,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                         last_quantizable_node.pop()
                     last_quantizable_node.append(node.name)
 
-                if node.name in last_quantizable_node:
-                    recipes_ops['last_conv_or_matmul_quantization'] = [(node.name, node.op_type)]
+                if len(recipes_ops['last_conv_or_matmul_quantization']):
+                    recipes_ops['last_conv_or_matmul_quantization'].pop()
+                recipes_ops['last_conv_or_matmul_quantization'].append((node.name, node.op_type))
 
                 # get first and last Conv or MatMul node
                 if exclude_pre_post_process:

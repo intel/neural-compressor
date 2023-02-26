@@ -205,7 +205,7 @@ class TuneStrategy(object):
         adaptor_name = get_adaptor_name(self.adaptor)
         adaptor_recipes = fwk_recipes['common']
         # TODO WA due to smooth quant only supported by ort/pt currently.
-        if not adaptor_name.startswith('tensorflow'):
+        if not adaptor_name not in ['onnx', 'pytorch']:
             adaptor_recipes.pop('smooth_quant', None)
         for adaptor_name_key, adaptor_recipes_val in fwk_recipes.items():
             if adaptor_name_key.startswith(adaptor_name):
@@ -213,6 +213,8 @@ class TuneStrategy(object):
         # divide it into two categories:
         # tuning lst: the value is equal to the default value
         # not tuning list: the value is not equal to the default value
+        logger.info(f"Adaptor has {len(adaptor_recipes)} recipes.")
+        logger.debug(adaptor_recipes)
         usr_recipes_cfg = self.cfg_bk.quantization.recipes if self.cfg_bk.quantization.recipes else {}
         for recipe_name, recipe_val in usr_recipes_cfg.items():
             # for not tuning recipes, use the value specified by user.
@@ -226,9 +228,9 @@ class TuneStrategy(object):
                 self._tuning_recipes[recipe_name] = adaptor_recipes[recipe_name]
                 self._tuning_recipes_default_values[recipe_name] = adaptor_recipes[recipe_name][0]
         logger.info(f"{len(self._not_tuning_recipes_values)} recipes specified by user.")
-        logger.info(self._not_tuning_recipes_values)
+        logger.debug(self._not_tuning_recipes_values)
         logger.info(f"{len(self._tuning_recipes)} recipes require future tuning.")
-        logger.info(self._tuning_recipes)
+        logger.debug(self._tuning_recipes)
         
 
     def distributed_next_tune_cfg_lst(self, comm):
@@ -473,7 +475,7 @@ class TuneStrategy(object):
     def _fallback_ops(self, tune_cfg, recipe_op_lst, tuning_space):
         """Fallback ops in recipe op list."""
         for op_name_type in recipe_op_lst:
-            tune_cfg['op'][op_name_type].update(OpTuningConfig(op_name_type[0],\
+            tune_cfg[op_name_type].update(OpTuningConfig(op_name_type[0],\
                 op_name_type[1],'fp32', tuning_space))
         return tune_cfg
     
@@ -483,9 +485,10 @@ class TuneStrategy(object):
         for recipe_name, recipe_val_lst in self._tuning_recipes.items():
             tune_cfg['recipe_cfgs'][recipe_name] = recipe_val_lst[-1]
             if recipe_name in FALLBACK_RECIPES_SET and 'recipes_ops' in self.capability and \
-                (self.capability['recipes_ops'].get(recipe_name, [])) > 0:
+                len(self.capability['recipes_ops'].get(recipe_name, [])) > 0:
                 logger.info(f"Applied recipe {recipe_name}.")
-                tune_cfg = self._fallback_ops(tune_cfg, self.capability['recipes_ops'][recipe_name], self.tuning_space)
+                tune_cfg = self._fallback_ops(tune_cfg, self.capability['recipes_ops'][recipe_name],\
+                    self.tuning_space)
         return tune_cfg
         
     def apply_recipe_one_by_one(self, tune_cfg):
@@ -498,7 +501,7 @@ class TuneStrategy(object):
         all_registered_samplers = TuningSamplerRegistry.sampler_dict
         for recipe_name, recipe_vals in self._tuning_recipes.items():
             if recipe_name in FALLBACK_RECIPES_SET and 'recipes_ops' in self.capability and \
-                (self.capability['recipes_ops'].get(recipe_name, [])) > 0:
+                len(self.capability['recipes_ops'].get(recipe_name, [])) > 0:
                 logger.info(f"Applied recipe {recipe_name} with value {recipe_vals[-1]}")
                 new_tune_cfg = self._fallback_ops(copy.deepcopy(tune_cfg), \
                     self.capability['recipes_ops'][recipe_name], self.tuning_space)

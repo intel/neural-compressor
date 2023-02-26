@@ -71,7 +71,7 @@ RECIPES = {
         'first_conv_or_matmul_quantization' : [True, False],
         'last_conv_or_matmul_quantization' : [True, False],
         },
-    "onnxruntime": {
+    "onnx": {
         'smooth_quant': [False, True],
         'first_conv_or_matmul_quantization' : [True, False],
         'last_conv_or_matmul_quantization' : [True, False],

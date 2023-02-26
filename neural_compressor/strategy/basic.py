@@ -189,7 +189,7 @@ class BasicTuneStrategy(TuneStrategy):
                 if index == 1 and not self.applied_all_recipes_flag:
                     logger.info("Apply all recipes.")
                     self.applied_all_recipes_flag = True
-                    yield self.apply_all_tuning_recipes(deepcopy(op_tuning_cfg))
+                    yield self.apply_all_tuning_recipes(deepcopy(self.cur_best_tuning_cfg))
                 stage1_cnt += 1
                 if early_stop_tuning and stage1_cnt > stage1_max:
                     logger.info("Early stopping the stage 1.")
