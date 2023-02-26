@@ -50,7 +50,7 @@ required_libs = {
     'pytorch_ipex': ['torch', 'intel_extension_for_pytorch'],
     'onnxrt_qlinearops': ['onnx', 'onnxruntime'],
     'onnxrt_integerops': ['onnx', 'onnxruntime'],
-    'onnxrt_qoperator': ['onnx', 'onnxruntime'],
+    'onnxruntime': ['onnx', 'onnxruntime'],
     'mxnet': ['mxnet'],
 }
 

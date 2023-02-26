@@ -251,7 +251,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s)),
@@ -269,7 +269,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         # compute_dtypeis only for PyTorch framework
         Optional('compute_dtype', default=['uint8']): And(
             list,
@@ -293,13 +293,13 @@ graph_optimization_schema = Schema({
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
         },
         Optional('activation', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
             }
     }
 })
@@ -309,20 +309,20 @@ mixed_precision_schema = Schema({
     Optional('precisions', default={'precisions': ['fp32']}): And(
         Or(str, list),
         Use(input_to_list),
-        lambda s: all(i in [ 'fp32', 'bf16'] for i in s)),
+        lambda s: all(i in [ 'fp32', 'bf16', 'fp16'] for i in s)),
 
     Optional('op_wise', default={'weight': {}, 'activation': {}}): {
         Optional('weight', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
         },
         Optional('activation', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
             }
     }
 })
@@ -857,7 +857,7 @@ schema = Schema({
                 Optional('dtype', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
                 Optional('algorithm', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
@@ -880,7 +880,7 @@ schema = Schema({
                 Optional('dtype', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
                 # compute_dtypeis only for PyTorch framework
                 Optional('compute_dtype', default=['uint8']): And(
                     Or(str, list),

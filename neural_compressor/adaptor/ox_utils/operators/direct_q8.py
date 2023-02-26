@@ -81,21 +81,6 @@ class Direct8BitOperator(Operator):
             return
         self.quantizer.dtype_cast(self.node, self.dtype)
 
-@op_registry(op_types="Shape, Loop, Slice")
-class DirectCastOperator(Operator): # pragma: no cover
-    """Direct8bit Operator Cast."""
-
-    def __init__(self, onnx_quantizer, onnx_node):
-        """Initialization."""
-        super(DirectCastOperator, self).__init__(onnx_quantizer, onnx_node)
-
-    def cast(self):
-        """Cast node."""
-        node = self.node
-        if node.input[0] not in [i.tensor_name for i in self.quantizer.new_value_info.values()]:
-            return
-        self.quantizer.dtype_cast(self.node, self.dtype)
-
 @qop_registry(op_types="Reshape, Transpose, Squeeze, Unsqueeze")
 class QDirectOperator(QOperator):
     """QDirect Operator."""
