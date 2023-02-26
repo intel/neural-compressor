@@ -972,7 +972,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         all_conv_matmul = []
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             if node.op_type in ['Conv', 'MatMul']:
-                if (first_quantizable_node) == 0:
+                if len(first_quantizable_node) == 0:
                     recipes_ops['first_conv_or_matmul_quantization'] = [(node.name, node.op_type)]
 
                 # get first Conv or MatMul node
