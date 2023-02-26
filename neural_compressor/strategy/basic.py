@@ -189,6 +189,7 @@ class BasicTuneStrategy(TuneStrategy):
             # Optype-wise tuning tuning items: the algorithm/scheme/granularity of activation(weight)
             quant_ops = quant_mode_wise_items.get('static', [])
             quant_ops += quant_mode_wise_items.get('dynamic', [])
+
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], op_item_dtype_dict,\
                 initial_op_tuning_cfg)
             for index, op_tuning_cfg in enumerate(op_wise_tuning_sampler):
@@ -199,6 +200,12 @@ class BasicTuneStrategy(TuneStrategy):
                     for tune_cfg in self._quantize_by_optype_wise(deepcopy(self.basic_last_quant_config)):
                         yield tune_cfg
                     if self.early_stopping: return
+                
+                # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
+                if index == 1 and not self.applied_all_recipes_flag:
+                    logger.info("Apply all recipes.")
+                    self.applied_all_recipes_flag = True
+                    yield self.apply_all_tuning_recipes(deepcopy(self.cur_best_tuning_cfg))
                 yield op_tuning_cfg
             
             # To handle the case that only one trial at stage 1.
@@ -207,7 +214,13 @@ class BasicTuneStrategy(TuneStrategy):
                 for tune_cfg in self._quantize_by_optype_wise(deepcopy(self.basic_last_quant_config)):
                     yield tune_cfg
                 if self.early_stopping: return
-    
+            
+            # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
+            if self.applied_all_recipes_flag:
+                logger.info("Apply all recipes.")
+                self.applied_all_recipes_flag = True
+                yield self.apply_all_tuning_recipes(deepcopy(self.cur_best_tuning_cfg))
+
             # Fallback the ops supported both static and dynamic from static to dynamic
             if self.cfg.quantization.approach == 'post_training_auto_quant':
                 static_dynamic_items = [item for item in tuning_space.query_items_by_quant_mode('static') if
@@ -223,6 +236,10 @@ class BasicTuneStrategy(TuneStrategy):
                                                    new_op_tuning_cfg[item.name])
                 new_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield new_op_tuning_cfg
+
+            logger.info("Apply recipe one by one.")
+            for tune_cfg in self.apply_recipe_one_by_one(deepcopy(self.cur_best_tuning_cfg)):
+                yield tune_cfg
             best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
 
             # Fallback

@@ -60,3 +60,33 @@ UINT8_ASYM_KL_PERCHANNEL = {'dtype': ['uint8'],
                             'algorithm': ['kl'],
                             'granularity': ['per_channel']}
 
+
+# Options for recipes, the first options is the default value.
+RECIPES = {
+    "common":{
+        # 'fast_bias_correction' : [False, True], # Disable it first
+        # 'weight_correction' : [False, True], # Disable it first
+        },
+    "tensorflow": {
+        'first_conv_or_matmul_quantization' : [True, False],
+        'last_conv_or_matmul_quantization' : [True, False],
+        },
+    "onnx": {
+        'smooth_quant': [False, True],
+        'first_conv_or_matmul_quantization' : [True, False],
+        'last_conv_or_matmul_quantization' : [True, False],
+        'pre_post_process_quantization' : [True, False],
+        },
+    "pytorch": {
+        'smooth_quant': [False, True],
+        },
+}
+
+RECIPES_PRIORITY = [
+    "smooth_quant",  #Only support by ort/pt currently
+    # "fast_bias_correction", # Disable it first
+    # "weight_correction", # Disable it first
+    "first_conv_or_matmul_quantization",
+    "last_conv_or_matmul_quantization",
+    "pre_post_process_quantization",
+    ]

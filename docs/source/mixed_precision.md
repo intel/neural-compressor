@@ -20,38 +20,63 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
 
 ## Mixed Precision Support Matrix
 
-|Framework     |BF16         |
-|--------------|:-----------:|
-|TensorFlow    |&#10004;     |
-|PyTorch       |&#10004;     |
-|ONNX          |plan to support in the future |
-|MXNet         |&#10004;     |
+|Framework     |BF16         |FP16         |
+|--------------|:-----------:|:-----------:|
+|TensorFlow    |&#10004;     |:x:     |
+|PyTorch       |&#10004;     |:x:     |
+|ONNX Runtime  |&#10004;     |&#10004;     |
+|MXNet         |&#10004;     |:x:     |
 
-> **During quantization, BF16 conversion can be executed if force enabled. Please refer to this [document](./quantization_mixed_precision.md) for its workflow.**
+> **During quantization, BF16 conversion is default enabled, FP16 can be executed if 'device' of config is 'gpu'. Please refer to this [document](./quantization_mixed_precision.md) for its workflow.**
 
 ## Get Started with Mixed Precision API
 
-To get a bf16 model, users can use the Mixed Precision API as follows.
+To get a bf16/fp16 model, users can use the Mixed Precision API as follows.
 
+
+Supported precisions for mix precision include bf16 and fp16. If users want to get a pure fp16 or bf16 model, they should add another precision into excluded_precisions.
+
+- BF16:
 
 ```python
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 
-conf = MixedPrecisionConfig()
-
+conf = MixedPrecisionConfig(excluded_precisions=['fp16'])
 converted_model = mix_precision.fit(model, config=conf)
 converted_model.save('./path/to/save/')
 ```
 
-> **BF16 conversion may lead to accuracy drop. Intel® Neural Compressor provides an accuracy-aware tuning function to reduce accuracy loss, which will fallback converted ops to FP32 automatically to get better accuracy. To enable this function, users only need to provide an evaluation function (or dataloader + metric).**
+- FP16:
+
+```python
+from neural_compressor import mix_precision
+from neural_compressor.config import MixedPrecisionConfig
+
+conf = MixedPrecisionConfig(
+        backend='onnxrt_cuda_ep',
+        device='gpu',
+        excluded_precisions=['bf16'])
+converted_model = mix_precision.fit(model, config=conf)
+converted_model.save('./path/to/save/')
+```
+
+> **BF16/FP16 conversion may lead to accuracy drop. Intel® Neural Compressor provides an accuracy-aware tuning function to reduce accuracy loss, which will fallback converted ops to FP32 automatically to get better accuracy. To enable this function, users only need to provide an evaluation function (or dataloader + metric).**
 
   
 ## Examples
 
-There are 2 pre-requirements to run BF16 mixed precision examples:
+- BF16： 
 
-- Hardware: CPU supports `avx512_bf16` instruction set.
-- Software: intel-tensorflow >= [2.3.0](https://pypi.org/project/intel-tensorflow/2.3.0/) or torch >= [1.11.0](https://download.pytorch.org/whl/torch_stable.html).
+    There are 2 pre-requirements to run BF16 mixed precision examples:
 
-If either pre-requirement can't be met, the program would exit consequently.
+    1. Hardware: CPU supports `avx512_bf16` instruction set.
+    2. Software: intel-tensorflow >= [2.3.0](https://pypi.org/project/intel-tensorflow/2.3.0/) or torch >= [1.11.0](https://download.pytorch.org/whl/torch_stable.html).
+
+    If either pre-requirement can't be met, the program would exit consequently.
+
+- FP16
+
+    Currently Intel® Neural Compressor only support FP16 mixed precision for ONNX models.
+    
+    To run FP16 mixed precision examples, users need to set 'device' of config to 'gpu' and 'backend' to 'onnxrt_cuda_ep'. 
