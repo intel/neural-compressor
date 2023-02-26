@@ -529,12 +529,14 @@ class TuneStrategy(object):
         recipe_cfgs = tune_cfg.get('recipe_cfgs', None)
         algo_scheduler.reset_exec_algorithms()
         if recipe_cfgs and recipe_cfgs.get('smooth_quant', False):
+            # skip assign alpha to sq first.
             # set the alpha to 0.5 by default
-            smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
+            # smooth_quant_args = recipe_cfgs.get('smooth_quant_args', {'alpha': 0.5})
             sq_algo = ALGORITHMS()['smooth_quant']
-            sq_algo.alpha = smooth_quant_args['alpha']
+            #sq_algo.alpha = smooth_quant_args['alpha']
+            #logger.debug(f"Set smooth quant with alpha {smooth_quant_args['alpha']} as the pre-quantization algo.")
             algo_scheduler.append_algorithm('pre_quantization', sq_algo)
-            logger.debug(f"Set smooth quant with alpha {smooth_quant_args['alpha']} as the pre-quantization algo.")
+            
             
     def set_param_for_post_quantization_algos(self, algo_scheduler, tune_cfg, pre_optimized_model, q_model) -> None:
         """Set the parameter for post-quantization algos, such as bias correction, weight correction.
