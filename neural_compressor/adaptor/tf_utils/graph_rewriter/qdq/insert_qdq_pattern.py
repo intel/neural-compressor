@@ -207,6 +207,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
               ) and ((node.op.find("Relu") == -1 and node.op.find("Elu") == -1) or \
               ('alpha' in node.attr and node.attr['alpha'].f > 0)):
             return False
+        elif self.itex_mode and node.op in ('Add', 'AddV2', 'AddN'):
+            if re.search(r"\w+:\d+", node.input[1]):
+                input_node = self.node_name_mapping[node.input[1].rsplit(':', 1)[0]].node
+            else:
+                input_node = self.node_name_mapping[node.input[1]].node
+            if input_node.op in ('BiasAdd', 'Add', 'AddV2', 'AddN'):
+                return False
         elif self._check_op_list(node.op) or (self.itex_mode and node.op in ('Add', 'AddV2')):
             if node.op == 'ConcatV2':
                 find_relu = False
