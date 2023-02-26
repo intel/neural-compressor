@@ -37,6 +37,8 @@ Functions
    neural_compressor.adaptor.ox_utils.util.make_dquant_node
    neural_compressor.adaptor.ox_utils.util.is_B_transposed
    neural_compressor.adaptor.ox_utils.util.split_shared_bias
+   neural_compressor.adaptor.ox_utils.util.float_to_float16
+   neural_compressor.adaptor.ox_utils.util.float_to_bfloat16
    neural_compressor.adaptor.ox_utils.util.cast_tensor
    neural_compressor.adaptor.ox_utils.util.remove_init_from_model_input
    neural_compressor.adaptor.ox_utils.util.collate_preds
@@ -89,6 +91,16 @@ Functions
 .. py:function:: split_shared_bias(model)
 
    Split shared tensor.
+
+
+.. py:function:: float_to_float16(tensor)
+
+   Convert float to float16.
+
+
+.. py:function:: float_to_bfloat16(tensor)
+
+   Convert float to bfloat16.
 
 
 .. py:function:: cast_tensor(tensor, dtype)

@@ -50,7 +50,7 @@ Functions
    :param framework: frameworks in ["tensorflow", "tensorflow_itex", "mxnet",
                      "onnxrt_qdq", "pytorch", "pytorch_ipex",
                      "pytorch_fx", "onnxrt_integerops",
-                     "onnxrt_qlinearops", "onnxrt_qoperator"].
+                     "onnxrt_qlinearops", "onnxruntime"].
    :type framework: str
 
 

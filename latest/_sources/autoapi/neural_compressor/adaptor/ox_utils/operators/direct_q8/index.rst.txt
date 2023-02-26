@@ -18,7 +18,6 @@ Classes
 .. autoapisummary::
 
    neural_compressor.adaptor.ox_utils.operators.direct_q8.Direct8BitOperator
-   neural_compressor.adaptor.ox_utils.operators.direct_q8.DirectCastOperator
    neural_compressor.adaptor.ox_utils.operators.direct_q8.QDirectOperator
 
 
@@ -49,18 +48,6 @@ Classes
 
       Convert to QOperator format.
 
-
-   .. py:method:: cast()
-
-      Cast node.
-
-
-
-.. py:class:: DirectCastOperator(onnx_quantizer, onnx_node)
-
-   Bases: :py:obj:`neural_compressor.adaptor.ox_utils.operators.ops.Operator`
-
-   Direct8bit Operator Cast.
 
    .. py:method:: cast()
 
