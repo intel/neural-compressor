@@ -145,7 +145,7 @@ class TestKerasInKerasOut(unittest.TestCase):
         for layer in model.layers:
             if 'quantize' in layer.name:
                 found_quantize = True
-            if 'de_quantize' in layer.name:
+            if 'dequantize' in layer.name:
                 found_dequantize = True
         self.assertEqual(found_quantize, True)
         self.assertEqual(found_dequantize, True)
