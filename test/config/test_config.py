@@ -8,6 +8,17 @@ def helper(content):
     with open('fake_conf.yaml', 'w', encoding="utf-8") as f:
         f.write(content)
 
+class TestConfig(unittest.TestCase):
+    def test_config(self):
+        from neural_compressor import PostTrainingQuantConfig
+        config = PostTrainingQuantConfig()
+        self.assertEqual(config.recipes['smooth_quant'], False)
+        self.assertEqual(config.recipes['fast_bias_correction'], False)
+        self.assertEqual(config.recipes['weight_correction'], False)
+        self.assertEqual(config.recipes['dedicated_qdq_pair'], False)
+        self.assertEqual(config.recipes['add_qdq_pair_to_weight'], False)
+        self.assertEqual(config.recipes['graph_optimization_level'], 'ENABLE_BASIC')
+
 class TestPyConf(unittest.TestCase):
     def test_config(self):
         from neural_compressor import conf

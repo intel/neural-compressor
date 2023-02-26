@@ -21,3 +21,4 @@ fvcore==0.1.5.post20220119
 ofa==0.1.0.post202203231606
 pymoo==0.5.0
 intel-extension-for-pytorch
+tf2onnx
