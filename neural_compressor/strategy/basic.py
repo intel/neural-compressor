@@ -182,7 +182,7 @@ class BasicTuneStrategy(TuneStrategy):
         self.basic_last_quant_config = None
         self.early_stopping = False
         # flag to record whether need to the op-type-wise quantized have been done
-        self._optype_wise_quant_flag = self._quant_level == 'auto'
+        self._optype_wise_quant_flag = self._quant_level == "auto"
         for calib_sampling_size in calib_sampling_size_lst:
             # Initialize the tuning config for each op according to the quantization approach.
             op_item_dtype_dict, quant_mode_wise_items, initial_op_tuning_cfg = self.initial_tuning_cfg()

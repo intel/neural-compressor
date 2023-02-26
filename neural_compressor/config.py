@@ -429,8 +429,8 @@ class _BaseQuantizationConfig:
             performance_only: whether do evaluation
             reduce_range: whether use 7 bit
             excluded_precisions: precisions to be excluded, support 'bf16'
-            quant_level: support auto, 0 and 1, 0 is conservative strategy, 1 is basic(default) or user-specified 
-                         strategy, auto is the combination of 0 and 1.
+            quant_level: support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+                         strategy, auto (default) is the combination of 0 and 1.
             accuracy_criterion: accuracy constraint settings
             use_distributed_tuning: whether use distributed tuning or not
         """
@@ -818,7 +818,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
 
         conf = PostTrainingQuantConfig(
-            quant_level='auto',  # the quantization level.
+            quant_level="auto",  # the quantization level.
             tuning_criterion=TuningCriterion(
                 timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
                 max_trials=100,  # optional. max tuning times.

@@ -135,7 +135,7 @@ class Quantization(Component):
         self._create_eval_dataloader(cfg)
         self._create_calib_dataloader(cfg)
         strategy = cfg.tuning.strategy.name.lower()
-        if cfg.quantization.quant_level == 'auto':
+        if cfg.quantization.quant_level == "auto":
             strategy = 'basic'
             logger.info(f"Start to auto tuning.")
         

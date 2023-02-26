@@ -901,7 +901,7 @@ schema = Schema({
         },
     },
     Optional('use_bf16', default=True): bool,
-    Optional('quant_level', default='auto'): And(Or(str, int), lambda level: level in ['auto', 0, 1]),
+    Optional('quant_level', default="auto"): And(Or(str, int), lambda level: level in ["auto", 0, 1]),
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
@@ -1177,7 +1177,7 @@ quantization_default_schema = Schema({
                                                      'activation': {}},
                                     }): dict,
     Optional('use_bf16', default=False): bool,
-    Optional('quant_level', default='auto'): Or(str, int),
+    Optional('quant_level', default="auto"): Or(str, int),
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
