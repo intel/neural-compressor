@@ -519,10 +519,9 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
-            from neural_compressor.metric import Metric
             from neural_compressor.experimental import Graph_Optimization, common
             graph_optimizer = Graph_Optimization('fake_yaml_3.yaml')
-            graph_optimizer.metric = Metric(MyMetric)
+            graph_optimizer.metric = common.Metric(MyMetric)
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
             graph_optimizer.precisions = ['fp32', 'bf16']
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)

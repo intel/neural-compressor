@@ -345,8 +345,8 @@ class Graph_Optimization():
             logger.warning("Override the value of `metric` field defined in yaml file" \
                            " as user defines the value of `metric` attribute by code.")
  
-        from neural_compressor.metric import Metric as NCMetric
-        from neural_compressor.metric import METRICS
+        from .common import Metric as NCMetric
+        from ..metric import METRICS
         if isinstance(user_metric, NCMetric):
             name = user_metric.name
             metric_cls = user_metric.metric_cls
