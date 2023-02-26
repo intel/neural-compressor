@@ -127,13 +127,12 @@ After prepare step is done, we add quantization and benchmark code to generate q
 #### Benchmark
 ```python
     from neural_compressor.benchmark import fit
-    from neural_compressor.model import Model
     from neural_compressor.config import BenchmarkConfig
+    from neural_compressor.model.tensorflow_model import TensorflowQATModel
     assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
     "Benchmark only supports performance or accuracy mode."
 
-    # convert the quantized keras model to graph_def so that it can be fused by ITEX
-    model = Model(FLAGS.input_model).graph_def
+    model = TensorflowQATModel(FLAGS.input_model).frozen_graph_def
     if FLAGS.mode == 'performance':
         conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
         fit(model, conf, b_func=evaluate)

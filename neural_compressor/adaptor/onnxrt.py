@@ -64,6 +64,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.domain = framework_specific_info["domain"]
         self.recipes = framework_specific_info["recipes"]
         self.backend = PROVIDERS[framework_specific_info["backend"]]
+        self.performance_only = framework_specific_info.get("performance_only", False)
 
         if self.backend not in ort.get_all_providers():
             logger.warning("{} backend is not supported in current environment, "
@@ -85,12 +86,13 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     logger.warning("Dynamic approach doesn't support QDQ format.")
         
         # get quantization config file according to backend
+        config_file = None
         if self.backend == 'CPUExecutionProvider':
             config_file = 'onnxrt.yaml'
         elif self.backend == 'TensorrtExecutionProvider':
             config_file = 'onnxrt_trt.yaml'
         elif self.backend == 'CUDAExecutionProvider':
-            config_file == 'onnxrt_cuda.yaml'
+            config_file = 'onnxrt_cuda.yaml'
         else: # pragma: no cover
             assert False, "{} provider is not supported in current environment, " \
                 "supported providers: {}".format(self.backend,
@@ -127,6 +129,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         for precision in self.query_handler.get_precisions():
             if precision != 'fp32':
+                if self.device == 'cpu' and precision == 'fp16':
+                    continue
                 self.quantizable_op_types += \
                     self.query_handler.get_op_types_by_precision(precision=precision)
  
@@ -265,7 +269,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
 
-        tmp_model = copy.deepcopy(model)
+        if self.performance_only:
+            tmp_model = model
+        else:
+            try:
+                tmp_model = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                tmp_model = model
         iterations = tune_cfg.get('calib_iteration', 1)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if not self.dynamic:
@@ -312,7 +324,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.quantize_params = quantize_params
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
         from neural_compressor import options
-        quantizer = Quantizer(copy.deepcopy(model),
+        quantizer = Quantizer(tmp_model,
             quantize_config,
             format,
             self.static,
@@ -736,7 +748,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             model = self._revert_conv_add_fusion(model)
         model = split_shared_bias(model)
         model.topological_sort()
-        self.pre_optimized_model = copy.deepcopy(model)
+        self.pre_optimized_model = model
 
     def _revert_conv_add_fusion(self, model):
         from onnx import numpy_helper
@@ -925,6 +937,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
+                if precision == 'fp16' and self.device == 'cpu':
+                    continue
                 # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \
                     query.get_op_types_by_precision(precision) != ['*'] else \
@@ -1153,6 +1167,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                             convert_attribute=False)
         sess_options = ort.SessionOptions()
         if self.backend == 'TensorrtExecutionProvider':
+            from neural_compressor.adaptor.ox_utils.util import trt_env_setup
+            trt_env_setup(input_graph.model)
             sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL 
         if measurer:
             # https://github.com/microsoft/onnxruntime/issues/7347
@@ -1416,12 +1432,17 @@ class ONNXRTQuery(QueryBackendCapability):
             config['capabilities'] = {} 
 
         # generate other config content including precisions and ops 
-        precisions = [key for key in config['capabilities'].keys()]
+        precisions = list(version_config.keys() - {'version', 'recipes'})
         if 'fp32' not in precisions:
             precisions.append('fp32')
         config['precisions'] = {'names': ','.join(precisions)}
 
         op_types = {}
+        for precision in precisions:
+            if precision in config['capabilities']:
+                op_types[precision] = [op_type for op_type in config['capabilities'][precision].keys()]
+            elif precision in version_config:
+                op_types[precision] = version_config[precision]
         for precision, precision_config in config['capabilities'].items():
             op_types[precision] = [op_type for op_type in precision_config.keys()]
         if 'fp32' not in op_types:

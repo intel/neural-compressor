@@ -151,8 +151,22 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         weight_name = normal_inputs[1]
         weight_node = self.node_name_mapping[helper.node_name_from_input(weight_name)].node
 
-        # FIXME We only quantize the MatMul op which second input node type is const. This is a
-        # workaround for RNN model like LTSM.
+        enter_node = None
+
+        if weight_node.op == 'Enter':
+            parent_node = self.node_name_mapping[
+                helper.node_name_from_input(weight_node.input[0])].node
+            # FIXME We only quantize the MatMul op which second input node type is const. This is a
+            # workaround for RNN model like LTSM.
+            if parent_node.op != 'Const':
+                self.logger.debug(
+                    'The weight node of matched_node {} is not Const or Const + Enter, skipped')
+                self.output_graph = self.input_graph
+                return []
+            enter_node = weight_node
+            weight_node = parent_node
+            weight_name = weight_node.name
+
         if weight_node.op != 'Const':
             self.output_graph = self.input_graph
             return []
@@ -165,11 +179,12 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             self.output_graph = self.input_graph
             return []
 
-        weights_content =  tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
+        if weight_node.op == 'Const':
+            weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
 
-        if np.any(np.isnan(weights_content)):
-            self.output_graph = self.input_graph
-            return []
+            if np.any(np.isnan(weights_content)):
+                self.output_graph = self.input_graph
+                return []
 
         for i in self.node_name_mapping:
             if weight_node.input and not weight_node.input[0].startswith('^') \
@@ -177,9 +192,16 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                 self.output_graph = self.input_graph
                 return []
 
-        is_shared_output = True if len(
-              matched_node.output
-        ) > 1 else False
+        len_output = len(matched_node.output)
+        is_shared_output = False
+        if len_output == 2:
+            if self.node_name_mapping[matched_node.output[0]].node.op == 'Reshape' or \
+                self.node_name_mapping[matched_node.output[1]].node.op == 'Reshape':
+                is_shared_output = False
+            else:
+                is_shared_output = True
+        elif len_output > 1:
+            is_shared_output = True
 
         need_insert_dummy_biasadd = 1
         if len(match_node_name) == 1:
@@ -192,17 +214,33 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             add_a_node = self.node_name_mapping[add_a_node_name].node
             add_b_node_name = helper.node_name_from_input(second_node.input[1])
             add_b_node = self.node_name_mapping[add_b_node_name].node
-            if add_a_node.op != 'Const' and add_b_node.op == 'Const':
+            if add_a_node.op != 'Const' and add_b_node.op in ('Const', 'Enter'):
                  need_insert_dummy_biasadd = 0
             if need_insert_dummy_biasadd:
                  self.apply_matmul_biasadd_fusion(match_node_name[:1])
                  return match_node_name[:1]
 
+        if self.frame_info and not enter_node:
+            from collections import OrderedDict
+            frame_info = OrderedDict(self.frame_info)
+            if match_node_name[0] in frame_info and frame_info[match_node_name[0]]:
+                enter_node = helper.create_node(
+                    'Enter', weight_name+'_enter', [weight_name])
+                helper.set_attr_string(enter_node,
+                        'frame_name', frame_info[weight_name].attr['frame_name'].s)
+                helper.set_attr_dtype(enter_node, 'T', dtypes.float32)
+                helper.set_attr_bool(enter_node, 'is_constant', True)
+                helper.set_attr_int(enter_node, 'parallel_iterations',
+                        frame_info[weight_name].attr['parallel_iterations'].i)
+
         q_weights_name, q_weights_min_name, q_weights_max_name = \
             self._intel_cpu_quantize_weight_eightbit(
-                matched_node.node.op, self.node_name_mapping[weight_name].node, self.per_channel)
+                matched_node.node.op, self.node_name_mapping[weight_name].node,
+                self.per_channel, enter_node)
 
         skip_node_name.append(weight_name)
+        if enter_node:
+            skip_node_name.append(enter_node.name)
 
         for _, node in enumerate(self.input_graph.node):
             if node.name in skip_node_name:
@@ -219,9 +257,32 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     bias_node = helper.create_constant_node(
                         bias_node_name, [0] * bias_size, dtypes.float32, shape=[bias_size]
                     )
+                    if enter_node:
+                        bias_enter_node = helper.create_node(
+                            'Enter', bias_node_name + '_enter', [bias_node_name])
+                        helper.set_attr_string(bias_enter_node,
+                            'frame_name', enter_node.attr['frame_name'].s)
+                        helper.set_attr_dtype(bias_enter_node, 'T', dtypes.float32)
+                        helper.set_attr_bool(bias_enter_node, 'is_constant', True)
+                        helper.set_attr_int(bias_enter_node, 'parallel_iterations',
+                               enter_node.attr['parallel_iterations'].i)
+
+                        self.add_output_graph_node(bias_enter_node)
+                        bias_node_name = bias_enter_node.name
+
                     self.add_output_graph_node(bias_node)
                 else:
                     bias_node_name = self.node_name_mapping[match_node_name[1]].node.input[1]
+                    if self.node_name_mapping[bias_node_name].node.op == 'Enter':
+                        bias_enter_node = helper.create_node(
+                            'Enter', bias_node_name+'_enter', [bias_node_name])
+                        helper.set_attr_string(bias_enter_node, 'frame_name',
+                                     self.node_name_mapping[bias_node_name].node.attr['frame_name'].s)
+                        helper.set_attr_dtype(bias_enter_node, 'T', dtypes.float32)
+                        helper.set_attr_bool(bias_enter_node, 'is_constant', True)
+                        helper.set_attr_int(bias_enter_node, 'parallel_iterations', \
+                             self.node_name_mapping[bias_node_name].node.attr['parallel_iterations'].i)
+                        self.add_output_graph_node(bias_enter_node)
 
                 all_input_names = self._add_eightbit_prologue_nodes(matched_node.node.name)
                 all_input_names = all_input_names[:1] + [q_weights_name] + all_input_names[1:]
