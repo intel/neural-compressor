@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2021 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Strategy util."""
+"""Tuning utility."""
+
 
 from collections import OrderedDict
 
@@ -41,3 +42,16 @@ def extract_data_type(data_type: str) -> str:
 def reverted_data_type(signed_flag: str, data_type: str) -> str:
     """Revert the data type."""
     return data_type if signed_flag == 'signed' else 'u' + data_type
+
+def get_adaptor_name(adaptor):
+    """Get adaptor name.
+
+    Args:
+        adaptor: adaptor instance.
+    """
+    adaptor_name = type(adaptor).__name__.lower()
+    adaptor_name_lst = ['onnx', 'tensorflow', 'pytorch']
+    for name in adaptor_name_lst:
+        if adaptor_name.startswith(name):
+            return name
+    return ""

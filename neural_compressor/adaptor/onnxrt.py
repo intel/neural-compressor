@@ -914,6 +914,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         """
         # optype_wise and op_wise capability
         self._pre_optimize(model)
+        recipes_ops = {}
+        recipes_ops['first_conv_or_matmul_quantization'] = []
+        recipes_ops['last_conv_or_matmul_quantization'] = []
+        recipes_ops['pre_post_process_quantization'] = []
         exclude_first_quantizable_op = True if 'first_conv_or_matmul_quantization' in \
             self.recipes and not self.recipes['first_conv_or_matmul_quantization'] \
             else False
@@ -982,16 +986,23 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         all_conv_matmul = []
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             if node.op_type in ['Conv', 'MatMul']:
+                if len(first_quantizable_node) == 0:
+                    recipes_ops['first_conv_or_matmul_quantization'] = [(node.name, node.op_type)]
+
                 # get first Conv or MatMul node
                 if exclude_first_quantizable_op:
                     if len(first_quantizable_node) == 0:
                         first_quantizable_node.append(node.name)
-                
+                    
                 # get last Conv or MatMul node
                 if exclude_last_quantizable_op:
                     if len(last_quantizable_node) != 0:
                         last_quantizable_node.pop()
                     last_quantizable_node.append(node.name)
+
+                if len(recipes_ops['last_conv_or_matmul_quantization']):
+                    recipes_ops['last_conv_or_matmul_quantization'].pop()
+                recipes_ops['last_conv_or_matmul_quantization'].append((node.name, node.op_type))
 
                 # get first and last Conv or MatMul node
                 if exclude_pre_post_process:
@@ -1021,22 +1032,27 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 op_wise.update(
                     {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
 
+        # get backbone nodes
+        from collections import deque
+        
+        # get nodes between first quantizable node and last quantizable node
+        backbone_queue = deque(last_quantizable_node)
+        backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue, first_quantizable_node)
+
+        # get extra Conv or MatMul nodes not between first quantizable node and last quantizable node
+        backbone_queue_extra = deque()
+        for conv_or_matmul in all_conv_matmul:
+            if conv_or_matmul.name not in backbone_nodes:
+                backbone_queue_extra.append(conv_or_matmul.name)
+                backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue_extra, 
+                                                first_quantizable_node, backbone_nodes)
+        backbone_nodes += [i for i in first_quantizable_node]
+        
+        for _, node in enumerate(self.pre_optimized_model.nodes()):
+            if node.name not in backbone_nodes:
+                recipes_ops['pre_post_process_quantization'].append((node.name, node.op_type))
+        
         if exclude_pre_post_process:
-            from collections import deque
-            
-            # get nodes between first quantizable node and last quantizable node
-            backbone_queue = deque(last_quantizable_node)
-            backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue, first_quantizable_node)
-
-            # get extra Conv or MatMul nodes not between first quantizable node and last quantizable node
-            backbone_queue_extra = deque()
-            for conv_or_matmul in all_conv_matmul:
-                if conv_or_matmul.name not in backbone_nodes:
-                    backbone_queue_extra.append(conv_or_matmul.name)
-                    backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue_extra, 
-                                                    first_quantizable_node, backbone_nodes)
-            backbone_nodes += [i for i in first_quantizable_node]
-
             for _, node in enumerate(self.pre_optimized_model.nodes()):
                 if node.op_type in optype_wise:
                     # nodes not in backbone are not quantized
@@ -1051,8 +1067,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     else: # pragma: no cover
                         op_wise.update(
                             {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
-
-        return {'optypewise': optype_wise, 'opwise': op_wise}
+        
+        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops}
 
     def _optypewise_filter_for_qdq(self, optype_wise):
         """Filter optypes that don't support per_channel in QDQ format.
