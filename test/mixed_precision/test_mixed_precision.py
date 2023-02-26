@@ -302,8 +302,8 @@ class TestMixedPrecision(unittest.TestCase):
         os.remove("test.yaml")
 
     def test_mixed_precision_with_evaluation(self):
-        from neural_compressor.experimental import common
-        from neural_compressor.experimental.metric.metric import ONNXRT_QL_METRICS
+        from neural_compressor.data import DataLoader
+        from neural_compressor.metric.metric import ONNXRT_QL_METRICS
         # test onnx
         conf = MixedPrecisionConfig(device='gpu', backend='onnxrt_cuda_ep')
 
@@ -314,7 +314,7 @@ class TestMixedPrecision(unittest.TestCase):
         conf = MixedPrecisionConfig(device='gpu', tuning_criterion=tuning_criterion, backend='onnxrt_cuda_ep')
         output_model = mix_precision.fit(self.onnx_model,
                                          conf,
-                                         eval_dataloader=common.DataLoader(self.matmul_dataset),
+                                         eval_dataloader=DataLoader("onnxrt_qlinearops", self.matmul_dataset),
                                          eval_metric=ONNXRT_QL_METRICS["MSE"]())
         self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 

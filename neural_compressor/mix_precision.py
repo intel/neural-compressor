@@ -289,7 +289,7 @@ class MixedPrecision:
                 metric_cls = type(user_metric).__name__
                 name = 'user_' + metric_cls
                 metric_cfg = {name: id(user_metric)}
-            metrics = METRICS(self.conf.usr_cfg.framework)
+            metrics = METRICS(self.conf.usr_cfg.model.framework)
             metrics.register(name, metric_cls)
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.metric", metric_cfg)
         self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
