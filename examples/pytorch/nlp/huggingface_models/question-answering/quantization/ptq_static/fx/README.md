@@ -1,28 +1,26 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing Huggingface models tuning zoo result.
+This document is used to list the steps of reproducing quantization and benchmarking results.
 
 # Prerequisite
-
-## Environment
-Recommend python 3.6 or higher version.
+## 1. Environment
+Python 3.6 or higher version is recommended.
+The dependent packages are all in requirements, please install as following.
 ```shell
-cd examples/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx
-pip install transformers==4.10.0
+cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx
 pip install -r requirements.txt
-pip install torch
 ```
-> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment). 
 
-# Quantization
+# Run
+## 1. Quantization
 ```shell
 python -u ./run_qa.py \
-        --model_name_or_path "bert-large-uncased-whole-word-masking-finetuned-squad" \
-        --dataset_name "squad" \
+        --model_name_or_path bert-large-uncased-whole-word-masking-finetuned-squad \
+        --dataset_name squad \
         --do_eval \
         --do_train \
-        --max_seq_length 128 \
+        --max_seq_length 384 \
         --per_device_eval_batch_size ${batch_size} \
         --no_cuda \
         --output_dir /path/to/checkpoint/dir \
@@ -34,17 +32,43 @@ python -u ./run_qa.py \
 >
 > /path/to/checkpoint/dir is the path to finetune output_dir
 
-# Tutorial of How to Enable NLP Model with Intel® Neural Compressor.
-### Intel® Neural Compressor supports two usages:
+or
 
+```bash
+sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
+```
+## 2. Benchmark
+```bash
+# int8
+sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true --input_model=/path/to/checkpoint/dir
+# fp32
+sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=model_name_or_path
+```
+## 3. Validated Model List
+<table>
+<thead>
+  <tr>
+    <th>Topology Name</th>
+    <th>Model Name</th>
+    <th>Dataset/Task Name</th>
+  </tr>
+</thead>
+<tbody align="center">
+  <tr>
+    <td>bert_large_SQuAD</td>
+    <td><a href="https://huggingface.co/bert-large-uncased-whole-word-masking-finetuned-squad">bert-large-uncased-whole-word-masking-finetuned-squad</a></td>
+    <td><a href="https://huggingface.co/datasets/squad">squad</a></td>
+  </tr>
+</tbody>
+</table>
+
+# Tutorial of Enabling NLP Models with Intel® Neural Compressor
+## 1. Intel® Neural Compressor supports two usages:
 1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics.
 2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
+## 2. Code Prepare
 
-As MRPC's metrics are 'f1', 'acc_and_f1', mcc', 'spearmanr', 'acc', so customer should provide evaluation function 'eval_func', it's suitable for the second use case.
-
-### Code Prepare
-
-We just need update run_qa.py like below
+We need to update `run_qa.py` like below:
 
 ```python
 trainer = QuestionAnsweringTrainer(

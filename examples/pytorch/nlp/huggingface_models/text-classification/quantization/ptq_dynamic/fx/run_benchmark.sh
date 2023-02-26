@@ -54,21 +54,19 @@ function init_params {
 function run_benchmark {
     extra_cmd=''
     MAX_SEQ_LENGTH=128
-    TASK_NAME='rte'
-    model_name_or_path=${input_model}
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
+        mode_cmd=" --accuracy"
     elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --benchmark --iters "${iters}
+        mode_cmd=" --performance --iters "${iters}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
-    if  [ "${topology}" = "bert_large_RTE" ]; then
+    if  [ "${topology}" = "bert_large_RTE_dynamic" ]; then
         TASK_NAME='rte'
-        model_name_or_path=${input_model}
-
+    elif [ "${topology}" = "xlm-roberta-base_MRPC_dynamic" ]; then
+        TASK_NAME='mrpc'
     fi
 
     extra_cmd='--model_name_or_path '${input_model}

@@ -13,7 +13,6 @@ function init_params {
   iters=100
   batch_size=16
   tuned_checkpoint=saved_results
-  max_eval_samples=`expr ${iters} \* ${batch_size}`
   echo ${max_eval_samples}
   for var in "$@"
   do
@@ -57,18 +56,18 @@ function run_benchmark {
     extra_cmd=''
 
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only "
+        mode_cmd=" --accuracy "
     elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --benchmark "
-        extra_cmd=$extra_cmd" --max_eval_samples ${max_eval_samples}"
+        mode_cmd=" --performance --iters "${iters}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
-    if [ "${topology}" = "gpt_j_wikitext" ]; then
+    if [ "${topology}" = "reformer_crime_and_punishment" ]; then
+        TASK_NAME='crime_and_punish'
+    elif [ "${topology}" = "gpt_j_wikitext" ]; then
         TASK_NAME='wikitext'
-        model_name_or_path=$input_model
         extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
     fi
 
@@ -78,7 +77,7 @@ function run_benchmark {
     echo $extra_cmd
 
     python -u run_clm.py \
-        --model_name_or_path ${model_name_or_path} \
+        --model_name_or_path ${input_model} \
         --dataset_name ${TASK_NAME} \
         --do_eval \
         --per_device_eval_batch_size ${batch_size} \

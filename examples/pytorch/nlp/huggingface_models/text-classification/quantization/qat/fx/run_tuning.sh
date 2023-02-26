@@ -60,7 +60,6 @@ function run_tuning {
         --save_strategy steps \
         --metric_for_best_model f1 \
         --save_total_limit 1 \
-        --onnx \
         --tune
 }
 

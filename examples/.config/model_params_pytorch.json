@@ -72,14 +72,14 @@
       "dataset_location": "",
       "input_model": "",
       "main_script": "run_qa.py",
-      "batch_size": 8,
+      "batch_size": 8
     },
     "bert_large_ipex":{
       "model_src_dir": "nlp/huggingface_models/question-answering/quantization/ptq_static/ipex",
       "dataset_location": "",
       "input_model": "",
       "main_script": "run_qa.py",
-      "batch_size": 8,
+      "batch_size": 8
     },
     "resnet50_gpu": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/gpu/eager/",
@@ -208,7 +208,7 @@
       "dataset_location": "/tf_dataset/pytorch/coco_data_yolo",
       "input_model": "/tf_dataset/pytorch/coco_data_yolo/yolov3.weights",
       "main_script": "test.py",
-      "batch_size": 100,
+      "batch_size": 100
     },
     "bert_base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
@@ -266,8 +266,15 @@
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
-    "bert_large_RTE": {
+    "bert_large_RTE_dynamic": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx",
+      "dataset_location": "",
+      "input_model": "/tf_dataset/pytorch/glue_data/weights/bert_large_rte", 
+      "batch_size": 64,
+      "main_script": "run_glue.py"
+    },
+    "bert_large_RTE": {
+      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
       "input_model": "/tf_dataset/pytorch/glue_data/weights/bert_large_rte", 
       "batch_size": 64,
@@ -503,13 +510,11 @@
       "new_benchmark": false
     },
     "reformer_crime_and_punishment": {
-      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/eager",
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/fx",
       "dataset_location": "",
       "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/reformer_clm",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 64,
-      "new_benchmark": false
+      "main_script": "run_clm.py",
+      "batch_size": 16
     },
     "gpt_j_wikitext":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/fx",
@@ -519,13 +524,11 @@
       "batch_size": 8
     },
     "xlm-roberta-base_MRPC": {
-      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/eager",
+      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
       "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/xlm-roberta_mrpc",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 64,
-      "new_benchmark": false
+      "batch_size": 8,
+      "main_script": "run_glue.py"
     },
     "flaubert_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/eager",
@@ -581,14 +584,12 @@
       "batch_size": 64,
       "new_benchmark": false
     },
-    "xlm_roberta_MRPC": {
-      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/eager",
+    "xlm-roberta-base_MRPC_dynamic": {
+      "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
       "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/xlm_roberta_MRPC",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
       "batch_size": 16,
-      "new_benchmark": false
+      "main_script": "run_glue.py"
     },
     "xlnet_base_MRPC(rm)": {
       "model_src_dir": "eager/huggingface_models",

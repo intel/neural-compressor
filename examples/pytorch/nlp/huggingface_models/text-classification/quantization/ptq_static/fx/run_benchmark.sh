@@ -57,46 +57,19 @@ function run_benchmark {
     TASK_NAME='mrpc'
     model_name_or_path=${input_model}
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy_only"
+        mode_cmd=" --accuracy"
     elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --benchmark --iters "${iters}
+        mode_cmd=" --performance --iters "${iters}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
-    if [ "${topology}" = "bert_base_MRPC" ];then
-        TASK_NAME='mrpc'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_base_CoLA" ]; then
-        TASK_NAME='cola'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_base_STS-B" ]; then
-        TASK_NAME='stsb'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_base_SST-2" ]; then
-        TASK_NAME='sst2'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_base_RTE" ]; then
+    if [ "${topology}" = "bert_large_RTE" ]; then
         TASK_NAME='rte'
         model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_large_MRPC" ]; then
-        TASK_NAME='mrpc'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_large_QNLI" ]; then
-        TASK_NAME='qnli'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_large_RTE" ]; then
-        TASK_NAME='rte'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_large_CoLA" ]; then
-        TASK_NAME='cola'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "funnel_MRPC_fx" ]; then
-        TASK_NAME='mrpc'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "distilbert_base_MRPC_fx" ]; then
-        TASK_NAME='mrpc'
+    elif [ "${topology}" = "xlm-roberta-base_MRPC" ]; then
+        TASK_NAME='MRPC'
         model_name_or_path=${input_model}
     fi
 
