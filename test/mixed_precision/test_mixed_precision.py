@@ -42,7 +42,7 @@ def build_matmul_model():
     graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A, B], [H],
                               [E_init, F_init])
     model = helper.make_model(graph)
-    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 16)]})
     return model
 
 
@@ -220,30 +220,28 @@ def build_yaml():
             dataloader:
               dataset:
                 dummy:
-                  shape: [[5,1,5,5], [5,1,5,1]]
+                  shape: [[1,1,5,5], [1,1,5,1]]
                   label: True
         """
     with open("test.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 
-class MatmulDataset:
+class MatmulDataloader:
     def __init__(self):
+        self.batch_size = 1
         self.data = []
         self.label = []
         for i in range(3):
             self.data.append([
-                np.random.randn(1, 5, 5).astype('float32'),
-                np.random.randn(1, 5, 1).astype('float32')
+                np.random.randn(1, 1, 5, 5).astype('float32'),
+                np.random.randn(1, 1, 5, 1).astype('float32')
             ])
-            self.label.append(np.random.randn(1, 5, 1).astype('float32'))
+            self.label.append(np.random.randn(1, 1, 5, 1).astype('float32'))
 
-    def __getitem__(self, idx):
-        return self.data[idx], self.label[idx]
-
-    def __len__(self):
-        return len(self.data)
-
+    def __iter__(self):
+        for data, label in zip(self.data, self.label):
+            yield data, label
 
 class Metric:
     def update(self, preds, labels):
@@ -288,7 +286,7 @@ class TestMixedPrecision(unittest.TestCase):
         os.environ['FORCE_FP16'] = '1'
         os.environ['FORCE_BF16'] = '1'
         self.onnx_model = build_matmul_model()
-        self.matmul_dataset = MatmulDataset()
+        self.matmul_dataloader = MatmulDataloader()
         self.tf_model = build_tf_graph()
         self.pt_model = build_pt_model()
         build_yaml()
@@ -311,10 +309,10 @@ class TestMixedPrecision(unittest.TestCase):
         #self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
         tuning_criterion = TuningCriterion(max_trials=3, timeout=1000000)
-        conf = MixedPrecisionConfig(device='gpu', tuning_criterion=tuning_criterion, backend='onnxrt_cuda_ep')
+        conf = MixedPrecisionConfig(device='gpu', tuning_criterion=tuning_criterion, backend='onnxrt_cuda_ep', excluded_precisions=['bf16'])
         output_model = mix_precision.fit(self.onnx_model,
                                          conf,
-                                         eval_dataloader=DataLoader("onnxrt_qlinearops", self.matmul_dataset),
+                                         eval_dataloader=self.matmul_dataloader,
                                          eval_metric=ONNXRT_QL_METRICS["MSE"]())
         self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
