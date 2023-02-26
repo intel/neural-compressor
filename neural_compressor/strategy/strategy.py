@@ -475,8 +475,8 @@ class TuneStrategy(object):
     def _fallback_ops(self, tune_cfg, recipe_op_lst, tuning_space):
         """Fallback ops in recipe op list."""
         for op_name_type in recipe_op_lst:
-            tune_cfg[op_name_type].update(OpTuningConfig(op_name_type[0],\
-                op_name_type[1],'fp32', tuning_space))
+            tune_cfg.update({op_name_type: OpTuningConfig(op_name_type[0], \
+                op_name_type[1],'fp32', tuning_space)})
         return tune_cfg
     
     def apply_all_tuning_recipes(self, tune_cfg):
