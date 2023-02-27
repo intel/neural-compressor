@@ -60,7 +60,7 @@ class DyNAS(NASBase):
             batch_size=self.batch_size,
             search_algo=self.search_algo,
             supernet_ckpt_path=self.supernet_ckpt_path,
-            valid_size=20,
+            valid_size=20, # TODO Remove later.
             dataloader_workers=self.num_workers,
         )
 
