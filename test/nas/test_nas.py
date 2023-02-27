@@ -189,8 +189,7 @@ class TestNAS(unittest.TestCase):
         for search_algorithm, supernet in [('nsga2','ofa_mbv3_d234_e346_k357_w1.2'), ('age', 'ofa_mbv3_d234_e346_k357_w1.2')]:
             config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
             config.dynas.supernet = supernet
-            config.seed = 42
-            config.dynas.metrics = ['acc', 'macs', 'lat']
+            config.dynas.metrics = ['params', 'latency']
             config.dynas.population = 10
             config.dynas.num_evals = 10
             config.nas.search.seed = 71
@@ -198,7 +197,7 @@ class TestNAS(unittest.TestCase):
             config.dynas.results_csv_path = 'search_results.csv'
             nas_agent = NAS(config)
             best_model_archs = nas_agent.search()
-            self.assertTrue(len(best_model_archs) > 0)
+            self.assertTrue(len(best_model_archs) == config.dynas.population)
 
         nas_agent.acc_predictor.get_parameters()
         nas_agent.acc_predictor.save('tmp.pickle')
