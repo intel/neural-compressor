@@ -179,7 +179,6 @@ class BasicTuneStrategy(TuneStrategy):
         from copy import deepcopy
         tuning_space = self.tuning_space
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
-        self.basic_last_quant_config = None
         self.early_stopping = False
         # flag to record whether need to the op-type-wise quantized have been done
         self._optype_wise_quant_flag = self._quant_level == "auto"
@@ -194,10 +193,9 @@ class BasicTuneStrategy(TuneStrategy):
                 initial_op_tuning_cfg)
             for index, op_tuning_cfg in enumerate(op_wise_tuning_sampler):
                 op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-                self.basic_last_quant_config = deepcopy(op_tuning_cfg)
                 if index == 1 and self._optype_wise_quant_flag:
                     self._optype_wise_quant_flag = False
-                    for tune_cfg in self._quantize_by_optype_wise(deepcopy(self.basic_last_quant_config)):
+                    for tune_cfg in self._quantize_by_optype_wise(deepcopy(self.last_op_tune_cfg)):
                         yield tune_cfg
                     if self.early_stopping: return
                 
@@ -211,7 +209,7 @@ class BasicTuneStrategy(TuneStrategy):
             # To handle the case that only one trial at stage 1.
             if self._optype_wise_quant_flag:
                 self._optype_wise_quant_flag = False
-                for tune_cfg in self._quantize_by_optype_wise(deepcopy(self.basic_last_quant_config)):
+                for tune_cfg in self._quantize_by_optype_wise(deepcopy(self.last_op_tune_cfg)):
                     yield tune_cfg
                 if self.early_stopping: return
             

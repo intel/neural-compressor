@@ -104,7 +104,6 @@ class TuneStrategy(object):
             self._quant_level = self.cfg.quantization.quant_level
         if self.cfg.quant_level:
             self._quant_level = self.cfg.quant_level
-        self.cfg_bk = copy.deepcopy(self.cfg)
         self.history_path = self._create_path(self.cfg.tuning.workspace.path, './history.snapshot')
         self.deploy_path = self._create_path(self.cfg.tuning.workspace.path, 'deploy.yaml')
         self.eval_dataloader = eval_dataloader
@@ -150,6 +149,8 @@ class TuneStrategy(object):
         self.last_tune_result = None
         self.last_qmodel = None
         self.last_tune_cfg = None
+        # record the tuning config of ops
+        self.last_op_tune_cfg = None
         self.best_qmodel = None 
         self.best_tune_result = None
         self.best_tuning_cfg = None # track the best tuning config correspondence to the best quantized model
@@ -250,7 +251,7 @@ class TuneStrategy(object):
         # not tuning list: the value is not equal to the default value
         logger.info(f"Adaptor has {len(adaptor_recipes)} recipes.")
         logger.debug(adaptor_recipes)
-        usr_recipes_cfg = self.cfg_bk.quantization.recipes if self.cfg_bk.quantization.recipes else {}
+        usr_recipes_cfg = deepcopy(self.cfg.quantization.recipes) if self.cfg.quantization.recipes else {}
         for recipe_name, recipe_val in usr_recipes_cfg.items():
             # for not tuning recipes, use the value specified by user.
             if recipe_name in adaptor_recipes and recipe_val != adaptor_recipes[recipe_name][0]:
@@ -613,6 +614,7 @@ class TuneStrategy(object):
         trials_count = 0
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
+            self.last_op_tune_cfg = deepcopy(op_tuning_cfg)
             tuning_start_time = time()
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
             trials_count += 1
@@ -954,8 +956,8 @@ class TuneStrategy(object):
         # For not tuning recipe, tune cfg use it directly
         tune_cfg['recipe_cfgs'].update(self._not_tuning_recipes_values)
         # WA for get the smooth quant args
-        if 'smooth_quant_args' in self.cfg_bk.quantization.recipes:
-            tune_cfg['recipe_cfgs']['smooth_quant_args'] = self.cfg_bk.quantization.recipes['smooth_quant_args']
+        if 'smooth_quant_args' in self.cfg.quantization.recipes:
+            tune_cfg['recipe_cfgs']['smooth_quant_args'] = self.cfg.quantization.recipes['smooth_quant_args']
         # For tuning recipe, use the default value if it not specified by recipe tuning sampler.
         for recipe_name, recipe_val in self._tuning_recipes_default_values.items():
             if recipe_name not in tune_cfg['recipe_cfgs']:
