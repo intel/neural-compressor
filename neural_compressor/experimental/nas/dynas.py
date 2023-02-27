@@ -62,6 +62,7 @@ class DyNAS(NASBase):
             supernet_ckpt_path=self.supernet_ckpt_path,
             valid_size=20, # TODO Remove later.
             dataloader_workers=self.num_workers,
+            distributed=self.distributed,
         )
 
     def search(self):
@@ -100,6 +101,7 @@ class DyNAS(NASBase):
         self.seed = self.conf.nas.search.seed
         self.search_algo = self.conf.nas.search.search_algorithm
         self.supernet = dynas_config.supernet
+        self.distributed = dynas_config.distributed
         self.metrics = dynas_config.metrics
         self.num_evals = dynas_config.num_evals
         self.results_csv_path = dynas_config.results_csv_path
