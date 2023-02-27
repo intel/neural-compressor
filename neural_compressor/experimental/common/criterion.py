@@ -23,8 +23,7 @@ Classes includes:
     PyTorchIntermediateLayersKnowledgeDistillationLoss.
 """
 
-from abc import abstractmethod
-from collections import UserDict, Counter
+from collections import Counter
 from neural_compressor.utils.utility import LazyImport, singleton
 from neural_compressor.utils import logger
 from neural_compressor.adaptor.pytorch import pytorch_forward_wrapper
@@ -130,7 +129,7 @@ class TensorFlowCrossEntropyLoss(object):
     """TensorFlow CrossEntropyLoss criterion."""
 
     def __init__(self, param_dict):
-        """Initialize the DATASETS class.
+        """Initialize the Datasets class.
 
         Args:
             param_dict (dict): The dict of parameters setting by user for CrossEntropyLoss criterion.
@@ -164,7 +163,7 @@ class TensorFlowSparseCategoricalCrossentropy(object):
     """TensorFlow SparseCategoricalCrossentropyLoss criterion."""
 
     def __init__(self, param_dict):
-        """Initialize the DATASETS class.
+        """Initialize the Datasets class.
 
         Args:
             param_dict (string): param_dict.
@@ -873,9 +872,9 @@ class IntermediateLayersKnowledgeDistillationLoss(KnowledgeDistillationFramework
             self.teacher_features[teacher_layer] = []
 
         self.loss_weights = [1.0 / len(layer_mappings)] * len(layer_mappings) \
-                            if loss_weights is None else loss_weights
+                            if (loss_weights is None or loss_weights == []) else loss_weights
         self.loss_types = ['MSE'] * len(layer_mappings) \
-                          if loss_types is None else loss_types
+                          if (loss_types is None or loss_types == []) else loss_types
         self.add_origin_loss = add_origin_loss
         self.loss_funcs = []
         self.feature_matchers = None
@@ -1098,7 +1097,8 @@ class PyTorchIntermediateLayersKnowledgeDistillationLoss(
         if device != model_device:
             model.to(device)
         with torch.no_grad():
-            return pytorch_forward_wrapper(model, input, device=device)
+            outputs = pytorch_forward_wrapper(model, input, device=device)
+        return outputs
 
     def loss_cal_sloss(self, student_outputs, teacher_outputs, student_loss):
         """Calculate all losses between student model and teacher model.
@@ -1193,9 +1193,9 @@ class PyTorchIntermediateLayersKnowledgeDistillationLossWrapper(object):
         param_dict = self.param_dict
         _params = ['layer_mappings', 'loss_types', 'loss_weights', 'add_origin_loss']
         layer_mappings = param_dict['layer_mappings']
-        if 'loss_types' not in param_dict:
+        if 'loss_types' not in param_dict or param_dict['loss_types'] == []:
             param_dict['loss_types'] = ['MSE'] * len(layer_mappings)
-        if 'loss_weights' not in param_dict:
+        if 'loss_weights' not in param_dict or param_dict['loss_weights'] == []:
             param_dict['loss_weights'] = [1.0 / len(layer_mappings)] * len(layer_mappings)
         if 'add_origin_loss' not in param_dict:
             param_dict['add_origin_loss'] = False
@@ -1453,6 +1453,36 @@ class PyTorchSelfKnowledgeDistillationLoss(
                 self.loss = self.loss.to(tmp_loss.device)
             self.loss += tmp_loss
         return self.loss
+
+    def teacher_model_forward(self, input, teacher_model=None, device=None):
+        """Teacher model forward.
+
+        Args:
+            input (tensor): input data
+            teacher_model (torch.nn.model, optional): teacher model. Defaults to None.
+            device (torch.device, optional): device. Defaults to None.
+
+        Returns:
+            tensor: output
+        """
+        outputs = None
+        if self.loss_weights[1] > 0:
+            model = self.teacher_model if teacher_model is None else teacher_model
+            assert isinstance(model, torch.nn.Module), \
+                'Teacher model should be a torch Module instead of {}'.format(type(model))
+            model.eval()
+            try:
+                model_device = next(model.parameters()).device
+            except:
+                logger.warning("Cannot get model device, assuming it's in CPU.")
+                model_device = "cpu"
+            device = model_device if device is None else device
+            if device != model_device:
+                model.to(device)
+            with torch.no_grad():
+                outputs = pytorch_forward_wrapper(model, input, device=device)
+            self.teacher_outputs = outputs
+        return outputs
 
 
 @criterion_registry('SelfKnowledgeDistillationLoss', 'pytorch')

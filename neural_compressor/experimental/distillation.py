@@ -100,10 +100,10 @@ class Distillation(Component):
 
     def _on_after_compute_loss(self, input, student_output, student_loss, teacher_output=None):
         """Set or compute output of teacher model.
-        
-        Called after student model forward, calculate the output of the teacher model 
+
+        Called after student model forward, calculate the output of the teacher model
         with the same input of the student model.
-            
+
         Args:
             input (tensor or list or dict): The input of the student model.
             student_output (tensor): The output logits of the student model.
@@ -217,6 +217,7 @@ class Distillation(Component):
     def prepare(self):
         """Prepare hooks."""
         self.generate_hooks()
+        self.create_criterion()
 
     def pre_process(self):
         """Preprocessing before the disillation pipeline.
@@ -226,7 +227,9 @@ class Distillation(Component):
         framework_specific_info = {'device': self.cfg.device,
                                    'random_seed': self.cfg.tuning.random_seed,
                                    'workspace_path': self.cfg.tuning.workspace.path,
-                                   'q_dataloader': None}
+                                   'q_dataloader': None,
+                                   'format': 'default',
+                                   'backend': 'default'}
 
         if self.framework == 'tensorflow':
             framework_specific_info.update(
@@ -237,11 +240,9 @@ class Distillation(Component):
         self.generate_hooks()
         assert isinstance(self._model, BaseModel), 'need set neural_compressor Model for distillation....'
 
-        if self._train_dataloader is None and self._train_func is None:
+        if self._train_dataloader is None and self._train_func is None and \
+            self.cfg.distillation.train.dataloader is not None:
             train_dataloader_cfg = self.cfg.distillation.train.dataloader
-            assert train_dataloader_cfg is not None, \
-                   'dataloader field of train field of distillation section ' \
-                   'in yaml file should be configured as train_dataloader property is NOT set!'
 
             self._train_dataloader = create_dataloader(self.framework, train_dataloader_cfg)
 
@@ -256,13 +257,15 @@ class Distillation(Component):
             self._eval_dataloader = create_dataloader(self.framework, eval_dataloader_cfg)
 
         if self._train_func is None:
-            self.create_criterion()
+            if self.criterion is None:
+                self.create_criterion()
             self.create_optimizer()
-            self._train_func = create_train_func(self.framework, \
-                                                 self.train_dataloader, \
-                                                 self.adaptor, \
-                                                 self._train_cfg, \
-                                                 hooks=self.hooks)
+            if self._train_dataloader is not None:
+                self._train_func = create_train_func(self.framework, \
+                                                     self.train_dataloader, \
+                                                     self.adaptor, \
+                                                     self._train_cfg, \
+                                                     hooks=self.hooks)
         if self.cfg.evaluation and self.eval_dataloader and self._eval_func is None:
             # eval section in yaml file should be configured.
             eval_cfg = self.cfg.evaluation

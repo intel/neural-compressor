@@ -5,7 +5,7 @@ import unittest
 import torch
 import torch.nn as nn
 import torchvision
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import \
     PyTorchDataLoader
 
@@ -84,7 +84,7 @@ class TestSelfDistillation(unittest.TestCase):
         from neural_compressor.config import DistillationConfig, \
                                              SelfKnowledgeDistillationLossConfig
 
-        datasets = DATASETS("pytorch")
+        datasets = Datasets("pytorch")
         dummy_dataset = datasets["dummy"](
             shape=(100, 3, 224, 224), low=0.0, high=1.0, label=True
         )

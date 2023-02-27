@@ -14,7 +14,6 @@
 # limitations under the License.
 """HWInfo test."""
 
-import platform
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -91,7 +90,6 @@ class TestHWInfo(unittest.TestCase):
     @patch("platform.system")
     @patch("psutil.LINUX", True)
     @patch("psutil.WINDOWS", False)
-    @unittest.skipIf(platform.system().lower() == "windows")
     def test_get_linux_distribution_without_dist(
         self,
         mock_platform_system: MagicMock,

@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse QuantizedConv QuantizedDeConv with redundant Dequantize Graph Rewriter."""
+
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.core.framework import node_def_pb2
 from tensorflow.python.framework import dtypes
@@ -23,8 +25,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
-    """Fuse _QuantizedConv/_QuantizedDeConv with the successor Dequantize Op.
-    """
+    """Fuse _QuantizedConv/_QuantizedDeConv with the successor Dequantize Op."""
     fuse_patterns = [[
         "_FusedQuantizedConv3D",
         "_FusedQuantizedConv2D",
@@ -42,6 +43,7 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
         )
 
     def __init__(self, model, device='cpu'):
+        """Initilization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -50,7 +52,9 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
 
     def do_transformation(self):
         """Fuse the _QuantizedConv Op with the following Dequantize op.
-            The output of _QuantizedConv or is fp32 or bf16.
+
+        The output of _QuantizedConv or is fp32 or bf16.
+
         Returns:
             [graphdef]: the optimized graphdef object
         """

@@ -45,8 +45,8 @@ from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
-from neural_compressor.data import DATASETS
-dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
+from neural_compressor.data import Datasets
+dataset = Datasets('tensorflow')['dummy']((100, 32, 32, 1), label=True)
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor.conf.config import BenchmarkConf
 benchmarker = Benchmark('fake_yaml.yaml')
@@ -60,8 +60,8 @@ from argparse import ArgumentParser
 arg_parser = ArgumentParser(description='Parse args')
 arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input odel')
 args = arg_parser.parse_args()
-from neural_compressor.data import DATASETS
-dataset = DATASETS('tensorflow')['dummy']((100, 32, 32, 1), label=True)
+from neural_compressor.data import Datasets
+dataset = Datasets('tensorflow')['dummy']((100, 32, 32, 1), label=True)
 from neural_compressor.experimental import Benchmark, common
 from neural_compressor.conf.config import BenchmarkConf
 conf = BenchmarkConf('fake_yaml.yaml')
@@ -94,8 +94,8 @@ def build_benchmark2():
         "arg_parser.add_argument('--input_model', dest='input_model', default='input_model', help='input model')\n",
         "args = arg_parser.parse_args()\n",
 
-        "from neural_compressor.data import DATASETS\n",
-        "dataset = DATASETS('tensorflow')['dummy']((5, 32, 32, 1), label=True)\n",
+        "from neural_compressor.data import Datasets\n",
+        "dataset = Datasets('tensorflow')['dummy']((5, 32, 32, 1), label=True)\n",
 
         "from neural_compressor.experimental import Benchmark, common\n",
         "benchmarker = Benchmark()\n",

@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Quantize FusedBatchNormV3 to int8 op."""
 
 from tensorflow.core.framework import graph_pb2
 from tensorflow.core.framework import node_def_pb2
@@ -23,8 +24,10 @@ from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGra
 from .quantize_graph_base import QuantizeNodeBase
 
 class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover
+    """Quantize FusedBatchNormV3 to int8 op and apply the fusion."""
 
     def __init__(self, **kwargs):
+        """Initilization."""
         super().__init__(**kwargs)
         self.sorted_patterns = sorted(self.patterns,
                                       key=lambda i: len(i),
@@ -40,6 +43,7 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover
         self.exclude_bn_nodes = []
 
     def apply_newly_bn_relu_fusion(self, match_node_name):
+        """Apply the FusedBatchNormV3 Relu fusion."""
         matched_node = self.node_name_mapping[match_node_name[0]]
         skip_node_name = match_node_name[1:]
         control_inputs, normal_inputs = self._get_node_input(
@@ -141,6 +145,7 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover
                 self.add_output_graph_node(new_node)
 
     def apply_newly_bn_leakyrelu_fusion(self, match_node_name):
+        """Apply the FusedBatchNormV3 LeakyRelu fusion."""
         matched_node = self.node_name_mapping[match_node_name[0]]
         skip_node_name = match_node_name[1:]
         control_inputs, normal_inputs = self._get_node_input(
@@ -243,11 +248,13 @@ class FuseNodeStartWithFusedBatchNormV3(QuantizeNodeBase): # pragma: no cover
                 self.add_output_graph_node(new_node)
 
     def get_longest_fuse(self):
+        """Get the longest fusion pattern."""
         self._get_op_list()
         matched_rule, matched_node_name = self._is_match(self.sorted_patterns)
         return matched_rule, matched_node_name
 
     def apply_the_transform(self):
+        """Quantize FusedBatchNormV3 and apply the fusion pattern."""
         self._get_op_list()
         matched_rule, matched_node_name = self._is_match(self.sorted_patterns)
         if matched_node_name:

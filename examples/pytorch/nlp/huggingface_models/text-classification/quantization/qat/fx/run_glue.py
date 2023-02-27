@@ -35,6 +35,7 @@ from transformers import (
     DataCollatorWithPadding,
     EvalPrediction,
     HfArgumentParser,
+    IntervalStrategy,
     PretrainedConfig,
     Trainer,
     TrainingArguments,
@@ -184,6 +185,21 @@ class ModelArguments:
             "with private models)."
         },
     )
+    tune: bool = field(
+        default=False, metadata={"help": "tune quantized model with Neural Compressor"}
+    )
+    int8: bool = field(
+        default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
+    )
+    performance: bool = field(
+        default=False, metadata={"help": "get benchmark instead of accuracy"}
+    )
+    iters: int = field(
+        default=100,
+        metadata={
+            "help": "The inference iterations to run for benchmark."
+        },
+    )
 
 
 def main():
@@ -327,14 +343,25 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    model = AutoModelForSequenceClassification.from_pretrained(
-        model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
-        config=config,
-        cache_dir=model_args.cache_dir,
-        revision=model_args.model_revision,
-        use_auth_token=True if model_args.use_auth_token else None,
-    )
+    if model_args.int8:
+        from neural_compressor.utils.load_huggingface import OptimizedModel
+        model = OptimizedModel.from_pretrained(
+            model_args.model_name_or_path,
+            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=config,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
+    else:
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_args.model_name_or_path,
+            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=config,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
 
     # Preprocessing the raw_datasets
     if data_args.task_name is not None:
@@ -370,9 +397,9 @@ def main():
             label_to_id = {i: int(label_name_to_id[label_list[i]]) for i in range(num_labels)}
         else:
             logger.warning(
-                "Your model seems to have been trained with labels, but they don't match the dataset: ",
-                f"model labels: {list(sorted(label_name_to_id.keys()))}, dataset labels: {list(sorted(label_list))}."
-                "\nIgnoring the model labels as a result.",
+                f"Your model seems to have been trained with labels, but they don't match the dataset: "
+                f"model labels: {list(sorted(label_name_to_id.keys()))}, dataset labels: {list(sorted(label_list))}.\n"
+                f"Ignoring the model labels as a result."
             )
     elif data_args.task_name is None and not is_regression:
         label_to_id = {v: i for i, v in enumerate(label_list)}
@@ -472,6 +499,56 @@ def main():
         tokenizer=tokenizer,
         data_collator=data_collator,
     )
+
+    early_stopping_patience = 2
+    early_stopping_threshold = 0.001 # optional
+    trainer.add_callback(transformers.EarlyStoppingCallback(early_stopping_patience, \
+                                                            early_stopping_threshold))
+
+    eval_dataloader = trainer.get_eval_dataloader()
+    batch_size = eval_dataloader.batch_size
+
+    def eval_func(model):
+        trainer.model = model
+        result = trainer.evaluate(eval_dataset=eval_dataset)
+        accu = result['eval_f1']
+        print('Accuracy: %.3f ' % (accu), flush=True)
+        return accu
+
+    def benchmark(model):
+        print(model)
+        trainer.model = model
+        result = trainer.evaluate(eval_dataset=eval_dataset)
+        throughput = result['eval_samples_per_second']
+        print('Batch size = %d' % batch_size)
+        print('Latency: %.3f ms' % (1000 / throughput))
+        print('Throughput: %.3f samples/sec' % result['eval_samples_per_second'])
+
+    # optimize and quantize with Neural Compressor
+    if model_args.tune:
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import QuantizationAwareTrainingConfig
+        conf = QuantizationAwareTrainingConfig()
+        compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        trainer.train()
+        compression_manager.callbacks.on_train_end()
+
+        from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
+        save_for_huggingface_upstream(compression_manager.model, tokenizer, training_args.output_dir)
+
+        
+    if model_args.performance:
+        from neural_compressor.config import BenchmarkConfig
+        from neural_compressor import benchmark
+        b_conf = BenchmarkConfig(warmup=5,
+                                 iteration=model_args.iters,
+                                 cores_per_instance=4,
+                                 num_of_instance=1)
+        benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
+    else:
+        eval_func(model)
+    return
 
     # Training
     if training_args.do_train:

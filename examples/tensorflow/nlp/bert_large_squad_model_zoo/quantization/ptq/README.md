@@ -5,19 +5,24 @@ This document is used to list steps of reproducing TensorFlow Intel® Neural Com
 This example can run on Intel CPUs and GPUs.
 
 
-## Prerequisite
+# Prerequisite
 
-### 1. Installation
+## 1. Environment
+
+### Installation
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow
+
+### Install Intel Tensorflow
 ```python
 pip install intel-tensorflow
 ```
 
-### 3. Install Intel Extension for Tensorflow
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
+
+### Install Intel Extension for Tensorflow
 
 #### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
@@ -34,7 +39,12 @@ Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's no
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-### 4. Prepare Dataset
+## 2. Prepare Pretrained model
+```shell
+wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_7_0/fp32_bert_squad.pb
+```
+
+## 3. Prepare Dataset
 ```shell
 wget https://storage.googleapis.com/bert_models/2019_05_30/wwm_uncased_L-24_H-1024_A-16.zip
 ```
@@ -62,23 +72,27 @@ Then create the tf_record file and you need to config the tf_record path in yaml
 python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=./eval.tf_record
 ```
 
-### 5. Prepare Pretrained model
-```shell
-wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_7_0/fp32_bert_squad.pb
-```
-
-## Write Yaml config file
-In examples directory, there is a bert.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The bert_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
-
-## Run Command
+# Run Command
   <b><font color='red'>Please make sure below command should be executed with the same Tensorflow runtime version as above step.</font></b>
 
-### Run Tuning
+## Quantization
   ```shell
-  python tune_squad.py --config=./bert.yaml --input_model=./bert_fp32.pb --output_model=./int8.pb --tune
+  bash run_tuning.sh --input_model=./fp32_bert_squad.pb --output_model=./bert_squad_int8.pb --dataset_location=/path/to/evaluation/dataset
   ```
 
-### Run Benchmark
+### Quantization Config
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+```
+
+## Benchmark
   ```shell
-  python tune_squad.py --config=./bert.yaml --input_model=./int8.pb --benchmark
+  bash run_benchmark.sh --input_model=./bert_squad_int8.pb --mode=accuracy --dataset_location=/path/to/evaluation/dataset --batch_size=64
+  bash run_benchmark.sh --input_model=./bert_squad_int8.pb --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=64
   ```

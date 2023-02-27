@@ -18,7 +18,7 @@
 import copy
 import math
 import os
-from collections import OrderedDict, UserDict
+from collections import OrderedDict, UserDict, namedtuple
 from packaging.version import Version
 import yaml
 from functools import partial
@@ -29,8 +29,7 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
-
-
+from .torch_utils.smooth_quant import TorchSmoothQuant
 torch = LazyImport("torch")
 json = LazyImport("json")
 hvd = LazyImport("horovod.torch")
@@ -129,6 +128,7 @@ def pytorch_forward_wrapper(model, input, device='cpu', conf=None, running_mode=
 
 
 def get_example_inputs(model, dataloader):  # pragma: no cover
+    version = get_torch_version()
     # Suggest set dataloader like calib_dataloader
     if dataloader is None:
         return None
@@ -137,36 +137,34 @@ def get_example_inputs(model, dataloader):  # pragma: no cover
             output = pytorch_forward_wrapper(model,
                                              input)
             if isinstance(input, dict) or isinstance(input, UserDict):
-                input_tensor = []
+                assert version.release >= Version("1.12.0").release, \
+                "INC support IPEX version >= 1.12.0"
                 if "label" in input.keys():
                     input.pop("label")
-                for key, value in input.items():
-                    if key == "start_positions" or key == "end_positions":
-                        continue
-                    input_tensor.append(value)
-                return input_tensor
-            if isinstance(input, list) or isinstance(input, tuple):
+                named_input = namedtuple("input", input.keys())
+                input = named_input._make(input.values())
                 return input
+            if isinstance(input, list) or isinstance(input, tuple):
+                return tuple(input)
             if isinstance(input, torch.Tensor):
-                return [input]
+                return input
             break
     except Exception as e:
         for idx, input in enumerate(dataloader):
             output = pytorch_forward_wrapper(model,
                                      input)
             if isinstance(input, dict) or isinstance(input, UserDict):
-                input_tensor = []
+                assert version.release >= Version("1.12.0").release, \
+                "INC support IPEX version >= 1.12.0"
                 if "label" in input.keys():
                     input.pop("label")
-                for key, value in input.items():
-                    if key == "start_positions" or key == "end_positions":
-                        continue
-                    input_tensor.append(value)
-                return input_tensor
-            if isinstance(input, list) or isinstance(input, tuple):
+                named_input = namedtuple("input", input.keys())
+                input = named_input._make(input.values())
                 return input
+            if isinstance(input, list) or isinstance(input, tuple):
+                return tuple(input)
             if isinstance(input, torch.Tensor):
-                return [input]
+                return input
             break
     if idx == 0:
         assert False, "Please checkout the example_inputs format."
@@ -308,11 +306,18 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                 activation_observer = _observer(algorithm, scheme, granularity,
                     dtype, 'post_training_dynamic_quant', compute_dtype)
 
+            version = get_torch_version()
             if observer_type == 'quant_aware_training':
                 if key[1] in ['LSTM', 'GRU', 'LSTMCell', 'GRUCell', 'RNNCell',
-                    'Embedding', 'EmbeddingBag']:
-                    qconfig = torch.quantization.QConfigDynamic(
-                        activation=activation_observer, weight=weights_observer)
+                  'Embedding', 'EmbeddingBag']:
+                    if version.release >= Version("1.11.0").release:
+                        if key[1] in ['Embedding', 'EmbeddingBag']:
+                            qconfig = torch.quantization.float_qparams_weight_only_qconfig
+                        else:
+                            qconfig = torch.quantization.default_dynamic_qconfig
+                    else:
+                        qconfig = torch.quantization.QConfigDynamic(
+                                activation=activation_observer, weight=weights_observer)
                 else:
                     qconfig = torch.quantization.QConfig(activation=activation_fake_quantize,
                                                      weight=weights_fake_quantize)
@@ -320,9 +325,13 @@ def _cfg_to_qconfig(tune_cfg, observer_type='post_training_static_quant'):
                 qconfig = torch.quantization.QConfig(activation=activation_observer,
                                                      weight=weights_observer)
             else:
-                version = get_torch_version()
                 if version.release < Version("1.6.0").release:  # pragma: no cover
                     qconfig = torch.quantization.QConfigDynamic(weight=weights_observer)
+                elif version.release >= Version("1.11.0").release:
+                    if key[1] in ['Embedding', 'EmbeddingBag']:
+                        qconfig = torch.quantization.float_qparams_weight_only_qconfig
+                    else:
+                        qconfig = torch.quantization.default_dynamic_qconfig
                 else:
                     qconfig = torch.quantization.QConfigDynamic(activation=activation_observer,
                                                                 weight=weights_observer)
@@ -372,10 +381,12 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
     if version.release >= Version("1.13.0").release:  # pragma: no cover
         from torch.ao.quantization import QConfigMapping
         fx_op_cfgs = QConfigMapping()
-        fx_op_cfgs.set_global(model_qconfig)
+        if observer_type != 'post_training_dynamic_quant':
+            fx_op_cfgs.set_global(model_qconfig)
     else:
         fx_op_cfgs = dict()
-        fx_op_cfgs[""] = model_qconfig
+        if observer_type != 'post_training_dynamic_quant':
+            fx_op_cfgs[""] = model_qconfig
         op_tuple_cfg_list = []
 
     for key, value in op_cfgs.items():
@@ -393,8 +404,7 @@ def _cfgs_to_fx_cfgs(op_cfgs, observer_type='post_training_static_quant'):
 
     if version.release < Version("1.13.0").release:  # pragma: no cover
         fx_op_cfgs["module_name"] = op_tuple_cfg_list
-
-    if version.release >= Version("1.13.0").release:  # pragma: no cover
+    elif observer_type != 'post_training_dynamic_quant':
         from torch.ao.quantization import get_default_qconfig_mapping
         for name, q_config  in get_default_qconfig_mapping().to_dict()['object_type']:
             fx_op_cfgs.set_object_type(name, q_config)
@@ -865,37 +875,89 @@ class TemplateAdaptor(Adaptor):
 
     def eval_func(self, model, dataloader, postprocess, metrics, measurer, iteration, conf=None):
         results = []
-        for idx, (input, label) in enumerate(dataloader):
-            if measurer is not None:
-                measurer.start()
+        try:
+            for idx, (input, label) in enumerate(dataloader):
+                if measurer is not None:
+                    measurer.start()
 
-            output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
-            if self.device != "cpu":  # pragma: no cover
-                output = output.to("cpu")
-                label = label.to("cpu")
-            if measurer is not None:
-                measurer.end()
-            if postprocess is not None:
-                output, label = postprocess((output, label))
-            if metrics:
-                for metric in metrics:
-                    if not hasattr(metric, "compare_label") or \
-                        (hasattr(metric, "compare_label") and metric.compare_label):
-                        metric.update(output, label)
-
-                # If distributed dataloader, gather all outputs to update metric
-                if getattr(dataloader, 'distributed', False) or \
-                  isinstance(dataloader.sampler, \
-                  torch.utils.data.distributed.DistributedSampler):
-                    hvd.init()
+                output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
+                if self.device != "cpu":  # pragma: no cover
+                    output = output.to("cpu")
+                    label = label.to("cpu")
+                if measurer is not None:
+                    measurer.end()
+                if postprocess is not None:
+                    output, label = postprocess((output, label))
+                if metrics:
                     for metric in metrics:
-                        metric.hvd = hvd
+                        if not hasattr(metric, "compare_label") or \
+                            (hasattr(metric, "compare_label") and metric.compare_label):
+                            metric.update(output, label)
 
-            if self.fp32_preds_as_label:
-                self.fp32_results.append(output) if self.is_baseline else \
-                    results.append(output)
-            if idx + 1 == iteration:
-                break
+                    # If distributed dataloader, gather all outputs to update metric
+                    if getattr(dataloader, 'distributed', False) or \
+                      isinstance(dataloader.sampler, \
+                      torch.utils.data.distributed.DistributedSampler):
+                        hvd.init()
+                        for metric in metrics:
+                            metric.hvd = hvd
+
+                if self.fp32_preds_as_label:
+                    self.fp32_results.append(output) if self.is_baseline else \
+                        results.append(output)
+                if idx + 1 == iteration:
+                    break
+        except Exception as e:
+            logger.warning("The dataloader didn't include label, will try input without label!")
+            for idx, input in enumerate(dataloader):
+                if (isinstance(input, dict) or isinstance(input, UserDict)):
+                    if not self.benchmark:
+                        assert "label" in input, \
+                            "The dataloader must include label to measure the metric!"
+                        label = input["label"].to("cpu")
+                elif not self.benchmark:
+                    assert False, "The dataloader must include label to measure the metric!"
+
+                if measurer is not None:
+                    measurer.start()
+
+                output = pytorch_forward_wrapper(model, input, device=self.device, conf=conf)
+
+                if measurer is not None:
+                    measurer.end()
+
+                if self.device != "cpu" and not self.benchmark:  # pragma: no cover
+                    if isinstance(output, dict) or isinstance(input, UserDict):
+                        for key in output:
+                            output[key] = output[key].to("cpu")
+                    elif isinstance(output, list) or isinstance(output, tuple):
+                        for tensor in output:
+                            tensor = tensor.to("cpu")
+                    else:
+                        output = output.to("cpu")
+
+                if postprocess is not None and not self.benchmark:
+                    output, label = postprocess((output, label))
+
+                if metrics and not self.benchmark:
+                    for metric in metrics:
+                        if not hasattr(metric, "compare_label") or \
+                            (hasattr(metric, "compare_label") and metric.compare_label):
+                            metric.update(output, label)
+
+                    # If distributed dataloader, gather all outputs to update metric
+                    if getattr(dataloader, 'distributed', False) or \
+                      isinstance(dataloader.sampler, \
+                      torch.utils.data.distributed.DistributedSampler):
+                        hvd.init()
+                        for metric in metrics:
+                            metric.hvd = hvd
+
+                if self.fp32_preds_as_label:
+                    self.fp32_results.append(output) if self.is_baseline else \
+                        results.append(output)
+                if idx + 1 == iteration:
+                    break
         return results
 
     def model_eval(self,
@@ -970,7 +1032,7 @@ class TemplateAdaptor(Adaptor):
             if self.approach == "post_training_dynamic_quant" else \
             self.query_handler.get_quantization_capability()['quant_aware'] \
             if self.approach == "quant_aware_training" else \
-            self.query_handler.get_quantization_capability()['int8']
+            self.query_handler.get_quantization_capability()['static']
 
         q_capability = {}
         q_capability['optypewise'] = OrderedDict()
@@ -984,10 +1046,10 @@ class TemplateAdaptor(Adaptor):
                 (self.query_handler.get_quantization_capability()['quant_aware'], 'static')]
         elif self.approach == "post_training_static_quant":
             capability_pair = [
-                (self.query_handler.get_quantization_capability()['int8'], 'static')]
+                (self.query_handler.get_quantization_capability()['static'], 'static')]
         else:
             capability_pair = [
-                (self.query_handler.get_quantization_capability()['int8'], 'static'),
+                (self.query_handler.get_quantization_capability()['static'], 'static'),
                 (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
         fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
         # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops,
@@ -1093,6 +1155,65 @@ class TemplateAdaptor(Adaptor):
             return True
         else:
             return False
+        
+    def calculate_hessian_trace(self,
+                                fp32_model, 
+                                dataloader, 
+                                q_model,
+                                criterion, 
+                                enable_act = False
+                                ):
+        """Calculate hessian trace.
+
+        Args:
+            fp32_model: The original fp32 model.
+            criterion: The loss function for calculate the hessian trace. # loss = criterion(output, target)
+            dataloader: The dataloader for calculate the gradient.
+            q_model: The INT8 AMAP model.
+            enable_act: Enabling quantization error or not.
+            
+        Return:
+            hessian_trace(Dict[Tuple, float]), key: (op_name, op_type); value: hessian trace.
+        """
+        from .torch_utils.hawq_metric import hawq_top
+        op_to_traces=hawq_top(fp32_model=fp32_model,
+                              dataloader=dataloader,
+                              q_model=q_model,
+                              criterion=criterion,
+                              enable_act=enable_act)
+        return op_to_traces
+
+    def smooth_quant(self, model, dataloader, calib_iter, tune_cfg=None, alpha=0.5,
+                     percentile=None, op_types=None, scales_per_op=None, force_re_smooth=False):
+        """ convert the model by smooth quant.
+
+        Args:
+            model: origin FP32 model
+            dataloader: calib dataloader
+            calib_iter: calib iters
+            tune_cfg: quantization config
+            alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+            percentile:Percentile of calibration to remove outliers, not supported now
+            op_types: The op types whose input tensor will be dumped
+            scales_per_op: True, each op will have an individual scale, mainly for accuracy
+                           False, ops with the same input will share a scale, mainly for performance
+
+        Returns:
+            model: A modified fp32 model
+        """
+        if not hasattr(self, 'sq') or force_re_smooth:
+            ##self.sq = TorchSmoothQuant(model._model, dataloader=dataloader)
+            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader)
+        args = {}  ##different backends may have different default values
+        if op_types != None:
+            args["op_types"] = op_types
+        if percentile != None:
+            args['percentile'] = percentile
+        if scales_per_op != None:
+            args['scales_per_op'] = scales_per_op
+        model._model = self.sq.transform(alpha=alpha, calib_iter=calib_iter, **args)
+        return model
+
 
 
 unify_op_type_mapping = {
@@ -1179,6 +1300,7 @@ class PyTorchAdaptor(TemplateAdaptor):
         # For tensorboard display
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
+        self.tune_cfg["reduce_range"] = REDUCE_RANGE
         self.tune_cfg["framework"] = "pytorch"
         op_cfgs = _cfg_to_qconfig(tune_cfg, self.approach)
         self.tune_cfg['bf16_ops_list'] = op_cfgs['bf16_ops_list']
@@ -1311,10 +1433,10 @@ class PyTorchAdaptor(TemplateAdaptor):
         self.non_quant_dict = self.get_non_quant_modules(self.model.kwargs) 
         quantizable_ops = []
         self._get_quantizable_ops_recursively(self.model._model, '', quantizable_ops)
-        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
         bf16_ops = []
         if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             self._get_bf16_ops_recursively(self.model._model, '', bf16_ops)
         bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         self.model.model.training = True
@@ -1331,7 +1453,7 @@ class PyTorchAdaptor(TemplateAdaptor):
 
     def _post_hook_for_qat(self):
         torch.quantization.convert(self.model._model, inplace=True)
-        if len(self.model.q_config['bf16_ops_list']) > 0 and \
+        if self.model.q_config is not None and len(self.model.q_config['bf16_ops_list']) > 0 and \
             self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
             self.model._model = torch_utils.bf16_convert.Convert(self.model._model, self.model.q_config)
@@ -2258,8 +2380,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
                 # At the 2nd run, the llga pass will be triggered and the model is turned into
                 # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-                q_model(*example_inputs)
-                q_model(*example_inputs)
+                self.calib_func(q_model, dataloader, tmp_iterations=2)
 
         assert self.approach != 'quant_aware_training', \
                 "Intel PyTorch Extension didn't support quantization aware training mode"
@@ -2504,7 +2625,7 @@ class PyTorch_IPEXAdaptor(TemplateAdaptor):  # pragma: no cover
                 self.q_dataloader.batch(batch_size)
                 logger.info('Recovery `calibration.dataloader.batchsize` {} according \
                             to config.yaml'                                           .format(batch_size))
-            del init_model
+            del(init_model)
         with open(self.ipex_config_path, 'r') as f:
             self.cfgs = json.load(f)
             if self.version.release < Version("1.12.0").release:
@@ -2677,6 +2798,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                "The model passed in is not the instance of torch.nn.Module"
         self.tune_cfg = tune_cfg
         self.tune_cfg["approach"] = self.approach
+        self.tune_cfg["reduce_range"] = REDUCE_RANGE
         self.tune_cfg["framework"] = "pytorch_fx"
 
         # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
@@ -2696,6 +2818,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         from torch.quantization.quantize_fx import prepare_fx, convert_fx, prepare_qat_fx
         try:
             q_model = copy.deepcopy(model)
+            q_model.fp32_model = model.fp32_model
         except Exception as e:  # pragma: no cover
             logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
                 repr(e)))
@@ -2747,7 +2870,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         else:
             if self.sub_module_list is None:
                 tmp_model = q_model._model
-                if self.version > Version("1.12.1"):  # pragma: no cover
+                if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                     # pylint: disable=E1123
                     q_model._model = prepare_fx(
                         q_model._model,
@@ -2784,7 +2907,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             scale_info = torch_utils.util._get_input_scale(q_model._model, hook_list)
 
         if self.sub_module_list is None:
-            if self.version > Version("1.12.1"):  # pragma: no cover
+            if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1123
                 q_model._model = convert_fx(q_model._model,
                                             convert_custom_config=self.convert_custom_config_dict)
@@ -2869,10 +2992,10 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         quantizable_ops = []
         tmp_model = self.fuse_fx_model(self.model, is_qat=True)
         self._get_quantizable_ops_recursively(tmp_model, '', quantizable_ops)
-        self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
         bf16_ops = []
         if self.version.release >= Version("1.11.0").release and self.use_bf16 and \
             (CpuInfo().bf16 or os.getenv('FORCE_BF16') == '1'): # pragma: no cover
+            self.bf16_ops = self.query_handler.get_op_types_by_precision("bf16")
             self._get_bf16_ops_recursively(tmp_model, '', bf16_ops)
         bf16_ops_list = [(op) for op in bf16_ops if op not in quantizable_ops]
         quantized_ops = OrderedDict()
@@ -2902,6 +3025,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         # PyTorch 1.13 and above version, need example_inputs for fx trace, but it not realy used,
         # so set it to None.
         example_inputs = None
+
+        # For export API, deepcopy fp32_model
+        try:
+            self.model.fp32_model = copy.deepcopy(self.model.fp32_model)
+        except Exception as e:  # pragma: no cover
+            logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                repr(e)))
 
         if self.sub_module_list is None:
             if self.version.release >= Version("1.13.0").release:  # pragma: no cover
@@ -3157,7 +3287,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         if res[op_type]['FP32'] > 0:
                             res[op_type]['FP32'] -= 1
                     else:
-                        res[op_type]['BF16'] = 1
+                        res[op_type] = {'INT8': 0, 'BF16': 1, 'FP32': 0}
+
 
         output_data = [[
             op_type,
@@ -3181,7 +3312,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         Returns:
             None
         """
-
         module_dict = dict(model.named_modules())
         for op_name, child in model.named_modules():
             if self.is_fused_module(child):
@@ -3233,6 +3363,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     sub_name = prefix + '--' + node.target
                 else:
                     sub_name = node.target
+                if not hasattr(model, node.target):
+                    continue 
                 if 'scale' in node.target:
                     tune_cfg['get_attr'][sub_name] = float(getattr(model, node.target))
                 elif 'zero_point' in node.target:
@@ -3346,7 +3478,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         tmp_module,
                         fx_sub_op_cfgs) if version <= Version("1.12.1") else prepare_fx(
                             tmp_module, fx_sub_op_cfgs, example_inputs=example_inputs)
-                torch_utils.util.append_attr(module_pre, module)
+                torch_utils.util.append_attr(module_pre, module, fx_white_list)
                 setattr(model, name, module_pre)
             else:
                 PyTorch_FXAdaptor.prepare_sub_graph(sub_module_list,
@@ -3424,7 +3556,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         try:
             tracer = QuantizationTracer(skipped_module_names, skipped_module_classes)
             graph_module = GraphModule(tmp_model, tracer.trace(tmp_model))
-            if self.version > Version("1.12.1"):  # pragma: no cover
+            if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1124, E1123
                 fused_model = _fuse_fx(graph_module,
                                         is_qat,
@@ -3506,6 +3638,28 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             logger.info('Module has no forward function')
         return False
 
+    def get_output_op_names(self, *args, **kwargs):
+        return None
+
+    def calculate_op_sensitivity(self, model, dataloader, tune_cfg, output_op_names, 
+                                 confidence_batches, fallback=True, requantize_cfgs=None):
+        """This is a helper function for `query_fw_capability`,
+           and it will get all quantizable ops from model.
+
+        Args:
+            model (object): INC model containing fp32 model
+            dataloader (string): dataloader contains real data.
+            tune_cfg (dict): dictionary of tune configure for each op.
+            fallback (bool): switch method in fallback stage and re-quantize stage
+
+        Returns:
+            ops_lst (list): sorted op list by sensitivity
+        """
+        from .torch_utils.util import get_fallback_order
+        ordered_ops = get_fallback_order(self, model.model, dataloader, tune_cfg, 
+                                         confidence_batches, fallback, requantize_cfgs)
+        return ordered_ops
+
 
 class PyTorchQuery(QueryBackendCapability):
     def __init__(self, local_config_file=None):
@@ -3516,7 +3670,7 @@ class PyTorchQuery(QueryBackendCapability):
         self._one_shot_query()
 
     def _get_specified_version_cfg(self, data):
-        """Get the configuration for the current runtime。
+        """Get the configuration for the current runtime.
         If there's no matched configuration in the input yaml, we'll
         use the `default` field of yaml.
 
@@ -3558,7 +3712,7 @@ class PyTorchQuery(QueryBackendCapability):
             [dictionary list]: A list composed of dictionary which key is precision
             and value is a dict that describes all op types' quantization capability.
         """
-        return self.cur_config['capabilities']
+        return self.cur_config['int8']
 
     def get_op_types(self):
         """Get the supported op types by all precisions.
@@ -3566,7 +3720,7 @@ class PyTorchQuery(QueryBackendCapability):
             [dictionary list]: A list composed of dictionary which key is precision
             and value is the op types.
         """
-        return self.cur_config['ops']
+        return self.cur_config
 
     def get_op_types_by_precision(self, precision):
         """Get op types per precision
@@ -3575,6 +3729,4 @@ class PyTorchQuery(QueryBackendCapability):
         Returns:
             [string list]: A list composed of op type.
         """
-        assert precision in list(self.cur_config['ops'].keys())
-
-        return self.cur_config['ops'][precision]
+        return self.cur_config[precision]

@@ -27,7 +27,7 @@ from ..conf.dotdict import deep_get
 from ..strategy import STRATEGIES
 from ..utils import logger
 from ..utils.create_obj_from_config import create_dataloader
-from ..utils.utility import CpuInfo, time_limit, set_backend
+from ..utils.utility import CpuInfo, time_limit
 from ..model import BaseModel
 from .graph_optimization import GraphOptimization
 
@@ -65,7 +65,6 @@ class MixedPrecision(GraphOptimization):
         cfg = self.conf.usr_cfg
         if cfg.model.framework != 'NA':
             self.framework = cfg.model.framework.lower()
-            set_backend(self.framework)
 
         cfg.tuning.strategy.name = 'automixedprecision'
         seed = cfg.tuning.random_seed
@@ -103,29 +102,28 @@ class MixedPrecision(GraphOptimization):
         assert isinstance(self._model, BaseModel), 'need set your Model for mixed precision....'
         if 'onnx' in self.framework and 'bf16' in self._precisions:
             logger.warning("Mixed precision doesn't support bf16 for ONNX models.")
-            sys.exit(0)
-        elif 'onnx' not in self.framework and 'fp16' in self._precisions:
-            logger.warning("Mixed precision doesn't support fp16 for {} models.".format(
-                self.framework))
-            sys.exit(0)
-
-        if self._precisions == ['bf16'] and not CpuInfo().bf16: # pragma: no cover
+            self._precisions.remove('bf16')
+    
+        if 'bf16' in self._precisions and not CpuInfo().bf16: # pragma: no cover
             if os.getenv('FORCE_BF16') == '1':
                 logger.warning("Mixed precision will generate bf16 graph although " \
                                "the hardware doesn't support bf16 instruction.")
             else:
                 logger.warning("Mixed precision exits due to the hardware " \
                                "doesn't support bf16 instruction.")
-                sys.exit(0)
+                self._precisions.remove('bf16')
 
-        if self._precisions == ['fp16'] and self.conf.usr_cfg.device != 'gpu':
+        if 'fp16' in self._precisions and 'gpu' not in self.conf.usr_cfg.device:
             if os.getenv('FORCE_FP16') == '1':
                 logger.warning("Mixed precision will generate fp16 graph although " \
                                "the hardware doesn't support fp16 instruction.")
             else:
                 logger.warning("Mixed precision exits due to the hardware " \
                                "doesn't support fp16 instruction.")
-                sys.exit(0)
+                self._precisions.remove('fp16')
+
+        if self._precisions == ['fp32'] or len(self._precisions) == 0:
+            sys.exit(0)
 
         cfg = self.conf.usr_cfg
         if self.framework == 'tensorflow':

@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""CSE Graph Rewriter."""
 
 from tensorflow.core.framework import graph_pb2
 from neural_compressor.utils.utility import dump_elapsed_time
@@ -25,43 +25,44 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 
 
 class GraphCseOptimizer(GraphRewriterBase):
-    """ We introduce the CSE optimizer to optimize the nodes that contains identical op type.
-        Case 1. Node A has three output nodes(B,C,D) and those child nodes has their own outputs
-                (B1/C1C2/D1).
+    """We introduce the CSE optimizer to optimize the nodes that contains identical op type.
+
+    Case 1. Node A has three output nodes(B,C,D) and those child nodes has their own outputs
+            (B1/C1C2/D1).
+            Node A
+            x    x    x
+            x    x     x
+    NODE B   NODE C  NODE D
+    x        x   x     x
+    B1       C1  C2    D1
+    If Node B/C/D have the identical memory-bound op, like relu/relu6. The graph will be
+    converted as below.
+    We removed the Node C & Node D, updated the B as the input of C1/C2/D1.
+            Node A
+            x
+            Node B
+            x x  x  x
+            x  x   x  x
+        x   x    x  x
+        B1  C1   C2  D1
+    Case 2.  Node A has three output nodes(B,C,D) and those child nodes has their own outputs
+            (B1/C1C2/D1).
+            Node A
+            x   x    x
+            x    x     x
+    NODE B   NODE C  NODE D
+        x      x   x     x
+        B1     C1  C2    D1
+    If Node B and C have the identical memory-bound op, like relu/relu6. The graph will be
+    converted as below.
+    We removed the Node C, updated the B as the input of C1/C2.
                 Node A
-              /    |    \
-             /     |     \
-        NODE B   NODE C  NODE D
-        |        |   |     |
-        B1       C1  C2    D1
-        If Node B/C/D have the identical memory-bound op, like relu/relu6. The graph will be
-        converted as below.
-        We removed the Node C & Node D, updated the B as the input of C1/C2/D1.
-               Node A
-                |
-               Node B
-              / |  \  \
-             /  |   \  \
-            /   |    \  \
-            B1  C1   C2  D1
-        Case 2.  Node A has three output nodes(B,C,D) and those child nodes has their own outputs
-                (B1/C1C2/D1).
-                Node A
-              /   |    \
-             /    |     \
-        NODE B   NODE C  NODE D
-          |      |   |     |
-          B1     C1  C2    D1
-        If Node B and C have the identical memory-bound op, like relu/relu6. The graph will be
-        converted as below.
-        We removed the Node C, updated the B as the input of C1/C2.
-                   Node A
-                   |     \
-                Node B  Node D
-                /   |  \    \
-                /   |   \    \
-                /   |    \    \
-               B1   C1    C2   D1
+                x     x
+            Node B  Node D
+            x   x  x    x
+            x   |   x    x
+            x   |    x    x
+            B1   C1    C2   D1
 
     Returns:
         [graphdef]: A optimized graphdef object.
@@ -70,8 +71,10 @@ class GraphCseOptimizer(GraphRewriterBase):
 
     @dump_elapsed_time("Pass GraphCseOptimizer")
     def do_transformation(self):
-        """Optimize the graph contains multi output nodes. If those nodes' type are identical,
-            those nodes should be elimated. Currently, we supported memory bound ops only.
+        """Optimize the graph contains multi output nodes.
+        
+        If those nodes' type are identical, those nodes should be elimated.
+        Currently, we supported memory bound ops only.
 
         Args:
             input_graph_def (graphdef): graphdef object

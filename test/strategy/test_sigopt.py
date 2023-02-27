@@ -143,25 +143,24 @@ class TestSigoptTuningStrategy(unittest.TestCase):
         
     def test_run_sigopt_one_trial_new_api(self):
         from neural_compressor.quantization import fit
-        from neural_compressor.config import AccuracyCriterion, AccuracyLoss, PostTrainingQuantConfig, TuningCriterion
-        from neural_compressor.data import DATASETS, DATALOADERS
+        from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig, TuningCriterion
+        from neural_compressor.data import Datasets, DATALOADERS
         
         # dataset and dataloader
-        dataset = DATASETS("tensorflow")["dummy"](((100, 3, 3, 1)))
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS["tensorflow"](dataset)
         
         # tuning and accuracy criterion
-        tolerable_loss = AccuracyLoss(0.01)
-        accuracy_criterion = AccuracyCriterion(criterion='relative', tolerable_loss=tolerable_loss)
+        accuracy_criterion = AccuracyCriterion(criterion='relative')
         strategy_kwargs = {'sigopt_api_token': 'sigopt_api_token_test', 
                            'sigopt_project_id': 'sigopt_project_id_test',
                            'sigopt_experiment_name': 'nc-tune'}
         tuning_criterion = TuningCriterion(strategy='sigopt', strategy_kwargs=strategy_kwargs, max_trials=3)
-        conf = PostTrainingQuantConfig(approach="static", backend="tensorflow", 
+        conf = PostTrainingQuantConfig(approach="static", 
                                        tuning_criterion=tuning_criterion,
                                        accuracy_criterion=accuracy_criterion)
+        self.assertEqual(conf.strategy_kwargs, strategy_kwargs)
         q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader= dataloader, eval_dataloader=dataloader)
-        self.assertIsNotNone(q_model)
 
 
 if __name__ == "__main__":

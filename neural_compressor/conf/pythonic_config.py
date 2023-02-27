@@ -18,7 +18,7 @@
 import logging
 from .dotdict import DotDict
 from ..config import _BaseQuantizationConfig, accuracy_criterion, BenchmarkConfig, \
-                     check_value, DistillationConfig, options, PruningConfig
+                     check_value, DistillationConfig, options, WeightPruningConfig
 
 logger = logging.getLogger("neural_compressor")
 
@@ -27,7 +27,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
     def __init__(self,
                  inputs=[],
                  outputs=[],
-                 backend='NA',
+                 backend='default',
                  device='cpu',
                  approach='post_training_static_quant',
                  calibration_sampling_size=[100],
@@ -41,27 +41,31 @@ class QuantizationConfig(_BaseQuantizationConfig):
                  performance_only=False,
                  reduce_range=None,
                  use_bf16=True,
-                 optimization_level=1,
-                 accuracy_criterion=accuracy_criterion):
-        extra_precisions = ["bf16"] if use_bf16 else []
-        super().__init__(inputs=inputs,
-                         outputs=outputs,
-                         backend=backend,
-                         device=device,
-                         calibration_sampling_size=calibration_sampling_size,
-                         op_type_list=op_type_list,
-                         op_name_list=op_name_list,
-                         strategy=strategy,
-                         strategy_kwargs=strategy_kwargs,
-                         objective=objective,
-                         timeout=timeout,
-                         max_trials=max_trials,
-                         performance_only=performance_only,
-                         reduce_range=reduce_range,
-                         extra_precisions=extra_precisions,
-                         optimization_level=optimization_level,
-                         accuracy_criterion=accuracy_criterion)
-        self._approach = approach
+                 quant_level=1,
+                 accuracy_criterion=accuracy_criterion,
+                 use_distributed_tuning=False):
+        excluded_precisions = ["bf16"] if not use_bf16 else []
+        super().__init__(
+            inputs=inputs,
+            outputs=outputs,
+            backend=backend,
+            device=device,
+            calibration_sampling_size=calibration_sampling_size,
+            op_type_list=op_type_list,
+            op_name_list=op_name_list,
+            strategy=strategy,
+            strategy_kwargs=strategy_kwargs,
+            objective=objective,
+            timeout=timeout,
+            max_trials=max_trials,
+            performance_only=performance_only,
+            reduce_range=reduce_range,
+            excluded_precisions=excluded_precisions,
+            accuracy_criterion=accuracy_criterion,
+            quant_level=quant_level,
+            use_distributed_tuning=use_distributed_tuning
+        )
+        self.approach = approach
 
     @property
     def approach(self):
@@ -74,7 +78,6 @@ class QuantizationConfig(_BaseQuantizationConfig):
             ['post_training_static_quant', 'post_training_dynamic_quant', 'quant_aware_training']
         ):
             self._approach = approach
-
 
 class WeightConf:
     def __init__(self, datatype=None, scheme=None, granularity=None, algorithm=None):
@@ -183,6 +186,10 @@ class TensorFlow(MXNet):
     def __init__(self, precisions=None):
         super().__init__(precisions)
 
+class Keras(MXNet):
+    def __init__(self, precisions=None):
+        super().__init__(precisions)
+
 class PyTorch(MXNet):
     def __init__(self, precisions=None):
         super().__init__(precisions)
@@ -236,11 +243,12 @@ class NASConfig:
 
 quantization = QuantizationConfig()
 benchmark = BenchmarkConfig()
-pruning = PruningConfig()
+pruning = WeightPruningConfig()
 distillation = DistillationConfig(teacher_model=None)
 nas = NASConfig()
 onnxruntime_config = ONNX()
 tensorflow_config = TensorFlow()
+keras_config = Keras()
 pytorch_config = PyTorch()
 mxnet_config = MXNet()
 
@@ -256,7 +264,8 @@ class Config:
                  onnxruntime=onnxruntime_config,
                  tensorflow=tensorflow_config,
                  pytorch=pytorch_config,
-                 mxnet=mxnet_config):
+                 mxnet=mxnet_config,
+                 keras=keras_config):
         self._quantization = quantization
         self._benchmark = benchmark
         self._options = options
@@ -267,6 +276,7 @@ class Config:
         self._tensorflow = tensorflow
         self._pytorch = pytorch
         self._mxnet = mxnet
+        self._keras = keras
 
     @property
     def distillation(self):
@@ -279,6 +289,10 @@ class Config:
     @property
     def tensorflow(self):
         return self._tensorflow
+
+    @property
+    def keras(self):
+        return self._keras
 
     @property
     def pytorch(self):

@@ -1,3 +1,4 @@
+#noqa: D100
 # https://github.com/mit-han-lab/hardware-aware-transformers/blob/master/LICENSE
 #
 # Copyright (c) 2022 Intel Corporation
@@ -19,9 +20,12 @@ from collections import defaultdict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from fairseq import utils
 from torch.nn import Parameter
 from torch.nn.modules.module import _addindent
+
+from neural_compressor.utils.utility import LazyImport
+
+fairseq = LazyImport("fairseq")
 
 INCREMENTAL_STATE_INSTANCE_ID = defaultdict(lambda: 0)
 
@@ -38,7 +42,7 @@ def _get_full_incremental_state_key(module_instance, key):
     return '{}.{}.{}'.format(module_name, module_instance._fairseq_instance_id, key)
 
 
-def get_incremental_state(module, incremental_state, key):
+def get_incremental_state(module, incremental_state, key):  #noqa: D102
     """Helper for getting incremental state for an nn.Module."""
     full_key = _get_full_incremental_state_key(module, key)
     if incremental_state is None or full_key not in incremental_state:
@@ -46,15 +50,15 @@ def get_incremental_state(module, incremental_state, key):
     return incremental_state[full_key]
 
 
-def set_incremental_state(module, incremental_state, key, value):
+def set_incremental_state(module, incremental_state, key, value):  #noqa: D102
     """Helper for setting incremental state for an nn.Module."""
     if incremental_state is not None:
         full_key = _get_full_incremental_state_key(module, key)
         incremental_state[full_key] = value
 
 
-class EmbeddingSuper(nn.Embedding):
-    def __init__(self, num_embeddings, super_embed_dim, padding_idx, *args, **kwargs):
+class EmbeddingSuper(nn.Embedding):  #noqa: D101
+    def __init__(self, num_embeddings, super_embed_dim, padding_idx, *args, **kwargs):  #noqa: D107
         super().__init__(num_embeddings, super_embed_dim, padding_idx, *args, **kwargs)
 
         # the largest embed dim
@@ -68,15 +72,15 @@ class EmbeddingSuper(nn.Embedding):
         self.profiling = False
         self.reset_parameters()
 
-    def profile(self, mode=True):
+    def profile(self, mode=True):  #noqa: D102
         self.profiling = mode
 
-    def reset_parameters(self):
+    def reset_parameters(self):  #noqa: D102
         super().reset_parameters()
         nn.init.normal_(self.weight, mean=0, std=self.embedding_dim ** -0.5)
         nn.init.constant_(self.weight[self.padding_idx], 0)
 
-    def set_sample_config(self, sample_embed_dim, part):
+    def set_sample_config(self, sample_embed_dim, part):  #noqa: D102
         self.sample_embed_dim[part] = sample_embed_dim
         self._sample_parameters(part)
 
@@ -86,18 +90,26 @@ class EmbeddingSuper(nn.Embedding):
 
         return self.samples
 
-    def sample_parameters(self, part, resample=False):
+    def sample_parameters(self, part, resample=False):  #noqa: D102
         return self._sample_parameters(part) if self.profiling or resample else self.samples
 
-    def sampled_weight(self, part):
+    def sampled_weight(self, part):  #noqa: D102
         return self.sample_parameters(part)[part]['weight']
 
-    def forward(self, input, part='encoder'):
-        return F.embedding(input, self.sampled_weight(part), self.padding_idx, self.max_norm, self.norm_type, self.scale_grad_by_freq, self.sparse)
+    def forward(self, input, part='encoder'):  #noqa: D102
+        return F.embedding(
+            input,
+            self.sampled_weight(part),
+            self.padding_idx,
+            self.max_norm,
+            self.norm_type,
+            self.scale_grad_by_freq,
+            self.sparse,
+        )
 
 
-class LinearSuper(nn.Linear):
-    def __init__(self, super_in_dim, super_out_dim, bias=True, uniform_=None, non_linear='linear'):
+class LinearSuper(nn.Linear):  #noqa: D101
+    def __init__(self, super_in_dim, super_out_dim, bias=True, uniform_=None, non_linear='linear'):  #noqa: D107
         super().__init__(super_in_dim, super_out_dim, bias=bias)
 
         # super_in_dim and super_out_dim indicate the largest network!
@@ -113,10 +125,10 @@ class LinearSuper(nn.Linear):
         self._reset_parameters(bias, uniform_, non_linear)
         self.profiling = False
 
-    def profile(self, mode=True):
+    def profile(self, mode=True):  #noqa: D102
         self.profiling = mode
 
-    def sample_parameters(self, resample=False):
+    def sample_parameters(self, resample=False):  #noqa: D102
         if self.profiling or resample:
             return self._sample_parameters()
         return self.samples
@@ -127,7 +139,7 @@ class LinearSuper(nn.Linear):
         if bias:
             nn.init.constant_(self.bias, 0.)
 
-    def set_sample_config(self, sample_in_dim, sample_out_dim):
+    def set_sample_config(self, sample_in_dim, sample_out_dim):  #noqa: D102
         self.sample_in_dim = sample_in_dim
         self.sample_out_dim = sample_out_dim
 
@@ -141,11 +153,11 @@ class LinearSuper(nn.Linear):
             self.samples['bias'] = sample_bias(self.bias, self.sample_out_dim)
         return self.samples
 
-    def forward(self, x):
+    def forward(self, x):  #noqa: D102
         self.sample_parameters()
         return F.linear(x, self.samples['weight'], self.samples['bias'])
 
-    def calc_sampled_param_num(self):
+    def calc_sampled_param_num(self):  #noqa: D102
         assert 'weight' in self.samples.keys()
         weight_numel = self.samples['weight'].numel()
 
@@ -157,20 +169,20 @@ class LinearSuper(nn.Linear):
         return weight_numel + bias_numel
 
 
-def sample_weight(weight, sample_in_dim, sample_out_dim):
+def sample_weight(weight, sample_in_dim, sample_out_dim):  #noqa: D103
     sample_weight = weight[:, :sample_in_dim]
     sample_weight = sample_weight[:sample_out_dim, :]
 
     return sample_weight
 
 
-def sample_bias(bias, sample_out_dim):
+def sample_bias(bias, sample_out_dim):  #noqa: D103
     sample_bias = bias[:sample_out_dim]
 
     return sample_bias
 
 
-def LayerNorm(normalized_shape, eps=1e-5, elementwise_affine=True, export=False):
+def LayerNorm(normalized_shape, eps=1e-5, elementwise_affine=True, export=False):  #noqa: D103
     if not export and torch.cuda.is_available():
         try:
             from apex.normalization import FusedLayerNorm
@@ -180,8 +192,8 @@ def LayerNorm(normalized_shape, eps=1e-5, elementwise_affine=True, export=False)
     return torch.nn.LayerNorm(normalized_shape, eps, elementwise_affine)
 
 
-class LayerNormSuper(torch.nn.LayerNorm):
-    def __init__(self, super_embed_dim):
+class LayerNormSuper(torch.nn.LayerNorm):  #noqa: D101
+    def __init__(self, super_embed_dim):  #noqa: D107
         super().__init__(super_embed_dim)
 
         # the largest embed dim
@@ -193,10 +205,10 @@ class LayerNormSuper(torch.nn.LayerNorm):
         self.samples = {}
         self.profiling = False
 
-    def profile(self, mode=True):
+    def profile(self, mode=True):  #noqa: D102
         self.profiling = mode
 
-    def sample_parameters(self, resample=False):
+    def sample_parameters(self, resample=False):  #noqa: D102
         if self.profiling or resample:
             return self._sample_parameters()
         return self.samples
@@ -206,15 +218,21 @@ class LayerNormSuper(torch.nn.LayerNorm):
         self.samples['bias'] = self.bias[:self.sample_embed_dim]
         return self.samples
 
-    def set_sample_config(self, sample_embed_dim):
+    def set_sample_config(self, sample_embed_dim):  # noqa: D102
         self.sample_embed_dim = sample_embed_dim
         self._sample_parameters()
 
-    def forward(self, x):
+    def forward(self, x):  # noqa: D102
         self.sample_parameters()
-        return F.layer_norm(x, (self.sample_embed_dim,), weight=self.samples['weight'], bias=self.samples['bias'], eps=self.eps)
+        return F.layer_norm(
+            x,
+            (self.sample_embed_dim,),
+            weight=self.samples['weight'],
+            bias=self.samples['bias'],
+            eps=self.eps,
+        )
 
-    def calc_sampled_param_num(self):
+    def calc_sampled_param_num(self):  # noqa: D102
         assert 'weight' in self.samples.keys()
         assert 'bias' in self.samples.keys()
         return self.samples['weight'].numel() + self.samples['bias'].numel()
@@ -228,7 +246,7 @@ class MultiheadAttentionSuper(nn.Module):
 
     def __init__(self, super_embed_dim, num_heads, is_encoder, super_kdim=None, super_vdim=None, dropout=0., bias=True,
                  add_bias_kv=False, add_zero_attn=False, self_attention=False,
-                 encoder_decoder_attention=False, out_dim=None, qkv_dim=None):
+                 encoder_decoder_attention=False, out_dim=None, qkv_dim=None):  # noqa: D107
         super().__init__()
 
         # the configs of super arch
@@ -308,7 +326,7 @@ class MultiheadAttentionSuper(nn.Module):
             self.enable_torch_version = False
         self.enable_torch_version = False
 
-    def calc_sampled_param_num(self):
+    def calc_sampled_param_num(self):  # noqa: D102
         assert self.in_proj_weight is not None and self.in_proj_bias is not None
         in_proj_q_weight_numel = self.sample_q_embed_dim * self.qkv_dim
         in_proj_v_weight_numel = in_proj_k_weight_numel = self.sample_kv_embed_dim * self.qkv_dim
@@ -320,7 +338,7 @@ class MultiheadAttentionSuper(nn.Module):
 
         return in_proj_q_weight_numel + in_proj_k_weight_numel + in_proj_v_weight_numel + in_proj_bias_numel
 
-    def set_sample_config(self, sample_q_embed_dim, sample_attention_heads, sample_kv_embed_dim=None):
+    def set_sample_config(self, sample_q_embed_dim, sample_attention_heads, sample_kv_embed_dim=None):  # noqa: D102
         self.sample_q_embed_dim = sample_q_embed_dim
         if sample_kv_embed_dim is None:
             self.sample_kv_embed_dim = sample_q_embed_dim
@@ -336,10 +354,10 @@ class MultiheadAttentionSuper(nn.Module):
         self.out_proj.set_sample_config(
             sample_in_dim=self.qkv_dim, sample_out_dim=self.sample_q_embed_dim)
 
-    def prepare_for_onnx_export_(self):
+    def prepare_for_onnx_export_(self):  # noqa: D102
         self.onnx_trace = True
 
-    def reset_parameters(self):
+    def reset_parameters(self):  # noqa: D102
         if self.qkv_same_dim:
             nn.init.xavier_uniform_(self.in_proj_weight)
         else:
@@ -358,14 +376,13 @@ class MultiheadAttentionSuper(nn.Module):
 
     def forward(self, query, key, value, key_padding_mask=None, incremental_state=None,
                 need_weights=True, static_kv=False, attn_mask=None):
-        """Input shape: Time x Batch x Channel
+        """Input shape: Time x Batch x Channel.
 
         Timesteps can be masked by supplying a T x T mask in the
         `attn_mask` argument. Padding elements can be excluded from
         the key by passing a binary ByteTensor (`key_padding_mask`) with shape:
         batch x src_len, where padding elements are indicated by 1s.
         """
-
         tgt_len, bsz, embed_dim = query.size()
 
         if incremental_state is not None:
@@ -497,7 +514,7 @@ class MultiheadAttentionSuper(nn.Module):
             attn_weights = attn_weights.view(
                 bsz * self.num_heads, tgt_len, src_len)
 
-        attn_weights = utils.softmax(
+        attn_weights = fairseq.utils.softmax(
             attn_weights, dim=-1, onnx_trace=self.onnx_trace,
         ).type_as(attn_weights)
         attn_weights = F.dropout(
@@ -528,10 +545,10 @@ class MultiheadAttentionSuper(nn.Module):
 
         return attn, attn_weights
 
-    def in_proj_qkv(self, query):
+    def in_proj_qkv(self, query):  # noqa: D102
         return self._in_proj(query, sample_dim=self.sample_q_embed_dim).chunk(3, dim=-1)
 
-    def in_proj_q(self, query):
+    def in_proj_q(self, query):  # noqa: D102
         if self.qkv_same_dim:
             return self._in_proj(query, end=self.qkv_dim, sample_dim=self.sample_q_embed_dim)
         else:
@@ -540,7 +557,7 @@ class MultiheadAttentionSuper(nn.Module):
                 bias = bias[:self.qkv_dim]
             return F.linear(query, self.q_proj_weight[..., :self.sample_q_embed_dim], bias)
 
-    def in_proj_k(self, key):
+    def in_proj_k(self, key):  # noqa: D102
         if self.qkv_same_dim:
             return self._in_proj(key, start=self.qkv_dim, end=2 * self.qkv_dim, sample_dim=self.sample_kv_embed_dim)
         else:
@@ -550,7 +567,7 @@ class MultiheadAttentionSuper(nn.Module):
                 bias = bias[self.qkv_dim:2 * self.qkv_dim]
             return F.linear(key, weight[..., :self.sample_kv_embed_dim], bias)
 
-    def in_proj_v(self, value):
+    def in_proj_v(self, value):  # noqa: D102
         if self.qkv_same_dim:
             return self._in_proj(value, start=2 * self.qkv_dim, sample_dim=self.sample_kv_embed_dim)
         else:
@@ -591,10 +608,10 @@ class MultiheadAttentionSuper(nn.Module):
             buffer,
         )
 
-    def apply_sparse_mask(self, attn_weights, tgt_len, src_len, bsz):
+    def apply_sparse_mask(self, attn_weights, tgt_len, src_len, bsz):  # noqa: D102
         return attn_weights
 
-    def __repr__(self):
+    def __repr__(self):  # noqa: D105
         # We treat the extra repr like the sub-module, one item per line
         extra_lines = []
         extra_repr = self.extra_repr()

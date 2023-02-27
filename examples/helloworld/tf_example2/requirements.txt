@@ -1,1 +1,1 @@
-intel-tensorflow==2.7.0
+intel-tensorflow

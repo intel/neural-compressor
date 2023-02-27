@@ -93,11 +93,17 @@ class ModelArguments:
     int8: bool = field(
         default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
     )
-    benchmark: bool = field(
+    performance: bool = field(
         default=False, metadata={"help": "get benchmark instead of accuracy"}
     )
-    accuracy_only: bool = field(
+    accuracy: bool = field(
         default=False, metadata={"help": "get accuracy"}
+    )
+    iters: int = field(
+        default=100,
+        metadata={
+            "help": "The inference iterations to run for benchmark."
+        },
     )
 
 
@@ -630,20 +636,30 @@ def main():
         if not training_args.do_eval:
             raise ValueError("do_eval must be set to True for quantization.")
 
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization('conf.yaml')
-        quantizer.eval_func = eval_func
-        quantizer.calib_dataloader = eval_dataloader
-        quantizer.model = common.Model(model)
-        model = quantizer.fit()
-        model.save(training_args.output_dir)
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor import quantization
+        conf = PostTrainingQuantConfig()
+        q_model = quantization.fit(model,
+                                   conf,
+                                   calib_dataloader=eval_dataloader,
+                                   eval_func=eval_func)
+        q_model.save(training_args.output_dir)
         return
 
     if model_args.int8:
         from neural_compressor.utils.pytorch import load
         model = load(training_args.output_dir, model, dataloader=eval_dataloader)
-    if model_args.benchmark or model_args.accuracy_only:
-        eval_func(model)
+    if model_args.performance or model_args.accuracy:
+        if model_args.performance:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(warmup=5,
+                                     iteration=model_args.iters,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
+        else:
+            eval_func(model)
         return
 
     # Training

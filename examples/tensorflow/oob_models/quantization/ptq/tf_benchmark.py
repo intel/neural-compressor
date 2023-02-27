@@ -1,10 +1,27 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2022 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 import os
 import sys
 import time
 import logging
 import argparse
 import math
-import yaml
 import numpy as np
 
 from tensorflow.python.client import timeline
@@ -28,6 +45,11 @@ def metrics_generator(array, tolerance):
     return max_diff, mean_diff, median_diff, success_rate
 
 def initialize_graph(model_details, args, od_graph_def):
+    if args.use_nc and not od_graph_def.node:
+        from neural_compressor.model import Model
+        model = Model(os.path.join(os.getcwd(), model_details['model_dir']))
+        od_graph_def = model.graph_def
+
     graph = tf_v1.Graph()
     with graph.as_default():
         input_variables = {
@@ -39,11 +61,6 @@ def initialize_graph(model_details, args, od_graph_def):
                 serialized_graph = fid.read()
                 od_graph_def.ParseFromString(serialized_graph)
                 od_graph_def = delete_assign(od_graph_def)
-
-        elif args.use_nc and not od_graph_def.node:
-            from neural_compressor.experimental import common
-            model = common.Model(os.path.join(os.getcwd(), model_details['model_dir']))
-            od_graph_def = model.graph_def
 
         # optimize for inference
         if not args.disable_optimize:
@@ -152,24 +169,6 @@ def run_benchmark(model_details, args, find_graph_def):
         print('Batch size = %d' % args.batch_size)
         print("Latency: {:.3f} ms".format(latency))
         print("Throughput: {:.2f} fps".format(throughput))
-
-def _write_inputs_outputs_to_yaml(yaml_path, output_yaml_path, inputs, outputs):
-    # deal with the inputs/outputs at yaml
-    with open(yaml_path, 'r') as f:
-        content = yaml.safe_load(f)
-
-        tmp_i = ''
-        tmp_o = ''
-        for item in inputs:
-            tmp_i = tmp_i + str(item) + ','
-        for item in outputs:
-            tmp_o = tmp_o + str(item) + ','
-        content['model'].update({'inputs': tmp_i[:-1]})
-        content['model'].update({'outputs': tmp_o[:-1]})
-        print(content)
-
-    with open(output_yaml_path, 'w') as nf:
-        yaml.dump(content, nf)
 
 def oob_collate_data_func(batch):
     """Puts each data field into a pd frame with outer dimension batch size"""
@@ -330,12 +329,20 @@ if __name__ == "__main__":
     # tune
     if args.tune:
         # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        from neural_compressor.experimental import Quantization, common
         inputs = model_detail['input']
         outputs = model_detail['output']
-        _write_inputs_outputs_to_yaml(args.yaml, "./config_tmp.yaml", list(inputs.keys()), outputs)
 
-        quantizer = Quantization("./config_tmp.yaml")
+        from neural_compressor.data import DataLoader
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.utils import set_random_seed
+
+        set_random_seed(9527)
+        config = PostTrainingQuantConfig(
+            inputs=list(inputs.keys()),
+            outputs=outputs,
+            calibration_sampling_size=[1])
+
         # generate dummy data
         if model_detail.get('sparse_d_shape'):
             sparse_input_names = [list(i.keys()) for i in model_detail['sparse_d_shape'].values()]
@@ -343,16 +350,19 @@ if __name__ == "__main__":
             for i in range(1, len(sparse_input_names)):
                 sparse_input_seq += sparse_input_names[i]
             input_dense_shape = [tuple(list(i.values())[0]) for i in model_detail['sparse_d_shape'].values()]
-            dataset = quantizer.dataset(dataset_type='sparse_dummy_v2',
+            from neural_compressor.data import Datasets
+            dataset = Datasets('tensorflow')['sparse_dummy_v2'](
                                         dense_shape=input_dense_shape,
                                         label_shape=[[1] for _ in range(len(input_dense_shape))],
                                         sparse_ratio=[1-1/np.multiply(*i) for i in input_dense_shape])
             seq_idxs = [sparse_input_seq.index(i) for i in inputs.keys()]
-            quantizer.calib_dataloader = common.DataLoader(dataset=dataset,
-                                                           batch_size=1,
-                                                           collate_fn=oob_collate_sparse_func)
+            calib_dataloader = DataLoader(framework='tensorflow',
+                                          dataset=dataset,
+                                          batch_size=1,
+                                          collate_fn=oob_collate_sparse_func)
         else:
-            dataset = quantizer.dataset(dataset_type='dummy',
+            from neural_compressor.data import Datasets
+            dataset = Datasets('tensorflow')['dummy'](
                                         shape=inputs_shape,
                                         low=low, high=high,
                                         dtype=inputs_dtype,
@@ -360,15 +370,23 @@ if __name__ == "__main__":
             dataloader_dict = {'wide_deep': WidedeepDataloader}
             if args.model_name and args.model_name in dataloader_dict.keys():
                 Dataloader = dataloader_dict[args.model_name]
+                calib_dataloader = Dataloader(dataset=dataset,
+                                            batch_size=args.batch_size,
+                                            collate_fn=oob_collate_data_func \
+                                                if model_detail.get('model_name')!='DLRM' \
+                                                else oob_dlrm_collate_func)
             else:
-                Dataloader = common.DataLoader
-            quantizer.calib_dataloader = Dataloader(dataset=dataset,
-                                                    batch_size=args.batch_size,
-                                                    collate_fn=oob_collate_data_func \
-                                                        if model_detail.get('model_name')!='DLRM' \
-                                                            else oob_dlrm_collate_func)
-        quantizer.model = args.model_path
-        q_model = quantizer.fit()
+                Dataloader = DataLoader
+                calib_dataloader = Dataloader(framework='tensorflow',
+                                            dataset=dataset,
+                                            batch_size=args.batch_size,
+                                            collate_fn=oob_collate_data_func \
+                                                if model_detail.get('model_name')!='DLRM' \
+                                                else oob_dlrm_collate_func)
+        q_model = fit(
+            model=args.model_path,
+            conf=config,
+            calib_dataloader=calib_dataloader)
         q_model.save(args.output_path)
 
     # benchmark

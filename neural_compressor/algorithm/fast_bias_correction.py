@@ -15,19 +15,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Build FastBiasCorrection algorithm class."""
+
 import numpy as np
 from .algorithm import Algorithm, algorithm_registry
 from ..utils import logger
 
-@algorithm_registry(algorithm_type='fast_bias_correction')
+@algorithm_registry(algorithm_type='fast_bias_correction', location='post_quantization')
 class FastBiasCorrection(Algorithm):
+    """FastBiasCorrection algorithm class."""
 
     def __init__(self, threshold=2.0, channel_axis=1):
+        """Initialize FastBiasCorrection class.
+
+        Args:
+            threshold (float, optional): threshold. Defaults to 2.0.
+            channel_axis (int, optional): channel_axis. Defaults to 1.
+        """
         self.threshold = threshold
         self.channel_axis = channel_axis
         self.quantization_cfg = None
 
     def __call__(self, origin_model, q_model, adaptor, dataloader, iterations):
+        """Return the processed model via FastBiasCorrection algorithm.
+
+        Args:
+            origin_model: origin_model
+            q_model: q_model
+            adaptor: adaptor
+            dataloader: dataloader
+            iterations: iterations
+
+        Returns:
+            model : The processed model
+        """
         # (TODO) assume int8 model also use fp32 op list
         # in adaptor fp32 op will be mapped to corresponding int8 op
         graph_info = origin_model.graph_info

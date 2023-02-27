@@ -14,24 +14,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""Gather Operator."""
 
 import onnx
-from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator
+from neural_compressor.adaptor.ox_utils.operators.ops import op_registry, Operator, QOperator, qop_registry
 from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg
 
 @op_registry(op_types="Gather")
 class GatherOperator(Operator):
+    """Gather Operator."""
+
     def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
         super(GatherOperator, self).__init__(onnx_quantizer, onnx_node)
 
     def quantize_check(self):
+        """Check if quantizaion can be done."""
         node = self.node
         if not self.quantizer.is_valid_quantize_weight(node.input[0]):
             return False
         return True
 
     def quantize(self):
+        """Do quantizaion."""
         node = self.node
         self.quantizer.quantize_inputs(node, [0])
         if not self.disable_qdq_for_node_output or self.quantizer != 'qdq':
@@ -39,6 +44,7 @@ class GatherOperator(Operator):
         node.name = node.name + "_quant"
 
     def convert_check(self, convert_format):
+        """Check if conversion can be done."""
         node = self.node
         assert convert_format in ['dynamic', 'static'], \
             "convert format for {} should be in ['dynamic', 'static']".format(node.op_type)
@@ -51,6 +57,7 @@ class GatherOperator(Operator):
         return True
 
     def convert(self, convert_format):
+        """Convert to QOperator format."""
         node = self.node
         
         parents = self.quantizer.model.get_parents(node)
@@ -90,3 +97,11 @@ class GatherOperator(Operator):
                         self.quantizer.model.replace_node_input(n, 
                                         child.output[0], gather_new_output)
             self.quantizer.remove_nodes.extend([node, parents[0]])
+            
+@qop_registry(op_types="Gather")
+class QGatherOperator(QOperator):
+    """QGather Operator."""
+
+    def __init__(self, onnx_node, children, initializers):
+        """Initialization."""
+        super().__init__(onnx_node, children, initializers)

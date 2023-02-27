@@ -23,10 +23,14 @@ from sqlalchemy.orm import session, sessionmaker
 from neural_compressor.ux.components.configuration_wizard.configuration_parser import (
     ConfigurationParser,
 )
+from neural_compressor.ux.components.configuration_wizard.pruning_config_parser import (
+    PruningConfigParser,
+)
 from neural_compressor.ux.components.db_manager.db_manager import DBManager
 from neural_compressor.ux.components.db_manager.db_models.optimization import Optimization
 from neural_compressor.ux.components.db_manager.db_models.optimization_type import OptimizationType
 from neural_compressor.ux.components.db_manager.db_models.precision import Precision
+from neural_compressor.ux.components.db_manager.db_models.pruning_details import PruningDetails
 from neural_compressor.ux.components.db_manager.db_models.tuning_details import TuningDetails
 from neural_compressor.ux.components.db_manager.db_models.tuning_history import TuningHistory
 from neural_compressor.ux.components.db_manager.db_operations.project_api_interface import (
@@ -50,7 +54,13 @@ from neural_compressor.ux.utils.consts import (
 )
 from neural_compressor.ux.utils.exceptions import ClientErrorException, InternalException
 from neural_compressor.ux.utils.logger import log
-from neural_compressor.ux.utils.utils import normalize_string
+from neural_compressor.ux.utils.utils import (
+    get_default_pruning_config_path,
+    load_pruning_details_config,
+    normalize_string,
+)
+from neural_compressor.ux.utils.workload.config import Config
+from neural_compressor.ux.utils.workload.pruning import Pruning as PruningConfig
 
 db_manager = DBManager()
 Session = sessionmaker(bind=db_manager.engine)
@@ -66,7 +76,7 @@ class OptimizationAPIInterface:
             optimization_id: int = int(data.get("id", None))
             optimization_name: str = str(data.get("name", None))
             job_id = parse_job_id("optimization", optimization_id)
-            jobs_control_queue.abort_job(job_id)
+            jobs_control_queue.abort_job(job_id, blocking=True)
         except ValueError:
             raise ClientErrorException("Could not parse value.")
         except TypeError:
@@ -311,15 +321,31 @@ class OptimizationAPIInterface:
                 parsed_input_data,
             )
         )
+
+        project_data = ProjectAPIInterface.get_project_details(
+            {
+                "id": parsed_optimization_data.project_id,
+            },
+        )
+        supports_pruning = project_data.get("input_model", {}).get("supports_pruning", False)
+
         with Session.begin() as db_session:
             quantization_id = OptimizationType.get_optimization_type_id(
-                db_session,
-                OptimizationTypes.QUANTIZATION.value,
+                db_session=db_session,
+                optimization_name=OptimizationTypes.QUANTIZATION.value,
+            )
+            pruning_id = OptimizationType.get_optimization_type_id(
+                db_session=db_session,
+                optimization_name=OptimizationTypes.PRUNING.value,
             )
 
             add_optimization_method = OptimizationAPIInterface.add_standard_optimization
             if parsed_optimization_data.optimization_type_id == quantization_id:
                 add_optimization_method = OptimizationAPIInterface.add_quantization_optimization
+            if parsed_optimization_data.optimization_type_id == pruning_id:
+                if not supports_pruning:
+                    raise ClientErrorException("Pruning is only supported for TensorFlow models.")
+                add_optimization_method = OptimizationAPIInterface.add_pruning_optimization
 
             optimization_id = add_optimization_method(db_session, parsed_optimization_data)
         return {
@@ -352,6 +378,38 @@ class OptimizationAPIInterface:
             batch_size=optimization_data.batch_size,
             sampling_size=optimization_data.sampling_size,
             tuning_details_id=tuning_details_id,
+            diagnosis_config=optimization_data.diagnosis_config,
+        )
+        return optimization_id
+
+    @staticmethod
+    def add_pruning_optimization(
+        db_session: session.Session,
+        optimization_data: OptimizationAddParamsInterface,
+    ) -> int:
+        """Add quantization optimization to database."""
+        pruning_config_path = get_default_pruning_config_path()
+        pruning_config = Config()
+        pruning_config.load(pruning_config_path)
+
+        if not isinstance(pruning_config.pruning, PruningConfig):
+            raise InternalException("Could not load predefined pruning configurations.")
+        optimization_data.pruning_details = pruning_config.pruning
+
+        pruning_details_id = PruningDetails.add(
+            db_session=db_session,
+            pruning_details=optimization_data.pruning_details,
+        )
+        optimization_id = Optimization.add(
+            db_session=db_session,
+            project_id=optimization_data.project_id,
+            name=optimization_data.name,
+            precision_id=optimization_data.precision_id,
+            optimization_type_id=optimization_data.optimization_type_id,
+            dataset_id=optimization_data.dataset_id,
+            batch_size=optimization_data.batch_size,
+            sampling_size=optimization_data.sampling_size,
+            pruning_details_id=pruning_details_id,
             diagnosis_config=optimization_data.diagnosis_config,
         )
         return optimization_id
@@ -459,33 +517,124 @@ class OptimizationAPIInterface:
                 )
 
             if "tuning_details" in data:
-                tuning_details_id = optimization.get("tuning_details", {}).get("id", None)
-                if tuning_details_id is None:
-                    raise ClientErrorException("Could not find tuning_details for optimization.")
-                tuning_details = TuningDetails.update(
+                tuning_details_response = OptimizationAPIInterface.edit_tuning_details(
                     db_session=db_session,
-                    tuning_details_id=tuning_details_id,
-                    tuning_details_data=parsed_optimization_data.tuning_details,
+                    optimization=optimization,
+                    parsed_optimization_data=parsed_optimization_data,
                 )
-                response.update({"tuning_details": tuning_details})
+                response.update(tuning_details_response)
 
-                response.update(
-                    Optimization.update_batch_size(
-                        db_session=db_session,
-                        optimization_id=parsed_optimization_data.id,
-                        batch_size=parsed_optimization_data.batch_size,
-                    ),
+            if "pruning_details" in data:
+                pruning_details_response = OptimizationAPIInterface.edit_pruning_details(
+                    db_session=db_session,
+                    optimization=optimization,
+                    pruning_data=data["pruning_details"],
                 )
-
-                response.update(
-                    Optimization.update_sampling_size(
-                        db_session=db_session,
-                        optimization_id=parsed_optimization_data.id,
-                        sampling_size=parsed_optimization_data.sampling_size,
-                    ),
-                )
+                response.update(pruning_details_response)
 
         return response
+
+    @staticmethod
+    def get_pruning_details(data: dict) -> dict:
+        """Gat pruning details in a form of tree."""
+        try:
+            optimization_id: int = int(data.get("id", None))
+        except ValueError:
+            raise ClientErrorException("Incorrect optimization id.")
+        except TypeError:
+            raise ClientErrorException("Could not find optimization id.")
+
+        with Session.begin() as db_session:
+            optimization_details = Optimization.details(
+                db_session,
+                optimization_id,
+            )
+        pruning_details = optimization_details.get("pruning_details", None)
+        if pruning_details is None:
+            raise ClientErrorException("Optimization does not have pruning details.")
+
+        parser = PruningConfigParser()
+        pruning_details_id = pruning_details["id"]
+        del pruning_details["id"]
+        pruning_tree = parser.generate_tree(pruning_details)
+        return {
+            "pruning_details": {
+                "id": pruning_details_id,
+                "config_tree": pruning_tree,
+            },
+        }
+
+    @staticmethod
+    def edit_tuning_details(
+        db_session: session.Session,
+        optimization: dict,
+        parsed_optimization_data: OptimizationEditParamsInterface,
+    ) -> dict:
+        """Edit tuning details."""
+        tuning_details_id = optimization.get("tuning_details", {}).get("id", None)
+        if tuning_details_id is None:
+            raise ClientErrorException("Could not find tuning_details for optimization.")
+        tuning_details = TuningDetails.update(
+            db_session=db_session,
+            tuning_details_id=tuning_details_id,
+            tuning_details_data=parsed_optimization_data.tuning_details,
+        )
+
+        tuning_details_response = {"tuning_details": tuning_details}
+
+        tuning_details_response.update(
+            Optimization.update_batch_size(
+                db_session=db_session,
+                optimization_id=parsed_optimization_data.id,
+                batch_size=parsed_optimization_data.batch_size,
+            ),
+        )
+
+        tuning_details_response.update(
+            Optimization.update_sampling_size(
+                db_session=db_session,
+                optimization_id=parsed_optimization_data.id,
+                sampling_size=parsed_optimization_data.sampling_size,
+            ),
+        )
+        return tuning_details_response
+
+    @staticmethod
+    def edit_pruning_details(
+        db_session: session.Session,
+        optimization: dict,
+        pruning_data: dict,
+    ) -> dict:
+        """Edit pruning details."""
+        pruning_details_id = optimization.get("pruning_details", {}).get("id", None)
+        if pruning_details_id is None:
+            raise ClientErrorException("Could not find pruning_details for optimization.")
+
+        pruning_details = optimization.get("pruning_details", None)
+
+        if pruning_details is None:
+            raise InternalException("Could not get pruning details from optimization.")
+
+        pruning_config = PruningConfig(pruning_details)
+        if pruning_config.train is not None:
+            pruning_config.train.epoch = int(pruning_data["epoch"])
+        if pruning_config.approach is not None:
+            if pruning_config.approach.weight_compression is not None:
+                pruning_config.approach.weight_compression.target_sparsity = float(
+                    pruning_data["target_sparsity"],
+                )
+
+            if pruning_config.approach.weight_compression_pytorch is not None:
+                pruning_config.approach.weight_compression_pytorch.target_sparsity = float(
+                    pruning_data["target_sparsity"],
+                )
+
+        pruning_details_response = PruningDetails.update(
+            db_session=db_session,
+            pruning_details_id=pruning_details_id,
+            pruning_details_data=pruning_config,
+        )
+        return pruning_details_response
 
     @staticmethod
     def add_tuning_history(
@@ -600,6 +749,11 @@ class OptimizationAPIInterface:
             raise ClientErrorException("Could not find required parameter.")
 
         return optimization_data
+
+    @staticmethod
+    def load_pruning_details_config(data: dict) -> List[dict]:
+        """Load pruning details config."""
+        return load_pruning_details_config()
 
     @staticmethod
     def clean_status(status_to_clean: ExecutionStatus) -> dict:

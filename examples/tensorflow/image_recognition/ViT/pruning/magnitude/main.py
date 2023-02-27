@@ -1,9 +1,50 @@
+#
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
-from neural_compressor.experimental import Pruning, common
 from neural_compressor.utils import logger
+from neural_compressor.data import DataLoader
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.conf.dotdict import DotDict
+from neural_compressor.training import WeightPruningConfig
+from neural_compressor.training import prepare_compression
+from neural_compressor.utils import create_obj_from_config
+from neural_compressor.conf.config import default_workspace
 
+flags = tf.compat.v1.flags
+FLAGS = flags.FLAGS
+
+## Required parameters
+flags.DEFINE_string(
+    'output_model', None, 'The output pruned model.')
+
+flags.DEFINE_integer(
+    'start_epoch', 0, 'The start epoch of training process.')
+
+flags.DEFINE_integer(
+    'end_epoch', 9, 'The end epoch of training process.')
+
+flags.DEFINE_bool(
+    'train_distributed', False, 'Whether to perform distributed training.')
+
+flags.DEFINE_bool(
+    'evaluation_distributed', False, 'Whether to perform distributed evaluation.')
 
 # Prepare dataset
 def prepare_dataset():
@@ -37,16 +78,68 @@ class EvalDataset(object):
     def __getitem__(self, idx):
         return self.x_test[idx], self.y_test[idx]
 
+def train(model, adaptor, compression_manager, train_dataloader):
+    train_cfg = {
+        'epoch': 15,
+        'start_epoch': 0,
+        'execution_mode': 'eager', 
+        'criterion': {'CrossEntropyLoss:': {'reduction': 'sum_over_batch_size', 'from_logits': True}}, 
+        'optimizer': {'AdamW': {'learning_rate': 1e-03, 'weight_decay': 1e-04}}, 
+    }
+    train_cfg = DotDict(train_cfg)
+    train_func = create_obj_from_config.create_train_func('tensorflow', \
+                            train_dataloader, \
+                            adaptor, \
+                            train_cfg, \
+                            hooks=compression_manager.callbacks.callbacks.hooks, \
+                            callbacks=compression_manager.callbacks.callbacks.callbacks)
+    train_func(model)
+
+def evaluate(model, adaptor, eval_dataloader):
+    eval_cfg = {'accuracy': {'metric': {'topk': 1}, 
+                             'iteration': -1, 
+                             'multi_metrics': None}
+                }
+    eval_cfg = DotDict(eval_cfg)
+    eval_func = create_obj_from_config.create_eval_func('tensorflow', \
+                                                        eval_dataloader, \
+                                                        adaptor, \
+                                                        eval_cfg.accuracy.metric, \
+                                                        eval_cfg.accuracy.postprocess, \
+                                                        fp32_baseline = False)
+    return eval_func(model)
 
 if __name__ == '__main__':
-    prune = Pruning("./prune_vit.yaml")
-    # prune.train_distributed = True
-    # prune.evaluation_distributed = True
     training_set, test_set = prepare_dataset()
-    prune.train_dataloader = common.DataLoader(training_set, batch_size=128)
-    prune.eval_dataloader = common.DataLoader(test_set, batch_size=256)
-    prune.model = './ViT_Model'
-    model = prune.fit()
+    train_dataloader = DataLoader(dataset=training_set, batch_size=128,
+                                        framework='tensorflow', distributed=FLAGS.train_distributed)
+    eval_dataloader = DataLoader(dataset=test_set, batch_size=256,
+                                        framework='tensorflow', distributed=FLAGS.evaluation_distributed)
+
+    framework_specific_info = {
+        'device': 'cpu', 'random_seed': 9527, 
+        'workspace_path': default_workspace, 
+        'q_dataloader': None, 'format': 'default', 
+        'backend': 'default', 'inputs': [], 'outputs': []
+    }
+    adaptor = FRAMEWORKS['tensorflow'](framework_specific_info)
+
+    configs = WeightPruningConfig(
+        pruning_type='magnitude',
+        target_sparsity=0.7,
+        start_step=FLAGS.start_epoch,
+        end_step=FLAGS.end_epoch
+    )
+    compression_manager = prepare_compression(model='./ViT_Model', confs=configs)
+    compression_manager.callbacks.on_train_begin()
+    model = compression_manager.model
+
+    train(model, adaptor, compression_manager, train_dataloader)
+    print("Pruned model score is ",evaluate(model, adaptor, eval_dataloader))
+
+
+    compression_manager.callbacks.on_train_end()
+    compression_manager.save(FLAGS.output_model)
     stats, sparsity = model.report_sparsity()
     logger.info(stats)
     logger.info(sparsity)

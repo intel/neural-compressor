@@ -64,13 +64,6 @@ def execute_benchmark(data: Dict[str, Any]) -> None:
         project_id = benchmark_details["project_id"]
         project_details = ProjectAPIInterface.get_project_details({"id": project_id})
 
-        BenchmarkAPIInterface.update_benchmark_status(
-            {
-                "id": benchmark_id,
-                "status": ExecutionStatus.WIP,
-            },
-        )
-
         response_data = execute_real_benchmark(
             request_id=request_id,
             project_details=project_details,

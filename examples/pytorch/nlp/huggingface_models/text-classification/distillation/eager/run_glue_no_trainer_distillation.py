@@ -26,6 +26,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 import torch.distributed as dist
 from tqdm.auto import tqdm
+import shutil
 
 import numpy as np
 
@@ -149,7 +150,6 @@ def parse_args():
                         help="do distillation with teacher model on student model.")
     parser.add_argument('--augmented_sst2_data', action='store_true',
                         help="use augmented sst2 training data for sst2 task.")
-    parser.add_argument("--config", default='distillation.yaml', help="pruning config")
     parser.add_argument("--core_per_instance", type=int, default=-1, help="cores per instance.")
     parser.add_argument(
         "--teacher_model_name_or_path",
@@ -210,7 +210,18 @@ def evaluation(model, eval_dataloader, metric):
     logger.info(f"eval_metric : {eval_metric}")
     return max(eval_metric.values())
 
-def train(args, model, train_dataloader, lr_scheduler, distiller):
+def save_checkpoint(state, is_best, save_dir):
+    """Saves checkpoint to disk"""
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    filename = save_dir + "checkpoint.pth"
+    torch.save(state, filename)
+    if is_best:
+        shutil.copyfile(filename, save_dir + 'model_best.pth')
+
+
+def train(args, model, train_dataloader, scheduler, compression_manager, criterion,
+      optimizer, eval_dataloader, metric):
     # Train!
     total_batch_size = args.per_device_train_batch_size * args.gradient_accumulation_steps
 
@@ -223,30 +234,43 @@ def train(args, model, train_dataloader, lr_scheduler, distiller):
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
     # Only show the progress bar once on each machine.
     completed_steps = 0
+    best_prec = 0
 
-    distiller.on_train_begin()
     for epoch in range(args.num_train_epochs):
         model.train()
         train_dataloader = tqdm(train_dataloader, desc="Training")
+
         for step, batch in enumerate(train_dataloader):
             teacher_logits = None
             if 'teacher_logits' in batch:
                 teacher_logits = batch['teacher_logits']
                 del batch['teacher_logits']
             outputs = model(**batch)
-            loss = distiller.criterion(outputs, batch["labels"])
-            loss = distiller.on_after_compute_loss(batch, outputs, loss, teacher_logits)
+            loss = criterion(outputs, batch["labels"])
+            loss = compression_manager.callbacks.on_after_compute_loss(batch, outputs, loss, teacher_logits)
             loss = loss / args.gradient_accumulation_steps
             loss.backward()
+
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                distiller.optimizer.step()
-                lr_scheduler.step()
-                distiller.optimizer.zero_grad()
+                optimizer.zero_grad()
+                optimizer.step()
+                scheduler.step()
                 completed_steps += 1
 
             if completed_steps >= args.max_train_steps:
                 break
-        distiller.on_epoch_end()
+
+        compression_manager.callbacks.on_epoch_end()
+        best_score = evaluation(model, eval_dataloader, metric)
+        is_best = best_score > best_prec
+        best_prec = max(best_score, best_prec)
+        save_checkpoint({
+            'epoch': epoch + 1,
+            'state_dict': model.state_dict(),
+            'best_prec1': best_prec,
+        }, is_best, args.output_dir)
+    model.load_state_dict(torch.load(args.output_dir + "/model_best.pth")["state_dict"])
+
 
 def main():
     args = parse_args()
@@ -587,33 +611,18 @@ def main():
 
     # Do distillation
     if args.do_distillation:
-        from neural_compressor.experimental import Distillation, common
-        from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
-        def train_func(model):
-            return train(args, model, train_dataloader, lr_scheduler, distiller)
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
 
-        def eval_func(model):
-            if model == teacher_model:
-                teacher_eval_dataloader = DataLoader(teacher_eval_dataset, 
-                                                    collate_fn=data_collator, 
-                                                    batch_size=args.per_device_eval_batch_size)
-                return evaluation(model, teacher_eval_dataloader, metric)
-            return evaluation(model, eval_dataloader, metric)
-
-        # eval datasets.
-        distiller = Distillation(args.config)
-        distiller.teacher_model = common.Model(teacher_model)
-        distiller.student_model = common.Model(model)
-        distiller.train_func = train_func
-        distiller.eval_func = eval_func
-        distiller.optimizer = optimizer
-        distiller.criterion = PyTorchKnowledgeDistillationLoss(
-                                temperature=args.temperature,
-                                loss_types=args.loss_types,
-                                loss_weights=args.loss_weights)
-        model = distiller.fit()
-        model.save(args.output_dir)
-        # change to framework model for further use
+        criterion = torch.nn.CrossEntropyLoss()
+        distillation_criterion = KnowledgeDistillationLossConfig(loss_types=args.loss_types,
+                                                                 temperature=args.temperature,
+                                                                 loss_weights=args.loss_weights)
+        conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+        compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
+        train(args, model, train_dataloader, lr_scheduler, compression_manager, criterion, optimizer, eval_dataloader, metric)
         model = model.model
 
     if args.do_train:

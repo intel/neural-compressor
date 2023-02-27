@@ -28,6 +28,8 @@ from ..utils import logger
 from ..utils.utility import time_limit
 from ..utils.create_obj_from_config import create_dataloader
 from ..model import BaseModel
+from ..model.tensorflow_model import TensorflowQATModel
+from ..model.model import get_model_fwk_name
 from ..conf.config import QuantConf
 from ..conf.pythonic_config import Config
 from deprecated import deprecated
@@ -80,8 +82,8 @@ class Quantization(Component):
                     logger.info("Because both eval_dataloader_cfg and user-defined eval_func are None," \
                         " automatically setting 'tuning.exit_policy.performance_only = True'.")
                     deep_set(cfg, 'tuning.exit_policy.performance_only', True)
-                    logger.info("Generate a fake evaluation function.")
-                    self._eval_func = self._fake_eval_func
+                    logger.info("The cfg.tuning.exit_policy.performance_only is: {}".format(\
+                        cfg.tuning.exit_policy.performance_only))
                 else:
                     if deep_get(cfg, 'evaluation.accuracy.iteration') == -1 and 'dummy_v2' \
                         in deep_get(cfg, 'evaluation.accuracy.dataloader.dataset', {}):
@@ -133,9 +135,15 @@ class Quantization(Component):
         self._create_eval_dataloader(cfg)
         self._create_calib_dataloader(cfg)
         strategy = cfg.tuning.strategy.name.lower()
-        if cfg.quantization.optimization_level == 0:
+        if cfg.quantization.quant_level == 0:
             strategy = "conservative"
             logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
+            
+        if strategy == "mse_v2":
+            if not (self.framework.startswith("tensorflow") or self.framework == 'pytorch_fx'):
+                strategy = "basic"
+                logger.warning(f"MSE_v2 does not support {self.framework} now, use basic instead.")
+                logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
 
         _resume = None
@@ -158,11 +166,45 @@ class Quantization(Component):
             self._eval_func,
             _resume,
             self.hooks)
+        
         if getattr(self._calib_dataloader, 'distributed', False):
             self.register_hook('on_train_begin', self.strategy.adaptor._pre_hook_for_hvd)
 
     def execute(self):
         """Quantization execute routinue based on strategy design."""
+        # check here the distributed flag
+        logger.info("..............use_distributed_tuning: {}".format(self.conf.usr_cfg.tuning.use_distributed_tuning))
+        if self.conf.usr_cfg.tuning.use_distributed_tuning:
+            return self.distributed_execute()
+        try:
+            with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
+                logger.debug("Dump user yaml configuration:")
+                logger.debug(self.conf.usr_cfg)
+                self.strategy.traverse()
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:
+            logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
+            import traceback
+            traceback.print_exc()
+        finally:
+            if self.strategy.best_qmodel:
+                logger.info(
+                    "Specified timeout or max trials is reached! "
+                    "Found a quantized model which meet accuracy goal. Exit.")
+                self.strategy.deploy_config()
+            else:
+                logger.error(
+                    "Specified timeout or max trials is reached! "
+                    "Not found any quantized model which meet accuracy goal. Exit.")
+
+            return self.strategy.best_qmodel
+    
+    def distributed_execute(self):
+        """Quantization distributed execute routinue based on strategy design."""
+        from ..utils.utility import LazyImport
+        MPI = LazyImport("mpi4py.MPI")
+        comm = MPI.COMM_WORLD
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
                 self.strategy.traverse()
@@ -179,6 +221,8 @@ class Quantization(Component):
                     "Found a quantized model which meet accuracy goal. Exit.")
                 self.strategy.deploy_config()
             else:
+                if comm.Get_rank() != 0:    # slaves have no q model
+                    return None
                 logger.error(
                     "Specified timeout or max trials is reached! "
                     "Not found any quantized model which meet accuracy goal. Exit.")
@@ -232,8 +276,8 @@ class Quantization(Component):
 
     def dataset(self, dataset_type, *args, **kwargs):
         """Get dataset according to dataset_type."""
-        from ..data import DATASETS
-        return DATASETS(self.framework)[dataset_type](*args, **kwargs)
+        from ..data import Datasets
+        return Datasets(self.framework)[dataset_type](*args, **kwargs)
 
     @property
     def calib_dataloader(self):
@@ -375,15 +419,9 @@ class Quantization(Component):
                            " as user defines the value of `postprocess` attribute by code.")
         deep_set(
             self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
-        from ..data import TRANSFORMS
+        from .data import TRANSFORMS
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
-
-    # if user doesn't config evaluation dataloader in yaml and eval_func is None, a
-    # fake eval func is created to do quantization once without tuning
-    def _fake_eval_func(self, model):
-        """Return fake accuracy 1 when no need to run tuning."""
-        return 1.
 
     # BELOW API TO BE DEPRECATED!
     @property
@@ -407,6 +445,39 @@ class Quantization(Component):
         self._calib_func = user_q_func
 
     calib_func = q_func
+
+    @property
+    def model(self):
+        """Override model getter method to handle quantization aware training case."""
+        return self._model
+
+    @model.setter
+    def model(self, user_model):
+        """Override model setter method to handle quantization aware training case.
+
+        Args:
+           user_model: user are supported to set model from original framework model format
+                       (eg, tensorflow frozen_pb or path to a saved model),
+                       but not recommended. Best practice is to set from a initialized
+                       neural_compressor.experimental.common.Model.
+                       If tensorflow model is used, model's inputs/outputs will be
+                       auto inferenced, but sometimes auto inferenced
+                       inputs/outputs will not meet your requests,
+                       set them manually in config yaml file.
+                       Another corner case is slim model of tensorflow,
+                       be careful of the name of model configured in yaml file,
+                       make sure the name is in supported slim model list.
+        """
+        approach_cfg = deep_get(self.cfg, 'quantization.approach')
+        if not self.framework:
+            self.framework = get_model_fwk_name(user_model)
+        if self.framework == 'tensorflow' and approach_cfg == 'quant_aware_training':
+            if type(user_model) == str:
+                self._model = TensorflowQATModel(user_model)
+            else:
+                self._model = TensorflowQATModel(user_model._model)
+        else:
+            Component.model.__set__(self, user_model)
 
     def __repr__(self):
         """Return the class string."""

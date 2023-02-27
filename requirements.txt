@@ -2,8 +2,6 @@ numpy
 pandas
 pyyaml
 scikit-learn
-scikit-image
-matplotlib
 schema
 py-cpuinfo
 contextlib2

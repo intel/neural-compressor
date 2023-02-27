@@ -7,7 +7,7 @@ import torchvision
 import torch.nn as nn
 import neural_compressor.adaptor.pytorch as nc_torch
 
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor.experimental.scheduler import Scheduler
 from packaging.version import Version
@@ -325,7 +325,7 @@ class TestPruning(unittest.TestCase):
         prune = Pruning('fake.yaml')
         scheduler = Scheduler()
         scheduler.model = self.model
-        datasets = DATASETS('pytorch')
+        datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 

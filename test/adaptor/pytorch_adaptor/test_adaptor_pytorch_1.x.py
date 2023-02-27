@@ -327,8 +327,8 @@ class FP32Model(torch.nn.Module):
     def forward(self, x):
         times = x.size(1)
         if times == 1:
-            return x + x
-        return x
+            return torch.ones(x.shape)
+        return torch.ones(x.shape) + 1
 
 
 class DynamicModel(torch.nn.Module):
@@ -849,8 +849,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}, \
-                                'dataloader': quantizer.calib_dataloader
+                                    {'preserved_attributes': []}
                               })
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
@@ -860,8 +859,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                             **{'prepare_custom_config_dict':
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict':
-                                    {'preserved_attributes': []},
-                               'dataloader': quantizer.calib_dataloader
+                                    {'preserved_attributes': []}
                               })
             self.assertEqual(model_fx.code, model_fx_recover.code)
             shutil.rmtree('./saved', ignore_errors=True)
@@ -978,7 +976,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             self.assertTrue('quantize' in str(type(q_model.model.rnn)))
 
     def test_fx_sub_module_quant(self):
-        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_ptq_yaml.yaml', 'fx_dynamic_yaml.yaml']:
+        for fake_yaml in ['fx_qat_yaml.yaml', 'fx_dynamic_yaml.yaml', 'fx_ptq_yaml.yaml']:
             model_origin = DynamicControlModel()
             # run fx_quant in neural_compressor and save the quantized GraphModule
             quantizer = Quantization(fake_yaml)
@@ -1000,8 +998,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}, \
-                               'dataloader': quantizer.calib_dataloader
+                                    {'preserved_attributes': []}
                               })
             self.assertTrue(isinstance(model_fx.sub, torch.fx.graph_module.GraphModule))
 
@@ -1011,8 +1008,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
-                                    {'preserved_attributes': []}, \
-                               'dataloader': quantizer.calib_dataloader
+                                    {'preserved_attributes': []}
                               })
             self.assertEqual(model_fx.sub.code, model_fx_recover.sub.code)
             shutil.rmtree('./saved', ignore_errors=True)

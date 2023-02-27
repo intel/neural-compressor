@@ -624,16 +624,22 @@ def eval_ssd_r34_mlperf_coco(args):
             return False
 
     if args.tune:
-         ssd_r34.eval()
-         ssd_r34.model = optimization.fuse(ssd_r34.model)
-         from neural_compressor.experimental import Quantization, common
-         quantizer = Quantization("./conf.yaml")
-         quantizer.model = common.Model(ssd_r34)
-         quantizer.calib_dataloader = val_dataloader
-         quantizer.eval_func = coco_eval
-         q_model = quantizer.fit()
-         q_model.save(args.tuned_checkpoint)
-         return
+        ssd_r34.eval()
+        ssd_r34.model = optimization.fuse(ssd_r34.model)
+
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+        tuning_criterion = TuningCriterion(max_trials=600)
+
+        conf = PostTrainingQuantConfig(approach="static", backend="ipex",
+            calibration_sampling_size=[800], tuning_criterion=tuning_criterion)
+        q_model = quantization.fit(ssd_r34,
+            conf=conf,
+            eval_func=coco_eval,
+            calib_dataloader=val_dataloader
+        )
+        q_model.save(args.tuned_checkpoint)
+        return
 
     if args.benchmark or args.accuracy_mode:
         ssd_r34.eval()
@@ -641,8 +647,18 @@ def eval_ssd_r34_mlperf_coco(args):
             config_file = os.path.join(args.tuned_checkpoint, "best_model.pt")
             assert os.path.exists(config_file), "there is no ipex model file, Please tune with Neural Compressor first!"
             from neural_compressor.utils.pytorch import load
-            ssd_r34 = load(args.tuned_checkpoint, ssd_r34, dataloader=val_dataloader)
-        coco_eval(ssd_r34)
+            ssd_r34 = load(args.tuned_checkpoint, ssd_r34)
+        else:
+            from neural_compressor.adaptor.pytorch import get_example_inputs
+            example_inputs = get_example_inputs(ssd_r34, val_dataloader)
+            ssd_r34 = ipex.optimize(ssd_r34)
+            with torch.no_grad():
+                ssd_r34 = torch.jit.trace(ssd_r34, example_inputs)
+                ssd_r34 = torch.jit.freeze(ssd_r34)
+        from neural_compressor.config import BenchmarkConfig
+        from neural_compressor import benchmark
+        b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
+        benchmark.fit(ssd_r34, config=b_conf, b_func=coco_eval)
         return
 
 

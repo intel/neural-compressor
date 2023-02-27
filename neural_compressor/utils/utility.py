@@ -50,38 +50,45 @@ required_libs = {
     'pytorch_ipex': ['torch', 'intel_extension_for_pytorch'],
     'onnxrt_qlinearops': ['onnx', 'onnxruntime'],
     'onnxrt_integerops': ['onnx', 'onnxruntime'],
-    'onnxrt_qoperator': ['onnx', 'onnxruntime'],
+    'onnxruntime': ['onnx', 'onnxruntime'],
     'mxnet': ['mxnet'],
 }
 
 def version1_lt_version2(version1, version2):
+    """Check whether version1 is less than version2."""
     return parse_version(version1) < parse_version(version2)
     
 def version1_gt_version2(version1, version2):
+    """Check whether version1 is greater than version2."""
     return parse_version(version1) > parse_version(version2)
 
 def version1_eq_version2(version1, version2):
+    """Check whether version1 is equal to version2."""
     return parse_version(version1) == parse_version(version2)
 
 def version1_gte_version2(version1, version2):
+    """Check whether version1 is greater than version2 or is equal to it."""
     return parse_version(version1) > parse_version(version2) or parse_version(version1) == parse_version(version2)
 
 def version1_lte_version2(version1, version2):
+    """Check whether version1 is less than version2 or is equal to it."""
     return parse_version(version1) < parse_version(version2) or parse_version(version1) == parse_version(version2)
 
 
 class LazyImport(object):
-    """Lazy import python module till use
-
-       Args:
-           module_name (string): The name of module imported later
-    """
+    """Lazy import python module till use."""
 
     def __init__(self, module_name):
+        """Init LazyImport object.
+        
+        Args:
+           module_name (string): The name of module imported later
+        """
         self.module_name = module_name
         self.module = None
 
     def __getattr__(self, name):
+        """Get the attributes of the module by name."""
         try:
             self.module = importlib.import_module(self.module_name)
             mod = getattr(self.module, name)
@@ -92,6 +99,7 @@ class LazyImport(object):
         return mod
 
     def __call__(self, *args, **kwargs):
+        """Call the function in that module."""
         function_name = self.module_name.split('.')[-1]
         module_name = self.module_name.split(f'.{function_name}')[0]
         self.module = importlib.import_module(module_name)
@@ -100,24 +108,23 @@ class LazyImport(object):
 
 
 def singleton(cls):
+    """Not displayed in API Docs.
+    
+    Singleton decorater.
+    """
     instances = {}
 
     def _singleton(*args, **kw):
+        """Create a singleton object."""
         if cls not in instances:
             instances[cls] = cls(*args, **kw)
         return instances[cls]
     return _singleton
 
-def set_backend(backend):
-    global __BACKEND
-    __BACKEND = backend
-
-def get_backend():
-    global __BACKEND
-    return __BACKEND
 
 @contextmanager
 def time_limit(seconds):
+    """Limit the time for context execution."""
     if seconds == 0:
         seconds = threading.TIMEOUT_MAX
     timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
@@ -129,7 +136,7 @@ def time_limit(seconds):
         timer.cancel()
 
 def get_size(obj, seen=None):
-    """Recursively finds size of objects"""
+    """Recursively finds size of objects."""
     tf = LazyImport("tensorflow")
     from tensorflow.python.framework import tensor_util
 
@@ -164,7 +171,15 @@ def get_size(obj, seen=None):
     return size
 
 
-def compute_sparsity(tensor, eps=1e-10):
+def compute_sparsity(tensor):
+    """Compute the sparsity.
+    
+    Args:
+        tensor: Tensorflow or Pytorch tensor
+
+    Return:
+        (the original tensor size, number of zero elements, number of non-zero elements)
+    """
     mask = np.ones_like(tensor)
     tensor_size = tensor.size
     dense_mask = tensor != 0
@@ -174,6 +189,7 @@ def compute_sparsity(tensor, eps=1e-10):
 
 @contextmanager
 def fault_tolerant_file(name):
+    """Make another temporary copy of the file."""
     dirpath, filename = osp.split(name)
     with NamedTemporaryFile(dir=os.path.abspath(os.path.expanduser(dirpath)),
                             delete=False, suffix='.tmp') as f:
@@ -185,8 +201,7 @@ def fault_tolerant_file(name):
 
 
 def equal_dicts(d1, d2, compare_keys=None, ignore_keys=None):
-    """Check whether two dicts are same except for those ignored keys.
-    """
+    """Check whether two dicts are same except for those ignored keys."""
     assert not (compare_keys and ignore_keys)
     if compare_keys == None and ignore_keys == None:
         return d1 == d2
@@ -202,7 +217,9 @@ def equal_dicts(d1, d2, compare_keys=None, ignore_keys=None):
 
 @singleton
 class CpuInfo(object):
+    """Get CPU Info."""
     def __init__(self):
+        """Get whether the cpu numerical format is bf16, the number of sockets, cores and cores per socket."""
         self._bf16 = False
         self._vnni = False
         info = cpuinfo.get_cpu_info()
@@ -231,14 +248,17 @@ class CpuInfo(object):
 
     @property
     def bf16(self):
+        """Get whether it is bf16."""
         return self._bf16
 
     @property
     def vnni(self):
+        """Get whether it is vnni."""
         return self._vnni
 
     @property
     def cores_per_socket(self):
+        """Get the cores per socket."""
         return self._cores_per_socket
 
     def get_number_of_sockets(self) -> int:
@@ -265,7 +285,7 @@ def dump_elapsed_time(customized_msg=""):
     """Get the elapsed time for decorated functions.
 
     Args:
-        customized_msg (string, optional): the parameter passed to decorator. Defaults to None.
+        customized_msg (string, optional): The parameter passed to decorator. Defaults to None.
     """
     def f(func):
         def fi(*args, **kwargs):
@@ -281,8 +301,7 @@ def dump_elapsed_time(customized_msg=""):
 
 
 def combine_histogram(old_hist, arr):
-    """ Collect layer histogram for arr and combine it with old histogram.
-    """
+    """Collect layer histogram for arr and combine it with old histogram."""
     new_max = np.max(arr)
     new_min = np.min(arr)
     new_th = max(abs(new_min), abs(new_max))
@@ -308,6 +327,7 @@ def combine_histogram(old_hist, arr):
 
 
 def get_tensor_histogram(tensor_data, bins=2048):
+    """Get the histogram of the tensor data."""
     max_val = np.max(tensor_data)
     min_val = np.min(tensor_data)
     th = max(abs(min_val), abs(max_val))
@@ -316,12 +336,15 @@ def get_tensor_histogram(tensor_data, bins=2048):
 
 
 def get_all_fp32_data(data):
+    """Get all the fp32 data."""
     return [float(i) for i in data.replace('[', ' ').replace(']', ' ').split(' ') if i.strip() and len(i) < 32]
 
 
 def get_tuning_history(tuning_history_path):
-    """
-    :params tuning_history_path: need user to assign
+    """Get tuning history.
+
+    Args:
+        tuning_history_path: The tuning history path, which need users to assign
     """
     with open(tuning_history_path, 'rb') as f:
         strategy_object = pickle.load(f)
@@ -330,11 +353,12 @@ def get_tuning_history(tuning_history_path):
 
 
 def recover(fp32_model, tuning_history_path, num, **kwargs):
-    """offline recover tuned model.
+    """Get offline recover tuned model.
 
-    :params fp32_model: input model path
-    :params tuning_history_path: need user to assign
-    :params num: tune index
+    Args:
+        fp32_model: Input model path
+        tuning_history_path: The tuning history path, which needs user to assign
+        num: tune index
     """
     tuning_history = get_tuning_history(tuning_history_path)
     target_history = tuning_history[0]['history']
@@ -348,24 +372,25 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
 
     from neural_compressor.adaptor import FRAMEWORKS
     adaptor = FRAMEWORKS[framework](q_config['framework_specific_info'])
-    if 'onnxrt' in framework:
-        from neural_compressor.experimental import common
-        ox_fp32_model = common.Model(fp32_model)
+    if 'onnx' in framework:
+        from neural_compressor.model import Model
+        ox_fp32_model = Model(fp32_model)
         tune_index_qmodel = adaptor.recover(ox_fp32_model, q_config)
         return tune_index_qmodel
     elif 'tensorflow' in framework:
-        from neural_compressor.experimental import common
-        tf_fp32_model = common.Model(fp32_model)
+        from neural_compressor.model import Model
+        tf_fp32_model = Model(fp32_model)
         tune_index_qmodel = adaptor.recover_tuned_model(tf_fp32_model, q_config)
         return tune_index_qmodel
     elif 'mxnet' in framework:
-        from neural_compressor.experimental import common
-        mx_fp32_model = common.Model(fp32_model)
+        from neural_compressor.model import Model
+        mx_fp32_model = Model(fp32_model)
         tune_index_qmodel = adaptor.recover_tuned_model(mx_fp32_model, q_config)
         return tune_index_qmodel
 
 
 def str2array(s):
+    """Get the array of the string."""
     s = re.sub(r'\[ +', '[', s.strip())
     s = re.sub(r'[,\s]+', ', ', s)
     s = re.sub(r'\]\[', '], [', s)
@@ -374,6 +399,7 @@ def str2array(s):
 
 
 def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
+    """Dequantize the weight with min-max filter tensors."""
     weight_channel = weight_tensor.shape[-1]
     if len(min_filter_tensor) == 1:
         return weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0])/ 127.0)
@@ -384,6 +410,7 @@ def DequantizeWeight(weight_tensor, min_filter_tensor, max_filter_tensor):
 
 
 def Dequantize(data, scale_info):
+    """Dequantize the data with the scale_info."""
     import numpy as np
     original_shape = data.shape
     max_value = 255.0 if scale_info[0].find("Relu") != -1.0 else 127.0
@@ -394,15 +421,22 @@ def Dequantize(data, scale_info):
 
 
 class CaptureOutputToFile(object):
+    """Not displayed in API Docs.
+    
+    Capture the output to file.
+    """
     def __init__(self, tmp_file_path, stream=sys.stderr):
+        """Open a temporary file."""
         self.orig_stream_fileno = stream.fileno()
         self.tmp_file = open(tmp_file_path, 'w')
 
     def __enter__(self):
+        """Duplicate the file desciptor to the stream."""
         self.orig_stream_dup = os.dup(self.orig_stream_fileno)
         os.dup2(self.tmp_file.fileno(), self.orig_stream_fileno)
 
     def __exit__(self, type, value, traceback):
+        """Duplicate the stream descriptor to the file."""
         os.close(self.orig_stream_fileno)
         os.dup2(self.orig_stream_dup, self.orig_stream_fileno)
         os.close(self.orig_stream_dup)
@@ -410,7 +444,16 @@ class CaptureOutputToFile(object):
 
 
 class Statistics():
+    """The statistics printer."""
     def __init__(self, data, header, field_names, output_handle=logger.info):
+        """Init a Statistics object.
+        
+        Args:
+            data: The statistics data
+            header: The table header
+            field_names: The field names
+            output_handle: The output logging method
+        """
         self.field_names = field_names
         self.header = header
         self.data = data
@@ -418,6 +461,7 @@ class Statistics():
         self.tb = pt.PrettyTable(min_table_width=40)
 
     def print_stat(self):
+        """Print the statistics."""
         valid_field_names = []
         for index, value in enumerate(self.field_names):
             if index < 2:
@@ -441,24 +485,22 @@ class Statistics():
 
 
 class MODE(Enum):
+    """Mode: Quantization, Benchmark or Pruning."""
     QUANTIZATION = 1
     BENCHMARK = 2
     PRUNING = 3
 
 
 class GLOBAL_STATE():
+    """Access the global model."""
     STATE = MODE.QUANTIZATION
 
 def load_data_from_pkl(path, filename):
-    """
-    load data from local pkl file
+    """Load data from local pkl file.
+
     Args:
-        path: the directory to load data
-        filename: filename to load
-
-    Returns:
-        None
-
+        path: The directory to load data
+        filename: The filename to load
     """
     try:
         file_path = os.path.join(path, filename)
@@ -469,16 +511,15 @@ def load_data_from_pkl(path, filename):
         logging.getLogger("neural_compressor").info('Can not open %s.' % path)
 
 def dump_data_to_local(data, path, filename):
-    """
-    Dump data to local as pkl file
+    """Dump data to local as pkl file.
+
     Args:
-        data: data used to dump
-        path: the directory to save data
-        filename: filename to dump
+        data: Data used to dump
+        path: The directory to save data
+        filename: The filename to dump
 
     Returns:
         loaded data
-
     """
     from pathlib import Path
     if not os.path.exists(path):
@@ -487,3 +528,37 @@ def dump_data_to_local(data, path, filename):
     with open(file_path, 'wb') as fp:
         pickle.dump(data, fp)
         logging.getLogger("neural_compressor").info("Dumped data to %s" % file_path)
+
+
+
+def set_random_seed(seed: int):
+    """Set the random seed in config."""
+    from neural_compressor.config import options
+    options.random_seed = seed
+
+
+def set_workspace(workspace: str):
+    """Set the workspace in config."""
+    from neural_compressor.config import options
+    options.workspace = workspace
+
+
+def set_resume_from(resume_from: str):
+    """Set the resume_from in config."""
+    from neural_compressor.config import options
+    options.resume_from = resume_from
+
+
+def set_tensorboard(tensorboard: bool):
+    """Set the tensorboard in config."""
+    from neural_compressor.config import options
+    options.tensorboard = tensorboard
+
+def show_memory_info(hint):
+    """Show process full memory."""
+    pid = os.getpid()
+    p = psutil.Process(pid)
+
+    info = p.memory_full_info()
+    memory = info.uss / 1024. / 1024
+    print('{} memory used: {} MB'.format(hint, memory))

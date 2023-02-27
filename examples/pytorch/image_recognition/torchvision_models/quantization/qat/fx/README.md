@@ -5,7 +5,7 @@ This document describes the step-by-step instructions for reproducing PyTorch Re
 
 # Prerequisite
 
-### 1. Installation
+### 1. Environment
 
 PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 
@@ -13,6 +13,7 @@ PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 cd examples/pytorch/image_recognition/torchvision_models/quantization/qat/fx
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ### 2. Prepare Dataset
 
@@ -25,108 +26,42 @@ train  val
 
 # Run
 
+> Note: All torchvision model names can be passed as long as they are included in `torchvision.models`, below are some examples.
+
 ### 1. ResNet50
 
 ```Shell
-python main.py -t -a resnet50 --pretrained --config /path/to/config_file /path/to/imagenet
+python main.py -t -a resnet50 --pretrained /path/to/imagenet
 ```
 
 ### 2. ResNet18
 
 ```Shell
-python main.py -t -a resnet18 --pretrained --config /path/to/config_file /path/to/imagenet
+python main.py -t -a resnet18 --pretrained /path/to/imagenet
 ```
 
 ### 3. ResNext101_32x8d
 
 ```Shell
-python main.py -t -a resnext101_32x8d --pretrained --config /path/to/config_file /path/to/imagenet
+python main.py -t -a resnext101_32x8d --pretrained /path/to/imagenet
 ```
 
-Examples Of Enabling Neural Compressor Auto Tuning On PyTorch ResNet
-=======================================================
+# Distributed Data Parallel Training
+We also supported Distributed Data Parallel training on single node and multi nodes settings for QAT. To use Distributed Data Parallel to speedup training, the bash command needs a small adjustment.
+<br>
+For example, bash command will look like the following, where *`<MASTER_ADDRESS>`* is the address of the master node, it won't be necessary for single node case, *`<NUM_PROCESSES_PER_NODE>`* is the desired processes to use in current node, for node with GPU, usually set to number of GPUs in this node, for node without GPU and use CPU for training, it's recommended set to 1, *`<NUM_NODES>`* is the number of nodes to use, *`<NODE_RANK>`* is the rank of the current node, rank starts from 0 to *`<NUM_NODES>`*`-1`.
+<br>
+Also please note that to use CPU for training in each node with multi nodes settings, argument `--no_cuda` is mandatory. In multi nodes setting, following command needs to be launched in each node, and all the commands should be the same except for *`<NODE_RANK>`*, which should be integer from 0 to *`<NUM_NODES>`*`-1` assigned to each node.
 
-This is a tutorial of how to enable a PyTorch classification model with Intel® Neural Compressor.
-
-# User Code Analysis
-
-For quantization aware training mode, Intel® Neural Compressor supports two usage as below:
-
-1. User specifies fp32 "model", training function "q_func", evaluation dataset "eval_dataloader" and metric in tuning.metric field of model-specific yaml config file, this option does not require customer to implement evaluation function.
-2. User specifies fp32 "model", training function "q_func" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself, this option require customer implement evaluation function by himself.
-
-As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by Intel® Neural Compressor. So here we integrate PyTorch ResNet with Intel® Neural Compressor by the first use case for simplicity.
-
-### Write Yaml Config File
-
-In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning.
-
-```yaml
-#conf.yaml
-
-model:
-  name: imagenet_qat 
-  framework: pytorch
-
-quantization:
-  approach: quant_aware_training
-
-evaluation:
-  accuracy:
-    metric:
-      topk: 1
-
-tuning:
-    accuracy_criterion:
-      relative: 0.01
-    exit_policy:
-      timeout: 0
-    random_seed: 9527
-
+```bash
+python -m torch.distributed.launch --master_addr=<MASTER_ADDRESS> --nproc_per_node=<NUM_PROCESSES_PER_NODE> --nnodes=<NUM_NODES> --node_rank=<NODE_RANK> \
+   main.py -t -a resnet50 --pretrained /path/to/imagenet
 ```
 
-Here we choose topk built-in metric and set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means unlimited tuning time until accuracy target is met, but the result maybe is not a model of best accuracy and performance.
-
-### Prepare
-
-The related code please refer to examples/pytorch/image_recognition/torchvision_models/quantization/qat/fx/main.py.
-
-### Code Update
-
-After prepare step is done, we just need update main.py like below.
-
-```python
-def training_func_for_nc(model):
-    epochs = 8
-    iters = 30
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-    for nepoch in range(epochs):
-        model.train()
-        cnt = 0
-        for image, target in train_loader:
-            print('.', end='')
-            cnt += 1
-            output = model(image)
-            loss = criterion(output, target)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            if cnt >= iters:
-                break
-        if nepoch > 3:
-            # Freeze quantizer parameters
-            model.apply(torch.quantization.disable_observer)
-        if nepoch > 2:
-            # Freeze batch norm mean and variance estimates
-            model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
-    return model
-model.module.fuse_model()
-from neural_compressor.experimental import Quantization, common
-quantizer = Quantization("./conf.yaml")
-quantizer.model = common.Model(model)
-quantizer.q_func = training_func_for_nc
-quantizer.eval_dataloader = val_loader
-q_model = quantizer.fit()
-```
-
-The quantizer.fit() function will return a best quantized model during timeout constrain.
+# Results
+We ran QAT for ResNet50 on ImageNet dataset with several settings, results are shown below.
+|   Setting       | Top1 Accuracy  |  Elapsed Time |
+|-----------------|----------------|---------------|
+|   1 CLX6248 Machine     |   76.22%       |        55min  |
+|   2 CLX6248 Machines     |   76.15%       |        26min  |
+|   4 CLX6248 Machines     |   75.99%       |        15min  |

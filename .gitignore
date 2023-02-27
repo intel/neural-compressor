@@ -19,3 +19,5 @@ _build
 lpot_workspace/
 .torch/
 node_modules
+
+build_tmp

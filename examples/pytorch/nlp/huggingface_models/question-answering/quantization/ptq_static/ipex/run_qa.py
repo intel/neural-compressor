@@ -105,6 +105,12 @@ class ModelArguments:
     accuracy_only: bool = field(
         default=False, metadata={"help": "get accuracy"}
      )
+    iters: int = field(
+        default=100,
+        metadata={
+            "help": "The inference iterations to run for benchmark."
+        },
+    )
 
 
 @dataclass
@@ -618,7 +624,7 @@ def main():
         samples = eval_samples - (eval_samples % batch_size) \
          if training_args.dataloader_drop_last else eval_samples
         if save_metrics:
-         trainer.save_metrics("eval", metrics)
+            trainer.save_metrics("eval", metrics)
         logger.info("metrics keys: {}".format(metrics.keys()))
         print('Batch size = %d' % batch_size)
         print("Finally Eval {} Accuracy: {}".format(metric_name, metrics.get(metric_name)))
@@ -631,44 +637,41 @@ def main():
 
     if model_args.tune:
         ipex.nn.utils._model_convert.replace_dropout_with_identity(model)
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization('conf.yaml')
-        quantizer.eval_func = eval_func
-        quantizer.calib_dataloader = eval_dataloader
-        quantizer.model = common.Model(model)
-        model = quantizer.fit()
-        model.save(training_args.output_dir)
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor import quantization
+        conf = PostTrainingQuantConfig(backend="ipex", calibration_sampling_size=800)
+        q_model = quantization.fit(model,
+                                   conf,
+                                   calib_dataloader=eval_dataloader,
+                                   eval_func=eval_func)
+        q_model.save(training_args.output_dir)
         return
 
-    if model_args.benchmark or model_args.accuracy_only:
-        ipex.nn.utils._model_convert.replace_dropout_with_identity(model)
-        model.eval()
-        if model_args.int8:
-            from neural_compressor.utils.pytorch import load
-            q_model = load(training_args.output_dir, model, dataloader=trainer.get_eval_dataloader())
-            trainer.model = q_model
+    model.eval()
+    if model_args.int8:
+        from neural_compressor.utils.pytorch import load
+        model = load(training_args.output_dir, model)
+    else:
+        from neural_compressor.adaptor.pytorch import get_example_inputs
+        example_inputs = get_example_inputs(model, eval_dataloader)
+        model = ipex.optimize(model)
+        import torch
+        with torch.no_grad():
+            model = torch.jit.trace(model, example_inputs, strict=False)
+            model = torch.jit.freeze(model)
 
-        start_time = timeit.default_timer()
-        results = trainer.evaluate()
-        evalTime = timeit.default_timer() - start_time
-        max_eval_samples = data_args.max_eval_samples \
-            if data_args.max_eval_samples is not None else len(eval_dataset)
-        eval_samples = min(max_eval_samples, len(eval_dataset))
-        samples = eval_samples - (eval_samples % training_args.per_device_eval_batch_size) \
-            if training_args.dataloader_drop_last else eval_samples
-        logger.info("metrics keys: {}".format(results.keys()))
-        bert_task_acc_keys = ['eval_f1', 'eval_accuracy', 'eval_matthews_correlation',
-                              'eval_pearson', 'eval_mcc', 'eval_spearmanr']
-        ret = False
-        for key in bert_task_acc_keys:
-            if key in results.keys():
-                ret = True
-                print('Batch size = ', training_args.per_device_eval_batch_size)
-                print("Finally Eval {} Accuracy: {}".format(key, results[key]))
-                print("Latency: {:.5f} ms".format(evalTime / samples * 1000))
-                print("Throughput: {:.5f} samples/sec".format(samples/evalTime))
-                break
-        assert ret, "No metric returned, Please check inference metric!"
+    if model_args.benchmark or model_args.accuracy_only:
+        if model_args.benchmark:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(backend="ipex",
+                                     warmup=5,
+                                     iteration=model_args.iters,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
+        else:
+            eval_func(model)
 
 def _mp_fn(index):
     # For xla_spawn (TPUs)

@@ -11,6 +11,7 @@ function main {
 
 # init params
 function init_params {
+    iters=100
     batch_size=8
     task_name="mrpc"
     topology="bert-base-cased"
@@ -54,8 +55,8 @@ function init_params {
 function run_benchmark {
 
     mode_cmd=""
-    if [[ ${mode} == "benchmark" ]]; then
-        mode_cmd="--benchmark "
+    if [[ ${mode} == "performance" ]]; then
+        mode_cmd="--performance --iters "${iters}
     fi
 
     extra_cmd='--model_name_or_path '${input_model}
@@ -64,7 +65,7 @@ function run_benchmark {
         extra_cmd=$extra_cmd" --int8"
     fi
 
-    python run_glue_tune.py \
+    python run_glue.py \
         --task_name ${task_name} \
         --do_train \
         --do_eval \

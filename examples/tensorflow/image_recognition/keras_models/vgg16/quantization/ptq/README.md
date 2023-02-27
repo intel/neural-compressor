@@ -1,24 +1,28 @@
 Step-by-Step
 ============
 
-This document is used to enable Tensorflow Keras models using Intel® Neural Compressor.
+This document is used to enable Tensorflow Keras model VGG16 quantization and benchmark using Intel® Neural Compressor.
 This example can run on Intel CPUs and GPUs.
 
 
-## Prerequisite
+# Prerequisite
 
-### 1. Installation
+## 1. Environment
+
+### Installation
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow
+
+### Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
-> Note: Supported Tensorflow [Version](../../../../../../../README.md#supported-frameworks).
 
-### 3. Install Intel Extension for Tensorflow
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
+
+### Install Intel Extension for Tensorflow
 #### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
@@ -34,7 +38,7 @@ Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's no
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-### 4. Prepare Pretrained model
+## 2. Prepare Pretrained model
 
 The pretrained model is provided by [Keras Applications](https://keras.io/api/applications/). prepare the model, Run as follow: 
  ```
@@ -42,12 +46,40 @@ The pretrained model is provided by [Keras Applications](https://keras.io/api/ap
  ```
 `--output_model ` the model should be saved as SavedModel format or H5 format.
 
-## Write Yaml config file
-In examples directory, there is a vgg16.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The vgg16_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
+## 3. Prepare Dataset
 
-## Run Command
+  TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
+  We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
+
   ```shell
-  bash run_tuning.sh --config=vgg16.yaml --input_model=./path/to/model --output_model=./result
-  bash run_benchmark.sh --config=vgg16.yaml --input_model=./path/to/model --mode=performance
+  cd examples/tensorflow/image_recognition/keras_models/
+  # convert validation subset
+  bash prepare_dataset.sh --output_dir=./vgg16/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
+  # convert train subset
+  bash prepare_dataset.sh --output_dir=./vgg16/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
+  cd vgg16/quantization/ptq
+  ```
+
+# Run Command
+
+## Quantization Config
+The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
+
+```
+config = PostTrainingQuantConfig(
+    device="gpu",
+    backend="itex",
+    ...
+    )
+
+## Quantization
+  ```shell
+  bash run_tuning.sh --input_model=./vgg16_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  ```
+
+## Benchmark
+  ```shell
+  bash run_benchmark.sh --input_model=./result --mode=accuracy --dataset_location=/path/to/evaluation/dataset --batch_size=32
+  bash run_benchmark.sh --input_model=./result --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=1
   ```
 

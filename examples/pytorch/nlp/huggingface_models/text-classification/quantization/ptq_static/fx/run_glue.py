@@ -189,14 +189,17 @@ class ModelArguments:
     int8: bool = field(
         default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
     )
-    benchmark: bool = field(
+    performance: bool = field(
         default=False, metadata={"help": "get benchmark instead of accuracy"}
     )
-    accuracy_only: bool = field(
+    accuracy: bool = field(
         default=False, metadata={"help": "get accuracy"}
     )
-    onnx: bool = field(
-        default=False, metadata={"help": "convert PyTorch model to ONNX"}
+    iters: int = field(
+        default=100,
+        metadata={
+            "help": "The inference iterations to run for benchmark."
+        },
     )
 
 
@@ -504,51 +507,33 @@ def main():
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
         tuning_criterion = TuningCriterion(max_trials=600)
-        conf = PostTrainingQuantConfig(approach="static", backend="pytorch_fx", tuning_criterion=tuning_criterion)
+        conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion, use_distributed_tuning=False)
         q_model = fit(model, conf=conf, calib_dataloader=eval_dataloader, eval_func=eval_func)
-        from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
-        save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
-
-        if model_args.onnx:
-            it = iter(eval_dataloader)
-            input = next(it)
-            input.pop('labels')
-            symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
-            dynamic_axes = {k: symbolic_names for k in input.keys()}
-            from neural_compressor.config import Torch2ONNXConfig
-            fp32_onnx_config = Torch2ONNXConfig(
-                dtype="fp32",
-                opset_version=14,
-                example_inputs=tuple(input.values()),
-                input_names=list(input.keys()),
-                output_names=['labels'],
-                dynamic_axes=dynamic_axes,
-            )
-            q_model.export('fp32-model.onnx', fp32_onnx_config)
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QDQ",
-                example_inputs=tuple(input.values()),
-                input_names=list(input.keys()),
-                output_names=['labels'],
-                dynamic_axes=dynamic_axes,
-            )
-            q_model.export('int8-nlp-qdq-model.onnx', int8_onnx_config)
-            int8_onnx_config = Torch2ONNXConfig(
-                dtype="int8",
-                opset_version=14,
-                quant_format="QLinear",
-                example_inputs=tuple(input.values()),
-                input_names=list(input.keys()),
-                output_names=['labels'],
-                dynamic_axes=dynamic_axes,
-            )
-            q_model.export('int8-nlp-qlinear-model.onnx', int8_onnx_config)
+        # whether to use distributed tuning
+        if conf.use_distributed_tuning == True:
+            from mpi4py import MPI
+            comm = MPI.COMM_WORLD
+            size = comm.Get_size()
+            assert size > 1
+            rank = comm.Get_rank()
+        else:
+            rank = -1
+        if rank == 0 or conf.use_distributed_tuning == False:
+            from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
+            save_for_huggingface_upstream(q_model, tokenizer, training_args.output_dir)
         return
 
-    if model_args.benchmark or model_args.accuracy_only:
-        eval_func(model)
+    if model_args.performance or model_args.accuracy:
+        if model_args.performance:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(warmup=5,
+                                     iteration=model_args.iters,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(model, b_conf, b_dataloader=eval_dataloader)
+        else:
+            eval_func(model)
         return
 
     # Training

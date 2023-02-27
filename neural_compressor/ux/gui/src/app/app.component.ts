@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { AfterViewInit, Component, HostBinding, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ShortcutInput } from 'ng-keyboard-shortcuts';
+import { HomeComponent } from './home/home.component';
 import { NotificationComponent } from './notification/notification.component';
 import { ModelService } from './services/model.service';
 import { SocketService } from './services/socket.service';
@@ -26,8 +29,9 @@ import { SystemInfoComponent } from './system-info/system-info.component';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
   @HostBinding('class') className = '';
+  shortcuts: ShortcutInput[] = [];
   tokenIsSet = false;
   workspacePath: string;
   toggleControl = new FormControl(false);
@@ -37,7 +41,10 @@ export class AppComponent implements OnInit {
     private modelService: ModelService,
     private socketService: SocketService,
     public dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private homeComponent: HomeComponent,
+    private router: Router,
+    public activatedRoute: ActivatedRoute
   ) { }
 
   ngOnInit() {
@@ -50,6 +57,16 @@ export class AppComponent implements OnInit {
       .subscribe(response => {
         this.openSnackBar(response.tab, response.id);
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.shortcuts.push(
+      {
+        key: 'shift + alt + c',
+        preventDefault: true,
+        command: e => this.homeComponent.createNewProject()
+      }
+    );
   }
 
   setColorTheme() {

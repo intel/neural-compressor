@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse BiasAdd and Add Graph Rewriter."""
 
 import tensorflow as tf
 from ..graph_base import GraphRewriterBase
@@ -24,11 +25,10 @@ from tensorflow.python.framework import tensor_util
 
 
 class FuseBiasAddAndAddOptimizer(GraphRewriterBase):
-    """Fuse Biasadd + Add into BiasAdd when the second input of Add is const node.
-    """
+    """Fuse Biasadd + Add into BiasAdd when the second input of Add is const node."""
 
     def do_transformation(self):
-
+        """Fuse Biasadd + Add into BiasAdd for pattern fusion."""
         cur_graph = GraphAnalyzer()
         cur_graph.graph = self.model
 

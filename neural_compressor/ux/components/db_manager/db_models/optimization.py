@@ -30,6 +30,7 @@ from neural_compressor.ux.components.db_manager.db_models.dataset import Dataset
 from neural_compressor.ux.components.db_manager.db_models.model import Model
 from neural_compressor.ux.components.db_manager.db_models.optimization_type import OptimizationType
 from neural_compressor.ux.components.db_manager.db_models.precision import Precision
+from neural_compressor.ux.components.db_manager.db_models.pruning_details import PruningDetails
 from neural_compressor.ux.components.db_manager.db_models.tuning_details import TuningDetails
 from neural_compressor.ux.components.db_manager.db_models.tuning_history import TuningHistory
 from neural_compressor.ux.utils.consts import ExecutionStatus
@@ -48,6 +49,7 @@ class Optimization(Base):
     optimization_type_id = Column(Integer, ForeignKey("optimization_type.id"), nullable=False)
     dataset_id = Column(Integer, ForeignKey("dataset.id"), nullable=False)
     tuning_details_id = Column(Integer, ForeignKey("tuning_details.id"), nullable=True)
+    pruning_details_id = Column(Integer, ForeignKey("pruning_details.id"), nullable=True)
     batch_size = Column(Integer, nullable=False)
     sampling_size = Column(Integer, nullable=False)
     optimized_model_id = Column(Integer, ForeignKey("model.id"), nullable=True)
@@ -77,6 +79,11 @@ class Optimization(Base):
         "TuningDetails.tuning_history_id == TuningHistory.id)",
         viewonly=True,
     )
+    pruning_details = relationship(
+        "PruningDetails",
+        foreign_keys=[pruning_details_id],
+        cascade="all, delete",
+    )
     accuracy_benchmark = relationship("Benchmark", foreign_keys=[accuracy_benchmark_id])
     performance_benchmark = relationship("Benchmark", foreign_keys=[performance_benchmark_id])
     optimized_model = relationship(
@@ -97,6 +104,7 @@ class Optimization(Base):
         batch_size: int,
         sampling_size: int,
         tuning_details_id: Optional[int] = None,
+        pruning_details_id: Optional[int] = None,
         diagnosis_config: Optional[dict] = None,
     ) -> int:
         """
@@ -111,6 +119,7 @@ class Optimization(Base):
             optimization_type_id=optimization_type_id,
             dataset_id=dataset_id,
             tuning_details_id=tuning_details_id,
+            pruning_details_id=pruning_details_id,
             batch_size=batch_size,
             sampling_size=sampling_size,
             diagnosis_config=json.dumps(diagnosis_config),
@@ -352,6 +361,25 @@ class Optimization(Base):
         }
 
     @staticmethod
+    def update_pruning_details(
+        db_session: session.Session,
+        optimization_id: int,
+        pruning_details_id: Optional[int],
+    ) -> dict:
+        """Update details of pruning optimization."""
+        optimization = (
+            db_session.query(Optimization).filter(Optimization.id == optimization_id).one()
+        )
+        optimization.pruning_details_id = pruning_details_id
+        db_session.add(optimization)
+        db_session.flush()
+
+        return {
+            "id": optimization.id,
+            "pruning_details_id": optimization.pruning_details_id,
+        }
+
+    @staticmethod
     def clean_status(
         db_session: session.Session,
         status_to_clean: ExecutionStatus,
@@ -495,6 +523,7 @@ class Optimization(Base):
             tuning_details,
             tuning_history,
             optimized_model,
+            pruning_details,
         ) = (
             db_session.query(
                 Optimization,
@@ -504,6 +533,7 @@ class Optimization(Base):
                 TuningDetails,
                 TuningHistory,
                 Model,
+                PruningDetails,
             )
             .join(Optimization.precision)
             .join(Optimization.optimization_type)
@@ -511,6 +541,7 @@ class Optimization(Base):
             .outerjoin(Optimization.tuning_details)
             .outerjoin(Optimization.optimized_model)
             .outerjoin(Optimization.tuning_history)
+            .outerjoin(Optimization.pruning_details)
             .filter(Optimization.id == optimization_id)
             .one()
         )
@@ -522,6 +553,7 @@ class Optimization(Base):
             dataset=dataset,
             tuning_details=tuning_details,
             tuning_history=tuning_history,
+            pruning_details=pruning_details,
             optimized_model=optimized_model,
         )
         return optimization_info
@@ -578,6 +610,7 @@ class Optimization(Base):
         dataset: Dataset,
         tuning_details: Optional[TuningDetails] = None,
         tuning_history: Optional[TuningHistory] = None,
+        pruning_details: Optional[PruningDetails] = None,
         optimized_model: Optional[Model] = None,
     ) -> dict:
         """Get optimization info."""
@@ -614,6 +647,7 @@ class Optimization(Base):
             "accuracy_benchmark_id": optimization.accuracy_benchmark_id,
             "performance_benchmark_id": optimization.performance_benchmark_id,
             "tuning_details": None,
+            "pruning_details": None,
             "diagnosis_config": diagnosis_config,
         }
         if optimized_model is not None:
@@ -647,6 +681,13 @@ class Optimization(Base):
                 )
             optimization_info.update(
                 optimization_data,
+            )
+
+        if pruning_details is not None:
+            optimization_info.update(
+                {
+                    "pruning_details": PruningDetails.build_info(pruning_details),
+                },
             )
         return optimization_info
 

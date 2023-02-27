@@ -1,29 +1,28 @@
 Legal Information
 =================
 
+1. [License](#license)
+2. [Citation](#citation)
+3. [Trademarks](#trademarks)
+
 ## License
 
 Intel® Neural Compressor is licensed under [Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). This software includes components that have separate copyright notices and licensing terms. Your use of the source code for these components is subject to the terms and conditions of the following licenses.
 
-Apache License Version 2.0:
-* [Intel TensorFlow Quantization Tool](https://github.com/IntelAI/tools)
-
-MIT License:
-* [bayesian-optimization](https://github.com/fmfn/BayesianOptimization)
+* [Third Party Programs](https://github.com/intel/neural-compressor/blob/master/third-party-programs.txt)
 
 See the accompanying [license](https://github.com/intel/neural-compressor/tree/master/LICENSE) file for full license text and copyright notices.
 
-
 ## Citation
 
-If you use Intel® Neural Compressor in your research or you wish to refer to the tuning results published in the [Validated Models](validated_model_list.md), use the following BibTeX entry.
+If you use Intel® Neural Compressor in your research, or you wish to refer to the tuning results published in the [Validated Models](validated_model_list.md), use the following BibTeX entry.
 
 ```
 @misc{Intel® Neural Compressor,
-  author =       {Feng Tian, Chuanqi Wang, Guoming Zhang, Penghui Cheng, Pengxin Yuan, Haihao Shen, and Jiong Gong},
+  author =       {Feng Tian, Hanwen Chang, Haihao Shen, and Suyue Chen},
   title =        {Intel® Neural Compressor},
   howpublished = {\url{https://github.com/intel/neural-compressor}},
-  year =         {2020}
+  year =         {2022}
 }
 ```
 

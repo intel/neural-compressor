@@ -367,9 +367,90 @@ class TestPruningConfig(unittest.TestCase):
         pruning = Pruning(self.pruning_config)
         result = pruning.serialize()
 
+        expected = {
+            "train": {
+                "optimizer": {
+                    "Adam": {
+                        "learning_rate": 0.123,
+                        "beta_1": 0.99,
+                        "beta_2": 0.9999,
+                        "epsilon": 1e-06,
+                        "amsgrad": True,
+                    },
+                },
+                "criterion": {
+                    "CrossEntropyLoss": {
+                        "reduction": "auto",
+                        "from_logits": True,
+                    },
+                    "SparseCategoricalCrossentropy": {
+                        "reduction": "sum",
+                        "from_logits": True,
+                    },
+                    "KnowledgeDistillationLoss": {
+                        "temperature": 1.0,
+                        "loss_types": ["CE"],
+                        "loss_weights": [0.3, 0.7],
+                    },
+                },
+                "dataloader": {
+                    "batch_size": 32,
+                    "dataset": {"ImageRecord": {"root": "/path/to/pruning/dataset"}},
+                    "transform": {
+                        "ResizeCropImagenet": {
+                            "height": 224,
+                            "width": 224,
+                            "mean_value": [123.68, 116.78, 103.94],
+                        },
+                    },
+                },
+                "epoch": 5,
+                "start_epoch": 1,
+                "end_epoch": 2,
+                "iteration": 10,
+                "frequency": 3,
+                "execution_mode": "graph",
+                "postprocess": {
+                    "transform": {
+                        "LabelShift": -1,
+                        "Collect": {
+                            "length": 1,
+                        },
+                        "SquadV1": {
+                            "label_file": "/path/to/label_file",
+                            "vocab_file": "/path/to/vocab_file",
+                            "do_lower_case": False,
+                        },
+                    },
+                },
+                "hostfile": "/some/file",
+            },
+            "approach": {
+                "weight_compression": {
+                    "initial_sparsity": 0.042,
+                    "target_sparsity": 0.1337,
+                    "start_epoch": 13,
+                    "end_epoch": 888,
+                    "pruners": [
+                        {
+                            "initial_sparsity": 0.0,
+                            "target_sparsity": 0.97,
+                            "start_epoch": 0,
+                            "end_epoch": 2,
+                            "prune_type": "basic_magnitude",
+                            "update_frequency": 0.1,
+                            "names": ["layer1.0.conv1.weight"],
+                            "pattern": "tile_pattern_1x1",
+                            "method": "per_tensor",
+                        },
+                    ],
+                },
+            },
+        }
+
         self.assertDictEqual(
+            expected,
             result,
-            self.pruning_config,
         )
 
 

@@ -1,0 +1,8 @@
+numpy
+matplotlib
+tensorflow
+tensorboard
+terminaltables
+pillow>=8.2.0
+tqdm
+rsa>=4.7 # not directly required, pinned by Snyk to avoid a vulnerability

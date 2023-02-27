@@ -284,19 +284,16 @@ class ParameterManager:
             return features_train, features_test, labels_train, labels_test
 
 
-class TransformerLTEncoding(ParameterManager):
-    def __init__(self, param_dict: dict, verbose: bool = False, seed: int = 0):
+class TransformerLTEncoding(ParameterManager):  #noqa: D101
+    def __init__(self, param_dict: dict, verbose: bool = False, seed: int = 0):  #noqa: D107
         super().__init__(param_dict, verbose, seed)
 
-    def onehot_custom(self, subnet_cfg, provide_onehot=True):
+    def onehot_custom(self, subnet_cfg, provide_onehot=True):  #noqa: D102
 
         features = []
-        #import ipdb;ipdb.set_trace()
         features.extend(subnet_cfg['encoder_embed_dim'])
 
-        #encoder_layer_num = subnet_cfg['encoder_layer_num']
-        encode_layer_num_int = 6  # encoder_layer_num[0]
-        # features.extend(encoder_layer_num)
+        encode_layer_num_int = 6
 
         # Encoder FFN Embed Dim
         encoder_ffn_embed_dim = subnet_cfg['encoder_ffn_embed_dim']
@@ -360,10 +357,6 @@ class TransformerLTEncoding(ParameterManager):
             one_hot_count = 0
             unique_values = self.unique_values
 
-            # uncomment
-            # with open(self.onehot_unique,'rb') as f:
-            #    load_unique_values = pickle.load(f)
-            #    unique_values = load_unique_values.tolist()
             for unique in unique_values:
                 one_hot_count += len(unique.tolist())
 
@@ -380,8 +373,6 @@ class TransformerLTEncoding(ParameterManager):
         else:
             return features
 
-        # return np.array(ks_onehot + ex_onehot)
-
     def import_csv(
         self,
         filepath: str,
@@ -390,9 +381,7 @@ class TransformerLTEncoding(ParameterManager):
         column_names: List[str] = None,
         drop_duplicates: bool = True,
     ) -> pd.DataFrame:
-        '''
-        Import a csv file generated from a supernetwork search for the purpose
-        of training a predictor.
+        """Import a csv file generated from a supernetwork search for the purpose of training a predictor.
 
         filepath - path of the csv to be imported.
         config - the subnetwork configuration
@@ -400,8 +389,7 @@ class TransformerLTEncoding(ParameterManager):
         column_names - a list of column names for the dataframe
         df - the output dataframe that contains the original config dict, pymoo, and 1-hot
              equivalent vector for training.
-        '''
-
+        """
         if column_names == None:
             df = pd.read_csv(filepath)
         else:
@@ -429,7 +417,6 @@ class TransformerLTEncoding(ParameterManager):
             config_as_onehot = self.onehot_custom(
                 config_as_dict, provide_onehot=False)
             convert_to_onehot.append(config_as_onehot)
-        #import ipdb;ipdb.set_trace()
         df[config] = convert_to_dict
         df['config_pymoo'] = convert_to_pymoo
         df['config_onehot'] = convert_to_onehot
@@ -444,11 +431,10 @@ class TransformerLTEncoding(ParameterManager):
         split: float = 0.33,
         seed: bool = None,
     ) -> Tuple[list, list, list, list]:
-        '''
-        Create a sklearn compatible test/train set from an imported results csv
-        after "import_csv" method is run.
-        '''
+        """Create a sklearn compatible test/train.
 
+        The set is created from an imported results csv after "import_csv" method is run.
+        """
         collect_rows = list()
         for i in range(len(dataframe)):
             collect_rows.append(np.asarray(dataframe['config_onehot'].iloc[i]))

@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2019 Intel Corporation
+# Copyright (c) 2022 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
 from neural_compressor.experimental import Quantization
-from neural_compressor.data import DATALOADERS, DATASETS
+from neural_compressor.data import DATALOADERS, Datasets
 from neural_compressor.adaptor.tf_utils.util import _parse_ckpt_bn_input
 
 flags = tf.flags
@@ -43,8 +43,6 @@ flags.DEFINE_string('input_model', None, 'Output directory.')
 flags.DEFINE_integer('batch_size', 1, 'batch_size')
 
 flags.DEFINE_bool('tune', False, 'if use tune')
-
-flags.DEFINE_string('config', None, 'yaml configuration for tuning')
 
 FLAGS = flags.FLAGS
 
@@ -80,70 +78,85 @@ def image_style_transfer(sess, content_img_path, style_img_path):
     save_image(stylized_image_res, os.path.join(FLAGS.output_dir, 'stylized_image.jpg'))
 
 def main(args=None):
-  tf.logging.set_verbosity(tf.logging.INFO)
-  if not tf.gfile.Exists(FLAGS.output_dir):
-    tf.gfile.MkDir(FLAGS.output_dir)
+    tf.logging.set_verbosity(tf.logging.INFO)
+    if not tf.gfile.Exists(FLAGS.output_dir):
+        tf.gfile.MkDir(FLAGS.output_dir)
 
-  with tf.Session() as sess:
-      if FLAGS.input_model.rsplit('.', 1)[-1] == 'ckpt':
-          style_img_ph = tf.placeholder(tf.float32, shape=[None, 256, 256, 3], name='style_input')
-          content_img_ph = tf.placeholder(tf.float32, shape=[None, 256, 256, 3], name='content_input')
-          # import meta_graph
-          meta_data_path = FLAGS.input_model + '.meta'
-          saver = tf.train.import_meta_graph(meta_data_path, clear_devices=True)
+    with tf.Session() as sess:
+        if FLAGS.input_model.rsplit('.', 1)[-1] == 'ckpt':
+            style_img_ph = tf.placeholder(tf.float32, shape=[None, 256, 256, 3], name='style_input')
+            content_img_ph = tf.placeholder(tf.float32, shape=[None, 256, 256, 3], name='content_input')
+            # import meta_graph
+            meta_data_path = FLAGS.input_model + '.meta'
+            saver = tf.train.import_meta_graph(meta_data_path, clear_devices=True)
 
-          sess.run(tf.global_variables_initializer())
-          saver.restore(sess, FLAGS.input_model)
-          graph_def = sess.graph.as_graph_def()
+            sess.run(tf.global_variables_initializer())
+            saver.restore(sess, FLAGS.input_model)
+            graph_def = sess.graph.as_graph_def()
 
-          replace_style = 'style_image_processing/ResizeBilinear_2'
-          replace_content = 'batch_processing/batch'
-          for node in graph_def.node:
-              for idx, input_name in enumerate(node.input):
-                  # replace style input and content input nodes to  placeholder
-                  if replace_content == input_name:
-                      node.input[idx] = 'content_input'
-                  if replace_style == input_name:
-                      node.input[idx] = 'style_input'
+            replace_style = 'style_image_processing/ResizeBilinear_2'
+            replace_content = 'batch_processing/batch'
+            for node in graph_def.node:
+                for idx, input_name in enumerate(node.input):
+                    # replace style input and content input nodes to  placeholder
+                    if replace_content == input_name:
+                        node.input[idx] = 'content_input'
+                    if replace_style == input_name:
+                        node.input[idx] = 'style_input'
 
-          if FLAGS.tune:
-              _parse_ckpt_bn_input(graph_def)
-          output_name = 'transformer/expand/conv3/conv/Sigmoid'
-          frozen_graph = tf.graph_util.convert_variables_to_constants(sess, graph_def, [output_name])
-      # use frozen pb instead 
-      elif FLAGS.input_model.rsplit('.', 1)[-1] == 'pb':
-          with open(FLAGS.input_model, 'rb') as f:
-              frozen_graph = tf.GraphDef()
-              frozen_graph.ParseFromString(f.read())
-      else:
-          print("not supported model format")
-          exit(-1)
+            if FLAGS.tune:
+                _parse_ckpt_bn_input(graph_def)
+            output_name = 'transformer/expand/conv3/conv/Sigmoid'
+            frozen_graph = tf.graph_util.convert_variables_to_constants(sess, graph_def, [output_name])
+        # use frozen pb instead
+        elif FLAGS.input_model.rsplit('.', 1)[-1] == 'pb':
+            with open(FLAGS.input_model, 'rb') as f:
+                frozen_graph = tf.GraphDef()
+                frozen_graph.ParseFromString(f.read())
+        else:
+            print("not supported model format")
+            exit(-1)
 
-      if FLAGS.tune:
-          with tf.Graph().as_default() as graph:
-              tf.import_graph_def(frozen_graph, name='')
-              quantizer = Quantization(FLAGS.config)
-              quantizer.model = graph
-              quantized_model = quantizer.fit()
-              quantized_model.save(FLAGS.output_model)
-              frozen_graph= quantized_model.graph_def
+        if FLAGS.tune:
+            with tf.Graph().as_default() as graph:
+                tf.import_graph_def(frozen_graph, name='')
+                from neural_compressor import quantization
+                from neural_compressor.config import PostTrainingQuantConfig
+                from neural_compressor.utils import set_random_seed
+                set_random_seed(9527)
 
-  # validate the quantized model here
-  with tf.Graph().as_default(), tf.Session() as sess:
-      if FLAGS.tune:
-          # create dataloader using default style_transfer dataset
-          # generate stylized images
-          dataset = DATASETS('tensorflow')['style_transfer']( \
-              FLAGS.content_images_paths.strip(),
-              FLAGS.style_images_paths.strip(),
-              crop_ratio=0.2,
-              resize_shape=(256, 256))
-      else: 
-          dataset = DATASETS('tensorflow')['dummy_v2'](\
-              input_shape=[(256, 256, 3), (256, 256, 3)], label_shape=(1, )) 
-      dataloader = DATALOADERS['tensorflow'](dataset=dataset, batch_size=FLAGS.batch_size)
-      tf.import_graph_def(frozen_graph, name='')
-      style_transfer(sess, dataloader)
+                from neural_compressor.utils.create_obj_from_config import create_dataloader
+                dataloader_args = {
+                    'batch_size': FLAGS.batch_size,
+                    'dataset': {"style_transfer": {'content_folder': FLAGS.content_images_paths.strip(),
+                                                   'style_folder': FLAGS.style_images_paths.strip()}},
+                    'transform': {"ParseDecodeVoc": {}},
+                    'filter': None
+                }
+                dataloader = create_dataloader('tensorflow', dataloader_args)
+                conf = PostTrainingQuantConfig(inputs=['style_input', 'content_input'],
+                                               outputs=['transformer/expand/conv3/conv/Sigmoid'],
+                                               calibration_sampling_size=[50, 100])
+                quantized_model = quantization.fit(graph, conf=conf, calib_dataloader=dataloader)
+                quantized_model.save(FLAGS.output_model)
+                frozen_graph= quantized_model.graph_def
+
+    # validate the quantized model here
+    with tf.Graph().as_default(), tf.Session() as sess:
+        if FLAGS.tune:
+            # create dataloader using default style_transfer dataset
+            # generate stylized images
+            dataset = Datasets('tensorflow')['style_transfer']( \
+                FLAGS.content_images_paths.strip(),
+                FLAGS.style_images_paths.strip(),
+                crop_ratio=0.2,
+                resize_shape=(256, 256))
+        else: 
+            dataset = Datasets('tensorflow')['dummy_v2'](\
+                input_shape=[(256, 256, 3), (256, 256, 3)], label_shape=(1, ))
+        dataloader = DATALOADERS['tensorflow'](dataset=dataset, batch_size=FLAGS.batch_size)
+        tf.import_graph_def(frozen_graph, name='')
+        style_transfer(sess, dataloader)
 
 def add_import_to_name(sess, name, try_cnt=2):
     for i in range(0, try_cnt):
@@ -155,7 +168,7 @@ def add_import_to_name(sess, name, try_cnt=2):
 
     raise ValueError('can not find tensor by name')
 
-# validate and  save the files
+# validate and save the files
 def style_transfer(sess, dataloader):
       time_list = []
       output_name = add_import_to_name(sess, 'transformer/expand/conv3/conv/Sigmoid:0', 3)
@@ -183,8 +196,8 @@ def style_transfer(sess, dataloader):
 
 
 def run_tuning():
-  tf.disable_v2_behavior()
-  tf.app.run(main)
+    tf.disable_v2_behavior()
+    tf.app.run(main)
 
 if __name__ == '__main__':
-  run_tuning()
+    run_tuning()

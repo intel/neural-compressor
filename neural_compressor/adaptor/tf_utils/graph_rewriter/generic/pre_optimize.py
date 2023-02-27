@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Pre Optimization Entrance."""
 
 import logging
 import tensorflow as tf
@@ -48,12 +48,24 @@ from .fuse_layer_norm import FuseLayerNormOptimizer
 from .strip_equivalent_nodes import StripEquivalentNodesOptimizer
 from .dilated_contraction import DilatedContraction
 from .convert_placeholder_to_const import ConvertPlaceholderToConst
-from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
+from neural_compressor.adaptor.tf_utils.util import version1_gte_version2, version1_eq_version2
 
 class PreOptimization():
-    def __init__(self, model, optimization, new_api, device):
+    """Pre optimization for the FP32 models."""
+
+    def __init__(self, model, new_api, device):
+        """Initilization."""
         self.model = model
-        self.optimization = optimization
+        if version1_gte_version2(tf.version.VERSION, '2.1.0') or \
+           version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
+            self.optimization = {'pruning': True, 'shape': True,
+                                'constfold': False, 'arithmetic': False,
+                                'dependency': True, 'debug_stripper': True,
+                                'loop': True}
+        else:
+            self.optimization = {'pruning': True, 'shape': True,
+                                'dependency': True, 'debug_stripper': True,
+                                'loop': True}
         # Table initialization should disable grappler dependency and pruning pass
         node_names = [node.name for node in model.graph_def.node]
         if 'init_all_tables' in node_names:
@@ -69,7 +81,7 @@ class PreOptimization():
 
 
     def get_excluded_node_names(self):
-        """Get the excluded node name
+        """Get the excluded node name.
 
         Returns:
             string list: the excluded ops' name
@@ -79,6 +91,7 @@ class PreOptimization():
     @dump_elapsed_time("Pass Pre Optimization")
     def get_optimized_model(self, itex_mode=False):
         """Executed the non-precision dependant graph optimization.
+
         The input graph will be optimized with following passes:
         1. Remove the training nodes like Identity Op.
         2. Split the shared nodes like weights node for multi-Conv2d.
@@ -91,7 +104,6 @@ class PreOptimization():
         Returns:
             [graphdef]: the optimized graphdef object.
         """
-
         from neural_compressor.experimental.common import Model
 
         origin_model = Model(self.model._model, **self.model.kwargs)
@@ -231,11 +243,12 @@ class PreOptimization():
         return origin_model
 
     def get_matched_nodes(self, patterns):
-        """Searche the matched nodes with the specified patterns
+        """Searche the matched nodes with the specified patterns.
 
         Args:
             patterns ([string list]): The patterns should be illustrated as below.
                 [['MatMul'], ("BiasAdd"), ("Relu",)]
+
         Returns:
             [string list]: It will return the list that contains the matched nodes name
                 and pattern. ['matched_node_a_name', 'matched_node_a_name',['MatMul','BiasAdd']]

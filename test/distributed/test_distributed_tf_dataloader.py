@@ -10,8 +10,8 @@ import shutil
 import tensorflow as tf
 from neural_compressor import data
 from neural_compressor.utils.create_obj_from_config import create_dataset, create_dataloader
-from neural_compressor.data.dataloaders.dataloader import DataLoader
-from neural_compressor.data import DATASETS, DATALOADERS, TRANSFORMS
+from neural_compressor.data import DataLoader
+from neural_compressor.data import Datasets, DATALOADERS, TRANSFORMS
 from neural_compressor.utils import logger
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
 

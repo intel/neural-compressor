@@ -1,139 +1,218 @@
 Tuning Strategies
-=================
+============
+
+1. [Introduction](#introduction)
+
+2. [Strategy Design](#strategy-design)
+
+    2.1. [Tuning Space](#tuning-space)
+
+	2.2. [Exit Policy](#exit-policy)
+
+	2.3. [Accuracy Criteria](#accuracy-criteria)
+
+    2.4. [Tuning Process](#tuning-process)
+
+3. [Tuning Algorithms](#tuning-algorithms)
+
+    3.1. [Conservative Tuning](#conservative-tuning)
+
+    3.2. [Basic](#basic)
+
+    3.3. [MSE](#mse)
+
+    3.4. [MSE_V2](#mse_v2)
+
+    3.5. [HAWQ_V2](#hawq_v2)
+
+    3.6. [Bayesian](#bayesian)
+
+    3.7. [Exhaustive](#exhaustive)
+
+    3.8. [Random](#random)
+
+    3.9. [SigOpt](#sigopt)
+
+    3.10. [TPE](#tpe)
+
+ 4. [Customize a New Tuning Strategy](#customize-a-new-tuning-strategy)
 
 ## Introduction
 
 Intel® Neural Compressor aims to help users quickly deploy
-the low-precision inference solution on popular Deep Learning frameworks
-such as TensorFlow, PyTorch, and MxNet. Using built-in strategies, it
-automatically optimizes low-precision recipes for deep learning models to
-achieve optimal product objectives, such as inference performance and memory
-usage, with expected accuracy criteria. Currently, it supports `Basic`, `Bayesian`, `Exhaustive`, `MSE`, `Random`, `SigOpt` and `TPE` strategies. `Basic` is
-the default strategy.
+the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch, ONNX, and MXNet. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several strategies, including `O0`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `SigOpt`, `TPE`, etc are supported. By default, the `Basic` strategy is used for tuning.
 
 ## Strategy Design
-
-Each strategy generates the next quantization configuration according to its
-logic and the last quantization result. The function of strategies is shown
+Before tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse process and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
 below:
 
-![Tuning Strategy](./_static/imgs/strategy.png "Strategy Framework")
+![Tuning Strategy](./imgs/strategy.png "Strategy Framework")
 
-Strategies begin with an adaptor layer (Framework Adaptor) where the user
-passes a framework-specific model to initialize an instance of the
-`neural_compressor.Quantization() class`; strategies call the `self.adaptor.query_fw_capability(model)` to get the framework and
-model-specific quantization capabilities. From there, each strategy merges
-model-specific configurations in a `yaml` configuration file to filter some
-capability from the first step in order to generate the tuning space. Each
-strategy then generates the quantization config according to its location
-and logic with tuning strategy configurations from the `yaml` configuration
-file. All strategies finish the tuning processing when the `timeout` or `max_trails` is reached. The default value of `timeout` is 0; if reached, the
-tuning phase stops when the `accuracy` criteria is met.
+### Tuning Space
 
-## Configurations
+Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
+![Conv2D_PyTorch_Cap](./imgs/Conv2D_PyTorch_Cap.png "Conv2D PyTorch Capability")
 
-Detailed configuration templates can be found [here](../neural_compressor/template).
+To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_list` and `op_type_list` in `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.
 
-### Model-specific configurations
+### Exit Policy
+User can control the tuning process by setting the exit policy by specifying the `timeout`, and `max_trials` fields in the `TuningCriterion`.
 
-For model-specific configurations, users can set the quantization approach.
-For post-training static quantization, users can also set calibration and
-quantization-related parameters for model-wise and op-wise:
+```python
+from neural_compressor.config import TuningCriterion
 
-```yaml
-quantization:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
-  approach: post_training_static_quant               # optional. default value is post_training_static_quant.
-  recipes:
-    scale_propagation_max_pooling: True              # optional. default value is True.
-    scale_propagation_concat: True                   # optional. default value is True.
-    first_conv_or_matmul_quantization: True          # optional. default value is True.
-  calibration:
-    sampling_size: 1000, 2000                        # optional. default value is 100. used to set how many samples should be used in calibration.
-    dataloader:                                      # optional. if not specified, user need construct a q_dataloader in code for neural_compressor.Quantization.
-      dataset:
-        TFRecordDataset:
-          root: /path/to/tf_record
-      transform:
-        Resize:
-          size: 256
-        CenterCrop:
-          size: 224
-  model_wise:                                        # optional. tuning constraints on model-wise for advance user to reduce tuning space.
-    weight:
-      granularity: per_channel
-      scheme: asym
-      dtype: int8
-      algorithm: minmax
-    activation:
-      granularity: per_tensor
-      scheme: asym
-      dtype: int8, fp32
-      algorithm: minmax, kl
-  op_wise: {                                         # optional. tuning constraints on op-wise for advance user to reduce tuning space. 
-         'conv1': {
-           'activation':  {'dtype': ['uint8', 'fp32'], 'algorithm': ['minmax', 'kl'], 'scheme':['sym']},
-           'weight': {'dtype': ['int8', 'fp32'], 'algorithm': ['kl']}
-         },
-         'pool1': {
-           'activation': {'dtype': ['int8'], 'scheme': ['sym'], 'granularity': ['per_tensor'], 'algorithm': ['minmax', 'kl']},
-         },
-         'conv2': {
-           'activation':  {'dtype': ['fp32']},
-           'weight': {'dtype': ['fp32']}
-         }
-       }
+tuning_criterion=TuningCriterion(
+    timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+    max_trials=100, # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+    strategy="basic", # optional. name of the tuning strategy. 
+    strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.
+)
 ```
 
-### Strategy tuning part-related configurations
 
-In strategy tuning part-related configurations, users can choose a specific
-tuning strategy and then set the accuracy criterion and optimization
-objective for tuning. Users can also set the `stop` condition for the tuning
-by changing the `exit_policy`:
+### Accuracy Criteria
+User can set the accuracy criteria by specifying the `higher_is_better`, `criterion`, and `tolerable_loss` fields in the `AccuracyCriterion`.
 
-```yaml
-tuning:
-  strategy:
-    name: basic                                      # optional. default value is basic. other values are bayesian, mse.
-  accuracy_criterion:
-    relative:  0.01                                  # optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.
-  objective: performance                             # optional. objective with accuracy constraint guaranteed. default value is performance. other values are modelsize and footprint.
+``` python
+from neural_compressor.config import AccuracyCriterion
 
-  exit_policy:
-    timeout: 0                                       # optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.
-    max_trials: 100                                  # optional. max tune times. default value is 100. combine with timeout field to decide when to exit.
-    performance_only: False                          # optional. max tune times. default value is False which means only generate fully quantized model.
-  random_seed: 9527                                  # optional. random seed for deterministic tuning.
-  tensorboard: True                                  # optional. dump tensor distribution in evaluation phase for debug purpose. default value is False.
+accuracy_criterion = AccuracyCriterion(
+    higher_is_better=True,  # optional. 
+    criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
+    tolerable_loss=0.01,  # optional.
+)
 ```
 
-### Basic
+### Tuning Process 
+Once the `tuning space` was constructed, user can specify the tuning process by setting the `quant_level` field with `0` or `1` in the `PostTrainingQuantConfig`, or the `strategy` field with the strategy name in the `TuningCriterion`. If user specifies the `quant_level` with 0, it will execute the conservative tuning, the detail can be found [here](./tuning_strategies.md#conservative-tuning). When user selects `quant_level` with `1`, it will execute the tuning process according to the strategy name. By default, the value of `quant_level` is `1`. Please note that the priority of `quant_level` is higher than `strategy`, which means the `quant_level` should be set to `1` if user wants to specify the tuning process by strategy name. The design and usage of each tuning process are introduced in the following session.
+
+## Tuning Algorithms
+
+### Conservative Tuning
+
+#### Design
+The conservative tuning (`quant_level` = `0`) is designed for user who wants to keep the accuracy of the model after quantization. It starts with the original(`fp32`) model, and then quantize the OPs to lower precision OP type wisely and OP name wisely.
+#### Usage
+
+To use conservative tuning, the `quant_level` field should be set to `0` in `PostTrainingQuantConfig`.
+
+```python
+from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
+
+conf = PostTrainingQuantConfig(
+    quant_level=0,  # the quantization level.
+    tuning_criterion=TuningCriterion(
+        timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+        max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+    ),
+)
+```
+
+## Basic
+
+### Design
+
+The `Basic` strategy is designed for quantizing most models. There are three stages executed by `Basic` strategy sequentially, and the tuning process ends once the condition meets the exit policy. 
+
+- **Stage I**. OP Type Wise Tuning
+
+    In this stage, it tries to quantize the OPs as many as possible and traverse all OP type wise tuning configs. Note that,  the OP is initialized with different quantization modes according to the quantization approach.
+    
+    a. `post_training_static_quant`: Quantize all OPs support PTQ static.
+
+    b. `post_training_dynamic_quant`: Quantize all OPs support PTQ dynamic.
+    
+    c. `post_training_auto_quant`: Quantize all OPs support PTQ static or PTQ dynamic. For OPs supporting both PTQ static and PTQ dynamic, PTQ static will be tried first, and PTQ dynamic will be tried when none of the OP type wise tuning configs meet the accuracy loss criteria.
+
+- **Stage II**. Fallback OP One by One
+
+    In this stage, it performs high-precision OP (FP32, BF16 ...) fallbacks one by one based on the tuning config with the best result in the previous stage, and records the impact of each OP. 
+
+- **Stage III**. Fallback Multiple OPs Accumulated
+
+    In the final stage, it first sorted the OPs list according to the impact score in stage II, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
+
+### Usage
+
+`Basic` is the default strategy. It can be used by default with nothing changed in the `strategy` field of `TuningCriterion`. Classical settings are shown below:
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+
+conf = PostTrainingQuantConfig(
+    tuning_criterion=TuningCriterion(
+        strategy="basic"  # optional. name of tuning strategy. 
+    ),
+)
+```
+
+### MSE
 
 #### Design
 
-`Basic` strategy is designed for most models to do quantization. It includes
-three steps. First, `Basic` strategy tries all model-wise tuning configs to
-get the best quantized model. If none of the model-wise tuning configs meet
-the accuracy loss criteria, Basic applies the second step. In this step, it
-performs high-precision OP (`FP32`, `BF16` ...) fallbacks one-by-one based
-on the best model-wise tuning config, and records the impact of each OP on
-accuracy and then sorts accordingly. In the final step, Basic tries to
-incrementally fallback multiple OPs to high precision according to the
-sorted OP list that is generated in the second step until the accuracy
-goal is achieved.
+`MSE` and `Basic` strategies share similar ideas. The primary difference
+between the two strategies is the way sorted op lists generated in stage II. The `MSE` strategy needs to get the tensors for each OP of raw FP32
+models and the quantized model based on the best model-wise tuning
+configuration. It then calculates the MSE (Mean Squared Error) for each
+OP, sorts those OPs according to the MSE value, and performs
+the op-wise fallback in this order.
 
 #### Usage
 
-`Basic` is the default strategy. It can be used by default if you don't add
-the `strategy` field in your `yaml` configuration file. Classical settings in the configuration file are shown below:
+The usage of `MSE` is similar to `Basic`. To use `MSE` strategy, the `strategy` field of the `TuningCriterion` should be specified with `mse`.
 
-```yaml
-tuning:
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+
+conf = PostTrainingQuantConfig(
+    tuning_criterion=TuningCriterion(
+        strategy="mse" 
+    ),
+)
+```
+
+### MSE_V2
+
+#### Design
+
+`MSE_v2` is a strategy with a two stages fallback and revert fallback. In the fallback stage, it uses multi-batch data to score the op impact and then fallback the op with the highest score util found the quantized model meets accuracy criteria. In the revert fallback stage, it also scores the impact of fallback OPs in the previous stage and selects the op with the lowest score to revert the fallback until the quantized model not meets accuracy criteria.
+
+#### Usage
+To use the `MSE_V2` tuning strategy, the `strategy` field in the `TuningCriterion` should be specified with `mse_v2`. Also, the `confidence_batches` can be specified optionally inside the `strategy_kwargs` for the number of batches to score the op impact. Increasing `confidence_batches` will generally improve the accuracy of the scoring with more time spent in tuning process.
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+
+conf = PostTrainingQuantConfig(
+    tuning_criterion=TuningCriterion(
+        strategy="mse_v2",
+        strategy_kwargs={"confidence_batches": 2}  # optional. the number of batches to score the op impact.
+    ),
+)
+```
+
+### HAWQ_V2
+
+#### Design
+`HAWQ_V2` implements the [Hessian Aware trace-Weighted Quantization of Neural Networks](https://arxiv.org/abs/1911.03852). We made a small change to it by using the hessian trace to score the op impact and then fallback the OPs according to the scoring result.
+
+#### Usage
+To use the `HAWQ_V2` tuning strategy, the `strategy` field in the `TuningCriterion` should be specified with `hawq_v2`, and the loss function for calculating the hessian trace of model should be provided. The loss function should be set in the field of `hawq_v2_loss` in the `strategy_kwargs`.
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+
+
+def model_loss(output, target, criterion):
+    return criterion(output, target)
+
+
+conf = PostTrainingQuantConfig(
+    tuning_criterion=TuningCriterion(
+        strategy="hawq_v2",
+        strategy_kwargs={"hawq_v2_loss": model_loss}  # required. the loss function for calculating the hessian trace.
+    ),
+)
 ```
 
 ### Bayesian
@@ -146,66 +225,111 @@ optimization](https://github.com/fmfn/BayesianOptimization) package and
 changed it to a discrete version that complied with the strategy standard of
 Intel® Neural Compressor. It uses [Gaussian processes](https://en.wikipedia.org/wiki/Neural_network_Gaussian_process) to define
 the prior/posterior distribution over the black-box function with the tuning
-history, and then finds the tuning configuration that maximizes the expected
-improvement. For now, `Bayesian` just focus on op-wise quantize configs tuning 
-without fallback phase. In order to obtain a quantized model with good accuracy 
-and better performance in a short time, we don't add datatype as a tuning 
+history and then finds the tuning configuration that maximizes the expected
+improvement. For now, `Bayesian` just focus on op-wise quantization configs tuning 
+without the fallback phase. In order to obtain a quantized model with good accuracy 
+and better performance in a short time. We don't add datatype as a tuning 
 parameter into `Bayesian`.
 
 #### Usage
 
-For the `Bayesian` strategy, set the `timeout` or `max_trials` to a non-zero
-value as shown in the below example. This is because the param space for `bayesian` can be very small so the accuracy goal might not be reached which
-can make the tuning never end. Additionally, if the log level is set to `debug` by `LOGLEVEL=DEBUG` in the environment, the message `[DEBUG] Tuning config was evaluated, skip!` will print endlessly. If the timeout is changed from 0 to an integer, `Bayesian` ends after the timeout is reached.
+For the `Bayesian` strategy, it is recommended to set `timeout` or `max_trials` to a non-zero
+value as shown in below example, because the param space for `bayesian` can be very small and the accuracy goal might not be reached, which can make the tuning end never. Additionally, if the log level is set to `debug` by `LOGLEVEL=DEBUG` in the environment variable, the message `[DEBUG] Tuning config was evaluated, skip!` will print endlessly. If the `timeout` is changed from 0 to an integer, `Bayesian` ends after the timeout is reached.
 
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
-```yaml
-tuning:
-  strategy:
-    name: bayesian
-  accuracy_criterion:
-    relative:  0.01
-  objective: performance
+conf = PostTrainingQuantConfig(
+    tuning_criterion=TuningCriterion(
+        timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+        max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+        strategy="bayesian"
+    ),
+)
 
-  exit_policy:
-    timeout: 0
-    max_trials: 100
 ```
 
-### MSE
+### Exhaustive
 
 #### Design
 
-`MSE` and `Basic` strategies share similar ideas. The primary difference
-between the two strategies is the way sorted op lists are generated in step
-2. The `MSE` strategy needs to get the tensors for each operator of raw FP32
-models and the quantized model based on the best model-wise tuning
-configuration. It then calculates the MSE (Mean Squared Error) for each
-operator, sorts those operators according to the MSE value, and performs
-the op-wise fallback in this order.
+The `Exhaustive` strategy is used to sequentially traverse all possible tuning
+configurations in a tuning space. From the perspective of the impact on
+performance, we currently only traverse all possible quantization tuning
+configs. Same reason as `Bayesian`, fallback datatypes are not included for now.
 
 #### Usage
 
-`MSE` is similar to `Basic` but the specific strategy name of `mse` must be
-included.
+`Exhaustive` usage is similar to `basic`, with `exhaustive` specified to `strategy` field in the `TuningCriterion`.
 
-```yaml
-tuning:
-  strategy:
-    name: mse
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+
+conf = PostTrainingQuantConfig(
+    tuning_criterion=TuningCriterion(
+        strategy="exhaustive",
+    ),
+)
 ```
+
+### Random
+
+#### Design
+
+`Random` strategy is used to randomly choose tuning configurations from the
+tuning space. As with the `Exhaustive` strategy, it also only considers quantization
+tuning configs to generate a better-performance quantized model.
+
+#### Usage
+
+`Random` usage is similar to `basic`, with `random` specified to `strategy` field in the `TuningCriterion`.
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+
+conf = PostTrainingQuantConfig(
+    tuning_criterion=TuningCriterion(
+        strategy="random",
+    ),
+)
+```
+
+
+### SigOpt
+
+#### Design
+
+`SigOpt` strategy is to use [SigOpt Optimization Loop](https://app.sigopt.com/docs/overview/optimization) method to accelerate and visualize the traversal of the tuning configurations from the tuning space. The metrics add accuracy as a constraint and optimize for latency to improve performance. [SigOpt Projects](https://app.sigopt.com/) can show the result of each tuning experiment.
+
+#### Usage
+
+Compared to `Basic`, `sigopt_api_token` and `sigopt_project_id` are necessary for `SigOpt`.
+For details, [how to use sigopt strategy in neural_compressor](./sigopt_strategy.md) is available.
+
+Note that the `sigopt_api_token`, `sigopt_project_id`, and `sigopt_experiment_name` should be set inside the `strategy_kwargs`.
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+
+conf = PostTrainingQuantConfig(
+    tuning_criterion=TuningCriterion(
+        strategy="sigopt",
+        strategy_kwargs={
+            "sigopt_api_token": "YOUR-ACCOUNT-API-TOKEN",
+            "sigopt_project_id": "PROJECT-ID",
+            "sigopt_experiment_name": "nc-tune",
+        },
+    ),
+)
+```
+
 
 ### TPE
 
 #### Design
 
-`TPE` uses sequential model-based optimization methods (SMBOs). **Sequential
-** refers to running trials one after another and selecting a better
+`TPE` uses sequential model-based optimization methods (SMBOs). **Sequential** refers to running trials one after another and selecting a better
 **hyperparameter** to evaluate based on previous trials. A hyperparameter is
 a parameter whose value is set before the learning process begins; it
 controls the learning process. SMBO apples Bayesian reasoning in that it
@@ -219,125 +343,48 @@ A surrogate model and selection criteria can be built in a variety of ways.
 `TPE` builds a surrogate model by applying Bayesian reasoning. The TPE
 algorithm consists of the following steps:
 
-1. Define a domain of hyperparameter search space.
-2. Create an objective function which takes in hyperparameters and outputs a
+- Define a domain of hyperparameter search space.
+- Create an objective function that takes in hyperparameters and outputs a
 score (e.g., loss, RMSE, cross-entropy) that we want to minimize.
-3. Collect a few observations (score) using a randomly selected set of
+- Collect a few observations (score) using a randomly selected set of
 hyperparameters.
-4. Sort the collected observations by score and divide them into two groups
+- Sort the collected observations by score and divide them into two groups
 based on some quantile. The first group (x1) contains observations that
-gives the best scores and the second one (x2) contains all other
+give the best scores and the second one (x2) contains all other
 observations.
-5. Model the two densities l(x1) and g(x2) using Parzen Estimators (also known as kernel density estimators) which are a simple average of kernels centered on existing data points.
-6. Draw sample hyperparameters from l(x1). Evaluate them in terms of l(x1)/g(x2), and return the set that yields the minimum value under l(x1)/g(x1) that
+- Model the two densities l(x1) and g(x2) using Parzen Estimators (also known as kernel density estimators), which are a simple average of kernels centered on existing data points.
+- Draw sample hyperparameters from l(x1). Evaluate them in terms of l(x1)/g(x2), and return the set that yields the minimum value under l(x1)/g(x1) that
 corresponds to the greatest expected improvement. Evaluate these
 hyperparameters on the objective function.
-7. Update the observation list in step 3.
+- Update the observation list in step 3.
 8. Repeat steps 4-7 with a fixed number of trials.
 
->Note: TPE requires many iterations in order to reach an optimal solution;
-we recommend running at least 200 iterations. Because every iteration
-requires evaluation of a generated model--which means accuracy measurements
-on a dataset and latency measurements using a benchmark--this process can
-take from 24 hours to few days to complete, depending on the model.
+>Note: TPE requires many iterations in order to reach an optimal solution.
+It is recommended to run at least 200 iterations, because every iteration
+requires evaluation of a generated model, which means accuracy measurements
+on a dataset and latency measurements using a benchmark. This process may
+take from 24 hours to a few days to complete, depending on the model.
 
 #### Usage
 
-`TPE` usage is similar to `Bayesian`:
+`TPE` usage is similar to `basic` with `tpe` specified to `strategy` field in the `TuningCriterion`.
 
-```yaml
-tuning:
-  strategy:
-    name: bayesian
-  accuracy_criterion:
-    relative:  0.01
-  objective: performance
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
 
-  exit_policy:
-    timeout: 0
-    max_trials: 100
+conf = PostTrainingQuantConfig(
+    tuning_criterion=TuningCriterion(
+        strategy="tpe"
+    )
+)
 ```
 
-### Exhaustive
-
-#### Design
-
-`Exhaustive` strategy is used to sequentially traverse all possible tuning
-configurations in a tuning space. From the perspective of the impact on
-performance, we currently only traverse all possible quantize tuning
-configs. Same reason as `Bayesian`, fallback datatypes are not included for now.
-
-#### Usage
-
-`Exhaustive` usage is similar to `Basic`:
-
-```yaml
-tuning:
-  strategy:
-    name: exhaustive
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-```
-
-### Random
-
-#### Design
-
-`Random` strategy is used to randomly choose tuning configurations from the
-tuning space. As with `Exhaustive` strategy, it also only considers quantize
-tuning configs to generate a better-performance quantized model.
-
-#### Usage
-
-`Random` usage is similar to `Basic`:
-
-```yaml
-tuning:
-  strategy:
-    name: random 
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-
-```
-### SigOpt
-
-#### Design
-
-`SigOpt` strategy is to use [SigOpt Optimization Loop](https://app.sigopt.com/docs/overview/optimization) method to accelerate and visualize the traversal of the tuning configurations from the tuning space. The metrics add accuracy as constraint and optimize for latency to improve the performance. [SigOpt Projects](https://app.sigopt.com/) can show the result of each tuning experiment.
-
-#### Usage
-
-Compare to `Basic`, `sigopt_api_token` and `sigopt_project_id` is necessary for `SigOpt`.`sigopt_experiment_name` is optional, the default name is `nc-tune`.
-
-```yaml
-tuning:
-  strategy:
-    name: sigopt
-    sigopt_api_token: YOUR-ACCOUNT-API-TOKEN
-    sigopt_project_id: PROJECT-ID
-    sigopt_experiment_name: nc-tune
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-
-```
-
-For details, [how to use sigopt strategy in neural_compressor](./sigopt_strategy.md) is available.
 
 ## Customize a New Tuning Strategy
 
-Intel® Neural Compressor supports new strategy extension by implementing a subclass of `TuneStrategy` class in neural_compressor.strategy package
- and registering this strategy by `strategy_registry` decorator.
+Intel® Neural Compressor supports new strategy extension by implementing a sub-class of the `TuneStrategy` class in neural_compressor.strategy package and registering it by the `strategy_registry` decorator.
 
-for example, user can implement a `Abc` strategy like below:
+For example, user can implement an `Abc` strategy like below:
 
 ```python
 @strategy_registry
@@ -347,12 +394,18 @@ class AbcTuneStrategy(TuneStrategy):
         ...
 
     def next_tune_cfg(self):
+        # generate the next tuning config
         ...
+    
+    def traverse(self):
+        for tune_cfg in self.next_tune_cfg():
+            # do quantization
+            ...
 
 ```
 
-The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse
- all the tuning space till a quantization configuration meets pre-defined accuracy criterion.
+The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.
 
-If the traverse behavior of `TuneStrategy` base class does not meet new strategy requirement, it could re-implement `traverse` function with self own logic.
-An example like this is under [TPE Strategy](../neural_compressor/strategy/strategy.py).
+The `traverse` function can be overridden optionally if the traverse process required by the new strategy is different from the one `TuneStrategy` base class implemented.
+
+An example of customizing a new tuning strategy can be reached at [TPE Strategy](../../neural_compressor/contrib/strategy/tpe.py).

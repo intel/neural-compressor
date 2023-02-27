@@ -14,27 +14,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Translate pre-processed data with a trained model.
-"""
+"""Translate pre-processed data with a trained model."""
 import time
 import warnings
 
 import numpy as np
-import torch
-import torchprofile
-from fairseq import options, progress_bar, tasks, utils
-from fairseq.data.encoders.moses_tokenizer import MosesTokenizer
-from fairseq.meters import StopwatchMeter
 
-from neural_compressor.utils import logger
+from neural_compressor.utils.utility import logger, LazyImport
 
 from .transformer_supernetwork import TransformerSuperNetwork
+
+torch = LazyImport('torch')
+torchprofile = LazyImport('torchprofile')
+fairseq = LazyImport('fairseq')
 
 warnings.filterwarnings("ignore")
 
 
 def compute_bleu(config, dataset_path, checkpoint_path):
+    """Measure BLEU score of the Transformer-based model."""
+    options = fairseq.options
+    utils = fairseq.utils
+    tasks = fairseq.tasks
+    MosesTokenizer = fairseq.data.encoders.moses_tokenizer.MosesTokenizer
+    StopwatchMeter = fairseq.meters.StopwatchMeter
+    progress_bar = fairseq.progress_bar
 
     parser = options.get_generation_parser()
 
@@ -137,6 +141,11 @@ def compute_bleu(config, dataset_path, checkpoint_path):
 
 
 def compute_latency(config, dataset_path, batch_size, get_model_parameters=False):
+    """Measure latency of the Transformer-based model."""
+    options = fairseq.options
+    utils = fairseq.utils
+    tasks = fairseq.tasks
+
     parser = options.get_generation_parser()
 
     args = options.parse_args_and_arch(parser, [dataset_path])
@@ -229,7 +238,9 @@ def compute_latency(config, dataset_path, batch_size, get_model_parameters=False
         encoder_latencies = encoder_latencies[int(
             args.latiter * 0.1): -max(1, int(args.latiter * 0.1))]
         logger.info(
-            f'[DyNAS-T] Encoder latency for dataset generation: Mean: {np.mean(encoder_latencies)} ms; Std: {np.std(encoder_latencies)} ms')
+            f'[DyNAS-T] Encoder latency for dataset generation: Mean: '
+            '{np.mean(encoder_latencies)} ms; Std: {np.std(encoder_latencies)} ms'
+        )
 
         encoder_out_test_with_beam = model.encoder.reorder_encoder_out(
             encoder_out_test, new_order)
@@ -269,7 +280,9 @@ def compute_latency(config, dataset_path, batch_size, get_model_parameters=False
             args.latiter * 0.1): -max(1, int(args.latiter * 0.1))]
 
     logger.info(
-        f'[DyNAS-T] Decoder latency for dataset generation: Mean: {np.mean(decoder_latencies)} ms; \t Std: {np.std(decoder_latencies)} ms')
+        f'[DyNAS-T] Decoder latency for dataset generation: Mean: '
+        '{np.mean(decoder_latencies)} ms; \t Std: {np.std(decoder_latencies)} ms'
+    )
 
     lat_mean = np.mean(encoder_latencies)+np.mean(decoder_latencies)
     lat_std = np.std(encoder_latencies)+np.std(decoder_latencies)
@@ -277,6 +290,11 @@ def compute_latency(config, dataset_path, batch_size, get_model_parameters=False
 
 
 def compute_macs(config, dataset_path):
+    """Calculate MACs for Transformer-based models."""
+    options = fairseq.options
+    utils = fairseq.utils
+    tasks = fairseq.tasks
+
     parser = options.get_generation_parser()
 
     args = options.parse_args_and_arch(parser,[dataset_path])

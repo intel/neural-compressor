@@ -61,19 +61,19 @@ class TestOptimizationLevel(unittest.TestCase):
         logger.info("*** Test: optimization level 0 with tensorflow model.")
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.data import DATASETS, DATALOADERS
+        from neural_compressor.data import Datasets, DATALOADERS
 
         # fake evaluation function
         def _fake_eval(model):
             return 1
 
         # dataset and dataloader
-        dataset = DATASETS("tensorflow")["dummy"](((100, 3, 3, 1)))
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS["tensorflow"](dataset)
 
         # tuning and accuracy criterion
-        optimization_level = 0
-        conf = PostTrainingQuantConfig(approach="static", backend="tensorflow", optimization_level=0)
+        quant_level = 0
+        conf = PostTrainingQuantConfig(quant_level=0)
 
         # fit
         q_model = fit(model=self.constant_graph,
@@ -87,7 +87,7 @@ class TestOptimizationLevel(unittest.TestCase):
         logger.info("*** Test: optimization level 1 with tensorflow model.")
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.data import DATASETS, DATALOADERS
+        from neural_compressor.data import Datasets, DATALOADERS
 
         # fake evaluation function
         self._fake_acc = 10
@@ -96,12 +96,11 @@ class TestOptimizationLevel(unittest.TestCase):
             return self._fake_acc
 
         # dataset and dataloader
-        dataset = DATASETS("tensorflow")["dummy"](((100, 3, 3, 1)))
+        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS["tensorflow"](dataset)
 
         # tuning and accuracy criterion
-        optimization_level = 1
-        conf = PostTrainingQuantConfig(approach="static", backend="tensorflow", optimization_level=optimization_level)
+        conf = PostTrainingQuantConfig()
 
         # fit
         q_model = fit(model=self.constant_graph,
@@ -115,7 +114,7 @@ class TestOptimizationLevel(unittest.TestCase):
         logger.info("*** Test: optimization level 0 with pytorch model.")
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.data import DATASETS, DATALOADERS
+        from neural_compressor.data import Datasets, DATALOADERS
         import torchvision
 
         # model
@@ -132,12 +131,12 @@ class TestOptimizationLevel(unittest.TestCase):
             return acc_lst[self.test_pt_opt_level_0_index]
 
         # dataset and dataloader
-        dataset = DATASETS("pytorch")["dummy"](((100, 3, 3, 1)))
+        dataset = Datasets("pytorch")["dummy"](((100, 3, 3, 1)))
         dataloader = DATALOADERS["pytorch"](dataset)
 
         # tuning and accuracy criterion
-        optimization_level = 0
-        conf = PostTrainingQuantConfig(approach="static", backend="pytorch", optimization_level=optimization_level)
+        quant_level = 0
+        conf = PostTrainingQuantConfig(quant_level=quant_level)
 
         # fit
         q_model = fit(model=resnet18,

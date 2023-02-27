@@ -14,9 +14,6 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
-      ;;
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
@@ -45,7 +42,6 @@ function run_tuning {
             --accuracy_only \
             --batch_size 1000 \
             --output_graph ${output_model} \
-            --config wide_deep_large_ds.yaml \
             --tune
 }
 

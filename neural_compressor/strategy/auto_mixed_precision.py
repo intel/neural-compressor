@@ -15,78 +15,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The auto-mixed precision strategy."""
+
 import copy
 import numpy as np
 from collections import OrderedDict
 from .strategy import strategy_registry, TuneStrategy
 from ..utils import logger
 
-from .st_utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
-from .st_utils.tuning_structs import OpTuningConfig
+from .utils.tuning_sampler import OpTypeWiseTuningSampler, FallbackTuningSampler
+from .utils.tuning_structs import OpTuningConfig
 
 
 @strategy_registry
 class AutoMixedPrecisionTuneStrategy(TuneStrategy):
-    """The auto-mixed precision strategy which tunes the mixed precision model with below order.
-
-    1. modelwise tuning for all tunable ops.
-    2. fallback tuning from bottom to top to decide the priority of which op has biggest impact
-       on accuracy.
-    3. incremental fallback tuning by fallbacking multiple ops with the order got from #2.
-
-    Args:
-        model (object):                        The FP32 model specified for low precision tuning.
-        conf (Class):                          The Conf class instance initialized from user yaml
-                                               config file.
-        eval_dataloader (generator, optional): Data loader for evaluation. It is iterable
-                                               and should yield a tuple of (input, label).
-                                               The input could be a object, list, tuple or dict,
-                                               depending on user implementation, as well as it can
-                                               be taken as model input. The label should be able
-                                               to take as input of supported metrics. If this
-                                               parameter is not None, user needs to specify
-                                               pre-defined evaluation metrics through configuration
-                                               file and should set "eval_func" parameter as None.
-                                               Tuner will combine model, eval_dataloader and
-                                               pre-defined metrics to run evaluation process.
-        eval_func (function, optional):        The evaluation function provided by user.
-                                               This function takes model as parameter, and
-                                               evaluation dataset and metrics should be
-                                               encapsulated in this function implementation and
-                                               outputs a higher-is-better accuracy scalar value.
-
-                                               The pseudo code should be something like:
-
-                                               def eval_func(model):
-                                                    input, label = dataloader()
-                                                    output = model(input)
-                                                    accuracy = metric(output, label)
-                                                    return accuracy
-        dicts (dict, optional):                The dict containing resume information.
-                                               Defaults to None.
-
-    """
-
-    def __init__(self, model, conf, q_dataloader=None, q_func=None,
-                eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None):
-        super().__init__(
-            model,
-            conf,
-            q_dataloader,
-            q_func,
-            eval_dataloader,
-            eval_func,
-            dicts,
-            q_hooks)
-
+    """Tuning strategy for auto mixed precision."""
+    
     def next_tune_cfg(self):
+        """Generate the next tuning config.
+        
+        Tuning configurations are generated according to the following rules:
+        1. First, it tries to convert all ops into target date type as many as possible.
+        2. If the accuracy does  not meets the requirements, it starts the stage of fallback 
+            which converts ops into higher precision.
+        
+        Yields:
+            tune_config (dict): A dict containing the tuning configuration.
+        """
         from copy import deepcopy
 
         # filter quantization dtype
         # TODO align with the old mixed-precison
-        target_dtype = self.cfg.graph_optimization.precisions if self.cfg.graph_optimization \
+        target_dtypes = self.cfg.graph_optimization.precisions if self.cfg.graph_optimization \
             else self.cfg.mixed_precision.precisions
-
+        target_dtypes = list(set(target_dtypes) - set(['fp32']))
         tuning_space = self.tuning_space
         initial_op_tuning_cfg = {}
         for item in tuning_space.root_item.options:
@@ -94,19 +56,24 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 op_name, op_type = item.name
                 initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
 
+        if not target_dtypes:
+            target_dtypes = ['bf16']
         # step1. target_dtype AMAP, collect the ops that support target_dtype
-        if not target_dtype:
-            target_dtype = 'bf16'
-        else:
-            target_dtype = target_dtype[0]
-        bf16_items = tuning_space.query_items_by_quant_mode(target_dtype)
-        bf16_items_name = [item.name for item in bf16_items]
-        op_tuning_cfg = deepcopy(initial_op_tuning_cfg)
-        for op_name_type in bf16_items_name:
-            op_tuning_cfg[op_name_type] = OpTuningConfig(op_name_type[0], op_name_type[1], target_dtype, tuning_space)
-        calib_sampling_size = 1
-        op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-        yield op_tuning_cfg
+        bf16_items_name = []
+        op_tuning_cfg = {}
+        for idx, target_dtype in enumerate(target_dtypes):
+            bf16_items = tuning_space.query_items_by_quant_mode(target_dtype)
+            if len(bf16_items) == 0 and \
+                not (idx == len(target_dtypes) - 1 and len(bf16_items_name) == 0):
+                continue
+            bf16_items_name = [item.name for item in bf16_items]
+            op_tuning_cfg = deepcopy(initial_op_tuning_cfg)
+            for op_name_type in bf16_items_name:
+                op_tuning_cfg[op_name_type] = \
+                    OpTuningConfig(op_name_type[0], op_name_type[1], target_dtype, tuning_space)
+            calib_sampling_size = 1
+            op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+            yield op_tuning_cfg
 
         # step2. fallback
         target_dtype = 'fp32'
@@ -141,39 +108,9 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 yield op_tuning_cfg
 
     def traverse(self):
+        """Traverse the tuning space according to auto-mixed precision strategy."""
         # get fp32 model baseline
-        if self.baseline is None and (self.eval_dataloader or self.eval_func):
-            logger.info("Get FP32 model baseline.")
-            self.baseline = self._evaluate(self.model)
-            # record the FP32 baseline
-            self._add_tuning_history()
-
-            if self.baseline:
-                self.tune_data['baseline'] = self.baseline[0] if \
-                    isinstance(self.baseline[0], list) else [self.baseline[0]]
-
-                for name, data in zip(self.metric_name, self.tune_data['baseline']):
-                    self.tune_data[name] = [data]
-
-                if self.metric_weight:
-                    self.tune_data['Weighted accuracy'] = \
-                        [np.mean(np.array(self.tune_data['baseline']) * self.metric_weight)]
-                    self.tune_data['baseline'] = self.tune_data['Weighted accuracy']
-
-                baseline_msg = '[Accuracy:' + \
-                    ''.join([' {:.4f}'.format(i) for i in self.tune_data['baseline']]) + \
-                    ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
-                    self.objectives.representation, self.baseline[1]) if x != 'Accuracy']) + ']'
-            else: # pragma: no cover
-                if self.metric_weight:
-                    self.tune_data['Weighted accuracy'] = ['n/a']
-                self.tune_data['baseline'] = ['n/a']
-
-                for name, data in zip(self.metric_name, self.tune_data['baseline']):
-                    self.tune_data[name] = ['n/a']
-                baseline_msg = 'n/a'
-
-            logger.info("FP32 baseline is: {}".format(baseline_msg))
+        self._eval_baseline()
 
         trials_count = 0
         for op_tuning_cfg in self.next_tune_cfg():
@@ -192,6 +129,12 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             self.last_qmodel = self.adaptor.quantize(
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)
             assert self.last_qmodel
+            # Return the last quantized model as a result. if performance only.
+            if self.cfg.tuning.exit_policy.performance_only:
+                self.best_qmodel = self.last_qmodel
+                self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
+                return
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
             if self.eval_dataloader or self.eval_func:
                 q_config = copy.deepcopy(self.last_qmodel.q_config)
                 self.last_tune_result = self._evaluate(self.last_qmodel)

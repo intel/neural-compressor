@@ -14,22 +14,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse small ops to Gelu Graph Rewriter."""
 
 import tensorflow as tf
 from ..graph_base import GraphRewriterBase
 from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 from tensorflow.python.framework import dtypes
-from neural_compressor.adaptor.tf_utils.util import version1_eq_version2
+from neural_compressor.adaptor.tf_utils.util import TF_SPR_BASE_VERSIONS
 
 
 class FuseGeluOptimizer(GraphRewriterBase): # pragma: no cover
-    """Fuse Sqrt + RealDiv + Erf + AddV2 + Mul + Mul into Gelu op.
-    """
+    """Fuse Sqrt + RealDiv + Erf + AddV2 + Mul + Mul into Gelu op."""
 
     def do_transformation(self):
+        """Execute the fusion from small ops to Gelu."""
         if not (tf.version.VERSION in ('1.15.0-up2','1.15.0-up3') or \
-           version1_eq_version2(tf.version.VERSION, '2.11.0202242')):
+           tf.version.VERSION in TF_SPR_BASE_VERSIONS):
             return self.model
 
         cur_graph = GraphAnalyzer()

@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Initialize the DATASETS class."""
+"""Initialize the Datasets class."""
 
 import numpy as np
 from neural_compressor.utils.utility import LazyImport

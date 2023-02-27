@@ -62,7 +62,7 @@ class DummyDataset(IterableDataset):
             filter (Filter objects, default=None): Filter out examples according to specific conditions.
         """
         self.dtype_map = {'float32':np.float32, 'float16':np.float16, 'uint8':np.uint8, \
-                     'int8':np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':np.bool}
+                     'int8':np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':bool}
 
         np.random.seed(9527)
         self.transform = transform
@@ -87,14 +87,14 @@ class DummyDataset(IterableDataset):
                 all(isinstance(elem, float) for elem in high),\
                 'high value list length should same with label dim + input_dim'
         else:
-            self.high = (high * np.ones(self.total_dim)).astype(np.float)
+            self.high = (high * np.ones(self.total_dim)).astype(np.float32)
 
         if isinstance(low, list):
             assert len(low) == self.total_dim and \
                 all(isinstance(elem, float) for elem in low), \
                 'low value list length should same with label dim + input_dim'
         else:
-            self.low = (low * np.ones(self.total_dim)).astype(np.float)
+            self.low = (low * np.ones(self.total_dim)).astype(np.float32)
 
         if isinstance(dtype, list):
             assert len(dtype) == self.total_dim and \
@@ -179,7 +179,7 @@ class SparseDummyDataset(IterableDataset):
             filter (Filter objects, default=None): Filter out examples according to specific conditions.
         """
         self.dtype_map = {'float32':np.float32, 'float16':np.float16, 'uint8':np.uint8, \
-                     'int8':np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':np.bool}
+                     'int8':np.int8, 'int32':np.int32, 'int64':np.int64, 'bool':bool}
 
         np.random.seed(9527)
         self.transform = transform
@@ -212,7 +212,7 @@ class SparseDummyDataset(IterableDataset):
                 all(isinstance(elem, float) for elem in sparse_ratio),\
                 'sparse_ratio list length should same with input_dim'
         else:
-            self.sparse_ratio = (sparse_ratio * np.ones(self.input_dim)).astype(np.float)
+            self.sparse_ratio = (sparse_ratio * np.ones(self.input_dim)).astype(np.float32)
         assert all([0 <= i <= 1 for i in self.sparse_ratio]), 'sparse_ratio should be in [0,1]'
 
         if isinstance(high, list):
@@ -220,14 +220,14 @@ class SparseDummyDataset(IterableDataset):
                 all(isinstance(elem, float) for elem in high),\
                 'high value list length should same with label dim + input_dim'
         else:
-            self.high = (high * np.ones(self.total_dim)).astype(np.float)
+            self.high = (high * np.ones(self.total_dim)).astype(np.float32)
 
         if isinstance(low, list):
             assert len(low) == self.total_dim and \
                 all(isinstance(elem, float) for elem in low), \
                 'low value list length should same with label dim + input_dim'
         else:
-            self.low = (low * np.ones(self.total_dim)).astype(np.float)
+            self.low = (low * np.ones(self.total_dim)).astype(np.float32)
 
         if isinstance(dtype, list):
             assert len(dtype) == self.total_dim and \

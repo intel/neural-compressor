@@ -30,8 +30,8 @@ from fvcore.nn import FlopCountAnalysis
 from neural_compressor.experimental.nas.dynast.dynas_manager import \
     ParameterManager
 from neural_compressor.experimental.nas.dynast.dynas_predictor import Predictor
-from neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface import (
-    compute_bleu, compute_latency, compute_macs)
+# from neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface import (
+#     compute_bleu, compute_latency, compute_macs)
 from neural_compressor.utils.utility import LazyImport, logger
 from ofa.imagenet_classification.data_providers.imagenet import \
     ImagenetDataProvider
@@ -41,6 +41,9 @@ from ofa.tutorial.flops_table import rm_bn_from_net
 
 torch = LazyImport('torch')
 torchvision = LazyImport('torchvision')
+transformer_interface = LazyImport(
+    'neural_compressor.experimental.nas.dynast.supernetwork.machine_translation.transformer_interface'
+)
 
 
 def get_macs(
@@ -177,6 +180,7 @@ class OFARunner(Runner):
         latency_predictor: Predictor,
         datasetpath: str,
         batch_size: int,
+        num_workers: int = 20,
         **kwargs,
     ) -> None:
         """Initialize the attributes."""
@@ -188,7 +192,7 @@ class OFARunner(Runner):
         self.test_size = None
         ImagenetDataProvider.DEFAULT_PATH = datasetpath
         self.ofa_network = ofa.model_zoo.ofa_net(supernet, pretrained=True)
-        self.run_config = ImagenetRunConfig(test_batch_size=64, n_worker=20)
+        self.run_config = ImagenetRunConfig(test_batch_size=64, n_worker=num_workers)
         self.batch_size = batch_size
 
     def estimate_accuracy_top1(
@@ -336,7 +340,7 @@ class OFARunner(Runner):
         return self.subnet
 
 
-class TransformerLTRunner(Runner):
+class TransformerLTRunner(Runner):  #noqa: D101
 
     def __init__(
         self,
@@ -348,7 +352,7 @@ class TransformerLTRunner(Runner):
         batch_size: int,
         checkpoint_path: str,
         **kwargs,
-    ) -> None:
+    ) -> None:  #noqa: D107
         self.supernet = supernet
         self.acc_predictor = acc_predictor
         self.macs_predictor = macs_predictor
@@ -362,30 +366,30 @@ class TransformerLTRunner(Runner):
     def estimate_accuracy_bleu(
         self,
         subnet_cfg: dict,
-    ) -> float:
+    ) -> float:  #noqa: D102
         top1 = self.acc_predictor.predict(subnet_cfg)
         return top1
 
     def estimate_macs(
         self,
         subnet_cfg: dict,
-    ) -> int:
+    ) -> int:  #noqa: D102
         macs = self.macs_predictor.predict(subnet_cfg)
         return macs
 
     def estimate_latency(
         self,
         subnet_cfg: dict,
-    ) -> float:
+    ) -> float:  #noqa: D102
         latency = self.latency_predictor.predict(subnet_cfg)
         return latency
 
     def validate_bleu(
         self,
         subnet_cfg: dict,
-    ) -> float:  # pragma: no cover
+    ) -> float:    #noqa: D102
 
-        bleu = compute_bleu(subnet_cfg, self.dataset_path,
+        bleu = transformer_interface.compute_bleu(subnet_cfg, self.dataset_path,
                             self.checkpoint_path)
         return bleu
 
@@ -393,14 +397,14 @@ class TransformerLTRunner(Runner):
         self,
         subnet_cfg: dict,
     ) -> float:
-        """Measure Torch model's FLOPs/MACs as per FVCore calculation
+        """Measure Torch model's FLOPs/MACs as per FVCore calculation.
+
         Args:
             subnet_cfg: sub-network Torch model
         Returns:
             `macs`
         """
-
-        macs = compute_macs(subnet_cfg, self.dataset_path)
+        macs = transformer_interface.compute_macs(subnet_cfg, self.dataset_path)
         logger.info('[DyNAS-T] Model\'s macs: {}'.format(macs))
 
         return macs
@@ -411,13 +415,13 @@ class TransformerLTRunner(Runner):
         subnet_cfg: dict,
     ) -> Tuple[float, float]:
         """Measure model's latency.
+
         Args:
             subnet_cfg: sub-network Torch model
         Returns:
             mean latency; std latency
         """
-
-        latency_mean, latency_std = compute_latency(
+        latency_mean, latency_std = transformer_interface.compute_latency(
             subnet_cfg, self.dataset_path, self.batch_size)
         logger.info(
             '[DyNAS-T] Model\'s latency: {} +/- {}'.format(latency_mean, latency_std))
@@ -610,7 +614,7 @@ class EvaluationInterfaceMobileNetV3(EvaluationInterface):
             return sample, macs, -top1
 
 
-class EvaluationInterfaceTransformerLT(EvaluationInterface):
+class EvaluationInterfaceTransformerLT(EvaluationInterface):  #noqa: D101
     def __init__(
         self,
         evaluator: Runner,
@@ -618,13 +622,13 @@ class EvaluationInterfaceTransformerLT(EvaluationInterface):
         metrics=['acc', 'macs'],
         predictor_mode=False,
         csv_path=None,
-    ) -> None:
+    ) -> None:  #noqa: D107
         super().__init__(evaluator, manager, metrics, predictor_mode, csv_path)
 
     def eval_subnet(
         self,
         x: list,
-    ) -> Tuple[dict, float, float]:
+    ) -> Tuple[dict, float, float]:  #noqa: D102
         # PyMoo vector to Elastic Parameter Mapping
         param_dict = self.manager.translate2param(x)
 
@@ -678,7 +682,7 @@ class EvaluationInterfaceTransformerLT(EvaluationInterface):
         else:
             return sample, macs, -bleu
 
-    def clear_csv(self) -> None:
+    def clear_csv(self) -> None:  #noqa: D102
         if self.csv_path:
             f = open(self.csv_path, "w")
             writer = csv.writer(f)
@@ -726,6 +730,7 @@ class TorchVisionReference:
         dataset_path (str): The path to the dataset.
         batch_size (int): Batch size of the input.
         input_size (int): Input image's width and height.
+        num_workers (int): How many subprocesses to use for data loading.
     """
 
     def __init__(
@@ -734,6 +739,7 @@ class TorchVisionReference:
         dataset_path: str,
         batch_size: int,
         input_size: int = 224,
+        num_workers: int = 20,
     ) -> None:
         """Initialize the attributes."""
         if 'ofa_resnet50' in model_name:
@@ -745,6 +751,7 @@ class TorchVisionReference:
         self.dataset_path = dataset_path
         self.batch_size = batch_size
         self.input_size = input_size
+        self.num_workers = num_workers
 
         logger.info(
             '{name} for \'{model_name}\' on \'{val_dataset_path}\' dataset'.format(
@@ -766,7 +773,7 @@ class TorchVisionReference:
         """
         ImagenetDataProvider.DEFAULT_PATH = self.dataset_path
         model = get_torchvision_model(model_name=self.model_name)
-        run_config = ImagenetRunConfig(test_batch_size=64, n_worker=20)
+        run_config = ImagenetRunConfig(test_batch_size=64, n_worker=self.num_workers)
         folder_name = '.torch/tmp-{}'.format(uuid.uuid1().hex)
         run_manager = RunManager(
             '{}/eval_subnet'.format(folder_name), model, run_config, init=False

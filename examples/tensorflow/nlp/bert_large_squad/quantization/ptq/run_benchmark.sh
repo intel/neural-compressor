@@ -14,18 +14,20 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --config=*)
-          config=$(echo $var |cut -f2 -d=)
-      ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
-      *)
-          echo "Error: No such parameter: ${var}"
-          exit 1
+      --dataset_location=*)
+          dataset_location=$(echo $var |cut -f2 -d=)
+      ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
+      --iters=*)
+          iters=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -37,9 +39,10 @@ function init_params {
 function run_benchmark {
 
     python tune_squad.py \
-      --config=${config} \
       --input_model=${input_model} \
       --mode=${mode} \
+      --dataset_location ${dataset_location} \
+      --batch_size ${batch_size} \
       --benchmark \
 
 }

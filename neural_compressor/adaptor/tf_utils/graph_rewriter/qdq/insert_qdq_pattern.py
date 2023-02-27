@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Insert QDQ pattern Graph Rewriter."""
 
 import copy
 import numpy as np
@@ -28,17 +29,10 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 import re
 
 class GenerateGraphWithQDQPattern(GraphRewriterBase):
-    """ Insert Q/DQ pairs before quantizable ops.
-
-    Args: model: input model.
-          data: sampling data.
-          device: cpu or gpu
-
-    Return: converted model with QDQ pattern
-    """
-
+    """Insert Q/DQ pairs before quantizable ops."""
     def __init__(self, model, calibration_data, op_wise_config, fake_quant, fp32_ops,
                  bf16_ops, quantized_nodes, device, performance_only, itex_mode):
+        """Initilization."""
         super().__init__(model)
         self.data = calibration_data
         self.op_wise_config = op_wise_config
@@ -51,6 +45,12 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.itex_mode = itex_mode
         self.node_details = namedtuple('node_details', ['node', 'output'])
         self.node_name_mapping = {}
+        self.check_op_list = {"ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
+            "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
+            "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul", "BatchMatMulV2",
+            "FakeQuantWithMinMaxVars", "_MklFusedInstanceNorm",
+            "Conv2DBackpropInput", "Conv3DBackpropInputV2", "Sigmoid"}
+
         for node in self.model.node:
             if node.name in self.node_name_mapping:
                 raise ValueError("Duplicate Node Found when _parse_graph, the node name is {}" \
@@ -63,6 +63,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
     @dump_elapsed_time("Pass GenerateGraphWithQDQPattern")
     def do_transformation(self):
+        """Generate the graph with QDQ patterns, this is the first step to do new api quantizaiton."""
         min_max_values = {}
         for i in self.data:
             if i.find('_requant') == -1:
@@ -178,14 +179,14 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         return self.g_qdq.dump_graph()
 
     def _check_op_list(self, node_type):
-        op_list = ("ConcatV2", "Conv2D", "Conv3D", "DepthwiseConv2D", "QuantizeV2", "DepthwiseConv2dNative",
-                   "MaxPool", "MaxPool3D", "FusedBatchNormV3", "Requantize", "RequantizePerChannel", "AvgPool", "Pad",
-                   "CropAndResize", "Dequantize", "Mean", "MatMul", "BatchMatMul", "BatchMatMulV2",
-                   "FakeQuantWithMinMaxVars", "_MklFusedInstanceNorm",
-                   "Conv2DBackpropInput", "Conv3DBackpropInputV2", "Sigmoid", "BiasAdd")
-        return any([node_type.find(i) != -1 for i in op_list])
+        """Check if the node_type in the allowed op list."""
+        return any([node_type.find(i) != -1 for i in self.check_op_list])
 
     def _find_relu_node(self, node):
+        """Find Relu node algorithm to identify the positive input."""
+        if node.op == 'MaxPool':
+            self.check_op_list.add("BiasAdd")
+
         if (node.op in ("Relu", "Relu6", "Elu") or \
             (node.op.find("AndRelu") != -1 and \
             ('alpha' not in node.attr or ('alpha' in node.attr and node.attr['alpha'].f == 0)))) \
@@ -206,6 +207,13 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
               ) and ((node.op.find("Relu") == -1 and node.op.find("Elu") == -1) or \
               ('alpha' in node.attr and node.attr['alpha'].f > 0)):
             return False
+        elif self.itex_mode and node.op in ('Add', 'AddV2', 'AddN'):
+            if re.search(r"\w+:\d+", node.input[1]):
+                input_node = self.node_name_mapping[node.input[1].rsplit(':', 1)[0]].node
+            else:
+                input_node = self.node_name_mapping[node.input[1]].node
+            if input_node.op in ('BiasAdd', 'Add', 'AddV2', 'AddN'):
+                return False
         elif self._check_op_list(node.op) or (self.itex_mode and node.op in ('Add', 'AddV2')):
             if node.op == 'ConcatV2':
                 find_relu = False
@@ -225,6 +233,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             return False
 
     def _insert_qdq_pattern_for_common_ops(self, original_node, is_asymmetric):
+        """Insert QDQ patterns for common OPs."""
         namespace_prefix = original_node.name + "_eightbit"
         if original_node.op in ("Conv2DBackpropInput", "Conv3DBackpropInputV2"):
             all_inputs = self.node_name_mapping[original_node.name].node.input[-1:]
@@ -262,6 +271,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
 
 
     def _insert_qdq_pattern_for_concatv2(self, original_node, is_asymmetric):
+        """Insert QDQ patterns for each input of ConcatV2."""
         namespace_prefix = original_node.name + "_eightbit"
         normal_inputs = [i for i in original_node.input if i[0] != '^']
         num_input = len(normal_inputs)
@@ -417,6 +427,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                                             per_channel,
                                             weight_bit=7.0,
                                             device='cpu'):
+        """Insert QDQ pattern for weight node."""
         host_op_type = computational_node.op
         base_name = weight_node.name + "_"
         qint8_const_name = base_name + "qint8_const"
@@ -568,28 +579,43 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             self.g_weight.add_node(reshape_3to4_node, dequant_node.name, [computational_node.name])
             computational_node.input[1] = reshape_3to4_node.name
         else:
-            if weight_node.name in self.g.parent_frame_details and self.g.parent_frame_details[weight_node.name]:
+            if computational_node.name in self.g.parent_frame_details and \
+               self.g.parent_frame_details[computational_node.name]:
+                weight_enter_node = Helper.create_node('Enter', \
+                                            weight_node.name + '_enter', [weight_node.name])
+                Helper.set_attr_string(weight_enter_node, 'frame_name',
+                    self.g.parent_frame_details[computational_node.name].attr['frame_name'].s)
+                Helper.set_attr_dtype(weight_enter_node, 'T', dtypes.float32)
+                Helper.set_attr_bool(weight_enter_node, 'is_constant', True)
+                Helper.set_attr_int(weight_enter_node, 'parallel_iterations', \
+                    self.g.parent_frame_details[computational_node.name].attr['parallel_iterations'].i)
+
                 min_enter_node = Helper.create_node('Enter', min_name + '_enter', [min_name])
                 Helper.set_attr_string(min_enter_node, 'frame_name',
-                    self.g.parent_frame_details[weight_node.name].attr['frame_name'].s)
+                    self.g.parent_frame_details[computational_node.name].attr['frame_name'].s)
                 Helper.set_attr_dtype(min_enter_node, 'T', dtypes.float32)
                 Helper.set_attr_bool(min_enter_node, 'is_constant', True)
                 Helper.set_attr_int(min_enter_node, 'parallel_iterations', \
-                 self.g.parent_frame_details[weight_node.name].attr['parallel_iterations'].i)
+                 self.g.parent_frame_details[computational_node.name].attr['parallel_iterations'].i)
 
                 max_enter_node = Helper.create_node('Enter', max_name + '_enter', [max_name])
                 Helper.set_attr_string(max_enter_node, 'frame_name',
-                    self.g.parent_frame_details[weight_node.name].attr['frame_name'].s)
+                    self.g.parent_frame_details[computational_node.name].attr['frame_name'].s)
                 Helper.set_attr_dtype(max_enter_node, 'T', dtypes.float32)
                 Helper.set_attr_bool(max_enter_node, 'is_constant', True)
                 Helper.set_attr_int(max_enter_node, 'parallel_iterations',\
-                    self.g.parent_frame_details[weight_node.name].attr['parallel_iterations'].i)
+                    self.g.parent_frame_details[computational_node.name].attr['parallel_iterations'].i)
 
                 self.g_weight.add_node(quant_node, weight_name, [])
                 self.g_weight.add_node(min_node, None, [min_enter_node.name])
                 self.g_weight.add_node(max_node, None, [max_enter_node.name])
                 self.g_weight.add_node(min_enter_node, min_node.name, [quant_node.name])
                 self.g_weight.add_node(max_enter_node, max_node.name, [quant_node.name])
+                self.g_weight.add_node(weight_enter_node, weight_node.name, [quant_node.name])
+                quant_node.input[0] = weight_enter_node.name
+                quant_node.input[1] = min_enter_node.name
+                quant_node.input[2] = max_enter_node.name
+                self.g_weight.add_node(quant_node, weight_enter_node.name, [])
                 self.g_weight.add_node(dequant_node, quant_node.name, [computational_node.name])
                 computational_node.input[1] = dequant_node.name
             else:
@@ -600,6 +626,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 computational_node.input[1] = dequant_node.name
 
     def _ignore_insert_qdq_pattern(self, matched_node_name):
+        """For some cases we don't need to insert QDQ patterns."""
         if (matched_node_name in self.fp32_ops or matched_node_name in self.bf16_ops) and \
            ((matched_node_name,) not in self.quantized_nodes):
             return True

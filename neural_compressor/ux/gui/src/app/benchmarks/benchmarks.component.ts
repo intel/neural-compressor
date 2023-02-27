@@ -11,16 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
-import { ColorHelper, ScaleType } from '@swimlane/ngx-charts';
+import { Color, ColorHelper, ScaleType } from '@swimlane/ngx-charts';
 import { environment } from 'src/environments/environment';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 import { BenchmarkFormComponent } from '../benchmark-form/benchmark-form.component';
 import { DatasetFormComponent } from '../dataset-form/dataset-form.component';
 import { ModelService } from '../services/model.service';
 import { SocketService } from '../services/socket.service';
+import { ShortcutInput } from 'ng-keyboard-shortcuts';
 
 declare let require: any;
 const shajs = require('sha.js');
@@ -34,7 +35,7 @@ const shajs = require('sha.js');
     './../datasets/datasets.component.scss',
     './../optimizations/optimizations.component.scss']
 })
-export class BenchmarksComponent implements OnInit {
+export class BenchmarksComponent implements OnInit, AfterViewInit {
   @Input() framework;
   @Input() domain;
   @Input() domainFlavour;
@@ -42,6 +43,7 @@ export class BenchmarksComponent implements OnInit {
   apiBaseUrl = environment.baseUrl;
   token = '';
 
+  shortcuts: ShortcutInput[] = [];
   benchmarks = [];
   activeBenchmarkId = -1;
   benchmarkDetails: any;
@@ -57,8 +59,7 @@ export class BenchmarksComponent implements OnInit {
   view: any[] = [307, 300];
 
   // options
-  throughputColors;
-  accuracyColors;
+
   throughputLegend = [];
   accuracyLegend = [];
 
@@ -73,21 +74,23 @@ export class BenchmarksComponent implements OnInit {
   timeline = true;
   fontColor = localStorage.getItem('darkMode') === 'darkMode' ? '#fff' : '#000';
 
-  customColor = {
-    domain: [
-      '#005B85',
-      '#0095CA',
-      '#00C7FD',
-      '#047271',
-      '#07b3b0',
-      '#9E8A87',
-      '#333471',
-      '#5153B0',
-      '#ED6A5E ',
-      '#9D79BC',
-      '#A14DA0',
-    ]
-  };
+  customColor = [
+    '#005B85',
+    '#0095CA',
+    '#00C7FD',
+    '#047271',
+    '#07b3b0',
+    '#9E8A87',
+    '#333471',
+    '#5153B0',
+    '#ED6A5E ',
+    '#9D79BC',
+    '#A14DA0',
+  ];
+
+  colorDomain = { domain: this.customColor };
+  colorScheme: Color = { domain: this.customColor, group: ScaleType.Ordinal, selectable: true, name: 'Customer Usage' };
+  colorHelper = new ColorHelper(this.colorScheme, ScaleType.Ordinal, this.customColor);
 
   fields = ['created_at', 'last_run_at', 'config_path', 'execution_command', 'log_path'];
 
@@ -124,6 +127,16 @@ export class BenchmarksComponent implements OnInit {
       .subscribe(resp => {
         this.fontColor = resp === '' ? '#000' : '#fff';
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.shortcuts.push(
+      {
+        key: 'shift + alt + b',
+        preventDefault: true,
+        command: e => this.addBenchmark()
+      },
+    );
   }
 
   getBenchmarksList(id?: number) {
@@ -220,9 +233,6 @@ export class BenchmarksComponent implements OnInit {
     this.throughputLegend = [];
     this.accuracyLegend = [];
     let record: any;
-
-    this.accuracyColors = new ColorHelper(this.customColor, ScaleType.Ordinal, this.accuracyLegend, this.customColor);
-    this.throughputColors = new ColorHelper(this.customColor, ScaleType.Ordinal, this.throughputLegend, this.customColor);
 
     Object.keys(this.comparison).forEach(benchmarkId => {
       if (this.comparison[benchmarkId]) {

@@ -1,28 +1,36 @@
-# Evaluate performance of ONNX Runtime(Squeezenet) 
->ONNX runtime quantization is under active development. please use 1.6.0+ to get more quantization support. 
+Step-by-Step
+============
 
-This example load an image classification model from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads). You need to download this dataset yourself.
+This example load an image classification model from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads).
 
-### Environment
-onnx: 1.9.0
-onnxruntime: 1.10.0
+# Prerequisite
 
-### Prepare model
-Download model from [ONNX Model Zoo](https://github.com/onnx/models)
+## 1. Environment
+```shell
+pip install neural-compressor
+pip install -r requirements.txt
+```
+> Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
+
+## 2. Prepare Model
+Download model from [ONNX Model Zoo](https://github.com/onnx/models).
 
 ```shell
 wget https://github.com/onnx/models/raw/main/vision/classification/squeezenet/model/squeezenet1.0-12.onnx
 ```
 
-### Quantization
+## 3. Prepare Dataset
+Download dataset [ILSVR2012 validation Imagenet dataset](http://www.image-net.org/challenges/LSVRC/2012/downloads).
+
+# Run
+
+## 1. Quantization
 
 Quantize model with QLinearOps:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
-                   --config=squeezenet.yaml \
-                   --data_path=/path/to/imagenet \
-                   --label_path=/path/to/imagenet/label \
+                   --dataset_location=/path/to/imagenet \
                    --output_model=path/to/save
 ```
 
@@ -30,19 +38,16 @@ Quantize model with QDQ mode:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
-                   --config=squeezenet_qdq.yaml \
-                   --data_path=/path/to/imagenet \
-                   --label_path=/path/to/imagenet/label \
-                   --output_model=path/to/save
+                   --dataset_location=/path/to/imagenet \
+                   --output_model=path/to/save \
+                   --quant_format=QDQ
 ```
 
-### Benchmark 
+
+## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --config=squeezenet.yaml \
-                      --data_path=/path/to/imagenet \
-                      --label_path=/path/to/imagenet/label \
+                      --dataset_location=/path/to/imagenet \
                       --mode=performance # or accuracy
 ```
-

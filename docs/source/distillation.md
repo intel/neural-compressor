@@ -18,7 +18,7 @@ Distillation
 Distillation is one of popular approaches of network compression, which transfers knowledge from a large model to a smaller one without loss of validity. As smaller models are less expensive to evaluate, they can be deployed on less powerful hardware (such as a mobile device). Graph shown below is the workflow of the distillation, the teacher model will take the same input that feed into the student model to produce the output that contains knowledge of the teacher model to instruct the student model.
 <br>
 
-<img src="./_static/imgs/Distillation_workflow.png" alt="Architecture" width=700 height=300>
+<img src="./imgs/Distillation_workflow.png" alt="Architecture" width=700 height=300>
 
 Intel® Neural Compressor supports Knowledge Distillation and Intermediate Layer Knowledge Distillation algorithms.
 
@@ -43,7 +43,7 @@ Self-distillation ia a one-stage training method where the teacher model and stu
 The additional classifiers in self-distillation allow the neural network to work in a dynamic manner, which leads to a much higher acceleration.
 <br>
 
-<img src="./_static/imgs/self-distillation.png" alt="Architecture" width=800 height=350>
+<img src="./imgs/self-distillation.png" alt="Architecture" width=800 height=350>
 
 Architecture from paper [Self-Distillation: Towards Efficient and Compact Neural Networks](https://ieeexplore.ieee.org/document/9381661)
 
@@ -57,27 +57,6 @@ Architecture from paper [Self-Distillation: Towards Efficient and Compact Neural
 
 ## Get Started with Distillation API 
 
-Simplest launcher code if training behavior is defined in user-defined yaml.
-
-```python
-from neural_compressor.experimental import Distillation, common
-distiller = Distillation('/path/to/user/yaml')
-distiller.student_model = student_model
-distiller.teacher_model = teacher_model
-model = distiller.fit()
-```
-Distillation class also support DistillationConf class as it's argument.
-
-```python
-from neural_compressor.experimental import Distillation, common
-from neural_compressor.conf.config import DistillationConf
-conf = DistillationConf('/path/to/user/yaml')
-distiller = Distillation(conf)
-distiller.student_model = student_model
-distiller.teacher_model = teacher_model
-model = distiller.fit()
-```
-
 User can pass the customized training/evaluation functions to `Distillation` for flexible scenarios. In this case, distillation process can be done by pre-defined hooks in Neural Compressor. User needs to put those hooks inside the training function.
 
 Neural Compressor defines several hooks for user pass
@@ -88,51 +67,49 @@ on_after_compute_loss(input, student_output, student_loss) : Hook executed after
 on_epoch_end() : Hook executed at each epoch end
 ```
 
-Following section shows how to use hooks in user pass-in training function which is part of example from BlendCNN distillation:
+Following section shows how to use hooks in user pass-in training function:
 
 ```python
-def train_func(model):
-    distiller.on_train_begin()
-    for nepoch in range(epochs):
-        model.train()
-        cnt = 0
-        loss_sum = 0.
-        iter_bar = tqdm(train_dataloader, desc='Iter (loss=X.XXX)')
-        for batch in iter_bar:
-            teacher_logits, input_ids, segment_ids, input_mask, target = batch
-            cnt += 1
-            output = model(input_ids, segment_ids, input_mask)
-            loss = criterion(output, target)
-            loss = distiller.on_after_compute_loss(
-                {'input_ids':input_ids, 'segment_ids':segment_ids, 'input_mask':input_mask},
-                output,
-                loss,
-                teacher_logits)
-            optimizer.zero_grad()
+def training_func_for_nc(model):
+    compression_manager.on_train_begin()
+    for epoch in range(epochs):
+        compression_manager.on_epoch_begin(epoch)
+        for i, batch in enumerate(dataloader):
+            compression_manager.on_step_begin(i)
+            ......
+            output = model(batch)
+            loss = ......
+            loss = compression_manager.on_after_compute_loss(batch, output, loss)
             loss.backward()
+            compression_manager.on_before_optimizer_step()
             optimizer.step()
-            if cnt >= iters:
-                break
-        print('Average Loss: {}'.format(loss_sum / cnt))
-        distiller.on_epoch_end()
+            compression_manager.on_step_end()
+        compression_manager.on_epoch_end()
+    compression_manager.on_train_end()
+
 ...
 ```
 
 In this case, the launcher code is like the following:
 
 ```python
-from neural_compressor.experimental import Distillation, common
-from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
-distiller = Distillation(args.config)
-distiller.student_model = model
-distiller.teacher_model = teacher
-distiller.criterion = PyTorchKnowledgeDistillationLoss()
-distiller.train_func = train_func
-model = distiller.fit()
+from neural_compressor.training import prepare_compression
+from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+
+distil_loss = SelfKnowledgeDistillationLossConfig()
+conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+compression_manager = prepare_compression(model, conf)
+model = compression_manager.model
+
+model = training_func_for_nc(model)
+eval_func(model)
 ```
 
 ## Examples
-
-[Distillation Examples](../examples/README.md#distillation)
+[Distillation PyTorch Examples](../../examples/README.md#distillation-1)
+<br>
+[Distillation TensorFlow Examples](../../examples/README.md#distillation)
 <br>
 [Distillation Examples Results](./validated_model_list.md#validated-knowledge-distillation-examples)

@@ -24,7 +24,7 @@ done
 FRAMEWORK="mxnet"
 FRAMEWORK_VERSION="1.9.1"
 
-
+inc_new_api=false
 # ======== set up config for mxnet models ========
 if [ "${model}" == "resnet50v1" ]; then
     model_src_dir="image_recognition/cnn_models/quantization/ptq"
@@ -52,6 +52,7 @@ fi
     --new_benchmark=${new_benchmark} \
     --tuning_cmd="${tuning_cmd}" \
     --benchmark_cmd="${benchmark_cmd}" \
+    --inc_new_api="${inc_new_api}" \
     --mode=${mode} \
     --USE_TUNE_ACC=${USE_TUNE_ACC} \
     --PERF_STABLE_CHECK=${PERF_STABLE_CHECK} \

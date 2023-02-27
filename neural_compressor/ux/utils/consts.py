@@ -56,6 +56,7 @@ class OptimizationTypes(Enum):
     QUANTIZATION = "Quantization"
     GRAPH_OPTIMIZATION = "Graph optimization"
     MIXED_PRECISION = "Mixed precision"
+    PRUNING = "Pruning"
 
 
 class ExecutionStatus(Enum):
@@ -96,6 +97,7 @@ precision_optimization_types = {
     ],
     OptimizationTypes.MIXED_PRECISION: [Precisions.BF16],
     OptimizationTypes.GRAPH_OPTIMIZATION: [Precisions.FP32, Precisions.BF16],
+    OptimizationTypes.PRUNING: [Precisions.FP32],
 }
 
-postprocess_transforms = ["SquadV1"]
+postprocess_transforms = ["SquadV1", "SquadV1ModelZoo", "Collect", "LabelShift"]

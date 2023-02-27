@@ -14,18 +14,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The objectives supported by neural_compressor, which is driven by accuracy.
 
+To support new objective, developers just need implement a new subclass in this file.
+"""
 from abc import abstractmethod
 import time
 import numpy as np
 from copy import deepcopy
 
+from typing import List, Tuple
+
 import tracemalloc
 from .utils.utility import get_size
 
-"""The objectives supported by neural_compressor, which is driven by accuracy.
-   To support new objective, developer just need implement a new subclass in this file.
-"""
 OBJECTIVES = {}
 
 def objective_registry(cls):   
@@ -43,42 +45,56 @@ def objective_registry(cls):
     return cls
     
 def objective_custom_registry(name, obj_cls):
+    """Register a customized objective.
+    
+    Example:
+        from eural_compressor.objective import objective_custom_registry
+        
+        objective_cls = type(user_objective)
+        name = user_objective.__class__.__name__
+        objective_cfg = name if deep_get(self.conf.usr_cfg, "tuning.objective") else [name]
+        deep_set(self.conf.usr_cfg, user_obj_cfg, objective_cfg)
+        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+        objective_custom_registry(name, objective_cls)
+    """ 
     if name.lower() in OBJECTIVES:
         raise ValueError('Cannot have two objectives with the same name')
     OBJECTIVES[name.lower()] = obj_cls
 
 class Objective(object):
     """The base class for precise benchmark supported by neural_compressor.
+    
+    With built-in objectives, users can compress models with different objectives easily.
+    In special cases, users can also register their own objective classes.
+
 
     """
     representation = ''
 
     def __init__(self):
+        """The defination of the objective."""
         self._result_list = []
         self._model = None
 
     @abstractmethod
     def reset(self):
-        """The interface reset benchmark measuring
-        Args:
-        """
+        """The interface reset benchmark measuring."""
         self._result_list = []
         return self._result_list
 
     @abstractmethod
     def start(self):
-        """The interface start benchmark measuring
-        """
+        """The interface start benchmark measuring."""
         raise NotImplementedError
 
     @abstractmethod
     def end(self):
-        """The interface end benchmark measuring
-        """
+        """The interface end benchmark measuring."""
         raise NotImplementedError
 
     @property
     def model(self):
+        """The interface benchmark model."""
         return self._model
 
     @model.setter
@@ -86,10 +102,10 @@ class Objective(object):
         self._model = model
 
     def result(self, start=None, end=None):
-        """The interface to get benchmark measuring result
-           measurer may sart and end many times, result will
-           return the total mean of the result, can set the start
-           and end index of the result list to calculate
+        """The result will return the total mean of the result.
+
+        The interface to get benchmark measuring result measurer may sart and end many times,
+        can set the start and end index of the result list to calculate.
 
         Args:
             start (int): start point to calculate result from result list
@@ -105,65 +121,91 @@ class Objective(object):
         return np.array(self._result_list[start_idx:end_idx]).mean()
 
     def result_list(self):
-        """The interface to get benchmark measuring result list
-           this interface will return a list of each start-end loop
-           measure value
-        Args:
+        """The interface to get benchmark measuring result list.
+
+        This interface will return a list of each start-end loop measure value.
         """
         return self._result_list
 
     def __str__(self):
+        """The interface to get the representation."""
         return self.representation
 
 @objective_registry
 class Accuracy(Objective):
+    """Configuration Accuracy class. Evaluate the accuracy."""
     representation = 'accuracy'
 
     def start(self):
+        """The interface start the measuring."""
         pass
 
     def end(self, acc):
+        """The interface end the measuring."""
         self._result_list.append(acc)
 
 
 
 @objective_registry
 class Performance(Objective):
+    """Configuration Performance class. Evaluate the inference time."""
     representation = 'duration (seconds)'
 
     def start(self):
+        """Record the start time."""
         self.start_time = time.time()
     def end(self):
+        """Record the duration time."""
         self.duration = time.time() - self.start_time
         assert self.duration >= 0, 'please use start() before end()'
         self._result_list.append(self.duration)
 
 @objective_registry
 class Footprint(Objective):
+    """Configuration Footprint class.
+    
+    Evaluate the peak size of memory blocks during inference.
+    """
     representation = 'memory footprint (MB)'
 
     def start(self):
+        """Record the space allocation."""
         tracemalloc.start()
 
     def end(self):
+        """Calculate the space usage."""
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         self._result_list.append(peak // 1048576)
 
 @objective_registry
 class ModelSize(Objective):
+    """Configuration ModelSize class. Evaluate the model size."""
     representation = 'model size (MB)'
 
     def start(self):
+        """Start to calculate the model size."""
         pass
 
     def end(self):
+        """Get the actual model size."""
         model_size = get_size(self.model)
         self._result_list.append(model_size)
 
 class MultiObjective:
+    """The base class for multiple benchmarks supported by neural_compressor.
+    
+    Example:
+        from neural_compressor.objective import MultiObjective
+        obj = MultiObjective(
+            objectives=['accuracy', 'modelsize', 'performance'],
+            accuracy_criterion={'relative': 0.1},
+            obj_criterion=[True, False, False],
+            obj_weight=[0.7, 0.2, 0.1])
+    """
     def __init__(self, objectives, accuracy_criterion, metric_criterion=[True], \
         metric_weight=None, obj_criterion=None, obj_weight=None, is_measure=False):
+        """Load the configuration."""
         assert isinstance(accuracy_criterion, dict), 'accuracy criterian should be dict'
         assert 'relative' in accuracy_criterion or 'absolute' in accuracy_criterion, \
             'accuracy criterion should set relative or absolute'
@@ -197,23 +239,26 @@ class MultiObjective:
     
     @property
     def baseline(self):
+        """Get the actual model performance."""
         return self._baseline
     
     @baseline.setter
     def baseline(self, val):
+        """Get the value of the performance."""
         self._baseline = val
         
     @property
     def accuracy_target(self):
+        """Set the accuracy target."""
         return self._accuracy_target
     
     @accuracy_target.setter
     def accuracy_target(self, val):
+        """Set the value of the accuracy target."""
         self._accuracy_target = val
     
     def compare(self, last, baseline):
-        """The interface of comparing if metric reaches
-           the goal with acceptable accuracy loss.
+        """The interface of comparing if metric reaches the goal with acceptable accuracy loss.
 
         Args:
             last (tuple): The tuple of last metric.
@@ -296,6 +341,7 @@ class MultiObjective:
         return acc_target
     
     def accuracy_meets(self):
+        """Verify the new model performance is better than the previous model performance."""
         last_acc, _ = deepcopy(self.val)
         got_better_result = False
         if not isinstance(last_acc, list):
@@ -309,6 +355,29 @@ class MultiObjective:
         all_lower = all([_last < _target for _last, _target in zip(last_acc, self.accuracy_target) ]) 
         got_better_result = (all_higher and self.higher_is_better) or (all_lower and not self.higher_is_better)
         return got_better_result
+    
+    def accuracy_meet_req(self, last_result: Tuple[float, List[float]]) -> bool:
+        """Compare the result of last tuning with baseline to check whether the result meet requirements.
+
+        Args:
+            last_result: The evaluation result of the last tuning.
+            
+        Returns:
+            check_result: Return True if the accuracy meets requirements else False.
+        """
+        check_result = False
+        last_acc, _ = last_result
+        if not isinstance(last_acc, list):
+            last_acc = [last_acc]
+    
+        if self.metric_weight is not None and len(last_acc) > 1:
+            last_acc = [np.mean(np.array(last_acc) * self.metric_weight)]
+        if not self._accuracy_target:
+            self.accuracy_target = self._get_accuracy_target()
+        all_higher = all([_last > _target for _last, _target in zip(last_acc, self.accuracy_target) ]) 
+        all_lower = all([_last < _target for _last, _target in zip(last_acc, self.accuracy_target) ]) 
+        check_result = (all_higher and self.higher_is_better) or (all_lower and not self.higher_is_better)
+        return check_result
 
     def evaluate(self, eval_func, model):
         """The interface of calculating the objective.
@@ -317,7 +386,6 @@ class MultiObjective:
             eval_func (function): function to do evaluation.
             model (object): model to do evaluation.
         """
-
         self.reset()
         self.set_model(model)
         if self.is_measure:
@@ -331,14 +399,17 @@ class MultiObjective:
         return self.val
 
     def reset(self):
+        """Reset the objective value."""
         for objective in self.objectives:
             objective.reset()
 
     def start(self):
+        """Start to measure the objective value."""
         for objective in self.objectives:
             objective.start()
 
     def end(self, acc):
+        """Calculate the objective value."""
         for objective in self.objectives:
             if isinstance(objective, Accuracy):
                 objective.end(acc)
@@ -346,20 +417,25 @@ class MultiObjective:
                 objective.end()
 
     def result(self):
+        """Get the results."""
         return [objective.result() for objective in self.objectives]
 
     def set_model(self, model):
+        """Set the objective model."""
         for objective in self.objectives:
             objective.model = model
 
     def best_result(self, tune_data, baseline):
-        """ metric + multi-objectives case:
+        """Calculate the best results.
+
+        Example:
+            # metric + multi-objectives case:
             tune_data = [
                 [acc1, [obj1, obj2, ...]],
                 [acc2, [obj1, obj2, ...]],
                 ...
             ]
-            multi-metrics + multi-objectives case:
+            # multi-metrics + multi-objectives case:
             tune_data = [
                 [[acc1, acc2], [[acc1, acc2], obj1, obj2]],
                 [[acc1, acc2], [[acc1, acc2], obj1, obj2]]
@@ -465,6 +541,6 @@ class MultiObjective:
             weighted_result = np.sum(obj_data, axis=1)
 
         weighted_result[acc_mask == False] = 0.
-        best_trail = np.argmax(weighted_result)
-        return best_trail, tune_data[best_trail]
+        best_trial = np.argmax(weighted_result)
+        return best_trial, tune_data[best_trial]
 

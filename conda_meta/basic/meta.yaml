@@ -1,4 +1,4 @@
-{% set version = "1.14.2" %}
+{% set version = "2.0" %}
 {% set buildnumber = 0 %}
 package:
   name: neural-compressor
@@ -16,7 +16,7 @@ requirements:
   run:
     - python
     - pip
-    - numpy
+    - numpy<=1.22.3
     - pyyaml
     - scikit-learn
     - schema
@@ -29,6 +29,7 @@ requirements:
     - requests
     - prettytable
     - packaging
+    - deprecated
 test:
   imports:
     - neural_compressor

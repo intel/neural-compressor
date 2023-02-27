@@ -4,26 +4,28 @@ Step-by-Step
 This document is used to list steps of reproducing TensorFlow style transfer Intel® Neural Compressor tuning zoo result.
 This example can run on Intel CPUs and GPUs.
 
+# Prerequisite
+
 ## Prerequisite
 
-### 1. Installation
+### Installation
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow
+### Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
 > Note: Supported Tensorflow [Version](../../../../../../README.md#supported-frameworks).
 
-### 3. Install Additional Dependency packages
+### Install Additional Dependency packages
 ```shell
 cd examples/tensorflow/style_transfer/arbitrary_style_transfer/quantization/ptq 
 pip install -r requirements.txt
 ```
 
-### 4. Install Intel Extension for Tensorflow
+### Install Intel Extension for Tensorflow
 #### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
@@ -39,15 +41,10 @@ Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's no
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-### 5. Prepare Dataset
-There are two folders named style_images and content_images
-you can use these two folders to generated stylized images for test
-you can also prepare your own style_images or content_images
-
-### 6. Prepare Pretrained model
+### 2. Prepare Pretrained model
 
 #### Automated approach
-Run the `prepare_model.py` script located in `LowPrecisionInferenceTool/examples/tensorflow/style_transfer`.
+Run the `prepare_model.py` script located in `./examples/tensorflow/style_transfer/arbitrary_style_transfer/quantization/ptq`.
 
 ```
 usage: prepare_model.py [-h] [--model_path MODEL_PATH]
@@ -64,16 +61,20 @@ wget https://storage.googleapis.com/download.magenta.tensorflow.org/models/arbit
 tar -xvzf arbitrary_style_transfer.tar.gz ./model
 ```
 
-## Run Command
+### 3. Prepare Dataset
+There are two folders named style_images and content_images in current folder. Please use these two folders to generated stylized images for test. And you can also prepare your own style_images or content_images.
+
+
+# Run Command
   ```shell
   python style_tune.py --output_dir=./result --style_images_paths=./style_images --content_images_paths=./content_images --input_model=./model/model.ckpt
   ```
-### Quantize with neural_compressor
-#### 1. Tune model with neural_compressor
+
+### Tune model with neural_compressor
   ```shell
   bash run_tuning.sh --dataset_location=style_images/,content_images/ --input_model=./model/model.ckpt --output_model=saved_model
   ```
-#### 2. check benchmark of tuned model
+### Check benchmark of tuned model
   ```shell
   bash run_benchmark.sh --dataset_location=style_images/,content_images/ --input_model=saved_model.pb --batch_size=1
   ```
@@ -96,55 +97,19 @@ def eval_func(model):
     return 1.
 ```
 
-### Write Yaml config file
-In examples directory, there is a conf.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The conf_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
-
-```yaml
-device: cpu                                          # NOTE: optional. default value is cpu, other value is gpu.
-
-model:
-  name: style_transfer
-  framework: tensorflow
-  inputs: import/style_input,import/content_input
-  outputs: import/transformer/expand/conv3/conv/Sigmoid
-
-quantization:
-  calibration:
-    dataloader:
-      batch_size: 2
-      dataset:
-        style_transfer:
-          content_folder: ./content_images/          # NOTE: modify to content images path if needed
-          style_folder: ./style_images/              # NOTE: modify to style images path if needed
-
-evaluation:
-  accuracy:
-    dataloader:
-      batch_size: 2
-      dataset:
-        style_transfer:
-          content_folder: ./content_images/          # NOTE: modify to content images path if needed
-          style_folder: ./style_images/              # NOTE: modify to style images path if needed
-
-tuning:
-    accuracy_criterion:
-      relative: 0.01
-    exit_policy:
-      timeout: 0
-    random_seed: 9527
-```
 Here we set the input tensor and output tensors name into *inputs* and *outputs* field. In this case we only calibration and quantize the model without tune the accuracy
 
 ### Code update
 
 After prepare step is done, we just need add 2 lines to get the quantized model.
 ```python
-from neural_compressor.experimental import Quantization
-
-quantizer = Quantization(args.config)
-quantizer.model = graph
-quantizer.eval_func = eval_func
-q_model = quantizer.fit()
+from neural_compressor import quantization
+from neural_compressor.config import PostTrainingQuantConfig
+conf = PostTrainingQuantConfig(inputs=['style_input', 'content_input'],
+                                outputs=['transformer/expand/conv3/conv/Sigmoid'],
+                                calibration_sampling_size=[50, 100])
+quantized_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=dataloader,
+            eval_dataloader==dataloader)
 ```
 
 The Intel® Neural Compressor quantizer.fit() function will return a best quantized model during timeout constrain.

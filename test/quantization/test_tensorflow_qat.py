@@ -2,54 +2,7 @@ import unittest
 import os
 import yaml
 import shutil
-
-def build_fake_yaml():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-
-        device: cpu
-        quantization:
-          approach: quant_aware_training
-        evaluation:
-          accuracy:
-            metric:
-              Accuracy: {}
-        '''
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
-
-
-def build_fake_yaml_by_train():
-    fake_yaml = '''
-        model:
-          name: fake_yaml
-          framework: tensorflow
-
-        device: cpu
-        quantization:
-          approach: quant_aware_training
-          train:
-            optimizer:
-              SGD:
-                learning_rate: 0.1
-            criterion:
-              CrossEntropyLoss:
-                reduction: none
-        evaluation:
-          accuracy:
-            metric:
-              Accuracy: {}
-        '''
-
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open('fake_yaml_train.yaml', "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
-
+from pkg_resources import parse_version
 
 def train_func():
     import tensorflow as tf
@@ -89,46 +42,7 @@ def train_func():
 
     print('Baseline test accuracy:', baseline_model_accuracy)
     model.save("baseline_model")
-
-
-def q_func(model):
-    import tensorflow as tf
-    from tensorflow import keras
-    mnist = keras.datasets.mnist
-    (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
-
-    # Normalize the input image so that each pixel value is between 0 to 1.
-    train_images = train_images / 255.0
-    test_images = test_images / 255.0
-
-    model = tf.keras.models.load_model("baseline_model")
-
-    import tensorflow_model_optimization as tfmot
-    quantize_model = tfmot.quantization.keras.quantize_model
-
-    # q_aware stands for for quantization aware.
-    q_aware_model = quantize_model(model)
-
-    # `quantize_model` requires a recompile.
-    q_aware_model.compile(optimizer='adam',
-                          loss=tf.keras.losses.SparseCategoricalCrossentropy(
-                              from_logits=True),
-                          metrics=['accuracy'])
-
-    train_images_subset = train_images[0:1000]  # out of 60000
-    train_labels_subset = train_labels[0:1000]
-
-    q_aware_model.fit(train_images_subset, train_labels_subset,
-                      batch_size=500, epochs=1, validation_split=0.1)
-
-    _, q_aware_model_accuracy = q_aware_model.evaluate(
-        test_images, test_labels, verbose=0)
-
-    print('Quant test accuracy:', q_aware_model_accuracy)
-    q_aware_model.save("trained_qat_model")
-    return 'trained_qat_model'
-
-
+    
 class Dataset(object):
     def __init__(self, batch_size=100):
         import tensorflow as tf
@@ -148,31 +62,53 @@ class Dataset(object):
     def __getitem__(self, idx):
         return self.test_images[idx], self.test_labels[idx]
 
-
 class TestTensorflowQAT(unittest.TestCase):
     import tensorflow as tf
     @classmethod
     def setUpClass(self):
-        build_fake_yaml()
         train_func()
-        build_fake_yaml_by_train()
 
     @classmethod
     def tearDownClass(self):
-        os.remove('fake_yaml.yaml')
         shutil.rmtree('baseline_model',ignore_errors=True)
         shutil.rmtree('trained_qat_model',ignore_errors=True)
-        os.remove('fake_yaml_train.yaml')
         
-    @unittest.skipIf(tf.version.VERSION < '2.3.0', " keras model need tensorflow version >= 2.3.0, so the case is skipped")
-    def test_qat_with_external_q_func(self):
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization('fake_yaml.yaml')
-        quantizer.eval_dataloader = common.DataLoader(Dataset())
-        quantizer.model = './baseline_model'
-        quantizer.q_func = q_func
-        quantizer.fit()
+    @unittest.skipIf(parse_version(tf.version.VERSION) < parse_version('2.3.0'), "version check")
+    def test_qat(self):
+        import tensorflow as tf
+        from tensorflow import keras
+        mnist = keras.datasets.mnist
+        (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
 
+        # Normalize the input image so that each pixel value is between 0 to 1.
+        train_images = train_images / 255.0
+        test_images = test_images / 255.0
+
+        from neural_compressor import training, QuantizationAwareTrainingConfig
+        config = QuantizationAwareTrainingConfig()
+        compression_manager = training.prepare_compression('./baseline_model', config)
+        compression_manager.callbacks.on_train_begin()
+
+        q_aware_model = compression_manager.model.model
+        # `quantize_model` requires a recompile.
+        q_aware_model.compile(optimizer='adam',
+                                loss=tf.keras.losses.SparseCategoricalCrossentropy(
+                                    from_logits=True),
+                                metrics=['accuracy'])
+
+        train_images_subset = train_images[0:1000]  # out of 60000
+        train_labels_subset = train_labels[0:1000]
+
+        q_aware_model.fit(train_images_subset, train_labels_subset,
+                            batch_size=500, epochs=1, validation_split=0.1)
+
+        _, q_aware_model_accuracy = q_aware_model.evaluate(
+            test_images, test_labels, verbose=0)
+
+        print('Quant test accuracy:', q_aware_model_accuracy)
+
+        compression_manager.callbacks.on_train_end()
+        compression_manager.save("trained_qat_model")
 
 if __name__ == '__main__':
     unittest.main()

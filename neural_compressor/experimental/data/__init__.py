@@ -18,14 +18,14 @@
 """Built-in dataloaders, datasets, transforms, filters for multiple framework backends."""
 
 
-from .datasets import DATASETS, Dataset, IterableDataset, dataset_registry
+from .datasets import Datasets, Dataset, IterableDataset, dataset_registry
 from .transforms import TRANSFORMS, BaseTransform, transform_registry
 from .dataloaders import DATALOADERS
 from .filters import FILTERS, Filter, filter_registry
 
 __all__ = [
     "DATALOADERS",
-    "DATASETS",
+    "Datasets",
     "Dataset",
     "IterableDataset",
     "dataset_registry",

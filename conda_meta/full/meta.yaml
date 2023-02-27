@@ -1,4 +1,4 @@
-{% set version = "1.14.2" %}
+{% set version = "2.0" %}
 {% set buildnumber = 0 %}
 package:
   name: neural-compressor-full
@@ -18,7 +18,7 @@ requirements:
   run:
     - python
     - pip
-    - numpy
+    - numpy<=1.22.3
     - pyyaml
     - scikit-learn
     - schema
@@ -40,6 +40,7 @@ requirements:
     - alembic==1.7.7
     - pywin32  # [win]
     - packaging
+    - deprecated
 test:
   imports:
     - neural_compressor

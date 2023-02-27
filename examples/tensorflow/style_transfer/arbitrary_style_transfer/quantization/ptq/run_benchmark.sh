@@ -52,7 +52,6 @@ function run_benchmark {
             --input_model "${input_model}" \
             --style_images_paths "${style_images}" \
             --content_images_paths "${content_images}" \
-            --config "./conf.yaml" \
             --batch_size "${batch_size}" \
             --tune=False \
             --output_model "${output_model}"

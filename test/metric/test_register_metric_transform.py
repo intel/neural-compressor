@@ -42,7 +42,7 @@ class TestRegisterMetric(unittest.TestCase):
         resize_image = resize_image - mean
         images = np.expand_dims(resize_image, axis=0)
         labels = [768]
-        from neural_compressor import Benchmark, Quantization
+        from neural_compressor import Benchmark
         from neural_compressor.experimental.data.transforms.imagenet_transform import LabelShift
         from neural_compressor.experimental.metric.metric import TensorflowTopK
         os.environ['NC_ENV_CONF'] = 'True'
@@ -53,9 +53,6 @@ class TestRegisterMetric(unittest.TestCase):
         dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
         evaluator(self.pb_path, b_dataloader=dataloader)
 
-        quantizer = Quantization('fake_yaml.yaml')
-        quantizer.postprocess('label_quantize', LabelShift, label_shift=1) 
-        quantizer.metric('topk_quantize', TensorflowTopK)
         evaluator = Benchmark('fake_yaml.yaml')
         evaluator.metric('topk_second', TensorflowTopK)
         dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))

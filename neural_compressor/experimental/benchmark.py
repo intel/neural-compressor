@@ -24,13 +24,13 @@ import numpy as np
 import subprocess
 import signal
 import psutil
+from threading import Thread
 from ..adaptor import FRAMEWORKS
 from ..objective import MultiObjective
 from ..conf.config import BenchmarkConf
 from ..conf.dotdict import DotDict
 from ..utils import logger
-from ..utils import OPTIONS
-from ..utils.utility import set_backend, GLOBAL_STATE, MODE
+from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
 from ..model import BaseModel
@@ -166,7 +166,6 @@ class Benchmark(object):
             self.conf = BenchmarkConf(conf_fname_or_obj)
         if self.conf.usr_cfg.model.framework != 'NA':
             self.framework = self.conf.usr_cfg.model.framework.lower()
-            set_backend(self.framework)
 
     def __call__(self, mode='performance'):
         """Directly call a Benchmark object.
@@ -197,27 +196,36 @@ class Benchmark(object):
 
     def summary_benchmark(self):
         """Get the summary of the benchmark."""
-        if sys.platform in ['linux']:
-            num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
-            cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
-            latency_l = []
-            throughput_l = []
-            for i in range(0, num_of_instance):
-                log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
-                with open(log, "r") as f:
-                    for line in f:
-                        latency = re.search(r"Latency:\s+(\d+(\.\d+)?)", line)
-                        latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
-                        throughput = re.search(r"Throughput:\s+(\d+(\.\d+)?)", line)
-                        throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
-            assert len(latency_l)==len(throughput_l)==num_of_instance, \
-                "Multiple instance benchmark failed with some instance!"
-            logger.info("\n\nMultiple instance benchmark summary: ")
-            logger.info("Latency average: {:.3f} ms".format(sum(latency_l)/len(latency_l)))
-            logger.info("Throughput sum: {:.3f} images/sec".format(sum(throughput_l)))
-        else:
-            # (TODO) should add summary after win32 benchmark has log
-            pass
+        num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
+        cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+        latency_l = []
+        throughput_l = []
+        for i in range(0, num_of_instance):
+            log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
+            with open(log, "r") as f:
+                for line in f:
+                    latency = re.search(r"[L,l]atency:\s+(\d+(\.\d+)?)", line)
+                    latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
+                    throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
+                    throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
+        assert len(latency_l)==len(throughput_l)==num_of_instance, \
+            "Multiple instance benchmark failed with some instance!"
+        logger.info("\n\nMultiple instance benchmark summary: ")
+        logger.info("Latency average: {:.3f} ms".format(sum(latency_l)/len(latency_l)))
+        logger.info("Throughput sum: {:.3f} images/sec".format(sum(throughput_l)))
+
+    def call_one(self, cmd, log_file):
+        """Execute one command for one instance in one thread and dump the log (for Windows)."""
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                shell=True) # nosec
+        with open(log_file, "w", 1, encoding="utf-8") as log_file:
+            log_file.write(f"[ COMMAND ] {cmd} \n")
+            for line in proc.stdout:
+                decoded_line = line.decode("utf-8", errors="ignore").strip()
+                logger.info(decoded_line)   # redirect to terminal
+                log_file.write(decoded_line + "\n")
 
     def config_instance(self):
         """Configure the multi-instance commands and trigger benchmark with sub process."""
@@ -226,13 +234,16 @@ class Benchmark(object):
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
 
-        if(get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
-            raise OSError('Currently no support on AMD with hyperthreads')
-        else:
+        logger.info("num of instance: {}".format(num_of_instance))
+        logger.info("cores per instance: {}".format(cores_per_instance))
+
+        if(sys.platform in ['linux'] and get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
+            raise OSError('Currently no support on ARM with hyperthreads')
+        elif sys.platform in ['linux']:
             bounded_threads = get_bounded_threads(get_core_ids(), get_threads(), get_physical_ids())
 
         for i in range(0, num_of_instance):
-            if get_architecture() == 'x86_64':
+            if sys.platform in ['linux'] and get_architecture() == 'x86_64':
                 core_list_idx = np.arange(0, cores_per_instance) + i * cores_per_instance
                 core_list = np.array(bounded_threads)[core_list_idx]
             else:
@@ -245,7 +256,6 @@ class Benchmark(object):
                 multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
                     instance_cmd, instance_log)
             else:  # pragma: no cover
-                # (TODO) should also add log to win32 benchmark
                 multi_instance_cmd += '{} \n'.format(instance_cmd)
 
         multi_instance_cmd += 'wait' if sys.platform in ['linux'] else ''
@@ -255,7 +265,22 @@ class Benchmark(object):
         if sys.platform in ['linux']:
             p = subprocess.Popen(multi_instance_cmd, preexec_fn=os.setsid, shell=True) # nosec
         elif sys.platform in ['win32']:  # pragma: no cover
-            p = subprocess.Popen(multi_instance_cmd, start_new_session=True, shell=True) # nosec
+            cmd_list = multi_instance_cmd.split("\n")[:-1]
+            threads = []
+            for idx, cmd in enumerate(cmd_list):
+                # wrap each execution of windows bat file in one thread
+                # write the log to the log file of the corresponding instance
+                logger.info('Will dump to {}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))
+                threads.append(Thread(target=self.call_one, args=(cmd,
+                    '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))))
+            for command_thread in threads:
+                command_thread.start()
+                logger.info("Worker threads start")
+            # Wait for all of them to finish
+            for command_thread in threads:
+                command_thread.join()
+                logger.info("Worker threads join")
+            return
         try:
             p.communicate()
         except KeyboardInterrupt:
@@ -298,20 +323,23 @@ class Benchmark(object):
         GLOBAL_STATE.STATE = MODE.BENCHMARK
         framework_specific_info = {'device': cfg.device, \
                                    'approach': cfg.quantization.approach, \
-                                   'random_seed': cfg.tuning.random_seed}
+                                   'random_seed': cfg.tuning.random_seed,
+                                   'backend': cfg.model.get('backend', 'default'),
+                                   'domain': cfg.model.get('domain', 'auto'),
+                                   'format': cfg.model.get('quant_format', 'default')}
         framework = cfg.model.framework.lower()
         if 'tensorflow' in framework:
             framework_specific_info.update({"inputs": cfg.model.inputs, \
                                             "outputs": cfg.model.outputs, \
                                             "recipes": cfg.model.recipes, \
                                             'workspace_path': cfg.tuning.workspace.path})
+        if framework == 'keras':
+            framework_specific_info.update({'workspace_path': cfg.tuning.workspace.path})
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": self._b_dataloader})
-        if 'onnxrt' in framework.lower():
-            framework_specific_info.update(
-                                {"backend": framework.lower().split('_')[-1], \
-                                 'workspace_path': cfg.tuning.workspace.path, \
-                                 'graph_optimization': OPTIONS[framework].graph_optimization})
+        if 'onnx' in framework.lower():
+            framework_specific_info.update({'workspace_path': cfg.tuning.workspace.path,
+                                            'recipes': cfg.quantization.get('recipes', {})})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
                                             "q_dataloader": None})
@@ -330,15 +358,15 @@ class Benchmark(object):
         metric = [self._metric] if self._metric else \
                     deep_get(cfg, 'evaluation.{}.metric'.format(mode))
         b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
-
         if self._b_func is None and self._b_dataloader is None:
             assert deep_get(cfg, 'evaluation.{}.dataloader'.format(mode)) is not None, \
                 'dataloader field of yaml file is missing'
 
             b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
             self._b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
-
+        is_measure = False
         if self._b_func is None:
+            is_measure = True
             self._b_func = create_eval_func(self.framework, \
                                     self._b_dataloader, \
                                     adaptor, \
@@ -353,10 +381,10 @@ class Benchmark(object):
         assert len(objectives) == 1, 'benchmark supports one objective at a time'
         self.objectives = MultiObjective(objectives,
                               cfg.tuning.accuracy_criterion,
-                              is_measure=True)
-
+                              is_measure=is_measure)
         if self._custom_b_func:
             val = self.objectives.evaluate(self._b_func, self._model.model)
+            return
         else:
             val = self.objectives.evaluate(self._b_func, self._model)
         # measurer contain info not only performance(eg, memory, model_size)
@@ -471,17 +499,37 @@ class Benchmark(object):
                        be careful of the name of the model configured in the yaml file,
                        make sure the name is in the supported slim model list.
         """
-        if not isinstance(user_model, BaseModel):
-            logger.warning("Force convert framework model to neural_compressor model.")
-            self._model = NCModel(user_model)
-        else:
-            self._model = user_model
-
         cfg = self.conf.usr_cfg
         if cfg.model.framework == 'NA':
+            assert not isinstance(user_model, BaseModel), \
+                "Please pass an original framework model but not neural compressor model!"
             self.framework = get_model_fwk_name(user_model)
+            if self.framework == "tensorflow":
+                from ..model.tensorflow_model import get_model_type
+                if get_model_type(user_model) == 'keras' and cfg.model.backend == 'itex':
+                    self.framework = 'keras'
+            if self.framework == "pytorch":
+                if cfg.model.backend == "default":
+                    self.framework = "pytorch_fx"
+                elif cfg.model.backend == "ipex":
+                    self.framework = "pytorch_ipex"
+                    import intel_extension_for_pytorch
             cfg.model.framework = self.framework
-            set_backend(self.framework)
+
+        if not isinstance(user_model, BaseModel):
+            logger.warning("Force convert framework model to neural_compressor model.")
+            if "tensorflow" in self.framework or self.framework == "keras":
+                self._model = NCModel(user_model, framework=self.framework, device=cfg.device)
+            else:
+                self._model = NCModel(user_model, framework=self.framework)
+        else:
+            # It is config of neural_compressor version < 2.0, no need in 2.0
+            if cfg.model.framework == "pytorch_ipex":
+                from neural_compressor.model.torch_model import IPEXModel
+                if not isinstance(user_model, IPEXModel):
+                    self._model = NCModel(user_model.model, framework=cfg.model.framework)
+                    return
+            self._model = user_model
 
         # (TODO) ugly to set these params, but tensorflow need
         if 'tensorflow' in self.framework:

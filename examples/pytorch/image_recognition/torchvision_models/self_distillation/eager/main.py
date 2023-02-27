@@ -11,11 +11,8 @@ import torch
 import torchvision
 import torchvision.models.resnet as models
 import torchvision.transforms as transforms
-from neural_compressor.data import DATASETS
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import \
+from neural_compressor.data.dataloaders.pytorch_dataloader import \
     PyTorchDataLoader
-from neural_compressor.experimental.data.transforms.transform import \
-    CropResizeTFTransform
 from neural_compressor.utils import logger
 
 from autoaugment import CIFAR10Policy
@@ -61,6 +58,37 @@ parser.add_argument("--autoaugment", default=True, type=bool)
 parser.add_argument("--cpu", action="store_true", help="using cpu for training")
 parser.add_argument("--hpo", action="store_true", help="enable HPO search")
 parser.add_argument("data", metavar="DIR", help="path to dataset")
+parser.add_argument('--start_epoch', default=0, type=int,
+                    help='manual epoch number (useful on restarts)')
+parser.add_argument('--epochs', default=100, type=int,
+                    help='number of total epochs to run')
+# optimizer
+parser.add_argument('--lr', '--learning-rate', default=0.001, type=float,
+                    help='initial learning rate')
+parser.add_argument('--momentum', default=0.1, type=float, help='momentum')
+parser.add_argument('--nesterov', default=True, type=bool, help='nesterov momentum')
+parser.add_argument('--weight-decay', '--wd', default=1e-3, type=float,
+                    help='weight decay (default: 1e-3)')
+# criterion
+parser.add_argument("--layer_mappings", default=[
+                    [['resblock.1.feature.output', 'resblock.deepst.feature.output'],
+                    ['resblock.2.feature.output','resblock.deepst.feature.output']],
+                    [['resblock.1.fc','resblock.deepst.fc'],
+                    ['resblock.2.fc','resblock.deepst.fc'],
+                    ['resblock.3.fc','resblock.deepst.fc']]
+                    ], type=str, nargs='+',
+                    help='layer pairs used for self distillation')
+parser.add_argument("--temperature", default=3, type=float,
+                    help='temperature parameter of distillation')
+parser.add_argument("--loss_types", default=['L2', 'CE'], type=str, nargs='+',
+                    help='loss types of distillation, should be a list of length 2, '
+                    'first for student targets loss, second for teacher student loss.')
+parser.add_argument("--loss_weights", default=[0.03, 0.3], type=float, nargs='+',
+                    help='loss weights of distillation, should be a list of length 2, '
+                    'and sum to 1.0, first for student targets loss weight, '
+                    'second for teacher student loss weight.')
+parser.add_argument('--add_origin_loss', default=True,
+                    help='whether add origin loss')
 
 args = parser.parse_args()
 logger.info(f"{args}")
@@ -81,31 +109,15 @@ def main():
     main_worker(args)
 
 
-def train(model, distiller, device, trainloader, trial=None):
-    start_epoch = distiller.cfg["distillation"]["train"]["start_epoch"]
-    end_epoch = distiller.cfg["distillation"]["train"]["end_epoch"]
+def train(model, compression_manager, device, trainloader, testloader, trial=None):
+    start_epoch = args.start_epoch
+    end_epoch = args.epochs
 
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(
         model.parameters(), lr=0.1, weight_decay=5e-4, momentum=0.9
     )
-    weight_logit = distiller.cfg["distillation"]["train"]["criterion"][
-        "SelfKnowledgeDistillationLoss"
-    ]["loss_weights"][1]
-    if trial:
-        distiller.cfg["distillation"]["train"]["criterion"][
-            "SelfKnowledgeDistillationLoss"
-        ]["loss_weights"][1] = trial.suggest_float("loss_coefficient", 0, 1)
-        distiller.cfg["distillation"]["train"]["criterion"][
-            "SelfKnowledgeDistillationLoss"
-        ]["loss_weights"][0] = trial.suggest_float("feature_loss_coefficient", 0, 0.1)
-        distiller.cfg["distillation"]["train"]["criterion"][
-            "SelfKnowledgeDistillationLoss"
-        ]["temperature"] = trial.suggest_int("temperature", 1, 5)
-        epochs = trial.suggest_int("epochs", 1, 250)
-        end_epoch = start_epoch + epochs
-        logger.info(f"trial param: {trial.params}")
-
+    weight_logit =args.loss_weights[1]
     init = False
     for nepoch in range(start_epoch, end_epoch):
         if nepoch in [end_epoch // 3, end_epoch * 2 // 3, end_epoch - 10]:
@@ -117,12 +129,12 @@ def train(model, distiller, device, trainloader, trial=None):
         model.train()
         cnt = 0
         sum_loss, total = 0.0, 0.0
-        distiller.on_epoch_begin(nepoch)
+        compression_manager.callbacks.on_epoch_begin(nepoch)
         for image, target in trainloader:
             cnt = cnt + 1
             image = image.to(device)
             target = target.to(device)
-            distiller.on_step_begin(cnt)
+            compression_manager.callbacks.on_step_begin(cnt)
             outputs, features = model(image)
             ensemble = sum(outputs[:-1]) / len(outputs)
             ensemble.detach_()
@@ -161,7 +173,7 @@ def train(model, distiller, device, trainloader, trial=None):
             #   for shallow classifier
             for index in range(1, len(outputs)):
                 loss += criterion(outputs[index], target) * (1 - weight_logit)
-            loss = distiller.on_after_compute_loss(
+            loss = compression_manager.callbacks.on_after_compute_loss(
                 image, outputs_features, loss, teacher_output=outputs_features
             )
             sum_loss += loss.item()
@@ -179,7 +191,7 @@ def train(model, distiller, device, trainloader, trial=None):
                     predicted[classifier_index].eq(target.data).cpu().sum()
                 )
             if cnt % 50 == 0:
-                logging.info(
+                logger.info(
                     "[epoch:%d, iter:%d] Loss: %.03f | Acc: 4/4: %.2f%% 3/4: %.2f%% 2/4: %.2f%%  1/4: %.2f%%"
                     " Ensemble: %.2f%%"
                     % (
@@ -193,13 +205,13 @@ def train(model, distiller, device, trainloader, trial=None):
                         100 * correct[4] / total,
                     )
                 )
-
-            distiller.on_step_end()
-        distiller.on_epoch_end()
+            compression_manager.callbacks.on_step_end()
+        compression_manager.callbacks.on_epoch_end()
+        validate(model, compression_manager, device, testloader, trial, nepoch)
     return model
 
 
-def validate(model, distiller, device, testloader, trial=None):
+def validate(model, compression_manager, device, testloader, trial=None, nepoch=None):
     """
     output:
     correct[0]: 4/4 result
@@ -239,8 +251,8 @@ def validate(model, distiller, device, testloader, trial=None):
             )
         )
     global best_score
-    if trial:
-        trial.report(correct[-1], step=distiller._epoch_runned)
+    if trial and nepoch:
+        trial.report(correct[-1], step=nepoch)
         if trial.should_prune():
             raise optuna.TrialPruned()
     if correct[-1] > best_score:
@@ -254,7 +266,7 @@ def validate(model, distiller, device, testloader, trial=None):
 
 
 def main_worker(args):
-    print("=> creating model '{}'".format(args.topology))
+    logging.info("=> creating model '{}'".format(args.topology))
     if args.cpu:
         device = torch.device("cpu")
     else:
@@ -294,7 +306,7 @@ def main_worker(args):
     trainset = torchvision.datasets.CIFAR100(
         root=args.data,
         train=True,
-        download=False,
+        download=True,
         transform=transform_train,
     )
     trainloader = PyTorchDataLoader(
@@ -302,11 +314,10 @@ def main_worker(args):
     )
 
     testset = torchvision.datasets.CIFAR100(
-        root=args.data, train=False, download=False, transform=transform_test
+        root=args.data, train=False, download=True, transform=transform_test
     )
 
     testloader = PyTorchDataLoader(testset, batch_size=args.batch_size)
-    from neural_compressor.experimental import Distillation, common
 
     if args.hpo:
         if is_optuna_available():
@@ -320,19 +331,30 @@ def main_worker(args):
         model = resnet50()
         model = model.to(device)
 
-        def train_func(model):
-            return train(model, distiller, device, trainloader)
+        def train_func(model, compression_manager):
+            return train(model, compression_manager, device, trainloader, testloader)
 
-        def eval_func(model):
-            return validate(model, distiller, device, testloader)
+        def eval_func(model, compression_manager):
+            return validate(model, compression_manager, device, testloader)
 
-        distiller = Distillation(args.config)
-        distiller.student_model = common.Model(model)
-        distiller.teacher_model = common.Model(model)
-        distiller.train_func = train_func
-        distiller.eval_func = eval_func
-        model = distiller.fit()
-        model.save(args.output_model)
+        import copy
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import DistillationConfig, \
+                                             SelfKnowledgeDistillationLossConfig
+        distil_loss = SelfKnowledgeDistillationLossConfig(
+            layer_mappings=args.layer_mappings,
+            temperature=args.temperature,
+            loss_types=args.loss_types,
+            loss_weights=args.loss_weights,
+            add_origin_loss=args.add_origin_loss,
+        )
+        conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+        compression_manager = prepare_compression(copy.deepcopy(model), conf)
+        model = compression_manager.model
+        train_func(model, compression_manager)
+        compression_manager.save(args.output_model)
+        accu = eval_func(model, compression_manager)
+        logging.info("Distilled model Accuracy:", accu)
     else:
 
         def objective(trial):
@@ -341,20 +363,36 @@ def main_worker(args):
             model = resnet50()
             model = model.to(device)
 
-            def train_func(model):
-                return train(model, distiller, device, trainloader, trial)
+            def train_func(model, compression_manager, trial):
+                return train(model, compression_manager, device, trainloader, testloader, trial)
 
-            def eval_func(model):
-                return validate(model, distiller, device, testloader, trial)
+            def eval_func(model, compression_manager, trial=None):
+                return validate(model, compression_manager, device, testloader, trial)
 
-            distiller = Distillation(args.config)
-            distiller.student_model = common.Model(model)
-            distiller.teacher_model = common.Model(model)
-            distiller.train_func = train_func
-            distiller.eval_func = eval_func
-            model = distiller.fit()
-            model.save(args.output_model)
-            return distiller.best_score
+            import copy
+            from neural_compressor.training import prepare_compression
+            from neural_compressor.config import DistillationConfig, \
+                                                SelfKnowledgeDistillationLossConfig
+            args.loss_weights[1] = trial.suggest_float("loss_coefficient", 0, 1)
+            args.loss_weights[0] = trial.suggest_float(
+            "feature_loss_coefficient", 0, 0.1)
+            args.temperature = trial.suggest_int("temperature", 1, 5)
+            args.epochs = trial.suggest_int("epochs", 1, 20)
+            logger.info(f"trial param: {trial.params}")
+            distil_loss = SelfKnowledgeDistillationLossConfig(
+                layer_mappings=args.layer_mappings,
+                temperature=args.temperature,
+                loss_types=args.loss_types,
+                loss_weights=args.loss_weights,
+                add_origin_loss=args.add_origin_loss,
+            )
+            conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+            compression_manager = prepare_compression(copy.deepcopy(model), conf)
+            model = compression_manager.model
+            train_func(model, compression_manager, trial)
+            compression_manager.save(args.output_model)
+            accu = eval_func(model, compression_manager)
+            return accu
 
         study = optuna.create_study(
             study_name="self_distillation_study",

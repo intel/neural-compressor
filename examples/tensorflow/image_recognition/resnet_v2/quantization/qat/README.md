@@ -4,23 +4,39 @@ Step-by-Step
 This document is used to list steps of reproducing Intel® Neural Compressor QAT feature.
 
 
-## Prerequisite
+# Prerequisite
 
-### 1. Installation
+## 1. Environment
+
+### Install Intel® Neural Compressor
 ```shell
-# Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install Intel Tensorflow 2.4.0 or above.
+### Install Requirements
+The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this QAT example.
+The Intel Extension for Tensorflow for Intel CPUs is installed as default.
 ```shell
-pip install intel-tensorflow==2.4.0
+pip install -r requirements.txt
 ```
-### 3. Install tensorflow_model_optimization
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
+
+# Run
+
+The baseline model will be generated and pretrained on CIFAR10 dataset. Then, it will be saved to "./baseline_model". The CIFAR10 dataset will be automatically loaded.
+To apply QAT, run the command below:
+
+## 1. Quantization
 ```shell
-pip install tensorflow_model_optimization
-```
-## Run Command
-```shell
-python resnet_v2.py    # to get the quantized ResNet-V2 model which will be saved into './trained_qat_model'.
+bash run_tuning.sh --output_model=/path/to/output_model
 ```
 
+## 2. Benchmark
+
+### Performance
+```shell
+bash run_benchmark.sh --input_model=/path/to/input_model --mode=performance
+```
+### Accuracy
+```shell
+bash run_benchmark.sh --input_model=/path/to/input_model --mode=accuracy
+```

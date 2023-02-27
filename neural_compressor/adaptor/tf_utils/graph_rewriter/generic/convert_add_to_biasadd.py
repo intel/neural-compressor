@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Convert Add OP to BiasAdd OP Graph Rewriter."""
 
 import numpy as np
 from tensorflow.python.framework import dtypes
@@ -25,15 +26,19 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as
 from tensorflow.python.framework import tensor_util
 
 class ConvertAddToBiasAddOptimizer(GraphRewriterBase):
-    """ Convert MatMul + Add(AddV2) to MatMul + BiasAdd.
-    """
+    """Convert MatMul/Conv2D + Add(AddV2) to MatMul + BiasAdd."""
     @dump_elapsed_time("Pass ConvertAddToBiasAddOptimizer")
     def do_transformation(self):
+        """Execute convertion Add to BiasAdd."""
         g = GraphAnalyzer()
         g.graph = self.model
         graph_info = g.parse_graph()
 
-        target_nodes = g.query_fusion_pattern_nodes([['MatMul'], ['Add', 'AddV2']])
+        import tensorflow as tf
+        if tf.version.VERSION not in ('2.11.0202242', '2.11.0202250'):
+            target_nodes = g.query_fusion_pattern_nodes([['MatMul', 'Conv2D'], ['Add', 'AddV2']])
+        else:
+            target_nodes = g.query_fusion_pattern_nodes([['MatMul'], ['Add', 'AddV2']])
         for i in target_nodes:
             successor_node_names = graph_info[i[1]].outputs
             matmul_input_name = graph_info[i[0]].node.input[0]
@@ -66,5 +71,5 @@ class ConvertAddToBiasAddOptimizer(GraphRewriterBase):
 
             g.add_node(bias_const_node, None, [bias_node_name])
             g.replace_single_node(bias_node, [i[0]], i[1], successor_node_names,  i[1])
-            
+
         return g.dump_graph()

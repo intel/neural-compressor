@@ -7,14 +7,13 @@ import warnings
 import torch
 import torch.nn as nn
 import torch.nn.parallel
-import torch.distributed as dist
 import torch.optim
 import torch.multiprocessing as mp
 import torch.utils.data
-import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+from accelerate import Accelerator
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
@@ -36,9 +35,7 @@ parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     metavar='N',
-                    help='mini-batch size (default: 256), this is the total '
-                         'batch size of all GPUs on the current node when '
-                         'using Data Parallel or Distributed Data Parallel')
+                    help='mini-batch size (default: 256)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
@@ -56,42 +53,30 @@ parser.add_argument('-t', '--tune', dest='tune', action='store_true',
                     help='tune best int8 model on calibration dataset')
 parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                     help='use pre-trained model')
-parser.add_argument('--world-size', default=-1, type=int,
-                    help='number of nodes for distributed training')
-parser.add_argument('--rank', default=-1, type=int,
-                    help='node rank for distributed training')
-parser.add_argument('--dist-url', default='tcp://224.66.41.62:23456', type=str,
-                    help='url used to set up distributed training')
-parser.add_argument('--dist-backend', default='nccl', type=str,
-                    help='distributed backend')
 parser.add_argument('--seed', default=None, type=int,
                     help='seed for initializing training. ')
-parser.add_argument('--gpu', default=None, type=int,
-                    help='GPU id to use.')
-parser.add_argument('--ppn', default=1, type=int,
-                    help='number of processes on each node of distributed training')
-parser.add_argument('--multiprocessing-distributed', action='store_true',
-                    help='Use multi-processing distributed training to launch '
-                         'N processes per node, which has N GPUs. This is the '
-                         'fastest way to use PyTorch for either single node or '
-                         'multi node data parallel training')
-parser.add_argument("--config", default=None, help="tuning config")
 parser.add_argument('-i', "--iter", default=0, type=int,
                     help='For accuracy measurement only.')
 parser.add_argument('-w', "--warmup_iter", default=5, type=int,
                     help='For benchmark measurement only.')
-parser.add_argument('--benchmark', dest='benchmark', action='store_true',
+parser.add_argument('--performance', dest='performance', action='store_true',
                     help='run benchmark')
+parser.add_argument("--accuracy", dest='accuracy', action='store_true',
+                    help='For accuracy measurement only.')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark')
+parser.add_argument("--no_cuda", action='store_true', help='use cpu for training.')
+parser.add_argument('--local_rank', default=-1, type=int,
+                    help='local rank for distributed training')
 
 best_acc1 = 0
 
 
 def main():
     args = parser.parse_args()
+    accelerator = Accelerator(cpu=args.no_cuda)
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -118,9 +103,6 @@ def main():
             checkpoint = torch.load(args.resume)
             args.start_epoch = checkpoint['epoch']
             best_acc1 = checkpoint['best_acc1']
-            if args.gpu is not None:
-                # best_acc1 may be from a checkpoint from a different GPU
-                best_acc1 = best_acc1.to(args.gpu)
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
             print("=> loaded checkpoint '{}' (epoch {})"
@@ -160,14 +142,16 @@ def main():
         num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
-        validate(val_loader, model, criterion, args)
+        validate(val_loader, model, criterion, args, accelerator)
         return
 
     if args.tune:
-        def training_func_for_nc(model):
+        model, train_loader, val_loader, optimizer = \
+            accelerator.prepare(model, train_loader, val_loader, optimizer)
+
+        def train_func(model):
             epochs = 8
             iters = 30
-            optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
             for nepoch in range(epochs):
                 model.train()
                 cnt = 0
@@ -177,7 +161,7 @@ def main():
                     output = model(image)
                     loss = criterion(output, target)
                     optimizer.zero_grad()
-                    loss.backward()
+                    accelerator.backward(loss) # loss.backward()
                     optimizer.step()
                     if cnt >= iters:
                         break
@@ -189,19 +173,22 @@ def main():
                     # Freeze batch norm mean and variance estimates
                     model.apply(torch.nn.intrinsic.qat.freeze_bn_stats)
 
-            return model
 
-        from neural_compressor.experimental import Quantization, common
-        quantizer = Quantization(args.config)
-        quantizer.model = common.Model(model)
-        quantizer.q_func = training_func_for_nc
-        quantizer.calib_dataloader = val_loader
-        quantizer.eval_dataloader = val_loader
-        q_model = quantizer.fit()
-        q_model.save(args.tuned_checkpoint)
+        import copy
+        from neural_compressor import QuantizationAwareTrainingConfig
+        from neural_compressor.training import prepare_compression
+        model = copy.deepcopy(model)
+        conf = QuantizationAwareTrainingConfig()
+        compression_manager = prepare_compression(model, conf)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
+        train_func(model)
+        compression_manager.callbacks.on_train_end()
+        model._model = accelerator.unwrap_model(model._model)
+        compression_manager.save(args.tuned_checkpoint)
         return
 
-    if args.benchmark:
+    if args.performance or args.accuracy:
         model.eval()
         if args.int8:
             from neural_compressor.utils.pytorch import load
@@ -210,11 +197,20 @@ def main():
                              dataloader=val_loader)
         else:
             new_model = model
-        validate(val_loader, new_model, criterion, args)
+        if args.performance:
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor import benchmark
+            b_conf = BenchmarkConfig(warmup=5,
+                                     iteration=args.iter,
+                                     cores_per_instance=4,
+                                     num_of_instance=1)
+            benchmark.fit(new_model, b_conf, b_dataloader=val_loader)
+        if args.accuracy:
+            validate(val_loader, new_model, criterion, args, accelerator)
         return
 
 
-def train(train_loader, model, criterion, optimizer, epoch, args):
+def train(train_loader, model, criterion, optimizer, epoch, args, accelerator):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
@@ -231,23 +227,21 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # measure data loading time
         data_time.update(time.time() - end)
 
-        if args.gpu is not None:
-            input = input.cuda(args.gpu, non_blocking=True)
-            target = target.cuda(args.gpu, non_blocking=True)
-
         # compute output
         output = model(input)
         loss = criterion(output, target)
 
         # measure accuracy and record loss
+        output = accelerator.gather(output)
+        target = accelerator.gather(target)
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
-        losses.update(loss.item(), input.size(0))
+        losses.update(accelerator.gather(loss).sum().data.item(), input.size(0)*accelerator.num_processes)
         top1.update(acc1[0], input.size(0))
         top5.update(acc5[0], input.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
-        loss.backward()
+        accelerator.backward(loss) # loss.backward()
         optimizer.step()
 
         # measure elapsed time
@@ -258,7 +252,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
             progress.print(i)
 
 
-def validate(val_loader, model, criterion, args):
+def validate(val_loader, model, criterion, args, accelerator):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
@@ -273,17 +267,15 @@ def validate(val_loader, model, criterion, args):
         for i, (input, target) in enumerate(val_loader):
             if i >= args.warmup_iter:
                 start = time.time()
-            if args.gpu is not None:
-                input = input.cuda(args.gpu, non_blocking=True)
-                target = target.cuda(args.gpu, non_blocking=True)
-
             # compute output
             output = model(input)
             loss = criterion(output, target)
 
             # measure accuracy and record loss
+            output = accelerator.gather(output)
+            target = accelerator.gather(target)
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
-            losses.update(loss.item(), input.size(0))
+            losses.update(accelerator.gather(loss).sum().data.item(), input.size(0)*accelerator.num_processes)
             top1.update(acc1[0], input.size(0))
             top5.update(acc5[0], input.size(0))
 
@@ -298,11 +290,6 @@ def validate(val_loader, model, criterion, args):
                 break
 
         print('Batch size = %d' % args.batch_size)
-        if args.batch_size == 1:
-            print('Latency: %.3f ms' % (batch_time.avg * 1000))
-        print('Throughput: %.3f images/sec' % (args.batch_size / batch_time.avg))
-
-        # TODO: this should also be done with the ProgressMeter
         print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
               .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 

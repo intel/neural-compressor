@@ -119,22 +119,9 @@ class DyNAS(NASBase):
         self.acc_predictor = None
         self.macs_predictor = None
         self.latency_predictor = None
-
-        self.results_csv_path = results_csv_path
-        self.search_algo = None
-        self.supernet = supernet
-        self.metrics = metrics
-        self.num_evals = num_evals
-        self.results_csv_path = results_csv_path
-        self.dataset_path = dataset_path
-        self.supernet_ckpt_path = supernet_ckpt_path
-        self.batch_size = batch_size
-        self.population = population
-        self.seed = seed
-        if self.population < 10:  # pragma: no cover
-            raise NotImplementedError(
-                "Please specify a population size >= 10"
-            )
+        self.results_csv_path = None
+        self.num_workers = None
+        self.init_cfg(conf_fname_or_obj)
 
     def estimate(self, individual):
         """Estimate performance of the model.
@@ -158,6 +145,7 @@ class DyNAS(NASBase):
             latency_predictor=None,
             datasetpath=self.dataset_path,
             batch_size=self.batch_size,
+            num_workers=self.num_workers,
             checkpoint_path=self.supernet_ckpt_path,
         )
 
@@ -213,6 +201,7 @@ class DyNAS(NASBase):
                 latency_predictor=self.latency_predictor,
                 datasetpath=self.dataset_path,
                 batch_size=self.batch_size,
+                num_workers=self.num_workers,
                 checkpoint_path=self.supernet_ckpt_path
             )
 
@@ -303,3 +292,34 @@ class DyNAS(NASBase):
             self.latency_predictor.train(features, labels.ravel())
         else:
             self.latency_predictor = None
+
+    def init_cfg(self, conf_fname_or_obj):
+        """Initialize the configuration."""
+        if isinstance(conf_fname_or_obj, str):
+            if os.path.isfile(conf_fname_or_obj):
+                self.conf = Conf(conf_fname_or_obj).usr_cfg
+        elif isinstance(conf_fname_or_obj, NASConfig):
+            conf_fname_or_obj.validate()
+            self.conf = conf_fname_or_obj.usr_cfg
+        else:  # pragma: no cover
+            raise NotImplementedError(
+                "Please provide a str path to the config file or an object of NASConfig."
+            )
+        # self.init_search_cfg(self.conf.nas)
+        assert 'dynas' in self.conf.nas, "Must specify dynas section."
+        dynas_config = self.conf.nas.dynas
+        self.search_algo = self.conf.nas.search.search_algorithm
+        self.supernet = dynas_config.supernet
+        self.metrics = dynas_config.metrics
+        self.num_evals = dynas_config.num_evals
+        self.results_csv_path = dynas_config.results_csv_path
+        self.dataset_path = dynas_config.dataset_path
+        self.supernet_ckpt_path = dynas_config.supernet_ckpt_path
+        self.batch_size = dynas_config.batch_size
+        self.num_workers = dynas_config.num_workers
+        if dynas_config.population < 10:  # pragma: no cover
+            raise NotImplementedError(
+                "Please specify a population size >= 10"
+            )
+        else:
+            self.population = dynas_config.population

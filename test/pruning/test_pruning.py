@@ -1,131 +1,75 @@
-import os
-import shutil
 import unittest
 
 import torch
 import torchvision
 import torch.nn as nn
-
-from neural_compressor.config import Pruner, PruningConfig
-from neural_compressor.data import DATASETS
+from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.training import prepare_compression
-
-
-def build_fake_yaml():
-    fake_yaml = """
-    model:
-      name: imagenet_prune
-      framework: pytorch
-
-    pruning:
-      approach:
-        weight_compression:
-          initial_sparsity: 0.0
-          target_sparsity: 0.97
-          start_epoch: 0
-          end_epoch: 2
-          pruners:
-            - !Pruner
-                start_epoch: 1
-                end_epoch: 2
-                prune_type: basic_magnitude
-                names: ['layer1.0.conv1.weight']
-
-            - !Pruner
-                target_sparsity: 0.6
-                prune_type: basic_magnitude
-                update_frequency: 2
-                names: ['layer1.0.conv2.weight']
-    """
-    with open('fake.yaml', 'w', encoding="utf-8") as f:
-        f.write(fake_yaml)
+from neural_compressor.config import WeightPruningConfig
+from neural_compressor.pruner.pruning import Pruning
 
 
 class TestPruning(unittest.TestCase):
-
     model = torchvision.models.resnet18()
 
-    @classmethod
-    def setUpClass(cls):
-        build_fake_yaml()
+    def test_pruning_basic(self):
+        local_configs = [
+            {
+                "op_names": ['layer1.*'],
+                'target_sparsity': 0.5,
+                "pattern": '8x2',
+                "pruning_type": "magnitude_progressive",
+                "false_key": "this is to test unsupport keys"
+            },
+            {
+                "op_names": ['layer2.*'],
+                'target_sparsity': 0.5,
+                'pattern': '2:4'
+            },
+            {
+                "op_names": ['layer3.*'],
+                'target_sparsity': 0.7,
+                'pattern': '5x1',
+                "pruning_type": "snip_progressive"
+            }
+        ]
+        config = WeightPruningConfig(
+            local_configs,
+            target_sparsity=0.8
+        )
+        prune = Pruning(config)
+        prune.update_config(start_step=1, end_step=10)
+        prune.model = self.model
 
-    @classmethod
-    def tearDownClass(cls):
-        os.remove('fake.yaml')
-        shutil.rmtree('./saved', ignore_errors=True)
-        shutil.rmtree('runs', ignore_errors=True)
-
-    def test_pruning(self):
-        pruner1 = Pruner(start_epoch=1, end_epoch=2, names=['layer1.0.conv1.weight'])
-        pruner2 = Pruner(target_sparsity=0.6, update_frequency=2, names=['layer1.0.conv2.weight'])
-        conf = PruningConfig(pruners=[pruner1, pruner2], end_epoch=2)
-        datasets = DATASETS('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
-        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        compression_manager = prepare_compression(self.model, conf)
-        model = compression_manager.model
-
-        epochs = 2
-        iters = 3
         criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-        for nepoch in range(epochs):
-            model.train()
-            cnt = 0
-            compression_manager.callbacks.on_epoch_begin(nepoch)
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
+        datasets = Datasets('pytorch')
+        dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
+        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+
+        prune.on_train_begin()
+        prune.update_config(pruning_frequency=4)
+        for epoch in range(2):
+            self.model.train()
+            prune.on_epoch_begin(epoch)
+            local_step = 0
             for image, target in dummy_dataloader:
-                compression_manager.callbacks.on_step_begin(cnt)
-                print('.', end='')
-                cnt += 1
-                output = model(image)
+                prune.on_step_begin(local_step)
+                output = self.model(image)
                 loss = criterion(output, target)
                 optimizer.zero_grad()
                 loss.backward()
+                prune.on_before_optimizer_step()
                 optimizer.step()
-                compression_manager.callbacks.on_step_end()
-                if cnt >= iters:
-                    break
-            compression_manager.callbacks.on_epoch_end()
+                prune.on_after_optimizer_step()
+                prune.on_step_end()
+                local_step += 1
 
-        model.save("./saved")
-
-    def test_pruning_external(self):
-        from neural_compressor.experimental import common
-        from neural_compressor import Pruning
-        from neural_compressor.conf.config import PruningConf
-        pruners = [Pruner(1,3,names=['layer1.0.conv1.weight']),
-            Pruner(target_sparsity=0.6,update_frequency=2,names=['layer1.0.conv2.weight'])]
-        conf = PruningConfig(pruners)
-
-        datasets = DATASETS('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(100, 3, 224, 224), low=0., high=1., label=True)
-        dummy_dataloader = PyTorchDataLoader(dummy_dataset)
-        compression_manager = prepare_compression(self.model, conf)
-        model = compression_manager.model
-
-        epochs = 2
-        iters = 3
-        criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
-        for nepoch in range(epochs):
-            model.train()
-            cnt = 0
-            compression_manager.callbacks.on_epoch_begin(nepoch)
-            for image, target in dummy_dataloader:
-                compression_manager.callbacks.on_step_begin(cnt)
-                print('.', end='')
-                cnt += 1
-                output = model(image)
-                loss = criterion(output, target)
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                compression_manager.callbacks.on_step_end()
-                if cnt >= iters:
-                    break
-            compression_manager.callbacks.on_epoch_end()
-        model.save("./saved")
+            prune.on_epoch_end()
+        prune.get_sparsity_ratio()
+        prune.on_train_end()
+        prune.on_before_eval()
+        prune.on_after_eval()
 
 
 if __name__ == "__main__":

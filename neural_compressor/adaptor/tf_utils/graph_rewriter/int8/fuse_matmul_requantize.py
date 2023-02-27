@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse QuantizedMatMul with Requantize/Dequantize Graph Rewriter."""
 
 import numpy as np
 import tensorflow as tf
@@ -30,9 +31,10 @@ from neural_compressor.adaptor.tf_utils.util import version1_gt_version2, versio
 
 
 class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
-    """Fuse QuantizedMatMul + Requantize + Dequantize into QuantizedMatMulWithBiasAndDequantize.
-    """
+    """Fuse QuantizedMatMul + Requantize + Dequantize into QuantizedMatMulWithBiasAndDequantize."""
+
     def __init__(self, model, device='cpu'):
+        """Initilization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -43,6 +45,7 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
         self.eps = 1e-5
 
     def do_transformation(self):
+        """Apply the fusion of QuantizedMatMul + Requantize + Dequantize."""
         fuse_pattern = []
         if tf.version.VERSION in ("1.15.0-up2", "1.15.0-up3") or version1_gt_version2(tf.version.VERSION, '2.1.0'):
             fuse_pattern = [["QuantizedMatMulWithBias"], ['Requantize'], ['Dequantize'], ('Softmax',)]
@@ -184,9 +187,9 @@ class FuseMatMulRequantizeDequantizeTransformer(GraphRewriterBase):
         return self.graph_analyzer.dump_graph()
 
 class FuseMatMulRequantizeTransformer(GraphRewriterBase):
-    """Fuse Quantized MatMul Op with the successor Requantize Op.
-    """
+    """Fuse Quantized MatMul Op with the successor Requantize Op."""
     def __init__(self, model, device='cpu'):
+        """Initilization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -196,6 +199,7 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
 
     def do_transformation(self):
         """Fuse the quantized op with the following requantize op.
+
         Returns:
             [graphdef]: the optimized graphdef object
         """
@@ -337,9 +341,10 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
         return self.graph_analyzer.dump_graph()
 
 class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # pragma: no cover
-    """Fuse _QuantizedMatMul + Requantize + Dequantize into _QuantizedMatMul.
-    """
+    """Fuse _QuantizedMatMul + Requantize + Dequantize into _QuantizedMatMul."""
+
     def __init__(self, model, device='cpu'):
+        """Initilization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -350,6 +355,7 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
         self.eps = 1e-5
 
     def do_transformation(self):
+        """Apply the fusion of QuantizedMatMul + Requantize + Dequantize."""
         fuse_pattern = [["_QuantizedMatMul"], ['Requantize'], ['Dequantize'], ('Softmax',)]
 
         uint8_type = dtypes.quint8.as_datatype_enum
@@ -520,9 +526,10 @@ class FuseMatMulRequantizeDequantizeNewAPITransformer(GraphRewriterBase): # prag
         return self.graph_analyzer.dump_graph()
 
 class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
-    """Fuse newAPI Quantized MatMul Op with the successor Requantize Op.
-    """
+    """Fuse newAPI Quantized MatMul Op with the successor Requantize Op."""
+
     def __init__(self, model, device='cpu'):
+        """Initilization."""
         super().__init__(model)
         self.device = device
         self.graph_analyzer = GraphAnalyzer()
@@ -532,6 +539,7 @@ class FuseMatMulRequantizeNewAPITransformer(GraphRewriterBase):
 
     def do_transformation(self):
         """Fuse the quantized op with the following requantize op.
+
         Returns:
             [graphdef]: the optimized graphdef object
         """

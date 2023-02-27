@@ -1,29 +1,29 @@
 This document describes the step-by-step to reproduce Yolo-v3 tuning result with Neural Compressor. This example can run on Intel CPUs and GPUs.
 
-## Prerequisite
+# Prerequisite
 
 
-### 1. Installation
+## 1. Environment
 Recommend python 3.6 or higher version.
 
+### Install Intel® Neural Compressor
 ```shell
-# Install Intel® Neural Compressor
 pip install neural-compressor
 ```
 
-### 2. Install Intel Tensorflow
+### Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
-> Note: Supported Tensorflow versions please refer to Neural Compressor readme file.
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
-### 3. Installation Dependency packages
+### Installation Dependency packages
 ```shell
 cd examples/tensorflow/object_detection/yolo_v3/quantization/ptq
 pip install -r requirements.txt
 ```
 
-### 4. Install Intel Extension for Tensorflow
+### Install Intel Extension for Tensorflow
 #### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
@@ -39,30 +39,31 @@ Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's no
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-### 5. Downloaded Yolo-v3 model
+## 2. Prepare model
+### Downloaded Yolo-v3 model
 ```shell
 git clone https://github.com/mystic123/tensorflow-yolo-v3.git
 cd tensorflow-yolo-v3
 ```
 
-### 6. Download COCO Class Names File
+### Download COCO Class Names File
 ```shell
 wget https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names
 ```
 
-### 7. Download Model Weights (Full):
+### Download Model Weights (Full):
 ```shell
 wget https://pjreddie.com/media/files/yolov3.weights
 ```
 
-### 8. Generate PB:
+### Generate PB:
 ```shell
 python convert_weights_pb.py --class_names coco.names --weights_file yolov3.weights --data_format NHWC --size 416 --output_graph yolov3.pb
 ```
 
-### 9. Prepare Dataset
+## 3. Prepare Dataset
 
-#### Automatic dataset download
+### Automatic dataset download
 
 > **_Note: `prepare_dataset.sh` script works with TF version 1.x._**
 
@@ -77,23 +78,23 @@ cd examples/tensorflow/object_detection/yolo_v3/quantization/ptq
 This script will download the *train*, *validation* and *test* COCO datasets. Furthermore it will convert them to
 tensorflow records using the `https://github.com/tensorflow/models.git` dedicated script.
 
-#### Manual dataset download
+### Manual dataset download
 Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
 
-## Get Quantized Yolo-v3 model with Neural Compressor
 
-### 1.Config the yolo_v3.yaml with the valid cocoraw data path or the yolo_v3_itex.yaml if using the Intel Extension for Tensorflow.
-
-### 2.Config the yaml file
-In examples directory, there is a yolo_v3.yaml for tuning the model on Intel CPUs. The 'framework' in the yaml is set to 'tensorflow'. If running this example on Intel GPUs, the 'framework' should be set to 'tensorflow_itex' and the device in yaml file should be set to 'gpu'. The yolo_v3_itex.yaml is prepared for the GPU case. We could remove most of items and only keep mandatory item for tuning. We also implement a calibration dataloader and have evaluation field for creation of evaluation function at internal neural_compressor.
-
-### 3.Run below command one by one.
+# Run
 Usage
 ```shell
 cd examples/tensorflow/object_detection/yolo_v3/quantization/ptq
 ```
+## 1. Tune
 ```python
-python infer_detections.py --input_graph /path/to/yolov3_fp32.pb --config ./yolo_v3.yaml --output_graph /path/to/save/yolov3_tuned3.pb
+bash run_tuning.sh --input_model=/path/to/yolov3_fp32.pb --output_model=/path/to/save/yolov3_int8.pb --dataset_location=/path/to/dataset
+```
+
+## 2. Benchmark
+```python
+bash run_benchmark.sh --input_model=/path/to/yolov3_fp32.pb --dataset_location=/path/to/dataset --mode=performance
 ```
 
 Finally, the program will generate the quantized Yolo-v3 model with relative 1% loss.

@@ -1,5 +1,25 @@
+#
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2023 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 from __future__ import print_function
+import yaml
+import numpy as np
 import tensorflow
+
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, Activation
 from  tensorflow.keras.layers import AveragePooling2D, Input, Flatten
 from  tensorflow.keras.callbacks import LearningRateScheduler
@@ -7,8 +27,47 @@ from  tensorflow.keras.callbacks import ReduceLROnPlateau
 from  tensorflow.keras.regularizers import l2
 from  tensorflow.keras.models import Model
 from  tensorflow.keras.datasets import cifar10
-import numpy as np
-import yaml
+
+
+from neural_compressor.utils import logger
+from neural_compressor.data import DataLoader
+from neural_compressor.adaptor import FRAMEWORKS
+from neural_compressor.conf.dotdict import DotDict
+from neural_compressor.training import WeightPruningConfig
+from neural_compressor.training import prepare_compression
+from neural_compressor.utils import create_obj_from_config
+from neural_compressor.conf.config import default_workspace
+
+flags = tensorflow.compat.v1.flags
+FLAGS = flags.FLAGS
+
+## Required parameters
+flags.DEFINE_bool(
+    'prune', False, 'Whether to perform distributed training.')
+
+flags.DEFINE_bool(
+    'benchmark', False, 'Whether to perform distributed evaluation.')
+
+flags.DEFINE_string(
+    'input_model', None, 'Run inference with specified model.')
+
+flags.DEFINE_string(
+    'output_model', None, 'The output pruned model.')
+
+flags.DEFINE_integer(
+    'start_epoch', 0, 'The start epoch of training process.')
+
+flags.DEFINE_integer(
+    'end_epoch', 7, 'The end epoch of training process.')
+
+flags.DEFINE_integer(
+    'iters', 100, 'The iteration of evaluating the performance.')
+
+flags.DEFINE_bool(
+    'train_distributed', False, 'Whether to perform distributed training.')
+
+flags.DEFINE_bool(
+    'evaluation_distributed', False, 'Whether to perform distributed evaluation.')
 
 
 def lr_schedule(epoch):
@@ -202,6 +261,60 @@ subtract_pixel_mean = True
 n = 3
 depth = n * 9 + 2
 
+def generate_pretrained_model():
+    # Load the CIFAR10 data.
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+
+    # Input image dimensions.
+    input_shape = x_train.shape[1:]
+    # Normalize data.
+    x_train = x_train.astype('float32') / 255
+    x_test = x_test.astype('float32') / 255
+
+    x_train_mean = np.mean(x_train, axis=0)
+    x_train -= x_train_mean
+    x_test -= x_train_mean
+
+    print('x_train shape:', x_train.shape)
+    print(x_train.shape[0], 'train samples')
+    print(x_test.shape[0], 'test samples')
+    print('y_train shape:', y_train.shape)
+
+    # Convert class vectors to binary class matrices.
+    y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
+    y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
+
+    model = resnet_v2(input_shape=input_shape, depth=depth)
+
+    model.compile(loss='categorical_crossentropy',
+                optimizer=tensorflow.keras.optimizers.Adam(learning_rate=0.01),
+                metrics=['accuracy'])
+    model.summary()
+
+    lr_scheduler = LearningRateScheduler(lr_schedule)
+
+    lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
+                                cooldown=0,
+                                patience=5,
+                                min_lr=0.5e-6)
+
+    callbacks = [lr_reducer, lr_scheduler]
+
+    # Run training, with or without data augmentation.
+    model.fit(x_train, y_train,
+                batch_size=batch_size,
+                epochs=epochs,
+                validation_data=(x_test, y_test),
+                shuffle=True,
+                callbacks=callbacks)
+
+
+    # Score trained model.
+    scores = model.evaluate(x_test, y_test, verbose=1)
+    print('Test loss:', scores[0])
+    print('Test accuracy:', scores[1])
+    model.save("baseline_model")
+
 class EvalDataset(object):
     def __init__(self, batch_size=100):
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
@@ -262,17 +375,76 @@ class TrainDataset(object):
     def __getitem__(self, idx):
         return self.train_images[idx], self.train_labels[idx]
 
-if __name__ == '__main__':
-    from neural_compressor.experimental import Pruning, common
-    from neural_compressor.utils import logger
-    prune = Pruning("./prune.yaml")
-    # prune.train_distributed = True
-    # prune.evaluation_distributed = True
-    prune.train_dataloader = common.DataLoader(TrainDataset(), batch_size=32)
-    prune.eval_dataloader = common.DataLoader(EvalDataset(), batch_size=32)
-    prune.model = './baseline_model'
-    model = prune.fit()
-    stats, sparsity = model.report_sparsity()
-    logger.info(stats)
-    logger.info(sparsity)
+def train(model, adaptor, compression_manager, train_dataloader):
+    train_cfg = {
+        'epoch': 8,
+        'start_epoch': 0,
+        'execution_mode': 'eager', 
+        'criterion': {'CrossEntropyLoss': {'reduction': 'sum_over_batch_size'}}, 
+        'optimizer': {'SGD': {'learning_rate': 1e-03, 'momentum': 0.9, 'nesterov': True}}, 
+    }
+    train_cfg = DotDict(train_cfg)
+    train_func = create_obj_from_config.create_train_func(
+                            'tensorflow', \
+                            train_dataloader, \
+                            adaptor, \
+                            train_cfg, \
+                            hooks=compression_manager.callbacks.callbacks.hooks, \
+                            callbacks=compression_manager.callbacks.callbacks.callbacks)
+    train_func(model)
 
+
+def evaluate(model, adaptor, eval_dataloader):
+    eval_cfg = {'accuracy': {'metric': {'topk': 1}, 
+                             'iteration': -1, 
+                             'multi_metrics': None}
+                }
+    eval_cfg = DotDict(eval_cfg)
+    eval_func = create_obj_from_config.create_eval_func('tensorflow', \
+                                                        eval_dataloader, \
+                                                        adaptor, \
+                                                        eval_cfg.accuracy.metric, \
+                                                        eval_cfg.accuracy.postprocess, \
+                                                        fp32_baseline = False)
+    return eval_func(model)
+
+if __name__ == '__main__':
+    train_dataloader = DataLoader(dataset=TrainDataset(), batch_size=32, 
+                                    framework='tensorflow', distributed=FLAGS.train_distributed)
+    eval_dataloader = DataLoader(dataset=EvalDataset(), batch_size=32, 
+                                    framework='tensorflow', distributed=FLAGS.evaluation_distributed)
+
+    if FLAGS.prune:
+        generate_pretrained_model()
+        framework_specific_info = {
+            'device': 'cpu', 'random_seed': 9527, 
+            'workspace_path': default_workspace, 
+            'q_dataloader': None, 'format': 'default', 
+            'backend': 'default', 'inputs': [], 'outputs': []
+        }
+        adaptor = FRAMEWORKS['tensorflow'](framework_specific_info)
+
+        configs = WeightPruningConfig(
+            pruning_type='magnitude',
+            target_sparsity=0.25,
+            start_step=FLAGS.start_epoch,
+            end_step=FLAGS.end_epoch
+        )
+        compression_manager = prepare_compression(model='./baseline_model', confs=configs)
+        compression_manager.callbacks.on_train_begin()
+        model = compression_manager.model
+
+        train(model, adaptor, compression_manager, train_dataloader)
+        print("Pruned model score is ",evaluate(model, adaptor, eval_dataloader))
+
+        compression_manager.callbacks.on_train_end()
+        compression_manager.save(FLAGS.output_model)
+        stats, sparsity = model.report_sparsity()
+        logger.info(stats)
+        logger.info(sparsity)
+        
+    if FLAGS.benchmark:
+        from neural_compressor.benchmark import fit
+        from neural_compressor.config import BenchmarkConfig
+        conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7, iteration=FLAGS.iters)
+        fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader)

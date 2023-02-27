@@ -40,8 +40,6 @@ function run_tuning {
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
-    model_type='bert'
-    approach='post_training_static_quant'
 
     if [ "${topology}" = "bert_large_SQuAD" ]; then
         TASK_NAME='squad'
@@ -49,9 +47,6 @@ function run_tuning {
         model_name_or_path="bert-large-uncased-whole-word-masking-finetuned-squad"
         extra_cmd='--doc_stride 128'
     fi
-
-    sed -i "/: bert/s|name:.*|name: $model_type|g" conf.yaml
-    sed -i "/approach:/s|approach:.*|approach: $approach|g" conf.yaml
 
     python -u ./run_qa.py \
         --model_name_or_path ${model_name_or_path} \

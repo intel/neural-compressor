@@ -133,9 +133,10 @@ def main():
 
     kwargs = {'num_workers': 0, 'pin_memory': True}
     assert(args.dataset == 'cifar100')
-    train_dataset = datasets.__dict__[args.dataset.upper()]('../data', 
-                                        train=True, download=True,
-                                        transform=transform_train)
+    train_dataset = datasets.__dict__[args.dataset.upper()]('../data',
+                                                            train=True,
+                                                            download=True,
+                                                            transform=transform_train)
     # get logits of teacher model
     if args.loss_weights[1] > 0:
         from tqdm import tqdm
@@ -183,6 +184,8 @@ def main():
                                 momentum=args.momentum, nesterov = args.nesterov,
                                 weight_decay=args.weight_decay)
 
+    criterion = torch.nn.CrossEntropyLoss()
+
     # cosine learning rate
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, len(train_loader) * args.epochs // accelerator.num_processes
@@ -191,36 +194,23 @@ def main():
     student_model, teacher_model, train_loader, val_loader, optimizer = \
         accelerator.prepare(student_model, teacher_model, train_loader, val_loader, optimizer)
 
-    def train_func(model):
-        return train(train_loader, model, scheduler, distiller, best_prec1, accelerator)
+    from neural_compressor.training import prepare_compression
+    from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+    distillation_criterion = KnowledgeDistillationLossConfig(temperature=args.temperature,
+                                                             loss_types=args.loss_types,
+                                                             loss_weights=args.loss_weights)
+    conf = DistillationConfig(teacher_model, distillation_criterion)
+    compression_manager = prepare_compression(student_model, conf)
+    compression_manager.callbacks.on_train_begin()
+    model = compression_manager.model
+    train(train_loader, model, criterion, optimizer, scheduler, compression_manager, best_prec1,
+          val_loader, accelerator)
 
-    def eval_func(model):
-        return validate(val_loader, model, distiller, accelerator)
-
-    from neural_compressor.experimental import Distillation, common
-    from neural_compressor.experimental.common.criterion import PyTorchKnowledgeDistillationLoss
-
-    distiller = Distillation(args.config)
-    distiller.teacher_model = common.Model(teacher_model)
-    distiller.student_model = common.Model(student_model)
-    distiller.train_func = train_func
-    distiller.eval_func = eval_func
-    distiller.optimizer = optimizer
-    distiller.criterion = PyTorchKnowledgeDistillationLoss(
-                            temperature=args.temperature,
-                            loss_types=args.loss_types,
-                            loss_weights=args.loss_weights)
-    model = distiller.fit()
-
-    directory = "runs/%s/"%(args.name)
-    os.makedirs(directory, exist_ok=True)
-    model._model = accelerator.unwrap_model(model.model)
-    model.save(directory)
     # change to framework model for further use
-    model = model.model
+    model = accelerator.unwrap_model(model.model)
 
-def train(train_loader, model, scheduler, distiller, best_prec1, accelerator):
-    distiller.on_train_begin()
+def train(train_loader, model, criterion, optimizer, scheduler, compression_manager, best_prec1,
+          val_loader, accelerator):
     for epoch in range(args.start_epoch, args.epochs):
         """Train for one epoch on the training set"""
         batch_time = AverageMeter()
@@ -240,8 +230,9 @@ def train(train_loader, model, scheduler, distiller, best_prec1, accelerator):
             # compute output
             output = model(input)
 
-            loss = distiller.criterion(output, target)
-            loss = distiller.on_after_compute_loss(input, output, loss, teacher_logits)
+            loss = criterion(output, target)
+            loss = compression_manager.callbacks.on_after_compute_loss(
+                input, output, loss, teacher_logits)
 
             # measure accuracy and record loss
             output = accelerator.gather(output)
@@ -251,9 +242,9 @@ def train(train_loader, model, scheduler, distiller, best_prec1, accelerator):
             top1.update(prec1.item(), input.size(0)*accelerator.num_processes)
 
             # compute gradient and do SGD step
-            distiller.optimizer.zero_grad()
+            optimizer.zero_grad()
             accelerator.backward(loss) # loss.backward()
-            distiller.optimizer.step()
+            optimizer.step()
             scheduler.step()
 
             # measure elapsed time
@@ -269,13 +260,14 @@ def train(train_loader, model, scheduler, distiller, best_prec1, accelerator):
                         epoch, i, len(train_loader), batch_time=batch_time,
                         loss=losses, top1=top1, scheduler=scheduler))
 
-        distiller.on_epoch_end()
+        compression_manager.callbacks.on_epoch_end()
+        best_score = validate(val_loader, model, epoch + 1)
         # remember best prec@1 and save checkpoint
-        is_best = distiller.best_score > best_prec1
-        best_prec1 = max(distiller.best_score, best_prec1)
+        is_best = best_score > best_prec1
+        best_prec1 = max(best_score, best_prec1)
         if accelerator.is_local_main_process:
             save_checkpoint({
-                'epoch': distiller._epoch_runned + 1,
+                'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
                 'best_prec1': best_prec1,
                 }, is_best)
@@ -284,9 +276,9 @@ def train(train_loader, model, scheduler, distiller, best_prec1, accelerator):
                 log_value('train_loss', losses.avg, epoch)
                 log_value('train_acc', top1.avg, epoch)
                 log_value('learning_rate', scheduler._last_lr[0], epoch)
-            
 
-def validate(val_loader, model, distiller, accelerator):
+
+def validate(val_loader, model, epoch, accelerator):
     """Perform validation on the validation set"""
     batch_time = AverageMeter()
     top1 = AverageMeter()
@@ -320,10 +312,10 @@ def validate(val_loader, model, distiller, accelerator):
     accelerator.print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))
     # log to TensorBoard
     if accelerator.is_local_main_process and args.tensorboard:
-        log_value('val_acc', top1.avg, distiller._epoch_runned)
+        log_value('val_acc', top1.avg, epoch)
     return top1.avg
 
-def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
+def save_checkpoint(state, is_best, filename='checkpoint.pt'):
     """Saves checkpoint to disk"""
     directory = "runs/%s/"%(args.name)
     if not os.path.exists(directory):
@@ -331,7 +323,7 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     filename = directory + filename
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, 'runs/%s/'%(args.name) + 'model_best.pth.tar')
+        shutil.copyfile(filename, 'runs/%s/'%(args.name) + 'model_best.pt')
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

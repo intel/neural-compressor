@@ -37,29 +37,19 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    extra_cmd=""
+    extra_cmd="--ipex"
     if [ -n "$output_model" ];then
-        extra_cmd=$extra_cmd"--tuned_checkpoint ${output_model}"
+        extra_cmd=$extra_cmd" --tuned_checkpoint ${output_model}"
     fi
-    if [ "resnext101_32x16d_wsl_ipex" = "${topology}" ];then
+    if [[ "${topology}" == "resnext101_32x16d_wsl"* ]];then
         extra_cmd=$extra_cmd" --hub "
-    fi
-    result=$(echo $topology | grep "ipex")
-    if [[ "$result" != "" ]];then
-        sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf_ipex.yaml
-        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf_ipex.yaml
-        extra_cmd=$extra_cmd" --ipex"
-        topology=${topology%*${topology:(-5)}}
-    else
-        sed -i "/\/path\/to\/calibration\/dataset/s|root:.*|root: $dataset_location/train|g" conf.yaml
-        sed -i "/\/path\/to\/evaluation\/dataset/s|root:.*|root: $dataset_location/val|g" conf.yaml
     fi
     extra_cmd=$extra_cmd" ${dataset_location}"
 
     python main.py \
             --pretrained \
             -t \
-            -a $topology \
+            -a $input_model \
             -b 30 \
             ${extra_cmd}
 

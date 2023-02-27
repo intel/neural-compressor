@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Fuse samll ops to LayerNorm Graph Rewriter."""
 
 import re
 from tensorflow.core.framework import attr_value_pb2
@@ -30,38 +31,39 @@ class FuseLayerNormOptimizer():  # pragma: no cover
     And further restrict it to only 2D or 3D tensor inputs to keras LayerNormalization api.
     """
     def __init__(self, input_graph_def):
-        """Constructor.
-        """
+        """Constructor."""
         self.input_graph_def = input_graph_def
 
     @dump_elapsed_time("Pass FuseLayerNormOptimizer")
     def do_transformation(self):
-        """
-        The following pattern will be searched in the graph with additional contraints.
+        """The following pattern will be searched in the graph with additional contraints.
+
         Here * means any type of op.
         Subgraph:
                 *(input)  *  * Const  *  Const                       FusedOp
-                     \    |   \  |    |  /        Const              -------
-                      \   |    \ |    | /  Const   /
-                      Reshape  Fill   Fill  /     /         *(input) *(gamma)  *(beta)
-                         \      /      /   /     /                \     |      /
-                          \    /      /   /     /                  \    |     /
+                     x    |   x  |    |  x        Const              -------
+                      x   |    x |    | x  Const   x
+                      Reshape  Fill   Fill  x     x         *(input) *(gamma)  *(beta)
+                         x      x      x   x     x                x     |      x
+                          x    x      x   x     x                  x    |     x
                      F u s e d B a t c h N o r m V 3              _MklLayerNorm
-                            \
-                             \   *
-                              \ /
+                            x
+                             x   *
+                              x x
                            Reshape
-                               \   *(gamma)
-                                \ /
+                               x   *(gamma)
+                                x x
                                 Mul
-                        *(beta) /
-                           \   /
+                        *(beta) x
+                           x   x
                          AddV2(output)
         Args:
             input_graph_def: A GraphDef containing a model.
+
         Returns:
             Modified graph with individual ops that made up of layer normalization
             fused to LayerNorm.
+
         Raises:
             ValueError: If the graph is badly formed with duplicate node names.
         """
@@ -194,7 +196,7 @@ class FuseLayerNormOptimizer():  # pragma: no cover
         result_graph_def.versions.CopyFrom(self.input_graph_def.versions)
         return result_graph_def
 
-def node_name_from_input(node_name):
+def node_name_from_input(node_name):  # pragma: no cover
     """Strips off ports and other decorations to get the underlying node name."""
     if node_name.startswith("^"):
         node_name = node_name[1:]
@@ -203,13 +205,16 @@ def node_name_from_input(node_name):
         node_name = m.group(1)
     return node_name
 
-def node_from_map(node_map, name):
+def node_from_map(node_map, name):  # pragma: no cover
     """Pulls a node def from a dictionary for a given name.
+
     Args:
         node_map: Dictionary containing an entry indexed by name for every node.
         name: Identifies the node we want to find.
+
     Returns:
         NodeDef of the node with the given name.
+
     Raises:
         ValueError: If the node isn't present in the dictionary.
     """
@@ -218,12 +223,15 @@ def node_from_map(node_map, name):
         raise ValueError("No node named '%s' found in map." % name)
     return node_map[stripped_name]
 
-def values_from_const(node_def):
+def values_from_const(node_def):  # pragma: no cover
     """Extracts the values from a const NodeDef as a numpy ndarray.
+
     Args:
         node_def: Const NodeDef that has the values we want to access.
+
     Returns:
         Numpy ndarray containing the values.
+
     Raises:
         ValueError: If the node isn't a Const.
     """

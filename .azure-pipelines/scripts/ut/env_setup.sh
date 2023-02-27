@@ -20,7 +20,7 @@ echo "mxnet version is $mxnet_version"
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
 elif [[ "${tensorflow_version}" == "spr-base" ]]; then
-    pip install /tf_dataset/tf_binary/221204/tensorflow*.whl
+    pip install /tf_dataset/tf_binary/221212/tensorflow*.whl
     if [[ $? -ne 0 ]]; then
       exit 1
     fi
@@ -28,7 +28,10 @@ elif [[ "${tensorflow_version}" != "" ]]; then
     pip install intel-tensorflow==${tensorflow_version}
 fi
 
-if [[ "${itex_version}" != "" ]]; then
+if [[ "${itex_version}" == "nightly" ]]; then
+    pip install /tf_dataset/itex_binary/221209/intel_extension_for_tensorflow-1.1.0-cp38-cp38-linux_x86_64.whl
+    pip install /tf_dataset/itex_binary/221209/intel_extension_for_tensorflow_lib-1.1.0.0-cp38-cp38-linux_x86_64.whl
+elif [[ "${itex_version}" != "" ]]; then
     pip install --upgrade intel-extension-for-tensorflow[cpu]==${itex_version}
 fi
 
@@ -40,8 +43,11 @@ if [[ "${torchvision_version}" != "" ]]; then
     pip install torchvision==${torchvision_version} -f https://download.pytorch.org/whl/torch_stable.html
 fi
 
-if [[ "${ipex_version}" != "" ]]; then
+if [[ "${ipex_version}" == "1.12.0+cpu" ]]; then
     ipex_whl="http://intel-optimized-pytorch.s3.cn-north-1.amazonaws.com.cn/wheels/v1.12.0/intel_extension_for_pytorch-1.12.0%2Bcpu-cp38-cp38-linux_x86_64.whl"
+    pip install $ipex_whl
+elif [[ "${ipex_version}" == "1.13.0+cpu" ]]; then
+    ipex_whl="https://github.com/intel/intel-extension-for-pytorch/releases/download/v1.13.0%2Bcpu/intel_extension_for_pytorch-1.13.0-cp38-cp38-manylinux2014_x86_64.whl"
     pip install $ipex_whl
 fi
 
@@ -54,11 +60,11 @@ if [[ "${onnxruntime_version}" != "" ]]; then
     pip install onnxruntime-extensions
 fi
 
-if [ "${mxnet_version}" == '1.6.0' ]; then
-    pip install mxnet-mkl==${mxnet_version}
-elif [ "${mxnet_version}" == '1.7.0' ]; then
-    pip install mxnet==${mxnet_version}.post2
-elif [ "${mxnet_version}" != '' ]; then
+if [ "${mxnet_version}" != '' ]; then
+    pip install numpy==1.23.5
+    echo "re-install pycocotools resolve the issue with numpy..."
+    pip uninstall pycocotools -y
+    pip install --no-cache-dir pycocotools
     pip install mxnet==${mxnet_version}
 fi
 

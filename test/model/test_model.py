@@ -3,8 +3,10 @@ import numpy as np
 import unittest
 import os
 import platform
+from pkg_resources import parse_version
 from neural_compressor.model import MODELS
-import neural_compressor.model.model as NCModel
+from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.model.mxnet_model import MXNetModel
 from neural_compressor.model.model import get_model_fwk_name
 from neural_compressor.experimental.common.model import Model
 
@@ -134,7 +136,7 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertEqual(True, isinstance(model.graph_def, tf.compat.v1.GraphDef))
 
     def test_validate_graph_node(self):
-        from neural_compressor.model.model import validate_graph_node
+        from neural_compressor.model.tensorflow_model import validate_graph_node
         graph = build_graph()
         self.assertEqual(False, validate_graph_node(graph.as_graph_def(), []))
         self.assertEqual(False, validate_graph_node(graph.as_graph_def(), ['test']))
@@ -247,6 +249,27 @@ class TestTensorflowModel(unittest.TestCase):
         os.system('rm -rf simple_model')
         os.system('rm -rf keras_model')
 
+    def test_tf_qat_model(self):
+        if parse_version(tf.version.VERSION) < parse_version('2.3.0'):
+            return
+        keras_model = build_keras()
+        self.assertEqual('tensorflow', get_model_fwk_name(keras_model))
+
+        from neural_compressor.model.tensorflow_model import TensorflowQATModel
+        model = TensorflowQATModel(keras_model)
+        assert isinstance(model.model, tf.keras.Model)
+        keras_model.save('./simple_model')
+        # load from path
+        model = TensorflowQATModel('./simple_model')
+        assert isinstance(model.model, tf.keras.Model)
+
+
+        os.makedirs('./keras_model', exist_ok=True)
+        model.save('./keras_model')
+        load_model = tf.keras.models.load_model('./keras_model')
+        os.system('rm -rf simple_model')
+        os.system('rm -rf keras_model')
+
     @unittest.skipIf(tf.version.VERSION < '2.4.0' or platform.system().lower() == "windows", "Only supports tf 2.4.0 or above")
     def test_saved_model(self):
         ssd_resnet50_ckpt_url = 'http://download.tensorflow.org/models/object_detection/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03.tar.gz'
@@ -302,7 +325,7 @@ class TestTensorflowModel(unittest.TestCase):
 
 
     def test_tensorflow(self):
-        from neural_compressor.model.model import TensorflowBaseModel
+        from neural_compressor.model.tensorflow_model import TensorflowBaseModel
         ori_model = build_graph()
         self.assertEqual('tensorflow', get_model_fwk_name(ori_model))
         self.assertEqual('tensorflow', get_model_fwk_name(TensorflowBaseModel(ori_model)))
@@ -346,7 +369,7 @@ class TestONNXModel(unittest.TestCase):
     def test_model(self):
         self.assertEqual('onnxruntime', get_model_fwk_name(self.cnn_export_path))
         model = MODELS['onnxruntime'](self.cnn_model)
-        self.assertEqual(True, isinstance(model, NCModel.ONNXModel))
+        self.assertEqual(True, isinstance(model, ONNXModel))
         self.assertEqual(True, isinstance(model.model, onnx.ModelProto))
 
         model.save('test.onnx')
@@ -356,7 +379,7 @@ class TestONNXModel(unittest.TestCase):
 class TestPyTorchModel(unittest.TestCase):
     def testPyTorch(self):
         import torchvision
-        from neural_compressor.model.model import PyTorchModel, PyTorchIpexModel, PyTorchFXModel
+        from neural_compressor.model.torch_model import PyTorchModel, IPEXModel, PyTorchFXModel
         ori_model = torchvision.models.mobilenet_v2()
         self.assertEqual('pytorch', get_model_fwk_name(ori_model))
         pt_model = PyTorchModel(ori_model)
@@ -365,7 +388,7 @@ class TestPyTorchModel(unittest.TestCase):
         with self.assertRaises(AssertionError):
             pt_model.workspace_path = './pytorch'
         
-        ipex_model = PyTorchIpexModel(ori_model)
+        ipex_model = IPEXModel(ori_model)
         self.assertTrue(ipex_model.model)
         ipex_model.model = ori_model
         ipex_model = PyTorchModel(torchvision.models.mobilenet_v2())
@@ -374,7 +397,7 @@ class TestPyTorchModel(unittest.TestCase):
         ipex_model.save('./')
 
         self.assertEqual('pytorch', get_model_fwk_name(PyTorchModel(ori_model)))
-        self.assertEqual('pytorch', get_model_fwk_name(PyTorchIpexModel(ori_model)))
+        self.assertEqual('pytorch', get_model_fwk_name(IPEXModel(ori_model)))
         self.assertEqual('pytorch', get_model_fwk_name(PyTorchFXModel(ori_model)))
 
 def load_mxnet_model(symbol_file, param_file):
@@ -417,7 +440,7 @@ class TestMXNetModel(unittest.TestCase):
         import mxnet as mx
         self.assertEqual('mxnet', get_model_fwk_name(self.net))
         model = MODELS['mxnet'](self.net)
-        self.assertEqual(True, isinstance(model, NCModel.MXNetModel))
+        self.assertEqual(True, isinstance(model, MXNetModel))
         self.assertEqual(True, isinstance(model.model, mx.gluon.HybridBlock))
 
         model.save('./test')

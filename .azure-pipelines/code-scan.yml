@@ -5,13 +5,16 @@ pr:
   drafts: false
   branches:
     include:
-    - master
+      - master
   paths:
     include:
-    - neural_compressor
-    - setup.py
+      - neural_compressor
+      - setup.py
+      - .azure-pipelines/code-scan.yml
+      - .azure-pipelines/scripts/codeScan
 
-pool: ICX-16C
+pool:
+  vmImage: "ubuntu-latest"
 
 variables:
   CODE_SCAN_LOG_PATH: ".azure-pipelines/scripts/codeScan/scanLog"
@@ -64,8 +67,10 @@ stages:
               rm -fr $(Build.SourcesDirectory) || true
               echo y | docker system prune
             displayName: "Clean workspace"
+
           - checkout: self
             displayName: "Checkout out Repo"
+
           - task: Bash@3
             inputs:
               targetType: "inline"

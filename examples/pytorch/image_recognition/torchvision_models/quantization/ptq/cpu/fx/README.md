@@ -1,11 +1,11 @@
 Step-by-Step
 ============
 
-This document describes the step-by-step instructions for reproducing PyTorch ResNet50/ResNet18/ResNet101 tuning results with Intel® Neural Compressor.
+This document describes the step-by-step instructions for reproducing PyTorch tuning results with Intel® Neural Compressor.
 
 # Prerequisite
 
-### 1. Installation
+## 1. Environment
 
 PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 
@@ -13,8 +13,9 @@ PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 cd examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
-### 2. Prepare Dataset
+## 2. Prepare Dataset
 
 Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.  The dir include below folder:
 
@@ -24,6 +25,8 @@ train  val
 ```
 
 # Run
+
+> Note: All torchvision model names can be passed as long as they are included in `torchvision.models`, below are some examples.
 
 ### 1. ResNet50
 
@@ -55,170 +58,66 @@ python main.py -t -a inception_v3 --pretrained /path/to/imagenet
 python main.py -t -a mobilenet_v2 --pretrained /path/to/imagenet
 ```
 
-# Saving and loading model:
+### 6. Efficientnet_b0
+
+```shell
+python main.py -t -a efficientnet_b0 --pretrained /path/to/imagenet
+```
+> **Note**
+>
+> To reduce tuning time and get the result faster, the `efficientnet_b0` model uses 
+> [`MSE_V2`](/docs/source/tuning_strategies.md#MSE_v2) by default.
+
+
+### 7. Efficientnet_b3
+
+```shell
+python main.py -t -a efficientnet_b3 --pretrained /path/to/imagenet
+```
+> **Note**
+>
+> To reduce tuning time and get the result faster, the `efficientnet_b3` model uses 
+> [`MSE_V2`](/docs/source/tuning_strategies.md#MSE_v2) by default.
+### 8. Efficientnet_b7
+
+```shell
+python main.py -t -a efficientnet_b7 --pretrained /path/to/imagenet
+```
+> **Note**
+>
+> To reduce tuning time and get the result faster, the `efficientnet_b7` model uses 
+> [`MSE_V2`](/docs/source/tuning_strategies.md#MSE_v2) by default.
+
+
+# Saving and Loading Model
 
 * Saving model:
   After tuning with Neural Compressor, we can get neural_compressor.model:
 
 ```
-from neural_compressor.experimental import Quantization, common
-quantizer = Quantization("./conf.yaml")
-quantizer.model = common.Model(model)
-nc_model = quantizer.fit()
+from neural_compressor import PostTrainingQuantConfig
+from neural_compressor import quantization
+conf = PostTrainingQuantConfig()
+q_model = quantization.fit(model,
+                            conf,
+                            calib_dataloader=val_loader,
+                            eval_func=eval_func)
 ```
 
-Here, nc_model is Neural Compressor model class, so it has "save" API:
+Here, `q_model` is the Neural Compressor model class, so it has "save" API:
 
 ```python
-nc_model.save("Path_to_save_configure_file")
+q_model.save("Path_to_save_quantized_model")
 ```
 
-* loading model:
+* Loading model:
 
 ```python
 from neural_compressor.utils.pytorch import load
-quantized_model = load(
-    os.path.join(Path, 'best_configure.yaml'),
-    os.path.join(Path, 'best_model_weights.pt'),
-    fp32_model,
-    dataloader=your_dataloader)
-
+quantized_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
+                        model,
+                        dataloader=val_loader)
 ```
+Here, `dataloader` is used to get example_inputs for `torch.fx` to trace the model. You can also pass in `example_inputs` instead. For torch version < 1.13.0, you can ignore this parameter.
 
 Please refer to [Sample code](./main.py).
-
-Examples of enabling Neural Compressor auto tuning on PyTorch ResNet
-=======================================================
-
-This is a tutorial of how to enable a PyTorch classification model with Neural Compressor.
-
-# User Code Analysis
-
-Neural Compressor supports three usages:
-
-1. User only provide fp32 "model", and configure calibration dataset, evaluation dataset and metric in model-specific yaml config file.
-2. User provide fp32 "model", calibration dataset "q_dataloader" and evaluation dataset "eval_dataloader", and configure metric in tuning.metric field of model-specific yaml config file.
-3. User specifies fp32 "model", calibration dataset "q_dataloader" and a custom "eval_func" which encapsulates the evaluation dataset and metric by itself.
-
-As ResNet18/50/101 series are typical classification models, use Top-K as metric which is built-in supported by Neural Compressor. So here we integrate PyTorch ResNet with Neural Compressor by the first use case for simplicity.
-
-### Write Yaml Config File
-
-In examples directory, there is a template.yaml. We could remove most of the items and only keep mandatory item for tuning.
-
-```yaml
-model:
-  name: imagenet_ptq
-  framework: pytorch
-
-quantization:
-  calibration:
-    sampling_size: 300
-    dataloader:
-      dataset:
-        ImageFolder:
-          root: /path/to/calibration/dataset
-      transform:
-        RandomResizedCrop:
-          size: 224
-        RandomHorizontalFlip:
-        ToTensor:
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
-          std: [0.229, 0.224, 0.225]
-
-evaluation:
-  accuracy:
-    metric:
-      topk: 1
-    dataloader:
-      batch_size: 30
-      dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset
-      transform:
-        Resize:
-          size: 256
-        CenterCrop:
-          size: 224
-        ToTensor:
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
-          std: [0.229, 0.224, 0.225]
-  performance:
-    configs:
-      cores_per_instance: 4
-      num_of_instance: 7
-    dataloader:
-      batch_size: 1
-      dataset:
-        ImageFolder:
-          root: /path/to/evaluation/dataset
-      transform:
-        Resize:
-          size: 256
-        CenterCrop:
-          size: 224
-        ToTensor:
-        Normalize:
-          mean: [0.485, 0.456, 0.406]
-          std: [0.229, 0.224, 0.225]
-
-tuning:
-  accuracy_criterion:
-    relative:  0.01
-  exit_policy:
-    timeout: 0
-  random_seed: 9527
-
-```
-
-Here we choose topk built-in metric and set accuracy target as tolerating 0.01 relative accuracy loss of baseline. The default tuning strategy is basic strategy. The timeout 0 means unlimited time for a tuning config meet accuracy target.
-
-### Prepare
-
-The related code please refer to examples/pytorch/fx/image_recognition/imagenet/cpu/ptq/main.py.
-
-### Code Update
-
-After prepare step is done, we just need update main.py like below.
-
-```python
-model.eval()
-model.module.fuse_model()
-from neural_compressor.experimental import Quantization, common
-quantizer = Quantization("./conf.yaml")
-quantizer.model = common.Model(model)
-q_model = quantizer.fit()
-```
-
-The quantizer.fit() function will return a best quantized model during timeout constrain.
-
-### Dump tensors for debug
-
-Neural Compressor can dump every layer output tensor which you specify in evaluation. You just need to add some setting to yaml configure file as below:
-
-```yaml
-tensorboard: true
-```
-
-The default value of "tensorboard" is "off".
-
-For example:
-
-```bash
-sh run_tuning_dump_tensor.sh --topology=resnet18 --dataset_location=<Dataset>
-```
-
-A "./runs" folder will be generated, for example
-
-```bash
-ls runs/eval/
-tune_0_acc0.73  tune_1_acc0.71 tune_2_acc0.72
-```
-
-"tune_0_acc0.73" means FP32 baseline is accuracy 0.73, and the best tune result is tune_2 with accuracy 0.72. You may want to compare them in tensorboard. It will demonstrate the output tensor and weight of each op in "Histogram", you can also find the tune config of each tuning run in "Text":
-
-```bash
-tensorboard --bind_all --logdir_spec baseline:./runs/eval/tune_0_acc0.73,tune_2:././runs/eval/tune_2_acc0.7
-```

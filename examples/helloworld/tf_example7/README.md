@@ -1,50 +1,40 @@
 tf_example7 example
 =====================
-This example is used to demonstrate how to utilize Neural Compressor to enabling quantization and benchmark with python-flavor config.
+This example is used to demonstrate how to quantize a TensorFlow model with dummy dataset.
 
+Step-by-Step
+============
+
+## Prerequisite
 ### 1. Installation
 ```shell
 pip install -r requirements.txt
 ```
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
-### 2. Prepare Model
+### 2. Download the FP32 model
 ```shell
-python train.py
+wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
 
-### 3. Run Command
-* Run quantization
+## Run
+### 1. Run Command
 ```shell
-python test.py --tune
-``` 
-* Run benchmark
-```shell
-python test.py --benchmark
+python test.py
 ``` 
 
-### 4. Introduction  
-* Use python code to set necessary parameters.
+### 2. Introduction
+We can quantize a model only needing to set the dataloader with dummy dataset to generate an int8 model.
 ```python
-    from neural_compressor import conf
-    dataloader = {
-        'dataset': {'dummy_v2': {'input_shape': [28, 28]}}
-    }
-    conf.evaluation.performance.dataloader = dataloader
-    conf.quantization.calibration.dataloader = dataloader
-    conf.evaluation.accuracy.dataloader = dataloader
-    conf.tuning.accuracy_criterion.absolute = 0.9
+    # Built-in dummy dataset
+    dataset = Datasets('tensorflow')['dummy'](shape=(1, 224, 224, 3))
+    # Built-in calibration dataloader and evaluation dataloader for Quantization.
+    dataloader = DataLoader(framework='tensorflow', dataset=dataset)
+    # Post Training Quantization Config
+    config = PostTrainingQuantConfig()
+    # Just call fit to do quantization.
+    q_model = fit(model="./mobilenet_v1_1.0_224_frozen.pb",
+                  conf=config,
+                  calib_dataloader=dataloader,
+                  eval_dataloader=dataloader)
 ```
-* Run quantization and benchmark. 
-```python
-    from neural_compressor.experimental import Quantization, common
-    quantizer = Quantization(conf)
-    quantizer.model = common.Model("../models/frozen_graph.pb")
-    quantizer.fit()
-    
-    from neural_compressor.experimental import Benchmark
-    evaluator = Benchmark(conf)
-    evaluator.model = common.Model("../models/frozen_graph.pb")
-    evaluator('performance')
-    
-```
-
