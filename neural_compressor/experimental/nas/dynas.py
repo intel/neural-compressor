@@ -38,7 +38,6 @@ class DyNAS(NASBase):
 
     def __init__(self, conf_fname_or_obj):
         # TODO(macsz) Remove `fvcore` dependency
-        # TODO(macsz) `text_to_speech.py:34 - Please install tensorboardX: pip install tensorboardX`
         # TODO(macsz) Update examples
         # TODO(macsz) DeprecationWarning: `np.int` is a deprecated alias for the builtin `int`.
         #   To silence this warning, use `int` by itself. Doing this will not modify any behavior and is safe.
