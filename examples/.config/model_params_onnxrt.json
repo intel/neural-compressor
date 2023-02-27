@@ -313,7 +313,7 @@
       "main_script": "main.py",
       "batch_size": 1
     },
-    "bert_base_MRPC_static_qdq": {
+    "bert_base_MRPC_qdq": {
       "model_src_dir": "nlp/bert/quantization/ptq_static",
       "dataset_location": "/tf_dataset/pytorch/glue_data/MRPC",
       "input_model": "/tf_dataset2/models/onnx/bert_base_MRPC/bert.onnx",
