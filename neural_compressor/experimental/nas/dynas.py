@@ -40,6 +40,11 @@ class DyNAS(NASBase):
         # TODO(macsz) Remove `fvcore` dependency
         # TODO(macsz) `text_to_speech.py:34 - Please install tensorboardX: pip install tensorboardX`
         # TODO(macsz) Update examples
+        # TODO(macsz) DeprecationWarning: `np.int` is a deprecated alias for the builtin `int`.
+        #   To silence this warning, use `int` by itself. Doing this will not modify any behavior and is safe.
+        #   When replacing `np.int`, you may wish to use e.g. `np.int64` or `np.int32` to specify the precision.
+        #   If you wish to review your current use, check the release note link for additional information.
+
 
         """Initialize the attributes."""
 
@@ -51,10 +56,10 @@ class DyNAS(NASBase):
             supernet=self.supernet,
             optimization_metrics=self.metrics,
             measurements=self.metrics,
-            search_tactic='random_dist',#'linas',
-            num_evals=2, #self.num_evals,
+            search_tactic='linas', # TODO(macsz) Need to expose this option; or add --distributed param to DyNAS-T
+            num_evals=self.num_evals,
             results_path=self.results_csv_path,
-            dataset_path=self.dataset_path,
+            dataset_path=self.dataset_path,  # TODO(macsz) check in config if exists, need to set to test acc
             seed=self.seed,
             population=self.population,
             batch_size=self.batch_size,
