@@ -39,10 +39,6 @@ class DyNAS(NASBase):
     def __init__(self, conf_fname_or_obj):
         # TODO(macsz) Remove `fvcore` dependency
         # TODO(macsz) Update examples
-        # TODO(macsz) DeprecationWarning: `np.int` is a deprecated alias for the builtin `int`.
-        #   To silence this warning, use `int` by itself. Doing this will not modify any behavior and is safe.
-        #   When replacing `np.int`, you may wish to use e.g. `np.int64` or `np.int32` to specify the precision.
-        #   If you wish to review your current use, check the release note link for additional information.
 
 
         """Initialize the attributes."""
