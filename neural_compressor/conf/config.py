@@ -1483,6 +1483,12 @@ class Conf(object):
                 mapping.update({
                     'model.backend': pythonic_config.benchmark.backend,
                 })
+            else:
+                if mapping['model.backend'] == 'default' and \
+                        pythonic_config.benchmark.backend != 'default':
+                    mapping.update({
+                        'model.backend': pythonic_config.benchmark.backend,
+                    })
 
         if "model.backend" not in mapping:
             mapping.update({
