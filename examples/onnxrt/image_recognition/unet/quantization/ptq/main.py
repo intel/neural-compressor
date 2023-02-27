@@ -74,6 +74,8 @@ if __name__ == "__main__":
 
     if args.tune:
         from neural_compressor.experimental import Quantization, common
+        from neural_compressor import options
+        options.onnxrt.graph_optimization.level = 'ENABLE_EXTENDED'
 
         quantize = Quantization(args.config)
         quantize.model = common.Model(args.model_path)
