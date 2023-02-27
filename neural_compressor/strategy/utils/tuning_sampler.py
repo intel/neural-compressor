@@ -30,6 +30,24 @@ TUNING_ITEM_PRIORITY = [('activation','scheme'), ('activation','algorithm'),('ac
                         ('weight','granularity')]
 
 
+
+class TuningSamplerRegistry:
+    """Class decorator used to register all TuningSampler subclasses."""
+    
+    sampler_dict = {}
+    
+    @classmethod
+    def register(cls, name):
+        """Register new tuning sampler.
+
+        Args:
+            name: the name of new tuning sampler.
+        """
+        def decorator(sampler):
+            assert name not in cls.sampler_dict, "Cannot have two sampler with the same name."
+            cls.sampler_dict[name] = sampler
+        return decorator
+
 class TuningOrder:
     """Not displayed in API Docs."""
 
@@ -47,13 +65,15 @@ class TuningSampler:
     def __init__(self,
                  tuning_space: TuningSpace,
                  tuning_order_lst: List[TuningOrder],
-                 initial_op_tuning_cfg: Dict):
+                 initial_op_tuning_cfg: Dict,
+                 kwargs: Dict = {}):
         """Init tuning sampler.
 
         Args:
             tuning_space: The tuning space.
             tuning_order_lst: The traverse orders.
             initial_op_tuning_cfg: The initialized tuning config.
+            kwargs: other args.
         """
         self.tuning_space = tuning_space
         self.tuning_order_lst = tuning_order_lst
@@ -62,7 +82,7 @@ class TuningSampler:
         # (op_name, op_type): [full_path1, full_path2,...]
         self.op_complete_path = {}
 
-    def __iter__(self):
+    def __iter__(self, tune_cfg=None):
         """Interface for generate the next tuning config."""
         pass
     
@@ -413,3 +433,35 @@ class FallbackTuningSampler(TuningSampler):
                 continue
             logger.debug(f"fallback {op_name_type} to {target_dtype}")
             yield new_tune_cfg  # need to skip the first one
+
+@TuningSamplerRegistry.register("smooth_quant")
+class SmoothQuantSampler(TuningSampler):
+    """Sampler for the hyperparameter tuning of smooth quantization."""
+    
+    def __init__(self,
+                 tuning_space: TuningSpace,
+                 tuning_order_lst: List[TuningOrder],
+                 initial_op_tuning_cfg: Dict,
+                 kwargs: Dict ={}):
+        """Initialize the sampler."""
+        super().__init__(tuning_space, tuning_order_lst, initial_op_tuning_cfg, kwargs)
+        # TODO use the alpha list specified by user
+        self._kwargs = kwargs
+        self._alpha_lst = [0.5]
+        if kwargs.get('smooth_quant_agrs', {}):
+            self._alpha_lst = kwargs['smooth_quant_agrs'].get('alpha_lst', [0.5])
+
+    def __iter__(self, tune_cfg=None) -> OpTuningConfig:
+        """Yield the next tuning config with update alpha.
+
+        Args:
+            tune_cfg: tuning config. Defaults to None.
+        """
+        for alpha in self._alpha_lst:
+            new_tune_cfg = copy.deepcopy(self.initial_op_tuning_cfg) if not tune_cfg else copy.deepcopy(tune_cfg)
+            sq_args = {'smooth_quant': True, 'smooth_quant_args': {'alpha': alpha}}
+            if 'recipe_cfgs' not in new_tune_cfg:
+                new_tune_cfg['recipe_cfgs'] = sq_args
+            else:
+                new_tune_cfg['recipe_cfgs'].update(sq_args)
+            yield new_tune_cfg

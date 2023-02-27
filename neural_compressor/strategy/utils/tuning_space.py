@@ -23,7 +23,7 @@ import re
 from typing import Dict, Tuple
 from copy import deepcopy
 from ...utils import logger
-from .util import OrderedDefaultDict
+from .utility import OrderedDefaultDict
 from .tuning_structs import OpTuningConfig
 
 from .constant import TUNING_ITEMS_LST
@@ -217,7 +217,7 @@ class TuningSpace:
         Returns:
             Return the merged capability.
         """
-        from .util import extract_data_type, reverted_data_type
+        from .utility import extract_data_type, reverted_data_type
         fw_op_cap = deepcopy(fw_op_cap)
         new_op_cap = deepcopy(cur_op_cap)
         for att in ['activation', 'weight']:
@@ -447,7 +447,7 @@ class TuningSpace:
                 }
             }
         """
-        from .util import OrderedDefaultDict, extract_data_type
+        from .utility import OrderedDefaultDict, extract_data_type
         cap = deepcopy(cap)
         parsed_cap = OrderedDict() # {(op_name, op_type): parsed_op_cap}
         for op_name_type, op_cap_lst in cap.items():
@@ -535,7 +535,6 @@ class TuningSpace:
             op_tuning_config: the default config according to the specified quantization mode.
         """
         from .tuning_structs import OpTuningConfig
-        # TODO handle precision
         # For quant_mode static/dynamic/((static, int8), (dynamic, int4))
         # set the first option as the default if the not support the required quant mode
         full_path = self.get_op_default_path_by_pattern(op_name_type, quant_mode)
@@ -562,7 +561,7 @@ class TuningSpace:
     
     def get_item_by_path(self, path, default=None):
         """Get the item according to the path."""
-        logger.info(f"Query item with path {path}") #TODO replace it with debug before merge
+        logger.debug(f"Query item with path {path}")
         item = self.root_item
         for val in path:
             if item is None:

@@ -43,7 +43,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s))},
@@ -56,7 +56,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'None'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16', 'None'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))}})
@@ -591,7 +591,7 @@ class _BaseQuantizationConfig:
 
     @excluded_precisions.setter
     def excluded_precisions(self, excluded_precisions):
-        if check_value("excluded_precisions", excluded_precisions, str, ["bf16"]):
+        if check_value("excluded_precisions", excluded_precisions, str, ["bf16", "fp16"]):
             self._excluded_precisions = excluded_precisions
             self._use_bf16 = "bf16" not in excluded_precisions
 

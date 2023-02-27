@@ -93,10 +93,10 @@ class ModelArguments:
     int8: bool = field(
         default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
     )
-    benchmark: bool = field(
+    performance: bool = field(
         default=False, metadata={"help": "get benchmark instead of accuracy"}
     )
-    accuracy_only: bool = field(
+    accuracy: bool = field(
         default=False, metadata={"help": "get accuracy"}
     )
     iters: int = field(
@@ -649,8 +649,8 @@ def main():
     if model_args.int8:
         from neural_compressor.utils.pytorch import load
         model = load(training_args.output_dir, model, dataloader=eval_dataloader)
-    if model_args.benchmark or model_args.accuracy_only:
-        if model_args.benchmark:
+    if model_args.performance or model_args.accuracy:
+        if model_args.performance:
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor import benchmark
             b_conf = BenchmarkConfig(warmup=5,

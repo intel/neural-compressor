@@ -538,6 +538,7 @@ eg
 eightbit
 einstein
 el
+EleutherAI
 elif
 eltwise
 emb
@@ -554,6 +555,7 @@ entrypoint
 enum
 env
 environ
+ep
 eq
 erf
 Erf
@@ -2528,3 +2530,5 @@ MobilenetV
 InceptionResnetV
 zalandoresearch
 emCgSTlJaAg
+matsubara
+yoshitomo
