@@ -209,6 +209,51 @@ Then slave node sends back the tune result to master node.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.apply_all_tuning_recipes">
+<span class="sig-name descname"><span class="pre">apply_all_tuning_recipes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.apply_all_tuning_recipes" title="Permalink to this definition"></a></dt>
+<dd><p>Apply all tunable recipes with their value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.apply_recipe_one_by_one">
+<span class="sig-name descname"><span class="pre">apply_recipe_one_by_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.apply_recipe_one_by_one" title="Permalink to this definition"></a></dt>
+<dd><p>Apply the tunable recipes one by one.</p>
+<p>For recipes only have two options, apply the last one.
+For recipes with multiple values. such as alpha of smooth quant, apply it one by one.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.set_param_for_pre_quantization_algos">
+<span class="sig-name descname"><span class="pre">set_param_for_pre_quantization_algos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algo_scheduler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.set_param_for_pre_quantization_algos" title="Permalink to this definition"></a></dt>
+<dd><p>Set the parameter for pre-quantization algos, such as smooth quantization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>algo_scheduler</strong> – algo scheduler</p></li>
+<li><p><strong>tune_cfg</strong> – the tuning config</p></li>
+<li><p><strong>fp32_model</strong> – the fp32 model</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.set_param_for_post_quantization_algos">
+<span class="sig-name descname"><span class="pre">set_param_for_post_quantization_algos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algo_scheduler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_optimized_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.set_param_for_post_quantization_algos" title="Permalink to this definition"></a></dt>
+<dd><p>Set the parameter for post-quantization algos, such as bias correction, weight correction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>algo_scheduler</strong> – algo scheduler</p></li>
+<li><p><strong>tune_cfg</strong> – the tuning config.</p></li>
+<li><p><strong>pre_optimized_model</strong> – the pre-optimized model</p></li>
+<li><p><strong>q_model</strong> – the quantized model</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.traverse">
 <span class="sig-name descname"><span class="pre">traverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.traverse" title="Permalink to this definition"></a></dt>
 <dd><p>Traverse the tuning space.</p>

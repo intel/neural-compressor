@@ -114,6 +114,38 @@ Functions
       The main traverse logic which could be override by some concrete strategy which needs more hooks.
 
 
+   .. py:method:: apply_all_tuning_recipes(tune_cfg)
+
+      Apply all tunable recipes with their value.
+
+
+   .. py:method:: apply_recipe_one_by_one(tune_cfg)
+
+      Apply the tunable recipes one by one.
+
+      For recipes only have two options, apply the last one.
+      For recipes with multiple values. such as alpha of smooth quant, apply it one by one.
+
+
+   .. py:method:: set_param_for_pre_quantization_algos(algo_scheduler, tune_cfg, fp32_model) -> None
+
+      Set the parameter for pre-quantization algos, such as smooth quantization.
+
+      :param algo_scheduler: algo scheduler
+      :param tune_cfg: the tuning config
+      :param fp32_model: the fp32 model
+
+
+   .. py:method:: set_param_for_post_quantization_algos(algo_scheduler, tune_cfg, pre_optimized_model, q_model) -> None
+
+      Set the parameter for post-quantization algos, such as bias correction, weight correction.
+
+      :param algo_scheduler: algo scheduler
+      :param tune_cfg: the tuning config.
+      :param pre_optimized_model: the pre-optimized model
+      :param q_model: the quantized model
+
+
    .. py:method:: traverse()
 
       Traverse the tuning space.

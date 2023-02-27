@@ -54,6 +54,12 @@ Functions
 
    Get the algorithms from configuration.
 
+   :param algorithms: the algorithm management.
+   :param cfg: a dict contain the algo name and use it or not.
+   :param compose: compose all algo or not. Defaults to False.
+
+   :returns: All open algos.
+
 
 .. py:function:: create_dataset(framework, data_source, cfg_preprocess, cfg_filter)
 

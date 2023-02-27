@@ -19,7 +19,7 @@ Submodules
    tuning_sampler/index.rst
    tuning_space/index.rst
    tuning_structs/index.rst
-   util/index.rst
+   utility/index.rst
 
 
 Package Contents
@@ -41,7 +41,7 @@ Classes
 
 
 
-.. py:class:: TuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict)
+.. py:class:: TuningSampler(tuning_space: neural_compressor.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict, kwargs: Dict = {})
 
    Not displayed in API Docs.
 

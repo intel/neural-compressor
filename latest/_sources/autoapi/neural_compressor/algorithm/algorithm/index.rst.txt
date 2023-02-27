@@ -104,6 +104,19 @@ Functions
       :returns: The calibration iter number.
       :rtype: calib_iter
 
+   .. py:method:: append_algorithm(location, algorithm)
+
+      Append algorithm to list of executed algorithms.
+
+      :param location: The location to call algorithm
+      :param algorithm: algorithm instance
+
+
+   .. py:method:: reset_exec_algorithms()
+
+      Reset the list of executed algorithms.
+
+
 
 .. py:class:: Algorithm
 
