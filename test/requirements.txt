@@ -18,3 +18,4 @@ tensorflow-addons
 onnxruntime-extensions; python_version < '3.10'
 dynast==1.0.0
 intel-extension-for-pytorch
+tf2onnx

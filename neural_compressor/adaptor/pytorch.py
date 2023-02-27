@@ -29,7 +29,7 @@ from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
 from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
-
+from .torch_utils.smooth_quant import TorchSmoothQuant
 torch = LazyImport("torch")
 json = LazyImport("json")
 hvd = LazyImport("horovod.torch")
@@ -1032,7 +1032,7 @@ class TemplateAdaptor(Adaptor):
             if self.approach == "post_training_dynamic_quant" else \
             self.query_handler.get_quantization_capability()['quant_aware'] \
             if self.approach == "quant_aware_training" else \
-            self.query_handler.get_quantization_capability()['int8']
+            self.query_handler.get_quantization_capability()['static']
 
         q_capability = {}
         q_capability['optypewise'] = OrderedDict()
@@ -1046,10 +1046,10 @@ class TemplateAdaptor(Adaptor):
                 (self.query_handler.get_quantization_capability()['quant_aware'], 'static')]
         elif self.approach == "post_training_static_quant":
             capability_pair = [
-                (self.query_handler.get_quantization_capability()['int8'], 'static')]
+                (self.query_handler.get_quantization_capability()['static'], 'static')]
         else:
             capability_pair = [
-                (self.query_handler.get_quantization_capability()['int8'], 'static'),
+                (self.query_handler.get_quantization_capability()['static'], 'static'),
                 (self.query_handler.get_quantization_capability()['dynamic'], 'dynamic')]
         fp32_config = {'activation': {'dtype': 'fp32'}, 'weight': {'dtype': 'fp32'}}
         # Ignore LayerNorm, InstanceNorm3d and Embedding quantizable ops,
@@ -1182,7 +1182,38 @@ class TemplateAdaptor(Adaptor):
                               criterion=criterion,
                               enable_act=enable_act)
         return op_to_traces
-        pass
+
+    def smooth_quant(self, model, dataloader, calib_iter, tune_cfg=None, alpha=0.5,
+                     percentile=None, op_types=None, scales_per_op=None, force_re_smooth=False):
+        """ convert the model by smooth quant.
+
+        Args:
+            model: origin FP32 model
+            dataloader: calib dataloader
+            calib_iter: calib iters
+            tune_cfg: quantization config
+            alpha: smooth alpha in SmoothQuant, 1.0 will fallback to SPIQ
+            percentile:Percentile of calibration to remove outliers, not supported now
+            op_types: The op types whose input tensor will be dumped
+            scales_per_op: True, each op will have an individual scale, mainly for accuracy
+                           False, ops with the same input will share a scale, mainly for performance
+
+        Returns:
+            model: A modified fp32 model
+        """
+        if not hasattr(self, 'sq') or force_re_smooth:
+            ##self.sq = TorchSmoothQuant(model._model, dataloader=dataloader)
+            self.sq = TorchSmoothQuant(model._model, dataloader=dataloader)
+        args = {}  ##different backends may have different default values
+        if op_types != None:
+            args["op_types"] = op_types
+        if percentile != None:
+            args['percentile'] = percentile
+        if scales_per_op != None:
+            args['scales_per_op'] = scales_per_op
+        model._model = self.sq.transform(alpha=alpha, calib_iter=calib_iter, **args)
+        return model
+
 
 
 unify_op_type_mapping = {
@@ -3639,7 +3670,7 @@ class PyTorchQuery(QueryBackendCapability):
         self._one_shot_query()
 
     def _get_specified_version_cfg(self, data):
-        """Get the configuration for the current runtime。
+        """Get the configuration for the current runtime.
         If there's no matched configuration in the input yaml, we'll
         use the `default` field of yaml.
 
@@ -3681,7 +3712,7 @@ class PyTorchQuery(QueryBackendCapability):
             [dictionary list]: A list composed of dictionary which key is precision
             and value is a dict that describes all op types' quantization capability.
         """
-        return self.cur_config['capabilities']
+        return self.cur_config['int8']
 
     def get_op_types(self):
         """Get the supported op types by all precisions.
@@ -3689,7 +3720,7 @@ class PyTorchQuery(QueryBackendCapability):
             [dictionary list]: A list composed of dictionary which key is precision
             and value is the op types.
         """
-        return self.cur_config['ops']
+        return self.cur_config
 
     def get_op_types_by_precision(self, precision):
         """Get op types per precision
@@ -3698,6 +3729,4 @@ class PyTorchQuery(QueryBackendCapability):
         Returns:
             [string list]: A list composed of op type.
         """
-        assert precision in list(self.cur_config['ops'].keys())
-
-        return self.cur_config['ops'][precision]
+        return self.cur_config[precision]

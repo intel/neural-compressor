@@ -124,10 +124,13 @@ class ModelArguments:
     int8: bool = field(
         default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
     )
-    benchmark: bool = field(
+    iters: int = field(
+        default=100, metadata={"help": "The inference iterations to run for benchmark."}
+    )
+    performance: bool = field(
         default=False, metadata={"help": "get benchmark instead of accuracy"}
     )
-    accuracy_only: bool = field(
+    accuracy: bool = field(
         default=False, metadata={"help": "get accuracy"}
     )
 
@@ -567,7 +570,7 @@ def main():
         exit(0)
 
     # Benchmark or accuracy
-    if model_args.benchmark or model_args.accuracy_only:
+    if model_args.performance or model_args.accuracy:
         if model_args.int8:
             from neural_compressor.utils.pytorch import load
             new_model = load(
@@ -575,7 +578,7 @@ def main():
         else:
             new_model = model
 
-        if model_args.benchmark:
+        if model_args.performance:
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor import benchmark
             b_conf = BenchmarkConfig(warmup=5, iteration=100, cores_per_instance=4, num_of_instance=1)

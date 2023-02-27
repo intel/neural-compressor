@@ -538,6 +538,7 @@ eg
 eightbit
 einstein
 el
+EleutherAI
 elif
 eltwise
 emb
@@ -554,6 +555,7 @@ entrypoint
 enum
 env
 environ
+ep
 eq
 erf
 Erf
@@ -1101,6 +1103,7 @@ mobilenet
 MobileNet
 mobilenetv
 Mobilenetv
+MobilenetV
 MobileNetv
 MobileNetV
 modalities
@@ -2500,6 +2503,7 @@ SelfKnowledgeDistillationLossConfig
 DistillationConfig
 KnowledgeDistillationLossConfig
 confs
+TensorflowQATModel
 HBM
 Ponte
 SmoothQuant
@@ -2526,3 +2530,5 @@ MobilenetV
 InceptionResnetV
 zalandoresearch
 emCgSTlJaAg
+matsubara
+yoshitomo

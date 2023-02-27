@@ -196,10 +196,16 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/image_recognition/keras_models/xception/quantization/ptq">keras</a></td>
   </tr>
   <tr>
-    <td>*ResNet V2</td>
+    <td>ResNet V2</td>
     <td>Image Recognition</td>
     <td>Quantization-Aware Training</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/resnet_v2/quantization/qat">keras</a> </td>
+    <td><a href="./tensorflow/image_recognition/resnet_v2/quantization/qat">keras</a> </td>
+  </tr>
+  <tr>
+    <td>ResNet50</td>
+    <td>Image Recognition</td>
+    <td>Quantization-Aware Training</td>
+    <td><a href="./tensorflow/image_recognition/keras_models/resnet50/quantization/qat">keras</a> </td>
   </tr>
   <tr>
     <td>*EfficientNet V2 B0</td>
@@ -322,7 +328,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Image Recognition</td>
     <td>Unstructured</td>
     <td>Magnitude</td>
-    <td><a href="./tensorflow/image_recognition/inception_v3/pruning/magnitude">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/keras_models/inception_v3/pruning/magnitude">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2</td>
@@ -354,11 +360,11 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
   <tr>
-    <td>*MobileNet</td>
+    <td>MobileNet</td>
     <td>DenseNet201</td>
     <td>Image Recognition</td>
     <td>Knowledge Distillation</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/tensorflow/image_recognition/tensorflow_models/distillation">pb</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/distillation">pb</a></td>
   </tr>
 </tbody>
 </table>
@@ -376,28 +382,28 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
   <tr>
-    <td>*ResNet18</td>
+    <td>ResNet18</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex">ipex</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex">ipex</a></td>
   </tr>
   <tr>
-    <td>*ResNet18</td>
+    <td>ResNet18</td>
     <td>Image Recognition</td>
     <td>Quantization-Aware Training</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed">distributed</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a></td>
   </tr>
   <tr>
-    <td>*ResNet50</td>
+    <td>ResNet50</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex">ipex</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex">ipex</a></td>
   </tr>
   <tr>
-    <td>*ResNet50</td>
+    <td>ResNet50</td>
     <td>Image Recognition</td>
     <td>Quantization-Aware Training</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a> / <a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed">distributed</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/qat/fx">fx</a></td>
   </tr>
   <tr>
     <td>ResNeXt101_32x16d_wsl</td>
@@ -406,10 +412,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/ipex">ipex</a></td>
   </tr>
   <tr>
-    <td>*ResNeXt101_32x8d</td>
+    <td>ResNeXt101_32x8d</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a></td>
   </tr>
   <tr>
     <td>*Se_ResNeXt50_32x4d</td>
@@ -418,16 +424,16 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/se_resnext/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
-    <td>*Inception V3</td>
+    <td>Inception V3</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a></td>
   </tr>
   <tr>
-    <td>*MobileNet V2</td>
+    <td>MobileNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/eager">eager</a> / <a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a></td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a></td>
   </tr>
   <tr>
     <td>*PeleeNet</td>
@@ -487,7 +493,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>*HuBERT</td>
     <td>Speech Recognition</td>
     <td>Post-Training Dynamic /Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager">eager</a> / <a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx">fx</a></td>
+    <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
     <td>*BlendCNN</td>
@@ -499,13 +505,37 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
   </tr>
-    <tr>
+  <tr>
     <td>distilbert-base-uncased-distilled-squad</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
+  </tr>
+  <tr>
+    <td>yoshitomo-matsubara/bert-large-uncased-rte</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Intel/xlm-roberta-base-mrpc</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Intel/xlm-roberta-base-mrpc</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>yoshitomo-matsubara/bert-large-uncased-rte</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
     <td>*t5-small</td>
@@ -526,7 +556,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/summarization/quantization/ptq_dynamic/eager">eager</a></td>
   </tr>
   <tr>
-    <td>GPTJ</td>
+    <td>google/reformer-crime-and-punishment</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>EleutherAI/gpt-j-6B</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a></td>
@@ -794,12 +830,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Natural Language Processing (text-classification)</td>
     <td>One-shot: Pruning, Distillation and QAT<br></td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/prune_once_for_all/fx">link</a></td>
-  </tr>
-  <tr>
-    <td>BERT-mini</td>
-    <td>Natural Language Processing (text-classification)</td>
-    <td>One-shot: Pruning, Distillation<br></td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/prune_once_for_all/fx">link</a></td>
   </tr>
 </tbody>
 </table>

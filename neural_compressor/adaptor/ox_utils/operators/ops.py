@@ -70,7 +70,7 @@ class Operator(object):
         self.activation_dtype = None
         self.activation_scheme = 'asym'
         if self.node.name in self.quantizer.config:
-            if self.quantizer.config[self.node.name] != 'fp32':
+            if self.quantizer.config[self.node.name] not in self.quantizer.fallback_list:
                 if 'weight' in self.quantizer.config[self.node.name].keys():
                     self.per_channel = self.quantizer.config[self.node.name]\
                         ['weight']['granularity'] == 'per_channel'

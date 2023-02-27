@@ -58,11 +58,20 @@ def get_postprocess(postprocesses, cfg, compose=True):
     return get_func_from_config(postprocesses, cfg, compose)
 
 def get_algorithm(algorithms, cfg, compose=False):
-    """Get the algorithms from configuration."""
+    """Get the algorithms from configuration.
+    
+    Args:
+        algorithms: the algorithm management.
+        cfg: a dict contain the algo name and use it or not. 
+        compose: compose all algo or not. Defaults to False.
+
+    Returns:
+        All open algos.
+    """
     # recipes contains quantization part, only use algorithms in that
     algo_conf = algorithms.support_algorithms().intersection(set(cfg.keys()))
     #(TODO) only support open/close according to cfg
-    return [algorithms()[algo]() for algo in algo_conf if cfg[algo]]
+    return [algorithms()[algo] for algo in algo_conf if cfg[algo]]
 
 def create_dataset(framework, data_source, cfg_preprocess, cfg_filter):
     """Create the dataset from the data source."""

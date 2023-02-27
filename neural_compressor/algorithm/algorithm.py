@@ -20,22 +20,27 @@
 from abc import abstractmethod
 from neural_compressor.utils.create_obj_from_config import get_algorithm
 
+# {location: {algorithm_type: cls}}
 registry_algorithms = {}
 
-def algorithm_registry(algorithm_type):
+def algorithm_registry(algorithm_type, location):
     """Decorate and register all Algorithm subclasses.
 
     Args:
         cls (class): The class of register.
         algorithm_type (str): The algorithm registration name
+        location (str): The location to call algorithms
 
     Returns:
         cls: The class of register.
     """
     def decorator_algorithm(cls):
-        if algorithm_type in registry_algorithms:
+        if location in registry_algorithms and algorithm_type in registry_algorithms[location]:
             raise ValueError('Cannot have two algorithms with the same name')
-        registry_algorithms[algorithm_type] = cls
+
+        if location not in registry_algorithms:
+            registry_algorithms[location] = {}
+        registry_algorithms[location][algorithm_type] = cls()
         return cls
     return decorator_algorithm
 
@@ -53,9 +58,14 @@ class ALGORITHMS(object):
         Returns:
             cls (class): The class of algorithm.
         """
-        assert algorithm_type in self.algorithms, "algorithm type only support {}".\
-            format(self.algorithms.keys())
-        return self.algorithms[algorithm_type]
+        result = None
+        for location in self.algorithms:
+            for key in self.algorithms[location]:
+                if key == algorithm_type:
+                    result = self.algorithms[location][key]
+        assert result, "algorithm type only support {}".format(self.support_algorithms())
+        return result
+
 
     @classmethod
     def support_algorithms(self):
@@ -64,7 +74,8 @@ class ALGORITHMS(object):
         Returns: 
             Set: A set of all algorithms.
         """
-        return set(self.algorithms.keys())
+        supported_algos = set([self.algorithms[key] for key in self.algorithms])
+        return supported_algos
 
 class AlgorithmScheduler(object):
     """control the Algorithm in different phase."""
@@ -75,28 +86,42 @@ class AlgorithmScheduler(object):
         Args:
             conf (dict): Configuration of algorithm.
         """
-        self.algorithms = get_algorithm(ALGORITHMS, conf)
+        self._exec_algorithms = {}
         self._origin_model = None
         self._q_model = None
         self._dataloader = None
         self._adaptor = None
         self._calib_iter = None
+        
+    def append_algorithm(self, location, algorithm):
+        """Append algorithm to list of executed algorithms.
 
-    def __call__(self):
+        Args:
+            location: The location to call algorithm
+            algorithm: algorithm instance
+        """
+        self._exec_algorithms[location] = self._exec_algorithms.get(location, [])
+        self._exec_algorithms[location].append(algorithm)
+        
+    def reset_exec_algorithms(self):
+        """Reset the list of executed algorithms."""
+        self._exec_algorithms = {}
+
+    def __call__(self, location):
         """Return the processed model via algorithm.
 
         Returns:
             model: The framework model.
         """
         assert self._q_model, 'set q_model for algorithm'
-        if len(self.algorithms) == 0:
+        if len(self._exec_algorithms.get(location, [])) == 0:
             return self._q_model
         assert self._origin_model, 'set origin model for algorithm'
         assert self._dataloader, 'set dataloader for algorithm'
         assert self._adaptor, 'set adaptor for algorithm'
         assert self._calib_iter, 'set calibration iteration for algorithm'
-        for algo in self.algorithms:
-            self._q_model = algo(self._origin_model, 
+        for algo in self._exec_algorithms.get(location, []):
+            self._q_model = algo(self._origin_model,
                                  self._q_model, \
                                  self._adaptor, \
                                  self._dataloader, \

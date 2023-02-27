@@ -42,7 +42,8 @@ class QuantizationConfig(_BaseQuantizationConfig):
                  reduce_range=None,
                  use_bf16=True,
                  quant_level=1,
-                 accuracy_criterion=accuracy_criterion):
+                 accuracy_criterion=accuracy_criterion,
+                 use_distributed_tuning=False):
         excluded_precisions = ["bf16"] if not use_bf16 else []
         super().__init__(
             inputs=inputs,
@@ -61,7 +62,8 @@ class QuantizationConfig(_BaseQuantizationConfig):
             reduce_range=reduce_range,
             excluded_precisions=excluded_precisions,
             accuracy_criterion=accuracy_criterion,
-            quant_level=quant_level
+            quant_level=quant_level,
+            use_distributed_tuning=use_distributed_tuning
         )
         self.approach = approach
 
@@ -162,7 +164,7 @@ class MXNet:
     def precisions(self, precisions):
         if not isinstance(precisions, list):
             precisions = [precisions]
-        if check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16']):
+        if check_value('precisions', precisions, str, ['int8', 'uint8', 'fp32', 'bf16', 'fp16']):
             self._precisions = precisions
 
 class ONNX(MXNet):
