@@ -55,8 +55,8 @@ class DyNAS(NASBase):
             num_evals=2, #self.num_evals,
             results_path=self.results_csv_path,
             dataset_path=self.dataset_path,
-            seed=42,
-            population=2,#self.population,
+            seed=self.seed,
+            population=self.population,
             batch_size=self.batch_size,
             search_algo=self.search_algo,
             supernet_ckpt_path=self.supernet_ckpt_path,
@@ -97,6 +97,7 @@ class DyNAS(NASBase):
         # self.init_search_cfg(self.conf.nas)
         assert 'dynas' in self.conf.nas, "Must specify dynas section."
         dynas_config = self.conf.nas.dynas
+        self.seed = self.conf.nas.search.seed
         self.search_algo = self.conf.nas.search.search_algorithm
         self.supernet = dynas_config.supernet
         self.metrics = dynas_config.metrics

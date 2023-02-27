@@ -193,8 +193,9 @@ class TestNAS(unittest.TestCase):
             config.dynas.metrics = ['acc', 'macs', 'lat']
             config.dynas.population = 10
             config.dynas.num_evals = 10
-            config.dynas.results_csv_path = 'search_results.csv'
+            config.nas.search.seed = 71
             config.dynas.batch_size = 64
+            config.dynas.results_csv_path = 'search_results.csv'
             nas_agent = NAS(config)
             best_model_archs = nas_agent.search()
             self.assertTrue(len(best_model_archs) > 0)
