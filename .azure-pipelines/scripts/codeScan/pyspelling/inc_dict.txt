@@ -538,6 +538,7 @@ eg
 eightbit
 einstein
 el
+EleutherAI
 elif
 eltwise
 emb
@@ -2529,3 +2530,5 @@ MobilenetV
 InceptionResnetV
 zalandoresearch
 emCgSTlJaAg
+matsubara
+yoshitomo

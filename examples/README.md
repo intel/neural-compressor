@@ -505,13 +505,37 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
   </tr>
-    <tr>
+  <tr>
     <td>distilbert-base-uncased-distilled-squad</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex</a></td>
+  </tr>
+  <tr>
+    <td>yoshitomo-matsubara/bert-large-uncased-rte</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Intel/xlm-roberta-base-mrpc</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Intel/xlm-roberta-base-mrpc</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>yoshitomo-matsubara/bert-large-uncased-rte</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
     <td>*t5-small</td>
@@ -532,7 +556,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/summarization/quantization/ptq_dynamic/eager">eager</a></td>
   </tr>
   <tr>
-    <td>GPTJ</td>
+    <td>google/reformer-crime-and-punishment</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>EleutherAI/gpt-j-6B</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a></td>

@@ -23,7 +23,7 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
-       --output_model=*)
+        --output_model=*)
            tuned_checkpoint=$(echo $var |cut -f2 -d=)
        ;;
       *)
@@ -40,21 +40,15 @@ function run_tuning {
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
-    model_type='bert'
-    approach='post_training_dynamic_quant'
-    TASK_NAME='rte'
-    model_name_or_path=${input_model}
-    if [ "${topology}" = "bert_large_RTE" ]; then
+    
+    if  [ "${topology}" = "bert_large_RTE_dynamic" ]; then
         TASK_NAME='rte'
-        model_name_or_path=${input_model}
-
+    elif [ "${topology}" = "xlm-roberta-base_MRPC_dynamic" ]; then
+        TASK_NAME='mrpc'
     fi
 
-    sed -i "/: bert/s|name:.*|name: $model_type|g" conf.yaml
-    sed -i "/approach:/s|approach:.*|approach: $approach|g" conf.yaml
-
     python -u ./run_glue.py \
-        --model_name_or_path ${model_name_or_path} \
+        --model_name_or_path ${input_model} \
         --task_name ${TASK_NAME} \
         --do_eval \
         --do_train \
