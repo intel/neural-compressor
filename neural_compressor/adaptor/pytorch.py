@@ -2997,7 +2997,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     q_model._model = prepare_qat_fx(
                         q_model._model,
                         self.fx_op_cfgs,
-                        example_inputs=example_inputs,
+                        example_inputs=self.example_inputs,
                         prepare_custom_config=self.prepare_custom_config_dict
                     )
                 else:
@@ -3015,7 +3015,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     q_model._model,
                     prefix='',
                     is_qat=True,
-                    example_inputs=example_inputs,
+                    example_inputs=self.example_inputs,
                     custom_config=self.prepare_custom_config_dict
                 )
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
@@ -3035,7 +3035,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     q_model._model = prepare_fx(
                         q_model._model,
                         self.fx_op_cfgs,
-                        example_inputs=example_inputs,
+                        example_inputs=self.example_inputs,
                         prepare_custom_config=self.prepare_custom_config_dict
                     )
                 else:
@@ -3052,7 +3052,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     self.fx_op_cfgs,
                     q_model._model,
                     prefix='',
-                    example_inputs=example_inputs,
+                    example_inputs=self.example_inputs,
                     custom_config=self.prepare_custom_config_dict
                 )
             if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
