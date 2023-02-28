@@ -565,11 +565,12 @@ class TestGraphOptimization(unittest.TestCase):
                 sess=sess,
                 input_graph_def=sess.graph_def,
                 output_node_names=[out_name])
+            from neural_compressor.data import Postprocess
             from neural_compressor.experimental import Graph_Optimization, common, data
             graph_optimizer = Graph_Optimization('fake_yaml.yaml')
             dataset = graph_optimizer.dataset('dummy', shape=(100, 300, 300, 16), label=True)
             graph_optimizer.eval_dataloader = common.DataLoader(dataset)
-            graph_optimizer.postprocess = common.Postprocess(data.transforms.transform.TensorflowWrapFunction(np.array))
+            graph_optimizer.postprocess = Postprocess(data.transforms.transform.TensorflowWrapFunction(np.array))
             graph_optimizer.model = output_graph_def
             output_graph = graph_optimizer.fit()
             found_cast_op = False

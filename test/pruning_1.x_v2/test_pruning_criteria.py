@@ -6,53 +6,62 @@ import torch.nn as nn
 
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.conf.pythonic_config import Config
 from neural_compressor.config import WeightPruningConfig
-from neural_compressor.pruner.pruning import Pruning
+from neural_compressor.experimental.pruning_v2 import Pruning
 
 
-class TestPytorchPruning(unittest.TestCase):
+class TestPruningCriteria(unittest.TestCase):
     model = torchvision.models.resnet18()
 
-    def test_pruning_class_config(self):
+    def test_pruning_criteria(self):
         local_configs = [
             {
-                "op_names": ['layer1.*', 'layer2.*'],
-                "excluded_op_names": ['downsample.*'],
-                'target_sparsity': 0.6,
-                "pattern": 'channelx1',
-                "pruning_type": "snip_progressive",
+                "op_names": ['layer1.*'],
+                'target_sparsity': 0.4,
+                "pattern": '8x2',
+                "pruning_type": "magnitude_progressive",
                 "pruning_scope": "local",
-                "start_step": 0,
-                "end_step": 10
+                "sparsity_decay_type": "cube"
+            },
+            {
+                "op_names": ['layer2.*'],
+                'target_sparsity': 0.45,
+                'pattern': '2:4',
+                "pruning_type": "snip",
+                'start_step': 6,
+                'end_step': 6
             },
             {
                 "op_names": ['layer3.*'],
-                "pruning_type": "pattern_lock"
+                'excluded_op_names': ['downsample.*'],
+                'target_sparsity': 0.7,
+                'pattern': '4x1',
+                "pruning_type": "snip_momentum_progressive",
+                "pruning_frequency": 4,
+                "min_sparsity_ratio_per_op": 0.5,
+                "max_sparsity_ratio_per_op": 0.8,
             }
         ]
-        config = WeightPruningConfig(
+        conf = WeightPruningConfig(
             local_configs,
-            pruning_frequency=2,
             target_sparsity=0.8,
+            sparsity_decay_type="cube"
         )
+        config = Config(quantization=None, benchmark=None, pruning=conf, distillation=None)
         prune = Pruning(config)
+        prune.update_config(start_step=1, end_step=10)
         prune.model = self.model
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
         datasets = Datasets('pytorch')
-        dummy_dataset = datasets['dummy'](shape=(12, 3, 224, 224), low=0., high=1., label=True)
+        dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        prune.update_config(pruning_frequency=4)
         prune.on_train_begin()
-        assert prune.pruners[0].config['pruning_frequency'] == 4
-        assert prune.pruners[0].config['target_sparsity'] == 0.6
-        assert prune.pruners[1].config['target_sparsity'] == 0.8
-        assert prune.pruners[0].config['pattern'] == "channelx1"
-        assert prune.pruners[1].config['pruning_type'] == 'pattern_lock'
-
-        for epoch in range(1):
+        prune.update_config(pruning_frequency=4)
+        for epoch in range(2):
             self.model.train()
             prune.on_epoch_begin(epoch)
             local_step = 0

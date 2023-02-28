@@ -151,7 +151,7 @@ options = Options()
 
 class BenchmarkConfig:
     """Config Class for Benchmark.
-    
+
     Example:
         # Run benchmark according to config
         from neural_compressor.benchmark import fit
@@ -931,7 +931,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     """Config Class for Quantization Aware Training.
-    
+
     Example:
         from neural_compressor.config import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
 
@@ -975,10 +975,10 @@ pruners = [Pruner()]
 
 class WeightPruningConfig:
     """Similiar to torch optimizer's interface.
-    
+
     Example:
         from neural_compressor.config import WeightPruningConfig
-        
+
         config = WeightPruningConfig(
             local_configs,
             target_sparsity=0.8
@@ -1179,7 +1179,7 @@ class DistillationConfig:
 
 class MixedPrecisionConfig(PostTrainingQuantConfig):
     """Config Class for MixedPrecision.
-    
+
     Example:
         from neural_compressor import mix_precision
         from neural_compressor.config import MixedPrecisionConfig

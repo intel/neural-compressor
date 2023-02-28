@@ -5,8 +5,9 @@ import torchvision
 import torch.nn as nn
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
+from neural_compressor.conf.pythonic_config import Config
 from neural_compressor.config import WeightPruningConfig
-from neural_compressor.pruner.pruning import Pruning
+from neural_compressor.experimental.pruning_v2 import Pruning
 
 
 class TestPruning(unittest.TestCase):
@@ -33,10 +34,11 @@ class TestPruning(unittest.TestCase):
                 "pruning_type": "snip_progressive"
             }
         ]
-        config = WeightPruningConfig(
+        conf = WeightPruningConfig(
             local_configs,
             target_sparsity=0.8
         )
+        config = Config(quantization=None, benchmark=None, pruning=conf, distillation=None)
         prune = Pruning(config)
         prune.update_config(start_step=1, end_step=10)
         prune.model = self.model

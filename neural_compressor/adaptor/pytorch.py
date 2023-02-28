@@ -28,7 +28,7 @@ from ..utils.utility import LazyImport, CpuInfo, GLOBAL_STATE, MODE
 from ..utils.utility import Statistics
 from ..utils import logger
 from .query import QueryBackendCapability
-from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from ..data.dataloaders.base_dataloader import BaseDataLoader
 from .torch_utils.smooth_quant import TorchSmoothQuant
 torch = LazyImport("torch")
 json = LazyImport("json")
@@ -1202,7 +1202,6 @@ class TemplateAdaptor(Adaptor):
             model: A modified fp32 model
         """
         if not hasattr(self, 'sq') or force_re_smooth:
-            ##self.sq = TorchSmoothQuant(model._model, dataloader=dataloader)
             self.sq = TorchSmoothQuant(model._model, dataloader=dataloader)
         args = {}  ##different backends may have different default values
         if op_types != None:

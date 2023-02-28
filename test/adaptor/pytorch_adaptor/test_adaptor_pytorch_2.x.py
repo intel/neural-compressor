@@ -10,7 +10,7 @@ from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTraining
 from neural_compressor.data import Datasets, DATALOADERS, DataLoader
 from neural_compressor.experimental.data.datasets.dataset import Datasets
 from neural_compressor import quantization
-from neural_compressor.training import prepare_compression
+from neural_compressor.training import prepare_compression, fit
 from neural_compressor.utils.pytorch import load
 from neural_compressor.utils.utility import recover
 from neural_compressor.utils.utility import LazyImport
@@ -329,8 +329,8 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                            calib_func=eval_func)
                 q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
-            model_fx = load("./saved", model_origin,
-                            **{"dataloader": torch.utils.data.DataLoader(dataset)})
+            model_fx = load("./saved", model_origin)
+            self.assertTrue("quantize" in str(type(q_model.model.fc)))
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
             if approach != "qat":
@@ -340,6 +340,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                 **{"dataloader": dataloader})
                 self.assertEqual(model_fx.code, model_fx_recover.code)
             shutil.rmtree("./saved", ignore_errors=True)
+
         for approach in ["qat", "static"]:
             model_origin = M()
             # run fx_quant in neural_compressor and save the quantized GraphModule
@@ -351,10 +352,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                   op_name_list=qat_op_name_list
                 )
                 compression_manager = prepare_compression(model, conf)
-                compression_manager.callbacks.on_train_begin()
-                model = compression_manager.model
-                q_model = train_func(model)
-                compression_manager.callbacks.on_train_end()
+                q_model = fit(compression_manager=compression_manager, train_func=train_func, eval_func=eval_func)
                 compression_manager.save("./saved")
             else:
                 conf = PostTrainingQuantConfig(
@@ -365,8 +363,8 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                                            calib_dataloader=dataloader)
                 q_model.save("./saved")
             # Load configure and weights with neural_compressor.utils
-            model_fx = load("./saved", model_origin,
-                            **{"dataloader": torch.utils.data.DataLoader(dataset)})
+            model_fx = load("./saved", model_origin)
+            self.assertTrue("quantize" in str(type(model_fx.conv)))
             self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
             shutil.rmtree("./saved", ignore_errors=True)
 
