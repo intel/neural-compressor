@@ -141,7 +141,7 @@ class TuningSpace:
         """Parse the capability and construct the tuning space(a tree).
 
         Args:
-            capability: tThe merged framework capability.
+            capability: merged framework capability.
         """
         calib = TuningItem(name='calib_sampling_size',
                            options=capability['calib']['calib_sampling_size'],
@@ -179,9 +179,6 @@ class TuningSpace:
                             self.quant_mode_wise_items[dtype_item.name].append(op_item)
                 else:
                     self.quant_mode_wise_items[q_option.name].append(op_item)
-
-        logger.info("Constructed tuning space.")
-        logger.info(self.root_item.get_details())
 
     def _create_tuning_item(self, tuning_items: Dict, attr_name: str, quant_mode_item: TuningItem):
         for tuning_item_name, options in tuning_items.items():
@@ -229,7 +226,6 @@ class TuningSpace:
                 # The intersection of user cfg and fwk capability.
                 valid_precision_set = set(fwk_precision_set).intersection(set(user_dtype_lst))
                 if len(valid_precision_set) != 0:
-                    logger.debug(f"only keep precision...")
                     new_op_cap = dict(filter(lambda item: item[0] == 'precision', new_op_cap.items()))
                     new_op_cap['precision'][att] = dict(filter(lambda item: item[0] in valid_precision_set,\
                         fw_op_cap['precision'][att].items()))
@@ -258,7 +254,6 @@ class TuningSpace:
         for op_type, op_user_cfg in optype_wise_usr_cfg.items():
             op_lst = [op_name_type for op_name_type in cap['op'] if op_name_type[1] == op_type]
             for op_name_type in op_lst:
-                logger.debug(f"*** Start to merge user optype wise config for op: {op_name_type}.")
                 cap['op'][op_name_type] = self._merge_op_cfg(cap['op'][op_name_type], 
                                                              op_user_cfg,
                                                              fw_cap['op'][op_name_type])
@@ -276,7 +271,6 @@ class TuningSpace:
             for op_name in op_name_types:
                 if op_name_pattern.fullmatch(op_name):
                     op_name_type = op_name_types[op_name]
-                    logger.debug(f"*** Start to merge user config for op: {op_name_type}")
                     cap['op'][op_name_type] = self._merge_op_cfg(cap['op'][op_name_type], 
                                                                  op_user_cfg,
                                                                  fw_cap['op'][op_name_type])
@@ -482,10 +476,6 @@ class TuningSpace:
                         self.ops_data_type[op_name_type][('precision', att, att_dtype)] = att_dtype
 
             parsed_cap[op_name_type] = parsed_op_cap
-        logger.info(f"Parsed cap ............")
-        logger.info(parsed_cap)
-        logger.info(f"Data type info...")
-        logger.info(self.ops_data_type)
         return parsed_cap
     
     def _create_tuning_space(self, capability, usr_cfg):
@@ -500,11 +490,9 @@ class TuningSpace:
         """
         capability['op'] = self._parse_cap_helper(deepcopy(capability['op']))
         if usr_cfg:
-            logger.info(f"*********** Before merged with user cfg ***********")
-            logger.info(capability)
             self._merge_with_user_cfg(capability, usr_cfg['quantization'])
-            logger.info(f"***********  After Merged with user cfg ***********")
-            logger.info(capability)
+            logger.debug(f"***********  After Merged with user cfg ***********")
+            logger.debug(capability)
         self._parse_capability(capability)
 
     def query_item_option(self, op_name_type, path, method_name, method_val):
@@ -561,7 +549,6 @@ class TuningSpace:
     
     def get_item_by_path(self, path, default=None):
         """Get the item according to the path."""
-        logger.debug(f"Query item with path {path}")
         item = self.root_item
         for val in path:
             if item is None:
@@ -589,7 +576,7 @@ class TuningSpace:
             assert len(path) == 2, f"Got the path: {path}, please provide the path include activation or weight."
             att_item = self.get_item_by_path((op_name_type, *path))
             if not att_item or len(att_item.options) == 0: 
-                logger.info(f"Could not found item for {op_name_type} with path {path}")
+                logger.debug(f"Could not found item for {op_name_type} with path {path}")
                 return None
             dtype = att_item.options[0].name
             return (*path, dtype)
@@ -684,7 +671,6 @@ def pattern_to_internal(pattern, default_dtype='int8'):
     if isinstance(pattern, str):
         pattern = ('precision', pattern) if pattern in PRECISION_SET_V2_0 else (pattern, (None))
     internal_pattern = (pattern[0], ((pattern[1],), (pattern[1],)))
-    logger.debug(f"# Convert pattern: {pattern_bk} into internal pattern {internal_pattern}.")
     return internal_pattern
 
 def pattern_to_path(pattern):
@@ -720,8 +706,6 @@ def initial_tuning_cfg_with_quant_mode(op_name_type, quant_mode, tuning_space: T
     internal_pattern = pattern_to_internal(quant_mode)
     full_path = {'activation': None, 'weight': None}
     full_path['activation'], full_path['weight'] = pattern_to_path(internal_pattern)
-    logger.debug(f"Convert quant_mode: {quant_mode} into internal act_path {full_path['activation']}" + \
-        f" weight_path: {full_path['weight']}.")
     has_weight = op_name_type in tuning_space.ops_attr['weight']
 
     config_args = {}
