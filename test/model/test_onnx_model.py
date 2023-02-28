@@ -203,6 +203,16 @@ class TestOnnxModel(unittest.TestCase):
         opts = ['X1', 'X2', 'X3', 'X4', 'X5', 'output']
         for opt in opts:
             self.assertTrue(opt in opts_name)
+        
+    def test_get_siblings(self):
+        for node in self.model.nodes():
+            if node.name == "Conv1":
+                siblings = self.model.get_siblings(node)
+        self.assertEqual(len(siblings), 1)
+        siblings_name = [sibling.name for sibling in siblings]
+        names = ["Conv3"]
+        for name in names:
+            self.assertTrue(name in siblings_name)
     
     def test_get_children(self):
         for node in self.model.nodes():
