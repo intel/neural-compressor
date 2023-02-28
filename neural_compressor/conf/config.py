@@ -1401,6 +1401,7 @@ class Conf(object):
                 'model.domain': pythonic_config.quantization.domain,
                 'quantization.recipes': pythonic_config.quantization.recipes,
                 'quantization.approach': pythonic_config.quantization.approach,
+                'quantization.example_inputs': pythonic_config.quantization.example_inputs,
                 'quantization.calibration.sampling_size': 
                     pythonic_config.quantization.calibration_sampling_size,
                 'quantization.optype_wise': pythonic_config.quantization.op_type_list,
@@ -1429,7 +1430,7 @@ class Conf(object):
                     if st_key in st_kwargs:
                         st_val =  st_kwargs[st_key]
                         mapping.update({'tuning.strategy.' + st_key: st_val})
-            
+
         if pythonic_config.distillation is not None:
             mapping.update({
                 'distillation.train.criterion': pythonic_config.distillation.criterion,
@@ -1458,7 +1459,6 @@ class Conf(object):
             if pythonic_config.benchmark.outputs != []:
                 mapping.update({'model.outputs': pythonic_config.benchmark.outputs})
             mapping.update({
-                'model.backend': pythonic_config.benchmark.backend,
                 'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
                 'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
                 'evaluation.performance.configs.cores_per_instance':
@@ -1478,6 +1478,16 @@ class Conf(object):
                 'evaluation.accuracy.configs.intra_num_of_threads':
                     pythonic_config.benchmark.intra_num_of_threads,
             })
+            if "model.backend" not in mapping:
+                mapping.update({
+                    'model.backend': pythonic_config.benchmark.backend,
+                })
+            else:
+                if mapping['model.backend'] == 'default' and \
+                        pythonic_config.benchmark.backend != 'default':
+                    mapping.update({
+                        'model.backend': pythonic_config.benchmark.backend,
+                    })
 
         if "model.backend" not in mapping:
             mapping.update({

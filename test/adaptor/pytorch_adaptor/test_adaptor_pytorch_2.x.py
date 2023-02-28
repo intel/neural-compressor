@@ -322,6 +322,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             else:
                 conf = PostTrainingQuantConfig(
                   op_name_list=ptq_fx_op_name_list)
+                conf.example_inputs = torch.randn([1, 3, 224, 224])
                 set_workspace("./saved")
                 q_model = quantization.fit(model_origin,
                                            conf,
@@ -381,11 +382,11 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         origin_model.eval()
         conf = PostTrainingQuantConfig(approach="dynamic", op_name_list=ptq_fx_op_name_list)
         set_workspace("./saved")
-        q_model = quantization.fit(origin_model, conf)
+        q_model = quantization.fit(copy.deepcopy(origin_model), conf)
         q_model.save("./saved")
 
         # Load configure and weights by neural_compressor.utils
-        model_fx = load("./saved", origin_model)
+        model_fx = load("./saved", copy.deepcopy(origin_model))
         self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
         # Test the functionality of older model saving type
@@ -396,7 +397,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             yaml.dump(tune_cfg, f, default_flow_style=False)
         torch.save(state_dict, "./saved/best_model_weights.pt")
         os.remove("./saved/best_model.pt")
-        model_fx = load("./saved", origin_model)
+        model_fx = load("./saved", copy.deepcopy(origin_model))
         self.assertTrue(isinstance(model_fx, torch.fx.graph_module.GraphModule))
 
         # recover int8 model with only tune_cfg
@@ -472,8 +473,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 # recover int8 model with only tune_cfg
                 history_file = "./saved/history.snapshot"
                 model_fx_recover = recover(model_origin, history_file, 0,
-                                   **{"dataloader": torch.utils.data.DataLoader(dataset)
-                                  })
+                                           **{"dataloader": torch.utils.data.DataLoader(dataset)})
                 self.assertEqual(model_fx.sub.code, model_fx_recover.sub.code)
             shutil.rmtree("./saved", ignore_errors=True)
 
@@ -489,7 +489,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         q_model = quantization.fit(model_origin,
                                    conf,
                                    calib_dataloader=dataloader,
-                                   calib_func = eval_func)
+                                   calib_func=eval_func)
         tune_cfg = q_model.q_config
         tune_cfg["op"][("conv.module", "Conv2d")].clear()
         tune_cfg["op"][("conv.module", "Conv2d")] = \

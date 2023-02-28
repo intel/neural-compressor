@@ -995,7 +995,8 @@ class TuneStrategy(object):
     def _set_framework_info(self, q_dataloader, q_func=None):
         framework_specific_info = {'device': self.cfg.device,
                                    'approach': self.cfg.quantization.approach,
-                                   'random_seed': self.cfg.tuning.random_seed}
+                                   'random_seed': self.cfg.tuning.random_seed,
+                                   'performance_only': self.cfg.tuning.exit_policy.performance_only,}
         framework = self.cfg.model.framework.lower()
         framework_specific_info.update({'backend': self.cfg.model.get('backend', 'default')})
         framework_specific_info.update({'format': self.cfg.model.get('quant_format', 'default')})
@@ -1010,7 +1011,6 @@ class TuneStrategy(object):
                  "outputs": self.cfg.model.outputs,
                  'workspace_path': self.cfg.tuning.workspace.path,
                  'recipes': self.cfg.quantization.recipes,
-                 'performance_only': self.cfg.tuning.exit_policy.performance_only,
                  'use_bf16': self.cfg.use_bf16 if self.cfg.use_bf16 is not None else False})
             for item in ['scale_propagation_max_pooling', 'scale_propagation_concat']:
                 if item not in framework_specific_info['recipes']:
@@ -1054,6 +1054,7 @@ class TuneStrategy(object):
                 framework_specific_info.update(
                     {"default_qconfig": self.cfg['quantization']['op_wise']['default_qconfig']})
             framework_specific_info.update({"q_func": q_func})
+            framework_specific_info.update({"example_inputs": self.cfg.quantization.example_inputs})
         return framework, framework_specific_info
 
     def _set_objectives(self):
