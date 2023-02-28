@@ -376,7 +376,7 @@ class TuneStrategy(object):
             self.algo.origin_model = self.adaptor.pre_optimized_model
             if self.cfg.quantization.recipes.fast_bias_correction:
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
-            self.last_qmodel = self.algo(location=None)
+            self.last_qmodel = self.algo()
             assert self.last_qmodel
             self.last_tune_result = self._evaluate(self.last_qmodel)
 
