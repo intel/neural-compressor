@@ -45,9 +45,9 @@ class ConservativeTuneStrategy(TuneStrategy):
         super().__init__(model, conf, q_dataloader, q_func, eval_dataloader, 
                          eval_func, dicts, q_hooks)
         self.acc_meet_flag = False
-        self.fallback_op_lst = ['conv', 'matmul', 'linear']
-        res_lst = [None] * len(self.fallback_op_lst)
-        self.quant_status = {k : v for k, v in zip(self.fallback_op_lst, res_lst)}
+        self.quant_op_type_lst = ['conv', 'matmul', 'linear']
+        res_lst = [None] * len(self.quant_op_type_lst)
+        self.quant_status = {k : v for k, v in zip(self.quant_op_type_lst, res_lst)}
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
@@ -223,7 +223,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         sorted_items = COrderedDict()
         for op_item, quant_mode in items_lst:
             op_name, op_type = op_item.name
-            for target_op_type in self.fallback_op_lst:
+            for target_op_type in self.quant_op_type_lst:
                 if target_op_type in op_type.lower():
                     if target_op_type not in sorted_items:
                         sorted_items[target_op_type] = []
