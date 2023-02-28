@@ -36,6 +36,21 @@ class AutoTuneStrategy(TuneStrategy):
     
     def __init__(self, model, conf, q_dataloader=None, q_func=None, \
         eval_dataloader=None, eval_func=None, resume=None, q_hooks=None):
+        """Init an auto tuning strategy.
+
+        Args:
+            model: The FP32 model specified for low precision tuning.
+            conf: The Conf class instance includes all user configurations.
+            q_dataloader: Data loader for calibration, mandatory for post-training quantization.  Defaults to None.
+            q_func: Training function for quantization aware training. Defaults to None. Defaults to None.
+            eval_dataloader: Data loader for evaluation. Defaults to None.
+            eval_func: The evaluation function provided by user. This function takes model as parameter, and 
+                evaluation dataset and metrics should be encapsulated in this function implementation and 
+                outputs a higher-is-better accuracy scalar value.
+            resume: The dict containing resume information. Defaults to None.
+            q_hooks: The dict of training hooks, supported keys are: on_epoch_begin, on_epoch_end, on_step_begin,
+                on_step_end. Their values are functions to be executed in adaptor layer.. Defaults to None.
+        """
         super().__init__(model, conf, q_dataloader, q_func, eval_dataloader,\
             eval_func, resume, q_hooks)
         logger.info(f"*** Start auto tuning")
