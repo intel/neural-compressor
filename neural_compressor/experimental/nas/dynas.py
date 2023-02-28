@@ -38,7 +38,6 @@ class DyNAS(NASBase):
 
     def __init__(self, conf_fname_or_obj):
         """Initialize the attributes."""
-
         super().__init__()
 
         self.init_cfg(conf_fname_or_obj)
@@ -67,7 +66,6 @@ class DyNAS(NASBase):
         Returns:
             Best model architectures found in the search process.
         """
-
         return self.dynas_manager.search()
 
     def select_model_arch(self): # pragma: no cover
@@ -79,7 +77,6 @@ class DyNAS(NASBase):
 
     def init_cfg(self, conf_fname_or_obj):
         """Initialize the configuration."""
-
         logger.info('init_cfg')
         if isinstance(conf_fname_or_obj, str):
             if os.path.isfile(conf_fname_or_obj):
