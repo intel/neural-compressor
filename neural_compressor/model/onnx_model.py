@@ -254,6 +254,7 @@ class ONNXModel(BaseModel):
                 self._output_name_to_node[output_name] = node
 
     def get_siblings(self, node):
+        """Get siblings nodes."""
         siblings = []
         for parent in self.get_parents(node):
             for child in self.get_children(parent):
