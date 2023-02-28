@@ -47,7 +47,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         self.acc_meet_flag = False
         self.fallback_op_lst = ['conv', 'matmul', 'linear']
         res_lst = [None] * len(self.fallback_op_lst)
-        self.new_o0_tuning_result = {k : v for k, v in zip(self.fallback_op_lst, res_lst)}
+        self.quant_status = {k : v for k, v in zip(self.fallback_op_lst, res_lst)}
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
@@ -82,14 +82,14 @@ class ConservativeTuneStrategy(TuneStrategy):
                     tmp_tune_cfg[op_info] = op_config
                 yield tmp_tune_cfg
                 if self.objectives.accuracy_meets():
-                    self.new_o0_tuning_result[op_type] = 'int8'
+                    self.quant_status[op_type] = dtype
                     logger.info(f"*** Convert all {op_type} ops to {dtype} and accuracy still meet the requirements")
                     tune_cfg = deepcopy(tmp_tune_cfg)
                 else:
                     # tmp_tune_cfg = deepcopy(tune_cfg)
-                    self.new_o0_tuning_result[op_type] = 'fp32'
+                    self.quant_status[op_type] = 'fp32'
                     logger.info(f"*** Convert all {op_type} ops to {dtype} but accuracy not meet the requirements")
-                logger.info(f"***Current result {self.new_o0_tuning_result.items()}")
+                logger.info(f"***Current result {self.quant_status.items()}")
         logger.info(f"*** Ending tuning process due to no quantifiable op left.")
         self.re_quant = False
 
@@ -288,13 +288,12 @@ class ConservativeTuneStrategy(TuneStrategy):
         quant_mode_wise_items = self.tuning_space.quant_mode_wise_items
         # Add all quantized pair into queue
         quant_items_pool = COrderedDict()
-        # skip bf16, fp16 only for int8
-        # # collect and sorted all ops that support bf16 and fp16
-        # for quant_mode in  ['bf16', 'fp16']:
-        #     if quant_mode in quant_mode_wise_items:
-        #         op_item_pairs = [(op_item, quant_mode) for op_item in quant_mode_wise_items[quant_mode]]
-        #         op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
-        #         quant_items_pool[quant_mode] = op_item_pairs
+        # collect and sorted all ops that support bf16 and fp16
+        for quant_mode in  ['bf16', 'fp16']:
+            if quant_mode in quant_mode_wise_items:
+                op_item_pairs = [(op_item, quant_mode) for op_item in quant_mode_wise_items[quant_mode]]
+                op_item_pairs = self._sorted_item_by_op_type(op_item_pairs, op_type_priority)
+                quant_items_pool[quant_mode] = op_item_pairs
         op_item_pairs = []
         quant_ops_name_set = set()
         # collect and sorted all ops that support int8

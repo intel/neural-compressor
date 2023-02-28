@@ -181,6 +181,7 @@ class TuneStrategy(object):
         self.applied_all_recipes_flag = False
         if resume is not None: self.setup_resume(resume)
 
+
     @abstractmethod
     def next_tune_cfg(self):
         """Interface for generate the next tuning config.
