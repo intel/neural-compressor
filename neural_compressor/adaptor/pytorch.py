@@ -2861,7 +2861,7 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     prefix='',
                     is_qat=True,
                     example_inputs=example_inputs,
-                    prepare_custom_config=self.prepare_custom_config_dict
+                    custom_config=self.prepare_custom_config_dict
                 )
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept
