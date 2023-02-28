@@ -194,7 +194,7 @@ class ModelSize(Objective):
 
 class MultiObjective:
     """The base class for multiple benchmarks supported by neural_compressor.
-    
+
     Example:
         from neural_compressor.objective import MultiObjective
         obj = MultiObjective(
@@ -369,7 +369,7 @@ class MultiObjective:
         last_acc, _ = last_result
         if not isinstance(last_acc, list):
             last_acc = [last_acc]
-    
+
         if self.metric_weight is not None and len(last_acc) > 1:
             last_acc = [np.mean(np.array(last_acc) * self.metric_weight)]
         if not self._accuracy_target:

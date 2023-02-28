@@ -43,8 +43,8 @@ def build_fake_yaml():
     f.close()
 
 def quantize(model,q_data, e_data):
-    from neural_compressor.experimental import Quantization , common
-    from neural_compressor.experimental.common import DataLoader
+    from neural_compressor.quantization import Quantization
+    from neural_compressor.data import DataLoader
 
     quantizer = Quantization('fake_yaml.yaml')
 

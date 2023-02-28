@@ -61,8 +61,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.device = framework_specific_info["device"]
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.dynamic = framework_specific_info["approach"] == "post_training_dynamic_quant"
-        self.domain = framework_specific_info["domain"]
-        self.recipes = framework_specific_info["recipes"]
+        self.domain = framework_specific_info.get("domain", "auto")
+        self.recipes = framework_specific_info.get("recipes", {})
         self.backend = PROVIDERS[framework_specific_info["backend"]]
         self.performance_only = framework_specific_info.get("performance_only", False)
 
@@ -636,7 +636,12 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         # 2. according to input
         # typically, NLP models have multiple inputs, 
         # and the dimension of each input is usually 2 (batch_size, max_seq_len)
-        sess = ort.InferenceSession(model.model.SerializeToString())
+        if not model.is_large_model:
+            sess = ort.InferenceSession(model.model.SerializeToString())
+        elif model.model_path is not None: # pragma: no cover
+            sess = ort.InferenceSession(model.model_path)
+        else: # pragma: no cover
+            assert False, "Please use model path instead of onnx model object to quantize."
         input_shape_lens = [len(input.shape) for input in  sess.get_inputs()]
         if len(input_shape_lens) > 1 and all(shape_len == 2 for shape_len in input_shape_lens):
             is_nlp = True

@@ -18,15 +18,69 @@
 
 import re
 import yaml
-from .logger import logger
-from ..config import WeightPruningConfig
-from ..conf.config import PrunerV2
+from ...config import WeightPruningConfig
+from ...conf.config import PrunerV2
 
 try:
+    from ...utils.utility import LazyImport
     from neural_compressor.conf.dotdict import DotDict
+    from neural_compressor.utils import logger
+    LazyImport('torch.nn')
+    torch = LazyImport('torch')
 except:
+    import torch
     from .dot_dict import DotDict  ##TODO
+    import logging
+    logger = logging.getLogger(__name__)
 
+
+def get_sparsity_ratio(pruners, model):
+    """Calculate sparsity ratio of a module/layer.
+
+    Returns:
+        Three floats.
+        elementwise_over_matmul_gemm_conv refers to zero elements' ratio in pruning layers.
+        elementwise_over_all refers to zero elements' ratio in all layers in the model.
+        blockwise_over_matmul_gemm_conv refers to all-zero blocks' ratio in pruning layers.
+    """
+    pattern_sparsity_cnt = 0
+    element_sparsity_cnt = 0
+    for pruner in pruners:
+        modules = pruner.modules
+        sparsity_ratio = pruner.pattern.get_sparsity_ratio(pruner.masks)
+        cnt = 0
+        for key in modules.keys():
+            cnt += modules[key].weight.numel()
+        pattern_sparsity_cnt += int(cnt * sparsity_ratio)
+        for key in pruner.masks.keys():
+            element_sparsity_cnt += torch.sum(pruner.masks[key] == 0).data.item()
+
+    linear_conv_cnt = 0
+    param_cnt = 0
+    for name, module in model.model.named_modules():
+        if type(module).__name__ in ["Linear"] or re.search(r'Conv.d', type(module).__name__) != None:
+            linear_conv_cnt += module.weight.numel()
+
+    for n, param in model.model.named_parameters():
+        param_cnt += param.numel()
+    if linear_conv_cnt == 0:
+        blockwise_over_matmul_gemm_conv = 0
+        elementwise_over_matmul_gemm_conv = 0
+    else:
+        blockwise_over_matmul_gemm_conv = float(pattern_sparsity_cnt) / linear_conv_cnt
+        elementwise_over_matmul_gemm_conv = float(element_sparsity_cnt) / linear_conv_cnt
+    if param_cnt == 0:
+        elementwise_over_all = 0
+    else:
+        elementwise_over_all = float(
+            element_sparsity_cnt) / param_cnt
+
+    logger.info(
+        f"elementwise_over_matmul_gemm_conv:{elementwise_over_matmul_gemm_conv},"
+        f" elementwise_over_all:{elementwise_over_all},"
+        f"blockwise_over_matmul_gemm_conv:{blockwise_over_matmul_gemm_conv}")
+
+    return elementwise_over_matmul_gemm_conv, elementwise_over_all, blockwise_over_matmul_gemm_conv
 
 def check_config(prune_config):
     """Check if the configuration dict is valid for running Pruning object.

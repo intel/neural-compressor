@@ -1,8 +1,7 @@
 import unittest
-import os
-import yaml
 import shutil
 from pkg_resources import parse_version
+
 
 def train_func():
     import tensorflow as tf
@@ -42,10 +41,10 @@ def train_func():
 
     print('Baseline test accuracy:', baseline_model_accuracy)
     model.save("baseline_model")
-    
+
+
 class Dataset(object):
     def __init__(self, batch_size=100):
-        import tensorflow as tf
         from tensorflow import keras
         mnist = keras.datasets.mnist
         (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
@@ -62,6 +61,7 @@ class Dataset(object):
     def __getitem__(self, idx):
         return self.test_images[idx], self.test_labels[idx]
 
+
 class TestTensorflowQAT(unittest.TestCase):
     import tensorflow as tf
     @classmethod
@@ -72,7 +72,7 @@ class TestTensorflowQAT(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree('baseline_model',ignore_errors=True)
         shutil.rmtree('trained_qat_model',ignore_errors=True)
-        
+
     @unittest.skipIf(parse_version(tf.version.VERSION) < parse_version('2.3.0'), "version check")
     def test_qat(self):
         import tensorflow as tf

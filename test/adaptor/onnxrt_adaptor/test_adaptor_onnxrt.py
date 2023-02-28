@@ -235,6 +235,7 @@ def build_gather_yaml():
           calibration:
             sampling_size: 1
             dataloader:
+              batch_size: 1
               dataset:
                 dummy_v2:
                   input_shape: [100, 4]
@@ -245,6 +246,7 @@ def build_gather_yaml():
               MSE:
                 compare_label: False
             dataloader:
+              batch_size: 1
               dataset:
                 dummy_v2:
                   input_shape: [100, 4]

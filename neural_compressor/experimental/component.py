@@ -20,11 +20,9 @@
 The Component class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
 """
 
-from ..conf.config import Conf
 from ..utils import logger
 from ..utils.utility import required_libs
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
-from ..model import BaseModel
 from .common import Model
 from ..adaptor import FRAMEWORKS
 from ..model.model import get_model_fwk_name
@@ -87,6 +85,7 @@ class Component(object):
             'on_after_eval': []
         }
         if conf_fname_or_obj is not None:  # pragma: no cover
+            from ..conf.config import Conf
             if isinstance(conf_fname_or_obj, str):
                 self.conf = Conf(conf_fname_or_obj)
             elif isinstance(conf_fname_or_obj, Conf):
@@ -207,7 +206,7 @@ class Component(object):
                                                self.adaptor,
                                                metric,
                                                self.cfg.evaluation.accuracy.postprocess,
-                                               fp32_baseline = False)
+                                               fp32_baseline=False)
 
         self.prepare()
         # strategy will be considered in future
@@ -493,6 +492,7 @@ class Component(object):
                         make sure the name is in supported slim model list.
 
         """
+        from ..model import BaseModel
         if self.cfg.model.framework == 'NA':
             assert not isinstance(user_model, BaseModel), \
                 "Please pass an original framework model but not neural compressor model!"

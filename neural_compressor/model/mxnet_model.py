@@ -18,7 +18,6 @@
 """Class for MXNet model."""
 
 import os
-from neural_compressor.conf import config as cfg
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.utils import logger
 from .base_model import BaseModel
@@ -55,6 +54,7 @@ class MXNetModel(BaseModel):
     def save(self, root=None):
         """Save MXNet model."""
         if root is None:
+            from neural_compressor.conf import config as cfg
             root = cfg.default_workspace
         root = os.path.abspath(os.path.expanduser(root))
         os.makedirs(os.path.dirname(root), exist_ok=True)

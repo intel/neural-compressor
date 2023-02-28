@@ -15,8 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from neural_compressor.utils.utility import LazyImport
-torch = LazyImport('torch')
+from .utils import torch
 
 
 CRITERIA = {}
@@ -46,7 +45,7 @@ class PruningCriterion:
     Args:
         config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
-    
+
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
