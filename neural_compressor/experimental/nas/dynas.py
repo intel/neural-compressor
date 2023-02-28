@@ -16,13 +16,14 @@
 
 import os
 
-from dynast.dynast_manager import DyNAS as DyNASManager
-
 from neural_compressor.conf.config import Conf, NASConfig
 from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport
 
 from .nas import NASBase
 from .nas_utils import nas_registry
+
+DyNASManager = LazyImport('dynast.dynast_manager.DyNAS')
 
 
 @nas_registry("DyNAS")
