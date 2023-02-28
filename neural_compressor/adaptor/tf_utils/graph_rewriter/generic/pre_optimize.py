@@ -48,15 +48,24 @@ from .fuse_layer_norm import FuseLayerNormOptimizer
 from .strip_equivalent_nodes import StripEquivalentNodesOptimizer
 from .dilated_contraction import DilatedContraction
 from .convert_placeholder_to_const import ConvertPlaceholderToConst
-from neural_compressor.adaptor.tf_utils.util import version1_gte_version2
+from neural_compressor.adaptor.tf_utils.util import version1_gte_version2, version1_eq_version2
 
 class PreOptimization():
     """Pre optimization for the FP32 models."""
 
-    def __init__(self, model, optimization, new_api, device):
+    def __init__(self, model, new_api, device):
         """Initilization."""
         self.model = model
-        self.optimization = optimization
+        if version1_gte_version2(tf.version.VERSION, '2.1.0') or \
+           version1_eq_version2(tf.version.VERSION, '1.15.0-up3'):
+            self.optimization = {'pruning': True, 'shape': True,
+                                'constfold': False, 'arithmetic': False,
+                                'dependency': True, 'debug_stripper': True,
+                                'loop': True}
+        else:
+            self.optimization = {'pruning': True, 'shape': True,
+                                'dependency': True, 'debug_stripper': True,
+                                'loop': True}
         # Table initialization should disable grappler dependency and pruning pass
         node_names = [node.name for node in model.graph_def.node]
         if 'init_all_tables' in node_names:
@@ -95,7 +104,7 @@ class PreOptimization():
         Returns:
             [graphdef]: the optimized graphdef object.
         """
-        from neural_compressor.experimental.common import Model
+        from neural_compressor.model import Model
 
         origin_model = Model(self.model._model, **self.model.kwargs)
         origin_model.name = self.model.name

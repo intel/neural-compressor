@@ -1,4 +1,4 @@
-### Turn ON Auto Mixed Precision during Quantization
+### Turn OFF Auto Mixed Precision during Quantization
 
 BF16 conversion during quantization is default ON. To force disable it, users need to exclude "bf16" in PostTrainingQuantConfig and QuantizationAwareTrainingConfig:
 

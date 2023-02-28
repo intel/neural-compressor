@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The basic tuning strategy."""
-
 import copy
 import numpy as np
 from collections import OrderedDict
@@ -29,7 +27,11 @@ from .utils.constant import TUNING_ITEMS_LST
 
 @strategy_registry
 class BasicTuneStrategy(TuneStrategy):
-    """The basic tuning strategy."""
+    """The basic tuning strategy.
+    
+    There are three stages executed by Basic strategy sequentially,
+    and the tuning process ends once the condition meets the exit policy.
+    """
 
     def distributed_next_tune_cfg_lst(self, comm):
         """Generate and yield the next tuning config list with below order.
@@ -162,11 +164,16 @@ class BasicTuneStrategy(TuneStrategy):
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
         
-            1. OP Type Wise Tuning
-            2. Fallback OP One by One
-            3. Fallback Multiple OPs Accumulated
+            1. OP Type Wise Tuning: tries to quantize the OPs as many as possible
+                and traverse all OP type wise tuning configs
+            2. Fallback OP One by One: it performs high-precision OP (FP32, BF16 ...)
+                fallbacks one by one based on the tuning config with the best result
+                in the previous stage, and records the impact of each OP.
+            3. Fallback Multiple OPs Accumulated: first sorted the OPs list
+                according to the impact score in stage II, and tries to incrementally
+                fallback multiple OPs to high precision according to the sorted OP list.
 
-        Yields:
+        Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         from copy import deepcopy
@@ -183,13 +190,25 @@ class BasicTuneStrategy(TuneStrategy):
             stage1_max = 1e9  # TODO set a more appropriate value
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
-            for op_tuning_cfg in op_wise_tuning_sampler:
+            for index, op_tuning_cfg in enumerate(op_wise_tuning_sampler):
+                op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+                # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
+                if index == 1 and not self.applied_all_recipes_flag:
+                    logger.info("Apply all recipes.")
+                    self.applied_all_recipes_flag = True
+                    yield self.apply_all_tuning_recipes(deepcopy(self.cur_best_tuning_cfg))
                 stage1_cnt += 1
                 if early_stop_tuning and stage1_cnt > stage1_max:
                     logger.info("Early stopping the stage 1.")
                     break
-                op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield op_tuning_cfg
+            
+            # Apply all recipes, if not got the qmodel that meet the requirements, discard it.
+            if stage1_cnt == 1 and not self.applied_all_recipes_flag:
+                logger.info("Apply all recipes.")
+                self.applied_all_recipes_flag = True
+                yield self.apply_all_tuning_recipes(deepcopy(self.cur_best_tuning_cfg))
+            
             # Fallback the ops supported both static and dynamic from static to dynamic
             # Tuning items: None
             if self.cfg.quantization.approach == 'post_training_auto_quant':
@@ -206,6 +225,10 @@ class BasicTuneStrategy(TuneStrategy):
                                                    new_op_tuning_cfg[item.name])
                 new_op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
                 yield new_op_tuning_cfg
+
+            logger.info("Apply recipe one by one.")
+            for tune_cfg in self.apply_recipe_one_by_one(deepcopy(self.cur_best_tuning_cfg)):
+                yield tune_cfg
             best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
 
             # Fallback

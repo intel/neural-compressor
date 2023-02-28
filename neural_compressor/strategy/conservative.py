@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The conservative tuning strategy for quantization level 0."""
-
 import copy
 import os
 import numpy as np
@@ -30,6 +28,7 @@ from .strategy import strategy_registry, TuneStrategy
 from .utils.tuning_space import TuningItem
 from ..utils import logger
 from ..utils.utility import Statistics
+from ..algorithm import AlgorithmScheduler
 
 @strategy_registry
 class ConservativeTuneStrategy(TuneStrategy):
@@ -57,7 +56,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         accuracy meets the requirements else continue
         5. For bf16 and fp16 operators, do the same as int8 operators.
 
-        Yields:
+        Returns:
             tune_config (dict): It's a dict containing the tuning configuration to run.
         """
         tuning_space = self.tuning_space
@@ -117,23 +116,19 @@ class ConservativeTuneStrategy(TuneStrategy):
             logger.debug("Dump current tuning configuration:")
             logger.debug(tune_cfg)
             self.tuning_times += 1
-            self.algo.calib_iter = tune_cfg['calib_iteration']
-            # TODO align the api to let strategy has access to pre_optimized model
-            assert self.adaptor.pre_optimized_model
-            self.algo.origin_model = self.adaptor.pre_optimized_model
-            if self.cfg.quantization.recipes.smooth_quant:
-                try:
-                    self.algo.alpha = self.cfg.quantization.recipes.smooth_quant_args.get("alpha", 0.5)
-                except:
-                    self.algo.alpha = 0.5
-                self.algo.tune_cfg = copy.deepcopy(tune_cfg)
-            self.algo.q_model = self.model
-            self.model = self.algo('pre_quantization')
+            # set the parameter for pre quantization algos and run
+            self.set_param_for_pre_quantization_algos(self.algo_scheduler, tune_cfg, self.model)
+            self.model = self.algo_scheduler('pre_quantization')
+            # quantize
             q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            self.algo.q_model = q_model
-            if self.cfg.quantization.recipes.fast_bias_correction:
-                self.algo.algorithms[0].quantization_cfg = tune_cfg
-            self.last_qmodel = self.algo('post_quantization')
+            assert self.adaptor.pre_optimized_model
+            # set the parameter for post quantization algos and run
+            self.set_param_for_post_quantization_algos(self.algo_scheduler, tune_cfg, self.adaptor.pre_optimized_model,
+                                                       q_model)
+            self.last_qmodel = self.algo_scheduler('post_quantization')
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
+            # Remove the reference to model
+            self.algo_scheduler.reset_exec_algorithms()
             assert self.last_qmodel
             # Return the last quantized model as a result. if performance only.
             if self.cfg.tuning.exit_policy.performance_only:

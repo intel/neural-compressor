@@ -97,6 +97,11 @@
       'LSTM': *default_dynamic,
     }
   }
+  fp16: &common_fp16 ['Concat', 'Gather', 'Reshape', 'Squeeze', 'Transpose', 'Unsqueeze',
+    'EmbedLayerNormalization', 'Attention', 'Split', 'Sigmoid', 'Relu', 'Mul', 'Pad', 'MaxPool',
+    'MatMul', 'LeakyRelu',  'GlobalAveragePool', 'Gemm', 'Conv', 'AveragePool', 'Add', 'Clip']
+  bf16: &common_bf16 ['Concat', 'Gather', 'Reshape', 'Squeeze', 'Transpose', 'Unsqueeze',
+    'Split', 'Sigmoid', 'Relu', 'Mul', 'MatMul', 'Gemm', 'Add']
   recipes: &default_optimization
     graph_optimization:   # from onnxruntime graph_optimization_level
       level: ['DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL']
@@ -137,6 +142,8 @@
     },
     'dynamic': *ref_1_6_dynamic 
   }
+  fp16: *common_fp16
+  bf16: *common_bf16
   recipes:
     <<: *default_optimization
 
@@ -204,6 +211,8 @@
       'LSTM': *default_dynamic,
     }
   }
+  fp16: *common_fp16
+  bf16: *common_bf16
   recipes:
     <<: *default_optimization
 
@@ -278,6 +287,8 @@
       'LSTM': *default_dynamic,
     }
   }
+  fp16: *common_fp16
+  bf16: *common_bf16
   recipes:
     <<: *default_optimization
 
@@ -332,6 +343,8 @@
     },
     'dynamic': *ref_1_9_dynamic
   }
+  fp16: *common_fp16
+  bf16: *common_bf16
   recipes:
     <<: *default_optimization
 
@@ -393,6 +406,8 @@
     },
     'dynamic': *ref_1_9_dynamic
   }
+  fp16: *common_fp16
+  bf16: *common_bf16
   recipes:
     <<: *default_optimization
 
@@ -400,6 +415,8 @@
   version:
     name: '1.12.0'
   int8: *ref_1_11
+  fp16: *common_fp16
+  bf16: *common_bf16
   recipes:
     <<: *default_optimization
 
@@ -407,5 +424,7 @@
   version:
     name: 'default'
   int8: *ref_1_6
+  fp16: *common_fp16
+  bf16: *common_bf16
   recipes:
     <<: *default_optimization

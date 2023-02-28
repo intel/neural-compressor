@@ -320,7 +320,7 @@ class Quantizer:
                         if len(outs) > 0:
                             output_dtype = str(self.new_value_info[outs[0]].new_dtype)
                             break
-                    if len(outs) == 0 or all([not self.should_convert(i) for i in children]):
+                    if len(outs) == 0 or all([not self.should_cast(i) for i in children]):
                         return
                     if input_dtype == str(match_nodes[1].attribute[0].i) and \
                         output_dtype == str(match_nodes[0].attribute[0].i) and \
@@ -355,17 +355,13 @@ class Quantizer:
 
     def dtype_cast(self, node, cfg, keep_io_types=True): # pragma: no cover
         """Cast node dtype."""
-        min_positive_val = 1e-7
-        max_finite_val = 1e4
         for idx, tensor_name in enumerate(node.input):
             initializer = find_by_name(tensor_name, self.model.initializer())
             if initializer is not None:
                 if initializer.data_type != onnx_proto.TensorProto.FLOAT: 
                     continue
-                new_tensor = cast_tensor(initializer, cfg)
-                if new_tensor:
-                    self.model.remove_initializer(initializer)
-                    self.model.add_initializer(new_tensor)
+                do_cast = cast_tensor(initializer, cfg)
+                if do_cast:
                     self.new_value_info[tensor_name] = ValueInfo(tensor_name,
                                                              TensorProto.FLOAT, dtype_mapping[cfg])
             else:

@@ -24,16 +24,6 @@ class CorrectMetric:
         self.item = []
 
 class TestMetrics(unittest.TestCase):
-    def testUserMetric(self):
-        from neural_compressor.experimental import common, Quantization, Benchmark, \
-            Graph_Optimization
-        for i in [Quantization(), Benchmark(), Graph_Optimization()]:
-            item = i
-            with self.assertRaises(AssertionError):
-                item.metric = InCorrectMetric()
-            item.framework = 'tensorflow'
-            item.metric = common.Metric(CorrectMetric, str(i))
-
     def testmIOU(self):
         metrics = METRICS('tensorflow')
         miou = metrics['mIOU']()
@@ -93,7 +83,7 @@ class TestMetrics(unittest.TestCase):
         labels_2 = [np.array([1, 1, 1, 0, 0, 1, 1, 1])]
         glue.update(preds_2, labels_2)
         self.assertEqual(glue.result(), 0.9375)        
-        
+
         glue.reset()
         glue.update(preds, labels)
         self.assertEqual(glue.result(), 0.875)
@@ -160,7 +150,7 @@ class TestMetrics(unittest.TestCase):
 
         predicts = [[0, 0.2, 0.9, 0.3], [0, 0.9, 0.8, 0]]
         single_predict = [0, 0.2, 0.9, 0.3]
-       
+
         labels = [[0, 1, 0, 0], [0, 0, 1, 0]]
         sparse_labels = [2, 2]
         single_label = 2
@@ -200,7 +190,7 @@ class TestMetrics(unittest.TestCase):
 
         predicts = [[0, 0.2, 0.9, 0.3], [0, 0.9, 0.8, 0]]
         single_predict = [0, 0.2, 0.9, 0.3]
-       
+
         labels = [[0, 1, 0, 0], [0, 0, 1, 0]]
         sparse_labels = [2, 2]
         single_label = 2
@@ -239,7 +229,7 @@ class TestMetrics(unittest.TestCase):
 
         predicts = [[0, 0.2, 0.9, 0.3], [0, 0.9, 0.8, 0]]
         single_predict = [0, 0.2, 0.9, 0.3]
-       
+
         labels = [[0, 1, 0, 0], [0, 0, 1, 0]]
         sparse_labels = [2, 2]
         single_label = 2
@@ -267,9 +257,8 @@ class TestMetrics(unittest.TestCase):
         self.assertEqual(top1.result(), 0.4)
         self.assertEqual(top2.result(), 0.8)
         self.assertEqual(top3.result(), 1)
-    
+
     def test_tensorflow_mAP(self):
-        import json
         import os
         metrics = METRICS('tensorflow')
         fake_dict = 'dog: 1'

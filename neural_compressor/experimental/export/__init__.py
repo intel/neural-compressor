@@ -20,3 +20,4 @@
 
 from .torch2onnx import torch_to_fp32_onnx, torch_to_int8_onnx
 from .qlinear2qdq import onnx_qlinear_to_qdq
+from .tf2onnx import tf_to_fp32_onnx, tf_to_int8_onnx

@@ -17,7 +17,7 @@
 # limitations under the License.
 
 from .component import Component
-from ..pruner.pruner_legacy import PRUNERS
+from .pruner_legacy import PRUNERS
 from ..utils import logger
 from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_dataloader, create_train_func, create_eval_func
@@ -490,3 +490,4 @@ class TfPruningCallback(object):
     def on_batch_end(self, logs=None):  # pragma: no cover
         """Call the same-name function from hooks."""
         self.on_step_end(logs)
+

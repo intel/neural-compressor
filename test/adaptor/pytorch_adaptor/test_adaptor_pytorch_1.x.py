@@ -264,9 +264,9 @@ def build_pytorch_yaml():
 
 def build_pytorch_fx_yaml():
     if PT_VERSION >= Version("1.9.0").release:
-      fake_fx_ptq_yaml = fake_ptq_yaml_for_fx
+        fake_fx_ptq_yaml = fake_ptq_yaml_for_fx
     else:
-      fake_fx_ptq_yaml = fake_ptq_yaml.replace('pytorch', 'pytorch_fx')
+        fake_fx_ptq_yaml = fake_ptq_yaml.replace('pytorch', 'pytorch_fx')
     with open('fx_ptq_yaml.yaml', 'w', encoding="utf-8") as f:
         f.write(fake_fx_ptq_yaml)
 
@@ -712,11 +712,11 @@ class TestPytorchAdaptor(unittest.TestCase):
         a = load_array('saved/dump_tensor/activation_iter1.npz')
         w = load_array('saved/dump_tensor/weight.npz')
         if PT_VERSION >= Version("1.8.0").release:
-          self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
-                          a['conv1.0'].item()['conv1.0.output0'].shape[1])
+            self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
+                            a['conv1.0'].item()['conv1.0.output0'].shape[1])
         else:
-          self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
-                          a['conv1.0'].item()['conv1.1.output0'].shape[1])
+            self.assertTrue(w['conv1.0'].item()['conv1.0.weight'].shape[0] ==
+                            a['conv1.0'].item()['conv1.1.output0'].shape[1])
         data = np.random.random(w['conv1.0'].item()['conv1.0.weight'].shape).astype(np.float32)
         quantizer.strategy.adaptor.set_tensor(q_model, {'conv1.0.weight': data})
         changed_tensor = q_model.get_weight('conv1.weight')
@@ -789,7 +789,7 @@ class TestPytorchAdaptor(unittest.TestCase):
         q_capability = self.adaptor.query_fw_capability(model)
         for k, v in q_capability["opwise"].items():
             if k[0] != "quant" and k[0] != "dequant":
-              fallback_ops.append(k[0])
+                fallback_ops.append(k[0])
         model.model.qconfig = torch.quantization.default_qconfig
         model.model.quant.qconfig = torch.quantization.default_qconfig
         if PT_VERSION >= Version("1.8.0").release:
@@ -903,7 +903,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         # run fx_quant in neural_compressor and save the quantized GraphModule
         model.eval()
         quantizer = Quantization('fx_dynamic_yaml.yaml')
-        quantizer.model = common.Model(model,
+        quantizer.model = common.Model(copy.deepcopy(model),
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
@@ -913,7 +913,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         q_model.save('./saved')
 
         # Load configure and weights by neural_compressor.utils
-        model_fx = load("./saved", model,
+        model_fx = load("./saved", copy.deepcopy(model),
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \
@@ -929,7 +929,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             yaml.dump(tune_cfg, f, default_flow_style=False)
         torch.save(state_dict, "./saved/best_model_weights.pt")
         os.remove('./saved/best_model.pt')
-        model_fx = load("./saved", model,
+        model_fx = load("./saved", copy.deepcopy(model),
                             **{'prepare_custom_config_dict': \
                                     {'non_traceable_module_name': ['a']},
                                'convert_custom_config_dict': \

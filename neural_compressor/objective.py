@@ -14,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The objectives supported by neural_compressor, which is driven by accuracy.
 
 To support new objective, developers just need implement a new subclass in this file.
@@ -46,13 +45,30 @@ def objective_registry(cls):
     return cls
     
 def objective_custom_registry(name, obj_cls):
-    """Register a customized objective.""" 
+    """Register a customized objective.
+    
+    Example:
+        from eural_compressor.objective import objective_custom_registry
+        
+        objective_cls = type(user_objective)
+        name = user_objective.__class__.__name__
+        objective_cfg = name if deep_get(self.conf.usr_cfg, "tuning.objective") else [name]
+        deep_set(self.conf.usr_cfg, user_obj_cfg, objective_cfg)
+        self.conf.usr_cfg = DotDict(self.conf.usr_cfg)
+        objective_custom_registry(name, objective_cls)
+    """ 
     if name.lower() in OBJECTIVES:
         raise ValueError('Cannot have two objectives with the same name')
     OBJECTIVES[name.lower()] = obj_cls
 
 class Objective(object):
-    """The base class for precise benchmark supported by neural_compressor."""
+    """The base class for precise benchmark supported by neural_compressor.
+    
+    With built-in objectives, users can compress models with different objectives easily.
+    In special cases, users can also register their own objective classes.
+
+
+    """
     representation = ''
 
     def __init__(self):
@@ -117,7 +133,7 @@ class Objective(object):
 
 @objective_registry
 class Accuracy(Objective):
-    """Configuration Accuracy class."""
+    """Configuration Accuracy class. Evaluate the accuracy."""
     representation = 'accuracy'
 
     def start(self):
@@ -132,7 +148,7 @@ class Accuracy(Objective):
 
 @objective_registry
 class Performance(Objective):
-    """Configuration Performance class."""
+    """Configuration Performance class. Evaluate the inference time."""
     representation = 'duration (seconds)'
 
     def start(self):
@@ -146,7 +162,10 @@ class Performance(Objective):
 
 @objective_registry
 class Footprint(Objective):
-    """Configuration Footprint class."""
+    """Configuration Footprint class.
+    
+    Evaluate the peak size of memory blocks during inference.
+    """
     representation = 'memory footprint (MB)'
 
     def start(self):
@@ -161,7 +180,7 @@ class Footprint(Objective):
 
 @objective_registry
 class ModelSize(Objective):
-    """Configuration ModelSize class."""
+    """Configuration ModelSize class. Evaluate the model size."""
     representation = 'model size (MB)'
 
     def start(self):
@@ -174,7 +193,16 @@ class ModelSize(Objective):
         self._result_list.append(model_size)
 
 class MultiObjective:
-    """The base class for multiple benchmarks supported by neural_compressor."""
+    """The base class for multiple benchmarks supported by neural_compressor.
+
+    Example:
+        from neural_compressor.objective import MultiObjective
+        obj = MultiObjective(
+            objectives=['accuracy', 'modelsize', 'performance'],
+            accuracy_criterion={'relative': 0.1},
+            obj_criterion=[True, False, False],
+            obj_weight=[0.7, 0.2, 0.1])
+    """
     def __init__(self, objectives, accuracy_criterion, metric_criterion=[True], \
         metric_weight=None, obj_criterion=None, obj_weight=None, is_measure=False):
         """Load the configuration."""
@@ -341,7 +369,7 @@ class MultiObjective:
         last_acc, _ = last_result
         if not isinstance(last_acc, list):
             last_acc = [last_acc]
-    
+
         if self.metric_weight is not None and len(last_acc) > 1:
             last_acc = [np.mean(np.array(last_acc) * self.metric_weight)]
         if not self._accuracy_target:
@@ -400,13 +428,14 @@ class MultiObjective:
     def best_result(self, tune_data, baseline):
         """Calculate the best results.
 
-        metric + multi-objectives case:
+        Example:
+            # metric + multi-objectives case:
             tune_data = [
                 [acc1, [obj1, obj2, ...]],
                 [acc2, [obj1, obj2, ...]],
                 ...
             ]
-            multi-metrics + multi-objectives case:
+            # multi-metrics + multi-objectives case:
             tune_data = [
                 [[acc1, acc2], [[acc1, acc2], obj1, obj2]],
                 [[acc1, acc2], [[acc1, acc2], obj1, obj2]]

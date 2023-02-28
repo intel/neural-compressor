@@ -40,6 +40,8 @@ class SplitSharedInputOptimizer(GraphRewriterBase):
         for node_name in list(graph_info.keys()):
             node = graph_info[node_name].node
             for _, input_node_name in enumerate(node.input):
+                if input_node_name.startswith('^'):
+                    continue
                 if graph_info[Helper.node_name_from_input(input_node_name)].node.op == 'Const':
                     # is shared and current node is not the first one
                     # sharing the input

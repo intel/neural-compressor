@@ -86,7 +86,7 @@ framework_filters = {"tensorflow": TensorflowFilters,
                      "mxnet": MXNetFilters,
                      "onnxrt_qlinearops": ONNXRTQLFilters,
                      "onnxrt_qdq": ONNXRTQLFilters,
-                     "onnxrt_qoperator": ONNXRTQLFilters,
+                     "onnxruntime": ONNXRTQLFilters,
                      "onnxrt_integerops": ONNXRTITFilters,
                      }
 
@@ -98,7 +98,7 @@ registry_filters = {"tensorflow": TENSORFLOW_FILTERS,
                     "mxnet": MXNET_FILTERS,
                     "onnxrt_integerops": ONNXRT_IT_FILTERS,
                     "onnxrt_qdq": ONNXRT_QL_FILTERS,
-                    "onnxrt_qoperator": ONNXRT_QL_FILTERS,
+                    "onnxruntime": ONNXRT_QL_FILTERS,
                     "onnxrt_qlinearops": ONNXRT_QL_FILTERS}
 
 
@@ -109,14 +109,14 @@ class FILTERS(object):    # pragma: no cover
         framework (str): frameworks in ["tensorflow", "tensorflow_itex", "mxnet",
                                         "onnxrt_qdq", "pytorch", "pytorch_ipex",
                                         "pytorch_fx", "onnxrt_integerops",
-                                        "onnxrt_qlinearops", "onnxrt_qoperator"].
+                                        "onnxrt_qlinearops", "onnxruntime"].
     """
 
     def __init__(self, framework):
         """Initialize the attribute of class."""
         assert framework in ["tensorflow", "tensorflow_itex",
                              "mxnet", "onnxrt_qdq", "pytorch", "pytorch_ipex", "pytorch_fx",
-                             "onnxrt_integerops", "onnxrt_qlinearops", "onnxrt_qoperator"], \
+                             "onnxrt_integerops", "onnxrt_qlinearops", "onnxruntime"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.filters = framework_filters[framework]().filters
         self.framework = framework
@@ -155,7 +155,7 @@ def filter_registry(filter_type, framework):    # pragma: no cover
                 "onnxrt_integerops",
                 "onnxrt_qdq",
                 "onnxrt_qlinearops",
-                "onnxrt_qoperator"
+                "onnxruntime"
             ], "The framework support tensorflow mxnet pytorch onnxrt"
             if filter_type in registry_filters[single_framework].keys():
                 raise ValueError('Cannot have two transforms with the same name')

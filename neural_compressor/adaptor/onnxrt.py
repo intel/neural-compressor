@@ -61,9 +61,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.device = framework_specific_info["device"]
         self.static = framework_specific_info["approach"] == "post_training_static_quant"
         self.dynamic = framework_specific_info["approach"] == "post_training_dynamic_quant"
-        self.domain = framework_specific_info["domain"]
+        self.domain = framework_specific_info.get("domain", "auto")
         self.recipes = framework_specific_info["recipes"]
         self.backend = PROVIDERS[framework_specific_info["backend"]]
+        self.performance_only = framework_specific_info.get("performance_only", False)
 
         if self.backend not in ort.get_all_providers():
             logger.warning("{} backend is not supported in current environment, "
@@ -85,12 +86,13 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     logger.warning("Dynamic approach doesn't support QDQ format.")
         
         # get quantization config file according to backend
+        config_file = None
         if self.backend == 'CPUExecutionProvider':
             config_file = 'onnxrt.yaml'
         elif self.backend == 'TensorrtExecutionProvider':
             config_file = 'onnxrt_trt.yaml'
         elif self.backend == 'CUDAExecutionProvider':
-            config_file == 'onnxrt_cuda.yaml'
+            config_file = 'onnxrt_cuda.yaml'
         else: # pragma: no cover
             assert False, "{} provider is not supported in current environment, " \
                 "supported providers: {}".format(self.backend,
@@ -127,6 +129,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         for precision in self.query_handler.get_precisions():
             if precision != 'fp32':
+                if self.device == 'cpu' and precision == 'fp16':
+                    continue
                 self.quantizable_op_types += \
                     self.query_handler.get_op_types_by_precision(precision=precision)
  
@@ -265,7 +269,15 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
 
-        tmp_model = copy.deepcopy(model)
+        if self.performance_only:
+            tmp_model = model
+        else:
+            try:
+                tmp_model = copy.deepcopy(model)
+            except Exception as e:  # pragma: no cover
+                logger.warning("Fail to deep copy the model due to {}, inplace is used now.".format(
+                    repr(e)))
+                tmp_model = model
         iterations = tune_cfg.get('calib_iteration', 1)
         calib_sampling_size = tune_cfg.get('calib_sampling_size', 1)
         if not self.dynamic:
@@ -312,7 +324,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         self.quantize_params = quantize_params
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
         from neural_compressor import options
-        quantizer = Quantizer(copy.deepcopy(model),
+        quantizer = Quantizer(tmp_model,
             quantize_config,
             format,
             self.static,
@@ -736,7 +748,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             model = self._revert_conv_add_fusion(model)
         model = split_shared_bias(model)
         model.topological_sort()
-        self.pre_optimized_model = copy.deepcopy(model)
+        self.pre_optimized_model = model
 
     def _revert_conv_add_fusion(self, model):
         from onnx import numpy_helper
@@ -902,6 +914,10 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         """
         # optype_wise and op_wise capability
         self._pre_optimize(model)
+        recipes_ops = {}
+        recipes_ops['first_conv_or_matmul_quantization'] = []
+        recipes_ops['last_conv_or_matmul_quantization'] = []
+        recipes_ops['pre_post_process_quantization'] = []
         exclude_first_quantizable_op = True if 'first_conv_or_matmul_quantization' in \
             self.recipes and not self.recipes['first_conv_or_matmul_quantization'] \
             else False
@@ -921,6 +937,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
+                if precision == 'fp16' and self.device == 'cpu':
+                    continue
                 # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \
                     query.get_op_types_by_precision(precision) != ['*'] else \
@@ -968,16 +986,23 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         all_conv_matmul = []
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             if node.op_type in ['Conv', 'MatMul']:
+                if len(first_quantizable_node) == 0:
+                    recipes_ops['first_conv_or_matmul_quantization'] = [(node.name, node.op_type)]
+
                 # get first Conv or MatMul node
                 if exclude_first_quantizable_op:
                     if len(first_quantizable_node) == 0:
                         first_quantizable_node.append(node.name)
-                
+                    
                 # get last Conv or MatMul node
                 if exclude_last_quantizable_op:
                     if len(last_quantizable_node) != 0:
                         last_quantizable_node.pop()
                     last_quantizable_node.append(node.name)
+
+                if len(recipes_ops['last_conv_or_matmul_quantization']):
+                    recipes_ops['last_conv_or_matmul_quantization'].pop()
+                recipes_ops['last_conv_or_matmul_quantization'].append((node.name, node.op_type))
 
                 # get first and last Conv or MatMul node
                 if exclude_pre_post_process:
@@ -1007,22 +1032,27 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 op_wise.update(
                     {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
 
+        # get backbone nodes
+        from collections import deque
+        
+        # get nodes between first quantizable node and last quantizable node
+        backbone_queue = deque(last_quantizable_node)
+        backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue, first_quantizable_node)
+
+        # get extra Conv or MatMul nodes not between first quantizable node and last quantizable node
+        backbone_queue_extra = deque()
+        for conv_or_matmul in all_conv_matmul:
+            if conv_or_matmul.name not in backbone_nodes:
+                backbone_queue_extra.append(conv_or_matmul.name)
+                backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue_extra, 
+                                                first_quantizable_node, backbone_nodes)
+        backbone_nodes += [i for i in first_quantizable_node]
+        
+        for _, node in enumerate(self.pre_optimized_model.nodes()):
+            if node.name not in backbone_nodes:
+                recipes_ops['pre_post_process_quantization'].append((node.name, node.op_type))
+        
         if exclude_pre_post_process:
-            from collections import deque
-            
-            # get nodes between first quantizable node and last quantizable node
-            backbone_queue = deque(last_quantizable_node)
-            backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue, first_quantizable_node)
-
-            # get extra Conv or MatMul nodes not between first quantizable node and last quantizable node
-            backbone_queue_extra = deque()
-            for conv_or_matmul in all_conv_matmul:
-                if conv_or_matmul.name not in backbone_nodes:
-                    backbone_queue_extra.append(conv_or_matmul.name)
-                    backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue_extra, 
-                                                    first_quantizable_node, backbone_nodes)
-            backbone_nodes += [i for i in first_quantizable_node]
-
             for _, node in enumerate(self.pre_optimized_model.nodes()):
                 if node.op_type in optype_wise:
                     # nodes not in backbone are not quantized
@@ -1038,7 +1068,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                         op_wise.update(
                             {(node.name, node.op_type): copy.deepcopy(optype_wise[node.op_type])})
         
-        return {'optypewise': optype_wise, 'opwise': op_wise}
+        return {'optypewise': optype_wise, 'opwise': op_wise, 'recipes_ops': recipes_ops}
 
     def _optypewise_filter_for_qdq(self, optype_wise):
         """Filter optypes that don't support per_channel in QDQ format.
@@ -1137,6 +1167,8 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                             convert_attribute=False)
         sess_options = ort.SessionOptions()
         if self.backend == 'TensorrtExecutionProvider':
+            from neural_compressor.adaptor.ox_utils.util import trt_env_setup
+            trt_env_setup(input_graph.model)
             sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL 
         if measurer:
             # https://github.com/microsoft/onnxruntime/issues/7347
@@ -1400,12 +1432,17 @@ class ONNXRTQuery(QueryBackendCapability):
             config['capabilities'] = {} 
 
         # generate other config content including precisions and ops 
-        precisions = [key for key in config['capabilities'].keys()]
+        precisions = list(version_config.keys() - {'version', 'recipes'})
         if 'fp32' not in precisions:
             precisions.append('fp32')
         config['precisions'] = {'names': ','.join(precisions)}
 
         op_types = {}
+        for precision in precisions:
+            if precision in config['capabilities']:
+                op_types[precision] = [op_type for op_type in config['capabilities'][precision].keys()]
+            elif precision in version_config:
+                op_types[precision] = version_config[precision]
         for precision, precision_config in config['capabilities'].items():
             op_types[precision] = [op_type for op_type in precision_config.keys()]
         if 'fp32' not in op_types:
