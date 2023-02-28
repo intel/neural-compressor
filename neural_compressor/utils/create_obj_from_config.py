@@ -17,9 +17,8 @@
 
 """Utility methods to create corresponding objects from configuration."""
 
-from neural_compressor.experimental.metric import METRICS
-from neural_compressor.experimental.data import Datasets, TRANSFORMS, FILTERS, DATALOADERS
-from neural_compressor.experimental.common import Optimizers, Criterions
+from neural_compressor.metric import METRICS
+from neural_compressor.data import Datasets, TRANSFORMS, FILTERS, DATALOADERS
 from collections import OrderedDict
 import copy
 import gc
@@ -188,6 +187,8 @@ def create_train_func(framework, dataloader, adaptor, train_cfg, hooks=None, cal
     # in config yaml file
     assert dataloader, "dataloader should NOT be empty when train_func is None"
     assert adaptor, "adaptor should NOT be empty"
+
+    from neural_compressor.experimental.common import Optimizers, Criterions
     postprocess_cfg = train_cfg.postprocess
     if postprocess_cfg is not None:
         postprocesses = TRANSFORMS(framework, "postprocess")

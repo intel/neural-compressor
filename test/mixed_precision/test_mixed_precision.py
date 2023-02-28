@@ -8,6 +8,7 @@ import neural_compressor.adaptor.pytorch as nc_torch
 import shutil
 import tensorflow as tf
 from neural_compressor import mix_precision
+from neural_compressor.mix_precision import fit
 from neural_compressor.utils.utility import LazyImport, CpuInfo
 from neural_compressor.adaptor.torch_utils.bf16_convert import BF16ModuleWrapper
 from neural_compressor.config import MixedPrecisionConfig, TuningCriterion
@@ -41,7 +42,7 @@ def build_matmul_model():
     graph = helper.make_graph([matmul_node, add, add2], 'test_graph_1', [A, B], [H],
                               [E_init, F_init])
     model = helper.make_model(graph)
-    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 13)]})
+    model = helper.make_model(graph, **{'opset_imports': [helper.make_opsetid('', 16)]})
     return model
 
 
@@ -219,30 +220,28 @@ def build_yaml():
             dataloader:
               dataset:
                 dummy:
-                  shape: [[5,1,5,5], [5,1,5,1]]
+                  shape: [[1,1,5,5], [1,1,5,1]]
                   label: True
         """
     with open("test.yaml", "w", encoding="utf-8") as f:
         f.write(fake_yaml)
 
 
-class MatmulDataset:
+class MatmulDataloader:
     def __init__(self):
+        self.batch_size = 1
         self.data = []
         self.label = []
         for i in range(3):
             self.data.append([
-                np.random.randn(1, 5, 5).astype('float32'),
-                np.random.randn(1, 5, 1).astype('float32')
+                np.random.randn(1, 1, 5, 5).astype('float32'),
+                np.random.randn(1, 1, 5, 1).astype('float32')
             ])
-            self.label.append(np.random.randn(1, 5, 1).astype('float32'))
+            self.label.append(np.random.randn(1, 1, 5, 1).astype('float32'))
 
-    def __getitem__(self, idx):
-        return self.data[idx], self.label[idx]
-
-    def __len__(self):
-        return len(self.data)
-
+    def __iter__(self):
+        for data, label in zip(self.data, self.label):
+            yield data, label
 
 class Metric:
     def update(self, preds, labels):
@@ -287,7 +286,7 @@ class TestMixedPrecision(unittest.TestCase):
         os.environ['FORCE_FP16'] = '1'
         os.environ['FORCE_BF16'] = '1'
         self.onnx_model = build_matmul_model()
-        self.matmul_dataset = MatmulDataset()
+        self.matmul_dataloader = MatmulDataloader()
         self.tf_model = build_tf_graph()
         self.pt_model = build_pt_model()
         build_yaml()
@@ -301,8 +300,8 @@ class TestMixedPrecision(unittest.TestCase):
         os.remove("test.yaml")
 
     def test_mixed_precision_with_evaluation(self):
-        from neural_compressor.experimental import common
-        from neural_compressor.experimental.metric.metric import ONNXRT_QL_METRICS
+        from neural_compressor.data import DataLoader
+        from neural_compressor.metric.metric import ONNXRT_QL_METRICS
         # test onnx
         conf = MixedPrecisionConfig(device='gpu', backend='onnxrt_cuda_ep')
 
@@ -310,10 +309,10 @@ class TestMixedPrecision(unittest.TestCase):
         #self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
         tuning_criterion = TuningCriterion(max_trials=3, timeout=1000000)
-        conf = MixedPrecisionConfig(device='gpu', tuning_criterion=tuning_criterion, backend='onnxrt_cuda_ep')
+        conf = MixedPrecisionConfig(device='gpu', tuning_criterion=tuning_criterion, backend='onnxrt_cuda_ep', excluded_precisions=['bf16'])
         output_model = mix_precision.fit(self.onnx_model,
                                          conf,
-                                         eval_dataloader=common.DataLoader(self.matmul_dataset),
+                                         eval_dataloader=self.matmul_dataloader,
                                          eval_metric=ONNXRT_QL_METRICS["MSE"]())
         self.assertTrue(any([i.op_type == 'Cast' for i in output_model.nodes()]))
 
@@ -334,7 +333,6 @@ class TestMixedPrecision(unittest.TestCase):
             del result[0]
             return result[0]
 
-        from neural_compressor import conf
         conf = MixedPrecisionConfig(
             inputs="input",
             outputs="final",
@@ -367,6 +365,9 @@ class TestMixedPrecision(unittest.TestCase):
             conf,
             eval_func=eval,
         )
+        self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
+
+        output_model = fit(self.tf_model, conf, eval)
         self.assertTrue(any([i.op == 'Cast' for i in output_model.graph_def.node]))
 
     @unittest.skipIf(PT_VERSION.release < Version("1.11.0").release,

@@ -4,7 +4,7 @@
 import unittest
 
 from neural_compressor.adaptor.tf_utils.util import disable_random
-from neural_compressor.experimental import common
+from neural_compressor.data.dataloaders.dataloader import DataLoader
 from neural_compressor.quantization import fit
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.utils.utility import set_random_seed
@@ -63,7 +63,7 @@ class TestItexNewAPI(unittest.TestCase):
         output_graph = fit(
             model=output_graph_def,
             conf=config,
-            calib_dataloader=common.DataLoader(dataset=dataset, batch_size=1))
+            calib_dataloader=DataLoader(framework="tensorflow_itex", dataset=dataset, batch_size=1))
 
         dequant_count = 0
         quantize_count = 0

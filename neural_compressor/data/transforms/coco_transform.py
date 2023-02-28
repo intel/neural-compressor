@@ -31,7 +31,7 @@
 # ==============================================================================
 
 from neural_compressor.utils import logger
-from neural_compressor.experimental.data.transforms import transform_registry, BaseTransform
+from neural_compressor.data.transforms import transform_registry, BaseTransform
 
 # BELOW IS TO BE DEPRECATED!
 @transform_registry(transform_type="ParseDecodeCoco", \

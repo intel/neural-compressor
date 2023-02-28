@@ -83,6 +83,8 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         config.quantization.backend = 'ipex'
+        config.quantization.accuracy_criterion.tolerable_loss = 0.0001
+        config.quantization.accuracy_criterion.higher_is_better = False
         config.quantization.approach = 'post_training_static_quant'
         config.quantization.use_bf16 = False
 
@@ -96,7 +98,7 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         model = M()
         quantizer = Quantization(config)
         quantizer.model = model
-        quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = True
+        quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = False
         dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
         dataloader = torch.utils.data.DataLoader(dataset)
         quantizer.calib_dataloader = dataloader
@@ -135,7 +137,6 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         copy_model = torch_utils.util.auto_copy(prepared_model)
         self.assertTrue(isinstance(copy_model, torch.nn.Module))
     
-    
     def test_bf16(self):
         from neural_compressor.experimental import Quantization
         model = M()
@@ -149,6 +150,18 @@ class TestPytorchIPEX_1_12_Adaptor(unittest.TestCase):
         dataloader = torch.utils.data.DataLoader(dataset)
         quantizer.calib_dataloader = dataloader
         quantizer.eval_dataloader = dataloader
+        nc_model = quantizer.fit()
+
+    def test_example_inputs(self):
+        from neural_compressor.experimental import Quantization
+        model = M()
+        config.quantization.example_inputs = torch.randn([1, 3, 224, 224])
+        quantizer = Quantization(config)
+        quantizer.model = model
+        quantizer.conf.usr_cfg.tuning.exit_policy['performance_only'] = False
+        dataset = quantizer.dataset('dummy', (100, 3, 224, 224), label=True)
+        dataloader = torch.utils.data.DataLoader(dataset)
+        quantizer.calib_dataloader = dataloader
         nc_model = quantizer.fit()
 
 if __name__ == "__main__":
