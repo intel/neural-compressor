@@ -46,16 +46,15 @@ class DyNAS(NASBase):
             supernet=self.supernet,
             optimization_metrics=self.metrics,
             measurements=self.metrics,
-            search_tactic='linas', # TODO(macsz) Need to expose this option; or add --distributed param to DyNAS-T
+            search_tactic='linas',
             num_evals=self.num_evals,
             results_path=self.results_csv_path,
-            dataset_path=self.dataset_path,  # TODO(macsz) check in config if exists, need to set to test acc
+            dataset_path=self.dataset_path,
             seed=self.seed,
             population=self.population,
             batch_size=self.batch_size,
             search_algo=self.search_algo,
             supernet_ckpt_path=self.supernet_ckpt_path,
-            valid_size=20, # TODO Remove later.
             dataloader_workers=self.num_workers,
             distributed=self.distributed,
         )
