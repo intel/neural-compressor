@@ -181,6 +181,74 @@ class TestSqLinearOpFuse(unittest.TestCase):
         assert len(sq.absorb_to_layer) == 1
 
 
+    @classmethod
+    def test_sq_linear_norm(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.norm = torch.nn.LayerNorm(4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.norm(out)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha=0.5, calib_iter=1)
+        assert len(sq.absorb_to_layer) == 1
+
+    @classmethod
+    def test_sq_linear_norm(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.norm_1 = torch.nn.LayerNorm(3)
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.norm_2 = torch.nn.LayerNorm(4)
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.norm_1(x)
+                out = self.fc1(out)
+                out = self.norm_2(out)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha=0.5, calib_iter=1)
+        assert len(sq.absorb_to_layer) == 2
+
+    @classmethod
+    def test_sq_linear_norm(self):
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.fc1 = torch.nn.Linear(3, 4)
+                self.norm = torch.nn.LayerNorm(4)
+                self.act = torch.nn.GELU()
+                self.fc2 = torch.nn.Linear(4, 3)
+
+            def forward(self, x):
+                out = self.fc1(x)
+                out = self.norm(out)
+                out = self.act(out)
+                out = self.fc2(out)
+                return out
+
+        model = Model()
+
+        sq = TorchSmoothQuant(model, self.linear_dl)
+        sq.transform(alpha=0.5, calib_iter=1)
+        assert len(sq.absorb_to_layer) == 0
+
+
 
 if __name__ == '__main__':
     unittest.main()
