@@ -2,7 +2,7 @@
 set -x
 
 function main {
-
+  batch_size=32
   init_params "$@"
   run_benchmark
 
@@ -10,6 +10,8 @@ function main {
 
 # init params
 function init_params {
+  batch_size=32
+
   for var in "$@"
   do
     case $var in

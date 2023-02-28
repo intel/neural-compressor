@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The random tuning strategy."""
-
 import numpy as np
 from .strategy import strategy_registry, TuneStrategy
 from collections import OrderedDict
@@ -32,9 +30,11 @@ class RandomTuneStrategy(TuneStrategy):
     def next_tune_cfg(self):
         """Generate and yield the next tuning config by random searching in tuning space.
         
-        Random strategy is used to randomly choose quantization tuning configurations from the tuning space.
+        Random strategy is used to randomly choose quantization tuning configurations
+        from the tuning space. As with the Exhaustive strategy, it also only considers
+        quantization tuning configs to generate a better-performance quantized model.
 
-        Yields:
+        Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         tuning_space = self.tuning_space

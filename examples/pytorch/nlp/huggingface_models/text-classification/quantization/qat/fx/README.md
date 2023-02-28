@@ -87,7 +87,7 @@ or
         --num_train_epochs 3 \
         --metric_for_best_model f1 \
         --output_dir ./output_log --overwrite_output_dir \
-        --benchmark [--int8]
+        --performance [--int8]
 
 
 # HuggingFace model hub
@@ -116,10 +116,3 @@ model = OptimizedModel.from_pretrained(
 
 We also upstreamed several int8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.
 
-# Appendix
-
-## Export to ONNX
-
-Right now, we experimentally support exporting PyTorch model to ONNX model, includes FP32 and INT8 model.
-
-By enabling `--onnx` argument, Intel Neural Compressor will export fp32 ONNX model, INT8 QDQ ONNX model, and INT8 QLinear ONNX model.

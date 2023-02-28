@@ -20,8 +20,9 @@ Intel® Neural Compressor Bench is a web application for easier use of Intel® N
 
     3.6. [Project Information](#project-information-tab)
 
-4. [System Information](#system-information)
-5. [Security](#security)
+4. [NAS demo](#nas-demo)
+5. [System Information](#system-information)
+6. [Security](#security)
 
 # Introduction
 ## Install Intel® Neural Compressor with Bench
@@ -251,6 +252,29 @@ When adding the dataset, you can choose *custom* in dataloader and metric field.
 Last tab is called "Project info". You can find here details about the project, when it was created and modified, what is the framework and some details about input model. It is also possible to add some notes about the project.
 
 ![Project info](imgs/bench/project-info.png "Project info")
+
+## NAS demo
+
+Neural architecture search (NAS) example can be created from branch called [NAS_demo](https://github.com/intel/neural-compressor/tree/NAS_demo). The following dependencies must be installed before running the code:
+```
+pip install ofa fvcore torchvision autograd pymoo numba
+```
+Then follow the instructions from [introduction](#introduction).
+
+To create new NAS example, click the `Create new project` button and in the second step called `Project type` choose `NAS example` like in the picture below.
+
+![Project wizard2](imgs/bench/wizard2.png)
+
+In third step called `Details` choose path to the [ImageNet ILSVRC dataset](https://www.image-net.org/).
+
+![Project wizard3](imgs/bench/wizard3.png)
+
+Details of the demo can be found in the initial view before running the demo:
+![New NAS](imgs/bench/new-nas.png)
+
+To run the demo click `Run` button. The process may take several hours. The results are shown in the chart:
+
+![Executed NAS](imgs/bench/executed-nas.png)
 
 ## System Information
 

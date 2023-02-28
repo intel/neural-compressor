@@ -28,7 +28,7 @@ from ..utils.utility import LazyImport, CpuInfo, singleton, Dequantize, dump_ela
 from ..utils.utility import Statistics, GLOBAL_STATE, MODE, version1_lt_version2
 from ..utils import logger
 from ..conf.dotdict import deep_get
-from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from ..data.dataloaders.base_dataloader import BaseDataLoader
 tf = LazyImport('tensorflow')
 
 def _add_supported_quantized_objects(custom_objects):

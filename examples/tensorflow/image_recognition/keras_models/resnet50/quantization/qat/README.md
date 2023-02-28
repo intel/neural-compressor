@@ -5,22 +5,24 @@ This document is used to apply QAT to Tensorflow Keras models using Intel® Neur
 This example can run on Intel CPUs and GPUs.
 
 
-## Prerequisite
+# Prerequisite
 
-### 1. Installation
+## 1. Environment
+
+### Installation
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### 2. Install requirements
+### Install requirements
 The Tensorflow and intel-extension-for-tensorflow is mandatory to be installed to run this QAT example.
 The Intel Extension for Tensorflow for Intel CPUs is installed as default.
 ```shell
 pip install -r requirements.txt
 ```
-> Note: Supported Tensorflow [Version](../../../../../../../README.md).
+> Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
-### 3. Benchmarking the model on Intel GPU (Optional)
+### Benchmarking the model on Intel GPU (Optional)
 
 To run benchmark of the model on Intel GPUs, Intel Extension for Tensorflow for Intel GPUs is required.
 
@@ -31,7 +33,18 @@ pip install --upgrade intel-extension-for-tensorflow[gpu]
 Please refer to the [Installation Guides](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html) for latest Intel GPU driver installation.
 For any more details, please follow the procedure in [install-gpu-drivers](https://github.com/intel-innersource/frameworks.ai.infrastructure.intel-extension-for-tensorflow.intel-extension-for-tensorflow/blob/master/docs/install/install_for_gpu.md#install-gpu-drivers).
 
-### 4. Prepare Dataset
+
+## 2. Prepare Pretrained model
+
+The pretrained model is provided by [Keras Applications](https://keras.io/api/applications/). prepare the model, Run as follow: 
+ ```
+
+python prepare_model.py --output_model=/path/to/model
+ ```
+`--output_model ` the model should be saved as SavedModel format or H5 format.
+
+
+## 3. Prepare Dataset
 
   TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
   We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
@@ -45,20 +58,18 @@ For any more details, please follow the procedure in [install-gpu-drivers](https
   cd resnet50/quantization/ptq
   ```
 
-### 5. Prepare Pretrained model
+# Run Command
 
-The pretrained model is provided by [Keras Applications](https://keras.io/api/applications/). prepare the model, Run as follow: 
- ```
-
-python prepare_model.py --output_model=/path/to/model
- ```
-`--output_model ` the model should be saved as SavedModel format or H5 format.
-
-## Run Command
+## Quantization
   ```shell
   bash run_tuning.sh --input_model=./path/to/model --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  ```
+
+## Benchmark
+  ```
   bash run_benchmark.sh --input_model=./path/to/model --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=100
   ```
+
 
 Details of enabling Intel® Neural Compressor to apply QAT.
 =========================
@@ -116,13 +127,12 @@ After prepare step is done, we add quantization and benchmark code to generate q
 #### Benchmark
 ```python
     from neural_compressor.benchmark import fit
-    from neural_compressor.model import Model
     from neural_compressor.config import BenchmarkConfig
+    from neural_compressor.model.tensorflow_model import TensorflowQATModel
     assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
     "Benchmark only supports performance or accuracy mode."
 
-    # convert the quantized keras model to graph_def so that it can be fused by ITEX
-    model = Model(FLAGS.input_model).graph_def
+    model = TensorflowQATModel(FLAGS.input_model).frozen_graph_def
     if FLAGS.mode == 'performance':
         conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
         fit(model, conf, b_func=evaluate)

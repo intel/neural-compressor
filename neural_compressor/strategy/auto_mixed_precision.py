@@ -46,9 +46,9 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
 
         # filter quantization dtype
         # TODO align with the old mixed-precison
-        target_dtype = self.cfg.graph_optimization.precisions if self.cfg.graph_optimization \
+        target_dtypes = self.cfg.graph_optimization.precisions if self.cfg.graph_optimization \
             else self.cfg.mixed_precision.precisions
-
+        target_dtypes = list(set(target_dtypes) - set(['fp32']))
         tuning_space = self.tuning_space
         initial_op_tuning_cfg = {}
         for item in tuning_space.root_item.options:
@@ -56,19 +56,24 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
                 op_name, op_type = item.name
                 initial_op_tuning_cfg[item.name] = OpTuningConfig(op_name, op_type, 'fp32', tuning_space)
 
+        if not target_dtypes:
+            target_dtypes = ['bf16']
         # step1. target_dtype AMAP, collect the ops that support target_dtype
-        if not target_dtype:
-            target_dtype = 'bf16'
-        else:
-            target_dtype = target_dtype[0]
-        bf16_items = tuning_space.query_items_by_quant_mode(target_dtype)
-        bf16_items_name = [item.name for item in bf16_items]
-        op_tuning_cfg = deepcopy(initial_op_tuning_cfg)
-        for op_name_type in bf16_items_name:
-            op_tuning_cfg[op_name_type] = OpTuningConfig(op_name_type[0], op_name_type[1], target_dtype, tuning_space)
-        calib_sampling_size = 1
-        op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
-        yield op_tuning_cfg
+        bf16_items_name = []
+        op_tuning_cfg = {}
+        for idx, target_dtype in enumerate(target_dtypes):
+            bf16_items = tuning_space.query_items_by_quant_mode(target_dtype)
+            if len(bf16_items) == 0 and \
+                not (idx == len(target_dtypes) - 1 and len(bf16_items_name) == 0):
+                continue
+            bf16_items_name = [item.name for item in bf16_items]
+            op_tuning_cfg = deepcopy(initial_op_tuning_cfg)
+            for op_name_type in bf16_items_name:
+                op_tuning_cfg[op_name_type] = \
+                    OpTuningConfig(op_name_type[0], op_name_type[1], target_dtype, tuning_space)
+            calib_sampling_size = 1
+            op_tuning_cfg['calib_sampling_size'] = calib_sampling_size
+            yield op_tuning_cfg
 
         # step2. fallback
         target_dtype = 'fp32'
@@ -105,38 +110,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
     def traverse(self):
         """Traverse the tuning space according to auto-mixed precision strategy."""
         # get fp32 model baseline
-        if self.baseline is None and (self.eval_dataloader or self.eval_func):
-            logger.info("Get FP32 model baseline.")
-            self.baseline = self._evaluate(self.model)
-            # record the FP32 baseline
-            self._add_tuning_history()
-
-            if self.baseline:
-                self.tune_data['baseline'] = self.baseline[0] if \
-                    isinstance(self.baseline[0], list) else [self.baseline[0]]
-
-                for name, data in zip(self.metric_name, self.tune_data['baseline']):
-                    self.tune_data[name] = [data]
-
-                if self.metric_weight:
-                    self.tune_data['Weighted accuracy'] = \
-                        [np.mean(np.array(self.tune_data['baseline']) * self.metric_weight)]
-                    self.tune_data['baseline'] = self.tune_data['Weighted accuracy']
-
-                baseline_msg = '[Accuracy:' + \
-                    ''.join([' {:.4f}'.format(i) for i in self.tune_data['baseline']]) + \
-                    ''.join([', {}: {:.4f}'.format(x,y) for x,y in zip( \
-                    self.objectives.representation, self.baseline[1]) if x != 'Accuracy']) + ']'
-            else: # pragma: no cover
-                if self.metric_weight:
-                    self.tune_data['Weighted accuracy'] = ['n/a']
-                self.tune_data['baseline'] = ['n/a']
-
-                for name, data in zip(self.metric_name, self.tune_data['baseline']):
-                    self.tune_data[name] = ['n/a']
-                baseline_msg = 'n/a'
-
-            logger.info("FP32 baseline is: {}".format(baseline_msg))
+        self._eval_baseline()
 
         trials_count = 0
         for op_tuning_cfg in self.next_tune_cfg():
@@ -155,6 +129,12 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
             self.last_qmodel = self.adaptor.quantize(
                 tune_cfg, self.model, self.calib_dataloader, self.q_func)
             assert self.last_qmodel
+            # Return the last quantized model as a result. if performance only.
+            if self.cfg.tuning.exit_policy.performance_only:
+                self.best_qmodel = self.last_qmodel
+                self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
+                return
+            self.last_tune_cfg = copy.deepcopy(tune_cfg)
             if self.eval_dataloader or self.eval_func:
                 q_config = copy.deepcopy(self.last_qmodel.q_config)
                 self.last_tune_result = self._evaluate(self.last_qmodel)

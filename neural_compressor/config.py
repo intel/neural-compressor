@@ -43,7 +43,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s))},
@@ -56,14 +56,22 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'None'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16', 'None'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax', 'kl', 'placeholder'] for i in s))}})
 
 
 def check_value(name, src, supported_type, supported_value=[]):
-    """Check if the given object is the given supported type and in the given supported value."""
+    """Check if the given object is the given supported type and in the given supported value.
+    
+    Example:
+        from neural_compressor.config import check_value
+        
+        def datatype(self, datatype):
+            if check_value('datatype', datatype, list, ['fp32', 'bf16', 'uint8', 'int8']):
+                self._datatype = datatype
+    """
     if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
         assert False, ("Type of {} items should be {} but not {}".format(
             name, str(supported_type), [type(i) for i in src]))
@@ -142,7 +150,15 @@ options = Options()
 
 
 class BenchmarkConfig:
-    """Config Class for Benchmark."""
+    """Config Class for Benchmark.
+
+    Example:
+        # Run benchmark according to config
+        from neural_compressor.benchmark import fit
+
+        conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+        fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
+    """
     def __init__(self,
                  inputs=[],
                  outputs=[],
@@ -269,7 +285,17 @@ class BenchmarkConfig:
 
 
 class AccuracyCriterion:
-    """Class of Accuracy Criterion."""
+    """Class of Accuracy Criterion.
+    
+    Example:
+        from neural_compressor.config import AccuracyCriterion
+        
+        accuracy_criterion = AccuracyCriterion(
+            higher_is_better=True,  # optional. 
+            criterion='relative',  # optional. Available values are 'relative' and 'absolute'.
+            tolerable_loss=0.01,  # optional.
+        )
+    """
     def __init__(self, higher_is_better=True, criterion='relative', tolerable_loss=0.01):
         """Init an AccuracyCriterion object."""
         self.higher_is_better = higher_is_better
@@ -348,6 +374,8 @@ class _BaseQuantizationConfig:
                  inputs=[],
                  outputs=[],
                  backend="default",
+                 domain="auto",
+                 recipes={},
                  quant_format="default",
                  device="cpu",
                  calibration_sampling_size=[100],
@@ -360,12 +388,58 @@ class _BaseQuantizationConfig:
                  max_trials=100,
                  performance_only=False,
                  reduce_range=None,
+                 example_inputs=None,
                  excluded_precisions=[],
                  quant_level=1,
-                 accuracy_criterion=accuracy_criterion):
+                 accuracy_criterion=accuracy_criterion,
+                 use_distributed_tuning=False):
+        """Initialize _BaseQuantizationConfig class.
+
+        Args:
+            inputs: inputs of model
+            outputs: outputs of model
+            backend: backend for model execution. Support 'default', 'itex', 'ipex', 'onnxrt_trt_ep', 'onnxrt_cuda_ep'
+            domain: model domain. Support 'auto', 'cv', 'object_detection', 'nlp' and 'recommendation_system'.
+                    Adaptor will use specific quantization settings for different domains automatically, and
+                    explicitly specified quantization settings will override the automatic setting.
+                    If users set domain as auto, automatic detection for domain will be executed.
+            recipes: recipes for quantiztaion, support list is as below.
+                     'smooth_quant': whether do smooth quant
+                     'smooth_quant_args': parameters for smooth_quant
+                     'fast_bias_correction': whether do fast bias correction
+                     'weight_correction': whether do weight correction
+                     'gemm_to_matmul': whether convert gemm to matmul and add, only valid for onnx models
+                     'graph_optimization_level': support 'DISABLE_ALL', 'ENABLE_BASIC', 'ENABLE_EXTENDED', 'ENABLE_ALL'
+                                               only valid for onnx models
+                     'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
+                     'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
+                     'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
+                     'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
+                     'optypes_to_exclude_output_quant': don't quantize output of specified optypes
+                     'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
+            quant_format: support 'default', 'QDQ' and 'QOperator'
+            device: support 'cpu' and 'gpu'
+            calibration_sampling_size: number of calibration sample
+            op_type_list: tuning constraints on optype-wise
+            op_name_list: tuning constraints on op-wise
+            strategy: strategy name
+            strategy_kwargs: parameters for strategy
+            objective: objective with accuracy constraint guaranteed, support 'performance', 'modelsize', 'footprint'
+            timeout: tuning timeout (seconds). default value is 0 which means early stop
+            max_trials: max tune times. default value is 100. Combine with timeout field to decide when to exit
+            performance_only: whether do evaluation
+            reduce_range: whether use 7 bit
+            example_inputs: used to trace PyTorch model with torch.jit/torch.fx
+            excluded_precisions: precisions to be excluded, support 'bf16'
+            quant_level: support 0 and 1, 0 is conservative strategy, 1 is basic(default) or user-specified strategy
+            accuracy_criterion: accuracy constraint settings
+            use_distributed_tuning: whether use distributed tuning or not
+        """
         self.inputs = inputs
         self.outputs = outputs
         self.backend = backend
+        self.domain = domain
+        self.recipes = recipes
         self.quant_format = quant_format
         self.device = device
         self.op_type_list = op_type_list
@@ -382,6 +456,128 @@ class _BaseQuantizationConfig:
         self.accuracy_criterion = accuracy_criterion
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
+        self.use_distributed_tuning=use_distributed_tuning
+        self._example_inputs = example_inputs
+
+    @property
+    def domain(self):
+        """Get domain."""
+        return self._domain
+
+    @domain.setter
+    def domain(self, domain):
+        """Set domain."""
+        if check_value("domain", domain, str,
+            ["auto", "cv", "object_detection", "nlp", "recommendation_system"]):
+            self._domain = domain
+
+    @property
+    def recipes(self):
+        """Get recipes."""
+        return self._recipes
+
+    @recipes.setter
+    def recipes(self, recipes):
+        """Set recipes."""
+        if recipes is not None and not isinstance(recipes, dict):
+            raise ValueError("recipes should be a dict.")
+
+        def smooth_quant(val=None):
+            if val is not None:
+                return check_value("smooth_quant", val, bool)
+            else:
+                return False
+
+        def smooth_quant_args(val=None):
+            if val is not None:
+                check_value("smooth_quant_args", val, dict)
+                for k, v in val.items():
+                    if k == "alpha":
+                        check_value("alpha", v, float)
+                return True
+            else:
+                return {}
+
+        def fast_bias_correction(val=None):
+            if val is not None:
+                return check_value("fast_bias_correction", val, bool)
+            else:
+                return False
+
+        def weight_correction(val=None):
+            if val is not None:
+                return check_value("weight_correction", val, bool)
+            else:
+                return False
+
+        def gemm_to_matmul(val=None):
+            if val is not None:
+                return check_value("gemm_to_matmul", val, bool)
+            else:
+                return True
+
+        def graph_optimization_level(val=None):
+            if val is not None:
+                return check_value("graph_optimization_level", val, str,
+                    ["DISABLE_ALL", "ENABLE_BASIC", "ENABLE_EXTENDED", "ENABLE_ALL"])
+            else:
+                return "ENABLE_BASIC"
+
+        def first_conv_or_matmul_quantization(val=None):
+            if val is not None:
+                return check_value("first_conv_or_matmul_quantization", val, bool)
+            else:
+                return True
+
+        def last_conv_or_matmul_quantization(val=None):
+            if val is not None:
+                return check_value("last_conv_or_matmul_quantization", val, bool)
+            else:
+                return True
+
+        def pre_post_process_quantization(val=None):
+            if val is not None:
+                return check_value("pre_post_process_quantization", val, bool)
+            else:
+                return True
+
+        def add_qdq_pair_to_weight(val=None):
+            if val is not None:
+                return check_value("add_qdq_pair_to_weight", val, bool)
+            else:
+                return False
+
+        def optypes_to_exclude_output_quant(val=None):
+            if val is not None:
+                return isinstance(val, list)
+            else:
+                return []
+
+        def dedicated_qdq_pair(val=None):
+            if val is not None:
+                return check_value("dedicated_qdq_pair", val, bool)
+            else:
+                return False
+
+        RECIPES = {"smooth_quant": smooth_quant,
+                   "smooth_quant_args": smooth_quant_args,
+                   "fast_bias_correction": fast_bias_correction,
+                   "weight_correction": weight_correction,
+                   "gemm_to_matmul": gemm_to_matmul,
+                   "graph_optimization_level": graph_optimization_level,
+                   "first_conv_or_matmul_quantization": first_conv_or_matmul_quantization,
+                   "last_conv_or_matmul_quantization": last_conv_or_matmul_quantization,
+                   "pre_post_process_quantization": pre_post_process_quantization,
+                   "add_qdq_pair_to_weight": add_qdq_pair_to_weight,
+                   "optypes_to_exclude_output_quant": optypes_to_exclude_output_quant,
+                   "dedicated_qdq_pair": dedicated_qdq_pair
+                   }
+        self._recipes = {}
+        for k in RECIPES.keys():
+            if k in recipes and RECIPES[k](recipes[k]):
+                self._recipes.update({k: recipes[k]})
+            else:
+                self._recipes.update({k: RECIPES[k]()})
 
     @property
     def accuracy_criterion(self):
@@ -398,7 +594,7 @@ class _BaseQuantizationConfig:
 
     @excluded_precisions.setter
     def excluded_precisions(self, excluded_precisions):
-        if check_value("excluded_precisions", excluded_precisions, str, ["bf16"]):
+        if check_value("excluded_precisions", excluded_precisions, str, ["bf16", "fp16"]):
             self._excluded_precisions = excluded_precisions
             self._use_bf16 = "bf16" not in excluded_precisions
 
@@ -409,6 +605,15 @@ class _BaseQuantizationConfig:
     @quant_level.setter
     def quant_level(self, quant_level):
         self._quant_level = quant_level
+
+    @property
+    def use_distributed_tuning(self):
+        return self._use_distributed_tuning
+
+    @use_distributed_tuning.setter
+    def use_distributed_tuning(self, use_distributed_tuning):
+        if check_value('use_distributed_tuning', use_distributed_tuning, bool):
+            self._use_distributed_tuning = use_distributed_tuning
 
     @property
     def reduce_range(self):
@@ -564,9 +769,31 @@ class _BaseQuantizationConfig:
         if check_value('inputs', inputs, str):
             self._inputs = inputs
 
+    @property
+    def example_inputs(self):
+        """Get strategy_kwargs."""
+        return self._example_inputs
+
+    @example_inputs.setter
+    def example_inputs(self, example_inputs):
+        """Set example_inputs."""
+        self._example_inputs = example_inputs
+
 
 class TuningCriterion:
-    """Class for Tuning Criterion."""
+    """Class for Tuning Criterion.
+    
+    Example:
+        from neural_compressor.config import TuningCriterion
+        
+        tuning_criterion=TuningCriterion(
+            timeout=0, # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+            max_trials=100, # optional. max tuning times. 
+                                # combined with the `timeout` field to decide when to exit tuning.
+            strategy="basic", # optional. name of the tuning strategy. 
+            strategy_kwargs=None, # optional. see concrete tuning strategy for available settings.
+        )
+    """
     def __init__(self, strategy="basic", strategy_kwargs=None, timeout=0, max_trials=100, objective="performance"):
         """Init a TuningCriterion object."""
         self.strategy = strategy
@@ -635,10 +862,25 @@ tuning_criterion = TuningCriterion()
 
 
 class PostTrainingQuantConfig(_BaseQuantizationConfig):
-    """Config Class for Post Training Quantization."""
+    """Config Class for Post Training Quantization.
+    
+    Example:
+        from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
+
+        conf = PostTrainingQuantConfig(
+            quant_level=0,  # the quantization level.
+            tuning_criterion=TuningCriterion(
+                timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+                max_trials=100,  # optional. max tuning times.
+                                # combined with the `timeout` field to decide when to exit tuning.
+            ),
+        )
+    """
     def __init__(self,
                  device="cpu",
                  backend="default",
+                 domain="auto",
+                 recipes={},
                  quant_format="default",
                  inputs=[],
                  outputs=[],
@@ -651,6 +893,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  quant_level=1,
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
+                 use_distributed_tuning=False,
     ):
         """Init a PostTrainingQuantConfig object."""
         self.tuning_criterion = tuning_criterion
@@ -658,6 +901,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          outputs=outputs,
                          device=device,
                          backend=backend,
+                         domain=domain,
+                         recipes=recipes,
                          quant_format=quant_format,
                          calibration_sampling_size=calibration_sampling_size,
                          op_type_list=op_type_list,
@@ -670,7 +915,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level,
-                         accuracy_criterion=accuracy_criterion)
+                         accuracy_criterion=accuracy_criterion,
+                         use_distributed_tuning=use_distributed_tuning)
         self.approach = approach
 
     @property
@@ -697,7 +943,18 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
 
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
-    """Config Class for Quantization Aware Training."""
+    """Config Class for Quantization Aware Training.
+
+    Example:
+        from neural_compressor.config import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
+
+        if approach == "qat":
+            model = copy.deepcopy(model_origin)
+            conf = QuantizationAwareTrainingConfig(
+                op_name_list=qat_op_name_list
+            )
+            compression_manager = prepare_compression(model, conf)
+    """
     def __init__(self,
                  device="cpu",
                  backend="default",
@@ -730,7 +987,19 @@ pruners = [Pruner()]
 
 
 class WeightPruningConfig:
-    """Similiar to torch optimizer's interface."""
+    """Similiar to torch optimizer's interface.
+
+    Example:
+        from neural_compressor.config import WeightPruningConfig
+
+        config = WeightPruningConfig(
+            local_configs,
+            target_sparsity=0.8
+        )
+        prune = Pruning(config)
+        prune.update_config(start_step=1, end_step=10)
+        prune.model = self.model
+    """
     def __init__(self, pruning_configs=[{}],  ##empty dict will use global values
                  target_sparsity=0.9, pruning_type="snip_momentum", pattern="4x1", op_names=[],
                  excluded_op_names=[],
@@ -769,7 +1038,22 @@ class WeightPruningConfig:
 
 
 class KnowledgeDistillationLossConfig:
-    """Config Class for Knowledge Distillation Loss."""
+    """Config Class for Knowledge Distillation Loss.
+    
+    Example:
+        from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
+        from neural_compressor import QuantizationAwareTrainingConfig
+        from neural_compressor.training import prepare_compression
+        
+        combs = []
+        distillation_criterion = KnowledgeDistillationLossConfig()
+        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+        combs.append(d_conf)
+        q_conf = QuantizationAwareTrainingConfig()
+        combs.append(q_conf)
+        compression_manager = prepare_compression(model, combs)
+        model = compression_manager.model
+    """
     def __init__(self, temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5]):
         """Init a KnowledgeDistillationLossConfig object."""
         self.config = DotDict({
@@ -782,7 +1066,20 @@ class KnowledgeDistillationLossConfig:
 
 
 class IntermediateLayersKnowledgeDistillationLossConfig:
-    """Config Class for Intermediate Layers Knowledge Distillation Loss."""
+    """Config Class for Intermediate Layers Knowledge Distillation Loss.
+    
+    Example:
+        from neural_compressor.config import DistillationConfig, IntermediateLayersKnowledgeDistillationLossConfig
+        
+        distillation_criterion = IntermediateLayersKnowledgeDistillationLossConfig(
+            layer_mappings=layer_mappings,
+            loss_types=['MSE']*len(layer_mappings),
+            loss_weights=[1.0 / len(layer_mappings)]*len(layer_mappings),
+            add_origin_loss=True
+        )
+        d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)
+        confs.append(d_conf)
+    """
     def __init__(self, layer_mappings=[], loss_types=[], loss_weights=[], add_origin_loss=False):
         """Init an IntermediateLayersKnowledgeDistillationLossConfig object."""
         self.config = DotDict({
@@ -796,7 +1093,19 @@ class IntermediateLayersKnowledgeDistillationLossConfig:
 
 
 class SelfKnowledgeDistillationLossConfig:
-    """Config Class for Self Knowledge Distillation Loss."""
+    """Config Class for Self Knowledge Distillation Loss.
+    
+    Example:
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+
+        distil_loss = SelfKnowledgeDistillationLossConfig()
+        conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+        compression_manager = prepare_compression(model, conf)
+        model = compression_manager.model
+    """
     def __init__(self,
                  layer_mappings=[],
                  temperature=1.0,
@@ -827,6 +1136,17 @@ class DistillationConfig:
                              Defaults to None.
         criterion (Callable, optional): Distillation loss configure.
         optimizer (dictionary, optional): Optimizer configure.
+    
+    Example:
+        from neural_compressor.training import prepare_compression
+        from neural_compressor.config import DistillationConfig, SelfKnowledgeDistillationLossConfig
+
+        distil_loss = SelfKnowledgeDistillationLossConfig()
+        conf = DistillationConfig(teacher_model=model, criterion=distil_loss)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+        compression_manager = prepare_compression(model, conf)
+        model = compression_manager.model
     """
     def __init__(self,
                  teacher_model=None,
@@ -871,7 +1191,15 @@ class DistillationConfig:
 
 
 class MixedPrecisionConfig(PostTrainingQuantConfig):
-    """Config Class for MixedPrecision."""
+    """Config Class for MixedPrecision.
+
+    Example:
+        from neural_compressor import mix_precision
+        from neural_compressor.config import MixedPrecisionConfig
+
+        conf = MixedPrecisionConfig()
+        converted_model = mix_precision.fit(model, config=conf)
+    """
     def __init__(self,
                  device="cpu",
                  backend="default",

@@ -82,8 +82,8 @@ class Quantization(Component):
                     logger.info("Because both eval_dataloader_cfg and user-defined eval_func are None," \
                         " automatically setting 'tuning.exit_policy.performance_only = True'.")
                     deep_set(cfg, 'tuning.exit_policy.performance_only', True)
-                    logger.info("Generate a fake evaluation function.")
-                    self._eval_func = self._fake_eval_func
+                    logger.info("The cfg.tuning.exit_policy.performance_only is: {}".format(\
+                        cfg.tuning.exit_policy.performance_only))
                 else:
                     if deep_get(cfg, 'evaluation.accuracy.iteration') == -1 and 'dummy_v2' \
                         in deep_get(cfg, 'evaluation.accuracy.dataloader.dataset', {}):
@@ -135,12 +135,10 @@ class Quantization(Component):
         self._create_eval_dataloader(cfg)
         self._create_calib_dataloader(cfg)
         strategy = cfg.tuning.strategy.name.lower()
-        cfg.quantization.quant_level = 0
-        logger.info(f"!!! Force convert quantization level to 0.") 
         if cfg.quantization.quant_level == 0:
             strategy = "conservative"
             logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
-            
+
         if strategy == "mse_v2":
             if not (self.framework.startswith("tensorflow") or self.framework == 'pytorch_fx'):
                 strategy = "basic"
@@ -168,12 +166,45 @@ class Quantization(Component):
             self._eval_func,
             _resume,
             self.hooks)
-        
+
         if getattr(self._calib_dataloader, 'distributed', False):
             self.register_hook('on_train_begin', self.strategy.adaptor._pre_hook_for_hvd)
 
     def execute(self):
         """Quantization execute routinue based on strategy design."""
+        # check here the distributed flag
+        logger.info("..............use_distributed_tuning: {}".format(self.conf.usr_cfg.tuning.use_distributed_tuning))
+        if self.conf.usr_cfg.tuning.use_distributed_tuning:
+            return self.distributed_execute()
+        try:
+            with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
+                logger.debug("Dump user yaml configuration:")
+                logger.debug(self.conf.usr_cfg)
+                self.strategy.traverse()
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:
+            logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
+            import traceback
+            traceback.print_exc()
+        finally:
+            if self.strategy.best_qmodel:
+                logger.info(
+                    "Specified timeout or max trials is reached! "
+                    "Found a quantized model which meet accuracy goal. Exit.")
+                self.strategy.deploy_config()
+            else:
+                logger.error(
+                    "Specified timeout or max trials is reached! "
+                    "Not found any quantized model which meet accuracy goal. Exit.")
+
+            return self.strategy.best_qmodel
+
+    def distributed_execute(self):
+        """Quantization distributed execute routinue based on strategy design."""
+        from ..utils.utility import LazyImport
+        MPI = LazyImport("mpi4py.MPI")
+        comm = MPI.COMM_WORLD
         try:
             with time_limit(self.conf.usr_cfg.tuning.exit_policy.timeout):
                 self.strategy.traverse()
@@ -190,6 +221,8 @@ class Quantization(Component):
                     "Found a quantized model which meet accuracy goal. Exit.")
                 self.strategy.deploy_config()
             else:
+                if comm.Get_rank() != 0:    # slaves have no q model
+                    return None
                 logger.error(
                     "Specified timeout or max trials is reached! "
                     "Not found any quantized model which meet accuracy goal. Exit.")
@@ -386,15 +419,9 @@ class Quantization(Component):
                            " as user defines the value of `postprocess` attribute by code.")
         deep_set(
             self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
-        from .data import TRANSFORMS
+        from neural_compressor.data import TRANSFORMS
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
-
-    # if user doesn't config evaluation dataloader in yaml and eval_func is None, a
-    # fake eval func is created to do quantization once without tuning
-    def _fake_eval_func(self, model):
-        """Return fake accuracy 1 when no need to run tuning."""
-        return 1.
 
     # BELOW API TO BE DEPRECATED!
     @property

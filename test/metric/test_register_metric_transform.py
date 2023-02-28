@@ -4,7 +4,7 @@ import unittest
 import platform
 import os
 import yaml
-     
+
 def build_fake_yaml():
     fake_yaml = '''
         model:
@@ -42,21 +42,28 @@ class TestRegisterMetric(unittest.TestCase):
         resize_image = resize_image - mean
         images = np.expand_dims(resize_image, axis=0)
         labels = [768]
-        from neural_compressor import Benchmark
-        from neural_compressor.experimental.data.transforms.imagenet_transform import LabelShift
-        from neural_compressor.experimental.metric.metric import TensorflowTopK
+        from neural_compressor.experimental import Benchmark, common
+        from neural_compressor.experimental.common import Postprocess
+        from neural_compressor.experimental.common import Metric
+        from neural_compressor.data.transforms.imagenet_transform import LabelShift
+        from neural_compressor.metric import TensorflowTopK
         os.environ['NC_ENV_CONF'] = 'True'
 
         evaluator = Benchmark('fake_yaml.yaml')
-        evaluator.postprocess('label_benchmark', LabelShift, label_shift=1) 
-        evaluator.metric('topk_benchmark', TensorflowTopK)
-        dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
-        evaluator(self.pb_path, b_dataloader=dataloader)
+        nc_postprocess = Postprocess(LabelShift, "label_benchmark", label_shift=1)
+        evaluator.postprocess = nc_postprocess
+        nc_metric = Metric(TensorflowTopK, 'topk_benchmark')
+        evaluator.metric = nc_metric
+        evaluator.b_dataloader = common.DataLoader(dataset=list(zip(images, labels)))
+        evaluator.model = self.pb_path
+        evaluator.fit()
 
         evaluator = Benchmark('fake_yaml.yaml')
-        evaluator.metric('topk_second', TensorflowTopK)
-        dataloader = evaluator.dataloader(dataset=list(zip(images, labels)))
-        evaluator(self.pb_path, b_dataloader=dataloader)
+        nc_metric = Metric(TensorflowTopK, 'topk_second')
+        evaluator.metric = nc_metric
+        evaluator.b_dataloader = common.DataLoader(dataset=list(zip(images, labels)))
+        evaluator.model = self.pb_path
+        evaluator.fit()
 
 
 if __name__ == "__main__":

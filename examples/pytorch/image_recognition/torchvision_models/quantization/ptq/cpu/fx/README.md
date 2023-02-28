@@ -13,6 +13,7 @@ PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 cd examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx
 pip install -r requirements.txt
 ```
+> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Dataset
 

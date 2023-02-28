@@ -346,7 +346,7 @@ class Graph_Optimization():
                            " as user defines the value of `metric` attribute by code.")
  
         from .common import Metric as NCMetric
-        from .metric import METRICS
+        from ..metric import METRICS
         if isinstance(user_metric, NCMetric):
             name = user_metric.name
             metric_cls = user_metric.metric_cls
@@ -385,7 +385,7 @@ class Graph_Optimization():
                 initialized from neural_compressor.common.Postprocess, in this method the 
                 user_postprocess.postprocess_cls will be registered to specific frameworks and initialized.
         """
-        from .common import Postprocess as NCPostprocess
+        from neural_compressor.data import Postprocess as NCPostprocess
         assert isinstance(user_postprocess, NCPostprocess), \
             'please initialize a neural_compressor.common.Postprocess and set....'
         postprocess_cfg = {user_postprocess.name : {**user_postprocess.kwargs}}
@@ -393,7 +393,7 @@ class Graph_Optimization():
             logger.warning("Override the value of `postprocess` field defined in yaml file" \
                            " as user defines the value of `postprocess` attribute by code.")
         deep_set(self.conf.usr_cfg, "evaluation.accuracy.postprocess.transform", postprocess_cfg)
-        from .data import TRANSFORMS
+        from neural_compressor.data import TRANSFORMS
         postprocesses = TRANSFORMS(self.framework, 'postprocess')
         postprocesses.register(user_postprocess.name, user_postprocess.postprocess_cls)
 

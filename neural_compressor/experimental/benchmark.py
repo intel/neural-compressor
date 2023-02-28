@@ -24,12 +24,12 @@ import numpy as np
 import subprocess
 import signal
 import psutil
+from threading import Thread
 from ..adaptor import FRAMEWORKS
 from ..objective import MultiObjective
 from ..conf.config import BenchmarkConf
 from ..conf.dotdict import DotDict
 from ..utils import logger
-from ..utils import OPTIONS
 from ..utils.utility import GLOBAL_STATE, MODE
 from ..utils.create_obj_from_config import create_eval_func, create_dataloader
 from ..conf.dotdict import deep_get, deep_set
@@ -196,27 +196,36 @@ class Benchmark(object):
 
     def summary_benchmark(self):
         """Get the summary of the benchmark."""
-        if sys.platform in ['linux']:
-            num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
-            cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
-            latency_l = []
-            throughput_l = []
-            for i in range(0, num_of_instance):
-                log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
-                with open(log, "r") as f:
-                    for line in f:
-                        latency = re.search(r"[L,l]atency:\s+(\d+(\.\d+)?)", line)
-                        latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
-                        throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
-                        throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
-            assert len(latency_l)==len(throughput_l)==num_of_instance, \
-                "Multiple instance benchmark failed with some instance!"
-            logger.info("\n\nMultiple instance benchmark summary: ")
-            logger.info("Latency average: {:.3f} ms".format(sum(latency_l)/len(latency_l)))
-            logger.info("Throughput sum: {:.3f} images/sec".format(sum(throughput_l)))
-        else:
-            # (TODO) should add summary after win32 benchmark has log
-            pass
+        num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
+        cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+        latency_l = []
+        throughput_l = []
+        for i in range(0, num_of_instance):
+            log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
+            with open(log, "r") as f:
+                for line in f:
+                    latency = re.search(r"[L,l]atency:\s+(\d+(\.\d+)?)", line)
+                    latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
+                    throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
+                    throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
+        assert len(latency_l)==len(throughput_l)==num_of_instance, \
+            "Multiple instance benchmark failed with some instance!"
+        logger.info("\n\nMultiple instance benchmark summary: ")
+        logger.info("Latency average: {:.3f} ms".format(sum(latency_l)/len(latency_l)))
+        logger.info("Throughput sum: {:.3f} images/sec".format(sum(throughput_l)))
+
+    def call_one(self, cmd, log_file):
+        """Execute one command for one instance in one thread and dump the log (for Windows)."""
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                shell=True) # nosec
+        with open(log_file, "w", 1, encoding="utf-8") as log_file:
+            log_file.write(f"[ COMMAND ] {cmd} \n")
+            for line in proc.stdout:
+                decoded_line = line.decode("utf-8", errors="ignore").strip()
+                logger.info(decoded_line)   # redirect to terminal
+                log_file.write(decoded_line + "\n")
 
     def config_instance(self):
         """Configure the multi-instance commands and trigger benchmark with sub process."""
@@ -224,6 +233,9 @@ class Benchmark(object):
         multi_instance_cmd = ''
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+
+        logger.info("num of instance: {}".format(num_of_instance))
+        logger.info("cores per instance: {}".format(cores_per_instance))
 
         if(sys.platform in ['linux'] and get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
             raise OSError('Currently no support on ARM with hyperthreads')
@@ -244,7 +256,6 @@ class Benchmark(object):
                 multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
                     instance_cmd, instance_log)
             else:  # pragma: no cover
-                # (TODO) should also add log to win32 benchmark
                 multi_instance_cmd += '{} \n'.format(instance_cmd)
 
         multi_instance_cmd += 'wait' if sys.platform in ['linux'] else ''
@@ -254,7 +265,22 @@ class Benchmark(object):
         if sys.platform in ['linux']:
             p = subprocess.Popen(multi_instance_cmd, preexec_fn=os.setsid, shell=True) # nosec
         elif sys.platform in ['win32']:  # pragma: no cover
-            p = subprocess.Popen(multi_instance_cmd, start_new_session=True, shell=True) # nosec
+            cmd_list = multi_instance_cmd.split("\n")[:-1]
+            threads = []
+            for idx, cmd in enumerate(cmd_list):
+                # wrap each execution of windows bat file in one thread
+                # write the log to the log file of the corresponding instance
+                logger.info('Will dump to {}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))
+                threads.append(Thread(target=self.call_one, args=(cmd,
+                    '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))))
+            for command_thread in threads:
+                command_thread.start()
+                logger.info("Worker threads start")
+            # Wait for all of them to finish
+            for command_thread in threads:
+                command_thread.join()
+                logger.info("Worker threads join")
+            return
         try:
             p.communicate()
         except KeyboardInterrupt:
@@ -299,6 +325,7 @@ class Benchmark(object):
                                    'approach': cfg.quantization.approach, \
                                    'random_seed': cfg.tuning.random_seed,
                                    'backend': cfg.model.get('backend', 'default'),
+                                   'domain': cfg.model.get('domain', 'auto'),
                                    'format': cfg.model.get('quant_format', 'default')}
         framework = cfg.model.framework.lower()
         if 'tensorflow' in framework:
@@ -311,9 +338,8 @@ class Benchmark(object):
         if framework == 'mxnet':
             framework_specific_info.update({"b_dataloader": self._b_dataloader})
         if 'onnx' in framework.lower():
-            framework_specific_info.update(
-                                 {'workspace_path': cfg.tuning.workspace.path, \
-                                 'graph_optimization': OPTIONS[framework].graph_optimization})
+            framework_specific_info.update({'workspace_path': cfg.tuning.workspace.path,
+                                            'recipes': cfg.quantization.get('recipes', {})})
         if framework == 'pytorch_ipex' or framework == 'pytorch' or framework == 'pytorch_fx':
             framework_specific_info.update({"workspace_path": cfg.tuning.workspace.path,
                                             "q_dataloader": None})
@@ -332,14 +358,12 @@ class Benchmark(object):
         metric = [self._metric] if self._metric else \
                     deep_get(cfg, 'evaluation.{}.metric'.format(mode))
         b_postprocess_cfg = deep_get(cfg, 'evaluation.{}.postprocess'.format(mode))
-
         if self._b_func is None and self._b_dataloader is None:
             assert deep_get(cfg, 'evaluation.{}.dataloader'.format(mode)) is not None, \
                 'dataloader field of yaml file is missing'
 
             b_dataloader_cfg = deep_get(cfg, 'evaluation.{}.dataloader'.format(mode))
             self._b_dataloader = create_dataloader(self.framework, b_dataloader_cfg)
-
         is_measure = False
         if self._b_func is None:
             is_measure = True
@@ -358,7 +382,6 @@ class Benchmark(object):
         self.objectives = MultiObjective(objectives,
                               cfg.tuning.accuracy_criterion,
                               is_measure=is_measure)
-
         if self._custom_b_func:
             val = self.objectives.evaluate(self._b_func, self._model.model)
             return

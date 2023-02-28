@@ -1,6 +1,6 @@
 neural-compressor
-transformers>=4.10.0
-datasets==1.18.0
+transformers>=4.16.0
+datasets>=1.18.0
 sentencepiece!=0.1.92
 protobuf
 scipy

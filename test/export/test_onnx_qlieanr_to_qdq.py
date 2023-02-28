@@ -8,7 +8,6 @@ from onnx import helper, TensorProto, numpy_helper, onnx_pb
 from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
 from neural_compressor.adaptor.ox_utils.util import QuantizedInitializer, QuantizedValue, QuantizationMode
 import onnxruntime as ort
-from neural_compressor import options
 from neural_compressor.config import ONNXQlinear2QDQConfig
 from neural_compressor.experimental.common import Model
 
@@ -81,13 +80,14 @@ class TestAdaptorONNXRT(unittest.TestCase):
         shutil.rmtree("./onnxrt_test", ignore_errors=True)
         os.remove("test.onnx")
 
-    def qlinear_test(self, model, q_config, quantize_params, quantizable_op_types):
+    def qlinear_test(self, model, q_config, quantize_params, quantizable_op_types, **kwargs):
         quantizer = Quantizer(copy.deepcopy(model),
             q_config,
             self.qlinear_backend,
             True,
             quantize_params,
-            quantizable_op_types)
+            quantizable_op_types,
+            **kwargs)
         model = quantizer.quantize_model()
         return Model(model)
 
@@ -316,8 +316,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
     def test_concat_reshape_pooling(self):
         model = build_model()
-        options.onnxrt.qdq_setting.DedicatedQDQPair = True
- 
         q_config = {'Reshape':self.static_q_config, 'conv1':self.static_q_config, 'conv2':self.static_q_config, \
                     'Concat':self.static_q_config, 'AveragePool':self.static_q_config, 'add':self.static_q_config}
         quantize_params = {'input': [np.uint8(10.), np.float32(0)],
@@ -332,9 +330,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            'shape': [np.uint8(10.), np.float32(0)],
                            'reshape_output': [np.uint8(10.), np.float32(0)]}
         quantizable_op_types = ['Reshape', 'Conv', 'Concat', 'AveragePool', 'Add']
-        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types, **{'dedicated_qdq_pair': True})
         q_model.export('./test.onnx', self.config)
-        options.onnxrt.qdq_setting.DedicatedQDQPair = False
 
         q_config = {'Reshape':self.static_q_config, 'conv1':'fp32', 'conv2':self.static_q_config, \
                     'Concat':self.static_q_config, 'AveragePool':self.static_q_config}

@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """MSE tuning strategy."""
-
 from copy import deepcopy
 import numpy as np
 from collections import OrderedDict
@@ -97,8 +95,7 @@ class MSETuneStrategy(TuneStrategy):
             save_to_disk=True, save_path="./nc_workspace/", 
             quantization_cfg=current_best_tune_cfg)
         fp32_tensor_dict = fp32_dump_content['activation'][0]
-        best_qmodel = self.q_model = self.adaptor.quantize(current_best_tune_cfg, self.model, \
-                                                           self.calib_dataloader, self.q_func)
+        best_qmodel = self.adaptor.quantize(current_best_tune_cfg, self.model, self.calib_dataloader, self.q_func)
         quant_dump_content = self.adaptor.inspect_tensor(best_qmodel, 
             self.calib_dataloader, op_name_lst, [1], inspect_type='activation',
             save_to_disk=True, save_path="./nc_workspace/", 
@@ -117,7 +114,7 @@ class MSETuneStrategy(TuneStrategy):
     def next_tune_cfg(self):
         """Generate and yield the next tuning config.
         
-        Yields:
+        Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
         tuning_space = self.tuning_space

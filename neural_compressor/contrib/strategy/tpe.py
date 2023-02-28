@@ -197,7 +197,7 @@ class TpeTuneStrategy(TuneStrategy):
         calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
         # step1. collect the ops that support static and dynamic
         quant_mode_wise_items = OrderedDict()
-        query_order = ['static', 'dynamic', 'bf16', 'fp32']
+        query_order = ['static', 'dynamic', 'bf16', 'fp16', 'fp32']
         pre_items = set()
         for quant_mode in query_order:
             items = tuning_space.query_items_by_quant_mode(quant_mode)
@@ -337,6 +337,7 @@ class TpeTuneStrategy(TuneStrategy):
         """Check if config was alredy evaluated."""
         op_cfgs = self._tune_cfg_converter(tune_cfg)
         self.last_qmodel = self.adaptor.quantize(op_cfgs, self.model, self.calib_dataloader)
+        self.last_tune_cfg = copy.deepcopy(tune_cfg)
         self.last_tune_result = self._evaluate(self.last_qmodel)
         logger.info("The last tune result is {}.".format(
             (self.last_tune_result[0], self.last_tune_result[1][0])))

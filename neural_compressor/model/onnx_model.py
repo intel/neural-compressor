@@ -40,12 +40,12 @@ class ONNXModel(BaseModel):
         """
         self._model = model if not isinstance(model, str) else onnx.load(model)
         self._model_path = None if not isinstance(model, str) else model
-        self._large_size = False
+        self._is_large_model = False
         try:
             ort.InferenceSession(self._model.SerializeToString())
         except Exception as e:  # pragma: no cover
             if 'Message onnx.ModelProto exceeds maximum protobuf size of 2GB' in str(e):
-                self._large_size = True
+                self._is_large_model = True
                 if self._model_path is None:
                     logger.warning('Please use model path instead of onnx model '
                                    'object to quantize')
@@ -59,9 +59,9 @@ class ONNXModel(BaseModel):
         self._q_config = None
 
     @property
-    def large_size(self):
-        """Return large size."""
-        return self._large_size
+    def is_large_model(self):
+        """Check the onnx model is over 2GB."""
+        return self._is_large_model
 
     @property
     def model_path(self):
@@ -134,7 +134,7 @@ class ONNXModel(BaseModel):
         """Save ONNX model."""
         if os.path.split(root)[0] != '' and not os.path.exists(os.path.split(root)[0]):
             raise ValueError('"root" directory does not exists.')
-        if self.large_size: # pragma: no cover
+        if self.is_large_model: # pragma: no cover
             from onnx.external_data_helper import convert_model_to_external_data, \
                 load_external_data_for_model
             load_external_data_for_model(self._model, os.path.split(self._model_path)[0])
@@ -491,3 +491,142 @@ class ONNXModel(BaseModel):
             logger.warning("Unsupported config for export, "
                 "only ONNXQlinear2QDQConfig is supported!")
             exit(0)
+
+    def add_tensors_to_outputs(self, tensor_names):
+        """Add the tensors to the model outputs to gets their values.
+
+        Args:
+            tensor_names: The names of tensors to be dumped.
+        """
+        added_outputs = []
+        for tensor in tensor_names:
+            if tensor not in self.output():
+                added_tensor = onnx.helper.ValueInfoProto()
+                added_tensor.name = tensor
+                added_outputs.append(added_tensor)
+        self._model.graph.output.extend(added_outputs)  # pylint: disable=no-member
+
+    def remove_tensors_from_outputs(self, tensor_names):
+        """Remove the tensors from the model outputs.
+
+        Args:
+            tensor_names: The names of tensors to be removed.
+        """
+        removed_outputs = []
+        for tensor in tensor_names:
+            if tensor in self.output():
+                removed_outputs.append(self._model.graph.output[self.output().index(tensor)])
+        for output in removed_outputs:
+            self._model.graph.output.remove(output)
+
+    def match_first_parent(self, node, parent_op_type, output_name_to_node, exclude=[]):
+        """Find parent node based on constraints on op_type.
+
+        Args:
+            node (str): current node name.
+            parent_op_type (str): constraint of parent node op_type.
+            output_name_to_node (dict): dictionary with output name as key, and node as value.
+            exclude (list): list of nodes that are excluded (not allowed to match as parent).
+
+        Returns:
+            parent: The matched parent node. None if not found.
+            index: The input index of matched parent node. None if not found.
+        """
+        for i, input in enumerate(node.input):
+            if input in output_name_to_node:
+                parent = output_name_to_node[input]
+                if parent.op_type == parent_op_type and parent not in exclude:
+                    return parent, i
+        return None, None
+
+    def match_parent(
+        self,
+        node,
+        parent_op_type,
+        input_index=None,
+        output_name_to_node=None,
+        exclude=[],
+        return_indice=None,
+    ):
+        """Find parent node based on constraints on op_type and index.
+
+        Args:
+            node (str): current node name.
+            parent_op_type (str): constraint of parent node op_type.
+            input_index (int or None): only check the parent given input index of current node.
+            output_name_to_node (dict): dictionary with output name as key, and node as value.
+            exclude (list): list of nodes that are excluded (not allowed to match as parent).
+            return_indice (list): a list to append the input index when input_index is None.
+
+        Returns:
+            parent: The matched parent node.
+        """
+        assert node is not None
+        assert input_index is None or input_index >= 0
+
+        if output_name_to_node is None:
+            output_name_to_node = self._output_name_to_node
+
+        if input_index is None:
+            parent, index = self.match_first_parent(node, 
+                                                    parent_op_type, 
+                                                    output_name_to_node, 
+                                                    exclude)
+            if return_indice is not None:
+                return_indice.append(index)
+            return parent
+
+        if input_index >= len(node.input):
+            return None
+
+        parent = self.get_parent(node, input_index, output_name_to_node)
+        if parent is not None and parent.op_type == parent_op_type and parent not in exclude:
+            return parent
+
+        return None
+
+    def match_parent_path(
+        self,
+        node,
+        parent_op_types,
+        parent_input_index,
+        output_name_to_node=None,
+        return_indice=None,
+    ):
+        """Find a sequence of input edges based on constraints on parent op_type and index.
+
+        Args:
+            node (str): current node name.
+            parent_op_types (str): constraint of parent node op_type of each input edge.
+            parent_input_index (list): constraint of input index of each input edge. 
+                                       None means no constraint.
+            output_name_to_node (dict): dictionary with output name as key, and node as value.
+            return_indice (list): a list to append the input index when there is 
+                                  no constraint on input index of an edge.
+
+        Returns:
+            parents: a list of matched parent node.
+        """
+        assert len(parent_input_index) == len(parent_op_types)
+
+        if output_name_to_node is None:
+            output_name_to_node = self._output_name_to_node
+
+        current_node = node
+        matched_parents = []
+        for i, op_type in enumerate(parent_op_types):
+            matched_parent = self.match_parent(
+                current_node,
+                op_type,
+                parent_input_index[i],
+                output_name_to_node,
+                exclude=[],
+                return_indice=return_indice,
+            )
+            if matched_parent is None:
+                return None
+
+            matched_parents.append(matched_parent)
+            current_node = matched_parent
+
+        return matched_parents

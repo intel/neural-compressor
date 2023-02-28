@@ -538,6 +538,7 @@ eg
 eightbit
 einstein
 el
+EleutherAI
 elif
 eltwise
 emb
@@ -554,6 +555,7 @@ entrypoint
 enum
 env
 environ
+ep
 eq
 erf
 Erf
@@ -650,6 +652,7 @@ functionalities
 functionet
 functools
 Funtowicz
+fvcore
 fw
 FWK
 fx
@@ -1100,6 +1103,7 @@ mobilenet
 MobileNet
 mobilenetv
 Mobilenetv
+MobilenetV
 MobileNetv
 MobileNetV
 modalities
@@ -1441,6 +1445,7 @@ pycocotools
 pyguide
 pylint
 pymodule
+pymoo
 PyObject
 pypi
 PyPI
@@ -2498,6 +2503,7 @@ SelfKnowledgeDistillationLossConfig
 DistillationConfig
 KnowledgeDistillationLossConfig
 confs
+TensorflowQATModel
 HBM
 Ponte
 SmoothQuant
@@ -2517,4 +2523,12 @@ ASPLOS
 MSFT
 NextPlatform
 VMware
-
+todo
+gui
+PostPostTrainingQuantConfig
+MobilenetV
+InceptionResnetV
+zalandoresearch
+emCgSTlJaAg
+matsubara
+yoshitomo

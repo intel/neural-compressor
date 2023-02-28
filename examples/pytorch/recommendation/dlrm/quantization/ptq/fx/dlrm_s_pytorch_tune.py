@@ -903,7 +903,8 @@ if __name__ == "__main__":
         q_model = quantization.fit(
                             dlrm,
                             conf=conf,
-                            calib_dataloader=eval_dataloader
+                            calib_dataloader=eval_dataloader,
+                            eval_func=eval_func
                             )
         q_model.save(args.tuned_checkpoint)
         exit(0)

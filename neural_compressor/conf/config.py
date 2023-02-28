@@ -20,7 +20,6 @@ from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
-from ..pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..version import __version__
 import re
@@ -252,7 +251,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym', 'asym_float'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         Optional('algorithm'): And(
             list,
             lambda s: all(i in ['minmax'] for i in s)),
@@ -270,7 +269,7 @@ ops_schema = Schema({
             lambda s: all(i in ['asym', 'sym'] for i in s)),
         Optional('dtype'): And(
             list,
-            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+            lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
         # compute_dtypeis only for PyTorch framework
         Optional('compute_dtype', default=['uint8']): And(
             list,
@@ -294,13 +293,13 @@ graph_optimization_schema = Schema({
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
         },
         Optional('activation', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
             }
     }
 })
@@ -310,20 +309,20 @@ mixed_precision_schema = Schema({
     Optional('precisions', default={'precisions': ['fp32']}): And(
         Or(str, list),
         Use(input_to_list),
-        lambda s: all(i in [ 'fp32', 'bf16'] for i in s)),
+        lambda s: all(i in [ 'fp32', 'bf16', 'fp16'] for i in s)),
 
     Optional('op_wise', default={'weight': {}, 'activation': {}}): {
         Optional('weight', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
         },
         Optional('activation', default=None): {
             Optional('dtype', default=None): And(
                 Or(str, list),
                 Use(input_to_list),
-                lambda s: all(i in ['fp32', 'bf16'] for i in s)),
+                lambda s: all(i in ['fp32', 'bf16', 'fp16'] for i in s)),
             }
     }
 })
@@ -858,7 +857,7 @@ schema = Schema({
                 Optional('dtype', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
                 Optional('algorithm', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
@@ -881,7 +880,7 @@ schema = Schema({
                 Optional('dtype', default=None): And(
                     Or(str, list),
                     Use(input_to_list),
-                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16'] for i in s)),
+                    lambda s: all(i in ['int8', 'uint8', 'fp32', 'bf16', 'fp16'] for i in s)),
                 # compute_dtypeis only for PyTorch framework
                 Optional('compute_dtype', default=['uint8']): And(
                     Or(str, list),
@@ -1399,7 +1398,10 @@ class Conf(object):
                 'model.outputs': pythonic_config.quantization.outputs,
                 'model.backend': pythonic_config.quantization.backend,
                 'model.quant_format': pythonic_config.quantization.quant_format,
+                'model.domain': pythonic_config.quantization.domain,
+                'quantization.recipes': pythonic_config.quantization.recipes,
                 'quantization.approach': pythonic_config.quantization.approach,
+                'quantization.example_inputs': pythonic_config.quantization.example_inputs,
                 'quantization.calibration.sampling_size': 
                     pythonic_config.quantization.calibration_sampling_size,
                 'quantization.optype_wise': pythonic_config.quantization.op_type_list,
@@ -1415,6 +1417,7 @@ class Conf(object):
                 'tuning.exit_policy.timeout': pythonic_config.quantization.timeout,
                 'tuning.exit_policy.max_trials': pythonic_config.quantization.max_trials,
                 'tuning.exit_policy.performance_only': pythonic_config.quantization.performance_only,
+                'tuning.use_distributed_tuning': pythonic_config.quantization.use_distributed_tuning,
                 'use_bf16': pythonic_config.quantization.use_bf16,
                 'quantization.quant_level': pythonic_config.quantization.quant_level,
                 'reduce_range': pythonic_config.quantization.reduce_range
@@ -1427,7 +1430,7 @@ class Conf(object):
                     if st_key in st_kwargs:
                         st_val =  st_kwargs[st_key]
                         mapping.update({'tuning.strategy.' + st_key: st_val})
-            
+
         if pythonic_config.distillation is not None:
             mapping.update({
                 'distillation.train.criterion': pythonic_config.distillation.criterion,
@@ -1456,7 +1459,6 @@ class Conf(object):
             if pythonic_config.benchmark.outputs != []:
                 mapping.update({'model.outputs': pythonic_config.benchmark.outputs})
             mapping.update({
-                'model.backend': pythonic_config.benchmark.backend,
                 'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
                 'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
                 'evaluation.performance.configs.cores_per_instance':
@@ -1476,6 +1478,16 @@ class Conf(object):
                 'evaluation.accuracy.configs.intra_num_of_threads':
                     pythonic_config.benchmark.intra_num_of_threads,
             })
+            if "model.backend" not in mapping:
+                mapping.update({
+                    'model.backend': pythonic_config.benchmark.backend,
+                })
+            else:
+                if mapping['model.backend'] == 'default' and \
+                        pythonic_config.benchmark.backend != 'default':
+                    mapping.update({
+                        'model.backend': pythonic_config.benchmark.backend,
+                    })
 
         if "model.backend" not in mapping:
             mapping.update({

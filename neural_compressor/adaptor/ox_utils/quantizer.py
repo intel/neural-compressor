@@ -38,7 +38,6 @@ from neural_compressor.adaptor.ox_utils.util import QuantizedValueType
 from neural_compressor.adaptor.ox_utils.util import find_by_name, dtype_to_name
 from neural_compressor.adaptor.ox_utils.util import __producer__, __version__
 from neural_compressor.adaptor.ox_utils.util import quantize_data, dtype_mapping, support_pair, ValueInfo
-from neural_compressor import options
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.adaptor.ox_utils.operators import OPERATORS
 
@@ -48,7 +47,9 @@ class Quantizer:
     """Quantizer class."""
 
     def __init__(self, model, q_config, mode, static, quantization_params,
-                 op_types_to_quantize, fallback_list=['fp32'], reduce_range=None):
+                 op_types_to_quantize, fallback_list=['fp32'], reduce_range=None,
+                 add_qdq_pair_to_weight=False, optypes_to_exclude_output_quant=[],
+                 dedicated_qdq_pair=False):
         """Initialization.
 
         Args:
@@ -60,10 +61,13 @@ class Quantizer:
             op_types_to_quantize (list): optypes to quantize
             fallback_list (list, optional): fallback data type. Defaults to ['fp32'].
             reduce_range (bool, optional): use 7 bit or not. Defaults to None.
+            add_qdq_pair_to_weight (bool, optional): add QDQ pair to weight or not. Defaults to False.
+            optypes_to_exclude_output_quant (list, optional): optypes to exclude output quantization. Defaults to [].
+            dedicated_qdq_pair (bool, optional): dedicate QDQ pair or not. Defaults to False.
         """
         self.model = ONNXModel(model) if not isinstance(model, ONNXModel) else model
         model = onnx.shape_inference.infer_shapes(self.model.model) if \
-            not self.model.large_size else self.model.model
+            not self.model.is_large_model else self.model.model
         self.config = q_config
         self.reduce_range = reduce_range
         self.mode = mode # QuantizationMode.Value
@@ -96,12 +100,10 @@ class Quantizer:
         if not self.static:
             self.op_types_to_exclude_output_quantization = op_types_to_quantize
         else:
-            self.op_types_to_exclude_output_quantization = [] \
-                if not options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin \
-                else options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
+            self.op_types_to_exclude_output_quantization = optypes_to_exclude_output_quant
 
-        self.add_qdq_pair_to_weight = options.onnxrt.qdq_setting.AddQDQPairToWeight
-        self.dedicated_qdq_pair = options.onnxrt.qdq_setting.DedicatedQDQPair
+        self.add_qdq_pair_to_weight = add_qdq_pair_to_weight
+        self.dedicated_qdq_pair = dedicated_qdq_pair
 
     def check_opset_version(self):
         """Check opset version."""
@@ -318,7 +320,7 @@ class Quantizer:
                         if len(outs) > 0:
                             output_dtype = str(self.new_value_info[outs[0]].new_dtype)
                             break
-                    if len(outs) == 0 or all([not self.should_convert(i) for i in children]):
+                    if len(outs) == 0 or all([not self.should_cast(i) for i in children]):
                         return
                     if input_dtype == str(match_nodes[1].attribute[0].i) and \
                         output_dtype == str(match_nodes[0].attribute[0].i) and \
@@ -353,17 +355,13 @@ class Quantizer:
 
     def dtype_cast(self, node, cfg, keep_io_types=True): # pragma: no cover
         """Cast node dtype."""
-        min_positive_val = 1e-7
-        max_finite_val = 1e4
         for idx, tensor_name in enumerate(node.input):
             initializer = find_by_name(tensor_name, self.model.initializer())
             if initializer is not None:
                 if initializer.data_type != onnx_proto.TensorProto.FLOAT: 
                     continue
-                new_tensor = cast_tensor(initializer, cfg)
-                if new_tensor:
-                    self.model.remove_initializer(initializer)
-                    self.model.add_initializer(new_tensor)
+                do_cast = cast_tensor(initializer, cfg)
+                if do_cast:
                     self.new_value_info[tensor_name] = ValueInfo(tensor_name,
                                                              TensorProto.FLOAT, dtype_mapping[cfg])
             else:

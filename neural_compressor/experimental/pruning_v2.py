@@ -26,16 +26,16 @@ from ..conf.config import PruningConf
 from ..conf.pythonic_config import Config
 from ..config import WeightPruningConfig
 
-from ..pruner.utils import process_config, parse_to_prune, check_config, update_params
+from .pruner_legacy import PRUNERS
+from ..compression.pruner.utils import generate_pruner_config
+from ..compression.pruner.utils import process_config, parse_to_prune, check_config, update_params
 from ..utils.utility import LazyImport
-from ..pruner.pruners import get_pruner
-from ..conf.pythonic_config import Config
+from ..compression.pruner.pruners import get_pruner
 
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 
 from deprecated import deprecated
-import importlib
 import re
 
 
@@ -195,7 +195,8 @@ class Pruning(Component):
         """Functions called after training."""
         for pruner in self.pruners:
             pruner.on_train_end()
-        self.get_sparsity_ratio()
+        if isinstance(self._model.model, torch.nn.Module):
+            self.get_sparsity_ratio()
 
     def _on_before_eval(self):
         """Implement at the beginning of evaluation phase."""
@@ -306,18 +307,44 @@ class Pruning(Component):
 
     def _generate_pruners(self):
         """Obtain Pruner objects."""
-        assert isinstance(self._model.model, torch.nn.Module)
+        if isinstance(self._model.model, torch.nn.Module):
+            for info in self.pruners_info:
+                modules = parse_to_prune(info, self._model.model)
+                if modules == {}:
+                    logger.warning("one pruner hooks no layers, please have a check")
 
-        for info in self.pruners_info:
-            modules = parse_to_prune(info, self._model.model)
-            if modules == {}:
-                logger.warning("one pruner hooks no layers, please have a check")
-
-            self.pruners.append(get_pruner(info, modules))
-            info['modules'] = [key for key in modules.keys()]
-            info['len_of_modules'] = len(info['modules'])
-            logger.info(info)
-
+                self.pruners.append(get_pruner(info, modules))
+                info['modules'] = [key for key in modules.keys()]
+                info['len_of_modules'] = len(info['modules'])
+                logger.info(info)
+        else:
+            for info in self.pruners_info:
+                pruner = generate_pruner_config(info)
+                if info.prune_type == 'magnitude':
+                    self.pruners.append(PRUNERS['BasicMagnitude'](\
+                                            self._model, \
+                                            pruner,
+                                            None))
+                elif info.prune_type == 'pattern_lock':
+                    self.pruners.append(PRUNERS['PatternLock'](\
+                                            self._model, \
+                                            pruner,
+                                            None))
+                elif info.prune_type == 'gradient_sensitivity':
+                    self.pruners.append(PRUNERS['GradientSensitivity'](\
+                                            self._model, \
+                                            pruner,
+                                            None))
+                elif info.prune_type == 'group_lasso':
+                    self.pruners.append(PRUNERS['GroupLasso'](\
+                                            self._model, \
+                                            pruner,
+                                            None))
+                else:
+                    ##print(pruner.prune_type)
+                    assert False, 'now only support {}'.format(PRUNERS.keys())
+                logger.info(info)
+                
     def __call__(self):
         """Entry point of pruning.
 
@@ -499,3 +526,4 @@ class TfPruningCallback(object):
     def on_batch_end(self, logs=None):  # pragma: no cover
         """Call the same-name function from hooks."""
         self.on_step_end(logs)
+
