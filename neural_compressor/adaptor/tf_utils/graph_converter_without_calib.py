@@ -24,7 +24,7 @@ import tensorflow as tf
 
 from tensorflow.python.platform import gfile
 from neural_compressor.conf.dotdict import deep_get
-from neural_compressor.experimental.common import Model
+from neural_compressor.model import Model
 from .transform_graph.rerange_quantized_concat import RerangeQuantizedConcat
 from .transform_graph.bias_correction import BiasCorrection
 from .quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel

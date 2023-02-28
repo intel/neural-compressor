@@ -70,7 +70,7 @@ class Distillation(Component):
 
     def _on_train_begin(self, dataloader=None):
         """Operations called on the begining of the training.
-        
+
         Called before training, evaluate the teacher model and the student model. 
         """
         assert self._model, 'student_model must be set.'
@@ -123,7 +123,7 @@ class Distillation(Component):
 
     def on_post_forward(self, input, teacher_output=None):  # pragma: no cover
         """Set or compute output of teacher model.
-        
+
         Deprecated.
         """
         assert False, "This method is deprecated. please use `on_after_compute_loss` instead." \
@@ -131,7 +131,7 @@ class Distillation(Component):
 
     def _on_epoch_end(self):
         """Operations called on the end of every epochs.
-        
+
         Called on the end of every epochs, evaluate the student model 
         and record the best one regularly.
         """
@@ -280,10 +280,10 @@ class Distillation(Component):
 
     def execute(self):
         """Do distillation pipeline.
-        
+
         First train the student model with the teacher model, after training, 
         evaluating the best student model if any.
-        
+
         Returns:
             Best distilled model found.
         """
@@ -305,7 +305,7 @@ class Distillation(Component):
 
     def generate_hooks(self):
         """Register hooks for distillation.
-        
+
         Register necessary hooks for distillation pipeline.
         """
         self.register_hook('on_train_begin', self._on_train_begin)
@@ -359,7 +359,7 @@ class Distillation(Component):
     @property
     def criterion(self):
         """Getter of criterion.
-        
+
         Returns:
             The criterion used in the distillation process.
         """
@@ -371,7 +371,7 @@ class Distillation(Component):
         
         Set the user defined criterion. When using built-in train_func, user can 
         specify the customized criterion through this setter.
-           
+
         Args:
             user_criterion (criterion object): User defined criterion.
         """
@@ -380,7 +380,7 @@ class Distillation(Component):
     @property
     def optimizer(self):
         """Getter of optimizer.
-        
+
         Returns:
             The optimizer used in the distillation process.
         """
@@ -392,7 +392,7 @@ class Distillation(Component):
         
         Set the user defined optimizer. When using built-in train_func, user can 
         specify the customized optimizer through this setter.
-           
+
         Args:
             user_optimizer (criterion object): User defined optimizer.
         """
@@ -401,7 +401,7 @@ class Distillation(Component):
     @property
     def teacher_model(self):
         """Getter of the teacher model.
-        
+
         Returns:
             The teacher model used in the distillation process.
         """
@@ -434,7 +434,7 @@ class Distillation(Component):
     @property
     def student_model(self):
         """Getter of the student model.
-        
+
         Returns:
             The student model used in the distillation process.
         """
@@ -467,7 +467,7 @@ class Distillation(Component):
     @property
     def train_cfg(self):
         """Getter of the train configuration.
-        
+
         Returns:
             The train configuration used in the distillation process.
         """

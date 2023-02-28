@@ -13,9 +13,9 @@ def build_fake_ut():
 import numpy as np
 import unittest
 from neural_compressor.metric import METRICS
-from neural_compressor.experimental.metric.f1 import evaluate
-from neural_compressor.experimental.metric.evaluate_squad import evaluate as evaluate_squad
-from neural_compressor.experimental.metric import bleu
+from neural_compressor.metric.f1 import evaluate
+from neural_compressor.metric.evaluate_squad import evaluate as evaluate_squad
+from neural_compressor.metric import bleu
 import horovod.tensorflow as hvd
 import os
 import json

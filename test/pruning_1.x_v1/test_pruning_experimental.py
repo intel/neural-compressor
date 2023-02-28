@@ -8,8 +8,7 @@ import torch.nn as nn
 
 from neural_compressor.data import Datasets
 from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-from neural_compressor.experimental.pytorch_pruner.pruning import Pruning
-#from neural_compressor.experimental.pruning import Pruning # old API
+from neural_compressor.experimental.pruning import Pruning # old API
 
 def build_fake_yaml_basic():
     fake_snip_yaml = """
@@ -134,9 +133,7 @@ class TestPytorchPruning(unittest.TestCase):
         shutil.rmtree('runs', ignore_errors=True)
 
     def test_pytorch_pruning_basic(self):
-        #import pdb;pdb.set_trace()
         prune = Pruning("fake_snip.yaml")
-        ##prune.generate_pruners()
         prune.update_items_for_all_pruners(start_step=1)
         prune.model = self.model
 
@@ -171,9 +168,7 @@ class TestPytorchPruning(unittest.TestCase):
         prune.on_after_eval()
 
     def test_pytorch_pruner_channel_pruning(self):
-        #import pdb;pdb.set_trace()
         prune = Pruning("fake_channel_pruning.yaml")
-        ##prune.generate_pruners()
         prune.model = self.model
 
         criterion = nn.CrossEntropyLoss()
@@ -204,5 +199,3 @@ class TestPytorchPruning(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-

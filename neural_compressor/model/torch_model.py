@@ -793,7 +793,7 @@ class IPEXModel(PyTorchBaseModel):   # pragma: no cover
             logger.info("Save config file of quantized model to {}.".format(root))
         except IOError as e:
             logger.error("Fail to save configure file and weights due to {}.".format(e))
-        
+
         if isinstance(self.model, torch.jit._script.RecursiveScriptModule):
             self.model.save(os.path.join(root, "best_model.pt"))
-            
+

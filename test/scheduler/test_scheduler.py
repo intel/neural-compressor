@@ -319,6 +319,7 @@ class TestPruning(unittest.TestCase):
         os.remove('fake6.yaml')
         shutil.rmtree('./saved', ignore_errors=True)
         shutil.rmtree('runs', ignore_errors=True)
+        shutil.rmtree('nc_workspace', ignore_errors=True)
 
     def test_pruning(self):
         from neural_compressor.experimental import Pruning, common

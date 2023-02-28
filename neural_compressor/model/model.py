@@ -23,7 +23,6 @@ import importlib
 import sys
 from neural_compressor.utils.utility import LazyImport
 from neural_compressor.utils import logger
-from neural_compressor.conf import config as cfg
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.model.mxnet_model import MXNetModel
@@ -31,6 +30,7 @@ from neural_compressor.model.keras_model import KerasModel
 from neural_compressor.model.tensorflow_model import (
      TensorflowBaseModel,
      TensorflowModel,
+     TensorflowQATModel,
      get_model_type
      )
 
@@ -51,6 +51,7 @@ np = LazyImport('numpy')
 MODELS = {'tensorflow': TensorflowModel,
           'tensorflow_itex': TensorflowModel,
           'keras': KerasModel,
+          'tensorflow_qat': TensorflowQATModel,
           'mxnet': MXNetModel,
           'pytorch': PyTorchModel if TORCH else None,
           'pytorch_ipex': IPEXModel if TORCH else None,
@@ -147,34 +148,41 @@ caused by unsupported model or inappropriate framework installation.'
 
 class Model(object):
     """A wrapper to construct a Neural Compressor Model."""
-    
+
     def __new__(cls, root, **kwargs):
         """Create a new instance object of Model.
-        
+
         Args:
             root (object): raw model format. For Tensorflow model, could be path to frozen pb file, 
                 path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras model object.
                 For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol 
                 or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto 
                 model object.
-                
+
         Returns:
             BaseModel: neural_compressor built-in model
         """
-        framework = kwargs.get("framework", "NA")
-        if framework == "NA":
-            framework = get_model_fwk_name(root)
+        backend = kwargs.get("backend", "NA")
+        if backend == "NA" or backend == "default":
+            backend_tmp = get_model_fwk_name(root)
+            if backend_tmp == "pytorch" and backend == "default":
+                backend = "pytorch_fx"
+            else:
+                backend = backend_tmp
+        elif backend == "ipex":
+            backend = "pytorch_ipex"
 
-        if 'tensorflow' in framework:
+        if 'tensorflow' in backend:
+            if kwargs.get("approach", None) == "quant_aware_training":
+                return TensorflowQATModel(root, **kwargs)
+
             if 'modelType' in kwargs:
                 model_type = kwargs['modelType']
             else:
                 model_type = get_model_type(root)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
-        elif framework == 'keras':
+        elif backend == 'keras':
             model = MODELS['keras'](root, **kwargs)
-        elif framework == 'pytorch':
-            model = MODELS[framework](root, **kwargs)
         else:
-            model = MODELS[framework](root, **kwargs)
+            model = MODELS[backend](root, **kwargs)
         return model
