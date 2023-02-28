@@ -19,7 +19,6 @@ import datetime
 import logging
 from schema import Schema, And, Optional
 from .conf.dotdict import DotDict
-from .conf.config import Pruner
 
 logger = logging.getLogger("neural_compressor")
 default_workspace = './nc_workspace/{}/'.format(
@@ -64,10 +63,10 @@ ops_schema = Schema({
 
 def check_value(name, src, supported_type, supported_value=[]):
     """Check if the given object is the given supported type and in the given supported value.
-    
+
     Example:
         from neural_compressor.config import check_value
-        
+
         def datatype(self, datatype):
             if check_value('datatype', datatype, list, ['fp32', 'bf16', 'uint8', 'int8']):
                 self._datatype = datatype
@@ -379,8 +378,8 @@ class _BaseQuantizationConfig:
                  quant_format="default",
                  device="cpu",
                  calibration_sampling_size=[100],
-                 op_type_list=None,
-                 op_name_list=None,
+                 op_type_dict=None,
+                 op_name_dict=None,
                  strategy="basic",
                  strategy_kwargs=None,
                  objective="performance",
@@ -420,8 +419,8 @@ class _BaseQuantizationConfig:
             quant_format: support 'default', 'QDQ' and 'QOperator'
             device: support 'cpu' and 'gpu'
             calibration_sampling_size: number of calibration sample
-            op_type_list: tuning constraints on optype-wise
-            op_name_list: tuning constraints on op-wise
+            op_type_dict: tuning constraints on optype-wise
+            op_name_dict: tuning constraints on op-wise
             strategy: strategy name
             strategy_kwargs: parameters for strategy
             objective: objective with accuracy constraint guaranteed, support 'performance', 'modelsize', 'footprint'
@@ -443,8 +442,8 @@ class _BaseQuantizationConfig:
         self.recipes = recipes
         self.quant_format = quant_format
         self.device = device
-        self.op_type_list = op_type_list
-        self.op_name_list = op_name_list
+        self.op_type_dict = op_type_dict
+        self.op_name_dict = op_name_dict
         self.strategy = strategy
         self.strategy_kwargs = strategy_kwargs
         self.objective = objective
@@ -681,36 +680,36 @@ class _BaseQuantizationConfig:
         self._strategy_kwargs = strategy_kwargs
 
     @property
-    def op_name_list(self):
-        return self._op_name_list
+    def op_name_dict(self):
+        return self._op_name_dict
 
-    @op_name_list.setter
-    def op_name_list(self, op_name_list):
-        if op_name_list is None:
-            self._op_name_list = op_name_list
-        elif isinstance(op_name_list, dict):
-            for k, v in op_name_list.items():
+    @op_name_dict.setter
+    def op_name_dict(self, op_name_dict):
+        if op_name_dict is None:
+            self._op_name_dict = op_name_dict
+        elif isinstance(op_name_dict, dict):
+            for k, v in op_name_dict.items():
                 ops_schema.validate(v)
-            self._op_name_list = op_name_list
+            self._op_name_dict = op_name_dict
         else:
-            assert False, ("Type of op_name_list should be dict but not {}, ".format(
-                type(op_name_list)))
+            assert False, ("Type of op_name_dict should be dict but not {}, ".format(
+                type(op_name_dict)))
 
     @property
-    def op_type_list(self):
-        return self._op_type_list
+    def op_type_dict(self):
+        return self._op_type_dict
 
-    @op_type_list.setter
-    def op_type_list(self, op_type_list):
-        if op_type_list is None:
-            self._op_type_list = op_type_list
-        elif isinstance(op_type_list, dict):
-            for k, v in op_type_list.items():
+    @op_type_dict.setter
+    def op_type_dict(self, op_type_dict):
+        if op_type_dict is None:
+            self._op_type_dict = op_type_dict
+        elif isinstance(op_type_dict, dict):
+            for k, v in op_type_dict.items():
                 ops_schema.validate(v)
-            self._op_type_list = op_type_list
+            self._op_type_dict = op_type_dict
         else:
-            assert False, ("Type of op_type_list should be dict but not {}".format(
-                type(op_type_list)))
+            assert False, ("Type of op_type_dict should be dict but not {}".format(
+                type(op_type_dict)))
 
     @property
     def calibration_sampling_size(self):
@@ -887,8 +886,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  outputs=[],
                  approach="static",
                  calibration_sampling_size=[100],
-                 op_type_list=None,
-                 op_name_list=None,
+                 op_type_dict=None,
+                 op_name_dict=None,
                  reduce_range=None,
                  excluded_precisions=[],
                  quant_level="auto",
@@ -906,8 +905,8 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                          recipes=recipes,
                          quant_format=quant_format,
                          calibration_sampling_size=calibration_sampling_size,
-                         op_type_list=op_type_list,
-                         op_name_list=op_name_list,
+                         op_type_dict=op_type_dict,
+                         op_name_dict=op_name_dict,
                          strategy=tuning_criterion.strategy,
                          strategy_kwargs=tuning_criterion.strategy_kwargs,
                          objective=tuning_criterion.objective,
@@ -952,7 +951,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
         if approach == "qat":
             model = copy.deepcopy(model_origin)
             conf = QuantizationAwareTrainingConfig(
-                op_name_list=qat_op_name_list
+                op_name_dict=qat_op_name_list
             )
             compression_manager = prepare_compression(model, conf)
     """
@@ -961,8 +960,8 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  backend="default",
                  inputs=[],
                  outputs=[],
-                 op_type_list=None,
-                 op_name_list=None,
+                 op_type_dict=None,
+                 op_name_dict=None,
                  reduce_range=None,
                  excluded_precisions=[],
                  quant_level="auto"):
@@ -971,8 +970,8 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                          outputs=outputs,
                          device=device,
                          backend=backend,
-                         op_type_list=op_type_list,
-                         op_name_list=op_name_list,
+                         op_type_dict=op_type_dict,
+                         op_name_dict=op_name_dict,
                          reduce_range=reduce_range,
                          excluded_precisions=excluded_precisions,
                          quant_level=quant_level)
@@ -982,9 +981,6 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     def approach(self):
         """Get approach."""
         return self._approach
-
-
-pruners = [Pruner()]
 
 
 class WeightPruningConfig:
@@ -1040,12 +1036,12 @@ class WeightPruningConfig:
 
 class KnowledgeDistillationLossConfig:
     """Config Class for Knowledge Distillation Loss.
-    
+
     Example:
         from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
         from neural_compressor import QuantizationAwareTrainingConfig
         from neural_compressor.training import prepare_compression
-        
+
         combs = []
         distillation_criterion = KnowledgeDistillationLossConfig()
         d_conf = DistillationConfig(teacher_model=teacher_model, criterion=distillation_criterion)

@@ -17,7 +17,8 @@
 
 """This is a module for Component class.
 
-The Component class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
+The Component class will be inherited by the class 'QuantizationAwareTrainingCallbacks',
+'PruningCallbacks' and 'DistillationCallbacks'.
 """
 
 import copy
@@ -44,7 +45,8 @@ torch = LazyImport('torch')
 class BaseCallbacks(object):
     """This is base class of Neural Compressor Callbacks.
 
-    This class will be inherited by the class 'QuantizationCallbacks', 'PruningCallbacks' and 'DistillationCallbacks'.
+    This class will be inherited by the class 'QuantizationAwareTrainingCallbacks',
+    'PruningCallbacks' and 'DistillationCallbacks'.
     This design is mainly for pruning/distillation/quantization-aware training.
     In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
     """
@@ -465,7 +467,7 @@ class BaseCallbacks(object):
                 self.hooks_dict[scope].remove(registed_hook)
 
 
-class AwareTrainingQuantCallbacks(BaseCallbacks):
+class QuantizationAwareTrainingCallbacks(BaseCallbacks):
     """This is the class for callbacks of quantization aware training.
 
     This design is mainly for Quantization-Aware Training.
@@ -479,7 +481,7 @@ class AwareTrainingQuantCallbacks(BaseCallbacks):
             conf: A QuantizationAwareTrainingConfig object which definds the compressor behavior.
             model: Model to be quantized in this object.
         """
-        super(AwareTrainingQuantCallbacks, self).__init__(conf=None)
+        super(QuantizationAwareTrainingCallbacks, self).__init__(conf=None)
         conf = Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
         self.conf = QuantConf()
         self.conf.map_pyconfig_to_cfg(conf)
