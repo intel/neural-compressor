@@ -58,7 +58,7 @@ class BasicTuneStrategy(TuneStrategy):
             stage1_max = 1e9  # TODO set a more appropriate value
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
-            ############ stage 1: yield op_tune_cfg_lst
+            # stage 1: yield op_tune_cfg_lst
             op_tuning_cfg_lst_stage_1 = []
             for op_tuning_cfg in op_wise_tuning_sampler:
                 stage1_cnt += 1
@@ -70,14 +70,14 @@ class BasicTuneStrategy(TuneStrategy):
             logger.info("yield op_tuning_cfg_lst_stage_1 with length {}".format(len(op_tuning_cfg_lst_stage_1)))
             yield op_tuning_cfg_lst_stage_1
 
-            #### Coordinate: only master knows cur best tune cfg
+            # Coordinate: only master knows cur best tune cfg
             cur_best_tuning_cfg = self.cur_best_tuning_cfg if rank == 0 else None
             if rank == 0:
                 comm.bcast(cur_best_tuning_cfg, root=0)
             else:
                 self.cur_best_tuning_cfg = comm.bcast(cur_best_tuning_cfg, root=0)
 
-            ############ stage 2: yield new_op_tuning_cfg_lst (length of 1)
+            # stage 2: yield new_op_tuning_cfg_lst (length of stage 1)
             # Fallback the ops supported both static and dynamic from static to dynamic
             # Tuning items: None
             if self.cfg.quantization.approach == 'post_training_auto_quant':
@@ -97,7 +97,7 @@ class BasicTuneStrategy(TuneStrategy):
                 logger.info("yield op_tuning_cfg_lst_stage_2 with length {}".format(len(op_tuning_cfg_lst_stage_2)))
                 yield op_tuning_cfg_lst_stage_2
 
-            #### Coordinate: only master knows cur best tune cfg
+            # Coordinate: only master knows cur best tune cfg
             cur_best_tuning_cfg = self.cur_best_tuning_cfg if rank == 0 else None
             if rank == 0:
                 comm.bcast(cur_best_tuning_cfg, root=0)
@@ -107,7 +107,7 @@ class BasicTuneStrategy(TuneStrategy):
             best_op_tuning_cfg_stage1 = deepcopy(self.cur_best_tuning_cfg)
 
             # Fallback
-            ############ stage 3, 4: yield op_tuning_cfg_lst
+            # stage 3, 4: yield op_tuning_cfg_lst
             op_tuning_cfg_lst_stage_3 = []
             op_tuning_cfg_lst_stage_4 = []
             for target_dtype in ['bf16', 'fp32']:
@@ -136,7 +136,7 @@ class BasicTuneStrategy(TuneStrategy):
                         acc, _ = self.eval_results[op_index]
                         op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc
 
-                #### Coordinate: only master knows op_fallback_acc_impact
+                # Coordinate: only master knows op_fallback_acc_impact
                 op_fallback_acc_impact = op_fallback_acc_impact if rank == 0 else None
                 if rank == 0:
                     comm.bcast(op_fallback_acc_impact, root=0)
