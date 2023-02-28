@@ -208,31 +208,36 @@ class TuneStrategy(object):
         return self.objectives.accuracy_meet_req(deepcopy(self.last_tune_result))
 
     def master_worker_handle(self, comm):
-        """Matster worker handles the task assignment and result management.
+        """Master worker handles the task assignment and result management.
 
         Master node send all task ids to all free nodes, and wait until any result.
         When receiving any result, directly send a new task id to the sender (it's free).
 
         Args:
-            comm (MPI.COMM): The instance of comunication for MPI.
+            comm (MPI.COMM): The instance of communication for MPI.
         """
         MPI = LazyImport("mpi4py.MPI")
         size = comm.Get_size()
         for process_id in range(1, min(len(self.tune_cfg_lst) + 1, size)):
             tune_cfg_id = process_id - 1
-            logger.info("~~~~~~master sending tune cfg: {} to rank {}".format(tune_cfg_id, process_id))
+            logger.info("[Rank 0]master sending tune cfg: {} to rank {}".format(tune_cfg_id, process_id))
             comm.send(
                 obj=tune_cfg_id, # just send the tune cfg id is enough
                 dest=process_id, # rank 0 send to rank 1, 2, ...
                 tag=tune_cfg_id # tag, the index of tune cfg 0,1,2,3
             )
             import time as ttime
-            ttime.sleep(0.5) # WA for UT
+            # WA for UT
+            ttime.sleep(0.5)
 
-        cur_cfg_id = min(len(self.tune_cfg_lst), size - 1)   # 4 master should be aware of the next config id to send
-        self.eval_results = {}  # record all results
-        self.num_acks = 0 # number of all response acks, break when it equals to len()
-        status = MPI.Status() # used to obtain the source and the tag for each received message
+        # master should be aware of the next config id to send
+        cur_cfg_id = min(len(self.tune_cfg_lst), size - 1)
+        # WA for UT
+        self.eval_results = {}
+        # record number of all response acks, break when it equals to len()
+        self.num_acks = 0
+        # used to obtain the source and the tag for each received message
+        status = MPI.Status()
 
         self.already_ack_id_lst = set()
         self.requirements_met_min_cfg_id = sys.maxsize
@@ -245,12 +250,15 @@ class TuneStrategy(object):
                 status=status   # get MPI status object
             )
             self.num_acks += 1
-            sender_rank = status.Get_source() # sender rank
-            tag = status.Get_tag() # the task id that is finished
+            # sender rank
+            sender_rank = status.Get_source()
+            # the task id that is finished
+            tag = status.Get_tag()
 
-            logger.info("~~~~~~master receiving eval result: {} from rank {}".format(eval_res, sender_rank))
+            logger.info("[Rank 0]master receiving eval result: {} from rank {}".format(eval_res, sender_rank))
 
-            self.last_tune_result = eval_res    # for context coordination of stage 3
+            # record eval_results for context coordination of stage 3
+            self.last_tune_result = eval_res
             self.eval_results[tag] = eval_res
             
             self.overall_trials += 1
@@ -259,7 +267,7 @@ class TuneStrategy(object):
 
             # if meet accuracy requirement, then update minimum id that met requirement
             if(self.meet_acc_req(eval_res)):
-                logger.info("~~~~~~master has one tuning cfg meet acc: {}".format(tag))
+                logger.info("[Rank 0]master has one tuning cfg meet acc: {}".format(tag))
                 self.met_flag = True
                 self.requirements_met_min_cfg_id = min(self.requirements_met_min_cfg_id, tag)
                 
@@ -267,24 +275,25 @@ class TuneStrategy(object):
                 # because a tune cfg (not acked yet) with lower id can have better acc
                 for i in range(self.requirements_met_min_cfg_id):
                     if i not in self.already_ack_id_lst:
-                        logger.info("~~~~~~master has one tuning cfg meet acc: {} but not collect all acks before"\
+                        logger.info("[Rank 0]master has one tuning cfg meet acc: {} but not collect all acks before"\
                                     .format(tag))
-                        self.met_flag = False   # not completely collected yet!
+                        # not completely collected yet!
+                        self.met_flag = False
                         break
                 
                 if self.met_flag:
                     # found the best tune cfg!
-                    logger.info("~~~~~~master has one tuning cfg meet acc: {} and also collect all acks before"\
+                    logger.info("[Rank 0]master has one tuning cfg meet acc: {} and also collect all acks before"\
                                 .format(tag))
                     self.best_tune_cfg_id = self.requirements_met_min_cfg_id
             else:
                 # get the current best acc but not meet requirements
-                logger.info("~~~~~~master gets the current best acc: {} but not meet requirements".format(tag))
+                logger.info("[Rank 0]master gets the current best acc: {} but not meet requirements".format(tag))
                 self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(self.tune_cfg_lst[tag])
 
             if self.best_tune_cfg_id is not None:
-                #### we find the best tune cfg id that meet requirements!!
-                logger.info("~~~~~~master finds best tune cfg id~~~~~~~")
+                # we find the best tune cfg id that meet requirements!
+                logger.info("[Rank 0]master finds best tune cfg id.")
                 logger.info(self.best_tune_cfg_id)
                 logger.info(self.tune_cfg_lst[self.best_tune_cfg_id])
                 break
@@ -295,20 +304,21 @@ class TuneStrategy(object):
             # elif time.time() - self.overall_time_start > self.cfg.tuning.exit_policy.timeout:
             #     self.max_time_flag = True
             elif cur_cfg_id < len(self.tune_cfg_lst):
-                logger.info("~~~~~~master sends new tuning cfg {} to rank: {}".format(cur_cfg_id, sender_rank))
+                logger.info("[Rank 0]master sends new tuning cfg {} to rank: {}".format(cur_cfg_id, sender_rank))
                 comm.send(obj=cur_cfg_id, dest=sender_rank, tag=cur_cfg_id)
                 cur_cfg_id += 1
             else:                    
-                logger.info("All tune configs are sent, no more sending, just collecting...")
+                logger.info("[Rank 0]All tune configs are sent, no more sending, just collecting...")
 
-            if len(self.tune_cfg_lst) == self.num_acks:    # all collected (ack should collected == acks)
+            # all collected (ack should collected == acks)
+            if len(self.tune_cfg_lst) == self.num_acks:
                 # all processes ended
                 # return self.requirements_met_min_cfg_id  if it has been updated
                 if self.requirements_met_min_cfg_id == sys.maxsize:
-                    logger.info("~~~~~~Not found any tune cfg that meet requirements~~~~~~")
+                    logger.info("[Rank 0]Not found any tune cfg that meet requirements")
                     self.cur_best_tuning_cfg = self.tune_cfg_lst[0] # TODO select cur_best_tuning_cfg
                 else:
-                    logger.info("~~~~~~Find best tune cfg id~~~~~~")
+                    logger.info("[Rank 0]Find best tune cfg id")
                     logger.info(self.requirements_met_min_cfg_id)
                     self.met_flag = True
                     self.best_tune_cfg_id = self.requirements_met_min_cfg_id
@@ -316,9 +326,9 @@ class TuneStrategy(object):
                 break
 
         # send END signal to all other slaves
-        logger.info("~~~~~~master sends END signal to all other slaves~~~~")
+        logger.info("[Rank 0]master sends END signal to all other slaves")
         for process_id in range(1, size):
-            logger.info("~~~~~~master sends END signal to rank: {}".format(process_id))
+            logger.info("[Rank 0]master sends END signal to rank: {}".format(process_id))
             comm.send(
                 obj="MET" if self.met_flag else "NOT MET", # send whether met criterion in the current stage
                 dest=process_id, # rank 0 send to rank 1, 2, ...
@@ -338,7 +348,7 @@ class TuneStrategy(object):
         Then slave node sends back the tune result to master node.
 
         Args:
-            comm (MPI.COMM): The instance of comunication for MPI.
+            comm (MPI.COMM): The instance of communication for MPI.
         """
         MPI = LazyImport("mpi4py.MPI")
         status = MPI.Status()
@@ -350,9 +360,9 @@ class TuneStrategy(object):
                 )
             cfg_idx = status.Get_tag()
             if status.Get_tag() >= len(self.tune_cfg_lst):
-                logger.info("~~~~~~slave {} receiving END signal in the current stage".format(comm.Get_rank()))
+                logger.info("[Rank {}]slave {} receiving END signal in the current stage".format(comm.Get_rank(), comm.Get_rank()))
                 if task == "MET":
-                    logger.info("~~~~~~met criterion in this stage!")
+                    logger.info("[Rank {}]met criterion in this stage!".format(comm.Get_rank()))
                     self.met_flag = True
                 break
             tune_cfg = self.tune_cfg_lst[cfg_idx]
@@ -366,12 +376,12 @@ class TuneStrategy(object):
             self.algo.origin_model = self.adaptor.pre_optimized_model
             if self.cfg.quantization.recipes.fast_bias_correction:
                 self.algo.algorithms[0].quantization_cfg = tune_cfg
-            self.last_qmodel = self.algo()
+            self.last_qmodel = self.algo(location=None)
             assert self.last_qmodel
             self.last_tune_result = self._evaluate(self.last_qmodel)
 
-            ##### send back the tuning statistics #########
-            logger.debug("##### Slave sends back the tuning statistics #########")
+            # send back the tuning statistics
+            logger.debug("[Rank {}]Slave sends back the tuning statistics".format(comm.Get_rank()))
             logger.debug(self.last_tune_result)
             comm.send(
                 obj=self.last_tune_result,
@@ -380,7 +390,7 @@ class TuneStrategy(object):
             )
 
     def distributed_traverse(self):
-        """Disributed traverse the tuning space.
+        """Distributed traverse the tuning space.
 
         The main traverse logic which could be override by some concrete strategy which needs more hooks.
         """
@@ -389,8 +399,10 @@ class TuneStrategy(object):
         rank = comm.Get_rank()
 
         self.met_flag = False
-        self.max_trial_flag = False # whether exceed max trials
-        self.max_time_flag = False # whether exceed max time
+        # whether exceed max trials
+        self.max_trial_flag = False
+        # whether exceed max time
+        self.max_time_flag = False
         self.overall_trials = 0
         self.overall_time_start = time()
 
@@ -480,12 +492,12 @@ class TuneStrategy(object):
             self.tune_cfg = tune_cfg
             now_time = time()
             acc_res_msg = ""
-            performace_res_msg = ""
+            performance_res_msg = ""
             if self.tuning_result_data:
                 acc_res_msg = "[ " + "| ".join(self.tuning_result_data[0]) + " ]"
-                performace_res_msg = "[ " + "| ".join(self.tuning_result_data[1]) + " ]"
+                performance_res_msg = "[ " + "| ".join(self.tuning_result_data[1]) + " ]"
             logger.debug(f"*** The accuracy of last tuning is: {acc_res_msg}")
-            logger.debug(f"*** The perfomance of last tuning is: {performace_res_msg}")
+            logger.debug(f"*** The performance of last tuning is: {performance_res_msg}")
             logger.debug(f"*** The last tuning time: {(now_time - tuning_start_time):.2f} s")
             logger.debug(f"*** The tuning process lasted time: {(now_time - traverse_start_time):.2f} s")
             
