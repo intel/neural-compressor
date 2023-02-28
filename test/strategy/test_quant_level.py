@@ -3,6 +3,7 @@
 import shutil
 import unittest
 import numpy as np
+from copy import deepcopy
 
 from onnx import helper, TensorProto, numpy_helper
 from neural_compressor.data import Datasets, DATALOADERS
@@ -110,6 +111,9 @@ class TestQuantLevel(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.constant_graph = build_fake_model()
+        self.ort_cv_model = build_conv_model()
+        self.ort_cv_dataloader = build_ort_data()
+        self.ort_resnet18 = build_resnet18()
 
     @classmethod
     def tearDownClass(self):
@@ -126,12 +130,10 @@ class TestQuantLevel(unittest.TestCase):
             del acc_lst[0]
             return result       
 
-        cv_model = build_conv_model()
-        cv_dataloader = build_ort_data()
         conf = PostTrainingQuantConfig(approach='static')
         
-        q_model = fit(conf=conf, model=cv_model, \
-            calib_dataloader=cv_dataloader, eval_func=fake_eval)
+        q_model = fit(model=self.ort_cv_model, conf=conf, \
+            calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval)
         node_names = [i.name for i in q_model.nodes()]
         # All conv will be quantized
         for node_name in node_names:
@@ -147,9 +149,8 @@ class TestQuantLevel(unittest.TestCase):
             return result
         
         conf = PostTrainingQuantConfig(approach='static')
-        model = build_resnet18()
-        cv_dataloader = build_ort_data()
-        q_model = fit(model=model, conf=conf, calib_dataloader=cv_dataloader, eval_func=fake_eval)
+        q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
+            calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval)
         node_names = [i.name for i in q_model.nodes()]
         
         for node_name in node_names:
@@ -166,9 +167,8 @@ class TestQuantLevel(unittest.TestCase):
             del acc_lst[0]
             return result
         conf = PostTrainingQuantConfig(approach='static')
-        model = build_resnet18()
-        cv_dataloader = build_ort_data()
-        q_model = fit(model=model, conf=conf, calib_dataloader=cv_dataloader, eval_func=fake_eval3)
+        q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
+            calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval3)
         node_names = [i.name for i in q_model.nodes()]
         
         for node_name in node_names:
@@ -184,9 +184,8 @@ class TestQuantLevel(unittest.TestCase):
             return result
 
         conf = PostTrainingQuantConfig(approach='static')
-        model = build_resnet18()
-        cv_dataloader = build_ort_data()
-        q_model = fit(model=model, conf=conf, calib_dataloader=cv_dataloader, eval_func=fake_eval4)
+        q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
+            calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval4)
         node_names = [i.name for i in q_model.nodes()]
         
         for node_name in node_names:
@@ -198,15 +197,14 @@ class TestQuantLevel(unittest.TestCase):
     def test5_quant_level_auto(self):
         # All matmul and conv will be quantized, return with all int8.
         acc_lst = [1.0, 1.2, 0.8, 1.1]
-        def fake_eval4(model):
+        def fake_eval5(model):
             result = acc_lst[0]
             del acc_lst[0]
             return result
 
         conf = PostTrainingQuantConfig(approach='static')
-        model = build_resnet18()
-        cv_dataloader = build_ort_data()
-        q_model = fit(model=model, conf=conf, calib_dataloader=cv_dataloader, eval_func=fake_eval4)
+        q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
+            calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval5)
         node_names = [i.name for i in q_model.nodes()]
         
         for node_name in node_names:
@@ -218,15 +216,14 @@ class TestQuantLevel(unittest.TestCase):
     def test6_quant_level_auto(self):
         # start with basic
         acc_lst = [1.0, 0.7, 0.8, 0.9, 1.1]
-        def fake_eval4(model):
+        def fake_eval6(model):
             result = acc_lst[0]
             del acc_lst[0]
             return result
 
         conf = PostTrainingQuantConfig(approach='static')
-        model = build_resnet18()
-        cv_dataloader = build_ort_data()
-        q_model = fit(model=model, conf=conf, calib_dataloader=cv_dataloader, eval_func=fake_eval4)
+        q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
+            calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval6)
         node_names = [i.name for i in q_model.nodes()]
         
         for node_name in node_names:
@@ -238,15 +235,14 @@ class TestQuantLevel(unittest.TestCase):
     def test7_quant_level_auto(self):
         # start with basic and return at the 3th of basic stage
         acc_lst = [1.0, 0.7, 0.8, 0.9, 0.95, 0.98, 1.1]
-        def fake_eval4(model):
+        def fake_eval7(model):
             result = acc_lst[0]
             del acc_lst[0]
             return result
 
         conf = PostTrainingQuantConfig(approach='static')
-        model = build_resnet18()
-        cv_dataloader = build_ort_data()
-        q_model = fit(model=model, conf=conf, calib_dataloader=cv_dataloader, eval_func=fake_eval4)
+        q_model = fit(model=deepcopy(self.ort_resnet18), conf=conf, \
+            calib_dataloader=self.ort_cv_dataloader, eval_func=fake_eval7)
         node_names = [i.name for i in q_model.nodes()]
         
         for node_name in node_names:
