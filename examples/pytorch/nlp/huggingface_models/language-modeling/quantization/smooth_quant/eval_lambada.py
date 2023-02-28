@@ -139,17 +139,17 @@ if args.int8:
     from neural_compressor import PostTrainingQuantConfig
     from neural_compressor import quantization
 
-    conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"])
+    conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
+                                   ##recipes={"smooth_quant": True},
+                                   )
     ##conf.performance_only = True
     if args.sq:
         from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
-        # sq = TorchSmoothQuant(model, calib_dataloader)
-        # model = sq.transform(alpha=0.5)
+        sq = TorchSmoothQuant(model, calib_dataloader)
+        model = sq.transform(alpha=args.alpha)
         q_model = quantization.fit(model,
                                    conf,
                                    calib_dataloader=calib_dataloader,
-                                   ##recipes={"smooth_quant": True, "smooth_quant_args":{'alpha':0.5}},
-                                   recipes={"smooth_quant": True},
                                    eval_func=eval_func)
     else:
         q_model = quantization.fit(model,

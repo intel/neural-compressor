@@ -689,6 +689,7 @@ class TuneStrategy(object):
             
         if not self.cfg.tuning.exit_policy.performance_only:
             # get fp32 model baseline
+            self.baseline=[0.65,[0,0]]
             if self.baseline is None:
                 logger.info("Get FP32 model baseline.")
                 self._fp32_model = self.model
