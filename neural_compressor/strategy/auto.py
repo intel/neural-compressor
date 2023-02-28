@@ -46,7 +46,7 @@ class AutoTuneStrategy(TuneStrategy):
         self.eval_func = eval_func
         self.resume = resume
         self.q_hooks = q_hooks
-        self.strategies_sequence = ['fwk','conservative', 'basic']
+        self.strategies_sequence = ['fwkquant','conservative', 'basic']
 
 
     def traverse(self):
@@ -71,8 +71,6 @@ class AutoTuneStrategy(TuneStrategy):
                 strategy.trials_count = pre_strategy.trials_count
                 strategy.objectives.baseline = deepcopy(pre_strategy.baseline)
             pre_strategy = strategy
-            import pdb
-            pdb.set_trace()
             strategy.traverse()
             self.best_qmodel = strategy.best_qmodel
             if self.best_qmodel:

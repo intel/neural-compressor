@@ -87,7 +87,6 @@ class PostTrainingQuant:
             strategy = "auto"
             logger.info(f"Start auto tuning.")
             
-            
         if cfg.quantization.quant_level == 0:
             strategy = "conservative"
             logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
