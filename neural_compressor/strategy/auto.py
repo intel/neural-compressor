@@ -38,6 +38,7 @@ class AutoTuneStrategy(TuneStrategy):
         eval_dataloader=None, eval_func=None, resume=None, q_hooks=None):
         super().__init__(model, conf, q_dataloader, q_func, eval_dataloader,\
             eval_func, resume, q_hooks)
+        logger.info(f"*** Start auto tuning")
         self.model = model
         self.conf = conf
         self.q_dataloader = q_dataloader
@@ -63,7 +64,7 @@ class AutoTuneStrategy(TuneStrategy):
         # Step2. try different strategies sequentially
         pre_strategy = None
         for strategy_name in self.strategies_sequence:
-            logger.info(f"Start {strategy_name} tuning.")
+            logger.info(f"*** Start {strategy_name} tuning.")
             strategy = STRATEGIES[strategy_name](self.model, self.conf, self.q_dataloader, self.q_func, \
                 self.eval_dataloader, self.eval_func, self.resume, self.q_hooks)
             if pre_strategy:
