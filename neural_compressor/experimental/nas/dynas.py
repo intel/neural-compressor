@@ -37,10 +37,6 @@ class DyNAS(NASBase):
     """
 
     def __init__(self, conf_fname_or_obj):
-        # TODO(macsz) Remove `fvcore` dependency
-        # TODO(macsz) Update examples
-
-
         """Initialize the attributes."""
 
         super().__init__()
