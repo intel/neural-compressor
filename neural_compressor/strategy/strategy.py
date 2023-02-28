@@ -948,7 +948,6 @@ class TuneStrategy(object):
             'op': self.capability['opwise']
         }
         self.tuning_space = TuningSpace(adaptor_cap, conf=conf, framework=self.framework)
-        logger.debug(self.tuning_space.root_item.get_details())
 
     def setup_resume(self, resume):
         """Resume the best quantized model from tuning history.
