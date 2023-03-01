@@ -47,20 +47,4 @@ Classes
       :rtype: tune_config (dict)
 
 
-   .. py:method:: traverse()
-
-      Traverse the tuning space.
-
-
-   .. py:method:: stop(trials_count)
-
-      Check whether needed to stop the traverse procedure.
-
-      :param trials_count: current total count of tuning trails.
-      :type trials_count: int
-
-      :returns: whether needed to stop the traverse procedure.
-      :rtype: bool
-
-
 
