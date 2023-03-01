@@ -70,7 +70,7 @@ def build_dynas_fake_yaml():
             search_algorithm: nsga2
         dynas:
             supernet: ofa_resnet50
-            metrics: ['acc', 'macs']
+            metrics: ['accuracy_top1', 'macs']
             results_csv_path: './search_results.csv'
     """
     with open('dynas_fake.yaml', 'w', encoding="utf-8") as f:
