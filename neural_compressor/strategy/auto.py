@@ -62,16 +62,11 @@ class AutoTuneStrategy(TuneStrategy):
         self.eval_func = eval_func
         self.resume = resume
         self.q_hooks = q_hooks
-        self.strategies_sequence = ['fwkquant','conservative', 'basic']
-
-
-    def traverse(self):
-        """Generate and yield the next tuning config.
-
-        Returns:
-            tune_config (dict): A dict containing the tuning configuration for quantization.
-        """
-        pre_strategy = None
+        self.strategies_sequence = ['conservative', 'basic']
+        
+    def sequential_traverse(self):
+        """Try different strategies sequentially."""
+        pre_strategy = self
         for strategy_name in self.strategies_sequence:
             logger.info(f"*** Start {strategy_name} tuning.")
             strategy = STRATEGIES[strategy_name](self.model, self.conf, self.q_dataloader, self.q_func, \
@@ -86,3 +81,26 @@ class AutoTuneStrategy(TuneStrategy):
             self.best_qmodel = strategy.best_qmodel
             if self.best_qmodel:
                 return 
+
+    def next_tune_cfg(self):
+        """Generate and yield the default tuning config.
+
+        Returns:
+            tune_config (dict): A dict containing the tuning configuration for quantization.
+        """
+        tuning_space = self.tuning_space
+        calib_sampling_size_lst = tuning_space.root_item.get_option_by_name('calib_sampling_size').options
+        _, _, op_tuning_cfg = self.initial_tuning_cfg()
+        op_tuning_cfg['calib_sampling_size'] = calib_sampling_size_lst[0]
+        logger.info(f"Quantize the model with default config.")
+        yield op_tuning_cfg
+     
+    def traverse(self):
+        """Traverse the tuning space."""
+        # Quantize model with default config
+        super().traverse()
+        if self.best_qmodel:
+            return
+        else:
+            # Start to try different strategies sequentially
+            self.sequential_traverse()
