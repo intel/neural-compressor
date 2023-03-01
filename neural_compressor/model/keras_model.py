@@ -141,3 +141,13 @@ class KerasModel(BaseModel):
             0, 0, 0])
 
         return df, total_sparsity
+
+    @property
+    def input_node_names(self):
+        """Return input node names."""
+        return []
+
+    @property
+    def output_node_names(self):
+        """Return output node names."""
+        return []
