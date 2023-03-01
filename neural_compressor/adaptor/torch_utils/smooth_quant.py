@@ -272,8 +272,9 @@ class TorchSmoothQuant:
             ##the order could not be changed
             if hasattr(layer, "bias") and (layer.bias != None):
                 layer.bias *= scale
-            scale = scale.view(-1, scale.shape[0], 1, 1)
+            scale = scale.view(scale.shape[0], 1 , 1, 1)
             layer.weight *= scale
+
         elif isinstance(layer, torch.nn.Linear):
             if hasattr(layer, "bias") and (layer.bias != None):
                 layer.bias *= scale
@@ -380,9 +381,9 @@ class TorchSmoothQuant:
                     op_types)  ##TODO we need to insert mul layer for no_absorb_layers later
                 if self.absorb_to_layer == None and no_absorb_layers == None:
                     logger.warning("sorry, could not trace the model, smooth quant is ignored")
-                    logger.warning("if you are using huggingface model, "
-                                   "you could set torchscript to Ture when \
-                                   loading the model or set the retrun_dict to False")
+                    logger.warning("if you are using huggingface model,"
+                                   "you could set torchscript to True "
+                                   "when loading the model or set the return_dict to False")
                     return self.model
 
                 input_maxes = self._calibrate(self.absorb_to_layer, calib_iter)
@@ -456,7 +457,8 @@ class GraphTrace:
         ##TODO, must statisfy af(x)=f(ax),current skip layer may be incomplete
         self.skip_ops_to_find_absorb = ["aten::to",
                                         "aten::relu",
-                                        "aten::leaky_relu"
+                                        "aten::leaky_relu",
+                                        "aten::hardtanh"
                                         ]
 
         self.could_absorb_layers = ["aten::layer_norm", "aten::batch_norm", "aten::linear", "aten::_convolution",
@@ -490,7 +492,6 @@ class GraphTrace:
         nodes = []
         for node in traced_model.graph.nodes():
             node_type = node.kind()
-            ##print(node_type)
             for op_type in op_types:
                 if node_type == op_type:
                     nodes.append((node, op_type))
