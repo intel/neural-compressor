@@ -21,6 +21,7 @@ wget https://github.com/onnx/models/raw/main/vision/object_detection_segmentatio
 
 ## 3. Prepare Dataset
 Download dataset [MS COCO 2017 dataset](https://cocodataset.org/#download).
+The dataset folder should contain 'val2017' and 'annotations' subfolders.
 
 # Run
 
@@ -30,7 +31,7 @@ Quantize model with QLinearOps:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --dataset_location=path/to/coco/val2017 \
+                   --dataset_location=path/to/coco/ \
                    --output_model=path/to/save
 ```
 
@@ -38,7 +39,7 @@ Quantize model with QDQ mode:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --dataset_location=path/to/coco/val2017 \
+                   --dataset_location=path/to/coco/ \
                    --output_model=path/to/save \
                    --quant_format=QDQ
 ```
@@ -48,6 +49,6 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --dataset_location=path/to/coco/val2017 \
+                      --dataset_location=path/to/coco/ \
                       --mode=performance # or accuracy
 ```
