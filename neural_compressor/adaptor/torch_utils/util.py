@@ -336,6 +336,10 @@ def check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                         ipex_op_cfg['input_tensor_infos'] = input_tensor_infos
                         activation_observer = generate_activation_observer(inc_scheme,
                                                                            inc_algorithm)
+                        if inc_scheme == 'sym':
+                            input_tensor_infos[index]['force_dtype'] = 'torch.qint8'
+                        if inc_scheme == 'asym':
+                            input_tensor_infos[index]['force_dtype'] = 'torch.quint8'
                         ipex_op_cfg['activation_observer'] = activation_observer
                     # int8 -> fp32
                     else:
