@@ -39,14 +39,8 @@ class Dataloader:
             tensor = tensor.astype(dtype[idx])
             self.dataset.append(tensor)
 
-        if len(self.dataset) == 1:
-            self.dataset = self.dataset[0]
-        else:
-            self.dataset = [elem for elem in zip(*self.dataset)]
-
     def __iter__(self):
-        for data in self.dataset:
-            yield data, 0
+         yield self.dataset, 0
 
 if __name__ == "__main__":
     logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
@@ -103,8 +97,7 @@ if __name__ == "__main__":
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(quant_format=args.quant_format)
- 
         q_model = quantization.fit(args.model_path, config, calib_dataloader=dataloader,
-			     eval_dataloader=dataloader)
+			     performance_only=True)
 
         q_model.save(args.output_model)
