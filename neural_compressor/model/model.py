@@ -183,8 +183,6 @@ class Model(object):
             if model_type == 'keras':
                 return MODELS['keras'](root, **kwargs)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
-        elif framework == 'pytorch':
-            model = MODELS[framework](root, **kwargs)
         else:
-            model = MODELS[framework](root, **kwargs)
+            model = MODELS[backend](root, **kwargs)
         return model
