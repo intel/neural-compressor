@@ -20,6 +20,7 @@ Subpackages
    export/index.rst
    metric/index.rst
    nas/index.rst
+   pruner_legacy/index.rst
    pruning_recipes/index.rst
    pytorch_pruner/index.rst
 

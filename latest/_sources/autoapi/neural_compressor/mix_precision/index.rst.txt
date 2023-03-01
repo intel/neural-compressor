@@ -12,6 +12,14 @@
 Module Contents
 ---------------
 
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.mix_precision.MixedPrecision
+
+
 
 Functions
 ~~~~~~~~~
@@ -19,6 +27,58 @@ Functions
 .. autoapisummary::
 
    neural_compressor.mix_precision.fit
+
+
+
+.. py:class:: MixedPrecision(conf=None)
+
+   Class used for generating low precision model.
+
+   MixedPrecision class automatically generates low precision model across various DL
+   frameworks including tensorflow, pytorch and onnxruntime.
+
+   .. rubric:: Example
+
+   from neural_compressor.config import MixedPrecisionConfig
+   def eval_func(model):
+       ...
+       return accuracy
+
+   conf = MixedPrecisionConfig()
+   output_model = mix_precision.fit(
+       model,
+       conf,
+       eval_func=eval_func,
+   )
+
+   .. py:property:: precisions
+
+      Get private member variable `precisions` of `MixedPrecision` class.
+
+   .. py:property:: eval_dataloader
+
+      Get eval_dataloader.
+
+   .. py:property:: model
+
+      Get model.
+
+   .. py:property:: metric
+
+      Get metric.
+
+   .. py:property:: eval_func
+
+      Get evaluation function.
+
+   .. py:method:: pre_process()
+
+      Create strategy object for tuning.
+
+
+   .. py:method:: execute()
+
+      Execute routinue based on strategy design.
 
 
 
@@ -30,15 +90,16 @@ Functions
                  to frozen pb, loaded graph_def object or
                  a path to ckpt/savedmodel folder.
                  For PyTorch model, it's torch.nn.model
-                 instance.
+                 instance. For onnx model, it chould be a path
+                 to .onnx file or onnx.onnx_ml_pb2.ModelProto.
                  For MXNet model, it's mxnet.symbol.Symbol
                  or gluon.HybirdBlock instance.
-   :type model: torch.nn.Module
+   :type model: object
    :param config: The path to the YAML configuration file or
                   QuantConf class containing accuracy goal,
                   tuning objective and preferred calibration &
                   quantization tuning space etc.
-   :type config: string or obj
+   :type config: MixedPrecisionConfig
    :param eval_func: The evaluation function provided by user.
                      This function takes model as parameter,
                      and evaluation dataset and metrics should be

@@ -26,7 +26,6 @@ Classes
 
    Bases: :py:obj:`object`
 
-   Entrance of all configured DataLoaders. Will dispatch the DataLoaders to framework
-   specific one. Users will be not aware of the dispatching, and the Interface is unified.
+   Entrance of all configured DataLoaders.
 
 

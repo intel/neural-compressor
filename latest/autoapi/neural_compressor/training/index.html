@@ -93,6 +93,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.training.CompressionManager" title="neural_compressor.training.CompressionManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CompressionManager</span></code></a></p></td>
 <td><p>CompressionManager is uesd in train loop for what user want to deal with additional.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.training.CallBacks" title="neural_compressor.training.CallBacks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CallBacks</span></code></a></p></td>
+<td><p>Define the basic command for the training loop.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -100,23 +103,30 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.training.prepare_compression" title="neural_compressor.training.prepare_compression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_compression</span></code></a>(model, confs, **kwargs)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.training.fit" title="neural_compressor.training.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(compression_manager, train_func[, eval_func, ...])</p></td>
+<td><p>Compress the model with tuning for quantization.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.training.prepare_compression" title="neural_compressor.training.prepare_compression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_compression</span></code></a>(model, confs, **kwargs)</p></td>
 <td><p>Summary.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.training.CompressionManager">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.training.</span></span><span class="sig-name descname"><span class="pre">CompressionManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.training.</span></span><span class="sig-name descname"><span class="pre">CompressionManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager" title="Permalink to this definition"></a></dt>
 <dd><p>CompressionManager is uesd in train loop for what user want to deal with additional.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>commponent</strong> – one instance of Distillation, Quantization, Pruning, Scheduler</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – A model to be compressed. It should be neural compressor model.</p></li>
+<li><p><strong>callbacks</strong> – A list of Callbacks instances.
+Such as: DistillationCallbbacks, AwareTrainingQuantCallbacks, PruningCallbacks.</p></li>
+</ul>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p>import neural_compressor.training.prepare_compression</p>
-<p>compression_manager = prepare_compression(conf, model)
+<p>import neural_compressor.training.prepare_compression
+compression_manager = prepare_compression(nc_model, confs)
 compression_manager.callbacks.on_train_begin()
 model = compression_manager.model
 train_loop:</p>
@@ -139,78 +149,34 @@ compression_manager.callbacks.on_step_end()</p>
 </div></blockquote>
 <p>compression_manager.callbacks.on_train_end()
 compression_manager.save(“path_to_save”)</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CallBacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks" title="Permalink to this definition"></a></dt>
-<dd><p>Define the basic command for the training loop.</p>
-<p class="rubric">Example</p>
-<p>from neural_compressor.training import Pruning, prepare_compression
-from neural_compressor.training import WeightPruningConfig</p>
-<dl class="simple">
-<dt>configs = WeightPruningConfig(</dt><dd><p>pruning_type=args.pruning_type,
-target_sparsity=args.target_sparsity,
-start_step=num_warm,
-end_step=num_iterations</p>
-</dd>
-</dl>
-<p>)
-compression_manager = prepare_compression(model=model, confs=configs)
-compression_manager.callbacks.on_train_begin()
-model = compression_manager.model</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks.on_train_begin">
-<span class="sig-name descname"><span class="pre">on_train_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks.on_train_begin" title="Permalink to this definition"></a></dt>
-<dd><p>Called before the beginning of epochs.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.train_func">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train_func</span></span><a class="headerlink" href="#neural_compressor.training.CompressionManager.train_func" title="Permalink to this definition"></a></dt>
+<dd><p>Not support get train_func.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.eval_func">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_func</span></span><a class="headerlink" href="#neural_compressor.training.CompressionManager.eval_func" title="Permalink to this definition"></a></dt>
+<dd><p>Not support get eval_func.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.eval_dataloader">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_dataloader</span></span><a class="headerlink" href="#neural_compressor.training.CompressionManager.eval_dataloader" title="Permalink to this definition"></a></dt>
+<dd><p>Getter to eval dataloader.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.metric">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metric</span></span><a class="headerlink" href="#neural_compressor.training.CompressionManager.metric" title="Permalink to this definition"></a></dt>
+<dd><p>Get <cite>metric</cite> attribute.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks.on_train_end">
-<span class="sig-name descname"><span class="pre">on_train_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks.on_train_end" title="Permalink to this definition"></a></dt>
-<dd><p>Called after the end of epochs.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks.on_epoch_begin">
-<span class="sig-name descname"><span class="pre">on_epoch_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks.on_epoch_begin" title="Permalink to this definition"></a></dt>
-<dd><p>Called on the beginning of epochs.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks.on_step_begin">
-<span class="sig-name descname"><span class="pre">on_step_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks.on_step_begin" title="Permalink to this definition"></a></dt>
-<dd><p>Called on the beginning of batches.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks.on_after_compute_loss">
-<span class="sig-name descname"><span class="pre">on_after_compute_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">student_output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">student_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teacher_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks.on_after_compute_loss" title="Permalink to this definition"></a></dt>
-<dd><p>Called on the end of loss computation.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks.on_before_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_before_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks.on_before_optimizer_step" title="Permalink to this definition"></a></dt>
-<dd><p>Called on the end of backward.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks.on_after_optimizer_step">
-<span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks.on_after_optimizer_step" title="Permalink to this definition"></a></dt>
-<dd><p>Called on the end of backward.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks.on_step_end">
-<span class="sig-name descname"><span class="pre">on_step_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks.on_step_end" title="Permalink to this definition"></a></dt>
-<dd><p>Called on the end of batches.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.CallBacks.on_epoch_end">
-<span class="sig-name descname"><span class="pre">on_epoch_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.CallBacks.on_epoch_end" title="Permalink to this definition"></a></dt>
-<dd><p>Called on the end of epochs.</p>
-</dd></dl>
-
+<dt class="sig sig-object py" id="neural_compressor.training.CompressionManager.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CompressionManager.fit" title="Permalink to this definition"></a></dt>
+<dd><p>Compress model with tuning for quantization.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -241,6 +207,53 @@ model = compression_manager.model</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.training.fit">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.training.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compression_manager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.fit" title="Permalink to this definition"></a></dt>
+<dd><p>Compress the model with tuning for quantization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>compression_manager</strong> (<a class="reference internal" href="#neural_compressor.training.CompressionManager" title="neural_compressor.training.CompressionManager"><em>CompressionManager</em></a>) – The Compression manager contains the model and
+callbacks.</p></li>
+<li><p><strong>train_func</strong> (<em>function</em><em>, </em><em>optional</em>) – Training function for quantization aware training. It is optional.
+This function takes “model” as input parameter
+and executes entire inference process. If this
+parameter specified.</p></li>
+<li><p><strong>eval_func</strong> (<em>function</em><em>, </em><em>optional</em>) – <p>The evaluation function provided by user.
+This function takes model as parameter,
+and evaluation dataset and metrics should be
+encapsulated in this function implementation
+and outputs a higher-is-better accuracy scalar
+value.
+The pseudo code should be something like:
+def eval_func(model):</p>
+<blockquote>
+<div><p>input, label = dataloader()
+output = model(input)
+accuracy = metric(output, label)
+return accuracy</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>eval_dataloader</strong> (<em>generator</em><em>, </em><em>optional</em>) – Data loader for evaluation. It is iterable
+and should yield a tuple of (input, label).
+The input could be a object, list, tuple or
+dict, depending on user implementation,
+as well as it can be taken as model input.
+The label should be able to take as input of
+supported metrics. If this parameter is
+not None, user needs to specify pre-defined
+evaluation metrics object and should set “eval_func” paramter as None.
+Tuner will combine model, eval_dataloader
+and pre-defined metrics to run evaluation
+process.</p></li>
+<li><p><strong>eval_metric</strong> (<em>dict</em><em> or </em><em>obj</em>) – Set metric class or a dict of built-in metric configures,
+and neural_compressor will initialize this class when evaluation.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.training.prepare_compression">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.training.</span></span><span class="sig-name descname"><span class="pre">prepare_compression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.prepare_compression" title="Permalink to this definition"></a></dt>
 <dd><p>Summary.</p>
@@ -249,7 +262,9 @@ model = compression_manager.model</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>Callable</em><em>, </em><em>optional</em>) – The model to optimize.</p></li>
 <li><p><strong>confs</strong> (<em>Union</em><em>[</em><em>Callable</em><em>, </em><em>List</em><em>]</em>) – Config of Distillation, Quantization, Pruning,
-or list of config for orchestration optimization</p></li>
+or list of config for orchestration optimization.
+The config class is QuantizationAwareTrainingConfig,
+PruningConfig, distillationConfig.</p></li>
 <li><p><strong>options</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.Options" title="neural_compressor.config.Options"><em>Options</em></a><em>, </em><em>optional</em>) – The configure for random_seed, workspace,
 resume path and tensorboard flag.</p></li>
 </ul>
@@ -281,6 +296,78 @@ compression_manager.on_step_end()</p>
 </div></blockquote>
 <p>compression_manager.on_train_end()</p>
 </div></blockquote>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.training.</span></span><span class="sig-name descname"><span class="pre">CallBacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks" title="Permalink to this definition"></a></dt>
+<dd><p>Define the basic command for the training loop.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_train_begin">
+<span class="sig-name descname"><span class="pre">on_train_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_train_begin" title="Permalink to this definition"></a></dt>
+<dd><p>Be called before the beginning of epochs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_train_end">
+<span class="sig-name descname"><span class="pre">on_train_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_train_end" title="Permalink to this definition"></a></dt>
+<dd><p>Be called after the end of epochs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_epoch_begin">
+<span class="sig-name descname"><span class="pre">on_epoch_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_epoch_begin" title="Permalink to this definition"></a></dt>
+<dd><p>Be called on the beginning of epochs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_step_begin">
+<span class="sig-name descname"><span class="pre">on_step_begin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_step_begin" title="Permalink to this definition"></a></dt>
+<dd><p>Be called on the beginning of batches.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_after_compute_loss">
+<span class="sig-name descname"><span class="pre">on_after_compute_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">student_output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">student_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teacher_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_after_compute_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Be called on the end of loss computation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_before_optimizer_step">
+<span class="sig-name descname"><span class="pre">on_before_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_before_optimizer_step" title="Permalink to this definition"></a></dt>
+<dd><p>Be called before optimizer step.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_after_optimizer_step">
+<span class="sig-name descname"><span class="pre">on_after_optimizer_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_after_optimizer_step" title="Permalink to this definition"></a></dt>
+<dd><p>Be called after optimizer step.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_before_eval">
+<span class="sig-name descname"><span class="pre">on_before_eval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_before_eval" title="Permalink to this definition"></a></dt>
+<dd><p>Be called before evaluation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_after_eval">
+<span class="sig-name descname"><span class="pre">on_after_eval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_after_eval" title="Permalink to this definition"></a></dt>
+<dd><p>Be called after evaluation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_step_end">
+<span class="sig-name descname"><span class="pre">on_step_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_step_end" title="Permalink to this definition"></a></dt>
+<dd><p>Be called on the end of batches.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.training.CallBacks.on_epoch_end">
+<span class="sig-name descname"><span class="pre">on_epoch_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.training.CallBacks.on_epoch_end" title="Permalink to this definition"></a></dt>
+<dd><p>Be called on the end of epochs.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>

@@ -163,8 +163,7 @@ Attributes
 
    Bases: :py:obj:`object`
 
-   Entrance of all configured DataLoaders. Will dispatch the DataLoaders to framework
-   specific one. Users will be not aware of the dispatching, and the Interface is unified.
+   Entrance of all configured DataLoaders.
 
 
 .. py:class:: DefaultDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
@@ -412,7 +411,7 @@ Attributes
 
 .. py:class:: ParseDecodeCocoTransform
 
-   Bases: :py:obj:`neural_compressor.experimental.data.transforms.BaseTransform`
+   Bases: :py:obj:`neural_compressor.data.transforms.BaseTransform`
 
    Coco decoding will be performed automatically from Neural Compressor v1.4.
 

@@ -26,54 +26,113 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.benchmark.set_env_var
+   neural_compressor.benchmark.set_all_env_var
+   neural_compressor.benchmark.get_architecture
+   neural_compressor.benchmark.get_threads_per_core
+   neural_compressor.benchmark.get_threads
+   neural_compressor.benchmark.get_physical_ids
+   neural_compressor.benchmark.get_core_ids
+   neural_compressor.benchmark.get_bounded_threads
    neural_compressor.benchmark.fit
 
 
 
-.. py:class:: Benchmark(conf_fname_or_obj)
+.. py:function:: set_env_var(env_var, value, overwrite_existing=False)
+
+   Set the specified environment variable.
+
+   Only set new env in two cases:
+   1. env not exists
+   2. env already exists but overwrite_existing params set True
+
+
+.. py:function:: set_all_env_var(conf, overwrite_existing=False)
+
+   Set all the environment variables with the configuration dict.
+
+   Neural Compressor only uses physical cores
+
+
+.. py:function:: get_architecture()
+
+   Get the architecture name of the system.
+
+
+.. py:function:: get_threads_per_core()
+
+   Get the threads per core.
+
+
+.. py:function:: get_threads()
+
+   Get the list of threads.
+
+
+.. py:function:: get_physical_ids()
+
+   Get the list of sockets.
+
+
+.. py:function:: get_core_ids()
+
+   Get the ids list of the cores.
+
+
+.. py:function:: get_bounded_threads(core_ids, threads, sockets)
+
+   Return the threads id list that we will bind instances to.
+
+
+.. py:class:: Benchmark(conf)
 
    Bases: :py:obj:`object`
 
-   Benchmark class measures the model performance with objective settings.
+   Benchmark class can be used to evaluate the model performance.
 
-   :param object: containing accuracy goal, tuning objective
-                  and preferred calibration & quantization tuning space etc.
-   :type object: string or obj
+   With the objective setting, user can get the data of what they configured in yaml.
 
-   .. py:method:: dataloader(dataset, batch_size=1, collate_fn=None, last_batch='rollover', sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+   :param conf: The config.BenchmarkConfig class containing accuracy goal, tuning objective etc.
+   :type conf: obj
 
-      Set dataloader for benchmarking.
+   .. py:property:: results
+
+      Get the results of benchmarking.
+
+   .. py:property:: b_dataloader
+
+      Get the dataloader for the benchmarking.
+
+   .. py:property:: b_func
+
+      Not support getting b_func.
+
+   .. py:property:: model
+
+      Get the model.
+
+   .. py:method:: summary_benchmark()
+
+      Get the summary of the benchmark.
 
 
-   .. py:method:: metric(name, metric_cls, **kwargs)
+   .. py:method:: config_instance()
 
-      Set the metric class and Neural Compressor will initialize this class when evaluation.
-
-      Neural Compressor has many built-in metrics, but users can set specific metrics through
-      this api. The metric class should take the outputs of the model or
-      postprocess (if have) as inputs. Neural Compressor built-in metrics always take
-      (predictions, labels) as inputs for update,
-      and user_metric.metric_cls should be a sub_class of neural_compressor.metric.metric
-      or an user-defined metric object
-
-      :param metric_cls: Should be a sub_class of neural_compressor.metric.BaseMetric,
-                         which takes (predictions, labels) as inputs
-      :type metric_cls: cls
-      :param name: Name for metric. Defaults to 'user_metric'.
-      :type name: str, optional
+      Configure the multi-instance commands and trigger benchmark with sub process.
 
 
-   .. py:method:: postprocess(name, postprocess_cls, **kwargs)
+   .. py:method:: generate_prefix(core_list)
 
-      Set postprocess class and neural_compressor will initialize this class when evaluation.
+      Generate the command prefix with numactl.
 
-      The postprocess function should take the outputs of the model as inputs, and
-      outputs (predictions, labels) as inputs for metric updates.
+      :param core_list: a list of core indexes bound with specific instances
 
-      :param name: Name for postprocess.
-      :type name: str, optional
-      :param postprocess_cls: Should be a sub_class of neural_compressor.data.transforms.postprocess.
-      :type postprocess_cls: cls
+
+   .. py:method:: run_instance()
+
+      Run the instance with the configuration.
+
+      :param runs benchmarking with numactl on specific cores and instances set: by user config and returns model performance
 
 
 

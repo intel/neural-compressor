@@ -86,6 +86,16 @@
 <p>Mix Precision for Neural Compressor.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.mix_precision.MixedPrecision" title="neural_compressor.mix_precision.MixedPrecision"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MixedPrecision</span></code></a></p></td>
+<td><p>Class used for generating low precision model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 <section id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
@@ -95,6 +105,71 @@
 </tr>
 </tbody>
 </table>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.mix_precision.</span></span><span class="sig-name descname"><span class="pre">MixedPrecision</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision" title="Permalink to this definition"></a></dt>
+<dd><p>Class used for generating low precision model.</p>
+<p>MixedPrecision class automatically generates low precision model across various DL
+frameworks including tensorflow, pytorch and onnxruntime.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.config import MixedPrecisionConfig
+def eval_func(model):</p>
+<blockquote>
+<div><p>…
+return accuracy</p>
+</div></blockquote>
+<p>conf = MixedPrecisionConfig()
+output_model = mix_precision.fit(</p>
+<blockquote>
+<div><p>model,
+conf,
+eval_func=eval_func,</p>
+</div></blockquote>
+<p>)</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.precisions">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">precisions</span></span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.precisions" title="Permalink to this definition"></a></dt>
+<dd><p>Get private member variable <cite>precisions</cite> of <cite>MixedPrecision</cite> class.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.eval_dataloader">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_dataloader</span></span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.eval_dataloader" title="Permalink to this definition"></a></dt>
+<dd><p>Get eval_dataloader.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.model" title="Permalink to this definition"></a></dt>
+<dd><p>Get model.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.metric">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metric</span></span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.metric" title="Permalink to this definition"></a></dt>
+<dd><p>Get metric.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.eval_func">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval_func</span></span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.eval_func" title="Permalink to this definition"></a></dt>
+<dd><p>Get evaluation function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.pre_process">
+<span class="sig-name descname"><span class="pre">pre_process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.pre_process" title="Permalink to this definition"></a></dt>
+<dd><p>Create strategy object for tuning.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.mix_precision.MixedPrecision.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.mix_precision.MixedPrecision.execute" title="Permalink to this definition"></a></dt>
+<dd><p>Execute routinue based on strategy design.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.mix_precision.fit">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.mix_precision.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.mix_precision.fit" title="Permalink to this definition"></a></dt>
@@ -102,14 +177,15 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – For Tensorflow model, it could be a path
+<li><p><strong>model</strong> (<em>object</em>) – For Tensorflow model, it could be a path
 to frozen pb, loaded graph_def object or
 a path to ckpt/savedmodel folder.
 For PyTorch model, it’s torch.nn.model
-instance.
+instance. For onnx model, it chould be a path
+to .onnx file or onnx.onnx_ml_pb2.ModelProto.
 For MXNet model, it’s mxnet.symbol.Symbol
 or gluon.HybirdBlock instance.</p></li>
-<li><p><strong>config</strong> (<em>string</em><em> or </em><em>obj</em>) – The path to the YAML configuration file or
+<li><p><strong>config</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.config.MixedPrecisionConfig" title="neural_compressor.config.MixedPrecisionConfig"><em>MixedPrecisionConfig</em></a>) – The path to the YAML configuration file or
 QuantConf class containing accuracy goal,
 tuning objective and preferred calibration &amp;
 quantization tuning space etc.</p></li>

@@ -135,7 +135,7 @@
 <td><p>Tensorflow COCO dataset in tf record format.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.DataLoader" title="neural_compressor.data.DataLoader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DataLoader</span></code></a></p></td>
-<td><p>Entrance of all configured DataLoaders. Will dispatch the DataLoaders to framework</p></td>
+<td><p>Entrance of all configured DataLoaders.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.DefaultDataLoader" title="neural_compressor.data.DefaultDataLoader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DefaultDataLoader</span></code></a></p></td>
 <td><p>DefaultDataLoader for multiple framework backends.</p></td>
@@ -318,8 +318,7 @@ filter (Filter objects, default=None): filter out examples according</p>
 <dt class="sig sig-object py" id="neural_compressor.data.DataLoader">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.</span></span><span class="sig-name descname"><span class="pre">DataLoader</span></span><a class="headerlink" href="#neural_compressor.data.DataLoader" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Entrance of all configured DataLoaders. Will dispatch the DataLoaders to framework
-specific one. Users will be not aware of the dispatching, and the Interface is unified.</p>
+<p>Entrance of all configured DataLoaders.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -601,7 +600,7 @@ otherwise its length should be same with the length of image shape</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.data.ParseDecodeCocoTransform">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.</span></span><span class="sig-name descname"><span class="pre">ParseDecodeCocoTransform</span></span><a class="headerlink" href="#neural_compressor.data.ParseDecodeCocoTransform" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../experimental/data/transforms/index.html#neural_compressor.experimental.data.transforms.BaseTransform" title="neural_compressor.experimental.data.transforms.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.experimental.data.transforms.BaseTransform</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="transforms/index.html#neural_compressor.data.transforms.BaseTransform" title="neural_compressor.data.transforms.BaseTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.data.transforms.BaseTransform</span></code></a></p>
 <p>Coco decoding will be performed automatically from Neural Compressor v1.4.</p>
 </dd></dl>
 

@@ -21,7 +21,7 @@ Classes
 
 .. py:class:: ParseDecodeCocoTransform
 
-   Bases: :py:obj:`neural_compressor.experimental.data.transforms.BaseTransform`
+   Bases: :py:obj:`neural_compressor.data.transforms.BaseTransform`
 
    Coco decoding will be performed automatically from Neural Compressor v1.4.
 
