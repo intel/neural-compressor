@@ -82,6 +82,11 @@ class PostTrainingQuant:
                 " force setting 'tuning.exit_policy.performance_only = True'.".format(performance_only))
 
         strategy = cfg.tuning.strategy.name.lower()
+        
+        if cfg.quant_level == "auto" or cfg.quantization.quant_level == "auto":
+            strategy = "auto"
+            logger.info(f"Start auto tuning.")
+            
         if cfg.quantization.quant_level == 0:
             strategy = "conservative"
             logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")

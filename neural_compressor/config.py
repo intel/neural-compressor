@@ -390,7 +390,7 @@ class _BaseQuantizationConfig:
                  reduce_range=None,
                  example_inputs=None,
                  excluded_precisions=[],
-                 quant_level=1,
+                 quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  use_distributed_tuning=False):
         """Initialize _BaseQuantizationConfig class.
@@ -431,7 +431,8 @@ class _BaseQuantizationConfig:
             reduce_range: whether use 7 bit
             example_inputs: used to trace PyTorch model with torch.jit/torch.fx
             excluded_precisions: precisions to be excluded, support 'bf16'
-            quant_level: support 0 and 1, 0 is conservative strategy, 1 is basic(default) or user-specified strategy
+            quant_level: support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+                         strategy, auto (default) is the combination of 0 and 1.
             accuracy_criterion: accuracy constraint settings
             use_distributed_tuning: whether use distributed tuning or not
         """
@@ -868,7 +869,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
 
         conf = PostTrainingQuantConfig(
-            quant_level=0,  # the quantization level.
+            quant_level="auto",  # the quantization level.
             tuning_criterion=TuningCriterion(
                 timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
                 max_trials=100,  # optional. max tuning times.
@@ -890,7 +891,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  excluded_precisions=[],
-                 quant_level=1,
+                 quant_level="auto",
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
                  use_distributed_tuning=False,
@@ -964,7 +965,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  excluded_precisions=[],
-                 quant_level=1):
+                 quant_level="auto"):
         """Init a QuantizationAwareTrainingConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
