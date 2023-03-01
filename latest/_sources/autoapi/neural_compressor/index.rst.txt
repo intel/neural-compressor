@@ -175,7 +175,7 @@ Functions
       Get teacher_model.
 
 
-.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_list=None, op_name_list=None, reduce_range=None, excluded_precisions=[], quant_level=1, tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, use_distributed_tuning=False)
+.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_list=None, op_name_list=None, reduce_range=None, excluded_precisions=[], quant_level='auto', tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, use_distributed_tuning=False)
 
    Bases: :py:obj:`_BaseQuantizationConfig`
 
@@ -186,7 +186,7 @@ Functions
    from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
 
    conf = PostTrainingQuantConfig(
-       quant_level=0,  # the quantization level.
+       quant_level="auto",  # the quantization level.
        tuning_criterion=TuningCriterion(
            timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
            max_trials=100,  # optional. max tuning times.
@@ -224,7 +224,7 @@ Functions
       Get weight_compression.
 
 
-.. py:class:: QuantizationAwareTrainingConfig(device='cpu', backend='default', inputs=[], outputs=[], op_type_list=None, op_name_list=None, reduce_range=None, excluded_precisions=[], quant_level=1)
+.. py:class:: QuantizationAwareTrainingConfig(device='cpu', backend='default', inputs=[], outputs=[], op_type_list=None, op_name_list=None, reduce_range=None, excluded_precisions=[], quant_level='auto')
 
    Bases: :py:obj:`_BaseQuantizationConfig`
 

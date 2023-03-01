@@ -24,6 +24,7 @@ Submodules
    :titlesonly:
    :maxdepth: 1
 
+   auto/index.rst
    auto_mixed_precision/index.rst
    basic/index.rst
    bayesian/index.rst
