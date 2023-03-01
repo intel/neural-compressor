@@ -19,11 +19,11 @@ Fine-tuning the library models for sequence to sequence.
 # You can also adapt this script on your own sequence to sequence task. Pointers for this are left as comments.
 
 import logging
+import math
 import os
 import sys
 from dataclasses import dataclass, field
 from typing import Optional
-
 import datasets
 import nltk  # Here to have a nice missing dependency error message early on
 import numpy as np
@@ -593,9 +593,22 @@ def main():
         results = trainer.evaluate(
             max_length=max_length, num_beams=num_beams, metric_key_prefix="eval"
         )
-        acc = results["eval_rougeLsum"]
-        logger.info("Finally Eval {}:{}".format("eval_rougeLsum", acc))
-        return acc
+        perplexity = math.exp(results["eval_rougeLsum"])
+        results = {"perplexity":perplexity,"eval_rougeLsum":results["eval_rougeLsum"],\
+                    "eval_samples_per_second":results['eval_samples_per_second']}
+        sum_task_metrics_keys = ["perplexity","eval_rougeLsum"]
+        for key in sum_task_metrics_keys:
+            if key in results.keys():
+                logger.info("Finally Eval {}:{}".format(key, results[key]))
+                if key=="eval_rougeLsum":
+                    eval_rougeLsum = results[key]
+                    break
+        print("Accuracy: %.5f" % eval_rougeLsum)
+        print('Throughput: %.3f samples/sec' % (results["eval_samples_per_second"]))
+        print('Latency: %.3f ms' % (1 * 1000 / results["eval_samples_per_second"]))
+        print('Batch size = %d' % training_args.per_device_eval_batch_size)
+        
+        return eval_rougeLsum
 
     if model_args.tune:
         from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig

@@ -10,7 +10,9 @@ function main {
 
 # init params
 function init_params {
+  batch_size=30
   tuned_checkpoint=saved_results
+
   for var in "$@"
   do
     case $var in
@@ -37,13 +39,14 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    python examples/imagenet_eval.py \
-            --tuned_checkpoint ${tuned_checkpoint} \
-            --data ${dataset_location} \
-            --tune \
-            -a ${input_model} \
-            -b 128 \
-            -j 1
+    python -u scripts/torch/verify.py \
+        --model ${input_model} \
+        --batch-size ${batch_size} \
+        --workers 1 \
+        --no-cuda \
+        --tune \
+        ${dataset_location}
+
 }
 
 main "$@"

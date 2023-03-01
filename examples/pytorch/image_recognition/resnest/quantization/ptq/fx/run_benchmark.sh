@@ -11,8 +11,8 @@ function main {
 # init params
 function init_params {
   iters=100
-  batch_size=16
   tuned_checkpoint=saved_results
+  batch_size=30
   for var in "$@"
   do
     case $var in
@@ -52,33 +52,28 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
-    extra_cmd=''
-
+    python setup.py install
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy"
     elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --performance "
+        mode_cmd=" --iter ${iters} --performance "
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
-    if [ "${topology}" = "pegasus_samsum" ]; then
-        model_name_or_path='lvwerra/pegasus-samsum'
-        extra_cmd='--dataset_name samsum'
-    fi
-
     if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --int8"
+        extra_cmd="--int8 ${dataset_location}"
+    else
+        extra_cmd="${dataset_location}"
     fi
-    echo $extra_cmd
 
-    python -u run_summarization.py \
-        --model_name_or_path ${model_name_or_path} \
-        --do_eval \
-        --predict_with_generate \
-        --per_device_eval_batch_size ${batch_size} \
-        --output_dir ${tuned_checkpoint} \
+    python -u scripts/torch/verify.py \
+        --tuned_checkpoint ${tuned_checkpoint} \
+        --model ${input_model} \
+        --batch-size ${batch_size} \
+        --workers 1 \
+        --no-cuda \
         ${mode_cmd} \
         ${extra_cmd}
 }

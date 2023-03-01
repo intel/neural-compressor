@@ -74,12 +74,11 @@ parser.add_argument('--int8', dest='int8', action='store_true',
                     help='run benchmark for int8')
 parser.set_defaults(preserve_aspect_ratio=True)
 best_prec1 = 0
+args = parser.parse_args()
 
 
 def main():
     global args, best_prec1
-    args = parser.parse_args()
-
     # create model
     print("=> creating model '{}'".format(args.arch))
     if args.pretrained.lower() not in ['false', 'none', 'not', 'no', '0']:
@@ -152,10 +151,7 @@ def main():
                                 weight_decay=args.weight_decay)
 
     model = torch.nn.DataParallel(model)
-
-    if args.evaluate:
-        validate(val_loader, model, criterion, args)
-        return
+    model.eval()
 
     def eval_func(model):
         accu = validate(val_loader, model, criterion, args)
@@ -185,7 +181,7 @@ def main():
             from neural_compressor.config import BenchmarkConfig
             from neural_compressor import benchmark
             b_conf = BenchmarkConfig(warmup=5,
-                                     iteration=args.iter,
+                                     iteration=args.iterations,
                                      cores_per_instance=4,
                                      num_of_instance=1)
             benchmark.fit(new_model, b_conf, b_dataloader=val_loader)
@@ -193,32 +189,15 @@ def main():
             validate(val_loader, new_model, criterion, args)
         return
 
-    for epoch in range(args.start_epoch, args.epochs):
-        adjust_learning_rate(optimizer, epoch)
-
-        # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch)
-
-        # evaluate on validation set
-        prec1 = validate(val_loader, model, criterion, args)
-
-        # remember best prec@1 and save checkpoint
-        is_best = prec1 > best_prec1
-        best_prec1 = max(prec1, best_prec1)
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'arch': args.arch,
-            'state_dict': model.state_dict(),
-            'best_prec1': best_prec1,
-        }, is_best)
-
 
 def train(train_loader, model, criterion, optimizer, epoch):
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
-    losses = AverageMeter()
-    top1 = AverageMeter()
-    top5 = AverageMeter()
+    batch_time = AverageMeter('Time', ':6.3f')
+    data_time = AverageMeter('Data', ':6.3f')
+    losses = AverageMeter('Loss', ':.4e')
+    top1 = AverageMeter('Acc@1', ':6.2f')
+    top5 = AverageMeter('Acc@5', ':6.2f')
+    progress = ProgressMeter(len(train_loader), batch_time, data_time, losses, top1,
+                             top5, prefix="Epoch: [{}]".format(epoch))
 
     # switch to train mode
     model.train()
@@ -252,29 +231,25 @@ def train(train_loader, model, criterion, optimizer, epoch):
         end = time.time()
 
         if i % args.print_freq == 0:
-            print('Epoch: [{0}][{1}/{2}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                  'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                epoch, i, len(train_loader), batch_time=batch_time,
-                data_time=data_time, loss=losses, top1=top1, top5=top5))
+            progress.print(i)
 
 
 def validate(val_loader, model, criterion, args):
+    batch_time = AverageMeter('Time', ':6.3f')
+    losses = AverageMeter('Loss', ':.4e')
+    top1 = AverageMeter('Acc@1', ':6.2f')
+    top5 = AverageMeter('Acc@5', ':6.2f')
+    progress = ProgressMeter(len(val_loader), batch_time, losses, top1, top5,
+                             prefix='Test: ')
+
+    # switch to evaluate mode
+    model.eval()
+
     with torch.no_grad():
-        batch_time = AverageMeter()
-        losses = AverageMeter()
-        top1 = AverageMeter()
-        top5 = AverageMeter()
-
-        # switch to evaluate mode
-        model.eval()
-
         for i, (input, target) in enumerate(val_loader):
             if i >= args.warmup_iterations:
                 start = time.time()
+            
             # compute output
             output = model(input)
             loss = criterion(output, target)
@@ -290,22 +265,16 @@ def validate(val_loader, model, criterion, args):
                 batch_time.update(time.time() - start)
 
             if i % args.print_freq == 0:
-                print('Test: [{0}/{1}]\t'
-                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                      'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                       i, len(val_loader), batch_time=batch_time, loss=losses,
-                       top1=top1, top5=top5))
+                progress.print(i)
 
-            if args.iterations > 0 and i >= args.iterations + args.warmup_iterations - 1:
+            if args.iterations > 0 and i >= (args.iterations + args.warmup_iterations - 1):
                 break
 
         print('Batch size = %d' % args.batch_size)
         print('Accuracy: {top1:.5f} Accuracy@5 {top5:.5f}'
-              .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
+            .format(top1=(top1.avg / 100), top5=(top5.avg / 100)))
 
-        return top1.avg
+    return top1.avg
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
@@ -316,8 +285,9 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
-
-    def __init__(self):
+    def __init__(self, name, fmt=':f'):
+        self.name = name
+        self.fmt = fmt
         self.reset()
 
     def reset(self):
@@ -331,6 +301,27 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
+    def __str__(self):
+        fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
+        return fmtstr.format(**self.__dict__)
+
+
+class ProgressMeter(object):
+    def __init__(self, num_batches, *meters, prefix=""):
+        self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
+        self.meters = meters
+        self.prefix = prefix
+
+    def print(self, batch):
+        entries = [self.prefix + self.batch_fmtstr.format(batch)]
+        entries += [str(meter) for meter in self.meters]
+        print('\t'.join(entries))
+
+    def _get_batch_fmtstr(self, num_batches):
+        num_digits = len(str(num_batches // 1))
+        fmt = '{:' + str(num_digits) + 'd}'
+        return '[' + fmt + '/' + fmt.format(num_batches) + ']'
 
 
 def adjust_learning_rate(optimizer, epoch):

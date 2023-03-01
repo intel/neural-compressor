@@ -442,10 +442,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/peleenet/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
-    <td>*ResNeSt50</td>
+    <td>ResNeSt50</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/resnest/quantization/ptq/eager">eager</a></td>
+    <td><a href="./pytorch/image_recognition/resnest/quantization/ptq/fx">fx</a></td>
   </tr>
   <tr>
     <td>3D-UNet</td>

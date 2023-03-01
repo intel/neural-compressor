@@ -56,19 +56,20 @@ function run_benchmark {
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy"
     elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --iter ${iters} --performance "
+        mode_cmd=" --iterations ${iters} --performance "
     else
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
 
+    extra_cmd=""
     if [[ ${int8} == "true" ]]; then
         extra_cmd="--int8"
     fi
 
-    python -u examples/imagenet_eval.py \
+    python examples/imagenet_eval.py \
         --data ${dataset_location} \
-        --tuned_checkpoint ${tuned_checkpoint} \
+        #--tuned_checkpoint ${tuned_checkpoint} \
         -a ${input_model} \
         -b ${batch_size} \
         -j 1 \
