@@ -22,7 +22,7 @@
       "batch_size": 32
     },
     "resnet50_v1": {
-      "model_src_dir": "image_recognition/resnet50/quantization/ptq",
+      "model_src_dir": "image_recognition/resnet50_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset2/models/tensorflow/resnet50_keras/resnet50",
       "main_script": "main.py",
