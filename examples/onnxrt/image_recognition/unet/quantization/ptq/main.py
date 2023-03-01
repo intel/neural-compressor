@@ -93,7 +93,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    model = onnx.load(args.model_path)
     dataloader = Dataloader()
 
     if args.benchmark and args.mode == 'performance':
@@ -105,7 +104,7 @@ if __name__ == "__main__":
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(quant_format=args.quant_format)
  
-        q_model = quantization.fit(model, config, calib_dataloader=dataloader,
+        q_model = quantization.fit(args.model_path, config, calib_dataloader=dataloader,
 			     eval_dataloader=dataloader)
 
         q_model.save(args.output_model)
