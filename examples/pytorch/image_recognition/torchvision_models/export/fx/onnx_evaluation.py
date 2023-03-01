@@ -167,7 +167,7 @@ class Dataloader:
                 image = image.transpose(2, 0, 1)
             image = np.expand_dims(image, axis=0)
             label = np.expand_dims(label, axis=0)
-            if not batched_label:
+            if batched_label is None:
                 batched_image = image
                 batched_label = label
             else:
