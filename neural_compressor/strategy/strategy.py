@@ -152,7 +152,7 @@ class TuneStrategy(object):
         self.cur_best_acc = self.initial_best_acc() # track the current best accuracy
         self.cur_best_tuning_cfg = {} # track tuning cfg with the current best accuracy
         self.re_quant = False
-
+        self.trials_count = 0
         self.capability = self.adaptor.query_fw_capability(model)
         logger.debug(self.capability)
         self.set_tuning_space(conf)
@@ -575,14 +575,13 @@ class TuneStrategy(object):
         logger.info("use distributed traverse: {}".format(self.cfg.tuning.use_distributed_tuning))
         if self.cfg.tuning.use_distributed_tuning:
             return self.distributed_traverse()
-        trials_count = 0
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
             tuning_start_time = time()
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
-            trials_count += 1
+            self.trials_count += 1
             tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
+            if tuning_history and self.trials_count < self.cfg.tuning.exit_policy.max_trials:
                 self.last_tune_result = tuning_history['last_tune_result']
                 self.best_tune_result = tuning_history['best_tune_result']
                 logger.warn("Find evaluated tuning config, skip.")
@@ -612,7 +611,7 @@ class TuneStrategy(object):
                 return
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
-            need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, trials_count)
+            need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, self.trials_count)
 
             # record the tuning history
             saved_tune_cfg = copy.deepcopy(tune_cfg)
@@ -1390,7 +1389,7 @@ class TuneStrategy(object):
                 else:
                     self.tune_data[name][2] = 'n/a'
 
-        logger.info("Tune {} result is: {}, Best tune result is: {}".format(trials_count,
+        logger.info("Tune {} result is: {}, Best tune result is: {}".format(self.trials_count,
                                                                             last_tune_msg,
                                                                             best_tune_msg))
         output_data = [[info_type,
@@ -1410,7 +1409,7 @@ class TuneStrategy(object):
         self.tuning_result_data = output_data
         Statistics(output_data,
                    header='Tune Result Statistics',
-                   field_names=['Info Type', 'Baseline', 'Tune {} result'.format(trials_count), \
+                   field_names=['Info Type', 'Baseline', 'Tune {} result'.format(self.trials_count), \
                                                                 'Best tune result']).print_stat()
 
 
@@ -1418,7 +1417,7 @@ class TuneStrategy(object):
             need_stop = True
         elif timeout == 0 and self.best_tune_result:
             need_stop = True
-        elif trials_count >= self.cfg.tuning.exit_policy.max_trials:
+        elif self.trials_count >= self.cfg.tuning.exit_policy.max_trials:
             need_stop = True
         else:
             need_stop = False
