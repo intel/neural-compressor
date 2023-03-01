@@ -178,7 +178,7 @@ class Dataloader:
                 batched_image = None
                 batched_label = None
         if (index + 1) % self.batch_size != 0:
-            yield image, label
+            yield batched_image, batched_label
 
 def eval_func(model, dataloader, metric, postprocess):
     metric.reset()
