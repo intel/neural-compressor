@@ -177,7 +177,7 @@ class TestSqLinearOpFuse(unittest.TestCase):
         model = Model()
 
         sq = TorchSmoothQuant(model, self.linear_dl)
-        sq.transform(alpha=0.5,calib_iter=1)
+        sq.transform(alpha=0.5, calib_iter=1)
         assert len(sq.absorb_to_layer) == 1
 
 

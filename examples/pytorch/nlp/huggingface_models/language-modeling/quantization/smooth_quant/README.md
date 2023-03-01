@@ -1,14 +1,21 @@
-This example is to demonstrate the accuracy improvement introduced by smooth quant for int8 models. Lambada train split is used for calibration(unless specified) and lambada validation split is used for evaluation.
+# Introduction
+This example is to demonstrate the accuracy improvement introduced by SmoothQuant[1] for int8 models. Lambada train split is used for calibration(unless specified) and validation  is used for evaluation.
 
-### Get Started
-#### 1 normal quantization
+# 1. Environment
+```shell
+pip3 install torch transformers datasets
+python -m pip install intel_extension_for_pytorch
+
+```
+# Run
+## Basic quantization
 ```shell
 python eval_lambada.py \
   --model_name_or_path bigscience/bloom-560m \
   --int8
 ```
 
-#### 2 Smooth quant
+##  Smooth quant
 
 ```shell
 python eval_lambada.py \
@@ -16,7 +23,7 @@ python eval_lambada.py \
   --int8 \
   --sq
 ```
-### Validated Models
+# Validated Models
 | Models\Acc |  FP32  |    int8     | SQ                |
 |------------|:------:|:-----------:|-------------------|
 | Bloom-560m | 0.6516 | 0.6496(kl)  | 0.6652(kl)        |
@@ -31,7 +38,7 @@ python eval_lambada.py \
 
 
 
-### Reference
+# Reference
 
 
 ```bibtex
