@@ -156,6 +156,11 @@ Classes
       Update initializer.
 
 
+   .. py:method:: get_siblings(node)
+
+      Get siblings nodes.
+
+
    .. py:method:: get_children(node, input_name_to_nodes=None)
 
       Get children nodes.
