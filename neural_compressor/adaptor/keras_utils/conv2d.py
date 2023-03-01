@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import tensorflow as tf
 from tensorflow.keras import activations
 from tensorflow.keras import constraints
@@ -41,16 +42,16 @@ class QConv2D(Conv):
                 activity_regularizer=regularizers.get(activity_regularizer),
                 kernel_constraint=constraints.get(kernel_constraint),
                 bias_constraint=constraints.get(bias_constraint), **kwargs)
-        self.min_value = float(min_value)
-        self.max_value = float(max_value)
+        self.min_value = json.loads(min_value)
+        self.max_value = json.loads(max_value)
 
     def call(self, inputs):
       # add the Q/DQ here
       kernel, _, _ = quantization.quantize(self.kernel, self.min_value,
                                       self.max_value, tf.qint8,
-                                      mode='SCALED',)
+                                      axis=3, mode='SCALED')
       kernel = quantization.dequantize(kernel, self.min_value,
-                                      self.max_value, mode='SCALED',)
+                                      self.max_value, axis=3, mode='SCALED',)
       outputs = tf.keras.backend.conv2d(
           inputs,
           kernel,
