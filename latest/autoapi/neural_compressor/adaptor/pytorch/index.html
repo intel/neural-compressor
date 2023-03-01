@@ -563,7 +563,7 @@ path (string): No used.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.prepare_sub_graph">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prepare_sub_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub_module_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fx_op_cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_qat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.prepare_sub_graph" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prepare_sub_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub_module_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fx_op_cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_qat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.prepare_sub_graph" title="Permalink to this definition"></a></dt>
 <dd><p>Static method to prepare sub modules recursively.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -573,6 +573,8 @@ path (string): No used.</p>
 <li><p><strong>model</strong> (<em>dir</em>) – input model which is PyTorch model.</p></li>
 <li><p><strong>prefix</strong> (<em>string</em>) – prefix of op name</p></li>
 <li><p><strong>is_qat</strong> (<em>bool</em>) – whether it is a qat quantization</p></li>
+<li><p><strong>example_inputs</strong> (<em>tensor / tupe</em><em> of </em><em>tensor</em>) – example inputs</p></li>
+<li><p><strong>custom_config</strong> (<em>dict</em>) – custom non traceable module dict</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -586,7 +588,7 @@ path (string): No used.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.convert_sub_graph">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">convert_sub_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub_module_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.convert_sub_graph" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">convert_sub_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub_module_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorch_FXAdaptor.convert_sub_graph" title="Permalink to this definition"></a></dt>
 <dd><p>Static method to convert sub modules recursively.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -594,6 +596,7 @@ path (string): No used.</p>
 <li><p><strong>sub_module_list</strong> (<em>list</em>) – contains the name of traceable sub modules</p></li>
 <li><p><strong>model</strong> (<em>dir</em>) – input model which is prepared PyTorch model.</p></li>
 <li><p><strong>prefix</strong> (<em>string</em>) – prefix of op name</p></li>
+<li><p><strong>custom_config</strong> (<em>dict</em>) – custom non traceable module dict</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

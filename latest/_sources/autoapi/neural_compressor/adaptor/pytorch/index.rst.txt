@@ -369,7 +369,7 @@ Functions
       :returns: None
 
 
-   .. py:method:: prepare_sub_graph(sub_module_list, fx_op_cfgs, model, prefix, is_qat=False, example_inputs=None)
+   .. py:method:: prepare_sub_graph(sub_module_list, fx_op_cfgs, model, prefix, is_qat=False, example_inputs=None, custom_config=None)
       :staticmethod:
 
       Static method to prepare sub modules recursively.
@@ -384,12 +384,16 @@ Functions
       :type prefix: string
       :param is_qat: whether it is a qat quantization
       :type is_qat: bool
+      :param example_inputs: example inputs
+      :type example_inputs: tensor / tupe of tensor
+      :param custom_config: custom non traceable module dict
+      :type custom_config: dict
 
       :returns: output model which is a prepared PyTorch model.
       :rtype: model (dir)
 
 
-   .. py:method:: convert_sub_graph(sub_module_list, model, prefix)
+   .. py:method:: convert_sub_graph(sub_module_list, model, prefix, custom_config=None)
       :staticmethod:
 
       Static method to convert sub modules recursively.
@@ -400,6 +404,8 @@ Functions
       :type model: dir
       :param prefix: prefix of op name
       :type prefix: string
+      :param custom_config: custom non traceable module dict
+      :type custom_config: dict
 
       :returns: output model which is a converted PyTorch int8 model.
       :rtype: model (dir)
