@@ -161,8 +161,6 @@ class ModelWiseTuningSampler(TuningSampler):
                                                                method_name, method_val):
                         all_exist_flag = False
                         tune_cfg[op_name_type] = self.default_op_config[op_name_type]
-                        logger.debug(f"{op_name_type} dose not support {method_name} for {method_val}, \
-                                     using the default config instead")
                         break
                 if all_exist_flag:
                     config_args = dict(zip(keys, vals))
@@ -261,8 +259,6 @@ class OpTypeWiseTuningSampler(TuningSampler):
                                                                        method_val):
                                 all_exist_flag = False
                                 op_tuning_config = self.default_op_config[op_name_type]
-                                logger.debug(f"{op_name_type} dose not support {method_name} for {method_val}, \
-                                             using the default config instead")
                                 break
                         if all_exist_flag:
                             config_args = dict(zip(op_tuning_items, op_tuning_item_vals))

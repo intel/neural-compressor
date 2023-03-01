@@ -2998,21 +2998,26 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         q_model._model,
                         self.fx_op_cfgs,
                         example_inputs=self.example_inputs,
-                        prepare_custom_config=self.prepare_custom_config_dict)
+                        prepare_custom_config=self.prepare_custom_config_dict
+                    )
                 else:
                     q_model._model = prepare_qat_fx(
                         q_model._model,
                         self.fx_op_cfgs,
-                        prepare_custom_config_dict=self.prepare_custom_config_dict)
+                        prepare_custom_config_dict=self.prepare_custom_config_dict
+                    )
             else:
                 logger.info('Fx trace of the entire model failed. ' + \
                             'We will conduct auto quantization')
-                PyTorch_FXAdaptor.prepare_sub_graph(self.sub_module_list,
-                                                    self.fx_op_cfgs,
-                                                    q_model._model,
-                                                    prefix='',
-                                                    is_qat=True,
-                                                    example_inputs=self.example_inputs)
+                PyTorch_FXAdaptor.prepare_sub_graph(
+                    self.sub_module_list,
+                    self.fx_op_cfgs,
+                    q_model._model,
+                    prefix='',
+                    is_qat=True,
+                    example_inputs=self.example_inputs,
+                    custom_config=self.prepare_custom_config_dict
+                )
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept
             # neural_compressor model and user defined func should accept framework model.
@@ -3031,20 +3036,25 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                         q_model._model,
                         self.fx_op_cfgs,
                         example_inputs=self.example_inputs,
-                        prepare_custom_config=self.prepare_custom_config_dict)
+                        prepare_custom_config=self.prepare_custom_config_dict
+                    )
                 else:
                     q_model._model = prepare_fx(
                         q_model._model,
                         self.fx_op_cfgs,
-                        prepare_custom_config_dict=self.prepare_custom_config_dict)
+                        prepare_custom_config_dict=self.prepare_custom_config_dict
+                    )
             else:
                 logger.info('Fx trace of the entire model failed, ' + \
                             'We will conduct auto quantization')
-                PyTorch_FXAdaptor.prepare_sub_graph(self.sub_module_list,
-                                                    self.fx_op_cfgs,
-                                                    q_model._model,
-                                                    prefix='',
-                                                    example_inputs=self.example_inputs)
+                PyTorch_FXAdaptor.prepare_sub_graph(
+                    self.sub_module_list,
+                    self.fx_op_cfgs,
+                    q_model._model,
+                    prefix='',
+                    example_inputs=self.example_inputs,
+                    custom_config=self.prepare_custom_config_dict
+                )
             if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
                 # For export API
                 hook_list = torch_utils.util._set_input_scale_hook(q_model._model, op_cfgs)
@@ -3052,10 +3062,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                 if q_func is not None:
                     q_func(q_model._model)
                 else:
-                    self.model_calibration(q_model._model,
-                                           dataloader,
-                                           iterations,
-                                           calib_sampling_size=tune_cfg.get('calib_sampling_size', 1))
+                    self.model_calibration(
+                        q_model._model,
+                        dataloader,
+                        iterations,
+                        calib_sampling_size=tune_cfg.get('calib_sampling_size', 1)
+                    )
 
         if self.approach != 'post_training_dynamic_quant':
             # For export API
@@ -3064,17 +3076,25 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         if self.sub_module_list is None:
             if self.version.release >= Version("1.13.0").release:  # pragma: no cover
                 # pylint: disable=E1123
-                q_model._model = convert_fx(q_model._model,
-                                            convert_custom_config=self.convert_custom_config_dict)
+                q_model._model = convert_fx(
+                    q_model._model,
+                    convert_custom_config=self.convert_custom_config_dict
+                )
             else:
                 q_model._model = convert_fx(
-                    q_model._model, convert_custom_config_dict=self.convert_custom_config_dict)
+                    q_model._model, 
+                    convert_custom_config_dict=self.convert_custom_config_dict
+                )
             torch_utils.util.append_attr(q_model._model, tmp_model)
             del tmp_model
             gc.collect()
         else:
-            PyTorch_FXAdaptor.convert_sub_graph(self.sub_module_list, \
-                                                q_model._model, prefix='')
+            PyTorch_FXAdaptor.convert_sub_graph(
+                self.sub_module_list,
+                q_model._model,
+                prefix='',
+                custom_config=self.prepare_custom_config_dict
+            )
 
         if len(self.tune_cfg['bf16_ops_list']) > 0 and \
             self.version.release >= Version("1.11.0").release and self.use_bf16 and \
@@ -3572,7 +3592,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                           model,
                           prefix,
                           is_qat=False,
-                          example_inputs=None):
+                          example_inputs=None,
+                          custom_config=None):
         """Static method to prepare sub modules recursively.
 
         Args:
@@ -3581,6 +3602,8 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             model (dir): input model which is PyTorch model.
             prefix (string): prefix of op name
             is_qat (bool): whether it is a qat quantization
+            example_inputs (tensor / tupe of tensor): example inputs
+            custom_config (dict): custom non traceable module dict
 
         Returns:
             model (dir): output model which is a prepared PyTorch model.
@@ -3591,6 +3614,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         fx_white_list = tqqm.get_default_qconfig_propagation_list()
         for name, module in model.named_children():
             op_name = prefix + '.' + name if prefix != '' else name
+            # skip custom non traceable module in fine-grained FX
+            if custom_config:
+                if ('non_traceable_module_name' in custom_config \
+                  and op_name in custom_config['non_traceable_module_name']) \
+                  or ('non_traceable_module_class' in custom_config \
+                  and isinstance(module, tuple(custom_config['non_traceable_module_class']))):
+                    continue
             if op_name in sub_module_list:
                 # remove prefix in fx_op_cfgs
                 version = get_torch_version()
@@ -3645,13 +3675,14 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                                                     example_inputs=example_inputs)
 
     @staticmethod
-    def convert_sub_graph(sub_module_list, model, prefix):
+    def convert_sub_graph(sub_module_list, model, prefix, custom_config=None):
         """Static method to convert sub modules recursively.
 
         Args:
             sub_module_list (list): contains the name of traceable sub modules
             model (dir): input model which is prepared PyTorch model.
             prefix (string): prefix of op name
+            custom_config (dict): custom non traceable module dict
 
         Returns:
             model (dir): output model which is a converted PyTorch int8 model.
@@ -3659,6 +3690,13 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
         from torch.quantization.quantize_fx import convert_fx
         for name, module in model.named_children():
             op_name = prefix + '.' + name if prefix != '' else name
+            # skip custom non traceable module in fine-grained FX
+            if custom_config:
+                if ('non_traceable_module_name' in custom_config \
+                  and op_name in custom_config['non_traceable_module_name']) \
+                  or ('non_traceable_module_class' in custom_config \
+                  and isinstance(module, tuple(custom_config['non_traceable_module_class']))):
+                    continue
             if op_name in sub_module_list:
                 module_con = convert_fx(module)
                 torch_utils.util.append_attr(module_con, module)
