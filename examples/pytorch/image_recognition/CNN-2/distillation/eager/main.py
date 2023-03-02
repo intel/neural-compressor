@@ -261,7 +261,7 @@ def train(train_loader, model, criterion, optimizer, scheduler, compression_mana
                         loss=losses, top1=top1, scheduler=scheduler))
 
         compression_manager.callbacks.on_epoch_end()
-        best_score = validate(val_loader, model, epoch + 1)
+        best_score = validate(val_loader, model, epoch + 1, accelerator)
         # remember best prec@1 and save checkpoint
         is_best = best_score > best_prec1
         best_prec1 = max(best_score, best_prec1)

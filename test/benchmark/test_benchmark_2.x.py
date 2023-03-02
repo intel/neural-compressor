@@ -1,7 +1,8 @@
 """Tests for neural_compressor benchmark"""
-import psutil
-import unittest
 import os
+import psutil
+import shutil
+import unittest
 import numpy as np
 import tensorflow as tf
 import tempfile
@@ -18,9 +19,9 @@ args = arg_parser.parse_args()
 from neural_compressor.benchmark import fit
 from neural_compressor.config import BenchmarkConfig
 from neural_compressor.data import Datasets
-from neural_compressor.experimental import common
+from neural_compressor.data.dataloaders.dataloader import DataLoader
 dataset = Datasets('tensorflow')['dummy']((100, 32, 32, 1), label=True)
-b_dataloader = common.DataLoader(dataset, batch_size=10)
+b_dataloader = DataLoader(framework="tensorflow", dataset=dataset, batch_size=10)
 conf = BenchmarkConfig(warmup=5, iteration=10, cores_per_instance=4, num_of_instance=2)
 fit(args.input_model, conf, b_dataloader=b_dataloader)
     '''
@@ -34,9 +35,9 @@ from neural_compressor.benchmark import fit
 from neural_compressor.config import BenchmarkConfig
 from neural_compressor.data import Datasets
 dataset = Datasets('tensorflow')['dummy']((100, 32, 32, 1), label=True)
-from neural_compressor.experimental import common
+from neural_compressor.data.dataloaders.dataloader import DataLoader
 conf = BenchmarkConfig(warmup=5, iteration=10, cores_per_instance=4, num_of_instance=2)
-b_dataloader = common.DataLoader(dataset, batch_size=10)
+b_dataloader = DataLoader(framework="tensorflow", dataset=dataset, batch_size=10)
 fit(args.input_model, conf, b_dataloader=b_dataloader)
     '''
 
@@ -66,8 +67,8 @@ def build_benchmark2():
         "from neural_compressor.data import Datasets\n",
         "dataset = Datasets('tensorflow')['dummy']((5, 32, 32, 1), label=True)\n",
 
-        "from neural_compressor.experimental import common\n",
-        "b_dataloader = common.DataLoader(dataset)\n",
+        "from neural_compressor.data.dataloaders.dataloader import DataLoader\n",
+        "b_dataloader = DataLoader(framework='tensorflow', dataset=dataset)\n",
         "fit(args.input_model, b_dataloader=b_dataloader)\n"
     ]
 
@@ -133,6 +134,7 @@ class TestObjective(unittest.TestCase):
             os.remove('fake_data_15.py')
         if os.path.exists('fake_data_25.py'):
             os.remove('fake_data_25.py')
+        shutil.rmtree('nc_workspace', ignore_errors=True)
 
     def test_benchmark(self):
         os.system("python fake.py --input_model={}".format(self.graph_path))

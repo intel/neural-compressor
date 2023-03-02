@@ -151,7 +151,7 @@ options = Options()
 
 class BenchmarkConfig:
     """Config Class for Benchmark.
-    
+
     Example:
         # Run benchmark according to config
         from neural_compressor.benchmark import fit
@@ -388,8 +388,9 @@ class _BaseQuantizationConfig:
                  max_trials=100,
                  performance_only=False,
                  reduce_range=None,
+                 example_inputs=None,
                  excluded_precisions=[],
-                 quant_level=1,
+                 quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  use_distributed_tuning=False):
         """Initialize _BaseQuantizationConfig class.
@@ -428,8 +429,10 @@ class _BaseQuantizationConfig:
             max_trials: max tune times. default value is 100. Combine with timeout field to decide when to exit
             performance_only: whether do evaluation
             reduce_range: whether use 7 bit
+            example_inputs: used to trace PyTorch model with torch.jit/torch.fx
             excluded_precisions: precisions to be excluded, support 'bf16'
-            quant_level: support 0 and 1, 0 is conservative strategy, 1 is basic(default) or user-specified strategy
+            quant_level: support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified 
+                         strategy, auto (default) is the combination of 0 and 1.
             accuracy_criterion: accuracy constraint settings
             use_distributed_tuning: whether use distributed tuning or not
         """
@@ -455,6 +458,7 @@ class _BaseQuantizationConfig:
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
         self.use_distributed_tuning=use_distributed_tuning
+        self._example_inputs = example_inputs
 
     @property
     def domain(self):
@@ -766,6 +770,16 @@ class _BaseQuantizationConfig:
         if check_value('inputs', inputs, str):
             self._inputs = inputs
 
+    @property
+    def example_inputs(self):
+        """Get strategy_kwargs."""
+        return self._example_inputs
+
+    @example_inputs.setter
+    def example_inputs(self, example_inputs):
+        """Set example_inputs."""
+        self._example_inputs = example_inputs
+
 
 class TuningCriterion:
     """Class for Tuning Criterion.
@@ -855,7 +869,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         from neural_compressor.config PostTrainingQuantConfig, TuningCriterion
 
         conf = PostTrainingQuantConfig(
-            quant_level=0,  # the quantization level.
+            quant_level="auto",  # the quantization level.
             tuning_criterion=TuningCriterion(
                 timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
                 max_trials=100,  # optional. max tuning times.
@@ -877,7 +891,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  excluded_precisions=[],
-                 quant_level=1,
+                 quant_level="auto",
                  tuning_criterion=tuning_criterion,
                  accuracy_criterion=accuracy_criterion,
                  use_distributed_tuning=False,
@@ -931,7 +945,7 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
     """Config Class for Quantization Aware Training.
-    
+
     Example:
         from neural_compressor.config import PostTrainingQuantConfig, QuantizationAwareTrainingConfig
 
@@ -951,7 +965,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
                  op_name_list=None,
                  reduce_range=None,
                  excluded_precisions=[],
-                 quant_level=1):
+                 quant_level="auto"):
         """Init a QuantizationAwareTrainingConfig object."""
         super().__init__(inputs=inputs,
                          outputs=outputs,
@@ -975,10 +989,10 @@ pruners = [Pruner()]
 
 class WeightPruningConfig:
     """Similiar to torch optimizer's interface.
-    
+
     Example:
         from neural_compressor.config import WeightPruningConfig
-        
+
         config = WeightPruningConfig(
             local_configs,
             target_sparsity=0.8
@@ -1179,7 +1193,7 @@ class DistillationConfig:
 
 class MixedPrecisionConfig(PostTrainingQuantConfig):
     """Config Class for MixedPrecision.
-    
+
     Example:
         from neural_compressor import mix_precision
         from neural_compressor.config import MixedPrecisionConfig

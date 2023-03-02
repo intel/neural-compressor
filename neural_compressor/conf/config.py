@@ -20,7 +20,6 @@ from schema import Schema, And, Use, Optional, Or, Hook
 from ..adaptor import FRAMEWORKS
 from ..strategy import STRATEGIES
 from ..objective import OBJECTIVES
-from ..pruner.pruner_legacy import PRUNERS
 from ..utils import logger
 from ..version import __version__
 import re
@@ -806,7 +805,6 @@ schema = Schema({
                                                       'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
-                                      'quant_level': 1,
                                       }): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
@@ -900,10 +898,9 @@ schema = Schema({
         Optional('op_wise', default=None): {
             str: ops_schema
         },
-        Optional('quant_level', default=1): And(int, lambda level: level in [0, 1]),
     },
     Optional('use_bf16', default=True): bool,
-    Optional('quant_level', default=1): And(int, lambda level: level in [0, 1]),
+    Optional('quant_level', default="auto"): And(Or(str, int), lambda level: level in ["auto", 0, 1]),
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
@@ -1179,7 +1176,7 @@ quantization_default_schema = Schema({
                                                      'activation': {}},
                                     }): dict,
     Optional('use_bf16', default=False): bool,
-    Optional('quant_level', default=1): int,
+    Optional('quant_level', default="auto"): Or(str, int),
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
@@ -1402,6 +1399,7 @@ class Conf(object):
                 'model.domain': pythonic_config.quantization.domain,
                 'quantization.recipes': pythonic_config.quantization.recipes,
                 'quantization.approach': pythonic_config.quantization.approach,
+                'quantization.example_inputs': pythonic_config.quantization.example_inputs,
                 'quantization.calibration.sampling_size': 
                     pythonic_config.quantization.calibration_sampling_size,
                 'quantization.optype_wise': pythonic_config.quantization.op_type_list,
@@ -1430,7 +1428,7 @@ class Conf(object):
                     if st_key in st_kwargs:
                         st_val =  st_kwargs[st_key]
                         mapping.update({'tuning.strategy.' + st_key: st_val})
-            
+
         if pythonic_config.distillation is not None:
             mapping.update({
                 'distillation.train.criterion': pythonic_config.distillation.criterion,
@@ -1459,7 +1457,6 @@ class Conf(object):
             if pythonic_config.benchmark.outputs != []:
                 mapping.update({'model.outputs': pythonic_config.benchmark.outputs})
             mapping.update({
-                'model.backend': pythonic_config.benchmark.backend,
                 'evaluation.performance.warmup': pythonic_config.benchmark.warmup,
                 'evaluation.performance.iteration': pythonic_config.benchmark.iteration,
                 'evaluation.performance.configs.cores_per_instance':
@@ -1479,6 +1476,16 @@ class Conf(object):
                 'evaluation.accuracy.configs.intra_num_of_threads':
                     pythonic_config.benchmark.intra_num_of_threads,
             })
+            if "model.backend" not in mapping:
+                mapping.update({
+                    'model.backend': pythonic_config.benchmark.backend,
+                })
+            else:
+                if mapping['model.backend'] == 'default' and \
+                        pythonic_config.benchmark.backend != 'default':
+                    mapping.update({
+                        'model.backend': pythonic_config.benchmark.backend,
+                    })
 
         if "model.backend" not in mapping:
             mapping.update({

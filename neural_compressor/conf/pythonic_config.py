@@ -41,7 +41,7 @@ class QuantizationConfig(_BaseQuantizationConfig):
                  performance_only=False,
                  reduce_range=None,
                  use_bf16=True,
-                 quant_level=1,
+                 quant_level="auto",
                  accuracy_criterion=accuracy_criterion,
                  use_distributed_tuning=False):
         excluded_precisions = ["bf16"] if not use_bf16 else []

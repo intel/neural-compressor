@@ -169,7 +169,7 @@ class METRICS(object):
     Attributes:
         metrics: The collection of registered metrics for the specified framework.
     """
-    
+
     def __init__(self, framework: str):
         """Initialize the metrics collection based on the framework name.
 

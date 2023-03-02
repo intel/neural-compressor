@@ -30,7 +30,7 @@ from ..utils.utility import Statistics, GLOBAL_STATE, MODE
 from ..utils.utility import version1_lt_version2, version1_gte_version2, version1_eq_version2
 from ..utils import logger
 from ..conf.dotdict import deep_get
-from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from ..data.dataloaders.base_dataloader import BaseDataLoader
 
 tensorflow = LazyImport('tensorflow')
 spr_base_verions = ('2.11.0202242', '2.11.0202250')
@@ -1148,7 +1148,7 @@ class TensorFlowAdaptor(Adaptor):
     def inspect_activation(self, node_list, graph_def, graph_node_name_mapping, quantization_cfg,
                            dataloader, iteration_list, graph_info):
         """Inspect the activation."""
-        from neural_compressor.experimental.common import Model
+        from neural_compressor.model import Model
         original_graph_node_mapping = {}
         for node in graph_def.node:
             original_graph_node_mapping[node.name] = node

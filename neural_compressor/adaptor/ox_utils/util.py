@@ -180,10 +180,20 @@ def cast_tensor(tensor, dtype): # pragma: no cover
             new_val = float_to_bfloat16(val)
         else:
             raise ValueError('Expect fp16 or bf16 but get {}.'.format(dtype))
-        tensor.float_data[:] = []
-        tensor.int32_data[:] = []
-        tensor.raw_data = new_val.tostring()
-        tensor.data_type = dtype_mapping[dtype]
+        try:
+            new_tensor = helper.make_tensor(
+                    name=tensor.name,
+                    data_type=dtype_mapping[dtype],
+                    dims=numpy_helper.to_array(tensor).shape if \
+                        len(numpy_helper.to_array(tensor).shape) != 0 else [],
+                    vals=new_val if \
+                        len(numpy_helper.to_array(tensor)) != 0 else [numpy_helper.to_array(tensor)])
+            tensor.CopyFrom(new_tensor)
+        except:
+            tensor.float_data[:] = []
+            tensor.int32_data[:] = []
+            tensor.raw_data = new_val.tostring()
+            tensor.data_type = dtype_mapping[dtype]
         return True
     return False
 

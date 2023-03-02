@@ -45,6 +45,9 @@ class ConservativeTuneStrategy(TuneStrategy):
         super().__init__(model, conf, q_dataloader, q_func, eval_dataloader, 
                          eval_func, dicts, q_hooks)
         self.acc_meet_flag = False
+        self.quant_op_type_lst = ['conv', 'matmul', 'linear']
+        res_lst = [None] * len(self.quant_op_type_lst)
+        self.quant_status = {k : v for k, v in zip(self.quant_op_type_lst, res_lst)}
 
     def next_tune_cfg(self):
         """Generate and yield the next tuning config with below order.
@@ -66,6 +69,7 @@ class ConservativeTuneStrategy(TuneStrategy):
         tune_cfg['calib_sampling_size'] = calib_sampling_size
         op_type_priority = self._get_op_type_priority()
         quant_items_pool = self._quant_items_pool(op_type_priority)
+        self.re_quant = True
         logger.info(f"*** Try to convert op into lower precision to improve performance.")
         for dtype, op_items in quant_items_pool.items():
             logger.info(f"*** Start to convert op into {dtype}.")
@@ -77,126 +81,18 @@ class ConservativeTuneStrategy(TuneStrategy):
                     op_config = tuning_space.get_default_config(op_info, quant_mode)
                     tmp_tune_cfg[op_info] = op_config
                 yield tmp_tune_cfg
-                if self.acc_meet_flag:
+                if self.objectives.accuracy_meets():
+                    self.quant_status[op_type] = dtype
                     logger.info(f"*** Convert all {op_type} ops to {dtype} and accuracy still meet the requirements")
                     tune_cfg = deepcopy(tmp_tune_cfg)
                 else:
-                    tmp_tune_cfg = deepcopy(tune_cfg)
+                    # tmp_tune_cfg = deepcopy(tune_cfg)
+                    self.quant_status[op_type] = 'fp32'
                     logger.info(f"*** Convert all {op_type} ops to {dtype} but accuracy not meet the requirements")
-                    logger.info(f"*** Try to convert {op_type} op into {dtype} one by one.")
-                    for item, quant_mode in items_lst:
-                        op_info = item.name
-                        op_config = tuning_space.get_default_config(op_info, quant_mode)
-                        tmp_tune_cfg[op_info] = op_config
-                        yield tmp_tune_cfg
-                        if self.acc_meet_flag:
-                            tune_cfg[op_info] = op_config
-                            logger.info((f"*** Convert one {op_type} op({op_info}) "
-                                         f"into {dtype} and accuracy still meet the requirements"))
-                        else:
-                            tmp_tune_cfg[op_info] = tune_cfg[op_info]
-                            logger.info(f"*** Skip convert {op_info}.")
+                logger.info(f"***Current result {self.quant_status.items()}")
         logger.info(f"*** Ending tuning process due to no quantifiable op left.")
+        self.re_quant = False
 
-    def traverse(self):
-        """Traverse the tuning space."""
-        self._eval_baseline()
-
-        # Start tuning
-        trials_count = 0
-        for op_tuning_cfg in self.next_tune_cfg():
-            tune_cfg = self._tune_cfg_converter(op_tuning_cfg)
-            trials_count += 1
-            tuning_history = self._find_tuning_history(tune_cfg)
-            if tuning_history and trials_count < self.cfg.tuning.exit_policy.max_trials:
-                self.last_tune_result = tuning_history['last_tune_result']
-                self.best_tune_result = tuning_history['best_tune_result']
-                logger.warn("Find evaluated tuning config, skip.")
-                continue
-            logger.debug("Dump current tuning configuration:")
-            logger.debug(tune_cfg)
-            self.tuning_times += 1
-            # set the parameter for pre quantization algos and run
-            self.set_param_for_pre_quantization_algos(self.algo_scheduler, tune_cfg, self.model)
-            self.model = self.algo_scheduler('pre_quantization')
-            # quantize
-            q_model = self.adaptor.quantize(copy.deepcopy(tune_cfg), self.model, self.calib_dataloader, self.q_func)
-            assert self.adaptor.pre_optimized_model
-            # set the parameter for post quantization algos and run
-            self.set_param_for_post_quantization_algos(self.algo_scheduler, tune_cfg, self.adaptor.pre_optimized_model,
-                                                       q_model)
-            self.last_qmodel = self.algo_scheduler('post_quantization')
-            self.last_tune_cfg = copy.deepcopy(tune_cfg)
-            # Remove the reference to model
-            self.algo_scheduler.reset_exec_algorithms()
-            assert self.last_qmodel
-            # Return the last quantized model as a result. if performance only.
-            if self.cfg.tuning.exit_policy.performance_only:
-                self.best_qmodel = self.last_qmodel
-                self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
-                return
-            self.last_tune_cfg = copy.deepcopy(tune_cfg)
-            self.last_tune_result = self._evaluate(self.last_qmodel)
-            self.acc_meet_flag = self.objectives.accuracy_meets()
-            if self.acc_meet_flag:
-                # For the first tuning
-                if not self.best_tune_result:
-                    self.best_tune_result = self.last_tune_result
-                    self.best_qmodel = self.last_qmodel
-                    self.best_tune_result = self.last_tune_result
-                else:
-                    # Update current tuning config and model with best performance
-                    get_better_performance = self._compare_performace(self.last_tune_result, self.best_tune_result)
-                    if get_better_performance:
-                        logger.info(f"*** Update the model with better performance.")
-                        self.best_qmodel = self.last_qmodel
-                        self.best_tune_result = self.last_tune_result
-                    else:
-                        logger.info(f"*** The qmodel was not updated due to not achieving better performance.")
-            # Dump the current state to log
-            self._dump_tuning_state(trials_count, self.last_tune_result, self.best_tune_result, self.baseline)
-            # Judge stop or continue tuning
-            need_stop = self.stop(trials_count)
-            # Record the tuning history
-            saved_tune_cfg = copy.deepcopy(tune_cfg)
-            saved_last_tune_result = copy.deepcopy(self.last_tune_result)
-            self._add_tuning_history(saved_tune_cfg,
-                                    saved_last_tune_result,
-                                    q_config=q_model.q_config)
-            self.tune_result_record.append(copy.deepcopy(self.last_tune_result))
-            self.tune_cfg = tune_cfg
-            self._dump_tuning_process_statistics()
-            if need_stop:
-                if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
-                    logger.debug(f'*** Start to do diagnosis (inspect tensor).')
-                    self._diagnosis()
-                self._recover_best_qmodel_from_tuning_cfg()
-                if self.use_multi_objective and len(self.tune_result_record) > 1 and \
-                    self.best_tune_result is not None:
-                    best_trail, best_result = self.objectives.best_result(self.tune_result_record,
-                                                                          copy.deepcopy(self.baseline))
-                    if best_result != self.best_tune_result:
-                        from neural_compressor.utils.utility import recover
-                        self.best_qmodel = recover(self.model.model, 
-                            os.path.join(self.cfg.tuning.workspace.path, 'history.snapshot'),
-                            best_trail)
-                        self.best_tune_result = best_result
-                    self._dump_tuning_process_statistics()
-                break
-
-    def stop(self, trials_count):
-        """Check whether needed to stop the traverse procedure.
-
-        Args:
-            trials_count (int): current total count of tuning trails.
-
-        Returns:
-            bool: whether needed to stop the traverse procedure.
-        """
-        need_stop = False
-        if trials_count >= self.cfg.tuning.exit_policy.max_trials:
-            need_stop = True
-        return need_stop
             
     def _compare_performace(self, last_tune_result, best_tune_result): # pragma: no cover
         """Compare the tuning result with performance only.
@@ -308,9 +204,9 @@ class ConservativeTuneStrategy(TuneStrategy):
         return op_type_priority
 
     def _sorted_item_by_op_type(self, 
-                                items_lst: List[Tuple[TuningItem, str]], 
+                                items_lst, 
                                 op_type_priority: List[str]) -> OrderedDict[str, List]:
-        """Socring the tuning items according to its op type.
+        """Scoring the tuning items according to its op type.
         
         Args:
             items_lst: The tuning item list. # [(op_item, quant_mode), ... ]
@@ -320,19 +216,18 @@ class ConservativeTuneStrategy(TuneStrategy):
             The tuning items list that sorted according to its op type.
             OrderDict:
                 # op_type: [(TuningItem, quant_mode), ...]
-                conv2d: [(TuningItem, static), (TuningItem, static)] 
+                conv: [(TuningItem, static), (TuningItem, static)] 
                 linear: [(TuningItem, static), (TuningItem, static)]
+                matmul: [(TuningItem, static), (TuningItem, static)]
         """
-        op_type_lst_from_items_lst = list(set([item[0].name[1] for item in items_lst]))
-        # For items whose op type does not exist in the priority list, assign it with lowest priority.
-        sorted_op_type_lst = [op_type for op_type in op_type_priority if op_type in op_type_lst_from_items_lst]
-        sorted_op_type_lst += list(set(op_type_lst_from_items_lst) - set(op_type_priority))
         sorted_items = COrderedDict()
-        for op_type in sorted_op_type_lst:
-            sorted_items[op_type] = []
         for op_item, quant_mode in items_lst:
-            op_type = op_item.name[1]
-            sorted_items[op_type].append((op_item, quant_mode))
+            op_name, op_type = op_item.name
+            for target_op_type in self.quant_op_type_lst:
+                if target_op_type in op_type.lower():
+                    if target_op_type not in sorted_items:
+                        sorted_items[target_op_type] = []
+                    sorted_items[target_op_type].append((op_item, quant_mode))
         return sorted_items
             
     def _initialize_tune_cfg(self):

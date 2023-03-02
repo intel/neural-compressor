@@ -58,6 +58,10 @@ def check_NLP_onnx(model_path, input):
     ort_session.run(None, input_dict)
     return True
 
+# This fake eval_func is used to avoid performance_only setting,
+# which will overwrite the fp32 model
+def eval_func(model):
+    return 1
 
 class DummyNLPDataloader(object):
     def __init__(self, model_name):
@@ -140,6 +144,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 q_model = quantization.fit(
                     model,
                     quant_conf,
+                    eval_func=eval_func,
                     calib_dataloader=self.cv_dataloader if fake_yaml == "static" else None)
 
             int8_onnx_config = Torch2ONNXConfig(
@@ -193,6 +198,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 q_model = quantization.fit(
                     model,
                     quant_conf,
+                    eval_func=eval_func,
                     calib_dataloader=self.cv_dataloader if fake_yaml == "static" else None)
 
             int8_onnx_config = Torch2ONNXConfig(
@@ -248,6 +254,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 q_model = quantization.fit(
                     model,
                     quant_conf,
+                    eval_func=eval_func,
                     calib_dataloader=self.cv_dataloader if fake_yaml == "static" else None)
 
             int8_onnx_config = Torch2ONNXConfig(
@@ -326,6 +333,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 q_model = quantization.fit(
                     model,
                     quant_conf,
+                    eval_func=eval_func,
                     calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None)
 
             int8_onnx_config = Torch2ONNXConfig(
@@ -384,6 +392,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 q_model = quantization.fit(
                     model,
                     quant_conf,
+                    eval_func=eval_func,
                     calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None)
 
             int8_onnx_config = Torch2ONNXConfig(
@@ -444,6 +453,7 @@ class TestPytorch2ONNX(unittest.TestCase):
                 q_model = quantization.fit(
                     model,
                     quant_conf,
+                    eval_func=eval_func,
                     calib_dataloader=self.nlp_dataloader if fake_yaml == "static" else None)
 
             int8_onnx_config = Torch2ONNXConfig(

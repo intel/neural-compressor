@@ -20,7 +20,7 @@
 import os
 from abc import abstractmethod
 from neural_compressor.model.base_model import BaseModel
-from neural_compressor.utils.utility import LazyImport
+from neural_compressor.utils.utility import LazyImport, compute_sparsity
 tf = LazyImport('tensorflow')
 
 class KerasModel(BaseModel):
@@ -78,3 +78,76 @@ class KerasModel(BaseModel):
     def framework(self):
         """Return framework."""
         return 'keras'
+
+    def get_all_weight_names(self):
+        """Get weight names of model.
+
+        Returns:
+            list: weight names list.
+        """
+        names = []
+        for index, layer in enumerate(self.model.layers):
+            if len(layer.weights):
+                names.append(index)
+        return names
+
+    def report_sparsity(self):
+        """Get sparsity of the model.
+
+        Returns:
+            df (DataFrame): DataFrame of sparsity of each weight.
+            total_sparsity (float): total sparsity of model.
+        """
+        import pandas as pd
+        import tensorflow as tf
+        import numpy as np
+        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
+                                   'Std', 'Mean', 'Abs-Mean'])
+        pd.set_option('display.precision', 2)
+        param_dims = [2, 4]
+        params_size = 0
+        sparse_params_size = 0
+        for index, layer in enumerate(self.model.layers):
+            if not len(layer.weights):
+                continue
+            # Extract just the actual parameter's name, which in this context we treat
+            # as its "type"
+            weights = layer.get_weights()[0]
+            if weights.ndim in param_dims:
+                param_size, sparse_param_size, dense_param_size = compute_sparsity(
+                    weights)
+                density = dense_param_size / param_size
+                params_size += param_size
+                sparse_params_size += sparse_param_size
+                df.loc[len(df.index)] = ([
+                    index,
+                    list(weights.shape),
+                    dense_param_size,
+                    sparse_param_size,
+                    (1 - density) * 100,
+                    np.std(weights),
+                    np.mean(weights),
+                    np.mean(np.abs(weights))
+                ])
+
+        total_sparsity = sparse_params_size / params_size * 100
+
+        df.loc[len(df.index)] = ([
+            'Total sparsity:',
+            params_size,
+            "-",
+            int(sparse_params_size),
+            total_sparsity,
+            0, 0, 0])
+
+        return df, total_sparsity
+
+    @property
+    def input_node_names(self):
+        """Return input node names."""
+        return []
+
+    @property
+    def output_node_names(self):
+        """Return output node names."""
+        return []
