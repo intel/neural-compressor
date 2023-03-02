@@ -180,9 +180,9 @@ class Model(object):
                 model_type = kwargs['modelType']
             else:
                 model_type = get_model_type(root)
+            if model_type == 'keras':
+                return MODELS['keras'](root, **kwargs)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
-        elif backend == 'keras':
-            model = MODELS['keras'](root, **kwargs)
         else:
             model = MODELS[backend](root, **kwargs)
         return model
