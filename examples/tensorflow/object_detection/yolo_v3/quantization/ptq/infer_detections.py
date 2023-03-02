@@ -160,16 +160,11 @@ def main(_):
     if FLAGS.tune:
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
-        op_name_list={
-            'detector/yolo-v3/Conv_6/Conv2D': {'activation':  {'dtype': ['fp32']}},
-            'detector/yolo-v3/Conv_14/Conv2D': {'activation':  {'dtype': ['fp32']}},
-            'detector/yolo-v3/Conv_22/Conv2D': {'activation':  {'dtype': ['fp32']}}
-            }
+
         config = PostTrainingQuantConfig(
             inputs=["inputs"],
             outputs=["output_boxes"],
-            calibration_sampling_size=[2],
-            op_name_list=op_name_list)
+            calibration_sampling_size=[2])
         q_model = quantization.fit(model=FLAGS.input_graph, conf=config, 
                                     calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(FLAGS.output_graph)
