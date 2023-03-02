@@ -118,6 +118,18 @@
 <dd><p>Return graph info.</p>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.keras_model.KerasModel.input_node_names">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">input_node_names</span></span><a class="headerlink" href="#neural_compressor.model.keras_model.KerasModel.input_node_names" title="Permalink to this definition"></a></dt>
+<dd><p>Return input node names.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.model.keras_model.KerasModel.output_node_names">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_node_names</span></span><a class="headerlink" href="#neural_compressor.model.keras_model.KerasModel.output_node_names" title="Permalink to this definition"></a></dt>
+<dd><p>Return output node names.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.model.keras_model.KerasModel.save">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.keras_model.KerasModel.save" title="Permalink to this definition"></a></dt>
@@ -128,6 +140,35 @@
 <dt class="sig sig-object py" id="neural_compressor.model.keras_model.KerasModel.framework">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">framework</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.keras_model.KerasModel.framework" title="Permalink to this definition"></a></dt>
 <dd><p>Return framework.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.keras_model.KerasModel.get_all_weight_names">
+<span class="sig-name descname"><span class="pre">get_all_weight_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.keras_model.KerasModel.get_all_weight_names" title="Permalink to this definition"></a></dt>
+<dd><p>Get weight names of model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>weight names list.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neural_compressor.model.keras_model.KerasModel.report_sparsity">
+<span class="sig-name descname"><span class="pre">report_sparsity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.keras_model.KerasModel.report_sparsity" title="Permalink to this definition"></a></dt>
+<dd><p>Get sparsity of the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame of sparsity of each weight.
+total_sparsity (float): total sparsity of model.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>df (DataFrame)</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
