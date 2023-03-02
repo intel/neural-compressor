@@ -119,7 +119,7 @@
     },
     "gpt2_lm_head_wikitext_model_zoo_dynamic": {
       "model_src_dir": "nlp/onnx_model_zoo/gpt2/quantization/ptq_dynamic",
-      "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/",
+      "dataset_location": "/tf_dataset2/datasets/wikitext/wikitext-2-raw/wiki.test.raw",
       "input_model": "/tf_dataset2/models/onnx/gpt2/gpt2_lm_head_wikitext_model_zoo.onnx",
       "main_script": "gpt2.py",
       "batch_size": 1

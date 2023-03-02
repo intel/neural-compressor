@@ -46,6 +46,12 @@ parser.add_argument(
     help="path to dataset"
 )
 parser.add_argument(
+    '--label_path',
+    type=str,
+    default='label_map.yaml',
+    help="Path of label map yaml file"
+)
+parser.add_argument(
     '--benchmark',
     action='store_true', \
     default=False
@@ -92,7 +98,7 @@ if __name__ == "__main__":
     calib_dataset = COCORawDataset(args.data_path, filter=filter)
     eval_dataloader = COCORawDataloader(eval_dataset, batch_size=args.batch_size)
     calib_dataloader = COCORawDataloader(calib_dataset, 1)
-    metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes': 0,
+    metric = COCOmAPv2(anno_path=args.label_path, output_index_mapping={'boxes': 0,
                                                                          'classes': 1,
                                                                          'scores': 2,
                                                                          'num_detections': 3})

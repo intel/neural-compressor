@@ -48,6 +48,12 @@ parser.add_argument(
     help="path to dataset"
 )
 parser.add_argument(
+    '--label_path',
+    type=str,
+    default='label_map.yaml',
+    help="Path of label map yaml file"
+)
+parser.add_argument(
     '--benchmark',
     action='store_true', \
     default=False
@@ -98,7 +104,7 @@ if __name__ == "__main__":
                                   CastTransform(dtype='float32')])
     dataset = COCORawDataset(args.data_path, transform=transform)
     dataloader = COCORawDataloader(dataset, batch_size=args.batch_size)
-    metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes':0, 'scores':2, 'classes':1})
+    metric = COCOmAPv2(anno_path=args.label_path, output_index_mapping={'boxes':0, 'scores':2, 'classes':1})
     postprocess = Post()
 
     def eval_func(model):

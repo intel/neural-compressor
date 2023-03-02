@@ -54,9 +54,8 @@ function define_mode {
 function run_benchmark {
     model_type='gpt2'
     model_name_or_path='gpt2'
-    test_data='wiki.test.raw'
     python gpt2.py --model_path ${input_model} \
-                        --data_path ${dataset_location}${test_data} \
+                        --data_path ${dataset_location} \
                         --model_type ${model_type} \
                         --model_name_or_path ${model_name_or_path} \
                         --per_gpu_eval_batch_size ${batch_size} \

@@ -19,6 +19,9 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
+      --label_path=*)
+          label_path=$(echo $var |cut -f2 -d=)
+      ;;
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
@@ -32,11 +35,15 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
+    if [ ! $label_path ]; then
+        label_path='label_map.yaml'
+    fi
 
     python main.py \
             --model_path ${input_model} \
             --mode ${mode} \
             --data_path ${dataset_location} \
+            --label_path ${label_path} \
             --batch_size ${batch_size} \
             --benchmark
 }

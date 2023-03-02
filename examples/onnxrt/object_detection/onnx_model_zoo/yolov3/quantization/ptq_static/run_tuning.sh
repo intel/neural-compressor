@@ -19,6 +19,9 @@ function init_params {
       --dataset_location=*)
           dataset_location=$(echo $var |cut -f2 -d=)
       ;;
+      --label_path=*)
+          label_path=$(echo $var |cut -f2 -d=)
+      ;;
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
@@ -32,10 +35,15 @@ function init_params {
 
 # run_tuning
 function run_tuning {
+    if [ ! $label_path ]; then
+        label_path='label_map.yaml'
+    fi
+
     python main.py \
             --model_path ${input_model} \
             --output_model ${output_model} \
             --data_path ${dataset_location} \
+            --label_path ${label_path} \
             --quant_format ${quant_format} \
             --tune
 }

@@ -41,6 +41,12 @@ parser.add_argument(
     help="Path of COCO dataset, it contains val2017 and annotations subfolder"
 )
 parser.add_argument(
+    '--label_path',
+    type=str,
+    default='label_map.yaml',
+    help="Path of label map yaml file"
+)
+parser.add_argument(
     '--model_path',
     type=str,
     help="Pre-trained model on onnx file"
@@ -479,7 +485,7 @@ class AccuracyLoss:
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
     dataloader = Dataloader(args.data_path, batch_size=args.batch_size)
-    metric = COCOmAPv2(anno_path="label_map.yaml", output_index_mapping={'boxes':0, 'scores':2, 'classes':1})
+    metric = COCOmAPv2(anno_path=args.label_path, output_index_mapping={'boxes':0, 'scores':2, 'classes':1})
     postprocess = Post()
 
     def eval_func(model):
