@@ -30,6 +30,14 @@ wget https://github.com/onnx/models/raw/main/text/machine_comprehension/bert-squ
 ## 3. Prepare Dataset
 Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
 
+Dataset directories:
+
+```bash
+squad
+├── dev-v1.1.json
+└── train-v1.1.json
+```
+
 # Run
 
 ## 1. Quantization
@@ -39,14 +47,14 @@ Dynamic quantization:
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
-                   --dataset_location=/path/to/SQuAD/dataset 
+                   --dataset_location=/path/to/squad 
 ```
 
 ## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=/path/to/model \ # model path as *.onnx
-                      --dataset_location=/path/to/SQuAD/dataset \
+                      --dataset_location=/path/to/squad \
                       --batch_size=batch_size \ 
                       --mode=performance # or accuracy
 ```

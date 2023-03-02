@@ -32,6 +32,14 @@ python -m tf2onnx.convert --opset 11 --tflite mobilebert_float_384_20200602.tfli
 ## 3. Prepare Dataset
 Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
 
+Dataset directories:
+
+```bash
+squad
+├── dev-v1.1.json
+└── train-v1.1.json
+```
+
 # Run
 
 ## 1. Quantization
@@ -41,7 +49,7 @@ Static quantization with QDQ format:
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
                    --output_model=/path/to/model_tune \
-                   --dataset_location=/path/to/SQuAD/dataset \
+                   --dataset_location=/path/to/squad \
                    --quant_format='QDQ'
 ```
 
@@ -49,7 +57,7 @@ bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
-                   --dataset_location=/path/to/SQuAD/dataset \
+                   --dataset_location=/path/to/squad \
                    --batch_size=batch_size \
                    --mode=performance # or accuracy
 ```

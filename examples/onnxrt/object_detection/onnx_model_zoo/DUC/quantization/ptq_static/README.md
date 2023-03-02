@@ -21,7 +21,17 @@ wget https://github.com/onnx/models/raw/main/vision/object_detection_segmentatio
 ```
 
 ## 3. Prepare Dataset
-Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
+Download dataset [cityscapes dataset](https://www.cityscapes-dataset.com/downloads/).
+
+Dataset directories:
+
+```bash
+cityscapes
+├── gtFine
+|   └── val
+├── leftImg8bit
+|   └── val
+```
 
 # Run
 
@@ -31,8 +41,8 @@ Static quantization with QOperator format:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
-                   --dataset_location=/path/to/leftImg8bit/val \
-                   --output_model=path/to/save \
+                   --output_model=path/to/save \ # model path as *.onnx
+                   --dataset_location=/path/to/cityscapes/leftImg8bit/val \
                    --quant_format="QOperator"
 ```
 
@@ -40,6 +50,6 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
-                      --dataset_location=/path/to/leftImg8bit/val \
+                      --dataset_location=/path/to/cityscapes/leftImg8bit/val \
                       --mode=performance
 ```

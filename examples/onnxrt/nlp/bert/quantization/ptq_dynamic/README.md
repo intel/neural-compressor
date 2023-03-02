@@ -17,7 +17,7 @@ pip install -r requirements.txt
 
 download the GLUE data with `prepare_data.sh` script.
 ```shell
-export GLUE_DIR=/path/to/glue_data
+export GLUE_DIR=path/to/glue_data
 export TASK_NAME=MRPC
 
 bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
@@ -45,15 +45,15 @@ Dynamic quantization:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx
-                   --output_model=path/to/model_tune \
-                   --dataset_location=path/to/glue/data 
+                   --output_model=path/to/model_tune \ # model path as *.onnx
+                   --dataset_location=path/to/glue_data 
 ```
 
 ## 2. Benchmark
 
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \ # model path as *.onnx
-                      --dataset_location=path/to/glue/data \
+                      --dataset_location=path/to/glue_data \
                       --batch_size=batch_size \
                       --mode=performance # or accuracy
 ```

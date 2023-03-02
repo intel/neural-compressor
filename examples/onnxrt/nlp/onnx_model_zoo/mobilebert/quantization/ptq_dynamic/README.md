@@ -32,6 +32,14 @@ python -m tf2onnx.convert --opset 11 --tflite mobilebert_float_384_20200602.tfli
 ## 3. Prepare Dataset
 Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQuAD-explorer/).
 
+Dataset directories:
+
+```bash
+squad
+├── dev-v1.1.json
+└── train-v1.1.json
+```
+
 # Run
 
 ## 1. Quantization

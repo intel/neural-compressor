@@ -24,6 +24,15 @@ python export.py
 ## 3. Prepare Dataset
 Please download [WikiText-2 dataset](https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-raw-v1.zip).
 
+Dataset directories:
+
+```bash
+wikitext-2-raw
+├── wiki.test.raw
+├── wiki.train.raw
+└── wiki.valid.raw
+```
+
 # Run
 
 ## 1. Quantization
@@ -31,15 +40,15 @@ Please download [WikiText-2 dataset](https://s3.amazonaws.com/research.metamind.
 Dynamic quantization:
 
 ```bash
-bash run_tuning.sh --dataset_location=/path/to/wikitext-2-raw/ \ 
+bash run_tuning.sh --dataset_location=/path/to/wikitext-2-raw/wiki.test.raw \ 
                    --input_model=path/to/model \ # model path as *.onnx
-                   --output_model=path/to/model_tune
+                   --output_model=path/to/model_tune # model path as *.onnx
 ```
 
 ## 2. Benchmark
 
 ```bash
-bash run_benchmark.sh --dataset_location=/path/to/wikitext-2-raw/ \ 
+bash run_benchmark.sh --dataset_location=/path/to/wikitext-2-raw/wiki.test.raw \ 
                       --input_model=path/to/model \ # model path as *.onnx
                       --batch_size=batch_size \
                       --mode=performance # or accuracy
