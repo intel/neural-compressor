@@ -573,6 +573,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-to-image/quantization">fx</a></td>
   </tr>
+  <tr>
+    <td>Bloom</td>
+    <td>Language models</td>
+    <td>Natural Language Processing</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex_smooth_quant">ipex</a></td>
+  </tr>
+  <tr>
+    <td>OPT</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex_smooth_quant">ipex</a></td>
+  </tr>
 </tbody>
 </table>
 

@@ -4,7 +4,7 @@ from tqdm import tqdm
 import sys
 import argparse
 
-sys.path.append('./')
+sys.path.append('/')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--int8', action='store_true', default=False, help="eval fp32 model or int8 model")
