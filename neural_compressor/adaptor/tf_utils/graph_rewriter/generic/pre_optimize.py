@@ -104,7 +104,7 @@ class PreOptimization():
         Returns:
             [graphdef]: the optimized graphdef object.
         """
-        from neural_compressor.experimental.common import Model
+        from neural_compressor.model import Model
 
         origin_model = Model(self.model._model, **self.model.kwargs)
         origin_model.name = self.model.name

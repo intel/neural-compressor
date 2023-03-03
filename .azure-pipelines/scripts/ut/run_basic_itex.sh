@@ -5,6 +5,8 @@ echo "run basic itex"
 echo "specify fwk version..."
 export itex_version='1.1.0'
 export tensorflow_version='2.11.0-official'
+export onnx_version='1.13.0'
+export onnxruntime_version='1.13.1'
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh

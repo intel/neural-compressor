@@ -921,6 +921,42 @@ class TensorflowBaseModel(BaseModel):
         f.write(self.graph_def.SerializeToString())
         logger.info("Save quantized model to {}.".format(pb_file))
 
+    def export(self, save_path, conf):
+        """Export the Tensorflow fp32/int8 model to ONNX fp32/int8 model."""
+        from neural_compressor.config import TF2ONNXConfig
+
+        if isinstance(conf, TF2ONNXConfig):
+            if conf.quant_format == 'QDQ' and conf.opset_version < 13:   # pragma: no cover
+                conf.opset_version = 13
+                logger.warning("QDQ format requires opset_version >= 13, " +
+                                "we reset opset_version={} here".format(conf.opset_version))
+
+            from neural_compressor.experimental.export import tf_to_fp32_onnx, tf_to_int8_onnx
+            inputs_as_nchw = conf.kwargs.get("inputs_as_nchw", None)
+            if conf.dtype == 'int8':
+                tf_to_int8_onnx(
+                    self.graph_def,
+                    save_path,
+                    opset_version=conf.opset_version,
+                    input_names=conf.input_names if conf.input_names else self.input_tensor_names,
+                    output_names=conf.output_names if conf.output_names else self.output_tensor_names,
+                    inputs_as_nchw=inputs_as_nchw
+                )
+            elif conf.dtype == 'fp32':
+                tf_to_fp32_onnx(
+                    self.graph_def,
+                    save_path,
+                    opset_version=conf.opset_version,
+                    input_names=conf.input_names if conf.input_names else self.input_tensor_names,
+                    output_names=conf.output_names if conf.output_names else self.output_tensor_names,
+                    inputs_as_nchw=inputs_as_nchw
+                )
+            else:   # pragma: no cover
+                assert False, "Not allowed dtype: {}, pleas use 'fp32' or 'int8'.".format(conf.dtype)
+        else:
+            logger.warning("Unsupported config for export, only TF2ONNXConfig is supported!")
+            exit(0)
+
 
 class TensorflowSavedModelModel(TensorflowBaseModel):
     """Build Tensorflow saved model."""
@@ -1088,7 +1124,7 @@ class TensorflowQATModel(TensorflowSavedModelModel):
                 self.keras_model = self._model
             else:
                 self.keras_model = tf.keras.models.load_model(self._model)
-                
+
         return self.keras_model
 
     @model.setter

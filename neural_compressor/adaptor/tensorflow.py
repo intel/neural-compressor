@@ -30,7 +30,7 @@ from ..utils.utility import Statistics, GLOBAL_STATE, MODE
 from ..utils.utility import version1_lt_version2, version1_gte_version2, version1_eq_version2
 from ..utils import logger
 from ..conf.dotdict import deep_get
-from ..experimental.data.dataloaders.base_dataloader import BaseDataLoader
+from ..data.dataloaders.base_dataloader import BaseDataLoader
 
 tensorflow = LazyImport('tensorflow')
 spr_base_verions = ('2.11.0202242', '2.11.0202250')
@@ -732,6 +732,7 @@ class TensorFlowAdaptor(Adaptor):
         other_config = copy.deepcopy(op_capability['default'])
 
         self.quantizable_op_details = OrderedDict()
+        self.recipes_ops = {}
 
         self._init_op_stat = {i: [] for i in tf_quantizable_op_type}
 
@@ -747,8 +748,16 @@ class TensorFlowAdaptor(Adaptor):
                 'sequence': [[','.join(patterns[:pat_length - i]) for i in range(pat_length)][0]],
                 'precision': ['int8']
             }
+            first_conv_or_matmul_node = []
             if node_op in tf_quantizable_op_type and node_name not in self.exclude_node_names and (
                 node_name, self.unify_op_type_mapping[node_op]) not in self.quantizable_op_details:
+                if (self.unify_op_type_mapping[node_op].find("conv2d") != -1 or \
+                    self.unify_op_type_mapping[node_op].find("matmul") != -1) and \
+                        len(first_conv_or_matmul_node) == 0:
+                            first_conv_or_matmul_node.append((node_name, \
+                                self.unify_op_type_mapping[node_op]))
+                            self.recipes_ops['first_conv_or_matmul_quantization'] = \
+                                first_conv_or_matmul_node
                 if exclude_first_quantizable_op and \
                     (self.unify_op_type_mapping[node_op].find("conv2d") != -1 or \
                     self.unify_op_type_mapping[node_op].find("matmul") != -1):
@@ -903,6 +912,7 @@ class TensorFlowAdaptor(Adaptor):
         self._query_bf16_ops(matched_bf16_nodes)
         capability = {
             'optypewise': self.get_optype_wise_ability(),
+            'recipes_ops': self.recipes_ops
         }
         capability['opwise'] = copy.deepcopy(self.quantizable_op_details)
         capability['opwise'].update(self.bf16_op_details)
@@ -1138,7 +1148,7 @@ class TensorFlowAdaptor(Adaptor):
     def inspect_activation(self, node_list, graph_def, graph_node_name_mapping, quantization_cfg,
                            dataloader, iteration_list, graph_info):
         """Inspect the activation."""
-        from neural_compressor.experimental.common import Model
+        from neural_compressor.model import Model
         original_graph_node_mapping = {}
         for node in graph_def.node:
             original_graph_node_mapping[node.name] = node

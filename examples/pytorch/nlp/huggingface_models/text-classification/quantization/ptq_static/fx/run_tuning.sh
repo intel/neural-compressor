@@ -40,46 +40,15 @@ function run_tuning {
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
-    model_type='bert'
-    TASK_NAME='mrpc'
-    model_name_or_path=${input_model}
-    if [ "${topology}" = "bert_base_MRPC" ];then
-        TASK_NAME='mrpc'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_base_CoLA" ]; then
-        TASK_NAME='cola'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_base_STS-B" ]; then
-        TASK_NAME='stsb'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_base_SST-2" ]; then
-        TASK_NAME='sst2'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_base_RTE" ]; then
+    
+    if [ "${topology}" = "bert_large_RTE" ]; then
         TASK_NAME='rte'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_large_MRPC" ]; then
+    elif [ "${topology}" = "xlm-roberta-base_MRPC" ]; then
         TASK_NAME='mrpc'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_large_QNLI" ]; then
-        TASK_NAME='qnli'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_large_RTE" ]; then
-        TASK_NAME='rte'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "bert_large_CoLA" ]; then
-        TASK_NAME='cola'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "funnel_MRPC_fx" ]; then
-        TASK_NAME='mrpc'
-        model_name_or_path=${input_model}
-    elif [ "${topology}" = "distilbert_base_MRPC_fx" ]; then
-        TASK_NAME='mrpc'
-        model_name_or_path=${input_model}
     fi
 
     python -u ./run_glue.py \
-        --model_name_or_path ${model_name_or_path} \
+        --model_name_or_path ${input_model} \
         --task_name ${TASK_NAME} \
         --do_eval \
         --do_train \
@@ -88,7 +57,6 @@ function run_tuning {
         --no_cuda \
         --output_dir ${tuned_checkpoint} \
         --tune \
-        --onnx \
         --overwrite_output_dir \
         ${extra_cmd}
 }

@@ -129,13 +129,13 @@ class TestKerasInKerasOut(unittest.TestCase):
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor.utils.utility import set_random_seed
-        from neural_compressor.experimental import common
+        from neural_compressor.data.dataloaders.dataloader import DataLoader
         set_random_seed(9527)
         config = PostTrainingQuantConfig(backend='itex')
         logger.info("=================Run Quantization...")
         q_model = fit(keras.models.load_model('./baseline_model'),
                       conf=config,
-                      calib_dataloader=common.DataLoader(Dataset()),
+                      calib_dataloader=DataLoader(framework="tensorflow", dataset=Dataset()),
                       eval_func=eval_func)
         q_model.save("itex_qdq_keras_model")
         model = keras.models.load_model('./itex_qdq_keras_model')
@@ -166,12 +166,12 @@ class TestKerasInKerasOut(unittest.TestCase):
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor.utils.utility import set_random_seed
-        from neural_compressor.experimental import common
+        from neural_compressor.data.dataloaders.dataloader import DataLoader
         set_random_seed(9527)
         config = PostTrainingQuantConfig(backend='itex')
         q_model = fit(keras.models.load_model('./baseline_model'),
                       conf=config,
-                      calib_dataloader=common.DataLoader(Dataset()),
+                      calib_dataloader=DataLoader(framework="tensorflow", dataset=Dataset()),
                       eval_func=eval_func)
         q_model.save("itex_qdq_keras_model")
         self.assertEqual(q_model.framework(), 'keras')

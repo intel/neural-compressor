@@ -279,7 +279,7 @@ framework_transforms = {"tensorflow": TensorflowTransforms,
                         "pytorch_fx": PyTorchTransforms,
                         "onnxrt_qlinearops": ONNXRTQLTransforms,
                         "onnxrt_integerops": ONNXRTITTransforms,
-                        "onnxrt_qoperator": ONNXRTQLTransforms,
+                        "onnxruntime": ONNXRTQLTransforms,
                         "onnxrt_qdq": ONNXRTQLTransforms}
 
 # transform registry will register transforms into these dicts
@@ -298,7 +298,7 @@ registry_transforms = {"tensorflow": TENSORFLOW_TRANSFORMS,
                        "pytorch_fx": PYTORCH_TRANSFORMS,
                        "onnxrt_qlinearops": ONNXRT_QL_TRANSFORMS,
                        "onnxrt_qdq": ONNXRT_QL_TRANSFORMS,
-                       "onnxrt_qoperator": ONNXRT_QL_TRANSFORMS,
+                       "onnxruntime": ONNXRT_QL_TRANSFORMS,
                        "onnxrt_integerops": ONNXRT_IT_TRANSFORMS,
                        }
 
@@ -316,7 +316,7 @@ class TRANSFORMS(object):
             framework (str): different framework type like tensorflow, pytorch and so on
             process (str): process type, the value can be preprocess, postprocess or general
         """
-        assert framework in ("tensorflow", "tensorflow_itex", "onnxrt_qoperator", \
+        assert framework in ("tensorflow", "tensorflow_itex", "onnxruntime", \
                              "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qdq", \
                              "onnxrt_qlinearops", "onnxrt_integerops", "mxnet"), \
                              "framework support tensorflow pytorch mxnet onnxrt"
@@ -375,7 +375,7 @@ def transform_registry(transform_type, process, framework):
                 "onnxrt_qlinearops",
                 "onnxrt_qdq",
                 "onnxrt_integerops",
-                "onnxrt_qoperator",
+                "onnxruntime",
             ], "The framework support tensorflow mxnet pytorch onnxrt"
             if transform_type in registry_transforms[single_framework][process].keys():
                 raise ValueError('Cannot have two transforms with the same name')

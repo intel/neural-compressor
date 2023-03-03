@@ -143,7 +143,7 @@ framework_datasets = {"tensorflow": TensorflowDatasets,
                       "pytorch_fx": PyTorchDatasets,
                       "onnxrt_qdq": ONNXRTQLDatasets,
                       "onnxrt_qlinearops": ONNXRTQLDatasets,
-                      "onnxrt_qoperator": ONNXRTQLDatasets,
+                      "onnxruntime": ONNXRTQLDatasets,
                       "onnxrt_integerops": ONNXRTITDatasets,
                       }
 
@@ -164,14 +164,14 @@ class Datasets(object):    # pragma: no cover
     Args:
         framework (str): framework name, like:"tensorflow", "tensorflow_itex",
                          "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
-                         "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qoperator".
+                         "pytorch", "pytorch_ipex", "pytorch_fx", "onnxruntime".
     """
 
     def __init__(self, framework):
         """Initialize the attributes of class."""
         assert framework in ["tensorflow", "tensorflow_itex", \
                              "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops", \
-                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxrt_qoperator"], \
+                             "pytorch", "pytorch_ipex", "pytorch_fx", "onnxruntime"], \
                              "framework support tensorflow pytorch mxnet onnxrt"
         self.datasets = framework_datasets[framework]().datasets
 
@@ -203,7 +203,7 @@ registry_datasets = {"tensorflow": TENSORFLOW_DATASETS,
                      "pytorch_fx": PYTORCHFX_DATASETS,
                      "onnxrt_integerops": ONNXRTIT_DATASETS,
                      "onnxrt_qdq": ONNXRTQL_DATASETS,
-                     "onnxrt_qoperator": ONNXRTQL_DATASETS,
+                     "onnxruntime": ONNXRTQL_DATASETS,
                      "onnxrt_qlinearops": ONNXRTQL_DATASETS,
                     }
 
@@ -232,7 +232,7 @@ def dataset_registry(dataset_type, framework, dataset_format=''):    # pragma: n
                 "onnxrt_qlinearops",
                 "onnxrt_integerops",
                 "onnxrt_qdq",
-                "onnxrt_qoperator",
+                "onnxruntime",
             ], "The framework support tensorflow mxnet pytorch onnxrt"
             dataset_name = dataset_type + dataset_format
             if dataset_name in registry_datasets[single_framework].keys():
