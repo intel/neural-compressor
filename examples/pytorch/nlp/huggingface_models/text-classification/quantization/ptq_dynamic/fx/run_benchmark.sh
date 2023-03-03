@@ -67,6 +67,10 @@ function run_benchmark {
         TASK_NAME='rte'
     elif [ "${topology}" = "xlm-roberta-base_MRPC_dynamic" ]; then
         TASK_NAME='mrpc'
+    elif [ "${topology}" = "distilbert_base_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "albert_base_MRPC" ]; then
+        TASK_NAME='mrpc'
     fi
 
     extra_cmd='--model_name_or_path '${input_model}

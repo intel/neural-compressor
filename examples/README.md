@@ -526,6 +526,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
   <tr>
+    <td>textattack/distilbert-base-uncased-MRPC</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/albert-base-v2-MRPC</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
     <td>Intel/xlm-roberta-base-mrpc</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
@@ -533,6 +545,78 @@ Intel® Neural Compressor validated examples with multiple compression technique
   </tr>
   <tr>
     <td>yoshitomo-matsubara/bert-large-uncased-rte</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Intel/bert-base-uncased-mrpc</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/bert-base-uncased-CoLA</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/bert-base-uncased-STS-B</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>gchhablani/bert-base-cased-finetuned-sst2</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>ModelTC/bert-base-uncased-rte</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/bert-base-uncased-QNLI</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>yoshitomo-matsubara/bert-large-uncased-cola</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/distilbert-base-uncased-MRPC</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>microsoft/deberta-base-mnli</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Intel/xlnet-base-cased-mrpc</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/roberta-base-MRPC</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Intel/camembert-base-mrpc</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>

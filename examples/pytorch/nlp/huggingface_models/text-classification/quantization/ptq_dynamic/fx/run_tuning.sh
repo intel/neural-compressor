@@ -45,6 +45,10 @@ function run_tuning {
         TASK_NAME='rte'
     elif [ "${topology}" = "xlm-roberta-base_MRPC_dynamic" ]; then
         TASK_NAME='mrpc'
+    elif [ "${topology}" = "distilbert_base_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "albert_base_MRPC" ]; then
+        TASK_NAME='mrpc'
     fi
 
     python -u ./run_glue.py \

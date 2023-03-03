@@ -67,10 +67,32 @@ function run_benchmark {
 
     if [ "${topology}" = "bert_large_RTE" ]; then
         TASK_NAME='rte'
-        model_name_or_path=${input_model}
     elif [ "${topology}" = "xlm-roberta-base_MRPC" ]; then
-        TASK_NAME='MRPC'
-        model_name_or_path=${input_model}
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "bert_base_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "bert_base_CoLA" ]; then
+        TASK_NAME='cola'
+    elif [ "${topology}" = "bert_base_STS-B" ]; then
+        TASK_NAME='stsb'
+    elif [ "${topology}" = "bert_base_SST-2" ]; then
+        TASK_NAME='sst2'
+    elif [ "${topology}" = "bert_base_RTE" ]; then
+        TASK_NAME='rte'
+    elif [ "${topology}" = "bert_large_QNLI" ]; then
+        TASK_NAME='qnli'
+    elif [ "${topology}" = "bert_large_CoLA" ]; then
+        TASK_NAME='cola'
+    elif [ "${topology}" = "distilbert_base_MRPC_fx" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "deberta_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "xlnet_base_cased_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "roberta_base_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "camembert_base_MRPC" ]; then
+        TASK_NAME='mrpc'
     fi
 
     extra_cmd='--model_name_or_path '${input_model}

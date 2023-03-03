@@ -67,6 +67,16 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
     <td><a href="https://huggingface.co/Intel/xlm-roberta-base-mrpc">Intel/xlm-roberta-base-mrpc</a></td>
     <td>mrpc</td>
   </tr>
+  <tr>
+    <td>distilbert_base_MRPC</td>
+    <td><a href="https://huggingface.co/textattack/distilbert-base-uncased-MRPC">textattack/distilbert-base-uncased-MRPC</a></td>
+    <td>mrpc</td>
+  </tr>
+  <tr>
+    <td>albert_base_MRPC</td>
+    <td><a href="https://huggingface.co/textattack/albert-base-v2-MRPC">textattack/albert-base-v2-MRPC</a></td>
+    <td>mrpc</td>
+  </tr>
 </tbody>
 </table>
 
