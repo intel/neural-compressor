@@ -57,7 +57,7 @@ We formulate the `conf.yaml` as in (https://github.com/intel/neural-compressor/b
 
 **Quantization with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, we integrate the `conf.yaml` into `main.py` to save the user's effort to write the `conf.yaml`, that most of config information could be set via the `PostTrainingQuantConfig`. The corresponding information should be written as follows (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.),
+In Intel Neural Compressor 2.X, we integrate the `conf.yaml` into `main.py` to save the user's effort to write the `conf.yaml`, that most of config information could be set via the `PostTrainingQuantConfig`. The corresponding information should be written as follows (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.),
 ```python
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, AccuracyCriterion
 
@@ -65,7 +65,7 @@ PostTrainingQuantConfig(
   ## model: this parameter does not need to specially be defined;
   backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
   inputs="image_tensor",    # input: same as in the conf.yaml;
-  ouputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  outputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
   device="cpu",             # device: same as in the conf.yaml;
   approach="static",        # approach: set as "static" when approach was "post_training_static_quant". Set as "dynamic" when approach was "post_training_dynamic_quant";
   ## recipes: this parameter does not need to specially be defined;
@@ -88,7 +88,7 @@ accuracy_criterion=AccuracyCriterion(
 )
 tuning_criterion=TuningCriterion(
   timeout=0,                # timeout: same as in the conf.yaml;
-  max_trials=100,           # maxtrials: same as in the conf.yaml;
+  max_trials=100,           # max_trials: same as in the conf.yaml;
 )          
 ```
 
@@ -165,7 +165,7 @@ QuantizationAwareTrainingConfig(
   ## model: this parameter does not need to specially be defined;
   backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
   inputs="image_tensor",    # input: same as in the conf.yaml;
-  ouputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  outputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
   device="cpu",             # device: same as in the conf.yaml;
   ## approach: this parameter does not need to specially be defined;
   ## train: these parameters do not need to specially be defined;
@@ -178,7 +178,7 @@ QuantizationAwareTrainingConfig(
   timeout=0,                # timeout: same as in the conf.yaml;
   max_trials=100,           # max_trials: same as in the conf.yaml;
   objective="performance",  # tuning.objective: same as in the conf.yaml;
-  performanc_only=False,    # tuning.performance_only: same as in the conf.yaml;
+  performance_only=False,    # tuning.performance_only: same as in the conf.yaml;
   ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
   ## diagnosis: these parameters do not need to specially be defined;
 )       
@@ -550,7 +550,7 @@ MixedPrecisionConfig(
   ## model: this parameter does not need to specially be defined;
   backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
   inputs="image_tensor",    # input: same as in the conf.yaml;
-  ouputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  outputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
   device="cpu",             # device: same as in the conf.yaml;
   tuning_criterion=tuning_criterion,
   accuracy_criterion=accuracy_criterion,

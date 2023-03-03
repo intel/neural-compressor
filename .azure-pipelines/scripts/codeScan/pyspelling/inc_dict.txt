@@ -100,6 +100,7 @@ AutoMixPrecision
 AutoModelForSequenceClassification
 autopep
 Autoregressive
+AutoTokenizer
 ava
 AverageMeter
 avgloss
