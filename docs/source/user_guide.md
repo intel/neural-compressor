@@ -5,7 +5,7 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
 
 ## Documentation
 
-The user can get a quick understand about design structure and workflow of Intel® Neural Compressor in the `Overview` part. This part has provided a wide range examples to help the user to get a quick start of using Intel® Neural Compressor. `Python-based APIs` contains more details about the functional APIs in Intel® Neural Compressor, which introduces the mechanism of each function and tutorial to help the user write their own code step by step. `Neural Conder` show our special Python launcher to help the user to achieve automatic deep learning optimization. If you're familiar with our Intel® Neural Compressor, you can find more advanced usages to help you optimize your code and improve the model performance in `Advanced Topics`. We also provide a comprehensive migration document to help the user update their code from our previous 1.X version to the new 2.X version. 
+The user can get a quick understand about design structure and workflow of Intel® Neural Compressor in the `Overview` part. This part has provided a wide range examples to help the user to get a quick start of using Intel® Neural Compressor. `Python-based APIs` contains more details about the functional APIs in Intel® Neural Compressor, which introduces the mechanism of each function and provides a tutorial to help the user write their own code step by step. `Neural Conder` show our special Python launcher to help the user to achieve automatic deep learning optimization. If you're familiar with our Intel® Neural Compressor, you can find more advanced usages to help you optimize your code and improve the model performance in `Advanced Topics`. We also provide a comprehensive migration document in `Code Migration` to help the user update their code from our previous 1.X version to the new 2.X version. 
 
 <table class="docutils">
   <thead>
@@ -60,21 +60,30 @@ The user can get a quick understand about design structure and workflow of Intel
     </tr>    
   </tbody>
   <thead>
+  <tr>
+    <th colspan="9">Code Migration</th>
+  </tr>
+  </thead>
+    <tbody>
+    <tr>
+        <td colspan="9" align="center"><a href="./docs/source/migration.md">Code Migration from Intel® Neural Compressor 1.X to Intel® Neural Compressor 2.X</a></td>
+    </tr>    
+  </tbody>
+  <thead>
       <tr>
         <th colspan="9">Advanced Topics</th>
       </tr>
   </thead>
   <tbody>
       <tr>
-          <td colspan="1" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
-          <td colspan="2" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
+          <td colspan="3" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
+          <td colspan="3" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
           <td colspan="3" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
-          <td colspan="3" align="center">SmoothQuant (Coming Soon)</td>
       </tr>
       <tr>
         <td colspan="3" align="center"><a href="./docs/source/metric.md">Metric</a></td>        
         <td colspan="3" align="center"><a href="./docs/source/objective.md">Objective</a></td>
-        <td colspan="3" align="center"><a href="./docs/source/migration.md">Code Migration</a></td>
+        <td colspan="3" align="center">SmoothQuant (Coming Soon)</td>
       </tr>
   </tbody>
 </table>
