@@ -5,10 +5,10 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
 
 ## Documentation
 
-**Overview** part helps user to get a quick understand about design structure and workflow of Intel® Neural Compressor. We provided broad examples to help users to get started.   
-**Python-based APIs** contains more details about the functional APIs in Intel® Neural Compressor, which introduce the mechanism of each function and provides a tutorial to help the user apply in their own cases. Please note we will stop to support Intel Neural Compressor 1.X API in the future. So we provide a comprehensive migration document in **Code Migration** to help the user update their code from previous 1.X version to the new 2.X version.   
-**Neural Coder** shows our special innovation about zero-code optimization tool to help user apply Intel® Neural Compressor optimization without coding.  
-**Advanced Topics** provide the advanced topics that help user dive deep into Intel® Neural Compressor.  
+* **Overview** part helps user to get a quick understand about design structure and workflow of Intel® Neural Compressor. We provided broad examples to help users get started.   
+* **Python-based APIs** contains more details about the functional APIs in Intel® Neural Compressor, which introduce the mechanism of each function and provides a tutorial to help the user apply in their own cases. Please note that we will stop to support Intel Neural Compressor 1.X API in the future. So we provide a comprehensive migration document in **Code Migration** to help the user update their code from previous 1.X version to the new 2.X version.   
+* **Neural Coder** shows our special innovation about zero-code optimization to help user apply Intel® Neural Compressor optimization without coding.  
+* **Advanced Topics** provide the advanced topics that help user dive deep into Intel® Neural Compressor.  
 
 <table class="docutils">
   <thead>
