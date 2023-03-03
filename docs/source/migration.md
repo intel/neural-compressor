@@ -77,7 +77,7 @@ PostTrainingQuantConfig(
   strategy="basic",         # tuning.strategy.name: same as in the conf.yaml;
   ## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;
   objective="performance",  # tuning.objective: same as in the conf.yaml;
-  performanc_only=False,    # tuning.performance_only: same as in the conf.yaml;
+  performance_only=False,    # tuning.performance_only: same as in the conf.yaml;
   tuning_criterion=tuning_criterion,
   accuracy_criterion=accuracy_criterion,
   ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
@@ -156,7 +156,7 @@ Similar to PTQ, it requires a `conf.yaml` (https://github.com/intel/neural-compr
 
 **Quantization with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, this `conf.yaml` is set via the `QuantizationAwareTrainingConfig`. The corresponding information should be written as follows (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.)，
+In Intel Neural Compressor 2.X, this `conf.yaml` is set via the `QuantizationAwareTrainingConfig`. The corresponding information should be written as follows (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.)，
 
 ```python
 from neural_compressor.config import QuantizationAwareTrainingConfig
@@ -280,7 +280,7 @@ def pruning_func(model):
 
 **Pruning with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, the training process is activated by a `compression manager`. And the configuration information is included in the `WeightPruningConfig`. The corresponding config should be set via (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.):
+In Intel Neural Compressor 2.X, the training process is activated by a `compression manager`. And the configuration information is included in the `WeightPruningConfig`. The corresponding config should be set via (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.):
 ```python
 from neural_compressor.config import WeightPruningConfig
 
@@ -309,7 +309,7 @@ We also need to replace the hooks in the training code. The newly defined hooks 
     on_train_end() : Execute at the ending of training phase.
 ```
 
-The final Pruning code is uopdated as follows,
+The final Pruning code is updated as follows,
 
 ```python
     config = { ## pruner
@@ -448,7 +448,7 @@ model = distiller.fit()
 
 **Distillation with Intel Neural Compressor 2.X**
 
-The new distillation API also introduce `compression manager` to conduct the training process. We continuously use the hooks in `compression manager` to activate the distillation process. We replace the `conf.yaml` with `DistillationConfig` API and clean the uncessary parameters (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.). The dataloader is directly inputed via `train_fun`. The updated code is shown as follows,
+The new distillation API also introduce `compression manager` to conduct the training process. We continuously use the hooks in `compression manager` to activate the distillation process. We replace the `conf.yaml` with `DistillationConfig` API and clean the unnecessary parameters (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.). The dataloader is directly inputted via `train_fun`. The updated code is shown as follows,
 
 ```python
 from neural_compressor.config import DistillationConfig
@@ -541,7 +541,7 @@ tuning:
 
 **Mix Precision with Intel Neural Compressor 2.X**
 
-In 2.X version, we integrate the config information in `MixedPrecisionConfig`, leading to the updates in the code as follows (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.),
+In 2.X version, we integrate the config information in `MixedPrecisionConfig`, leading to the updates in the code as follows (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.),
 
 ```python
 from neural_compressor.config import MixedPrecisionConfig, TuningCriterion, AccuracyCriterion
@@ -562,7 +562,7 @@ accuracy_criterion=AccuracyCriterion(
 )
 tuning_criterion=TuningCriterion(
   timeout=0,                # timeout: same as in the conf.yaml;
-  max_trials=100,           # maxtrials: same as in the conf.yaml;
+  max_trials=100,           # max_trials: same as in the conf.yaml;
 )          
 ```
 
@@ -681,7 +681,7 @@ results = evaluator()
 
 **Benchmark with Intel Neural Compressor 2.X**
 
-In Intel Neural Compressor 2.X, we optimize the code to make it simple and clear for the user. We replace `conf.yaml` with `BenchmarkConfig`. The corresponding information should be defined as (Note: the corresponding names of the parameters in 1.X yaml file are attched in the comment.):
+In Intel Neural Compressor 2.X, we optimize the code to make it simple and clear for the user. We replace `conf.yaml` with `BenchmarkConfig`. The corresponding information should be defined as (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.):
 ```python
 from neural_compressor.config import BenchmarkConfig
 
@@ -689,7 +689,7 @@ BenchmarkConfig(
   ## model: this parameter does not need to specially be defined;
   backend="default",        # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
   inputs="image_tensor",    # input: same as in the conf.yaml;
-  ouputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
+  outputs="num_detections,detection_boxes,detection_scores,detection_classes" # output: same as in the conf.yaml;
   device="cpu",             # device: same as in the conf.yaml;
   warmup=10,                # warmup: same as in the conf.yaml;
   iteration=100,            # iteration: same as in the conf.yaml;
