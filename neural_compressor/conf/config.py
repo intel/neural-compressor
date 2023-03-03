@@ -1184,7 +1184,7 @@ quantization_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
+    Optional('evaluation', default={'accuracy': {}}): dict
 })
 
 pruning_default_schema = Schema({
@@ -1206,7 +1206,7 @@ pruning_default_schema = Schema({
                                             'target_sparsity': 0.97, 'start_epoch': 0, \
                                             'end_epoch': 4}}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
+    Optional('evaluation', default={'accuracy': {}}): dict
 })
 
 graph_optimization_default_schema = Schema({
@@ -1238,7 +1238,7 @@ graph_optimization_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
+    Optional('evaluation', default={'accuracy': {}}): dict,
 
     Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict
 })
@@ -1272,7 +1272,7 @@ mixed_precision_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
+    Optional('evaluation', default={'accuracy': {}}): dict,
 
     Optional('mixed_precision', default={'precisions': ['bf16, fp32']}): dict
 })
@@ -1306,7 +1306,7 @@ benchmark_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
+    Optional('evaluation', default={'accuracy': {}}): dict
 })
 
 distillation_default_schema = Schema({
@@ -1333,8 +1333,8 @@ distillation_default_schema = Schema({
                                   'loss_types': ['CE', 'KL'],
                                   'loss_weights': [0.5, 0.5]}}}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}):dict
-
+    Optional('evaluation', default={'accuracy': {}}):dict
+ 
 })
 
 class Conf(object):

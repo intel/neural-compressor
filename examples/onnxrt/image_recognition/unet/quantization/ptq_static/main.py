@@ -92,7 +92,6 @@ if __name__ == "__main__":
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(quant_format=args.quant_format)
-        q_model = quantization.fit(args.model_path, config, calib_dataloader=dataloader,
-			     performance_only=True)
+        q_model = quantization.fit(args.model_path, config, calib_dataloader=dataloader)
 
         q_model.save(args.output_model)

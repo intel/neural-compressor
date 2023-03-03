@@ -885,121 +885,121 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>*ResNet50 V1.5</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/resnet50_torchvision/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/resnet50_torchvision/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/resnet50_torchvision/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/resnet50_torchvision/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*ResNet50 V1.5 MLPerf</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/resnet50_mlperf/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/resnet50_mlperf/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/resnet50_mlperf/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/resnet50_mlperf/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*VGG16</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/vgg16/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/vgg16/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/vgg16/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/vgg16/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*MobileNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/mobilenet_v2/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/mobilenet_v2/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/mobilenet_v2/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/mobilenet_v2/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*MobileNet V3 MLPerf</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/mobilenet_v3/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/mobilenet_v3/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/mobilenet_v3/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/mobilenet_v3/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*AlexNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/alexnet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*CaffeNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/caffenet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*DenseNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/densenet/quantization/ptq">qlinearops</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/densenet/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
     <td>*EfficientNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/efficientnet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>FCN</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/fcn/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/fcn/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/fcn/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/fcn/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*GoogleNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/googlenet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*Inception V1</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/inception/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*MNIST</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/mnist/quantization/ptq">qlinearops</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/mnist/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
     <td>*MobileNet V2 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/mobilenet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*ResNet50 V1.5 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/resnet50/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*ShuffleNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>SqueezeNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/squeezenet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/squeezenet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/squeezenet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/squeezenet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*VGG16 (ONNX Model Zoo)</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/vgg16/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>*ZFNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq">qdq</a></td>
+    <td><a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq_static">qlinearops</a> / <a href="./onnxrt/image_recognition/onnx_model_zoo/zfnet/quantization/ptq_static">qdq</a></td>
   </tr>
   <tr>
     <td>ArcFace</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq">qlinearops</a></td>
+    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
     <td>*BERT base MRPC</td>
@@ -1195,13 +1195,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Emotion FERPlus</td>
     <td>Body Analysis</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq">qlinearops</a></td>
+    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/emotion_ferplus/quantization/ptq_static">qlinearops</a></td>
   </tr>
   <tr>
     <td>Ultra Face</td>
     <td>Body Analysis</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq">qlinearops</a></td>
+    <td><a href="./onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq_static">qlinearops</a></td>
   </tr>
 </tbody>
 </table>
