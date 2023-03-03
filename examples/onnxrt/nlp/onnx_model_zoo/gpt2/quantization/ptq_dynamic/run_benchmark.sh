@@ -58,7 +58,7 @@ function run_benchmark {
                         --data_path ${dataset_location} \
                         --model_type ${model_type} \
                         --model_name_or_path ${model_name_or_path} \
-                        --per_gpu_eval_batch_size ${batch_size} \
+                        --eval_batch_size ${batch_size} \
                         --benchmark \
                         --mode ${mode} \
                         ${mode_cmd}

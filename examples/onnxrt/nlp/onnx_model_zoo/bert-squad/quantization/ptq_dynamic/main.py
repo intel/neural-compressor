@@ -120,10 +120,7 @@ def main():
 
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        from neural_compressor.utils.constant import FP32
-        config = PostTrainingQuantConfig(approach='dynamic',
-                                         op_name_list={'bert/encoder/layer_2/output/dense/MatMul': FP32,
-                                                       'bert/encoder/layer_10/output/dense/MatMul': FP32})
+        config = PostTrainingQuantConfig(approach='dynamic')
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)

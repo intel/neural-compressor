@@ -86,7 +86,10 @@ class TextDataset(Dataset):
         return len(self.examples)
 
     def __getitem__(self, item):
-        return torch.tensor(self.examples[item])
+        inputs = torch.tensor(self.examples[item])
+        inputs = np.array(inputs)
+        inputs = np.expand_dims(inputs, axis=0)
+        return inputs, inputs
 
 def load_and_cache_examples(args, tokenizer, evaluate=False):
     dataset = TextDataset(tokenizer, args, file_path=args.data_path, block_size=args.block_size)
@@ -95,13 +98,8 @@ def load_and_cache_examples(args, tokenizer, evaluate=False):
 def evaluate(args, model, tokenizer, prefix=""):
     eval_dataset = load_and_cache_examples(args, tokenizer, evaluate=True)
 
-    args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
     eval_sampler = SequentialSampler(eval_dataset)
     eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
-
-    # multi-gpu evaluate
-    if args.n_gpu > 1:
-        model = torch.nn.DataParallel(model)
 
     # Eval!
     logger.info("***** Running evaluation {} *****".format(prefix))
@@ -120,15 +118,13 @@ def evaluate(args, model, tokenizer, prefix=""):
     inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
     ort_inputs = {}
 
-    for idx, batch in enumerate(tqdm(eval_dataloader, desc="Evaluating")):
+    for idx, (inputs, labels) in enumerate(tqdm(eval_dataloader, desc="Evaluating")):
         if nb_eval_steps >= args.warmup_steps:
             start = timeit.default_timer()
-        inputs, labels = (batch, batch)
         inputs = inputs.to(args.device)
         labels = labels.to(args.device)
         for i in range(len_inputs):
             inputs = np.array(inputs)
-            inputs = np.expand_dims(inputs, axis=0)
             ort_inputs.update({inputs_names[i]: inputs})
         predictions = session.run(None, ort_inputs)
         lm_logits = predictions[0]
@@ -193,7 +189,7 @@ def main():
                         help="Optional input sequence length after tokenization."
                              "The training dataset will be truncated in block of this size for training."
                              "Default to the model max input length for single sentence inputs (take into account special tokens).")
-    parser.add_argument("--per_gpu_eval_batch_size", default=1, type=int,
+    parser.add_argument("--eval_batch_size", default=1, type=int,
                         help="Batch size per GPU/CPU for evaluation.")
     parser.add_argument('--overwrite_cache', action='store_true',
                         help="Overwrite the cached training and evaluation sets")
@@ -213,8 +209,7 @@ def main():
                         help='For accuracy measurement only.')
     args = parser.parse_args()
 
-    device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-    args.n_gpu = torch.cuda.device_count()
+    device = torch.device("cpu")
     args.device = device
 
     # Setup logging
@@ -241,7 +236,17 @@ def main():
         return evaluate(args, model, tokenizer)
 
     if args.benchmark:
-        evaluate(args, model, tokenizer)
+        if args.mode == 'performance':
+            from neural_compressor.benchmark import fit
+            from neural_compressor.config import BenchmarkConfig
+            from neural_compressor.data.dataloaders.onnxrt_dataloader import DefaultDataLoader
+            conf = BenchmarkConfig(iteration=100,
+                                   cores_per_instance=4,
+                                   num_of_instance=1)
+            b_dataloader = DefaultDataLoader(ds, args.eval_batch_size)
+            fit(model, conf, b_dataloader=b_dataloader)
+        else:
+            evaluate(args, model, tokenizer)
         
     if args.tune:
         # GPT2 optimizer
@@ -260,12 +265,10 @@ def main():
 
         from neural_compressor import quantization
         from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
-        from neural_compressor.utils.constant import FP32
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.higher_is_better = False
         accuracy_criterion.relative = 0.11
         config = PostTrainingQuantConfig(approach='dynamic', 
-                                         op_name_list={'MatMul_2924': FP32},
                                          accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model, 
                                    config,

@@ -400,9 +400,7 @@ if __name__ == "__main__":
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        from neural_compressor.utils.constant import FP32
-        config = PostTrainingQuantConfig(approach="dynamic",
-                                         op_name_list={'MatMul_2469': FP32})
+        config = PostTrainingQuantConfig(approach="dynamic")
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func)

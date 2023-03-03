@@ -53,8 +53,6 @@ require_version(
 
 logger = logging.getLogger(__name__)
 
-FP32_CONFIG = {'activation':  {'dtype': ['fp32']}, 'weight': {'dtype': ['fp32']}}
-
 @dataclass
 class ModelArguments:
     """
@@ -474,8 +472,7 @@ def main():
         config = PostTrainingQuantConfig(approach='dynamic')
         q_model = quantization.fit(model, 
                                    config,
-                                   eval_func=eval_func
-                                   )
+                                   eval_func=eval_func)
         q_model.save(model_args.save_path)
 
     if model_args.benchmark:

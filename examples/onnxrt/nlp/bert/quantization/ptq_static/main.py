@@ -407,13 +407,9 @@ if __name__ == "__main__":
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        from neural_compressor.utils.constant import FP32
-        
-        fp32_op_names = ['MatMul_673'] if args.quant_format == "QDQ" else ['MatMul_851']
         config = PostTrainingQuantConfig(approach="static",
                                          quant_format=args.quant_format,
                                          calibration_sampling_size=[8, 16, 32],
-                                         op_name_list={op_name:FP32 for op_name in fp32_op_names},
                                          recipes={"optypes_to_exclude_output_quant": ["MatMul", "Gemm", "Attention", "FusedGemm"]})
         q_model = quantization.fit(model, 
                                    config,

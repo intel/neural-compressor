@@ -140,15 +140,11 @@ if __name__ == "__main__":
     if args.tune:
         from neural_compressor import quantization
         from neural_compressor.config import AccuracyCriterion, PostTrainingQuantConfig
-        from neural_compressor.utils.constant import FP32
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.absolute = 0.01
-        fp32_op_names = ['Postprocessor/BatchMultiClassNonMaxSuppression/mul', 'Mul__(161|166)',
-                         'Shape__7732', 'Gather__.*?', 'Postprocessor/convert_scores', 'add']
         config = PostTrainingQuantConfig(approach='static', 
                                          accuracy_criterion=accuracy_criterion,
                                          quant_format=args.quant_format,
-                                         calibration_sampling_size=[50],
-                                         op_name_list={op_name:FP32 for op_name in fp32_op_names})
+                                         calibration_sampling_size=[50])
         q_model = quantization.fit(model, config, calib_dataloader=calib_dataloader, eval_func=eval_func)
         q_model.save(args.output_model)
