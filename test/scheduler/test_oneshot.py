@@ -317,7 +317,8 @@ class TestPruning(unittest.TestCase):
         p_conf = WeightPruningConfig(
             [{'start_step': 0, 'end_step': 2}], target_sparsity=0.64, pruning_scope="local")
         compression_manager = prepare_compression(model=model, confs=[d_conf, p_conf])
-
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)
         def train_func_for_nc(model):
             epochs = 3
             iters = 3
@@ -336,6 +337,7 @@ class TestPruning(unittest.TestCase):
                     compression_manager.callbacks.on_step_begin(cnt)
                     print('.', end='')
                     cnt += 1
+                    image.to(device)
                     output = model(image)
                     loss = criterion(output, target)
                     loss = compression_manager.callbacks.on_after_compute_loss(image, output, loss)
