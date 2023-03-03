@@ -22,6 +22,7 @@ import numpy as np
 import onnx
 import os
 import hashlib
+import collections
 import onnxruntime as ort
 from sklearn.metrics import accuracy_score
 
@@ -189,8 +190,8 @@ class Dataloader:
         ('https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz',
             '8a61469f7ea1b51cbae51d4f78837e45')
     ]
-    def __init__(self, dataset_location, download=True):
-        self.batch_size = 1
+    def __init__(self, dataset_location, batch_size, download=True):
+        self.batch_size = batch_size
         self.root = dataset_location
         if download:
             self.download()
@@ -205,7 +206,7 @@ class Dataloader:
                 raise RuntimeError(
                     'Dataset not found. You can use download=True to download it')
             with np.load(file_path, allow_pickle=True) as f:
-                self.data, self.targets = f['x_test'], f['y_test']
+                self.image_list, self.targets = f['x_test'], f['y_test']
 
     @property
     def class_to_idx(self):
@@ -222,12 +223,54 @@ class Dataloader:
                 download_url(url, root=self.root,
                             filename=filename, md5=md5)
 
+    def _preprpcess(self, image):
+        image = np.expand_dims(image, -1)
+        image = image.transpose(2, 0, 1)
+        return image.astype('float32')
+
     def __iter__(self):
-        for image, label in zip(self.data, self.targets):
-            image = np.expand_dims(image, -1)
-            image = image.transpose(2, 0, 1)
-            image = np.expand_dims(image, axis=0)
-            yield image.astype('float32'), int(label)
+        return self._generate_dataloader()
+
+    def _generate_dataloader(self):
+        sampler = iter(range(0, len(self.image_list), 1))
+
+        def collate(batch):
+            """Puts each data field into a pd frame with outer dimension batch size"""
+            elem = batch[0]
+            if isinstance(elem, collections.abc.Mapping):
+                return {key: collate([d[key] for d in batch]) for key in elem}
+            elif isinstance(elem, collections.abc.Sequence):
+                batch = zip(*batch)
+                return [collate(samples) for samples in batch]
+            elif isinstance(elem, np.ndarray):
+                try:
+                    return np.stack(batch)
+                except:
+                    return batch
+            else:
+                return batch
+
+        def batch_sampler():
+            batch = []
+            for idx in sampler:
+                batch.append(idx)
+                if len(batch) == self.batch_size:
+                    yield batch
+                    batch = []
+            if len(batch) > 0:
+                yield batch
+
+        def fetcher(ids):
+            data = [self._preprpcess(self.image_list[idx]) for idx in ids]
+            label = [int(self.label_list[idx]) for idx in ids]
+            return collate(data), label
+
+        for batched_indices in batch_sampler():
+            try:
+                data = fetcher(batched_indices)
+                yield data
+            except StopIteration:
+                return
 
 def eval_func(model, dataloader, metric):
     metric.reset()
@@ -283,10 +326,15 @@ if __name__ == "__main__":
         choices=['default', 'QDQ', 'QOperator'],
         help="quantization format"
     )
+    parser.add_argument(
+        "--batch_size",
+        default=1,
+        type=int,
+    )
     args = parser.parse_args()
 
     model = onnx.load(args.model_path)
-    dataloader = Dataloader(args.dataset_location)
+    dataloader = Dataloader(args.dataset_location, args.batch_size)
     top1 = TopK()
 
     def eval(onnx_model):

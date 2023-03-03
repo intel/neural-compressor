@@ -23,6 +23,7 @@ import numpy as np
 import onnx
 import re
 import os
+import collections
 from PIL import Image
 import onnxruntime as ort
 from sklearn.metrics import accuracy_score
@@ -115,8 +116,8 @@ class TopK:
         return self.num_correct / self.num_sample
 
 class Dataloader:
-    def __init__(self, dataset_location, image_list):
-        self.batch_size = 1
+    def __init__(self, dataset_location, image_list, batch_size):
+        self.batch_size = batch_size
         self.image_list = []
         self.label_list = []
         self.random_crop = False
@@ -135,22 +136,64 @@ class Dataloader:
                 self.image_list.append(src)
                 self.label_list.append(int(label))
 
+    def _preprpcess(self, src):
+        with Image.open(src) as image:
+            image = np.array(image.convert('RGB')).astype(np.float32)
+            image = image / 255.
+            image = cv2.resize(image, (256, 256), interpolation=cv2.INTER_AREA)
+
+            h, w = image.shape[0], image.shape[1]
+
+            y0 = (h - 224) // 2
+            x0 = (w - 224) // 2
+            image = image[y0:y0 + 224, x0:x0 + 224, :]
+            image = (image - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]
+            image = image.transpose((2, 0, 1))
+        return image.astype('float32')
+
     def __iter__(self):
-        for src, label in zip(self.image_list, self.label_list):
-            with Image.open(src) as image:
-                image = np.array(image.convert('RGB')).astype(np.float32)
-                image = image / 255.
-                image = cv2.resize(image, (256, 256), interpolation=cv2.INTER_AREA)
+        return self._generate_dataloader()
 
-                h, w = image.shape[0], image.shape[1]
+    def _generate_dataloader(self):
+        sampler = iter(range(0, len(self.image_list), 1))
 
-                y0 = (h - 224) // 2
-                x0 = (w - 224) // 2
-                image = image[y0:y0 + 224, x0:x0 + 224, :]
-                image = (image - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]
-                image = image.transpose((2, 0, 1))
-                image = np.expand_dims(image, axis=0)
-            yield image.astype('float32'), label
+        def collate(batch):
+            """Puts each data field into a pd frame with outer dimension batch size"""
+            elem = batch[0]
+            if isinstance(elem, collections.abc.Mapping):
+                return {key: collate([d[key] for d in batch]) for key in elem}
+            elif isinstance(elem, collections.abc.Sequence):
+                batch = zip(*batch)
+                return [collate(samples) for samples in batch]
+            elif isinstance(elem, np.ndarray):
+                try:
+                    return np.stack(batch)
+                except:
+                    return batch
+            else:
+                return batch
+
+        def batch_sampler():
+            batch = []
+            for idx in sampler:
+                batch.append(idx)
+                if len(batch) == self.batch_size:
+                    yield batch
+                    batch = []
+            if len(batch) > 0:
+                yield batch
+
+        def fetcher(ids):
+            data = [self._preprpcess(self.image_list[idx]) for idx in ids]
+            label = [self.label_list[idx] for idx in ids]
+            return collate(data), label
+
+        for batched_indices in batch_sampler():
+            try:
+                data = fetcher(batched_indices)
+                yield data
+            except StopIteration:
+                return
 
 def eval_func(model, dataloader, metric):
     metric.reset()
@@ -211,10 +254,15 @@ if __name__ == "__main__":
         choices=['default', 'QDQ', 'QOperator'],
         help="quantization format"
     )
+    parser.add_argument(
+        "--batch_size",
+        default=1,
+        type=int,
+    )
     args = parser.parse_args()
 
     model = onnx.load(args.model_path)
-    dataloader = Dataloader(args.dataset_location, args.label_path)
+    dataloader = Dataloader(args.dataset_location, args.label_path, args.batch_size)
     top1 = TopK()
 
     def eval(onnx_model):

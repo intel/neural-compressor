@@ -112,8 +112,8 @@ class Metric:
         return np.mean(accuracy)
 
 class Dataloader:
-    def __init__(self, data_dir):
-        self.batch_size = 1
+    def __init__(self, data_dir, batch_size):
+        self.batch_size = batch_size
         path = os.path.join(data_dir)
         # Load data
         if os.path.exists(path):
@@ -177,13 +177,17 @@ if __name__ == '__main__':
         type=str,
         help="benchmark mode of performance or accuracy"
     )
-    
+    parser.add_argument(
+        "--batch_size",
+        default=1,
+        type=int,
+    )
     args = parser.parse_args()
     # Load image size
     image_size = load_property(args.dataset_location)
     print('image_size', image_size)
     
-    dataloader = Dataloader(args.dataset_location)
+    dataloader = Dataloader(args.dataset_location, args.batch_size)
     model = onnx.load(args.model_path)
     metric = Metric(args.nfolds)
     def eval(onnx_model):

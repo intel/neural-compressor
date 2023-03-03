@@ -38,6 +38,7 @@ function run_benchmark {
             --mode ${mode} \
             --dataset_location ${dataset_location} \
             --label_path ${label_path-${dataset_location}../val.txt} \
+            --batch_size 1 \
             --benchmark
 }
 

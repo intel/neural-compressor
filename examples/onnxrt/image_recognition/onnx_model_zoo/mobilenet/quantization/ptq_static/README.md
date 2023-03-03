@@ -59,6 +59,7 @@ bash run_tuning.sh --input_model=path/to/model \  # model path as *.onnx
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
                       --dataset_location=/path/to/imagenet \
                       --label_path=/path/to/val.txt \
+                      --batch_size=batch_size \
                       --mode=performance # or accuracy
 ```
 

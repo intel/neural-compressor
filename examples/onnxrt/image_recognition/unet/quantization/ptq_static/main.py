@@ -29,9 +29,9 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     level = logging.WARN)
 
 class Dataloader:
-    def __init__(self):
-        self.batch_size = 1
-        shape = [[1, 4, 64, 64], [1], [1, 77, 768]]
+    def __init__(self, batch_size):
+        self.batch_size = batch_size
+        shape = [[batch_size, 4, 64, 64], [batch_size], [batch_size, 77, 768]]
         dtype = ['float32', 'int64', 'float32']
         self.dataset = []
         for idx in range(0, len(shape)):
@@ -80,9 +80,14 @@ if __name__ == "__main__":
         choices=['default', 'QDQ', 'QOperator'],
         help="quantization format"
     )
+    parser.add_argument(
+        "--batch_size",
+        default=1,
+        type=int,
+    )
     args = parser.parse_args()
 
-    dataloader = Dataloader()
+    dataloader = Dataloader(args.batch_size)
 
     if args.benchmark and args.mode == 'performance':
         from neural_compressor.benchmark import fit

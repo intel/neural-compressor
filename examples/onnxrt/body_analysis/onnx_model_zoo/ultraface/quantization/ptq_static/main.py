@@ -26,8 +26,8 @@ from scipy.io import loadmat
 import onnxruntime as ort
 
 class Dataloader:
-    def __init__(self, dataset_location, size=[320,240]):
-        self.batch_size = 1
+    def __init__(self, dataset_location, batch_size, size=[320,240]):
+        self.batch_size = batch_size
         image_mean=np.array([127, 127, 127], dtype=np.float32)
         image_std = 128.0
         self.data = []
@@ -43,8 +43,6 @@ class Dataloader:
                 label = [(height, width), parent.split('/')[-1], file_name.split('.')[0]]
                 self.data.append((np.transpose(image, [2,0,1])[np.newaxis,:], label))
             
-    def __len__(self):
-        return len(self.data)
 
     def __iter__(self):
         for item in self.data:
@@ -420,11 +418,16 @@ parser.add_argument(
     type=str,
     help="benchmark mode of performance or accuracy"
 )
+parser.add_argument(
+    "--batch_size",
+    default=1,
+    type=int,
+)
 args = parser.parse_args()
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    dataloader  = Dataloader(args.dataset_location, size=args.input_size)
+    dataloader  = Dataloader(args.dataset_location, args.batch_size, size=args.input_size)
     metric = AP(args.label_path)
     postprocess = Post()
     def eval(onnx_model):

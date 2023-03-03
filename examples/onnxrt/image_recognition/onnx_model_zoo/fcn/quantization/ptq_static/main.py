@@ -78,6 +78,11 @@ parser.add_argument(
     choices=['default', 'QDQ', 'QOperator'],
     help="quantization format"
 )
+parser.add_argument(
+    "--batch_size",
+    default=1,
+    type=int,
+)
 args = parser.parse_args()
 
 # key = COCO id, value = Pascal VOC id
@@ -112,8 +117,8 @@ preprocess = transforms.Compose([
 ])
 
 class Dataloader:
-    def __init__(self):
-        self.batch_size = 1
+    def __init__(self, batch_size):
+        self.batch_size = batch_size
         imgIds = self.getImgIdsUnion(cocoGt, VOC_CAT_IDS)
         self.data = []
         for imgId in imgIds:
@@ -195,7 +200,7 @@ def evaluate(model, dataloader):
 if __name__ == "__main__":
 
     model = onnx.load(args.model_path)
-    dataloader = Dataloader()
+    dataloader = Dataloader(args.batch_size)
     def eval(model):
         return evaluate(model, dataloader)
 

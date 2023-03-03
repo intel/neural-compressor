@@ -64,6 +64,11 @@ parser.add_argument(
     type=str,
     help="benchmark mode of performance or accuracy"
 )
+parser.add_argument(
+    "--batch_size",
+    default=1,
+    type=int,
+)
 args = parser.parse_args()
 
 def _topk_shape_validate(preds, labels):
@@ -153,16 +158,13 @@ class TopK:
         return self.num_correct / self.num_sample
 
 class Dataloader:
-    def __init__(self, dataset_location):
+    def __init__(self, dataset_location, batch_size):
         df = pd.read_csv(dataset_location)
         df = df[df['Usage']=='PublicTest']
         images = [np.reshape(np.fromstring(image, dtype=np.uint8, sep=' '), (48, 48)) for image in df['pixels']]
         labels = np.array(list(map(int, df['emotion'])))
-        self.batch_size = 1
+        self.batch_size = batch_size
         self.data = [(self.preprocess(image), [label]) for image, label in zip(images, labels)]
-            
-    def __len__(self):
-        return len(self.data)
 
     def __iter__(self):
         for item in self.data:
@@ -188,7 +190,7 @@ def eval_func(model, dataloader, metric):
 
 if __name__ == "__main__":
     model = onnx.load(args.model_path)
-    dataloader  = Dataloader(args.dataset_location)
+    dataloader  = Dataloader(args.dataset_location, args.batch_size)
     top1 = TopK()
     def eval(onnx_model):
         return eval_func(onnx_model, dataloader, top1)

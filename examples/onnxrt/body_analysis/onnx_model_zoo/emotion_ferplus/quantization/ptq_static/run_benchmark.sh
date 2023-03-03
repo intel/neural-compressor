@@ -34,6 +34,7 @@ function run_benchmark {
             --model_path ${input_model} \
             --mode ${mode} \
             --dataset_location ${dataset_location} \
+            --batch_size 1 \
             --benchmark
 }
 
