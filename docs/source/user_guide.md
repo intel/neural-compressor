@@ -5,7 +5,10 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
 
 ## Documentation
 
-The user can get a quick understand about design structure and workflow of Intel® Neural Compressor in the `Overview` part. This part has provided a wide range examples to help the user to get a quick start of using Intel® Neural Compressor. `Python-based APIs` contains more details about the functional APIs in Intel® Neural Compressor, which introduces the mechanism of each function and provides a tutorial to help the user write their own code step by step. `Neural Conder` show our special Python launcher to help the user to achieve automatic deep learning optimization. If you're familiar with our Intel® Neural Compressor, you can find more advanced usages to help you optimize your code and improve the model performance in `Advanced Topics`. We also provide a comprehensive migration document in `Code Migration` to help the user update their code from our previous 1.X version to the new 2.X version. 
+**Overview** part helps user to get a quick understand about design structure and workflow of Intel® Neural Compressor. We provided broad examples to help users to get started.   
+**Python-based APIs** contains more details about the functional APIs in Intel® Neural Compressor, which introduce the mechanism of each function and provides a tutorial to help the user apply in their own cases. Please note we will stop to support Intel Neural Compressor 1.X API in the future. So we provide a comprehensive migration document in **Code Migration** to help the user update their code from previous 1.X version to the new 2.X version.   
+**Neural Coder** shows our special innovation about zero-code optimization tool to help user apply Intel® Neural Compressor optimization without coding.  
+**Advanced Topics** provide the advanced topics that help user dive deep into Intel® Neural Compressor.  
 
 <table class="docutils">
   <thead>
@@ -48,6 +51,16 @@ The user can get a quick understand about design structure and workflow of Intel
   </tbody>
   <thead>
     <tr>
+      <th colspan="9">Code Migration</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td colspan="9" align="center"><a href="./docs/source/migration.md">Code Migration from Intel® Neural Compressor 1.X to Intel® Neural Compressor 2.X</a></td>
+    </tr>    
+  </tbody>
+  <thead>
+    <tr>
       <th colspan="9">Neural Coder (Zero-code Optimization)</th>
     </tr>
   </thead>
@@ -57,16 +70,6 @@ The user can get a quick understand about design structure and workflow of Intel
         <td colspan="2" align="center"><a href="./neural_coder/extensions/neural_compressor_ext_lab/README.md">JupyterLab Extension</a></td>
         <td colspan="3" align="center"><a href="./neural_coder/extensions/neural_compressor_ext_vscode/README.md">Visual Studio Code Extension</a></td>
         <td colspan="3" align="center"><a href="./neural_coder/docs/SupportMatrix.md">Supported Matrix</a></td>
-    </tr>    
-  </tbody>
-  <thead>
-  <tr>
-    <th colspan="9">Code Migration</th>
-  </tr>
-  </thead>
-    <tbody>
-    <tr>
-        <td colspan="9" align="center"><a href="./docs/source/migration.md">Code Migration from Intel® Neural Compressor 1.X to Intel® Neural Compressor 2.X</a></td>
     </tr>    
   </tbody>
   <thead>
