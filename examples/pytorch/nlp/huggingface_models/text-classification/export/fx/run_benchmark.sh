@@ -62,7 +62,7 @@ function run_benchmark {
     if [[ ${input_model: -5:5} == ".onnx" ]]; then
         # fetch tokenizer configuration for dataset.
         python onnx_evaluation.py \
-                --model_name_or_path ${tuned_checkpoint} \
+                --model_name_or_path ${tokenizer} \
                 --model_path ${input_model} \
                 --task ${dataset_location} \
                 --batch_size=${batch_size} \
