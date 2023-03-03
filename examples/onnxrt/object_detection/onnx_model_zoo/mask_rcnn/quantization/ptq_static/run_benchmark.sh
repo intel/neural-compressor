@@ -25,9 +25,6 @@ function init_params {
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
-      --batch_size=*)
-          batch_size=$(echo $var |cut -f2 -d=)
-      ;;
     esac
   done
 
@@ -38,6 +35,7 @@ function run_benchmark {
     if [ ! $label_path ]; then
         label_path='label_map.yaml'
     fi
+    batch_size=1
 
     python main.py \
             --model_path ${input_model} \
