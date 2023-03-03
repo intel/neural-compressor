@@ -5,22 +5,20 @@ This document is used to enable Tensorflow Keras models using Intel® Neural Com
 This example can run on Intel CPUs and GPUs.
 
 
-# Prerequisite
+## Prerequisite
 
-## 1. Environment
-
-### Installation
+### 1. Installation
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
 ```
-### Install Intel Tensorflow
+### 2. Install Intel Tensorflow
 ```shell
 pip install intel-tensorflow
 ```
 > Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
-### Install Intel Extension for Tensorflow
+### 3. Install Intel Extension for Tensorflow
 #### Quantizing the model on Intel GPU
 Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.
 
@@ -37,29 +35,13 @@ Intel Extension for Tensorflow for Intel CPUs is experimental currently. It's no
 pip install --upgrade intel-extension-for-tensorflow[cpu]
 ```
 
-## 2. Prepare Pretrained model
+### 4. Prepare Pretrained model
 
 The pretrained model is provided by [Keras Applications](https://keras.io/api/applications/). prepare the model, Run as follow: 
  ```
-python prepare_model.py --output_model=/path/to/model
+python prepare_model.py   --output_model=/path/to/model
  ```
 `--output_model ` the model should be saved as SavedModel format or H5 format.
-
-## 3. Prepare Dataset
-
-  TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
-  We also prepared related scripts in `imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
-
-  ```shell
-  cd examples/tensorflow/image_recognition/keras_models/
-  # convert validation subset
-  bash prepare_dataset.sh --output_dir=/resnetv2_50/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
-  # convert train subset
-  bash prepare_dataset.sh --output_dir=/resnetv2_50/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
-  cd resnetv2_50/quantization/ptq
-  ```
-
-# Run Command
 
 ## Quantization Config
 The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
@@ -72,14 +54,9 @@ config = PostTrainingQuantConfig(
     )
 ```
 
-## Quantization
+## Run Command
   ```shell
-  bash run_tuning.sh --input_model=./resnetv2_50_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
-  ```
-
-## Benchmark
-  ```shell
-  bash run_benchmark.sh --input_model=./result --mode=accuracy --dataset_location=/path/to/evaluation/dataset --batch_size=32
-  bash run_benchmark.sh --input_model=./result --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=1
+  bash run_tuning.sh --input_model=./path/to/model --output_model=./result --dataset_location=/path/to/evaluation/dataset --batch_size=32
+  bash run_benchmark.sh --input_model=./path/to/model --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=1
   ```
 

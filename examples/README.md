@@ -61,7 +61,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>MobileNet V2</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/mobilenet_v2/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/mobilenet_v2/quantization/ptq">keras</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/mobilenet_v2/quantization/ptq">pb</a> / <a href="./keras/image_recognition/mobilenet_v2/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>MobileNet V3</td>
@@ -115,13 +115,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>ResNet V2 50</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet_v2_50/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/resnetv2_50/quantization/ptq">keras</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet_v2_50/quantization/ptq">pb</a> / <a href="./keras/image_recognition/resnetv2_50/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2 101</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet_v2_101/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/resnetv2_101/quantization/ptq">keras</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet_v2_101/quantization/ptq">pb</a> / <a href="./keras/image_recognition/resnetv2_101/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2 152</td>
@@ -193,7 +193,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Xception</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/xception/quantization/ptq">keras</a></td>
+    <td><a href="./keras/image_recognition/xception/quantization/ptq">keras</a></td>
   </tr>
   <tr>
     <td>ResNet V2</td>
@@ -208,7 +208,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/image_recognition/keras_models/resnet50/quantization/qat">keras</a> </td>
   </tr>
   <tr>
-    <td>*EfficientNet V2 B0</td>
+    <td>EfficientNet V2 B0</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/image_recognition/SavedModel/efficientnet_v2_b0/quantization/ptq">SavedModel</a></td>

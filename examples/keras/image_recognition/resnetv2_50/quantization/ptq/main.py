@@ -51,22 +51,23 @@ flags.DEFINE_integer('batch_size', 32, 'batch_size')
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
-from neural_compressor.metric import TensorflowTopK
-from neural_compressor.data import ComposeTransform
-from neural_compressor.data import TensorflowImageRecord
-from neural_compressor.data import LabelShift
-from neural_compressor.data import DefaultDataLoader
-from neural_compressor.data import BilinearImagenetTransform
+from neural_compressor.metric.metric import TensorflowTopK
+from neural_compressor.data.transforms.transform import ComposeTransform
+from neural_compressor.data.datasets.dataset import TensorflowImageRecord
+from neural_compressor.data.transforms.imagenet_transform import LabelShift
+from neural_compressor.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
+from neural_compressor.data.transforms.imagenet_transform import BilinearImagenetTransform
 
+height = width = 224
 eval_dataset = TensorflowImageRecord(root=FLAGS.eval_data, transform=ComposeTransform(transform_list= \
-                 [BilinearImagenetTransform(height=224, width=224)]))
+                 [BilinearImagenetTransform(height=height, width=width)]))
 
-eval_dataloader = DefaultDataLoader(dataset=eval_dataset, batch_size=FLAGS.batch_size)
+eval_dataloader = TensorflowDataLoader(dataset=eval_dataset, batch_size=FLAGS.batch_size)
 
 if FLAGS.calib_data:
     calib_dataset = TensorflowImageRecord(root=FLAGS.calib_data, transform= \
-        ComposeTransform(transform_list= [BilinearImagenetTransform(height=224, width=224)]))
-    calib_dataloader = DefaultDataLoader(dataset=calib_dataset, batch_size=10)
+        ComposeTransform(transform_list= [BilinearImagenetTransform(height=height, width=width)]))
+    calib_dataloader = TensorflowDataLoader(dataset=calib_dataset, batch_size=10)
 
 def evaluate(model):
     """
@@ -79,9 +80,6 @@ def evaluate(model):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
-    infer = model.signatures["serving_default"]
-    output_dict_keys = infer.structured_outputs.keys()
-    output_name = list(output_dict_keys )[0]
     postprocess = LabelShift(label_shift=1)
     metric = TensorflowTopK(k=1)
     latency_list = []
@@ -92,13 +90,10 @@ def evaluate(model):
         if FLAGS.benchmark and FLAGS.mode == 'performance':
             iteration = FLAGS.iters
         for idx, (inputs, labels) in enumerate(dataloader):
-            inputs = np.array(inputs)
-            input_tensor = tf.constant(inputs)
             start = time.time()
-            predictions = infer(input_tensor)[output_name]
+            predictions = model.predict_on_batch(inputs)
             end = time.time()
             latency_list.append(end - start)
-            predictions = predictions.numpy()
             predictions, labels = postprocess((predictions, labels))
             metric.update(predictions, labels)
             if iteration and idx >= iteration:
@@ -122,9 +117,9 @@ def main(_):
     if FLAGS.tune:
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.utils import set_random_seed
+        from neural_compressor.utils.utility import set_random_seed
         set_random_seed(9527)
-        config = PostTrainingQuantConfig(
+        config = PostTrainingQuantConfig(backend='itex', 
             calibration_sampling_size=[50, 100])
         q_model = fit(
             model=FLAGS.input_model,
@@ -138,10 +133,10 @@ def main(_):
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         if FLAGS.mode == 'performance':
-            conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+            conf = BenchmarkConfig(backend='itex', cores_per_instance=4, num_of_instance=7)
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
-            from neural_compressor.model import Model
+            from neural_compressor.model.model import Model
             accuracy = evaluate(Model(FLAGS.input_model).model)
             logger.info('Batch size = %d' % FLAGS.batch_size)
             logger.info("Accuracy: %.5f" % accuracy)

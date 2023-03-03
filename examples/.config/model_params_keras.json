@@ -1,0 +1,39 @@
+{
+  "keras": {
+    "resnetv2_50": {
+      "model_src_dir": "image_recognition/resnetv2_50/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/resnetv2_50_keras/saved_model",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "xception": {
+      "model_src_dir": "image_recognition/xception/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/xception_keras/saved_model/",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "mnist": {
+      "model_src_dir": "image_recognition/mnist/quantization/qat",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/tensorflow/mnist_keras/saved_model/",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "resnetv2_101": {
+      "model_src_dir": "image_recognition/resnetv2_101/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/resnetv2_101_keras/saved_model",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "mobilenet_v2": {
+      "model_src_dir": "image_recognition/mobilenet_v2/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/mobilenet_v2_keras/saved_model/",
+      "main_script": "main.py",
+      "batch_size": 32
+    }
+  }
+}
