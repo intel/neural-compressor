@@ -97,8 +97,10 @@ autgrad
 autogenerate
 autograd
 AutoMixPrecision
+AutoModelForSequenceClassification
 autopep
 Autoregressive
+AutoTokenizer
 ava
 AverageMeter
 avgloss
