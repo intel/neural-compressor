@@ -408,7 +408,8 @@ class TuneStrategy(object):
                 )
             cfg_idx = status.Get_tag()
             if status.Get_tag() >= len(self.tune_cfg_lst):
-                logger.info("[Rank {}]slave {} receiving END signal in the current stage".format(comm.Get_rank(), comm.Get_rank()))
+                logger.info("[Rank {}]slave {} receiving END signal in the current stage".format(comm.Get_rank(),\
+                    comm.Get_rank()))
                 if task == "MET":
                     logger.info("[Rank {}]met criterion in this stage!".format(comm.Get_rank()))
                     self.met_flag = True
