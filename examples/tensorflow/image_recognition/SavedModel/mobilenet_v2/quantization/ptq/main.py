@@ -106,17 +106,7 @@ class eval_object_detection_optimized_graph(object):
                 'filter': None
             }
             calib_dataloader = create_dataloader('tensorflow', calib_dataloader_args)
-            op_name_list={
-                'MobilenetV2/expanded_conv/depthwise/depthwise':
-                            {
-                            'activation':  {'dtype': ['fp32']}
-                            },
-                'MobilenetV2/Conv_1/Conv2D':
-                            {
-                            'activation':  {'dtype': ['fp32']}
-                            }
-                        }
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[20, 50], op_name_list=op_name_list)
+            conf = PostTrainingQuantConfig(calibration_sampling_size=[20, 50])
             q_model = quantization.fit(model=args.input_graph, conf=conf,
                                        calib_dataloader=calib_dataloader, eval_func=evaluate)
             q_model.save(args.output_graph)
