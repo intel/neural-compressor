@@ -11,7 +11,7 @@ parser.add_argument('--int8', action='store_true', default=False, help="eval fp3
 parser.add_argument('--sq', action='store_true', default=False, help="whether to use smooth quant")
 parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
 parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-560m')
-parser.add_argument('--alpha', type=float, default=0.5)
+# parser.add_argument('--alpha', type=float, default=0.5)
 parser.add_argument('--log_frequency', type=int, default=100)
 args = parser.parse_args()
 
