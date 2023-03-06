@@ -114,7 +114,8 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 - One-shot Pruning
 
-  One-shot pruning means the model is pruned to its target sparsity with one single step. This pruning method often works at model's initialization step(which means pruning start_step = end_step). It can easily cause accuracy drop, but save much training time.
+  One-shot pruning means the model is pruned to its target sparsity with one single step(which means pruning start_step = end_step). This often takes place at the initial stage of training/finetuning which simplifies the pruning procedure. However, one-shot pruning is prone to larger accuracy degradation compared to iterative pruning.
+
 
 - Iterative Pruning
 
