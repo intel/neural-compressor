@@ -167,9 +167,7 @@ class Benchmark(object):
         """Directly call a Benchmark object.
 
         Args:
-            model: Get the model
-            b_dataloader: Set dataloader for benchmarking
-            b_func: Eval function for benchmark
+            raw_cmd: raw command used for benchmark
         """
         cfg = self.conf.usr_cfg
         assert cfg.evaluation is not None, 'benchmark evaluation filed should not be None...'
@@ -222,7 +220,11 @@ class Benchmark(object):
             pass
 
     def config_instance(self, raw_cmd):
-        """Configure the multi-instance commands and trigger benchmark with sub process."""
+        """Configure the multi-instance commands and trigger benchmark with sub process.
+
+        Args:
+            raw_cmd: raw command used for benchmark
+        """
         multi_instance_cmd = ''
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
