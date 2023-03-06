@@ -30,3 +30,4 @@ stages:
           utScriptFileName: 'run_ux'
           uploadPath: $(UPLOAD_PATH)
           utArtifact: 'ut-ux'
+          utContainerName: 'utTest-ux'
