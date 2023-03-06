@@ -35,9 +35,9 @@ Tuning Strategies
 
     3.10. [TPE](#tpe)
 
- 4. [Customize a New Tuning Strategy](#customize-a-new-tuning-strategy)
+ 4. [Distributed Tuning](#distributed-tuning)
 
- 5. [Distributed Tuning](#distributed-tuning)
+ 5. [Customize a New Tuning Strategy](#customize-a-new-tuning-strategy)
 
 ## Introduction
 
@@ -382,6 +382,32 @@ conf = PostTrainingQuantConfig(
 ```
 
 
+
+The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.
+
+The `traverse` function can be overridden optionally if the traverse process required by the new strategy is different from the one `TuneStrategy` base class implemented.
+
+An example of customizing a new tuning strategy can be reached at [TPE Strategy](../../neural_compressor/contrib/strategy/tpe.py).
+
+## Distributed Tuning
+
+### Design
+
+Intel® Neural Compressor provides distributed tuning to speed up the tuning process by leveraging the multi-node cluster. It seamlessly parallelizes the tuning process across multi nodes by using the MPI. In distributed tuning, the `fp32` model is replicated on every node, and each original model replica is fed with a different quantization configuration. The master handler coordinates the tuning process and synchronizes the tuning result of each stage to every slave handler. The distributed tuning allows the tuning process to scale up significantly to the number of nodes, which translates into faster results and more efficient utilization of computing resources. 
+
+
+### Usage
+
+To use Distributed Tuning, the `use_distributed_tuning` field in the `TuningCriterion` should be specified with `True`.
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig
+
+conf = PostTrainingQuantConfig(use_distributed_tuning=True)
+```
+An example of distributed tuning can be reached at [ptq_static_mrpc](../../examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx).
+
+
 ## Customize a New Tuning Strategy
 
 Intel® Neural Compressor supports new strategy extension by implementing a sub-class of the `TuneStrategy` class in neural_compressor.strategy package and registering it by the `strategy_registry` decorator.
@@ -405,51 +431,3 @@ class AbcTuneStrategy(TuneStrategy):
             ...
 
 ```
-
-The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.
-
-The `traverse` function can be overridden optionally if the traverse process required by the new strategy is different from the one `TuneStrategy` base class implemented.
-
-An example of customizing a new tuning strategy can be reached at [TPE Strategy](../../neural_compressor/contrib/strategy/tpe.py).
-
-## Distributed Tuning
-
-### Design
-
-Intel® Neural Compressor supports distributed tuning config level parallel tuning on multi nodes. The Distributed Tuning is designed for speedup quantizing most models. After generating a tuning config list at each stage, Distributed Tuning start parallel execution tuning at each stage, and the tuning process ends once the condition meets the exit policy.
-
-### Implementation
-
-```python
-@strategy_registry
-class AbcTuneStrategy(TuneStrategy):
-    def __init__(self, model, conf, q_dataloader, q_func=None,
-                 eval_dataloader=None, eval_func=None, dicts=None):
-        ...
-
-    def distributed_next_tune_cfg_list(self):
-        # generate the next tuning config list
-        ...
-
-    def traverse(self):
-        # if select distributed tuning
-        self.distributed_traverse()
-        ...
-
-    def distributed_traverse(self):
-         for tune_cfg_list in self.distributed_next_tune_cfg_list():
-            # distributed do quantization
-            ...
-
-```
-
-### Usage
-
-To use Distributed Tuning, user can set `use_distributed_tuning` to True in `PostTrainingQuantConfig`.
-
-```python
-from neural_compressor.config import PostTrainingQuantConfig
-
-conf = PostTrainingQuantConfig(use_distributed_tuning=True)
-```
-An example of distributed tuning can be reached at [ptq_static_mrpc](../../examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx).

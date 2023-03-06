@@ -17,6 +17,9 @@ pip install -r requirements.txt
 
 # Run
 ## 1. Quantization
+
+### 1.1 Quantization with single node
+
 ```shell
 python run_glue.py \
         --model_name_or_path yoshitomo-matsubara/bert-large-uncased-rte \
@@ -36,39 +39,34 @@ or
 ```bash
 sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
 ```
-#### Try distributed tuning (take mrpc task as an example) as follows:
 
-Install mpi4py: 
+### 1.2 Quantization with multi-node
 
-```shell
-# Build Open MPI
+We need the `mpi4py` to be installed to execute the distributed tuning across multi-node.
 
-# download openmpi-<version> from https://www.open-mpi.org/
-tar xf openmpi-<version>.tar.bz2
-cd openmpi-<version>
-mkdir build
-cd build
-../configure --prefix=<path> 2>&1 | tee config.out
-make all
-make install
+- Prerequisites:
+    - A working MPI implementation
+    - `mpi4py`
 
-# add `Export PATH=<path>` into `~/.bashrc`
-source ~/.bashrc
+> NOTE: For the working MPI implementation, we suggest users either build it using [Conda](https://anaconda.org/conda-forge/openmpi) or follow the instructions provided in the OpenMPI [Installing  documentation](https://docs.open-mpi.org/en/v5.0.x/installing-open-mpi/quickstart.html#building-from-source).
 
-# Install mpi4py
-pip install mpi4py
-```
 
 In `run_glue.py`, set `config.use_distributed_tuning` to True by the following statement.
 
 ```python
-conf = PostTrainingQuantConfig(approach="static", tuning_criterion=tuning_criterion, use_distributed_tuning=True)
+conf = PostTrainingQuantConfig(approach="static", 
+                               tuning_criterion=tuning_criterion, 
+                               use_distributed_tuning=True)
 ```
 
 And then, run the following command:
 
-```
-mpirun -np <NUM_PROCESS> -mca btl_tcp_if_include <NETWORK_INTERFACE> -x OMP_NUM_THREADS=<MAX_NUM_THREADS> --host <HOSTNAME1>,<HOSTNAME2>,<HOSTNAME3> bash run_distributed_tuning.sh
+``` shell
+mpirun -np <NUM_PROCESS> \
+         -mca btl_tcp_if_include <NETWORK_INTERFACE> \
+         -x OMP_NUM_THREADS=<MAX_NUM_THREADS> \
+         --host <HOSTNAME1>,<HOSTNAME2>,<HOSTNAME3> \
+         bash run_distributed_tuning.sh
 ```
 
 * *`<NUM_PROCESS>`* is the number of processes, which is recommended to set to be equal to the number of hosts.
@@ -79,6 +77,8 @@ the number of physical cores on one node.
 * *`<HOSTNAME>`* is the host name, and argument `--host <HOSTNAME>,<HOSTNAME>...` can be replaced with `--hostfile <HOSTFILE>`, when each line in *`<HOSTFILE>`* is a host name.
 
 * `-mca btl_tcp_if_include <NETWORK_INTERFACE>` is used to set the network communication interface between hosts. For example, *`<NETWORK_INTERFACE>`* can be set to 192.168.20.0/24 to allow the MPI communication between all hosts under the 192.168.20.* network segment.
+
+
 ## 2. Benchmark
 ```bash
 # int8
