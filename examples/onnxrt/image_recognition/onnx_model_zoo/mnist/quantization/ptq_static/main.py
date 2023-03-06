@@ -262,7 +262,7 @@ class Dataloader:
 
         def fetcher(ids):
             data = [self._preprpcess(self.image_list[idx]) for idx in ids]
-            label = [int(self.label_list[idx]) for idx in ids]
+            label = [int(self.targets[idx]) for idx in ids]
             return collate(data), label
 
         for batched_indices in batch_sampler():

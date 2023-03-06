@@ -35,7 +35,7 @@ function run_benchmark {
     python main.py \
             --model_path ${input_model} \
             --dataset_location ${dataset_location} \
-            --label_path ${label_path-${dataset_location}../val.txt} \
+            --label_path ${label_path-${dataset_location}/../val.txt} \
             --mode=${mode} \
             --batch_size 1 \
             --benchmark

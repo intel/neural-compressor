@@ -38,7 +38,7 @@ function run_tuning {
     python main.py \
             --model_path ${input_model} \
             --dataset_location ${dataset_location} \
-            --label_path ${label_path-${dataset_location}../val.txt} \
+            --label_path ${label_path-${dataset_location}/../val.txt} \
             --output_model ${output_model} \
             --quant_format ${quant_format-default} \
             --tune
