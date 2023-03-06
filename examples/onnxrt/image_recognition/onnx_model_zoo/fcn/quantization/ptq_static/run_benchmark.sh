@@ -37,7 +37,7 @@ function run_benchmark {
             --model_path ${input_model} \
             --mode ${mode} \
             --dataset_location ${dataset_location} \
-            --label_path ${label_path-${dataset_location}/../val.txt} \
+            --label_path ${label_path-${dataset_location}/../annotations/instances_val2017.json} \
             --batch_size 1 \
             --benchmark
 }

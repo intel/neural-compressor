@@ -51,5 +51,6 @@ bash run_tuning.sh --input_model=path/to/model  \ # model path as *.onnx
 ```bash
 bash run_benchmark.sh --input_model=path/to/model \  # model path as *.onnx
                       --dataset_location=path/to/val2017/ \
-                      --label_path=/path/to/instances_val2017.json \                      --mode=performance # or accuracy
+                      --label_path=/path/to/instances_val2017.json \
+                      --mode=performance # or accuracy
 ```
