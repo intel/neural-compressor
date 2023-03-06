@@ -14,7 +14,6 @@ parameters:
   - name: utTestMode
     type: string
     default: "coverage"
-
   - name: utContainerName
     type: string
     default: "utTest"
