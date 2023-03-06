@@ -48,8 +48,8 @@ Pruning
 Neural network pruning is a promising model compression technique that removes the least important parameters/neurons in the network and achieves compact architectures of minimal accuracy drop and maximal inference acceleration. As state-of-the-art model sizes have grown at an unprecedented speed, pruning has become increasingly crucial to reducing the computational and memory footprint that huge neural networks require.
 
 <div align=center>
-<a target="_blank" href="./../../docs/source/imgs/pruning/pruning.png">
-    <img src="./../../docs/source/imgs/pruning/pruning.png" width=350 height=155 alt="pruning intro">
+<a target="_blank" href="../../../docs/source/imgs/pruning/pruning.png">
+    <img src="../../../docs/source/imgs/pruning/pruning.png" width=350 height=155 alt="pruning intro">
 </a>
 </div>
 
@@ -70,8 +70,8 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 
 <div align=center>
-<a target="_blank" href="../../docs/source/imgs/pruning/Pruning_patterns.jpg">
-    <img src="../../docs/source/imgs/pruning/pruning_patterns.jpg" width=695 height=145 alt="Sparsity Pattern">
+<a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_patterns.jpg">
+    <img src="../../../docs/source/imgs/pruning/pruning_patterns.jpg" width=695 height=145 alt="Sparsity Pattern">
 </a>
 </div>
 
@@ -88,7 +88,7 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 - Gradient
 
-  The algorithm prunes the weight by the lowest gradient value of each layer with given sparsity target.
+  The algorithm prunes the weight by the lowest gradient value of each layer with given sparsity target. Note that when using a gradient-based criterion, it is necessary to let the pruning start step >= 1.
 
 - SNIP
 
@@ -101,8 +101,8 @@ Pruning Criteria determines how should the weights of a neural network are score
   $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$
 
 <div align=center>
-<a target="_blank" href="./../../docs/source/imgs/pruning/pruning_criteria.png">
-    <img src="./../../docs/source/imgs/pruning/pruning_criteria.png" width=350 height=170 alt="Pruning criteria">
+<a target="_blank" href="../../../docs/source/imgs/pruning/pruning_criteria.png">
+    <img src="../../../docs/source/imgs/pruning/pruning_criteria.png" width=350 height=170 alt="Pruning criteria">
 </a>
 </div>
 
@@ -114,15 +114,15 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 - One-shot Pruning
 
-  One-shot pruning means the model is pruned to its target sparsity with one single step. This pruning method often works at model's initialization step. It can easily cause accuracy drop, but save much training time.
+  One-shot pruning means the model is pruned to its target sparsity with one single step. This pruning method often works at model's initialization step(which means pruning start_step = end_step). It can easily cause accuracy drop, but save much training time.
 
 - Iterative Pruning
 
   Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.
 
 <div align=center>
-<a target="_blank" href="../../docs/source/imgs/pruning/Pruning_schedule.jpg">
-    <img src="./../../docs/source/imgs/pruning/Pruning_schedule.jpg" width=930 height=170 alt="Pruning schedule">
+<a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_schedule.jpg">
+    <img src="../../../docs/source/imgs/pruning/Pruning_schedule.jpg" width=930 height=170 alt="Pruning schedule">
 </a>
 </div>
 
@@ -143,8 +143,8 @@ Pruning type defines how the masks are generated and applied to a neural network
   Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
 
   <div align = "center", style = "width: 77%; margin-bottom: 2%;">
-      <a target="_blank" href="../../docs/source/imgs/pruning/progressive_pruning.png">
-          <img src="../../docs/source/imgs/pruning/progressive_pruning.png" alt="Architecture" width=420 height=290>
+      <a target="_blank" href="../../../docs/source/imgs/pruning/progressive_pruning.png">
+          <img src="../../../docs/source/imgs/pruning/progressive_pruning.png" alt="Architecture" width=420 height=290>
       </a>
   </div>
   &emsp;&emsp;(a) refers to the traditional structured iterative pruning;(b, c, d) demonstrates some typical implementations of mask interpolation.  <Br/>
@@ -178,8 +178,8 @@ Range of sparse score calculation in iterative pruning, default scope is global.
 
 Growth rules for the sparsity of iterative pruning, "exp", "cos", "cube",  and "linear" are available，We use exp by default.
 <div align=center>
-<a target="_blank" href="../../docs/source/imgs/pruning/sparsity_decay_type.png">
-    <img src="../../docs/source/imgs/pruning/sparsity_decay_type.png" width=870 height=220 alt="Regularization">
+<a target="_blank" href="../../../docs/source/imgs/pruning/sparsity_decay_type.png">
+    <img src="../../../docs/source/imgs/pruning/sparsity_decay_type.png" width=870 height=220 alt="Regularization">
 </a>
 </div>
 
@@ -194,8 +194,8 @@ Regularization is a technique that discourages learning a more complex model and
   The main ideas of Group Lasso are to construct an objective function that penalizes the L2 parameterization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
 
 <div align=center>
-<a target="_blank" href="../../docs/source/imgs/pruning/Regularization.jpg">
-    <img src="../../docs/source/imgs/pruning/Regularization.jpg" width=350 height=170 alt="Regularization">
+<a target="_blank" href="../../../docs/source/imgs/pruning/Regularization.jpg">
+    <img src="../../../docs/source/imgs/pruning/Regularization.jpg" width=350 height=170 alt="Regularization">
 </a>
 </div>
 
@@ -204,7 +204,7 @@ Regularization is a technique that discourages learning a more complex model and
 
 
 
-Neural Compressor `Pruning` API is defined under `neural_compressor.pruner`, which takes a user-defined configure object as input.
+Neural Compressor `Pruning` API is defined under `neural_compressor.training`, which takes a user-defined configure object as input.
 Users can pass the customized training/evaluation functions to `Pruning` in various scenarios.
 
 
@@ -217,7 +217,8 @@ The following section exemplifies how to use hooks in user pass-in training func
       configs = [
               { ## Example of a regular configuration
                 "op_names": ['layer1.*'], # A list of modules that would be pruned.
-                "end_step": 10000, # Step at which to end pruning.
+                "start_step": 1,  # Step at which to begin pruning, if a gradient-based criterion is used (e.g., snip-momentum), should let the start_step >= 1.
+                "end_step": 10000, # Step at which to end pruning, for one-shot pruning start_step=end_step.
                 "excluded_op_names": ['.*embeddings*'], # A list of modules that would not be pruned.
                 'target_sparsity': 0.9,   # Target sparsity ratio of modules.
                 "pruning_frequence": 250,   # Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.
@@ -232,7 +233,7 @@ The following section exemplifies how to use hooks in user pass-in training func
                   'pattern': "4x1", # Default pruning pattern.
                   'op_names': ['layer2.*'],  # A list of modules that would be pruned.
                   'excluded_op_names': ['layer3.*'],  # A list of modules that would not be pruned.
-                  'start_step': 0,  # Step at which to begin pruning.
+                  'start_step': 1,  # Step at which to begin pruning.
                   'end_step': 10,   # Step at which to end pruning.
                   'pruning_scope': "global", # Default pruning scope.
                   'pruning_frequency': 1, # Frequency of applying pruning.
@@ -248,28 +249,29 @@ The following section exemplifies how to use hooks in user pass-in training func
 
     ```python
         """ All you need is to insert following API functions to your codes:
-        pruner.on_train_begin() # Setup pruner
-        pruner.on_step_begin() # Prune weights
-        pruner.on_before_optimizer_step() # Do weight regularization
-        pruner.on_after_optimizer_step() # Update weights' criteria, mask weights
+        on_train_begin() # Setup pruners
+        on_step_begin() # Prune weights
+        on_before_optimizer_step() # Do weight regularization
+        on_after_optimizer_step() # Update weights' criteria, mask weights
+        on_train_end() # end of pruner, Print sparse information
         """
-        from neural_compressor.pruner.pruning import Pruning, WeightPruningConfig
+        from neural_compressor.training import prepare_compression, WeightPruningConfig
         config = WeightPruningConfig(configs)
-        pruner = Pruning(config)  # Define a pruning object.
-        pruner.model = model      # Set model object to prune.
-        pruner.on_train_begin()
+        compression_manager = prepare_compression(model, config) # Define a pruning object.
+        compression_manager.callbacks.on_train_begin()  ## insert hook  
         for epoch in range(num_train_epochs):
             model.train()
             for step, batch in enumerate(train_dataloader):
-                pruner.on_step_begin(step)
+                compression_manager.callbacks.on_step_begin(step)
                 outputs = model(**batch)
                 loss = outputs.loss
                 loss.backward()
-                pruner.on_before_optimizer_step()
+                compression_manager.callbacks.on_before_optimizer_step()
                 optimizer.step()
-                pruner.on_after_optimizer_step()
+               compression_manager.callbacks.on_after_optimizer_step()
                 lr_scheduler.step()
                 model.zero_grad()
+        compression_manager.callbacks.on_train_end()
     ```
  In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function.
 
@@ -279,24 +281,24 @@ The following section exemplifies how to use hooks in user pass-in training func
 The pruning technique  is validated on typical models across various domains (including CV and NLP).
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
-  <a target="_blank" href="../../docs/source/imgs/pruning/pruning_scatter.jpg">
-    <img src="../../docs/source/imgs/pruning/pruning_scatter.jpg" alt="Architecture" width=450 height=300>
+  <a target="_blank" href="../../../docs/source/imgs/pruning/pruning_scatter.jpg">
+    <img src="../../../docs/source/imgs/pruning/pruning_scatter.jpg" alt="Architecture" width=450 height=300>
   </a>
 </div>
 
 - Text Classification
 
-  Sparsity is implemented in different pruning patterns of MRPC and SST-2 tasks [Text-classification examples](../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
+  Sparsity is implemented in different pruning patterns of MRPC and SST-2 tasks [Text-classification examples](../../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
 
 - Question Answering
 
-  Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
+  Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
 - Object Detection
 
-  Pruning on YOLOv5 model using coco dataset [Object-etection examples](../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
+  Pruning on YOLOv5 model using coco dataset [Object-etection examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
-The API [Pruning V2](../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
+The API [Pruning V2](../../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
 
 
 
@@ -305,4 +307,5 @@ The API [Pruning V2](../../docs/source/pruning.md#Get-Started-with-Pruning-API) 
 [1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.
 
 [2] Zafrir, Ofir, Ariel Larey, Guy Boudoukh, Haihao Shen, and Moshe Wasserblat. "Prune once for all: Sparse pre-trained language models." arXiv preprint arXiv:2111.05754 (2021).
+
 
