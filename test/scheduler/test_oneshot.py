@@ -311,14 +311,14 @@ class TestPruning(unittest.TestCase):
         datasets = Datasets('pytorch')
         dummy_dataset = datasets['dummy'](shape=(16, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(device)
         model = copy.deepcopy(self.model)
         distillation_criterion = KnowledgeDistillationLossConfig(loss_types=['CE', 'KL'])
         d_conf = DistillationConfig(copy.deepcopy(self.model), distillation_criterion)
         p_conf = WeightPruningConfig(
             [{'start_step': 0, 'end_step': 2}], target_sparsity=0.64, pruning_scope="local")
         compression_manager = prepare_compression(model=model, confs=[d_conf, p_conf])
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model.to(device)
         def train_func_for_nc(model):
             epochs = 3
             iters = 3
