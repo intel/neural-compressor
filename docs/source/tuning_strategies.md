@@ -398,7 +398,7 @@ Intel® Neural Compressor provides distributed tuning to speed up the tuning pro
 
 ### Usage
 
-To use Distributed Tuning, the `use_distributed_tuning` field in the `TuningCriterion` should be specified with `True`.
+To use Distributed Tuning, the `use_distributed_tuning` field in the `PostTrainingQuantConfig` should be specified with `True`.
 
 ```python
 from neural_compressor.config import PostTrainingQuantConfig

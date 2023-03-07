@@ -13,7 +13,7 @@ import importlib
 if importlib.util.find_spec("mpi4py") is None:
     CONDITION = True
 else:
-    from mpi4py import MPI
+    # from mpi4py import MPI
     CONDITION = False
 
 def build_fake_ut():
