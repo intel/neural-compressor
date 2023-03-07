@@ -522,7 +522,7 @@ class _BaseQuantizationConfig:
                 return check_value("graph_optimization_level", val, str,
                     ["DISABLE_ALL", "ENABLE_BASIC", "ENABLE_EXTENDED", "ENABLE_ALL"])
             else:
-                return "ENABLE_BASIC"
+                return None
 
         def first_conv_or_matmul_quantization(val=None):
             if val is not None:
