@@ -51,6 +51,11 @@ parser.add_argument(
     help="Path to val2017 of COCO"
 )
 parser.add_argument(
+    '--label_path',
+    type=str,
+    help="Path to instances_val2017.json"
+)
+parser.add_argument(
     '--benchmark',
     action='store_true', \
     default=False
