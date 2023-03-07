@@ -45,7 +45,7 @@ from transformers import (
 )
 from transformers.file_utils import get_full_repo_name
 from transformers.utils.versions import require_version
-from neural_compressor.training import prepare_compression, Pruning
+from neural_compressor.training import prepare_compression
 from neural_compressor.training import WeightPruningConfig
 
 logger = logging.getLogger(__name__)
@@ -632,5 +632,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
