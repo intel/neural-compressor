@@ -598,12 +598,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
-    <td>microsoft/deberta-base-mnli</td>
-    <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
-  </tr>
-  <tr>
     <td>Intel/xlnet-base-cased-mrpc</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>

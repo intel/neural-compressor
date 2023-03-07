@@ -26,11 +26,11 @@ python run_glue.py \
         --max_seq_length 128 \
         --per_device_eval_batch_size 16 \
         --no_cuda \
-        --output_dir /path/to/checkpoint/dir \
+        --output_dir saved_results \
         --tune \
         --overwrite_output_dir
 ```
-> NOTE: /path/to/checkpoint/dir is the path to finetune output_dir
+> NOTE: `saved_results` is the path to finetuned output_dir.
 
 or
 ```bash
@@ -39,7 +39,7 @@ sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
 ## 2. Benchmark
 ```bash
 # int8
-sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true --input_model=/path/to/checkpoint/dir
+sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true --input_model=saved_results
 # fp32
 sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=model_name_or_path
 ```
@@ -100,13 +100,8 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
     <td>cola</td>
   </tr>
   <tr>
-    <td>distilbert_base_MRPC_fx</td>
+    <td>distilbert_base_MRPC</td>
     <td><a href="https://huggingface.co/textattack/distilbert-base-uncased-MRPC">textattack/distilbert-base-uncased-MRPC</a></td>
-    <td>mrpc</td>
-  </tr>
-  <tr>
-    <td>deberta_MRPC</td>
-    <td><a href="https://huggingface.co/microsoft/deberta-base-mnli">microsoft/deberta-base-mnli</a></td>
     <td>mrpc</td>
   </tr>
   <tr>
@@ -117,7 +112,7 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
   <tr>
     <td>roberta_base_MRPC</td>
     <td><a href="https://huggingface.co/textattack/roberta-base-MRPC">textattack/roberta-base-MRPC</a></td>
-    <td>mrpc</td>
+    <td>mnli</td>
   </tr>
   <tr>
     <td>camembert_base_MRPC</td>

@@ -83,9 +83,7 @@ function run_benchmark {
         TASK_NAME='qnli'
     elif [ "${topology}" = "bert_large_CoLA" ]; then
         TASK_NAME='cola'
-    elif [ "${topology}" = "distilbert_base_MRPC_fx" ]; then
-        TASK_NAME='mrpc'
-    elif [ "${topology}" = "deberta_MRPC" ]; then
+    elif [ "${topology}" = "distilbert_base_MRPC" ]; then
         TASK_NAME='mrpc'
     elif [ "${topology}" = "xlnet_base_cased_MRPC" ]; then
         TASK_NAME='mrpc'
@@ -95,7 +93,6 @@ function run_benchmark {
         TASK_NAME='mrpc'
     fi
 
-    extra_cmd='--model_name_or_path '${input_model}
     if [[ ${int8} == "true" ]]; then
         extra_cmd='--model_name_or_path '${tuned_checkpoint}
         extra_cmd=$extra_cmd" --int8"

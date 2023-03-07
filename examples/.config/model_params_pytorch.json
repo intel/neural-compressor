@@ -408,14 +408,14 @@
        "main_script": "run_asr.py",
        "batch_size": 1
     },
-    "distilbert_base_MRPC": {
+    "distilbert_base_MRPC_dynamic": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
       "input_model": "/tf_dataset2/models/huggingface/distilbert-base-uncased-MRPC",
       "batch_size": 64,
       "main_script": "run_glue.py"
     },
-    "distilbert_base_MRPC_fx": {
+    "distilbert_base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
       "input_model": "/tf_dataset2/models/huggingface/distilbert-base-uncased-MRPC",
@@ -556,7 +556,7 @@
       "batch_size": 64,
       "new_benchmark": false
     },
-    "deberta_MRPC": {
+    "deberta_MNLI": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",
       "input_model": "/tf_dataset2/models/huggingface/deberta-base-mnli",

@@ -59,9 +59,7 @@ function run_tuning {
         TASK_NAME='qnli'
     elif [ "${topology}" = "bert_large_CoLA" ]; then
         TASK_NAME='cola'
-    elif [ "${topology}" = "distilbert_base_MRPC_fx" ]; then
-        TASK_NAME='mrpc'
-    elif [ "${topology}" = "deberta_MRPC" ]; then
+    elif [ "${topology}" = "distilbert_base_MRPC" ]; then
         TASK_NAME='mrpc'
     elif [ "${topology}" = "xlnet_base_cased_MRPC" ]; then
         TASK_NAME='mrpc'

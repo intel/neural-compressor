@@ -22,11 +22,11 @@ python run_clm.py \
   --do_train \
   --do_eval \
   --tune \
-  --output_dir /path/to/checkpoint/dir
+  --output_dir saved_results
 ```
 > NOTE
 >
-> /path/to/checkpoint/dir is the path to finetune output_dir
+> `saved_results` is the path to finetuned output_dir.
 
 or
 ```bash
@@ -35,7 +35,7 @@ sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
 ## 2. Benchmark
 ```bash
 # int8
-sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true --input_model=/path/to/checkpoint/dir
+sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true --input_model=model_name_or_path  --config=saved_results
 # fp32
 sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=model_name_or_path
 ```
