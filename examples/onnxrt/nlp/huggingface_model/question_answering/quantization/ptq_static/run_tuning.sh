@@ -32,10 +32,14 @@ function run_tuning {
         model_name_or_path="mrm8488/spanbert-finetuned-squadv1"
         num_heads=12
         hidden_size=768
-    elif [[ "${input_model}" =~ "bert-base" ]]; then
+    elif [[ "${input_model}" =~ "bert-base-multilingual" ]]; then
         model_name_or_path="salti/bert-base-multilingual-cased-finetuned-squad"
         num_heads=12
         hidden_size=768
+    elif [[ "${input_model}" =~ "bert-large-uncased" ]]; then
+        model_name_or_path="bert-large-uncased-whole-word-masking-finetuned-squad"
+        num_heads=16
+        hidden_size=1024
     fi
 
     python main.py \

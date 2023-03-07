@@ -329,7 +329,12 @@ if __name__ == "__main__":
                 'distilbert-base-uncased-finetuned-sst-2-english',
                 'Alireza1044/albert-base-v2-sst2',
                 'philschmid/MiniLM-L6-H384-uncased-sst2',
-                'Intel/MiniLM-L12-H384-uncased-mrpc'],
+                'Intel/MiniLM-L12-H384-uncased-mrpc',
+                'bert-base-cased-finetuned-mrpc',
+                'Intel/electra-small-discriminator-mrpc',
+                'M-FAC/bert-mini-finetuned-mrpc',
+                'Intel/xlnet-base-cased-mrpc',
+                'Intel/bart-large-mrpc'],
         help="pretrained model name or path"
     )
     parser.add_argument(
@@ -394,12 +399,13 @@ if __name__ == "__main__":
     if args.tune:
         from onnxruntime.transformers import optimizer
         from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-        opt_options = BertOptimizationOptions('bert')
+        model_type = 'bart' if args.model_name_or_path == 'Intel/bart-large-mrpc' else 'bert'
+        opt_options = BertOptimizationOptions(model_type)
         opt_options.enable_embed_layer_norm = False
 
         model_optimizer = optimizer.optimize_model(
             args.model_path,
-            'bert',
+            model_type,
             num_heads=args.num_heads,
             hidden_size=args.hidden_size,
             optimization_options=opt_options)

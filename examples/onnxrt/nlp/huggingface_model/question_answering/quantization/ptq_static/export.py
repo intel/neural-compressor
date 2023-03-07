@@ -35,7 +35,8 @@ if __name__ == "__main__":
         '--model_name_or_path',
         type=str,
         choices=['mrm8488/spanbert-finetuned-squadv1',
-                'salti/bert-base-multilingual-cased-finetuned-squad'],
+                'salti/bert-base-multilingual-cased-finetuned-squad',
+                'bert-large-uncased-whole-word-masking-finetuned-squad'],
         help='pretrained model name or path ')
     parser.add_argument(
         '--max_len',

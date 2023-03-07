@@ -324,12 +324,13 @@ if __name__ == "__main__":
         type=str,
         choices=['Intel/bert-base-uncased-mrpc',
                 'Intel/roberta-base-mrpc',
-                'Intel/xlm-roberta-base-mrpc',
-                'Intel/camembert-base-mrpc',
                 'distilbert-base-uncased-finetuned-sst-2-english',
-                'Alireza1044/albert-base-v2-sst2',
                 'philschmid/MiniLM-L6-H384-uncased-sst2',
-                'Intel/MiniLM-L12-H384-uncased-mrpc'],
+                'Intel/MiniLM-L12-H384-uncased-mrpc',
+                'bert-base-cased-finetuned-mrpc',
+                'Intel/electra-small-discriminator-mrpc',
+                'M-FAC/bert-mini-finetuned-mrpc',
+                'Intel/xlnet-base-cased-mrpc'],
         help="pretrained model name or path"
     )
     parser.add_argument(
@@ -413,19 +414,8 @@ if __name__ == "__main__":
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
-        from neural_compressor.utils.constant import FP32
-        fp32_op_names = None
-        if args.model_name_or_path == 'Intel/xlm-roberta-base-mrpc':
-            fp32_op_names = ['MatMul_(331|433|637|841|1045)', 'Attention_(2|4)', 'Add_129']
-        elif args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
-            fp32_op_names = ['MatMul_(259|347|362|465|568|656|671|862|877|980|1054|1186|1274|1363|1377)', 
-                             'Attention_(0|1|2|3|4)', 'Add_(169|171|173|175|231)', 'Gather_(152|153|155)']
-        elif args.model_name_or_path == 'Intel/camembert-base-mrpc':
-            fp32_op_names = ['MatMul_(229|321|331|433|627|637|831|841|943|1147)']
         config = PostTrainingQuantConfig(approach='static',
-                                         quant_format=args.quant_format,
-                                         op_name_list={op_name:FP32 for op_name in fp32_op_names} \
-                                            if fp32_op_names is not None else None)
+                                         quant_format=args.quant_format)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,

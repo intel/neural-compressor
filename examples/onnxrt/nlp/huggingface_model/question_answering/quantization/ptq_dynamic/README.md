@@ -15,10 +15,13 @@ pip install -r requirements.txt
 ## 2. Prepare Model
 Supported model identifier from [huggingface.co](https://huggingface.co/):
 
-|                 Model Identifier                |
-|:-----------------------------------------------:|
-|           mrm8488/spanbert-finetuned-squadv1          |
-|      salti/bert-base-multilingual-cased-finetuned-squad             |
+|                 Model Identifier                 |
+|:------------------------------------------------:|
+|           mrm8488/spanbert-finetuned-squadv1     |
+|salti/bert-base-multilingual-cased-finetuned-squad|
+|     distilbert-base-uncased-distilled-squad      |
+|bert-large-uncased-whole-word-masking-finetuned-squad|
+|           deepset/roberta-large-squad2           | 
 
 
 ```bash

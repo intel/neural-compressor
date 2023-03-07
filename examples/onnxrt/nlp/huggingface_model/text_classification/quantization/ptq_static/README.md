@@ -20,12 +20,13 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 |:-----------------------------------------------:|
 |           Intel/bert-base-uncased-mrpc          |
 |             Intel/roberta-base-mrpc             |
-|           Intel/xlm-roberta-base-mrpc           |
-|            Intel/camembert-base-mrpc            |
 | distilbert-base-uncased-finetuned-sst-2-english |
-|         Alireza1044/albert-base-v2-sst2         |
 |        Intel/MiniLM-L12-H384-uncased-mrpc       |
 |      philschmid/MiniLM-L6-H384-uncased-sst2     |
+|        bert-base-cased-finetuned-mrpc           |
+|        Intel/electra-small-discriminator-mrpc   |
+|         M-FAC/bert-mini-finetuned-mrpc          |
+|             Intel/xlnet-base-cased-mrpc         |
 
 ```bash
 python export.py --model_name_or_path=Intel/bert-base-uncased-mrpc \ # or other supported model identifier
