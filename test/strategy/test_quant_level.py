@@ -265,7 +265,7 @@ class TestQuantLevel(unittest.TestCase):
             del acc_lst[0]
             return result
 
-        dataset = Datasets("pytorch")["dummy"](((100, 3, 3, 1)))
+        dataset = Datasets("pytorch")["dummy"](((4, 3, 3, 1)))
         dataloader = DATALOADERS["pytorch"](dataset)
         conf = PostTrainingQuantConfig()
         q_model = fit(model=resnet18, conf=conf, calib_dataloader= dataloader, \
