@@ -34,10 +34,9 @@ from datasets import load_dataset
 from transformers import AutoTokenizer, EvalPrediction, HfArgumentParser, PreTrainedTokenizer, TrainingArguments
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
-from onnxruntime import InferenceSession
+import onnxruntime
 
 from evaluate import load
-# from optimum.onnxruntime.model import ORTModel
 from utils_model import ORTModel
 from utils_qa import postprocess_qa_predictions
 
@@ -238,7 +237,8 @@ class SQuADDataset():
     ):  
         self.dataset = dataset
         self.label_names = ["labels"] if label_names is None else label_names
-        self.session = InferenceSession(model.SerializeToString())
+        self.session = onnxruntime.InferenceSession(model.SerializeToString(),
+                                                    providers=onnxruntime.get_available_providers())
         self.onnx_input_names = {input_key.name: idx for idx, input_key in enumerate(self.session.get_inputs())}
         self._process_dataset()
     
@@ -448,7 +448,6 @@ def main():
 
         ort_model = ORTModel(
             model,
-            execution_provider='CPUExecutionProvider',
             compute_metrics=compute_metrics,
             label_names=["start_positions", "end_positions"],
         )
