@@ -473,8 +473,8 @@
     },
     "t5_WMT_en_ro": {
       "model_src_dir": "nlp/huggingface_models/translation/quantization/ptq_dynamic/fx",
-      "dataset_location": "",
-      "input_model": "",
+      "dataset_location": "/tf_dataset/pytorch/wmt16",
+      "input_model": "/tf_dataset2/models/huggingface/t5-small-finetuned-en-to-ro-dataset_20",
       "batch_size": 64,
       "main_script": "run_translation.py"
     },

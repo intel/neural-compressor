@@ -38,15 +38,15 @@ function init_params {
 # run_tuning
 function run_tuning {
     batch_size=16
+    extra_cmd=''
 
-if [ "${topology}" = "t5_WMT_en_ro" ];then
-        model_name_or_path='aretw0/t5-small-finetuned-en-to-ro-dataset_20'
+    if [ "${topology}" = "t5_WMT_en_ro" ];then
+        extra_cmd='--model_name_or_path '${input_model}
     elif [ "${topology}" = "marianmt_WMT_en_ro" ]; then
-        model_name_or_path='Helsinki-NLP/opus-mt-en-ro'
+        extra_cmd="--model_name_or_path Helsinki-NLP/opus-mt-en-ro"
     fi
 
     python -u run_translation.py \
-        --model_name_or_path ${model_name_or_path} \
         --do_train \
         --do_eval \
         --predict_with_generate \
@@ -57,7 +57,8 @@ if [ "${topology}" = "t5_WMT_en_ro" ];then
         --dataset_config_name ro-en \
         --dataset_name wmt16 \
         --tune \
-        --overwrite_output_dir
+        --overwrite_output_dir \
+        ${extra_cmd}
 }
 
 main "$@"

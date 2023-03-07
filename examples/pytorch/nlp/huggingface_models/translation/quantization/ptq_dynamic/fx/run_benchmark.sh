@@ -63,9 +63,9 @@ function run_benchmark {
     fi
 
     if [ "${topology}" = "t5_WMT_en_ro" ];then
-        model_name_or_path='aretw0/t5-small-finetuned-en-to-ro-dataset_20'
+        extra_cmd='--model_name_or_path '${input_model}
     elif [ "${topology}" = "marianmt_WMT_en_ro" ]; then
-        model_name_or_path='Helsinki-NLP/opus-mt-en-ro'
+        extra_cmd="--model_name_or_path Helsinki-NLP/opus-mt-en-ro"
     fi
 
     if [[ ${int8} == "true" ]]; then
@@ -74,7 +74,6 @@ function run_benchmark {
     echo $extra_cmd
 
     python -u run_translation.py \
-        --model_name_or_path ${model_name_or_path} \
         --do_eval \
         --predict_with_generate \
         --per_device_eval_batch_size ${batch_size} \

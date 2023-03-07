@@ -21,7 +21,7 @@ pip install -r requirements.txt
 ## 1. Quantization
 ```shell
 cd examples/pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/fx
-sh run_tuning.sh --topology=topology_name
+sh run_tuning.sh --topology=topology_name --input_model=model_name_or_path
 ```
 > NOTE
 >
@@ -29,9 +29,9 @@ sh run_tuning.sh --topology=topology_name
 ## 2. Benchmark
 ```bash
 # int8
-sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true
+sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=model_name_or_path --config=saved_results --int8=true
 # fp32
-sh run_benchmark.sh --topology=topology_name --mode=performance
+sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=model_name_or_path
 ```
 ## 3. Validated Model List
 <table>
