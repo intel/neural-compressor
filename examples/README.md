@@ -646,6 +646,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
+    <td>abeja/gpt-neox-japanese-2.7b</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
     <td>SD Diffusion</td>
     <td>Text to Image</td>
     <td>Post-Training Static Quantization</td>

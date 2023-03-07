@@ -39,7 +39,6 @@ function init_params {
 function run_tuning {
     extra_cmd=''
     batch_size=8
-    model_type='bert'
     approach='post_training_static_quant'
 
     if [ "${topology}" = "reformer_crime_and_punishment" ]; then
@@ -49,6 +48,10 @@ function run_tuning {
         TASK_NAME='wikitext'
         model_name_or_path=${input_model}
         extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
+    elif [ "${topology}" = "gpt_neox" ]; then
+        TASK_NAME='oscar'
+        model_name_or_path=${input_model}
+        extra_cmd='--dataset_config_name=unshuffled_original_ast'
     fi
 
     python -u run_clm.py \

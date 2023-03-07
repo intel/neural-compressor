@@ -513,6 +513,13 @@
       "main_script": "run_clm.py",
       "batch_size": 8
     },
+    "gpt_neox":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/fx",
+      "dataset_location": "/tf_dataset/pytorch/glue_data_new/oscar",
+      "input_model": "/tf_dataset2/models/huggingface/gpt-neox-japanese-2.7b",
+      "main_script": "run_clm.py",
+      "batch_size": 8
+    },
     "xlm-roberta-base_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_static/fx",
       "dataset_location": "",

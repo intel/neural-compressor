@@ -71,6 +71,10 @@ function run_benchmark {
         TASK_NAME='wikitext'
         model_name_or_path=${input_model}
         extra_cmd='--dataset_config_name=wikitext-2-raw-v1'
+    elif [ "${topology}" = "gpt_neox" ]; then
+        TASK_NAME='oscar'
+        model_name_or_path=${input_model}
+        extra_cmd='--dataset_config_name=unshuffled_original_ast'
     fi
 
     if [[ ${int8} == "true" ]]; then

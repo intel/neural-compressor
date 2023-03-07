@@ -59,6 +59,11 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
     <td><a href="https://huggingface.co/EleutherAI/gpt-j-6B">EleutherAI/gpt-j-6B</a></td>
     <td><a href="https://huggingface.co/datasets/wikitext">wikitext</a></td>
   </tr>
+  <tr>
+    <td>gpt_neox</td>
+    <td><a href="https://huggingface.co/abeja/gpt-neox-japanese-2.7b">abeja/gpt-neox-japanese-2.7b</a></td>
+    <td><a href="https://huggingface.co/datasets/oscar">oscar</a></td>
+  </tr>
 </tbody>
 </table>
 
