@@ -3,9 +3,8 @@ This example is to demonstrate the accuracy improvement introduced by SmoothQuan
 
 # 1. Environment
 ```shell
-pip3 install torch transformers datasets
-python -m pip install intel_extension_for_pytorch
-
+cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant
+pip install -r requirements.txt
 ```
 # Run
 ## Basic quantization
