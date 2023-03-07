@@ -361,8 +361,8 @@ if __name__ == "__main__":
 
     def eval_func(model, *args):
         metric.reset()
-        import tqdm
-        session = ort.InferenceSession(model.SerializeToString(), None)
+        session = ort.InferenceSession(model.SerializeToString(), 
+                                       providers=ort.get_available_providers())
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]

@@ -368,8 +368,8 @@ if __name__ == "__main__":
 
     def eval_func(model, *args):
         metric.reset()
-        import tqdm
-        session = ort.InferenceSession(model.SerializeToString(), None)
+        session = ort.InferenceSession(model.SerializeToString(), 
+                                       providers=ort.get_available_providers())
         ort_inputs = {}
         len_inputs = len(session.get_inputs())
         inputs_names = [session.get_inputs()[i].name for i in range(len_inputs)]
@@ -413,9 +413,19 @@ if __name__ == "__main__":
         model = model_optimizer.model
 
         from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.utils.constant import FP32
+        fp32_op_names = None
+        if args.model_name_or_path == 'Intel/xlm-roberta-base-mrpc':
+            fp32_op_names = ['MatMul_(331|433|637|841|1045)', 'Attention_(2|4)', 'Add_129']
+        elif args.model_name_or_path == 'Alireza1044/albert-base-v2-sst2':
+            fp32_op_names = ['MatMul_(259|347|362|465|568|656|671|862|877|980|1054|1186|1274|1363|1377)', 
+                             'Attention_(0|1|2|3|4)', 'Add_(169|171|173|175|231)', 'Gather_(152|153|155)']
+        elif args.model_name_or_path == 'Intel/camembert-base-mrpc':
+            fp32_op_names = ['MatMul_(229|321|331|433|627|637|831|841|943|1147)']
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=args.quant_format,
-                                         quant_level=0)
+                                         op_name_list={op_name:FP32 for op_name in fp32_op_names} \
+                                            if fp32_op_names is not None else None)
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
