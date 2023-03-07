@@ -120,8 +120,18 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
+            op_name_list={
+                'efficientnet-b0/model/stem/conv2d/Conv2D': {'activation':  {'dtype': ['fp32']}},
+                'efficientnet-b0/model/blocks_0/conv2d/Conv2D': {'activation':  {'dtype': ['fp32']}},
+                'efficientnet-b0/model/blocks_1/conv2d/Conv2D': {'activation':  {'dtype': ['fp32']}},
+                'efficientnet-b0/model/blocks_2/conv2d/Conv2D': {'activation':  {'dtype': ['fp32']}},
+                'efficientnet-b0/model/blocks_12/conv2d_1/Conv2D': {'activation':  {'dtype': ['fp32']}},
+                'efficientnet-b0/model/blocks_13/conv2d_1/Conv2D': {'activation':  {'dtype': ['fp32']}},
+                'efficientnet-b0/model/blocks_14/conv2d_1/Conv2D': {'activation':  {'dtype': ['fp32']}},
+            }
             conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100],
-                                           inputs=['truediv'], outputs=['Squeeze'])
+                                           inputs=['truediv'], outputs=['Squeeze'],
+                                           op_name_list=op_name_list)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
                         eval_dataloader=eval_dataloader)
             q_model.save(args.output_graph)
