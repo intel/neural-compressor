@@ -41,6 +41,7 @@ stages:
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut-adaptor"
               utTestMode: "no-coverage"
+              utContainerName: "utTest-no-coverage"
 
   - stage: Pruning
     displayName: Unit Test Pruning
@@ -55,6 +56,7 @@ stages:
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut-pruning"
               utTestMode: "no-coverage"
+              utContainerName: "utTest-no-coverage"
 
   - stage: IPEX
     displayName: Unit Test IPEX
@@ -69,6 +71,7 @@ stages:
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut-ipex"
               utTestMode: "no-coverage"
+              utContainerName: "utTest-no-coverage"
 
   - stage: Others
     displayName: Unit Test other basic case
@@ -83,4 +86,5 @@ stages:
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut-others"
               utTestMode: "no-coverage"
+              utContainerName: "utTest-no-coverage"
 
