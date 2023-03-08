@@ -33,7 +33,7 @@ function init_params {
 # run_benchmark
 function run_benchmark {
     
-    if [[ "${input_model}" =~ "bert-base" ]]; then
+    if [[ "${input_model}" =~ "bert-base-uncased" ]]; then
         model_name_or_path="Intel/bert-base-uncased-mrpc"
         TASK_NAME='mrpc'
     fi
