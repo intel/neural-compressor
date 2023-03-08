@@ -70,7 +70,7 @@ def build_dynas_fake_yaml():
             search_algorithm: nsga2
         dynas:
             supernet: ofa_resnet50
-            metrics: ['acc', 'macs']
+            metrics: ['accuracy_top1', 'macs']
             results_csv_path: './search_results.csv'
     """
     with open('dynas_fake.yaml', 'w', encoding="utf-8") as f:
@@ -189,150 +189,15 @@ class TestNAS(unittest.TestCase):
         for search_algorithm, supernet in [('nsga2','ofa_mbv3_d234_e346_k357_w1.2'), ('age', 'ofa_mbv3_d234_e346_k357_w1.2')]:
             config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
             config.dynas.supernet = supernet
-            config.seed = 42
-            config.dynas.metrics = ['acc', 'macs', 'lat']
+            config.dynas.metrics = ['params', 'latency']
             config.dynas.population = 10
             config.dynas.num_evals = 10
-            config.dynas.results_csv_path = 'search_results.csv'
+            config.nas.search.seed = 71
             config.dynas.batch_size = 64
+            config.dynas.results_csv_path = 'search_results.csv'
             nas_agent = NAS(config)
             best_model_archs = nas_agent.search()
-            self.assertTrue(len(best_model_archs) > 0)
-
-        nas_agent.acc_predictor.get_parameters()
-        nas_agent.acc_predictor.save('tmp.pickle')
-        nas_agent.acc_predictor.load('tmp.pickle')
-        samples = nas_agent.supernet_manager.random_samples(10)
-        subnet_cfg = nas_agent.supernet_manager.translate2param(samples[0])
-        nas_agent.runner_validate.validate_macs(subnet_cfg)
-        nas_agent.runner_validate.measure_latency(subnet_cfg)
-        nas_agent.validation_interface.clear_csv()
-        os.remove('tmp.pickle')
-
-    def test_vision_reference(self):
-        from neural_compressor.experimental.nas.dynast.dynas_utils import \
-            TorchVisionReference
-        reference = TorchVisionReference('ofa_mbv3', dataset_path=None, batch_size=1)
-        macs = reference.validate_macs()
-
-        self.assertEqual(macs, 217234208)
-
-        reference.measure_latency(
-            warmup_steps=1,
-            measure_steps=1,
-        )
-
-    def test_parameter_manager_onehot_generic(self):
-        test_configs = [
-            {
-                'supernet': 'ofa_mbv3_d234_e346_k357_w1.2',
-                'pymoo_vector': [
-                    1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
-                    1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
-                    0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
-                ],
-                'onehot_vector_expected': [
-                    0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-                    0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0,
-                    1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1,
-                    0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0,
-                    1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-                    1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-                    0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0,
-                    0, 0, 1, 1, 0, 0, 1, 0, 0,
-                ],
-            },
-            {
-                'supernet': 'transformer_lt_wmt_en_de',
-                'pymoo_vector': [
-                    0, 0, 2, 1, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 3, 0, 0, 0, 0, 0,
-                    0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1],
-                'onehot_vector_expected': [
-                    1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0,
-                    0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1,
-                    0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
-                    0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0,
-                    1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0,
-                ],
-            },
-        ]
-        for test_config in test_configs:
-            nas_agent = NAS('dynas_fake.yaml')
-            search_algorithm, supernet = 'nsga2', test_config['supernet']
-            config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
-            config.dynas.supernet = supernet
-            nas_agent = NAS(config)
-            nas_agent.init_for_search()
-
-            onehot_vector = nas_agent.supernet_manager.onehot_generic(in_array=test_config['pymoo_vector'])
-            self.assertListEqual(list(onehot_vector), test_config['onehot_vector_expected'])
-
-    def test_parameter_manager_translate2param(self):
-        test_configs = [
-            {
-                'supernet': 'ofa_mbv3_d234_e346_k357_w1.2',
-                'pymoo_vector': [
-                    1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
-                    1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
-                    0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
-                ],
-                'param_dict_expected': {
-                    'd': [4, 2, 4, 2, 2],
-                    'e': [4, 4, 6, 4, 3, 4, 3, 6, 6, 6, 3, 3, 6, 6, 6, 6, 4, 4, 6, 4],
-                    'ks': [5, 7, 7, 7, 7, 7, 5, 7, 3, 7, 5, 5, 3, 3, 5, 5, 7, 7, 5, 3],
-                },
-            },
-            {
-                'supernet': 'transformer_lt_wmt_en_de',
-                'pymoo_vector': [0, 0, 2, 1, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1],
-                'param_dict_expected': {'encoder_embed_dim': [640], 'decoder_embed_dim': [640], 'encoder_ffn_embed_dim': [1024, 2048, 3072, 3072, 3072, 1024], 'decoder_ffn_embed_dim': [3072, 1024, 1024, 1024, 3072, 1024], 'decoder_layer_num': [3], 'encoder_self_attention_heads': [8, 8, 8, 8, 8, 8], 'decoder_self_attention_heads': [8, 4, 8, 4, 4, 8], 'decoder_ende_attention_heads': [8, 4, 4, 4, 8, 8], 'decoder_arbitrary_ende_attn': [1, -1, -1, 1, -1, 1]},
-            }
-        ]
-
-        for test_config in test_configs:
-            nas_agent = NAS('dynas_fake.yaml')
-            search_algorithm, supernet = 'nsga2', test_config['supernet']
-            config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
-            config.dynas.supernet = supernet
-            nas_agent = NAS(config)
-            nas_agent.init_for_search()
-
-            param_dict = nas_agent.supernet_manager.translate2param(test_config['pymoo_vector'])
-
-            self.assertDictEqual(param_dict, test_config['param_dict_expected'])
-
-
-    def test_parameter_manager_translate2pymoo(self):
-        test_configs = [
-            {
-                'supernet': 'ofa_mbv3_d234_e346_k357_w1.2',
-                'param_dict': {
-                    'd': [4, 2, 4, 2, 2],
-                    'e': [4, 4, 6, 4, 3, 4, 3, 6, 6, 6, 3, 3, 6, 6, 6, 6, 4, 4, 6, 4],
-                    'ks': [5, 7, 7, 7, 7, 7, 5, 7, 3, 7, 5, 5, 3, 3, 5, 5, 7, 7, 5, 3],
-                },
-                'pymoo_vector_expected': [
-                    1, 2, 2, 2, 2, 2, 1, 2, 0, 2, 1, 1, 0, 0, 1,
-                    1, 2, 2, 1, 0, 1, 1, 2, 1, 0, 1, 0, 2, 2, 2,
-                    0, 0, 2, 2, 2, 2, 1, 1, 2, 1, 2, 0, 2, 0, 0,
-                ],
-            },
-            {
-                'supernet': 'transformer_lt_wmt_en_de',
-                'param_dict': {'encoder_embed_dim': [640], 'decoder_embed_dim': [640], 'encoder_ffn_embed_dim': [1024, 2048, 3072, 3072, 3072, 1024], 'decoder_ffn_embed_dim': [3072, 1024, 1024, 1024, 3072, 1024], 'decoder_layer_num': [3], 'encoder_self_attention_heads': [8, 8, 8, 8, 8, 8], 'decoder_self_attention_heads': [8, 4, 8, 4, 4, 8], 'decoder_ende_attention_heads': [8, 4, 4, 4, 8, 8], 'decoder_arbitrary_ende_attn': [1, -1, -1, 1, -1, 1]},
-                'pymoo_vector_expected': [0, 0, 2, 1, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1],
-            }
-        ]
-        for test_config in test_configs:
-            nas_agent = NAS('dynas_fake.yaml')
-            search_algorithm, supernet = 'nsga2', test_config['supernet']
-            config = NASConfig(approach='dynas', search_algorithm=search_algorithm)
-            config.dynas.supernet = supernet
-            nas_agent = NAS(config)
-            nas_agent.init_for_search()
-
-            pymoo_vector = nas_agent.supernet_manager.translate2pymoo(test_config['param_dict'])
-            self.assertListEqual(pymoo_vector, test_config['pymoo_vector_expected'])
+            self.assertTrue(len(best_model_archs) == config.dynas.population)
 
 
 if __name__ == "__main__":

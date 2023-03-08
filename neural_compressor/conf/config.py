@@ -1147,6 +1147,7 @@ schema = Schema({
             Optional("supernet_ckpt_path", default=None): str,
             Optional("batch_size", default=64): int,
             Optional("num_workers", default=20): int,
+            Optional("distributed", default=False): bool,
             },
     },
 
