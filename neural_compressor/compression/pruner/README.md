@@ -299,6 +299,10 @@ The pruning technique  is validated on typical models across various domains (in
 
   Pruning on YOLOv5 model using coco dataset [Object-etection examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
+- Image Recognition
+
+  Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
+
 The API [Pruning V2](../../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
 
 

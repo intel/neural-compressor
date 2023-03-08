@@ -1,5 +1,5 @@
 # Step by Step
-This document describes the step-by-step instructions for pruning ResNet50 on ImageNet dataset. The example relies **[timm](https://github.com/huggingface/pytorch-image-models)**, a popular package for PyTorch image models.
+This document describes the step-by-step instructions for pruning ResNet50 on ImageNet dataset. The example uses **[TIMM](https://github.com/huggingface/pytorch-image-models)**, a popular package for PyTorch image models.
 
 # Prerequisite
 ## Environment
@@ -9,14 +9,19 @@ First, please make sure that you have successfully installed neural_compressor.
 cd examples/pytorch/image_recognition/ResNet50/pruning/eager/
 pip install -r requirements.txt
 ```
+## Prepare Dataset
+Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.  The dir include below folder:
+```bash
+ls /path/to/imagenet
+train  val
+```
 
 # Pruning
-Go to the script run_resnet50_prune.sh. Please get familar with some parameters of pruning by referring to our [Pruning API README](https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner)
+Go to the script run_resnet50_prune.sh. Please get familiar with some parameters of pruning by referring to our [Pruning API README](https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner)
 ```bash
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES="6"
-DATA="/path/to/imagenet/dataset/"
-python train.py \
+DATA="/path/to/your/dataset/"
+python ./train.py \
     ${DATA} \
     --model "resnet50" \
     --num-classes 1000 \
@@ -32,12 +37,14 @@ python train.py \
     --pruning-pattern "2x1" \
     --update-frequency-on-step 2000 \
     --distillation-loss-weight "1.0" \
-    --output /your/path/to/save/pruned/checkpoints/ \
+    --output ./outputs/ \
+
 ```
 After configs are settled, just run:
-```
+```bash
 sh run_resnet50_prune.sh
 ```
 
 # Results
+Our dense ResNet50 model used from timm has accuracy of 80.1, and our pruned model with 75% sparsity has 
 Your can refer to our validated pruning results in our [documentation](https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner#validated-pruning-models)
