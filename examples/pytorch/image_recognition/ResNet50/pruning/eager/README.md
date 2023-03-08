@@ -1,5 +1,5 @@
 # Step by Step
-This document describes the step-by-step instructions for pruning ResNet50 on ImageNet dataset. The example uses **[TIMM](https://github.com/huggingface/pytorch-image-models)**, a popular package for PyTorch image models.
+This document describes the step-by-step instructions for pruning ResNet50 on ImageNet dataset. The example refers **pytorch-image-model[](https://github.com/huggingface/pytorch-image-models)**, a popular package for PyTorch image models.
 
 # Prerequisite
 ## Environment
@@ -46,5 +46,5 @@ sh run_resnet50_prune.sh
 ```
 
 # Results
-Our dense ResNet50 model used from timm has accuracy of 80.1, and our pruned model with 75% sparsity has 
+Our dense ResNet50 model's accuracy is 80.1, and our pruned model with 75% 2x1 structured sparsity has accuracy of 78.95.
 Your can refer to our validated pruning results in our [documentation](https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner#validated-pruning-models)

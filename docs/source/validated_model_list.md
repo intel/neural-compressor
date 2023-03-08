@@ -1946,7 +1946,7 @@ Performance varies by use, configuration and other factors. See [platform config
     <td>object detection</br>COCO</td>
     <td>AP0.50:0.95/AP0.50=0.404/0.6</br>AP0.50:0.95/AP0.50=0.393/0.584</td>
     <td>-2.72%</td>
-    <td>80%</br>unstrucutred</td>
+    <td>80%</br>unstructured</td>
     <td>snip momentum</br>unbalanced</td>
   </tr>
   <tr>
