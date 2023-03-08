@@ -83,7 +83,7 @@ class PostTrainingQuant:
 
         strategy = cfg.tuning.strategy.name.lower()
         
-        if cfg.quant_level == "auto" or cfg.quantization.quant_level == "auto":
+        if cfg.quantization.quant_level == "auto":
             strategy = "auto"
             
         elif cfg.quantization.quant_level == 0:
