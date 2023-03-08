@@ -314,7 +314,7 @@ def quantize_data_per_channel(data, axis, quantize_range, qType, scheme):
             rmax = np.max(data, axis=i, keepdims=True) if rmax is None else  np.max(rmax, axis=i, keepdims=True)
     rmin = np.minimum(rmin, 0)
     rmax = np.maximum(rmax, 0)
-    scale, zero_point = calculate_scale_zp(rmin.squeeze(), rmax.squeeze(), quantize_range, qType, scheme)
+    scale, zero_point = calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
     quantized_data = quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
     return rmin.squeeze(), rmax.squeeze(), zero_point.squeeze(), scale.squeeze(), quantized_data
 
