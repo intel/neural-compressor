@@ -1,4 +1,3 @@
-# for test
 from io import open
 from setuptools import find_packages, setup
 import os
