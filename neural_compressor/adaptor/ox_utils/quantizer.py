@@ -786,8 +786,8 @@ class Quantizer:
             rmin, rmax, zero_point, scale, quantized_weights = quantize_data_per_channel(
                 weights, channel_axis, _get_qrange_for_qType(weight_qType,self.reduce_range), weight_qType, scheme)
 
-            weight = QuantizedInitializer(initializer.name, initializer, rmin_list, rmax_list, 
-                                          zero_point_list, scale_list,
+            weight = QuantizedInitializer(initializer.name, initializer, rmin, rmax,
+                                          zero_point, scale,
                                           weights,
                                           quantized_weights.flatten().tolist(), 
                                           channel_axis, weight_qType)
