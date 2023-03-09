@@ -250,15 +250,17 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
     if scheme == 'sym':
         if isinstance(rmax, np.ndarray):
             max_range = np.maximum(abs(rmin), abs(rmax))
-            scale = np.ones(rmax.shape)
-            scale[max_range > 0] = ((max_range * 2.) / quantize_range).squeeze()
+            scale = np.ones(rmax.shape, dtype='float32')
+            scale[max_range > 0] = \
+                np.array([float(i) / quantize_range for i in (max_range * 2.).squeeze().tolist()], dtype='float32')
         else:
             max_range = max(abs(rmin), abs(rmax))
             scale = (max_range * 2.) / quantize_range if max_range > 0 else 1
     else:
         if isinstance(rmax, np.ndarray):
-            scale = np.ones(rmax.shape)
-            scale[rmin != rmax] = ((rmax - rmin) / float(quantize_range)).squeeze()
+            scale = np.ones(rmax.shape, dtype='float32')
+            scale[rmin != rmax] = \
+                np.array([float(i) / quantize_range for i in (rmax - rmin).squeeze().tolist()], dtype='float32')
         else:
             scale = (rmax - rmin) / float(quantize_range) if rmin != rmax else 1
 
