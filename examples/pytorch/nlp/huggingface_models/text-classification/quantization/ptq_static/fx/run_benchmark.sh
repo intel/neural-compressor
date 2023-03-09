@@ -55,7 +55,8 @@ function run_benchmark {
     extra_cmd=''
     MAX_SEQ_LENGTH=128
     TASK_NAME='mrpc'
-    model_name_or_path=${input_model}
+    extra_cmd='--model_name_or_path '${input_model}
+
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" --accuracy"
     elif [[ ${mode} == "performance" ]]; then
@@ -96,7 +97,10 @@ function run_benchmark {
     if [[ ${int8} == "true" ]]; then
         extra_cmd='--model_name_or_path '${tuned_checkpoint}
         extra_cmd=$extra_cmd" --int8"
+    else
+        extra_cmd='--model_name_or_path '${input_model}
     fi
+    
     echo $extra_cmd
 
     python -u run_glue.py \

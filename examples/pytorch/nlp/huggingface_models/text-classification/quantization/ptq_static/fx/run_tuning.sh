@@ -40,6 +40,7 @@ function run_tuning {
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
+    TASK_NAME='mrpc'
     
     if [ "${topology}" = "bert_large_RTE" ]; then
         TASK_NAME='rte'
