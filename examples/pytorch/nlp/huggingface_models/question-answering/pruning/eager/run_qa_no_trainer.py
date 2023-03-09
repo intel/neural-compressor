@@ -56,7 +56,7 @@ from transformers.file_utils import get_full_repo_name
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
-from neural_compressor.training import Pruning, prepare_compression
+from neural_compressor.training import prepare_compression
 from neural_compressor.training import WeightPruningConfig
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -1174,4 +1174,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

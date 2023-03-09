@@ -165,8 +165,8 @@ def main(_):
             inputs=["inputs"],
             outputs=["output_boxes"],
             calibration_sampling_size=[2])
-        q_model = quantization.fit(model=FLAGS.input_graph, conf=config, 
-                                    calib_dataloader=calib_dataloader, eval_func=evaluate)
+        q_model = quantization.fit(model=FLAGS.input_graph, conf=config,
+                                   calib_dataloader=calib_dataloader, eval_func=evaluate)
         q_model.save(FLAGS.output_graph)
     elif FLAGS.benchmark:
         from neural_compressor.benchmark import fit

@@ -312,7 +312,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             if approach == "qat":
                 model = copy.deepcopy(model_origin)
                 conf = QuantizationAwareTrainingConfig(
-                  op_name_list=qat_op_name_list)
+                  op_name_dict=qat_op_name_list)
                 compression_manager = prepare_compression(model, conf)
                 compression_manager.callbacks.on_train_begin()
                 model = compression_manager.model
@@ -321,7 +321,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
                 compression_manager.save("./saved")
             else:
                 conf = PostTrainingQuantConfig(
-                  op_name_list=ptq_fx_op_name_list)
+                  op_name_dict=ptq_fx_op_name_list)
                 conf.example_inputs = torch.randn([1, 3, 224, 224])
                 set_workspace("./saved")
                 q_model = quantization.fit(model_origin,
@@ -350,14 +350,14 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             if approach == "qat":
                 model = copy.deepcopy(model_origin)
                 conf = QuantizationAwareTrainingConfig(
-                  op_name_list=qat_op_name_list
+                  op_name_dict=qat_op_name_list
                 )
                 compression_manager = prepare_compression(model, conf)
                 q_model = fit(compression_manager=compression_manager, train_func=train_func, eval_func=eval_func)
                 compression_manager.save("./saved")
             else:
                 conf = PostTrainingQuantConfig(
-                    op_name_list=ptq_fx_op_name_list
+                    op_name_dict=ptq_fx_op_name_list
                 )
                 q_model = quantization.fit(model_origin,
                                            conf,
@@ -380,7 +380,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         )
         # run fx_quant in neural_compressor and save the quantized GraphModule
         origin_model.eval()
-        conf = PostTrainingQuantConfig(approach="dynamic", op_name_list=ptq_fx_op_name_list)
+        conf = PostTrainingQuantConfig(approach="dynamic", op_name_dict=ptq_fx_op_name_list)
         set_workspace("./saved")
         q_model = quantization.fit(copy.deepcopy(origin_model), conf)
         q_model.save("./saved")
@@ -424,7 +424,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             if approach == "qat":
                 model = copy.deepcopy(model_origin)
                 conf = QuantizationAwareTrainingConfig(
-                    op_name_list=qat_op_name_list
+                    op_name_dict=qat_op_name_list
                 )
                 compression_manager = prepare_compression(model, conf)
                 compression_manager.callbacks.on_train_begin()
@@ -449,7 +449,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
             # run fx_quant in neural_compressor and save the quantized GraphModule
             if approach == "qat":
                 model = copy.deepcopy(model_origin)
-                conf = QuantizationAwareTrainingConfig(op_name_list=qat_op_name_list)
+                conf = QuantizationAwareTrainingConfig(op_name_dict=qat_op_name_list)
                 compression_manager = prepare_compression(model, conf)
                 compression_manager.callbacks.on_train_begin()
                 model = compression_manager.model
@@ -485,7 +485,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         dataset = Datasets("pytorch")["dummy"]((100, 3, 224, 224))
         dataloader = DataLoader("pytorch", dataset)
         set_workspace=("./saved")
-        conf = PostTrainingQuantConfig(op_name_list=ptq_fx_op_name_list)
+        conf = PostTrainingQuantConfig(op_name_dict=ptq_fx_op_name_list)
         q_model = quantization.fit(model_origin,
                                    conf,
                                    calib_dataloader=dataloader,
