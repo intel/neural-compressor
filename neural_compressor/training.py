@@ -16,7 +16,7 @@
 # limitations under the License.
 """The configuration of the training loop."""
 import copy
-from .compression.callbacks import AwareTrainingQuantCallbacks, DistillationCallbacks, PruningCallbacks
+from .compression.callbacks import QuantizationAwareTrainingCallbacks, DistillationCallbacks, PruningCallbacks
 from .model.model import Model
 from .utils import logger
 from neural_compressor import (DistillationConfig, QuantizationAwareTrainingConfig,
@@ -30,7 +30,7 @@ class CompressionManager:
     Arguments:
         model: A model to be compressed. It should be neural compressor model.
         callbacks: A list of Callbacks instances.
-                   Such as: DistillationCallbbacks, AwareTrainingQuantCallbacks, PruningCallbacks.
+                   Such as: DistillationCallbbacks, QuantizationAwareTrainingCallbacks, PruningCallbacks.
 
     Examples:
         import neural_compressor.training.prepare_compression
@@ -59,7 +59,7 @@ class CompressionManager:
 
         model: A model to be compressed. It should be neural compressor model.
         callbacks: A list of Callbacks instances.
-                   Such as: DistillationCallbbacks, AwareTrainingQuantCallbacks, PruningCallbacks.
+                   Such as: DistillationCallbbacks, QuantizationAwareTrainingCallbacks, PruningCallbacks.
         """
         self.callbacks = CallBacks(callbacks_list)
         self.model = model
@@ -76,7 +76,7 @@ class CompressionManager:
             self.fp32_model = None
 
         for component in callbacks_list:
-            if isinstance(component, AwareTrainingQuantCallbacks):
+            if isinstance(component, QuantizationAwareTrainingCallbacks):
                 self.quantizer = component
 
     @property
@@ -302,7 +302,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
         for conf in confs:
             if isinstance(conf, QuantizationAwareTrainingConfig):
                 nc_model = Model(model, backend=conf.backend, approach="quant_aware_training")
-                callbacks_list.append(AwareTrainingQuantCallbacks(conf, model=nc_model))
+                callbacks_list.append(QuantizationAwareTrainingCallbacks(conf, model=nc_model))
             elif isinstance(conf, WeightPruningConfig):
                 callbacks_list.append(PruningCallbacks(conf, model=model))
             elif isinstance(conf, DistillationConfig):
@@ -314,7 +314,7 @@ def prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
             confs = confs[0]
         if isinstance(confs, QuantizationAwareTrainingConfig):
             nc_model = Model(model, backend=confs.backend, approach="quant_aware_training")
-            callbacks_list.append(AwareTrainingQuantCallbacks(confs, model=nc_model))
+            callbacks_list.append(QuantizationAwareTrainingCallbacks(confs, model=nc_model))
         elif isinstance(confs, WeightPruningConfig):
             callbacks_list.append(PruningCallbacks(confs, model=model))
         elif isinstance(confs, DistillationConfig):
@@ -338,7 +338,7 @@ class CallBacks:
     def __init__(self, callbacks_list):
         """Callbacks list are used for execute the training procedure.
 
-        Callbacks list should be any of the instance of AwareTrainingQuantCallbacks,
+        Callbacks list should be any of the instance of QuantizationAwareTrainingCallbacks,
         PruningCallbacks and DistillationCallbacks.
         """
         assert len(callbacks_list) >= 1, "The length of callbacks list must be greater than 1."

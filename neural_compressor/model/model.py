@@ -165,7 +165,7 @@ class Model(object):
         backend = kwargs.get("backend", "NA")
         if backend == "NA" or backend == "default":
             backend_tmp = get_model_fwk_name(root)
-            if backend_tmp == "pytorch" and backend == "default":
+            if backend_tmp == "pytorch":
                 backend = "pytorch_fx"
             else:
                 backend = backend_tmp

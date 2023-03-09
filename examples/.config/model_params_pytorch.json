@@ -177,13 +177,11 @@
       "new_benchmark": false
     },
     "peleenet": {
-      "model_src_dir": "image_recognition/peleenet/quantization/ptq/eager",
+      "model_src_dir": "image_recognition/peleenet/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "/tf_dataset/pytorch/peleenet/peleenet_acc7208.pth.tar",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 100,
-      "new_benchmark": false
+      "main_script": "main.py",
+      "batch_size": 100
     },
     "resnest50": {
       "model_src_dir": "image_recognition/resnest/quantization/ptq/eager",
@@ -474,22 +472,18 @@
       "new_benchmark": false
     },
     "t5_WMT_en_ro": {
-      "model_src_dir": "nlp/huggingface_models/translation/quantization/ptq_dynamic/eager",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
+      "model_src_dir": "nlp/huggingface_models/translation/quantization/ptq_dynamic/fx",
+      "dataset_location": "/tf_dataset/pytorch/wmt16",
+      "input_model": "/tf_dataset2/models/huggingface/t5-small-finetuned-en-to-ro-dataset_20",
       "batch_size": 64,
-      "new_benchmark": false
+      "main_script": "run_translation.py"
     },
     "marianmt_WMT_en_ro": {
-      "model_src_dir": "nlp/huggingface_models/translation/quantization/ptq_dynamic/eager",
+      "model_src_dir": "nlp/huggingface_models/translation/quantization/ptq_dynamic/fx",
       "dataset_location": "",
       "input_model": "",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
       "batch_size": 64,
-      "new_benchmark": false
+      "main_script": "run_translation.py"
     },
     "pegasus_samsum": {
       "model_src_dir": "nlp/huggingface_models/summarization/quantization/ptq_dynamic/eager",
