@@ -1,0 +1,179 @@
+"""Weight Squeezer."""
+# !/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2022 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import torch
+import torch.nn as nn
+import random
+
+class PostCompressionUtils(object):
+    @staticmethod
+    def obtain_output_masks(tensor):
+        # dim 1 is input channel
+        # assert tensor.shape.__len__ == 2, "Current post training compression object only support 2-dim tensor compression"
+        tensor_reduce = torch.sum(tensor.abs(), 1)
+        mask_reduce = torch.where(tensor_reduce==0.0, 0, 1)
+        return mask_reduce
+
+    @staticmethod
+    def obtain_input_masks(tensor):
+        # dim 0 is output channel
+        # assert tensor.shape.__len__ == 2, "Current post training compression object only support 2-dim tensor compression"
+        tensor_reduce = torch.sum(tensor.abs(), 0)
+        mask_reduce = torch.where(tensor_reduce==0.0, 0, 1)
+        return mask_reduce
+
+    @staticmethod
+    def get_mask_indices(mask):
+        # return the indices of elements whose values are zero
+        return torch.nonzero(torch.where(mask == 0, 1, 0) == 1).squeeze().tolist()
+
+    @staticmethod
+    def find_pruneable_indices(indice, n_heads, head_size=1, round_option=0):
+        """
+        indices: list(int): channel / heads' indices to be pruned
+        n_head: int. number of head to prune
+        head_size: for head pruning, it is head size, for channel pruning, it is 1
+        round: if pruning channel number does not equals to 32x, (16x), round it to a 32x int
+        """
+        # import pdb;pdb.set_trace()
+        # round the pruning number to be a multiple of 2^n
+        if round_option > 0 and indice.__len__() > round_option:
+            round_length = (indice.__len__() // round_option) * round_option
+            indice = random.sample(indice, round_length)
+            indice.sort()
+
+        mask = torch.ones(n_heads, head_size)
+        already_pruned_heads = set()
+        indice = set(indice)  # Convert to set and remove already pruned heads
+        for head in indice:
+            # Compute how many pruned heads are before the head and move the index accordingly
+            head = head - sum(1 if h < head else 0 for h in already_pruned_heads)
+            mask[head] = 0
+        mask = mask.view(-1).contiguous().eq(1)
+        indice_to_keep: torch.LongTensor = torch.arange(len(mask))[mask].long()
+        return indice, indice_to_keep
+
+    @staticmethod
+    def prune_linear(layer, index, device, dim = 0, prune_bias = True):
+        """
+        layer: a linear layer
+        index: the indice which channels/heads should be kept
+        dim: input channel (1) or output channel (0)
+        prune_bias: if output channel is pruned, bias should also be pruned.
+        By default, prune the output channel.
+        index is a tensor of index for channel which we want to keep 
+        dim = 0: output dim
+        dim = 1: input dim
+        """
+        # import pdb;pdb.set_trace()
+        index = index.to(device)
+        _w = layer.weight.index_select(dim, index).clone().detach()
+        if prune_bias:
+            _b = layer.bias[index].clone().detach()
+        else:
+            _b = layer.bias.clone().detach()
+        new_size = list(layer.weight.size())
+        new_size[dim] = len(index)
+        setattr(layer, "in_features", new_size[1])
+        setattr(layer, "out_features", new_size[0])
+        setattr(layer, "weight", torch.nn.Parameter(_w.clone()))
+        setattr(layer, "bias", torch.nn.Parameter(_b.clone()))
+
+        # new_layer = nn.Linear(new_size[1], new_size[0], bias=layer.bias is not None)
+        layer.weight.requires_grad = False
+        layer.weight.copy_(_w.contiguous())
+        layer.weight.requires_grad = True
+
+        if prune_bias:
+            layer.bias.requires_grad = False
+            layer.bias.copy_(_b.contiguous())
+            layer.bias.requires_grad = True
+
+class LinearCompression(object):
+    """
+    For two continous linear layer, when the second layer's input channel is pruned, 
+    then the first layer's output channel can also be pruned.
+    """
+    def __init__(self, layer_1, layer_2):
+        """
+        layer_1 (`torch.nn.Linear`): The layer to prune.
+        layer_2 (`torch.nn.Linear`): The layer to prune.
+        follows such process:
+        x = layer_1(input)
+        x = act_fn(x)
+        x = layer_2(x)
+        """
+        assert type(layer_1).__name__ == "Linear", "layer 1 should be torch.nn.modules.linear.Linear module type"
+        assert type(layer_2).__name__ == "Linear", "layer 1 should be torch.nn.modules.linear.Linear module type"
+        self.layer_1 = layer_1
+        self.layer_2 = layer_2
+        self.device = self.layer_1.weight.device
+        self.log = {
+            '1_before': [self.layer_1.out_features, self.layer_1.in_features],
+            '2_before': [self.layer_2.out_features, self.layer_2.in_features],
+        }
+    
+    def __call__(self, mask=None, round_value=0):
+        """
+        step 1: prune output.dense's input channel
+        step 2: prune intermediate.dense's output channel, including bias
+        """
+        if mask is not None:
+            layer_2_mask = mask.clone().to(self.device)
+        else:
+            layer_2_mask = PostCompressionUtils.obtain_input_masks(self.layer_2.weight)
+        layer_2_indice_to_prune = PostCompressionUtils.get_mask_indices(layer_2_mask)
+        _, layer_2_indice_to_keep = PostCompressionUtils.find_pruneable_indices(layer_2_indice_to_prune, self.layer_2.in_features, 1, round_value) # 1 refer to channel-wise pruning
+        PostCompressionUtils.prune_linear(self.layer_2, layer_2_indice_to_keep, device=self.device, dim=1, prune_bias=False)
+        PostCompressionUtils.prune_linear(self.layer_1, layer_2_indice_to_keep, device=self.device, dim=0, prune_bias=True)
+        # Summary:
+        self.log['1_after'] = [self.layer_1.out_features, self.layer_1.in_features]
+        self.log['2_after'] = [self.layer_2.out_features, self.layer_2.in_features]
+        print(f"layer_1 compression: {self.log['1_before']} -> {self.log['1_after']}")
+        print(f"layer_2 compression: {self.log['2_before']} -> {self.log['2_after']}")
+
+class LinearCompressionIterator(object):
+    """
+    This object is useful for compressing a sequence of linear pattern, especially when these linears patterns comes from one model.
+    """
+    def __init__(self, linear_patterns):
+        self.linear_patterns = linear_patterns
+
+    def __call__(self, masks=None, round_value=0):
+        # masks should have same length as layers patterns
+        # self.linear_patterns: a list or dict
+        if isinstance(masks, list):
+            mask_len = len(masks)
+        if isinstance(masks, torch.Tensor):
+            mask_len = masks.shape[0]
+        layer_idx = 0
+        for pattern in self.linear_patterns:
+            if isinstance(self.linear_patterns, dict):
+                linear_pruner = LinearCompression(self.linear_patterns[pattern][0], self.linear_patterns[pattern][1])
+            elif isinstance(self.linear_patterns, list):
+                linear_pruner = LinearCompression(pattern[0], pattern[1])
+            else:
+                raise NotImplementedError
+            # compression
+            if masks != None and layer_idx < len(masks):
+                linear_pruner(mask=masks[layer_idx], round_value=round_value)
+            else:
+                linear_pruner(round_value=round_value)
+            layer_idx += 1
+            del linear_pruner
+        print(f"Post training compression finished.")

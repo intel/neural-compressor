@@ -39,6 +39,8 @@ from ..model.tensorflow_model import TensorflowQATModel
 from ..strategy import STRATEGIES
 from .pruner.utils import process_config, parse_to_prune, generate_pruner_config, get_sparsity_ratio
 from .pruner.pruners import get_pruner, PRUNERS
+from .pruner.weight_squeezer import LinearCompressionIterator
+from .pruner.searcher import Linear2LinearSearcher
 LazyImport('torch.nn')
 torch = LazyImport('torch')
 
@@ -572,6 +574,21 @@ class PruningCallbacks(BaseCallbacks):
                 logger.info(info)
         else:
             assert False, 'now only support {}'.format(PRUNERS.keys())
+    
+    @staticmethod
+    def model_slim(model, round_value=0):
+        """Remove some sparse part in the model permanently and obtain acceleration directly.
+
+        Args:
+            model: a sprase model.
+            round_value(int): the channel number after slimming should be multiple of this number.
+        """
+        logger.warning(f"You are using model slim methods, some weight channels will be removed permanently.")
+        searcher = Linear2LinearSearcher(model)
+        layers = searcher.search()
+        linear_pruner = LinearCompressionIterator(layers)
+        linear_pruner(masks=None, round_value=round_value)
+        return model
 
 
 class DistillationCallbacks(BaseCallbacks):
