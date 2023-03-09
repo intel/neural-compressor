@@ -135,6 +135,7 @@ if args.benchmark:
 
         int8_folder = model_name.split('/')[-1]
         if not os.path.exists(int8_folder):
+            exit()
             print(f"could not find int8 folder {int8_folder} ")
         model = load(int8_folder)
     else:
