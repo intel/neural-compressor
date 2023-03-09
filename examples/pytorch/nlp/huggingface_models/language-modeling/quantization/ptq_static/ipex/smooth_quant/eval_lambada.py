@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--int8', action='store_true', default=False, help="eval fp32 model or int8 model")
 parser.add_argument('--sq', action='store_true', default=False, help="whether to use smooth quant")
 # parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
-parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-1.7b')
+parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-560m')
 parser.add_argument('--alpha', type=float, default=0.5)
 parser.add_argument('--log_frequency', type=int, default=100)
 parser.add_argument('--benchmark', action='store_true', default=False)
@@ -45,8 +45,6 @@ class Evaluator:
             if index % args.log_frequency == 0:
                 print(hit / total)
             index += 1
-            if index == 10:
-                break
         acc = hit / total
         return acc
 
@@ -144,9 +142,10 @@ if args.benchmark:
                                                                   torchscript=True  ##FIXME
                                                                   )
         model.eval()
-    conf = BenchmarkConfig(backend='ipex',cores_per_instance=4, num_of_instance=7)
+    conf = BenchmarkConfig(backend='ipex')
     res = fit(model, conf, b_func=evaluator.evaluate)
     print(res)
+    exit()
 
 model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
                                                           torchscript=True  ##FIXME

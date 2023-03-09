@@ -22,6 +22,25 @@ python eval_lambada.py \
   --int8 \
   --sq
 ```
+
+## Benchmarking 
+
+int8 benchmarking
+```shell
+python eval_lambada.py \
+  --model_name_or_path bigscience/bloom-560m \
+  --int8\
+  --benchmark
+```
+
+fp32 benchmarking
+```shell
+python eval_lambada.py \
+  --model_name_or_path bigscience/bloom-560m \
+  --benchmark
+```
+
+
 # Validated Models
 | Models\Acc       |  FP32  |    int8     | SQ           |
 |------------------|:------:|:-----------:|--------------|
