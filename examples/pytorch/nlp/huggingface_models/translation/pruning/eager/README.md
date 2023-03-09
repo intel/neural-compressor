@@ -26,9 +26,9 @@ One example of pruning a Flan-T5-small model is provided, which is trained on wm
 
 ### Results
 The snip-momentum pruning method is used by default and the initial dense model us fine-tuned.
-|  Model  | Dataset  |  Sparsity pattern | Dense BLEU | Sparse BLEU | Relative drop|
-|  :----:  | :----:  | :----: |:----: |:----:| :----: |
-| Flan-T5-small | wmt16 en-ro |  4x1  | 25.63 | 24.35 | -4.95% |
+|  Model  | Dataset  | Target sparsity | Sparsity pattern | Dense BLEU | Sparse BLEU | Relative drop|
+|  :----:  | :----:  | :----: |:----: |:----:| :----: | :----: |
+| Flan-T5-small | wmt16 en-ro | 0.8 | 4x1  | 25.63 | 24.35 | -4.95% |
 
 
 ## References
