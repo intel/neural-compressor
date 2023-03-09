@@ -252,7 +252,7 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
             max_range = np.maximum(abs(rmin), abs(rmax))
             scale = np.ones(rmax.shape, dtype='float32')
             scale[max_range > 0] = \
-                np.array([float(i) / quantize_range for i in (max_range * 2.).squeeze().tolist()], dtype='float32')
+                np.array([float(i) / quantize_range for i in (max_range * 2.).flatten().tolist()], dtype='float32')
         else:
             max_range = max(abs(rmin), abs(rmax))
             scale = (max_range * 2.) / quantize_range if max_range > 0 else 1
@@ -260,7 +260,7 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
         if isinstance(rmax, np.ndarray):
             scale = np.ones(rmax.shape, dtype='float32')
             scale[rmin != rmax] = \
-                np.array([float(i) / quantize_range for i in (rmax - rmin).squeeze().tolist()], dtype='float32')
+                np.array([float(i) / quantize_range for i in (rmax - rmin).flatten().tolist()], dtype='float32')
         else:
             scale = (rmax - rmin) / float(quantize_range) if rmin != rmax else 1
 
@@ -273,7 +273,8 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
         zero_point = 0
     elif qType == onnx_proto.TensorProto.UINT8:
         zero_point = np.uint8(max(0, min(255, round((0 - rmin) / float(scale))))) if \
-            not isinstance(rmin, np.ndarray) else np.maximum(0, np.minimum(255, zero_point).round()).astype('uint8')
+            not isinstance(rmin, np.ndarray) else \
+            np.maximum(0, np.minimum(255, ((0 - float(rmin)) / scale).round()).round()).astype('uint8')
     else:
         zero_point = (-64 - rmin) / float(scale) if quantize_range == 128 else (-127 - rmin) / float(scale)
         zero_point = round(zero_point) if not isinstance(zero_point, np.ndarray) else zero_point.round()
