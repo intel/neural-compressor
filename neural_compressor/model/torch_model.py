@@ -130,9 +130,17 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
             # intersection update kw arguments
             self.input_args.update(values['kwargs'])
             # update arguments
-            for (single_input, single_arg) in zip(values['input'],
-                    list(self.input_args.keys())[:len(values['input'])]):
-                self.input_args[single_arg] = single_input
+            if "input" in values:
+                for (single_input, single_arg) in \
+                        zip(values['input'], list(self.input_args.keys())[:len(values['input'])]):
+                    self.input_args[single_arg] = single_input
+            elif "args" in values:
+                for (single_input, single_arg) in \
+                        zip(values['args'], list(self.input_args.keys())[:len(values['args'])]):
+                    self.input_args[single_arg] = single_input
+            else:
+                assert False, "there is no input field was found!"
+
         return actual_forward_pre_hook
 
     def framework(self):
@@ -161,7 +169,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
             new_tensor (ndarray): weight value.
         """
         # TODO: copy tensor option to new tensor is better
-        device = next(self._model.parameters()).device 
+        device = next(self._model.parameters()).device
         new_tensor = torch.tensor(new_tensor).float().to(device)
         module_index = '.'.join(tensor_name.split('.')[:-1])
         module = dict(self._model.named_modules())[module_index]
@@ -421,10 +429,10 @@ class PyTorchModel(PyTorchBaseModel):
             logger.info(info)
             logger.info("*"*len(info))
 
-    def export_to_bf16_onnx(self, 
-        save_path='bf16-model.onnx', 
+    def export_to_bf16_onnx(self,
+        save_path='bf16-model.onnx',
         example_inputs = torch.rand([1, 1, 1, 1]),
-        opset_version=14, 
+        opset_version=14,
         dynamic_axes={"input": {0: "batch_size"},
                       "output": {0: "batch_size"}},
         input_names=None,
@@ -507,7 +515,7 @@ class PyTorchModel(PyTorchBaseModel):
         dtype='S8S8',
         fp32_model=None,
         calib_dataloader=None,
-    ): 
+    ):
         """Export PyTorch int8 model to ONNX int8 model.
 
         Args:
@@ -537,7 +545,7 @@ class PyTorchModel(PyTorchBaseModel):
         elif 'U8S8' in dtype:
             activation_type = ortq.QuantType.QUInt8
             weight_type = ortq.QuantType.QInt8
-        else:   # pragma: no cover 
+        else:  # pragma: no cover
             # Gather requires weight type be the same as activation.
             # So U8S8(acitvation|weight) option is not workable for best performance.
             logger.error("Right now, we don't support dtype: {}, \
@@ -558,17 +566,17 @@ class PyTorchModel(PyTorchBaseModel):
             pytorch_op_types_to_quantize=['Linear', 'Embedding', 'Conv1d', 'Conv2d']
             addition_op_to_quantize = []
 
-        if quant_format == 'QDQ' and opset_version < 13:   # pragma: no cover 
+        if quant_format == 'QDQ' and opset_version < 13:   # pragma: no cover
             opset_version = 13
-            logger.warning("QDQ format requires opset_version >= 13, " + 
-                            "we reset opset_version={} here".format(opset_version))
+            logger.warning("QDQ format requires opset_version >= 13, " +
+                           "we reset opset_version={} here".format(opset_version))
         all_op_types_to_quantize = op_types_to_quantize + addition_op_to_quantize
 
         # pylint: disable=E1101
         fp32_path = save_path + '.tmp' if save_path else 'int8-model.onnx.tmp'
         self.export_to_fp32_onnx(
             save_path=fp32_path,
-            example_inputs = example_inputs,
+            example_inputs=example_inputs,
             opset_version=opset_version,
             dynamic_axes=dynamic_axes,
             input_names=input_names,
@@ -710,7 +718,7 @@ class PyTorchModel(PyTorchBaseModel):
     ):
         """Export PyTorch model to ONNX model."""
         from neural_compressor.experimental.export import (
-            torch_to_fp32_onnx, 
+            torch_to_fp32_onnx,
             torch_to_int8_onnx
         )
         if conf.dtype == 'int8':
@@ -796,4 +804,3 @@ class IPEXModel(PyTorchBaseModel):   # pragma: no cover
 
         if isinstance(self.model, torch.jit._script.RecursiveScriptModule):
             self.model.save(os.path.join(root, "best_model.pt"))
-
