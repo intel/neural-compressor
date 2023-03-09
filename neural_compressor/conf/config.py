@@ -1147,6 +1147,7 @@ schema = Schema({
             Optional("supernet_ckpt_path", default=None): str,
             Optional("batch_size", default=64): int,
             Optional("num_workers", default=20): int,
+            Optional("distributed", default=False): bool,
             },
     },
 
@@ -1399,8 +1400,8 @@ class Conf(object):
                 'quantization.example_inputs': pythonic_config.quantization.example_inputs,
                 'quantization.calibration.sampling_size':
                     pythonic_config.quantization.calibration_sampling_size,
-                'quantization.optype_wise': pythonic_config.quantization.op_type_list,
-                'quantization.op_wise': pythonic_config.quantization.op_name_list,
+                'quantization.optype_wise': pythonic_config.quantization.op_type_dict,
+                'quantization.op_wise': pythonic_config.quantization.op_name_dict,
                 'tuning.strategy.name': pythonic_config.quantization.strategy,
                 'tuning.accuracy_criterion.relative':
                     pythonic_config.quantization.accuracy_criterion.relative,
