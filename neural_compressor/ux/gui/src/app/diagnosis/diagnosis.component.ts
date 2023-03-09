@@ -40,6 +40,7 @@ export class DiagnosisComponent implements OnInit {
     Weights: any;
     'OP name': string;
   };
+  nodeDetails;
   activeOp = '';
   activeType: 'weights' | 'activation';
   chartOptions;
@@ -50,6 +51,7 @@ export class DiagnosisComponent implements OnInit {
   granularity: 'per_channel' | 'per_tensor';
   showOps = true;
   showSpinner = false;
+  showHistogram = false;
 
   constructor(
     private modelService: ModelService,
@@ -62,6 +64,8 @@ export class DiagnosisComponent implements OnInit {
     this.getModels();
     this.modelService.projectChanged$
       .subscribe((response: { id: number }) => {
+        this.showOps = false;
+        this.activeOp = null;
         this.getModels(response.id);
       });
     this.modelService.getNodeDetails$
@@ -126,6 +130,7 @@ export class DiagnosisComponent implements OnInit {
 
   getOpDetails(modelId: number, opName: string) {
     this.activeOp = opName;
+    this.activeType = null;
     this.modelService.getOpDetails(this.activatedRoute.snapshot.params.id, modelId, opName)
       .subscribe(
         (response: { Pattern: any; Weights: any; 'OP name': string }) => {
@@ -139,6 +144,9 @@ export class DiagnosisComponent implements OnInit {
             } else {
               this.supportedPrecisions = ['int8', 'fp32'];
             }
+            setTimeout(() => {
+              document.getElementById('opDetails').scrollIntoView({ behavior: 'smooth' });
+            }, 500);
           }
         },
         error => {
@@ -148,6 +156,18 @@ export class DiagnosisComponent implements OnInit {
             this.modelService.openErrorDialog(error);
           }
         });
+  }
+
+  showNodeDetails(node) {
+    this.nodeDetails = node;
+  }
+
+  getLabel(label: string) {
+    if (label.includes('/')) {
+      return label.replace(/^.*[\\\/]/, '');
+    } else {
+      return label;
+    }
   }
 
   updateValue(valueName: string, value: string, opName: string) {

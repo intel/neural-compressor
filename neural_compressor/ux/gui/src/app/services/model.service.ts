@@ -82,6 +82,12 @@ export class ModelService {
     );
   }
 
+  getJobsQueue() {
+    return this.http.get(
+      this.baseUrl + 'api/jobs/queue'
+    );
+  }
+
   getDefaultPath(name: string) {
     return this.http.post(
       this.baseUrl + 'api/get_default_path',
