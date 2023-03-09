@@ -543,7 +543,7 @@ dataset_schema = Schema({
             And(str, Use(input_int_to_float))),
         Optional('dtype'): And(Or(str, list), Use(input_to_list)),
     },
- 
+
     Optional('dummy'): {
         'shape': And(Or(str, list), Use(list_to_tuple)),
         Optional('low'): Or(
@@ -657,7 +657,7 @@ optimizer_schema = Schema({
         Optional('beta_2', default=0.999): Use(float),
         Optional('epsilon', default=1e-07): Use(float),
         Optional('amsgrad', default=False): bool
-    }, 
+    },
 })
 
 criterion_schema = Schema({
@@ -788,13 +788,10 @@ schema = Schema({
         'framework': And(str, lambda s: s in list(FRAMEWORKS.keys()) + ['NA']),
         Optional('inputs', default=[]): And(Or(str, list), Use(input_to_list)),
         Optional('outputs', default=[]): And(Or(str, list), Use(input_to_list)),
- 
     },
-    Optional('version', default=float(__version__.split('.')[0])): And(
-                                          Or(float,
-                                             And(int, Use(input_int_to_float)),
-                                             And(str, Use(input_int_to_float))),
-                                          lambda s: s == float(__version__.split('.')[0])),
+    Optional('version', default=float(__version__.split('.')[0])): Or(float,
+                                                                      And(int, Use(input_int_to_float)),
+                                                                      And(str, Use(input_int_to_float))),
     Optional('device', default='cpu'): And(str, lambda s: s in ['cpu', 'gpu']),
     Optional('quantization', default={'approach': 'post_training_static_quant', \
                                       'calibration': {'sampling_size': [100]}, \
@@ -805,7 +802,6 @@ schema = Schema({
                                                       'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
-                                      'quant_level': 1,
                                       }): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
@@ -899,17 +895,16 @@ schema = Schema({
         Optional('op_wise', default=None): {
             str: ops_schema
         },
-        Optional('quant_level', default=1): And(int, lambda level: level in [0, 1]),
     },
     Optional('use_bf16', default=True): bool,
-    Optional('quant_level', default=1): And(int, lambda level: level in [0, 1]),
+    Optional('quant_level', default="auto"): And(Or(str, int), lambda level: level in ["auto", 0, 1]),
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
     Optional('model_conversion'): model_conversion_schema,
 
     Optional('tuning', default={
-        'strategy': {'name': 'basic'}, 
+        'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
         'objective': 'performance',
         'exit_policy': {'timeout': 0, 'max_trials': 100, 'performance_only': False},
@@ -918,7 +913,7 @@ schema = Schema({
         'diagnosis': False,
         }): {
         Optional('strategy', default={'name': 'basic'}): {
-            'name': And(str, lambda s: s in STRATEGIES), 
+            'name': And(str, lambda s: s in STRATEGIES),
             Optional('sigopt_api_token'): str,
             Optional('sigopt_project_id'): str,
             Optional('sigopt_experiment_name', default='nc-tune'): str,
@@ -935,7 +930,7 @@ schema = Schema({
         },
         Optional('objective', default='performance'): And(str, lambda s: s in OBJECTIVES),
         Hook('multi_objectives', handler=_valid_multi_objectives): object,
-        Optional('multi_objectives'):{ 
+        Optional('multi_objectives'):{
             Optional('objective'): And(
                 Or(str, list), Use(input_to_list), lambda s: all(i in OBJECTIVES for i in s)),
             Optional('weight'): And(Or(str, list), Use(input_to_list_float)),
@@ -994,9 +989,9 @@ schema = Schema({
                 Optional('COCOmAPv2'): {
                     Optional('anno_path'): str,
                     Optional('map_key', default='DetectionBoxes_Precision/mAP'): str,
-                    Optional('output_index_mapping', default={'num_detections': -1, 
-                                                      'boxes': 0, 
-                                                      'scores': 1, 
+                    Optional('output_index_mapping', default={'num_detections': -1,
+                                                      'boxes': 0,
+                                                      'scores': 1,
                                                       'classes': 2}): COCOmAP_input_order_schema
                 },
                 Optional('VOCmAP'): {
@@ -1026,7 +1021,7 @@ schema = Schema({
                 Optional('ROC'): {
                     Optional('task'): str
                 },
-            }, 
+            },
             Optional('metric', default=None): {
                 Optional('topk'): And(int, lambda s: s in [1, 5]),
                 Optional('mAP'): {
@@ -1043,9 +1038,9 @@ schema = Schema({
                 Optional('COCOmAPv2'): {
                     Optional('anno_path'): str,
                     Optional('map_key', default='DetectionBoxes_Precision/mAP'): str,
-                    Optional('output_index_mapping', default={'num_detections': -1, 
-                                                      'boxes': 0, 
-                                                      'scores': 1, 
+                    Optional('output_index_mapping', default={'num_detections': -1,
+                                                      'boxes': 0,
+                                                      'scores': 1,
                                                       'classes': 2}): COCOmAP_input_order_schema
                 },
                 Optional('VOCmAP'): {
@@ -1152,6 +1147,7 @@ schema = Schema({
             Optional("supernet_ckpt_path", default=None): str,
             Optional("batch_size", default=64): int,
             Optional("num_workers", default=20): int,
+            Optional("distributed", default=False): bool,
             },
     },
 
@@ -1178,7 +1174,7 @@ quantization_default_schema = Schema({
                                                      'activation': {}},
                                     }): dict,
     Optional('use_bf16', default=False): bool,
-    Optional('quant_level', default=1): int,
+    Optional('quant_level', default="auto"): Or(str, int),
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
@@ -1221,7 +1217,7 @@ graph_optimization_default_schema = Schema({
 
     Optional('device', default='cpu'): str,
 
-    Optional('quantization', default={'approach': 'post_training_static_quant', 
+    Optional('quantization', default={'approach': 'post_training_static_quant',
                                     'calibration': {'sampling_size': [100]},
                                     'recipes': {'scale_propagation_max_pooling': True,
                                                     'scale_propagation_concat': True,
@@ -1243,7 +1239,7 @@ graph_optimization_default_schema = Schema({
 
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
 
-    Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict 
+    Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict
 })
 
 mixed_precision_default_schema = Schema({
@@ -1255,7 +1251,7 @@ mixed_precision_default_schema = Schema({
 
     Optional('device', default='cpu'): str,
 
-    Optional('quantization', default={'approach': 'post_training_static_quant', 
+    Optional('quantization', default={'approach': 'post_training_static_quant',
                                     'calibration': {'sampling_size': [100]},
                                     'recipes': {'scale_propagation_max_pooling': True,
                                                     'scale_propagation_concat': True,
@@ -1277,7 +1273,7 @@ mixed_precision_default_schema = Schema({
 
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
 
-    Optional('mixed_precision', default={'precisions': ['bf16, fp32']}): dict 
+    Optional('mixed_precision', default={'precisions': ['bf16, fp32']}): dict
 })
 
 benchmark_default_schema = Schema({
@@ -1291,7 +1287,7 @@ benchmark_default_schema = Schema({
 
     Optional('use_bf16', default=False): bool,
 
-    Optional('quantization', default={'approach': 'post_training_static_quant', 
+    Optional('quantization', default={'approach': 'post_training_static_quant',
                                     'calibration': {'sampling_size': [100]},
                                     'recipes': {'scale_propagation_max_pooling': True,
                                                     'scale_propagation_concat': True,
@@ -1328,16 +1324,16 @@ distillation_default_schema = Schema({
         'workspace': {'path': default_workspace}}): dict,
 
     Optional('distillation', default={
-        'train': {'start_epoch': 0, 'end_epoch': 10, 
-                  'iteration': 1000, 'frequency': 1, 
-                  'optimizer': {'SGD': {'learning_rate': 0.001}}, 
-                  'criterion': {'KnowledgeDistillationLoss': 
-                                 {'temperature': 1.0, 
-                                  'loss_types': ['CE', 'KL'], 
+        'train': {'start_epoch': 0, 'end_epoch': 10,
+                  'iteration': 1000, 'frequency': 1,
+                  'optimizer': {'SGD': {'learning_rate': 0.001}},
+                  'criterion': {'KnowledgeDistillationLoss':
+                                 {'temperature': 1.0,
+                                  'loss_types': ['CE', 'KL'],
                                   'loss_weights': [0.5, 0.5]}}}}): dict,
 
     Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}):dict
- 
+
 })
 
 class Conf(object):
@@ -1377,7 +1373,7 @@ class Conf(object):
                 with open(cfg_fname, 'w') as f:
                     f.write(content)
 
-            return validated_cfg   
+            return validated_cfg
         except FileNotFoundError as f:
             logger.error("{}.".format(f))
             raise RuntimeError(
@@ -1402,12 +1398,12 @@ class Conf(object):
                 'quantization.recipes': pythonic_config.quantization.recipes,
                 'quantization.approach': pythonic_config.quantization.approach,
                 'quantization.example_inputs': pythonic_config.quantization.example_inputs,
-                'quantization.calibration.sampling_size': 
+                'quantization.calibration.sampling_size':
                     pythonic_config.quantization.calibration_sampling_size,
-                'quantization.optype_wise': pythonic_config.quantization.op_type_list,
-                'quantization.op_wise': pythonic_config.quantization.op_name_list,
+                'quantization.optype_wise': pythonic_config.quantization.op_type_dict,
+                'quantization.op_wise': pythonic_config.quantization.op_name_dict,
                 'tuning.strategy.name': pythonic_config.quantization.strategy,
-                'tuning.accuracy_criterion.relative': 
+                'tuning.accuracy_criterion.relative':
                     pythonic_config.quantization.accuracy_criterion.relative,
                 'tuning.accuracy_criterion.absolute':
                     pythonic_config.quantization.accuracy_criterion.absolute,
@@ -1523,7 +1519,7 @@ class Conf(object):
         for key in src:
             if key in dst:
                 if isinstance(dst[key], dict) and isinstance(src[key], dict):
-                    if key in ['accuracy_criterion', 'metric', 'dataset', 
+                    if key in ['accuracy_criterion', 'metric', 'dataset',
                         'criterion', 'optimizer']:
                         # accuracy_criterion can only have one of absolute and relative
                         # others can only have one item
@@ -1719,7 +1715,7 @@ class NASConfig(Conf):
 
     def validate(self):
         self.usr_cfg = schema.validate(self.usr_cfg)
-        
+
     @property
     def nas(self):
         return self.usr_cfg.nas

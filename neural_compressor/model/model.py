@@ -165,7 +165,7 @@ class Model(object):
         backend = kwargs.get("backend", "NA")
         if backend == "NA" or backend == "default":
             backend_tmp = get_model_fwk_name(root)
-            if backend_tmp == "pytorch" and backend == "default":
+            if backend_tmp == "pytorch":
                 backend = "pytorch_fx"
             else:
                 backend = backend_tmp
@@ -180,9 +180,9 @@ class Model(object):
                 model_type = kwargs['modelType']
             else:
                 model_type = get_model_type(root)
+            if model_type == 'keras':
+                return MODELS['keras'](root, **kwargs)
             model = MODELS['tensorflow'](model_type, root, **kwargs)
-        elif backend == 'keras':
-            model = MODELS['keras'](root, **kwargs)
         else:
             model = MODELS[backend](root, **kwargs)
         return model

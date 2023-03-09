@@ -35,7 +35,9 @@ Tuning Strategies
 
     3.10. [TPE](#tpe)
 
- 4. [Customize a New Tuning Strategy](#customize-a-new-tuning-strategy)
+ 4. [Distributed Tuning](#distributed-tuning)
+
+ 5. [Customize a New Tuning Strategy](#customize-a-new-tuning-strategy)
 
 ## Introduction
 
@@ -53,7 +55,7 @@ below:
 Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the `framework capability` to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
 ![Conv2D_PyTorch_Cap](./imgs/Conv2D_PyTorch_Cap.png "Conv2D PyTorch Capability")
 
-To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_list` and `op_type_list` in `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.
+To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_dict` and `op_type_dict` in `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.
 
 ### Exit Policy
 User can control the tuning process by setting the exit policy by specifying the `timeout`, and `max_trials` fields in the `TuningCriterion`.
@@ -380,6 +382,32 @@ conf = PostTrainingQuantConfig(
 ```
 
 
+
+The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.
+
+The `traverse` function can be overridden optionally if the traverse process required by the new strategy is different from the one `TuneStrategy` base class implemented.
+
+An example of customizing a new tuning strategy can be reached at [TPE Strategy](../../neural_compressor/contrib/strategy/tpe.py).
+
+## Distributed Tuning
+
+### Design
+
+Intel® Neural Compressor provides distributed tuning to speed up the tuning process by leveraging the multi-node cluster. It seamlessly parallelizes the tuning process across multi nodes by using the MPI. In distributed tuning, the `fp32` model is replicated on every node, and each original model replica is fed with a different quantization configuration. The master handler coordinates the tuning process and synchronizes the tuning result of each stage to every slave handler. The distributed tuning allows the tuning process to scale up significantly to the number of nodes, which translates into faster results and more efficient utilization of computing resources. 
+
+
+### Usage
+
+To use Distributed Tuning, the `use_distributed_tuning` field in the `PostTrainingQuantConfig` should be specified with `True`.
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig
+
+conf = PostTrainingQuantConfig(use_distributed_tuning=True)
+```
+An example of distributed tuning can be reached at [ptq_static_mrpc](../../examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx).
+
+
 ## Customize a New Tuning Strategy
 
 Intel® Neural Compressor supports new strategy extension by implementing a sub-class of the `TuneStrategy` class in neural_compressor.strategy package and registering it by the `strategy_registry` decorator.
@@ -403,9 +431,3 @@ class AbcTuneStrategy(TuneStrategy):
             ...
 
 ```
-
-The `next_tune_cfg` function is used to yield the next tune configuration according to some algorithm or strategy. `TuneStrategy` base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.
-
-The `traverse` function can be overridden optionally if the traverse process required by the new strategy is different from the one `TuneStrategy` base class implemented.
-
-An example of customizing a new tuning strategy can be reached at [TPE Strategy](../../neural_compressor/contrib/strategy/tpe.py).

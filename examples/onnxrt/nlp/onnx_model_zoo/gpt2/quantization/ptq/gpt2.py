@@ -263,11 +263,7 @@ def main():
         accuracy_criterion = AccuracyCriterion()
         accuracy_criterion.higher_is_better = False
         accuracy_criterion.relative = 0.11
-        config = PostTrainingQuantConfig(approach='dynamic', 
-                                         op_name_list={'MatMul_2924': {
-                                                            'activation':  {'dtype': ['fp32']},
-                                                            'weight': {'dtype': ['fp32']}
-                                                        }},
+        config = PostTrainingQuantConfig(approach='dynamic',
                                          accuracy_criterion=accuracy_criterion)
         q_model = quantization.fit(model, 
                                    config,

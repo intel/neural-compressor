@@ -123,16 +123,6 @@ class TestConf(unittest.TestCase):
 
     def test_version(self):
         test = '''
-        version: 1.0
-
-        model:
-          name: version_yaml 
-          framework: mxnet
-        '''
-        helper(test)
-        self.assertRaises(RuntimeError, conf.Conf, 'fake_conf.yaml')
-
-        test = '''
         model:
           name: version_yaml 
           framework: mxnet

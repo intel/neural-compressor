@@ -190,12 +190,7 @@ class eval_classifier_optimized_graph:
         config = PostTrainingQuantConfig(
             inputs=["new_numeric_placeholder", "new_categorical_placeholder"],
             outputs=["import/head/predictions/probabilities"],
-            calibration_sampling_size=[2000],
-            op_name_list={
-                'import/dnn/hiddenlayer_0/MatMul': {
-                'activation':  {'dtype': ['uint8'], 'algorithm': ['minmax'], 'scheme':['asym']},
-                }
-            })
+            calibration_sampling_size=[2000])
 
         if self.args.calib_data:
             q_model = fit(
