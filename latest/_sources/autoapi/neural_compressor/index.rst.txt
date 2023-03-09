@@ -101,9 +101,11 @@ Functions
       Get the summary of the benchmark.
 
 
-   .. py:method:: config_instance()
+   .. py:method:: config_instance(raw_cmd)
 
       Configure the multi-instance commands and trigger benchmark with sub process.
+
+      :param raw_cmd: raw command used for benchmark
 
 
    .. py:method:: generate_prefix(core_list)
