@@ -4,14 +4,14 @@ from tqdm import tqdm
 import sys
 import argparse
 
-sys.path.append('./')
+sys.path.insert(0, './')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--int8', action='store_true', default=False, help="eval fp32 model or int8 model")
 parser.add_argument('--sq', action='store_true', default=False, help="whether to use smooth quant")
-parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
+# parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
 parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-1.7b')
-# parser.add_argument('--alpha', type=float, default=0.5)
+parser.add_argument('--alpha', type=float, default=0.5)
 parser.add_argument('--log_frequency', type=int, default=100)
 args = parser.parse_args()
 
@@ -139,14 +139,12 @@ if args.int8:
     from neural_compressor import PostTrainingQuantConfig
     from neural_compressor import quantization
 
-
-
     if args.sq:
         # from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
         # sq = TorchSmoothQuant(model, calib_dataloader)
         # model = sq.transform(alpha=args.alpha)
         conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
-                                       recipes={"smooth_quant": True})
+                                       recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}})
     else:
         conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
                                        )
@@ -156,7 +154,7 @@ if args.int8:
                                calib_dataloader=calib_dataloader,
                                eval_func=eval_func)
     save_model_name = model_name.split("/")[-1]
-    q_model.save(f"{save_model_name}")
+    ##q_model.save(f"{save_model_name}.pt")
 
 else:
     acc = evaluator.evaluate(model)
