@@ -198,13 +198,16 @@ stages:
     jobs:
       - job: CollectDatafiles
         steps:
-          - template: template/docker-template.yml
-            parameters:
-              dockerConfigName: "commonDockerConfig"
-              repoName: "neural-compressor"
-              repoTag: "py38"
-              dockerFileName: "Dockerfile"
-              containerName: ""
+          - script: |
+              if [[ ! $(docker images | grep -i ${IMAGE_NAME}:${IMAGE_TAG}) ]]; then
+                docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+              fi
+              docker images | grep -i ${IMAGE_NAME}
+              if [[ $? -ne 0 ]]; then
+                echo "NO Such Repo"
+                exit 1
+              fi
+            displayName: "Build develop docker image"
 
           - task: DownloadPipelineArtifact@2
             inputs:
