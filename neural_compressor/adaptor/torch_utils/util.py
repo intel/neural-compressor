@@ -241,6 +241,11 @@ def append_attr(fx_model, model, fx_white_list=[]):
                             r'_activation_post_process_']
     add_special_patterns = [r"_forward_hooks", r"_forward_pre_hooks", r"_backward_hooks"]
     attr_names = []
+    if hasattr(fx_model, 'module') and hasattr(fx_model.module, 'weight'):
+        if not isinstance(fx_model.module.weight, torch.Tensor):
+            fx_model.weight=fx_model.module.weight()
+        else:
+            fx_model.weight=fx_model.module.weight
     for i in org_attr:
         if type(model) in fx_white_list and type(model) != torch.nn.Sequential \
           and any([re.search(p, i) for p in add_special_patterns]):
