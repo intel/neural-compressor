@@ -134,7 +134,7 @@ After prepare step is done, we add quantization and benchmark code to generate q
 
     model = TensorflowQATModel(FLAGS.input_model).frozen_graph_def
     if FLAGS.mode == 'performance':
-        conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
+        conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
         fit(model, conf, b_func=evaluate)
     elif FLAGS.mode == 'accuracy':
         accuracy = evaluate(model)

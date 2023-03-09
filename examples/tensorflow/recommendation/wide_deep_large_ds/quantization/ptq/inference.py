@@ -310,7 +310,7 @@ class eval_classifier_optimized_graph:
         if self.args.benchmark:
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+            conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=1)
             fit(self.args.input_graph, conf,
                 b_dataloader=Dataloader(self.args.eval_data, self.args.batch_size),
                 b_func=evaluation_func)

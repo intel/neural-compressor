@@ -446,5 +446,5 @@ if __name__ == '__main__':
     if FLAGS.benchmark:
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
-        conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7, iteration=FLAGS.iters)
+        conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1, iteration=FLAGS.iters)
         fit(FLAGS.input_model, conf, b_dataloader=eval_dataloader)
