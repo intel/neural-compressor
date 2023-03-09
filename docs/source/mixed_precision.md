@@ -42,7 +42,7 @@ Supported precisions for mix precision include bf16 and fp16. If users want to g
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 
-conf = MixedPrecisionConfig(excluded_precisions=['fp16'])
+conf = MixedPrecisionConfig(precision=['bf16'])
 converted_model = mix_precision.fit(model, config=conf)
 converted_model.save('./path/to/save/')
 ```
@@ -56,7 +56,7 @@ from neural_compressor.config import MixedPrecisionConfig
 conf = MixedPrecisionConfig(
         backend='onnxrt_cuda_ep',
         device='gpu',
-        excluded_precisions=['bf16'])
+        precision=['fp16'])
 converted_model = mix_precision.fit(model, config=conf)
 converted_model.save('./path/to/save/')
 ```
@@ -66,17 +66,29 @@ converted_model.save('./path/to/save/')
   
 ## Examples
 
+There are some pre-requirements to run mixed precision examples for each framework. If the hardware requirements cannot be met, the program would exit consequently.
+
 - BF16： 
 
-    There are 2 pre-requirements to run BF16 mixed precision examples:
+
+    ### TensorFlow
 
     1. Hardware: CPU supports `avx512_bf16` instruction set.
-    2. Software: intel-tensorflow >= [2.3.0](https://pypi.org/project/intel-tensorflow/2.3.0/) or torch >= [1.11.0](https://download.pytorch.org/whl/torch_stable.html).
+    2. Software: intel-tensorflow >= [2.3.0](https://pypi.org/project/intel-tensorflow/2.3.0/).
 
-    If either pre-requirement can't be met, the program would exit consequently.
+    ### PyTorch
+
+    1. Hardware: CPU supports `avx512_bf16` instruction set.
+    2. Software: torch >= [1.11.0](https://download.pytorch.org/whl/torch_stable.html).
+
+    ### ONNX Runtime
+
+    1. Hardware: GPU, set 'device' of config to 'gpu' and 'backend' to 'onnxrt_cuda_ep'.
+    2. Software: onnxruntime-gpu.
 
 - FP16
 
-    Currently Intel® Neural Compressor only support FP16 mixed precision for ONNX models.
-    
-    To run FP16 mixed precision examples, users need to set 'device' of config to 'gpu' and 'backend' to 'onnxrt_cuda_ep'. 
+    ### ONNX Runtime
+
+    1. Hardware: GPU, set 'device' of config to 'gpu' and 'backend' to 'onnxrt_cuda_ep'.
+    2. Software: onnxruntime-gpu.
