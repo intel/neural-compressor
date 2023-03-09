@@ -16,7 +16,7 @@ sed -i '/ ux\//d' run.sh
 sed -i '/ neural_coder\//d' run.sh
 sed -i '/ ipex\//d' run.sh
 sed -i '/ itex\//d' run.sh
-sed -i '/ pruning*\//d' run.sh
+sed -i '/ pruning/d' run.sh
 sed -i '/ scheduler\//d' run.sh
 sed -i '/ nas\//d' run.sh
 
