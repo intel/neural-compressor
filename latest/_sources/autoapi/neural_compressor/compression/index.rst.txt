@@ -33,14 +33,14 @@ Classes
 
 .. autoapisummary::
 
-   neural_compressor.compression.AwareTrainingQuantCallbacks
+   neural_compressor.compression.QuantizationAwareTrainingCallbacks
    neural_compressor.compression.DistillationCallbacks
    neural_compressor.compression.PruningCallbacks
 
 
 
 
-.. py:class:: AwareTrainingQuantCallbacks(conf=None, model=None)
+.. py:class:: QuantizationAwareTrainingCallbacks(conf=None, model=None)
 
    Bases: :py:obj:`BaseCallbacks`
 

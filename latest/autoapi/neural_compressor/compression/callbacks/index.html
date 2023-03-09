@@ -84,7 +84,8 @@
   <section id="module-neural_compressor.compression.callbacks">
 <span id="neural-compressor-compression-callbacks"></span><h1><a class="reference internal" href="#module-neural_compressor.compression.callbacks" title="neural_compressor.compression.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.compression.callbacks</span></code></a><a class="headerlink" href="#module-neural_compressor.compression.callbacks" title="Permalink to this heading"></a></h1>
 <p>This is a module for Component class.</p>
-<p>The Component class will be inherited by the class ‘Quantization’, ‘Pruning’ and ‘Distillation’.</p>
+<p>The Component class will be inherited by the class ‘QuantizationAwareTrainingCallbacks’,
+‘PruningCallbacks’ and ‘DistillationCallbacks’.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
 <section id="classes">
@@ -94,7 +95,7 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.callbacks.BaseCallbacks" title="neural_compressor.compression.callbacks.BaseCallbacks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseCallbacks</span></code></a></p></td>
 <td><p>This is base class of Neural Compressor Callbacks.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.callbacks.AwareTrainingQuantCallbacks" title="neural_compressor.compression.callbacks.AwareTrainingQuantCallbacks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AwareTrainingQuantCallbacks</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.callbacks.QuantizationAwareTrainingCallbacks" title="neural_compressor.compression.callbacks.QuantizationAwareTrainingCallbacks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizationAwareTrainingCallbacks</span></code></a></p></td>
 <td><p>This is the class for callbacks of quantization aware training.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.callbacks.PruningCallbacks" title="neural_compressor.compression.callbacks.PruningCallbacks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PruningCallbacks</span></code></a></p></td>
@@ -110,7 +111,8 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.callbacks.</span></span><span class="sig-name descname"><span class="pre">BaseCallbacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.compression.callbacks.BaseCallbacks" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This is base class of Neural Compressor Callbacks.</p>
-<p>This class will be inherited by the class ‘QuantizationCallbacks’, ‘PruningCallbacks’ and ‘DistillationCallbacks’.
+<p>This class will be inherited by the class ‘QuantizationAwareTrainingCallbacks’,
+‘PruningCallbacks’ and ‘DistillationCallbacks’.
 This design is mainly for pruning/distillation/quantization-aware training.
 In this class will apply all hooks for ‘Quantization’, ‘Pruning’ and ‘Distillation’.</p>
 <dl class="py property">
@@ -237,8 +239,8 @@ In this class will apply all hooks for ‘Quantization’, ‘Pruning’ and ‘
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.compression.callbacks.AwareTrainingQuantCallbacks">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.callbacks.</span></span><span class="sig-name descname"><span class="pre">AwareTrainingQuantCallbacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.compression.callbacks.AwareTrainingQuantCallbacks" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="neural_compressor.compression.callbacks.QuantizationAwareTrainingCallbacks">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.callbacks.</span></span><span class="sig-name descname"><span class="pre">QuantizationAwareTrainingCallbacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.compression.callbacks.QuantizationAwareTrainingCallbacks" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#neural_compressor.compression.callbacks.BaseCallbacks" title="neural_compressor.compression.callbacks.BaseCallbacks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseCallbacks</span></code></a></p>
 <p>This is the class for callbacks of quantization aware training.</p>
 <p>This design is mainly for Quantization-Aware Training.

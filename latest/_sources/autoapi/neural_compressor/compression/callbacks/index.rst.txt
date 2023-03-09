@@ -7,7 +7,8 @@
 
    This is a module for Component class.
 
-   The Component class will be inherited by the class 'Quantization', 'Pruning' and 'Distillation'.
+   The Component class will be inherited by the class 'QuantizationAwareTrainingCallbacks',
+   'PruningCallbacks' and 'DistillationCallbacks'.
 
 
 
@@ -20,7 +21,7 @@ Classes
 .. autoapisummary::
 
    neural_compressor.compression.callbacks.BaseCallbacks
-   neural_compressor.compression.callbacks.AwareTrainingQuantCallbacks
+   neural_compressor.compression.callbacks.QuantizationAwareTrainingCallbacks
    neural_compressor.compression.callbacks.PruningCallbacks
    neural_compressor.compression.callbacks.DistillationCallbacks
 
@@ -33,7 +34,8 @@ Classes
 
    This is base class of Neural Compressor Callbacks.
 
-   This class will be inherited by the class 'QuantizationCallbacks', 'PruningCallbacks' and 'DistillationCallbacks'.
+   This class will be inherited by the class 'QuantizationAwareTrainingCallbacks',
+   'PruningCallbacks' and 'DistillationCallbacks'.
    This design is mainly for pruning/distillation/quantization-aware training.
    In this class will apply all hooks for 'Quantization', 'Pruning' and 'Distillation'.
 
@@ -135,7 +137,7 @@ Classes
 
 
 
-.. py:class:: AwareTrainingQuantCallbacks(conf=None, model=None)
+.. py:class:: QuantizationAwareTrainingCallbacks(conf=None, model=None)
 
    Bases: :py:obj:`BaseCallbacks`
 

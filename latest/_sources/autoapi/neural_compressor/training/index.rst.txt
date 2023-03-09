@@ -38,7 +38,7 @@ Functions
 
    :param model: A model to be compressed. It should be neural compressor model.
    :param callbacks: A list of Callbacks instances.
-                     Such as: DistillationCallbbacks, AwareTrainingQuantCallbacks, PruningCallbacks.
+                     Such as: DistillationCallbbacks, QuantizationAwareTrainingCallbacks, PruningCallbacks.
 
    .. rubric:: Examples
 
