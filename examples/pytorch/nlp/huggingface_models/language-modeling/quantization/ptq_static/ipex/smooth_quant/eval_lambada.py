@@ -13,6 +13,7 @@ parser.add_argument('--sq', action='store_true', default=False, help="whether to
 parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-1.7b')
 parser.add_argument('--alpha', type=float, default=0.5)
 parser.add_argument('--log_frequency', type=int, default=100)
+parser.add_argument('--benchmark', action='store_true', default=False)
 args = parser.parse_args()
 
 from torch.nn.functional import pad
@@ -124,6 +125,13 @@ model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
                                                           torchscript=True  ##FIXME
                                                           )
 model.eval()
+from neural_compressor.benchmark import fit
+from neural_compressor.config import BenchmarkConfig
+
+if args.benchmark:
+    conf = BenchmarkConfig(backend='ipex')
+    fit(model, conf, b_func=evaluator.evaluate)
+    exit()
 
 if args.int8:
     calib_dataset = load_dataset('lambada', split='train')
