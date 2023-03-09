@@ -1,3 +1,5 @@
+import os.path
+
 import transformers
 import torch
 from tqdm import tqdm
@@ -14,6 +16,7 @@ parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-
 parser.add_argument('--alpha', type=float, default=0.5)
 parser.add_argument('--log_frequency', type=int, default=100)
 parser.add_argument('--benchmark', action='store_true', default=False)
+parser.add_argument('--kl', action='store_true', default=False, help="whether to use kl divergence for calibration")
 args = parser.parse_args()
 
 from torch.nn.functional import pad
@@ -42,6 +45,8 @@ class Evaluator:
             if index % args.log_frequency == 0:
                 print(hit / total)
             index += 1
+            if index == 10:
+                break
         acc = hit / total
         return acc
 
@@ -115,23 +120,37 @@ class INCDataloader:
 from datasets import load_dataset
 
 model_name = args.model_name_or_path
-
 tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
 eval_dataset = load_dataset('lambada', split='validation')
 
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
+if args.benchmark:
+    from neural_compressor.benchmark import fit
+    from neural_compressor.config import BenchmarkConfig
+
+    if args.int8:
+        print("benchmarking int8 model")
+        from neural_compressor.utils.pytorch import load
+
+        int8_folder = model_name.split('/')[-1]
+        if not os.path.exists(int8_folder):
+            print(f"could not find int8 folder {int8_folder} ")
+        model = load(int8_folder)
+    else:
+        print("benchmarking fp32 model")
+        model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
+                                                                  torchscript=True  ##FIXME
+                                                                  )
+        model.eval()
+    conf = BenchmarkConfig(backend='ipex',cores_per_instance=4, num_of_instance=7)
+    res = fit(model, conf, b_func=evaluator.evaluate)
+    print(res)
+
 model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
                                                           torchscript=True  ##FIXME
                                                           )
 model.eval()
-from neural_compressor.benchmark import fit
-from neural_compressor.config import BenchmarkConfig
-
-if args.benchmark:
-    conf = BenchmarkConfig(backend='ipex')
-    fit(model, conf, b_func=evaluator.evaluate)
-    exit()
 
 if args.int8:
     calib_dataset = load_dataset('lambada', split='train')
@@ -151,11 +170,9 @@ if args.int8:
     if args.sq:
         recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
     op_type_dict = None
-    # op_type_dict = {'^((?!linear).)*$': {'activation': {'algorithm': ['kl']}}}##kl entry, have bug now
+    if args.kl:
+        op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
 
-    # from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
-    # sq = TorchSmoothQuant(model, calib_dataloader)
-    # model = sq.transform(alpha=args.alpha)
     conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
                                    recipes=recipes,
                                    op_type_dict=op_type_dict)
@@ -165,7 +182,7 @@ if args.int8:
                                calib_dataloader=calib_dataloader,
                                eval_func=eval_func)
     save_model_name = model_name.split("/")[-1]
-    ##q_model.save(f"{save_model_name}.pt")
+    q_model.save(f"{save_model_name}")
 
 else:
     acc = evaluator.evaluate(model)
