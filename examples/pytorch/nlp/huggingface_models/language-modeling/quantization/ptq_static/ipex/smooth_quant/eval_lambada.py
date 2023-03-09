@@ -139,15 +139,18 @@ if args.int8:
     from neural_compressor import PostTrainingQuantConfig
     from neural_compressor import quantization
 
+    recipes = {}
     if args.sq:
-        # from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
-        # sq = TorchSmoothQuant(model, calib_dataloader)
-        # model = sq.transform(alpha=args.alpha)
-        conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
-                                       recipes={"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}})
-    else:
-        conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
-                                       )
+        recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
+    op_type_dict = None
+    # op_type_dict = {'^((?!linear).)*$': {'activation': {'algorithm': ['kl']}}}##kl entry, have bug now
+
+    # from neural_compressor.adaptor.torch_utils.smooth_quant import TorchSmoothQuant
+    # sq = TorchSmoothQuant(model, calib_dataloader)
+    # model = sq.transform(alpha=args.alpha)
+    conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
+                                   recipes=recipes,
+                                   op_type_dict=op_type_dict)
 
     q_model = quantization.fit(model,
                                conf,
