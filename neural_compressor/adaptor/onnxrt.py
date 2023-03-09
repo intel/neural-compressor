@@ -689,8 +689,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     is_nlp = True
                     break
 
-        # 4. according to LSTM structure
-        if "LSTM" in [node.op_type for node in model.model.graph.node]:
+        # 4. according to LSTM/Attention optype
+        op_types = [node.op_type for node in model.model.graph.node]
+        if "LSTM" in op_types or 'Attention' in op_types:
             is_nlp = True
 
         logger.warning("The model is automatically detected as {} model. "
