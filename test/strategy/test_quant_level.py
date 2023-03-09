@@ -110,7 +110,7 @@ class TestQuantLevel(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.constant_graph = build_fake_model()
+        self.tf_graph = build_fake_model()
         self.ort_cv_model = build_conv_model()
         self.ort_cv_dataloader = build_ort_data()
         self.ort_resnet18 = build_resnet18()
@@ -251,7 +251,7 @@ class TestQuantLevel(unittest.TestCase):
             if 'conv' in node_name:
                 self.assertTrue('quant' in node_name or 'Quant' in node_name)
 
-    def test_pt_opt_level_0(self):
+    def test_pt_quant_level_auto(self):
         logger.info("*** Test: quantization level is auto with pytorch model.")
         import torchvision
         from neural_compressor.data import Datasets, DATALOADERS
@@ -273,6 +273,94 @@ class TestQuantLevel(unittest.TestCase):
         self.assertIsNotNone(q_model)
         fc_layer = q_model._model.fc
         self.assertTrue('Quant' in str(fc_layer))
+
+    def test_tf_quant_level_0(self):
+        logger.info("*** Test: quantization level 0 with tensorflow model.")
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data import Datasets, DATALOADERS
+
+        # fake evaluation function
+        def _fake_eval(model):
+            return 1
+
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"](((16, 3, 3, 1)))
+        dataloader = DATALOADERS["tensorflow"](dataset)
+
+        # tuning and accuracy criterion
+        conf = PostTrainingQuantConfig(quant_level=0)
+
+        # fit
+        q_model = fit(model=self.tf_graph,
+                      conf=conf,
+                      calib_dataloader= dataloader,
+                      eval_dataloader=dataloader,
+                      eval_func=_fake_eval)
+        self.assertIsNotNone(q_model)
+
+    def test_tf_quant_level_1(self):
+        logger.info("*** Test: quantization level 1 with tensorflow model.")
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data import Datasets, DATALOADERS
+
+        # fake evaluation function
+        self._fake_acc = 10
+        def _fake_eval(model):
+            self._fake_acc -= 1
+            return self._fake_acc
+
+        # dataset and dataloader
+        dataset = Datasets("tensorflow")["dummy"](((16, 3, 3, 1)))
+        dataloader = DATALOADERS["tensorflow"](dataset)
+
+        # tuning and accuracy criterion
+        conf = PostTrainingQuantConfig(quant_level=1)
+
+        # fit
+        q_model = fit(model=self.tf_graph,
+                      conf=conf,
+                      calib_dataloader= dataloader,
+                      eval_dataloader=dataloader,
+                      eval_func=_fake_eval)
+        self.assertIsNone(q_model)
+
+    def test_pt_quant_level_0(self):
+        logger.info("*** Test: quantization level 0 with pytorch model.")
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.data import Datasets, DATALOADERS
+        import torchvision
+        import time
+
+        # model
+        resnet18 = torchvision.models.resnet18()
+
+        # fake evaluation function
+        acc_lst =  [2.0, 1.0, 2.1, 2.2, 2.3]
+        perf_lst = [2.0, 1.5, 1.0, 0.5, 0.1]
+        self.test_pt_opt_level_0_index = -1
+        def _fake_eval(model):
+            self.test_pt_opt_level_0_index += 1
+            perf = perf_lst[self.test_pt_opt_level_0_index]
+            time.sleep(perf)
+            return acc_lst[self.test_pt_opt_level_0_index]
+
+        # dataset and dataloader
+        dataset = Datasets("pytorch")["dummy"](((16, 3, 3, 1)))
+        dataloader = DATALOADERS["pytorch"](dataset)
+
+        # tuning and accuracy criterion
+        conf = PostTrainingQuantConfig(quant_level=0)
+
+        # fit
+        q_model = fit(model=resnet18,
+                      conf=conf,
+                      calib_dataloader= dataloader,
+                      eval_dataloader=dataloader,
+                      eval_func=_fake_eval)
+        self.assertIsNotNone(q_model)
 
 if __name__ == "__main__":
     unittest.main()
