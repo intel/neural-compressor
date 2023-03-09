@@ -401,8 +401,8 @@ if __name__ == "__main__":
 
     if args.tune:
         from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-        opt_options = BertOptimizationOptions('bert')
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('bert')
         opt_options.enable_embed_layer_norm = False
 
         model_optimizer = optimizer.optimize_model(

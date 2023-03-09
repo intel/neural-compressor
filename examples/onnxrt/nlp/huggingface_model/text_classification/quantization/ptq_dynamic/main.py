@@ -398,9 +398,9 @@ if __name__ == "__main__":
 
     if args.tune:
         from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
+        from onnxruntime.transformers.fusion_options import FusionOptions
         model_type = 'bart' if args.model_name_or_path == 'Intel/bart-large-mrpc' else 'bert'
-        opt_options = BertOptimizationOptions(model_type)
+        opt_options = FusionOptions(model_type)
         opt_options.enable_embed_layer_norm = False
 
         model_optimizer = optimizer.optimize_model(

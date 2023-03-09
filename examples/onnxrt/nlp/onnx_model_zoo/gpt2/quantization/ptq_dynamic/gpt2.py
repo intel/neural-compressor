@@ -251,8 +251,8 @@ def main():
     if args.tune:
         # GPT2 optimizer
         from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.onnx_model_bert import BertOptimizationOptions
-        opt_options = BertOptimizationOptions('gpt2')
+        from onnxruntime.transformers.fusion_options import FusionOptions
+        opt_options = FusionOptions('gpt2')
         opt_options.enable_embed_layer_norm = False
 
         model_optimizer = optimizer.optimize_model(
