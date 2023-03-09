@@ -283,7 +283,7 @@ The pruning technique  is validated on typical models across various domains (in
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="../../../docs/source/imgs/pruning/pruning_scatter.jpg">
-    <img src="../../../docs/source/imgs/pruning/pruning_scatter.jpg" alt="Architecture" width=450 height=300>
+    <img src="../../../docs/source/imgs/pruning/scatter-ver03-09.png" alt="Architecture" width=450 height=300>
   </a>
 </div>
 

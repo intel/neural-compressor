@@ -1933,25 +1933,6 @@ Performance varies by use, configuration and other factors. See [platform config
 </thead>
 <tbody>  
   <tr>
-    <td>ResNet50</td>
-    <td>image recognition</br>ImageNet</td>
-    <td>top1 acc = 78.95</br>top1 acc = 80.10</td>
-    <td>-1.43%</td>
-    <td>75%</br>structured 2x1</td>
-    <td>snip momentum</br>unbalanced</td>
-  </tr>
-  <tr>
-  <tr>
-    <td>YOLO-v5s6</td>
-    <td>object detection</br>COCO</td>
-    <td>AP0.50:0.95/AP0.50=0.404/0.6</br>AP0.50:0.95/AP0.50=0.393/0.584</td>
-    <td>-2.72%</td>
-    <td>80%</br>unstructured</td>
-    <td>snip momentum</br>unbalanced</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
     <td>Bert-Mini</td>
     <td>question answering</br>SQuAD-v1.1</td>
     <td>f1=76.87</br>f1=76.2</td>
@@ -2132,45 +2113,24 @@ Performance varies by use, configuration and other factors. See [platform config
   <tr>
   </tr>
   <tr>
-    <td>ResNet18</td>
-    <td>image classification</br>ImageNet</td>
-    <td>top-1% acc = 69.76</br>top-1% acc = 69.47</td>
-    <td>-0.42%</td>    
-    <td>30%</td>
-    <td>magnitude</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
     <td>ResNet50</td>
-    <td>image classification</br>ImageNet</td>
-    <td>top-1% acc = 76.13</br>top-1% acc = 76.11</td>
-    <td>-0.03%</td>    
-    <td>30%</td>
-    <td>magnitude</td>
-  </tr> 
-  <tr>
+    <td>image recognition</br>ImageNet</td>
+    <td>top1 acc = 78.95</br>top1 acc = 80.10</td>
+    <td>-1.43%</td>
+    <td>75%</br>structured 2x1</td>
+    <td>snip momentum</br>unbalanced</td>
   </tr>
   <tr>
-    <td>ResNet50</td>
-    <td>image classification</br>ImageNet</td>
-    <td>top-1% acc = 76.13</br>top-1% acc = 76.01</td>
-    <td>-0.16%</td>    
-    <td>30%</td>
-    <td>magnitude</br>Post Training Quantization</td>    
+  <tr>
+    <td>YOLO-v5s6</td>
+    <td>object detection</br>COCO</td>
+    <td>AP0.50:0.95/AP0.50=0.404/0.6</br>AP0.50:0.95/AP0.50=0.393/0.584</td>
+    <td>-2.72%</td>
+    <td>80%</br>unstructured</td>
+    <td>snip momentum</br>unbalanced</td>
   </tr>
   <tr>
-  </tr>  
-  <tr>
-    <td>ResNet50</td>
-    <td>image classification</br>ImageNet</td>
-    <td>top-1% acc = 76.13</br>top-1% acc = 75.90</td>
-    <td>-0.30%</td> 
-    <td>30%</td>
-    <td>magnitude</br>Quantization Aware Training</td>   
-  </tr> 
-  <tr>
-  </tr>     
+  </tr>
   <tr>
     <td>Bert-Large</td>
     <td>question answering</br>SQuAD-v1.1</td>
