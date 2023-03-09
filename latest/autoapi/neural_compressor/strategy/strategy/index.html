@@ -178,12 +178,12 @@ quantization level according to tuning result and traverse logic.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.master_worker_handle">
 <span class="sig-name descname"><span class="pre">master_worker_handle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">comm</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.master_worker_handle" title="Permalink to this definition"></a></dt>
-<dd><p>Matster worker handles the task assignment and result management.</p>
+<dd><p>Master worker handles the task assignment and result management.</p>
 <p>Master node send all task ids to all free nodes, and wait until any result.
 When receiving any result, directly send a new task id to the sender (it’s free).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>comm</strong> (<em>MPI.COMM</em>) – The instance of comunication for MPI.</p>
+<dd class="field-odd"><p><strong>comm</strong> (<em>MPI.COMM</em>) – The instance of communication for MPI.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -196,7 +196,7 @@ When receiving any result, directly send a new task id to the sender (it’s fre
 Then slave node sends back the tune result to master node.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>comm</strong> (<em>MPI.COMM</em>) – The instance of comunication for MPI.</p>
+<dd class="field-odd"><p><strong>comm</strong> (<em>MPI.COMM</em>) – The instance of communication for MPI.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -204,7 +204,7 @@ Then slave node sends back the tune result to master node.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.strategy.strategy.TuneStrategy.distributed_traverse">
 <span class="sig-name descname"><span class="pre">distributed_traverse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.strategy.TuneStrategy.distributed_traverse" title="Permalink to this definition"></a></dt>
-<dd><p>Disributed traverse the tuning space.</p>
+<dd><p>Distributed traverse the tuning space.</p>
 <p>The main traverse logic which could be override by some concrete strategy which needs more hooks.</p>
 </dd></dl>
 

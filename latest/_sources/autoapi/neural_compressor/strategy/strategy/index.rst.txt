@@ -87,12 +87,12 @@ Functions
 
    .. py:method:: master_worker_handle(comm)
 
-      Matster worker handles the task assignment and result management.
+      Master worker handles the task assignment and result management.
 
       Master node send all task ids to all free nodes, and wait until any result.
       When receiving any result, directly send a new task id to the sender (it's free).
 
-      :param comm: The instance of comunication for MPI.
+      :param comm: The instance of communication for MPI.
       :type comm: MPI.COMM
 
 
@@ -103,13 +103,13 @@ Functions
       When receiving any task id, slave node finds it in self.tune_cfg_lst and run it.
       Then slave node sends back the tune result to master node.
 
-      :param comm: The instance of comunication for MPI.
+      :param comm: The instance of communication for MPI.
       :type comm: MPI.COMM
 
 
    .. py:method:: distributed_traverse()
 
-      Disributed traverse the tuning space.
+      Distributed traverse the tuning space.
 
       The main traverse logic which could be override by some concrete strategy which needs more hooks.
 

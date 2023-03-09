@@ -103,6 +103,7 @@
 <p>3.9. <a class="reference external" href="#sigopt">SigOpt</a></p>
 <p>3.10. <a class="reference external" href="#tpe">TPE</a></p>
 </li>
+<li><p><a class="reference external" href="#distributed-tuning">Distributed Tuning</a></p></li>
 <li><p><a class="reference external" href="#customize-a-new-tuning-strategy">Customize a New Tuning Strategy</a></p></li>
 </ol>
 <section id="introduction">
@@ -443,7 +444,27 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 <span class="p">)</span>
 </pre></div>
 </div>
+<p>The <code class="docutils literal notranslate"><span class="pre">next_tune_cfg</span></code> function is used to yield the next tune configuration according to some algorithm or strategy. <code class="docutils literal notranslate"><span class="pre">TuneStrategy</span></code> base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">traverse</span></code> function can be overridden optionally if the traverse process required by the new strategy is different from the one <code class="docutils literal notranslate"><span class="pre">TuneStrategy</span></code> base class implemented.</p>
+<p>An example of customizing a new tuning strategy can be reached at <a class="reference external" href="../../neural_compressor/contrib/strategy/tpe.py">TPE Strategy</a>.</p>
 </section>
+</section>
+</section>
+<section id="distributed-tuning">
+<h2>Distributed Tuning<a class="headerlink" href="#distributed-tuning" title="Permalink to this heading"></a></h2>
+<section id="id19">
+<h3>Design<a class="headerlink" href="#id19" title="Permalink to this heading"></a></h3>
+<p>Intel® Neural Compressor provides distributed tuning to speed up the tuning process by leveraging the multi-node cluster. It seamlessly parallelizes the tuning process across multi nodes by using the MPI. In distributed tuning, the <code class="docutils literal notranslate"><span class="pre">fp32</span></code> model is replicated on every node, and each original model replica is fed with a different quantization configuration. The master handler coordinates the tuning process and synchronizes the tuning result of each stage to every slave handler. The distributed tuning allows the tuning process to scale up significantly to the number of nodes, which translates into faster results and more efficient utilization of computing resources.</p>
+</section>
+<section id="id20">
+<h3>Usage<a class="headerlink" href="#id20" title="Permalink to this heading"></a></h3>
+<p>To use Distributed Tuning, the <code class="docutils literal notranslate"><span class="pre">use_distributed_tuning</span></code> field in the <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code> should be specified with <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">use_distributed_tuning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>An example of distributed tuning can be reached at <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">ptq_static_mrpc</a>.</p>
 </section>
 </section>
 <section id="customize-a-new-tuning-strategy">
@@ -466,9 +487,6 @@ take from 24 hours to a few days to complete, depending on the model.</p>
             <span class="o">...</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">next_tune_cfg</span></code> function is used to yield the next tune configuration according to some algorithm or strategy. <code class="docutils literal notranslate"><span class="pre">TuneStrategy</span></code> base class will traverse all the tuning space till a quantization configuration meets the pre-defined accuracy criterion.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">traverse</span></code> function can be overridden optionally if the traverse process required by the new strategy is different from the one <code class="docutils literal notranslate"><span class="pre">TuneStrategy</span></code> base class implemented.</p>
-<p>An example of customizing a new tuning strategy can be reached at <a class="reference external" href="../../neural_compressor/contrib/strategy/tpe.py">TPE Strategy</a>.</p>
 </section>
 </section>
 
