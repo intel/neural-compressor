@@ -680,6 +680,13 @@
       "batch_size": 1,
       "main_script": "eval_lambada.py"
     },
+    "bloom-176b_sq": {
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
+      "dataset_location": "",
+      "input_model": "bigscience/bloom",
+      "batch_size": 1,
+      "main_script": "eval_lambada.py"
+    },
     "opt-125m_sq": {
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/ptq_static/ipex/smooth_quant",
       "dataset_location": "",
