@@ -696,7 +696,7 @@ def torch_to_fp32_onnx(
             for name in input_order:
                 if name in input_names:
                     new_input_names.append(name)
-                    id = input_names.index(name)
+                    id = name if isinstance(example_inputs, dict) else input_names.index(name)
                     new_example_inputs.append(example_inputs[id])
             input_names = new_input_names
             example_inputs = new_example_inputs
