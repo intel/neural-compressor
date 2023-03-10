@@ -1421,8 +1421,7 @@ class Conf(object):
             if pythonic_config.quantization.strategy_kwargs:
                 st_kwargs = pythonic_config.quantization.strategy_kwargs
                 for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \
-                    'accuracy_weight', 'latency_weight', 'hawq_v2_loss']:
-
+                    'accuracy_weight', 'latency_weight', 'hawq_v2_loss', 'confidence_batches']:
                     if st_key in st_kwargs:
                         st_val =  st_kwargs[st_key]
                         mapping.update({'tuning.strategy.' + st_key: st_val})
