@@ -157,7 +157,7 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.quantize_data" title="neural_compressor.adaptor.ox_utils.util.quantize_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_data</span></code></a>(data, quantize_range, qType, scheme)</p></td>
 <td><p>Quantize data.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel" title="neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_data_per_channel</span></code></a>(tensor_value, qType, scheme, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel" title="neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_data_per_channel</span></code></a>(data, axis, quantize_range, ...)</p></td>
 <td><p>Quantize tensor per-channel.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.util.dequantize_data_with_scale_zero" title="neural_compressor.adaptor.ox_utils.util.dequantize_data_with_scale_zero"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dequantize_data_with_scale_zero</span></code></a>(tensor_value, ...)</p></td>
@@ -344,7 +344,7 @@ z: zero point</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">quantize_data_per_channel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zo_value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.util.</span></span><span class="sig-name descname"><span class="pre">quantize_data_per_channel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantize_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel" title="Permalink to this definition"></a></dt>
 <dd><p>Quantize tensor per-channel.</p>
 </dd></dl>
 

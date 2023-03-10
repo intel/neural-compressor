@@ -174,7 +174,7 @@ Functions
    :type scheme: string
 
 
-.. py:function:: quantize_data_per_channel(tensor_value, qType, scheme, scale_value, zo_value)
+.. py:function:: quantize_data_per_channel(data, axis, quantize_range, qType, scheme)
 
    Quantize tensor per-channel.
 
