@@ -307,7 +307,8 @@ The pruning technique  is validated on typical models across various domains (in
 
 - Object Detection
 
-  Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
+  Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../../examples/pytorch/object_detection/yolo_v5/pruning/eager).
+  
 
 The API [Pruning V2](../../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
 
@@ -315,7 +316,8 @@ The API [Pruning V2](../../../docs/source/pruning.md#Get-Started-with-Pruning-AP
 ## Examples
 |  Example Name | Task<br>Dataset | Dense Metric<br>Sparse Metric | Relative Drop | Sparsity ratio<br>Sparsity Pattern | Comments<br>Balanced or unbalanced ratio |
 |-----|-----|-----|-----|-----|-----|
-|yolov5|
+|YOLOv5s6|object-detection<br>COCO|mAP50/mAP50-95 0.600<br>mAP50/mAP50-95 0.584| -2.67%|80%<br>Unstructured 1x1|snip_momentum<br>unbalanced
+|YOLOv5s6|object-detection<br>COCO|mAP50/mAP50-95 0.600<br>mAP50/mAP50-95 0.573| -4.5%|80%<br>Structured 4x1|snip_momentum<br>unbalanced
 |resnet|
 |Flan-T5-small| translation<br>wmt16 en-ro | BLEU 25.63<br>BLEU 24.53|-4.95%|80%<br>Structured 4x1|snip_momentum<br>unbalanced|
 
