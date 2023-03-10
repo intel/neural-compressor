@@ -18,6 +18,15 @@ pip install -r requirements.txt
 The dataset will be downloaded automatically from the datasets Hub.
 See more about loading [huggingface dataset](https://huggingface.co/docs/datasets/loading_datasets.html)
 
+## 3. Prepare Model
+
+The Flan-T5 model could be downloaded from Huggingface. More details of running this Pytorch model could be found at [Model Usage](https://huggingface.co/google/flan-t5-small#usage). 
+
+```shell
+git lfs install
+git clone https://huggingface.co/google/flan-t5-small
+git lfs pull
+```
 
 # Run Examples
 One example of pruning a [Flan-T5-small](scripts/run_translation_prune.sh) model is provided, which is trained on wmt16 English-Romanian task. We are working on providing more pruning examples and sharing our sparse models on HuggingFace.  
