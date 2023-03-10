@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python3 ./examples/pytorch/nlp/huggingface_models/translation/pruning/eager/run_translation_no_trainer_prune.py \
+python3 ./examples/pytorch/nlp/huggingface_models/translation/pruning/eager/run_translation_no_trainer.py \
     --model_name_or_path '/path/to/Flan-T5/dense_finetuned_model/' \
     --do_prune \
     --source_lang en \
