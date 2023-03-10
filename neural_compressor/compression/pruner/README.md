@@ -72,6 +72,8 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 - Channel-wise Pruning
 
   Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.
+  
+  An advantage of channel pruning is that pruned channels can be removed from original weights without influence other dense channels. Via this process we can decrease these weights' size and obtain direct improvements of inference speed, instead of relying on kernels' support. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
 
 
 - Unstructured Pruning
@@ -144,10 +146,6 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. progressive pruning is preferred when large patterns like 1xchannel and channelx1 are selected.
 
-- Pattern_lock Pruning
-
-  Pattern_lock pruning type uses masks of a fixed pattern during the pruning process. It locks the sparsity pattern in fine-tuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied for the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
-
 - Progressive Pruning
 
   Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of intervals masks during the pruning process. In this method, a sequence of masks is generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
@@ -158,12 +156,15 @@ Pruning type defines how the masks are generated and applied to a neural network
           <img src="../../../docs/source/imgs/pruning/progressive_pruning.png" alt="Architecture" width=420 height=290>
       </a>
   </div>
-  &emsp;&emsp;(a) refers to the traditional structured iterative pruning;(b, c, d) demonstrates some typical implementations of mask interpolation.  <Br/>
-  &emsp;&emsp;(b) uses masks with smaller structured blocks during every pruning step.  <Br/>
-  &emsp;&emsp;(c) inserts masks with smaller structured blocks between every pruning steps.  <Br/>
-  &emsp;&emsp;(d) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
+  &emsp;&emsp;(a) refers to the traditional structured iterative pruning;  <Br/>
+  &emsp;&emsp;(b) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
 
-  (d) is adopted in progressive pruning implementation. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. these partial-zero unstructured masks are added to the previous structured masks and  pruning continues. After training the model with these interpolating masks and masking more elements in these blocks, the mask interpolation process is returned. After several steps of mask interpolation, All weights in the blocks are finally masked and the model is trained as pure block-wise sparsity.
+  (b) is adopted in progressive pruning implementation. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. these partial-zero unstructured masks are added to the previous structured masks and  pruning continues. After training the model with these interpolating masks and masking more elements in these blocks, the mask interpolation process is returned. After several steps of mask interpolation, All weights in the blocks are finally masked and the model is trained as pure block-wise sparsity.
+
+- Pattern_lock Pruning
+
+  Pattern_lock pruning type uses masks of a fixed pattern during the pruning process. It locks the sparsity pattern in fine-tuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied for the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
+
 
 
 
@@ -313,12 +314,13 @@ The pruning technique  is validated on typical models across various domains (in
 The API [Pruning V2](../../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
 
 
-## Examples
+## Experimental Examples
+The table below shows some pruning results which are still have chance to be improved. 
 |  Example Name | Task<br>Dataset | Dense Metric<br>Sparse Metric | Relative Drop | Sparsity ratio<br>Sparsity Pattern | Comments<br>Balanced or unbalanced ratio |
 |-----|-----|-----|-----|-----|-----|
 |YOLOv5s6|object-detection<br>COCO|mAP50/mAP50-95 0.600<br>mAP50/mAP50-95 0.584| -2.67%|80%<br>Unstructured 1x1|snip_momentum<br>unbalanced
 |YOLOv5s6|object-detection<br>COCO|mAP50/mAP50-95 0.600<br>mAP50/mAP50-95 0.573| -4.5%|80%<br>Structured 4x1|snip_momentum<br>unbalanced
-|resnet|
+|ResNet50|image recognition<br>ImageNet|Top-1 Acc 80.1<br>Top-1 Acc 78.95| -1.43% | 75% <br> Structured 2x1| snip_momentum <br> unbalanced|
 |Flan-T5-small| translation<br>wmt16 en-ro | BLEU 25.63<br>BLEU 24.53|-4.95%|80%<br>Structured 4x1|snip_momentum<br>unbalanced|
 
 ## Reference
