@@ -44,6 +44,7 @@ autosummary_generate = True
 autoapi_options = ['members',  'show-inheritance',
                    'show-module-summary', 'imported-members', ]
 autoapi_ignore = []
+autoapi_template_dir = './autoapi_templates'
 
 templates_path = ['_templates']
 

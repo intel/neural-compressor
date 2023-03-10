@@ -1,14 +1,13 @@
 User facing APIs
-###########
+####################
 
 The user facing APIs information is available:
 
-.. toctree::
-   :maxdepth: 1
+.. autoapisummary::
 
-   basic_api/quantization
-   basic_api/mix_precision
-   basic_api/benchmark
-   basic_api/objective
-   basic_api/training
-   basic_api/config
+   neural_compressor.quantization
+   neural_compressor.mix_precision
+   neural_compressor.benchmark
+   neural_compressor.objective
+   neural_compressor.training
+   neural_compressor.config
