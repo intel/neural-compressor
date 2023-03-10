@@ -701,6 +701,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Prune once for all</td>
     <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pattern_lock/eager">eager</a></td>
   </tr>
+  <tr>
+    <td>Flan-T5-small</td>
+    <td>Natural Language Processing (translation)</td>
+    <td>Structured (4x1)</td>
+    <td>Snip-momentum</td>
+    <td><a href="https://github.com/intel/neural-compressor/tree/lyt/Q1update/examples/pytorch/nlp/huggingface_models/translation/pruning/eager">eager</a></td>
+  </tr>
 </tbody>
 </table>
 
