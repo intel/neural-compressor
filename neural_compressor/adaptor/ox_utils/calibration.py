@@ -280,7 +280,7 @@ class ONNXRTAugment:
                 calib_method = q_config[node.name]['activation']['algorithm'] \
                     if node.name in q_config else 'minmax'
                 assert calib_method in CALIBRATOR, 'Calibration method {} is not registerd.'.format(calib_method)
-                unsigned = q_config[node.name]['activation']['dtype'] == 'uint8' if node.name in q_config else False
+                unsigned = (q_config[node.name]['activation']['dtype'] == 2) if node.name in q_config else False
                 calibrator = CALIBRATOR[calib_method](unsigned=unsigned)
                 calibrator.collect(merged_dict[data_name])
                 ranges_dict.setdefault(data_name, []).append(calibrator.calib_range)
