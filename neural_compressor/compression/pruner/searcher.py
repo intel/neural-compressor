@@ -21,7 +21,7 @@ import re
 
 JIT_SUPPORT_OPS = ['linear', 'gelu', 'mul'] # linear and all act_fn supported by pytorch-aten extension
 
-def get_attributes_multi_level(module: torch.nn.Module, attrs: str):
+def get_attributes(module: torch.nn.Module, attrs: str):
     """Get a multi-level descent module of module.
 
     Args:
@@ -39,32 +39,46 @@ def get_attributes_multi_level(module: torch.nn.Module, attrs: str):
     return sub_module
 
 class RecipeSearcher(object):
+    """Searcher class which searches patterns with a pre-defined recipe.
+
+    A Recipe is a dict type data which contains the root module's name and 
+    its sub-modules' levelwise calling way. 
+    For example, for the self-attention module in Huggingface bert-model,
+    if we want to obtain its linear ops (query, key, value and output),
+    the recipe should be like:
+    recipe_samples = {
+        'BertAttention': ["self.query", "self.key", "self.value", "output.dense"]
+    }
+
+    Args:
+        model (torch.nn.Module): The PyTorch model for searching.
+        recipe (dict): A dict containing infomation of the searching pattern.
+            
+    Attributes:
+        model: The PyTorch model for searching.
+        recipe: A dict containing infomation of the searching pattern.
+        targets: The basic module's name which contains searching pattern.
+        searching_results: The list/dict which store matched patterns.
     """
-    If users exactly know the target layer's name to call, then can define a recipe to locate target layers efficiently. 
-    """
+
     def __init__(self, model: torch.nn.Module, recipe: dict):
-        """
-        recipe_samples = {
-            {'BertLayer': ["intermediate.dense", "output.dense"],}
-            'BertAttention': ["self.query", "self.key", "self.value", "output.dense"]
-        }
-        """
+        """Initialize the attributes."""
         self.model = model
         self.recipe = recipe
         self.targets = list(self.recipe.keys())
         self.search_results = {}
 
     def search(self, target_name):
-        #assert target_name in STURCTURE_RECIPES, print(f"{target_name} structure is not support for search.")
+        """Operations called for entire searching process."""
         self.search_results.clear()
         self.dfs_search(self.model, type(self.model).__name__, target_name)
         return self.search_results
     
     def dfs_search(self, module, module_name, target_name):
-        # find a target module
+        """Operations called for one single search step."""
         module_type = type(module).__name__
         if module_type in self.targets:
-            sublayers = [get_attributes_multi_level(module, sublayer_name) for sublayer_name in self.recipe[module_type]]
+            sublayers = [get_attributes(module, sublayer_name) for sublayer_name in self.recipe[module_type]]
             self.search_results[module_name] = sublayers
         # recursively search
         for n, m in module.named_children():
@@ -72,13 +86,27 @@ class RecipeSearcher(object):
 
 
 class JitBasicSearcher(object):
-    """
-    By converting a PyTorch Model into a static model using torch.jit.trace()/script(),
-    we can trace some special pattern in the model and optimizer them automatically.
-    This class provide some basic functionality for jit searcher
+    """Static graph searcher class which searches patterns with PyTorch static graph and its input/output information.
+
+    By converting a PyTorch Model into a static version using torch.jit.trace()/script(),
+    we can trace some special pattern in the model and optimize them automatically.
+    This class provide some basic functions for jit searcher
     Including generating dummy inputs, generating static graph, analyzing static graph.
+
+    Args:
+        model (torch.nn.Module): The PyTorch model for searching.
+            
+    Attributes:
+        model: The PyTorch model for searching.
+        device: The model's current device type.
+        static_graph: The static graph of original model.
+        flatten_static_graph: A list of string with the model's static graph inference details.
+        target_layers: The layer types the searcher will extract.
+        searching_results: The list/dict which store matched patterns.
     """
+
     def __init__(self, model):
+        """Initialize the attributes."""
         self.model = model
         self.device = self.model.device
         # use torch.jit to generate static graph
@@ -90,6 +118,7 @@ class JitBasicSearcher(object):
         self.search_results = []
 
     def generate_static_graph(self):
+        """Operations called when generate the model's static graph."""
         print(f"Generating jit tracing from original model.")
         dummy_inputs = self.generate_dummy_inputs()
         self.static_graph = torch.jit.trace(self.model, dummy_inputs, strict=False)
@@ -97,16 +126,25 @@ class JitBasicSearcher(object):
         self.flatten_static_graph = [l.strip() for l in self.static_graph.inlined_graph.__str__().split('\n')]
     
     def generate_dummy_inputs(self, shape=[1, 16], dtype=torch.int64):
-        """
-        shape: list [1, 16], [1, 3, 228, 228] etc.
-        to generate a static graph, we need to generate a dummy input for model.
-        default: a sequence data for nlp model (Bert, GPTJ, etc.)
+        """Generate dummy inputs for the model's static graph.
+
+        Args:
+            shape: the dummy input's shape.
+            dtype: the dummy input's date type. For nlp tasks, it should be torch.int64 (long).
+        
+        Return:
+            A torch.Tensor.
         """
         return torch.ones(shape, dtype=dtype).to(self.device)
 
     def filter_static_code(self, list_in, kw):
-        """
-        filter out a sublist, whose members contain kw
+        """Obtain sub-list which contains some key words.
+        
+        Args:
+            list_in: list.
+            kw: string.
+        
+        Return: a sub-list of list_in, whose members contains kw. 
         """
         list_out = []
         for info in list_in:
@@ -115,15 +153,19 @@ class JitBasicSearcher(object):
         return list_out
 
     def analyze_code(self, code):
-        """
-        Analyzes and extracts static graph str style's critical information.
-        input: a single-line static graph forwarding code
-        {
-            output_name: "the output node name for this op",
-            input_name: "the input node name for this op",
-            op_type: "the aten::op name",
-            op_trace: "the absolute dir to get this model, in torch.nn.Module's attribute style."
-        }
+        """Analyzes and extracts static graph str style's critical information.
+
+        Args:
+            code: a str presenting static graph forwarding code
+        
+        Return:
+            A dict:
+                {
+                    output_name: "the output node name for this op",
+                    input_name: "the input node name for this op",
+                    op_type: "the aten::op name",
+                    op_trace: "the absolute dir to get this model, in torch.nn.Module's attribute style."
+                }
         """
         # find output's name
         output_name = code.split(":")[0].strip()
@@ -148,16 +190,16 @@ class JitBasicSearcher(object):
         return res
 
     def search(self):
-        """
-        Core searching function will be implemented in children classes for specific aims. 
-        """
+        """Operations called for entire searching process."""
         raise NotImplementedError
 
     def get_layer_for_all(self):
-        """
+        """Extract target layers from matched patterns.
+
         After searching process, target patterns are stored in self.search_results.
-        This function obtains obtains the layer object (torch.nn.Module) from self.search_results
-        By default, self.target_layer is ['Linear'], therefore this function only obtain linear layers
+        This function obtains obtains the layer object (torch.nn.Module) from self.search_results.
+        By default, self.target_layer is ['Linear'], therefore this function only obtain linear layers,
+        and store them in self.search_results.
         """
         results = []
         for pattern in self.search_results:
@@ -172,11 +214,19 @@ class JitBasicSearcher(object):
         self.search_results += results
 
     def get_layers(self, scope_code):
-        """
-        # in jit, scope keyword is a item which use to trace a layer's heirachy in a model
-        # and it has a tower-like structure. For example, for a intermediate layer in bert-base its scope is like:
-        # scope: __module.bert/__module.bert.encoder/__module.bert.encoder.layer.0/__module.bert.encoder.layer.0.intermediate/__module.bert.encoder.layer.0.intermediate.dense #
-        # example: '__module.bert.encoder.layer.11.intermediate.intermediate_act_fn'
+        """Obtain the specific layer from jit code.
+
+        In jit, scope keyword is a item which use to trace a layer from a model
+        For example, for a intermediate layer in Huggingface bert-base, its scope is like:
+        scope: __module.bert/__module.bert.encoder/__module.bert.encoder.layer.0/ 
+               __module.bert.encoder.layer.0.intermediate/__module.bert.encoder.layer.0.intermediate.dense #
+        example: '__module.bert.encoder.layer.11.intermediate.intermediate_act_fn'
+
+        Args:
+            scope_code: a string representing a operator's forward code. 
+        
+        Return:
+            a torch.nn.module: the layer/operator corresponding with scope_code.
         """
         scope_regex = re.compile('scope\: .* \#')
         try:
@@ -196,12 +246,30 @@ class JitBasicSearcher(object):
         return sub_module
 
 class PathSearcher(JitBasicSearcher):
+    """Static graph searcher.
+
+    Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
+    Need to provide a string to indicate the structure/sequence of the target pattern.
+    
+    Args:
+        model (torch.nn.Module): The PyTorch model for searching.
+        target_pattern (str): a string presenting the pattern to search (use '/' to link different layer names.)
+            
+    Attributes:
+        model: The PyTorch model for searching.
+        device: The model's current device type.
+        static_graph: The static graph of original model.
+        flatten_static_graph: A list of string with the model's static graph inference details.
+        target_layers: The layer types the searcher will extract.
+        searching_results: The list/dict which store matched patterns.
+        target_path: a string presenting the pattern to search (use '/' to link different layer names.)
+        target_op: a set containing target operators' names.
+        target_op_lut: a lookup table for target operators and their corresponding jit codes.
+        current_pattern: a searching path to store searching status.
     """
-    Use jit to detect some special pattern in a module, there is no need for user to define layer name.
-    User need to provide a string to indicate the structure of target pattern
-    ""
-    """
+
     def __init__(self, model, target_pattern='linear/gelu/linear'):
+        """Initialize."""
         super(PathSearcher, self).__init__(model)
         # some search related attribuites
         self.target_pattern = target_pattern
@@ -212,16 +280,15 @@ class PathSearcher(JitBasicSearcher):
         self.current_pattern = []
     
     def search(self):
-        """
-        By define a target path, we use dfs to search matched patterns
-        """
+        """Operations called for entire searching process."""
         # step 1: establish search space within all interested ops, saved in self.target_op_lut
         self.search_results.clear()
         self.target_op_lut.clear()
         self.current_pattern.clear()
         for op in self.target_ops:
-            self.target_op_lut[op] = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::" + op)
+            self.target_op_lut[op] = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::"+op)
         def dfs():
+            """Operations called for one single search step."""
             # if target pattern is found
             if len(self.current_pattern) == len(self.target_path):
                 # find the target pattern
@@ -245,30 +312,46 @@ class PathSearcher(JitBasicSearcher):
         # step 2: dfs  
         # execute dfs-based pattern matching
         dfs()
-        print(f"Found {len(self.search_results)} target pattern {self.target_pattern} in model {type(self.model).__name__}")
+        print(f"Matched {len(self.search_results)} pattern {self.target_pattern} in model {type(self.model).__name__}")
         JitBasicSearcher.get_layer_for_all(self)
         return self.search_results
 
 class Linear2LinearSearcher(JitBasicSearcher):
+    """Static graph searcher.
+
+    Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
+    Automatically searcher linear layers which can be optimized.
+
+    Args:
+        model (torch.nn.Module): The PyTorch model for searching.
+            
+    Attributes:
+        model: The PyTorch model for searching.
+        device: The model's current device type.
+        static_graph: The static graph of original model.
+        flatten_static_graph: A list of string with the model's static graph inference details.
+        target_layers: The layer types the searcher will extract.
+        searching_results: The list/dict which store matched patterns.
+        target_op_lut: a lookup table for target operators and their corresponding jit codes.
+        current_pattern: a searching path to store searching status.
     """
-    A downstream task of PathSearcher, restrict the pattern to be "Linear2Linear":
-    Linear2Linear is pattern with start with Linear and ends up with Linear.
-    Between two Linears, activation, mul, etc ops are supported
-    Due to this restriction, there is no need to provide a specific "target_pattern" comparing to PathSearcher.
-    """
+
     def __init__(self, model):
+        """Initialize."""
         super(Linear2LinearSearcher, self).__init__(model)
         self.target_op_lut = {}
         self.current_pattern = []
 
     def search(self):
+        """Operations called for entire searching process."""
         self.search_results.clear()
         self.target_op_lut.clear()
         self.current_pattern.clear()
         for op in JIT_SUPPORT_OPS:
-            self.target_op_lut[op] = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::" + op)
+            self.target_op_lut[op] = JitBasicSearcher.filter_static_code(self, self.flatten_static_graph, "aten::"+op)
 
         def dfs():
+            """Operations called for one single search step."""
             # ends up with another linear layer, successfully obtain a linear2linear pattern
             if len(self.current_pattern) > 1 and self.current_pattern[-1]['op_type'] == "linear":
                 self.search_results.append(self.current_pattern[:])

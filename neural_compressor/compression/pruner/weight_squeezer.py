@@ -21,34 +21,43 @@ import torch.nn as nn
 import random
 
 class PostCompressionUtils(object):
+    """Operations library related to weight compression."""
+
     @staticmethod
     def obtain_output_masks(tensor):
+        """Obtain a lower dimension mask for an sparse weight matrix."""
         # dim 1 is input channel
-        # assert tensor.shape.__len__ == 2, "Current post training compression object only support 2-dim tensor compression"
         tensor_reduce = torch.sum(tensor.abs(), 1)
         mask_reduce = torch.where(tensor_reduce==0.0, 0, 1)
         return mask_reduce
 
     @staticmethod
     def obtain_input_masks(tensor):
+        """Obtain a lower dimension mask for an sparse weight matrix."""
         # dim 0 is output channel
-        # assert tensor.shape.__len__ == 2, "Current post training compression object only support 2-dim tensor compression"
         tensor_reduce = torch.sum(tensor.abs(), 0)
         mask_reduce = torch.where(tensor_reduce==0.0, 0, 1)
         return mask_reduce
 
     @staticmethod
     def get_mask_indices(mask):
+        """Obtain the masks' 0 elements' indice."""
         # return the indices of elements whose values are zero
         return torch.nonzero(torch.where(mask == 0, 1, 0) == 1).squeeze().tolist()
 
     @staticmethod
     def find_pruneable_indices(indice, n_heads, head_size=1, round_option=0):
-        """
-        indices: list(int): channel / heads' indices to be pruned
-        n_head: int. number of head to prune
-        head_size: for head pruning, it is head size, for channel pruning, it is 1
-        round: if pruning channel number does not equals to 32x, (16x), round it to a 32x int
+        """Obtain the masks' 0 elements' indice.
+
+        Args:
+            indices: list(int): channel / heads' indices to be pruned
+            n_head: int. number of head to prune
+            head_size: for head pruning, it is head size, for channel pruning, it is 1
+            round_option: if pruning channel number does not equals to 32x, (16x), round it to a 32x int
+        
+        Return:
+            indice: the mask' zero-value elements indice
+            indice_to_keep: the masks one-value elements indice
         """
         # import pdb;pdb.set_trace()
         # round the pruning number to be a multiple of 2^n
@@ -70,15 +79,16 @@ class PostCompressionUtils(object):
 
     @staticmethod
     def prune_linear(layer, index, device, dim = 0, prune_bias = True):
-        """
-        layer: a linear layer
-        index: the indice which channels/heads should be kept
-        dim: input channel (1) or output channel (0)
-        prune_bias: if output channel is pruned, bias should also be pruned.
-        By default, prune the output channel.
-        index is a tensor of index for channel which we want to keep 
-        dim = 0: output dim
-        dim = 1: input dim
+        """Operation to compress a sparse linear layer's weight.
+        
+        Args:
+            layer (torch.nn.Linear): a linear layer
+            index (list): the indice which channels/heads should be kept
+            dim (int): input channel (1) or output channel (0)
+            prune_bias (bool): if output channel is pruned, bias should also be pruned.
+
+        Return:
+            The same layer object whose weight (probability also bias) has been compressed. 
         """
         # import pdb;pdb.set_trace()
         index = index.to(device)
@@ -105,19 +115,28 @@ class PostCompressionUtils(object):
             layer.bias.requires_grad = True
 
 class LinearCompression(object):
+    """Class which automatically compresses two consecutive linear layers.
+
+    For two consecutive linear layer, when the second layer's input channel is pruned, 
+    then the first layer's output channel can also be pruned, 
+    while the second layer's output hidden state value is identical. 
+    for example, two consecutive linears have following structure.
+    x = layer_1(input)
+    x = act_fn(x)
+    x = layer_2(x)
+
+    Args:
+        layer_1 (torch.nn.Linear): the first Linear layer.
+        layer_2 (torch.nn.Linear): the second Linear layer.
+
+    Attributes:
+        layer_1 (torch.nn.Linear): the first Linear layer.
+        layer_2 (torch.nn.Linear): the second Linear layer.
+        device: the device of layers' weights.
     """
-    For two continous linear layer, when the second layer's input channel is pruned, 
-    then the first layer's output channel can also be pruned.
-    """
+
     def __init__(self, layer_1, layer_2):
-        """
-        layer_1 (`torch.nn.Linear`): The layer to prune.
-        layer_2 (`torch.nn.Linear`): The layer to prune.
-        follows such process:
-        x = layer_1(input)
-        x = act_fn(x)
-        x = layer_2(x)
-        """
+        """Initialize."""
         assert type(layer_1).__name__ == "Linear", "layer 1 should be torch.nn.modules.linear.Linear module type"
         assert type(layer_2).__name__ == "Linear", "layer 1 should be torch.nn.modules.linear.Linear module type"
         self.layer_1 = layer_1
@@ -129,18 +148,33 @@ class LinearCompression(object):
         }
     
     def __call__(self, mask=None, round_value=0):
-        """
-        step 1: prune output.dense's input channel
-        step 2: prune intermediate.dense's output channel, including bias
+        """Operation to execute weight compression process.
+
+        Args:
+            mask: the predefined mask of the second layer's input channel.
+                  if is None, the API automatically detects the sparse channel and generates the mask.
+            round_value (int): if pruning channel number does not equals to 32x, (16x), round it to a 32x int
+
         """
         if mask is not None:
             layer_2_mask = mask.clone().to(self.device)
         else:
             layer_2_mask = PostCompressionUtils.obtain_input_masks(self.layer_2.weight)
         layer_2_indice_to_prune = PostCompressionUtils.get_mask_indices(layer_2_mask)
-        _, layer_2_indice_to_keep = PostCompressionUtils.find_pruneable_indices(layer_2_indice_to_prune, self.layer_2.in_features, 1, round_value) # 1 refer to channel-wise pruning
-        PostCompressionUtils.prune_linear(self.layer_2, layer_2_indice_to_keep, device=self.device, dim=1, prune_bias=False)
-        PostCompressionUtils.prune_linear(self.layer_1, layer_2_indice_to_keep, device=self.device, dim=0, prune_bias=True)
+        _, layer_2_indice_to_keep = PostCompressionUtils.find_pruneable_indices(
+            layer_2_indice_to_prune, 
+            self.layer_2.in_features, 1, round_value
+        ) # 1 refer to channel-wise pruning
+        PostCompressionUtils.prune_linear(
+            self.layer_2, 
+            layer_2_indice_to_keep, 
+            device=self.device, dim=1, prune_bias=False
+        )
+        PostCompressionUtils.prune_linear(
+            self.layer_1, 
+            layer_2_indice_to_keep, 
+            device=self.device, dim=0, prune_bias=True
+        )
         # Summary:
         self.log['1_after'] = [self.layer_1.out_features, self.layer_1.in_features]
         self.log['2_after'] = [self.layer_2.out_features, self.layer_2.in_features]
@@ -148,13 +182,25 @@ class LinearCompression(object):
         print(f"layer_2 compression: {self.log['2_before']} -> {self.log['2_after']}")
 
 class LinearCompressionIterator(object):
+    """Pruner of a sequence of consecutive linear patterns.
+
+    Attributes:
+        linear_patterns (dict/list): a iterable object of consecutive linear patterns.
     """
-    This object is useful for compressing a sequence of linear pattern, especially when these linears patterns comes from one model.
-    """
+
     def __init__(self, linear_patterns):
+        """Initialize."""
         self.linear_patterns = linear_patterns
 
     def __call__(self, masks=None, round_value=0):
+        """Operation to execute weight compression process.
+
+        Args:
+            mask: the predefined masks of the second layers input channel.
+                  if is None, the API automatically detects the sparse channel and generates the mask.
+            round_value (int): if pruning channel number does not equals to 32x, (16x), round it to a 32x int
+
+        """
         # masks should have same length as layers patterns
         # self.linear_patterns: a list or dict
         if isinstance(masks, list):
