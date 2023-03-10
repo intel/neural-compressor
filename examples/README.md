@@ -715,6 +715,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/eager">eager</a></td>
   </tr>
   <tr>
+    <td>Flan-T5-small</td>
+    <td>Natural Language Processing (translation)</td>
+    <td>Structured (4x1)</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/translation/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
     <td>YOLOv5s6</td>
     <td>Object Detection</td>
     <td>Structured (4x1, 2in4), Unstructured</td>

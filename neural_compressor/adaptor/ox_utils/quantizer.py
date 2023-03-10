@@ -34,7 +34,7 @@ from onnxruntime import SessionOptions, InferenceSession, GraphOptimizationLevel
 
 from neural_compressor.adaptor.ox_utils.util import QuantizedValue, QuantizedInitializer, \
     _get_qrange_for_qType, cast_tensor, make_quant_node, make_dquant_node
-from neural_compressor.adaptor.ox_utils.util import QuantizedValueType
+from neural_compressor.adaptor.ox_utils.util import QuantizedValueType, quantize_data_per_channel
 from neural_compressor.adaptor.ox_utils.util import find_by_name, dtype_to_name
 from neural_compressor.adaptor.ox_utils.util import __producer__, __version__
 from neural_compressor.adaptor.ox_utils.util import quantize_data, dtype_mapping, support_pair, ValueInfo
@@ -783,33 +783,11 @@ class Quantizer:
 
         if initializer.name not in self.quantized_value_map:
             weights = self.tensor_proto_to_array(initializer)
-            channel_count = weights.shape[channel_axis]
-            rmin_list = []
-            rmax_list = []
-            zero_point_list = []
-            scale_list = []
-            quantized_per_channel_data_list = []
-            for i in range(channel_count):
-                per_channel_data = weights.take(i, channel_axis)
-                rmin, rmax, zero_point, scale, quantized_per_channel_data = quantize_data(
-                    per_channel_data.flatten().tolist(), _get_qrange_for_qType(weight_qType, 
-                    self.reduce_range), weight_qType, scheme)
-                rmin_list.append(rmin)
-                rmax_list.append(rmax)
-                zero_point_list.append(zero_point)
-                scale_list.append(scale)
-                quantized_per_channel_data_list.append(quantized_per_channel_data)
+            rmin, rmax, zero_point, scale, quantized_weights = quantize_data_per_channel(
+                weights, channel_axis, _get_qrange_for_qType(weight_qType,self.reduce_range), weight_qType, scheme)
 
-            # combine per_channel_data into one
-            reshape_dims = list(weights.shape)  # deep copy
-            reshape_dims[channel_axis] = 1  # only one per channel for reshape
-            quantized_weights = np.asarray(quantized_per_channel_data_list[0]).reshape(reshape_dims)
-            for i in range(1, len(quantized_per_channel_data_list)):
-                channel_weights = np.asarray(quantized_per_channel_data_list[i]).reshape(reshape_dims)
-                quantized_weights = np.concatenate((quantized_weights, channel_weights), channel_axis)
-
-            weight = QuantizedInitializer(initializer.name, initializer, rmin_list, rmax_list, 
-                                          zero_point_list, scale_list,
+            weight = QuantizedInitializer(initializer.name, initializer, rmin, rmax,
+                                          zero_point, scale,
                                           weights,
                                           quantized_weights.flatten().tolist(), 
                                           channel_axis, weight_qType)
