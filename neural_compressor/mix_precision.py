@@ -383,7 +383,7 @@ def fit(model,
             logger.warning("Mix precision exits due to device isn't gpu.")
             sys.exit(0)
         elif config.backend != "onnxrt_cuda_ep":
-            logger.waring("Mix precision exits due to backend isn't onnxrt_cuda_ep.")
+            logger.warning("Mix precision exits due to backend isn't onnxrt_cuda_ep.")
             sys.exit(0)
     elif 'bf16' in precisions and not CpuInfo().bf16 and converter.model.framework() != "onnxruntime":
         if os.getenv('FORCE_BF16') == '1':
