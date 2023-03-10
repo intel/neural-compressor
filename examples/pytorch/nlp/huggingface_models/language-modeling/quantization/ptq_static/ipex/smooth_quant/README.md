@@ -27,17 +27,15 @@ python eval_lambada.py \
 
 int8 benchmarking
 ```shell
-python eval_lambada.py \
+python benchmark.py \
   --model_name_or_path bigscience/bloom-560m \
-  --int8\
-  --benchmark
+  --int8
 ```
 
 fp32 benchmarking
 ```shell
-python eval_lambada.py \
-  --model_name_or_path bigscience/bloom-560m \
-  --benchmark
+python benchmark.py \
+  --model_name_or_path bigscience/bloom-560m 
 ```
 
 
