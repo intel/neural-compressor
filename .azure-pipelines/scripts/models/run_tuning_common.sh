@@ -14,8 +14,6 @@ do
             framework=`echo $i | sed "s/${PATTERN}//"`;;
         --model=*)
             model=`echo $i | sed "s/${PATTERN}//"`;;
-        --input_model=*)
-            input_model=`echo $i | sed "s/${PATTERN}//"`;;
         --tuning_cmd=*)
             tuning_cmd=`echo $i | sed "s/${PATTERN}//"`;;
         --log_dir=*)
