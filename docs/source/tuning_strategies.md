@@ -88,11 +88,11 @@ accuracy_criterion = AccuracyCriterion(
 
 ### Tuning Process 
 
-Intel® Neural Compressor allows users to choose different tuning processes by specifying the quantization level (`quant_level`). Currently, the recognized `quant_level`s are `0`, `1`, and `"auto"`. For `quant_level` is `1`, the tuning behaves can be finer-grained controlled by setting the `strategy` field.
+Intel® Neural Compressor allows users to choose different tuning processes by specifying the quantization level (`quant_level`). Currently, the recognized `quant_level`s are `0`, `1`, and `"auto"`. For `quant_level` is `1`, the tuning process can be finer-grained controlled by setting the `strategy` field.
 
-- `0`: "Conservative" tuning. `0` starts with an `fp32` model and tries to quantize OPs into lower precision **op-type-wise**. `0` can be useful to give insights about the accuracy degradation after quantizing some OPs.
+- `0`: "Conservative" tuning. `0` starts with an `fp32` model and tries to quantize OPs into lower precision by **op-type-wise**. `0` can be useful to give users insights about the accuracy degradation after quantizing some OPs.
 
-- `1`: "Aggressive" tuning. `1` starts with the default quantization configuration and selects different quantization parameters. `1` can be used to achieve the better performance. 
+- `1`: "Aggressive" tuning. `1` starts with the default quantization configuration and selects different quantization parameters. `1` can be used to achieve the performance. 
 
 - `"auto"` (default) Auto tuning. `"auto"` combines the advantages of `quant_level=0` and `quant_level=1`. Currently, it tries default quantization configuration, `0`, and [`basic`](./tuning_strategies.md#basic-tuning) strategy sequentially.
 
@@ -102,7 +102,7 @@ Intel® Neural Compressor allows users to choose different tuning processes by s
 ### Conservative Tuning
 
 #### Design
-The conservative tuning (`quant_level` = `0`) starts with an `fp32` model and tries to key OPs such as `conv`, `matmul`, or `linear` into into lower precision **op-type-wise**.
+The conservative tuning (`quant_level` = `0`) starts with an `fp32` model and tries to key OPs like `conv`, `matmul`, or `linear` into lower precision **op-type-wise**.
 #### Usage
 
 To use conservative tuning, the `quant_level` field should be set to `0` in `PostTrainingQuantConfig`.
@@ -127,7 +127,7 @@ The `Basic` strategy is designed for quantizing most models. There are six stage
 
 - **Stage I**. Default quantization
     
-    In this stage, it tries to quantize OPs with default quantization configuration which is consistent with the framework behave.
+    In this stage, it tries to quantize OPs with the default quantization configuration which is consistent with the framework behavior.
 
 - **Stage II** Apply all recipes
 
@@ -175,7 +175,7 @@ conf = PostTrainingQuantConfig(
 
 #### Design
 
-The auto tuning (`quant_level` = `"auto"`) is the default tuning process. Classical settings are shown below:
+The auto tuning (`quant_level`=`"auto"`) is the default tuning process. Classical settings are shown below:
 
 #### Usage
 
