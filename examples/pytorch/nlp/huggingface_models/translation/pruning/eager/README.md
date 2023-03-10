@@ -10,7 +10,7 @@ This document presents step-by-step instructions for pruning Huggingface models 
 PyTorch 1.8 or higher version is needed with pytorch_fx backend.
 
 ```shell
-pip install -r examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager/requirements.txt
+pip install -r examples/pytorch/nlp/huggingface_models/translation/pruning/eager/requirements.txt
 ```
 
 ## 2. Prepare Dataset
