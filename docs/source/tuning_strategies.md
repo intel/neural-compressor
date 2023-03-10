@@ -102,7 +102,7 @@ Intel® Neural Compressor allows users to choose different tuning processes by s
 ### Conservative Tuning
 
 #### Design
-The conservative tuning (`quant_level` = `0`) starts with an `fp32` model and tries to key OPs like `conv`, `matmul`, or `linear` into lower precision **op-type-wise**.
+The conservative tuning (`quant_level`=`0`) starts with an `fp32` model and tries to convert key OPs like `conv`, `matmul`, or `linear` into lower precision **op-type-wise**.
 #### Usage
 
 To use conservative tuning, the `quant_level` field should be set to `0` in `PostTrainingQuantConfig`.
@@ -125,11 +125,11 @@ conf = PostTrainingQuantConfig(
 
 The `Basic` strategy is designed for quantizing most models. There are six stages executed by `Basic` strategy sequentially, and the tuning process ends once the condition meets the exit policy. 
 
-- **Stage I**. Default quantization
+- **Stage I**. Quantize with default quantization configuration
     
     In this stage, it tries to quantize OPs with the default quantization configuration which is consistent with the framework behavior.
 
-- **Stage II** Apply all recipes
+- **Stage II**. Apply all recipes
 
     In this stage, it tries to apply all recipes.
 
