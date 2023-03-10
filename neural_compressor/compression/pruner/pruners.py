@@ -22,6 +22,8 @@ from .schedulers import get_scheduler
 from .criteria import get_criterion, CRITERIA
 from .regs import get_reg
 from .utils import logger
+from .model_slim.pattern_analyzer import Linear2LinearSearcher
+from .model_slim.weight_slim import LinearCompressionIterator
 
 PRUNERS = {}
 
@@ -88,6 +90,19 @@ def get_pruner(config, modules):
         assert False, f"does not support {name}, currently only support {parse_valid_pruner_types()}"
     return PRUNERS[name](config, modules)
 
+def model_slim(model, round_multiplier=0):
+    """Remove some sparse part in the model permanently and obtain acceleration directly.
+
+    Args:
+        model: a sprase model.
+        round_multiplier(int): the channel number after slimming should be multiple of this number.
+    """
+    logger.warning(f"You are using model slim methods, some weight channels will be removed permanently.")
+    pa_obj = Linear2LinearSearcher(model)
+    layers = pa_obj.search()
+    linear_pruner = LinearCompressionIterator(layers)
+    linear_pruner(masks=None, round_value=round_multiplier)
+    return model
 
 class BasePruner:
     """Pruning Pruner.

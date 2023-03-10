@@ -889,8 +889,8 @@ def main():
     logger.info(f"Average inference time: {avg_latency} ms")
 
     #-----------------Following codes execute post-training compression---------------------------#
-    from neural_compressor.training import PruningCallbacks
-    model = PruningCallbacks.model_slim(model)
+    from neural_compressor.training import model_slim
+    model = model_slim(model)
     #---------------------------------------------------------------------------------------------#
 
     logger.info(f"***** Running Evaluation after post-training compression*****")
