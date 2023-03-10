@@ -480,7 +480,7 @@ def main():
             fp32_op_names = ['MatMul_660', 'MatMul_566', 'Unsqueeze_91']
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=model_args.quant_format,
-                                         op_name_list={op_name:FP32 for op_name in fp32_op_names} \
+                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
                                             if fp32_op_names is not None else None)
         q_model = quantization.fit(model, 
                                    config,
