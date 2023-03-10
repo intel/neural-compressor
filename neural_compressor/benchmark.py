@@ -38,6 +38,7 @@ from .conf.pythonic_config import Config
 from .utils import logger
 from .conf.pythonic_config import Config
 from .config import BenchmarkConfig
+from .utils.utility import Statistics
 
 
 def set_env_var(env_var, value, overwrite_existing=False):
@@ -163,13 +164,11 @@ class Benchmark(object):
         if self.conf.usr_cfg.model.framework != 'NA':
             self.framework = self.conf.usr_cfg.model.framework.lower()
 
-    def __call__(self):
+    def __call__(self, raw_cmd=None):
         """Directly call a Benchmark object.
 
         Args:
-            model: Get the model
-            b_dataloader: Set dataloader for benchmarking
-            b_func: Eval function for benchmark
+            raw_cmd: raw command used for benchmark
         """
         cfg = self.conf.usr_cfg
         assert cfg.evaluation is not None, 'benchmark evaluation filed should not be None...'
@@ -182,7 +181,9 @@ class Benchmark(object):
         logger.info("Start to run Benchmark.")
         if os.environ.get('NC_ENV_CONF') == 'True':
             return self.run_instance()
-        self.config_instance()
+        if raw_cmd is None:
+            raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
+        self.config_instance(raw_cmd)
         self.summary_benchmark()
         return None
 
@@ -190,40 +191,41 @@ class Benchmark(object):
 
     def summary_benchmark(self):
         """Get the summary of the benchmark."""
-        num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
-        cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
-        latency_l = []
-        throughput_l = []
-        for i in range(0, num_of_instance):
-            log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
-            with open(log, "r") as f:
-                for line in f:
-                    latency = re.search(r"[L,l]atency:\s+(\d+(\.\d+)?)", line)
-                    latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
-                    throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
-                    throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
-        assert len(latency_l)==len(throughput_l)==num_of_instance, \
-            "Multiple instance benchmark failed with some instance!"
-        logger.info("\n\nMultiple instance benchmark summary: ")
-        logger.info("Latency average: {:.3f} ms".format(sum(latency_l)/len(latency_l)))
-        logger.info("Throughput sum: {:.3f} images/sec".format(sum(throughput_l)))
+        if sys.platform in ['linux']:
+            num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
+            cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+            latency_l = []
+            throughput_l = []
+            for i in range(0, num_of_instance):
+                log = '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, i)
+                with open(log, "r") as f:
+                    for line in f:
+                        latency = re.search(r"[L,l]atency:\s+(\d+(\.\d+)?)", line)
+                        latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
+                        throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
+                        throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
+            assert len(latency_l)==len(throughput_l)==num_of_instance, \
+                "Multiple instance benchmark failed with some instance!"
 
-    def call_one(self, cmd, log_file):
-        """Execute one command for one instance in one thread and dump the log (for Windows)."""
-        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                shell=True) # nosec
-        with open(log_file, "w", 1, encoding="utf-8") as log_file:
-            log_file.write(f"[ COMMAND ] {cmd} \n")
-            for line in proc.stdout:
-                decoded_line = line.decode("utf-8", errors="ignore").strip()
-                logger.info(decoded_line)   # redirect to terminal
-                log_file.write(decoded_line + "\n")
+            output_data = [
+                ["Latency average [second/sample]", "{:.3f}".format(sum(latency_l)/len(latency_l))],
+                ["Throughput sum [samples/second]", "{:.3f}".format(sum(throughput_l))]
+            ]
+            logger.info("********************************************")
+            Statistics(
+                output_data, 
+                header='Multiple Instance Benchmark Summary',
+                field_names=["Items", "Result"]).print_stat()
+        else:
+            # (TODO) should add summary after win32 benchmark has log
+            pass
 
-    def config_instance(self):
-        """Configure the multi-instance commands and trigger benchmark with sub process."""
-        raw_cmd = sys.executable + ' ' + ' '.join(sys.argv)
+    def config_instance(self, raw_cmd):
+        """Configure the multi-instance commands and trigger benchmark with sub process.
+
+        Args:
+            raw_cmd: raw command used for benchmark
+        """
         multi_instance_cmd = ''
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))

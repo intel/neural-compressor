@@ -1,7 +1,7 @@
 Step-by-Step
 ============
 
-This document presents step-by-step instructions for pruning PyTorch models using the Intel® Neural Compressor.
+This document presents step-by-step instructions for pruning Huggingface models using the Intel® Neural Compressor.
 
 # Prerequisite
 
@@ -16,7 +16,7 @@ pip install -r examples/pytorch/nlp/huggingface_models/question-answering/prunin
 ## 2. Prepare Dataset
 
 The dataset will be downloaded automatically from the datasets Hub.
-See more about loading dataset:https://huggingface.co/docs/datasets/loading_datasets.html
+See more about loading [huggingface dataset](https://huggingface.co/docs/datasets/loading_datasets.html)
 
 
 # Run Examples
@@ -43,6 +43,7 @@ The snip-momentum pruning method is used by default and the initial dense models
 ## References
 * [SNIP: Single-shot Network Pruning based on Connection Sensitivity](https://arxiv.org/abs/1810.02340)
 * [Knowledge Distillation with the Reused Teacher Classifier](https://arxiv.org/abs/2203.14001)
+
 
 
 

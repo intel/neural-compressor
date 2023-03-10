@@ -62,7 +62,7 @@ from utils.metrics import fitness
 from utils.plots import plot_evolve
 from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel, select_device, smart_DDP, smart_optimizer,
                                smart_resume, torch_distributed_zero_first)
-from neural_compressor.training import prepare_compression, Pruning
+from neural_compressor.training import prepare_compression
 from neural_compressor.training import WeightPruningConfig
 
 
@@ -793,6 +793,7 @@ def run(**kwargs):
 if __name__ == "__main__":
     opt = parse_opt()
     main(opt)
+
 
 
 

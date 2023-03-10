@@ -17,7 +17,6 @@
 #
 import time
 import numpy as np
-from neural_compressor import data
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
@@ -75,7 +74,7 @@ def evaluate(model):
 
     Args:
         model (tf.saved_model.load): The input model will be the class of tf.saved_model.load(quantized_model_path).
-        
+
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
