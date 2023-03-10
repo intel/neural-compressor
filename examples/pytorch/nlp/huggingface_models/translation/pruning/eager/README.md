@@ -20,7 +20,7 @@ See more about loading [huggingface dataset](https://huggingface.co/docs/dataset
 
 ## 3. Prepare Model
 
-The Flan-T5 model could be downloaded from Huggingface. More details of running this Pytorch model could be found at [Model Usage](https://huggingface.co/google/flan-t5-small#usage). 
+The Flan-T5 model could be downloaded from Huggingface. More details of running this Pytorch model could be found at [Model Usage](https://huggingface.co/google/flan-t5-small#usage).  
 
 ```shell
 git lfs install
@@ -29,9 +29,10 @@ git lfs pull
 ```
 
 # Run Examples
-One example of pruning a [Flan-T5-small](scripts/run_translation_prune.sh) model is provided, which is trained on wmt16 English-Romanian task. We are working on providing more pruning examples and sharing our sparse models on HuggingFace.  
+An [example](scripts/run_translation_finetune.sh) of finetuning Flan-T5 is provided to generate a desirable baseline model for pruning jobs.
 
-Fine-tuning of the [dense](scripts/run_translation_finetune.sh) model is also supported by setting --do_prune to False. 
+An example of pruning a [Flan-T5-small](scripts/run_translation_prune.sh) model is provided, which is trained on wmt16 English-Romanian task. We are working on providing more pruning examples and sharing our sparse models on HuggingFace.  
+ 
 
 
 ### Results
