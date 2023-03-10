@@ -20,9 +20,9 @@ See more about loading [huggingface dataset](https://huggingface.co/docs/dataset
 
 
 # Run Examples
-One example of pruning a [Flan-T5-small](run_translation_prune.sh) model is provided, which is trained on wmt16 English-Romanian task. We are working on providing more pruning examples and sharing our sparse models on HuggingFace.  
+One example of pruning a [Flan-T5-small](scripts/run_translation_prune.sh) model is provided, which is trained on wmt16 English-Romanian task. We are working on providing more pruning examples and sharing our sparse models on HuggingFace.  
 
-Fine-tuning of the [dense](run_translation_finetune.sh) model is also supported by setting --do_prune to False. 
+Fine-tuning of the [dense](scripts/run_translation_finetune.sh) model is also supported by setting --do_prune to False. 
 
 
 ### Results
