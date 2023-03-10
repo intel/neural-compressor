@@ -39,6 +39,8 @@ Pruning
 
 
 
+4. [Reference](#reference)
+
 
 ## Introduction
 
@@ -62,11 +64,19 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 - NxM Pruning
 
   NxM pruning means pruning parameters in groups and deleting entire blocks, filters, or channels according to some pruning criterions. Consecutive NxM matrix blocks are used as the minimum unit for weight pruning, thus NxM pruning leads to lower accuracy due to restrictive structure compared to unstructured pruning but it can significantly accelerate the model execution as it fits better with hardware designs.
-  Please note that 1x1 pattern is referred to as unstructured pruning and channelx1 (or 1xchannel) pattern is referred to as channel-wise pruning.
 
 - N:M Pruning
 
   N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used.
+
+- Channel-wise Pruning
+
+  Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.
+
+
+- Unstructured Pruning
+  
+  Unstructured pruning means pruning parameters individually without any constraints. A major drawback that that unstructured pruning presents is that it could not accelerate the computation of sparse matrices. Users could apply unstructured pruning pattern by setting pattern to 1x1.
 
 
 <div align=center>
@@ -269,7 +279,7 @@ The following section exemplifies how to use hooks in user pass-in training func
                 loss.backward()
                 compression_manager.callbacks.on_before_optimizer_step()
                 optimizer.step()
-               compression_manager.callbacks.on_after_optimizer_step()
+                compression_manager.callbacks.on_after_optimizer_step()
                 lr_scheduler.step()
                 model.zero_grad()
         compression_manager.callbacks.on_train_end()
@@ -297,11 +307,17 @@ The pruning technique  is validated on typical models across various domains (in
 
 - Object Detection
 
-  Pruning on YOLOv5 model using coco dataset [Object-etection examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
+  Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
 The API [Pruning V2](../../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
 
 
+## Examples
+|  Example Name | Task<br>Dataset | Dense Metric<br>Sparse Metric | Relative Drop | Sparsity ratio<br>Sparsity Pattern | Comments<br>Balanced or unbalanced ratio |
+|-----|-----|-----|-----|-----|-----|
+|yolov5|
+|resnet|
+|Flan-T5-small| translation<br>wmt16 en-ro | BLEU 25.63<br>BLEU 24.53|-4.95%|80%<br>Structured 4x1|snip_momentum<br>unbalanced|
 
 ## Reference
 
