@@ -30,7 +30,7 @@
                     'dtype': ['int8'],
                     'scheme': ['sym'],
                     'granularity': ['per_tensor'],
-                    'algorithm': ['minmax']
+                    'algorithm': ['minmax', 'kl', 'percentile']
                   },
         'mode': ['QDQ']
       },
@@ -45,7 +45,7 @@
                     'dtype': ['int8'],
                     'scheme': ['sym'],
                     'granularity': ['per_tensor'],
-                    'algorithm': ['minmax']
+                    'algorithm': ['minmax', 'kl', 'percentile']
                   },
         'mode': ['QDQ']
       },
