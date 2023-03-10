@@ -353,6 +353,7 @@ class CallBacks:
         """Be called after the end of epochs."""
         for callbacks in self.callbacks_list:
             callbacks.on_train_end()
+        logger.info("Training finished!")
 
     def on_epoch_begin(self, epoch):
         """Be called on the beginning of epochs."""
