@@ -40,10 +40,33 @@ function run_tuning {
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
+    TASK_NAME='mrpc'
     
     if [ "${topology}" = "bert_large_RTE" ]; then
         TASK_NAME='rte'
     elif [ "${topology}" = "xlm-roberta-base_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "bert_base_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "bert_base_CoLA" ]; then
+        TASK_NAME='cola'
+    elif [ "${topology}" = "bert_base_STS-B" ]; then
+        TASK_NAME='stsb'
+    elif [ "${topology}" = "bert_base_SST-2" ]; then
+        TASK_NAME='sst2'
+    elif [ "${topology}" = "bert_base_RTE" ]; then
+        TASK_NAME='rte'
+    elif [ "${topology}" = "bert_large_QNLI" ]; then
+        TASK_NAME='qnli'
+    elif [ "${topology}" = "bert_large_CoLA" ]; then
+        TASK_NAME='cola'
+    elif [ "${topology}" = "distilbert_base_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "xlnet_base_cased_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "roberta_base_MRPC" ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "camembert_base_MRPC" ]; then
         TASK_NAME='mrpc'
     fi
 

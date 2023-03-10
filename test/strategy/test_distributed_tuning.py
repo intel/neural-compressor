@@ -1,9 +1,28 @@
 """Tests for distributed tuning strategy"""
+import os
+import sys
+import cpuinfo
+import signal
+import shutil
+import subprocess
+import unittest
+import re
 
+from neural_compressor.utils import logger
+import importlib
+if importlib.util.find_spec("mpi4py") is None:
+    CONDITION = True
+else:
+    # from mpi4py import MPI
+    CONDITION = False
+
+def build_fake_ut():
+    fake_ut = """
 import shutil
 import unittest
 import time
 import os
+import sys
 
 import numpy as np
 
@@ -41,7 +60,6 @@ def next_acc_and_perf(acc_perf_data_file_path):
 
 @unittest.skipIf(CONDITION , "missing the mpi4py package")
 class TestDistributedTuning(unittest.TestCase):
-    """Run: mpirun -np 2 python test_distributed_tuning.py TestDistributedTuning.test_pt_stage_1_met"""
     @classmethod
     def setUpClass(self):
         self.comm = MPI.COMM_WORLD
@@ -60,9 +78,8 @@ class TestDistributedTuning(unittest.TestCase):
                 os.remove('test_pt_stage_not_met.json')
             if os.path.exists('test_pt_num_of_nodes_more_than_len_of_tune_cfg_lst_met.json'):
                 os.remove('test_pt_num_of_nodes_more_than_len_of_tune_cfg_lst_met.json')
-    
+
     def test_pt_stage_1_met(self):
-        """Run: mpirun -np 3 python test_distributed_tuning.py TestDistributedTuning.test_pt_stage_1_met"""
         logger.info("*** Test: distributed tuning testing test_pt_stage_1_met start.")
 
         num_processes = 3
@@ -218,7 +235,6 @@ class TestDistributedTuning(unittest.TestCase):
             self.assertIsNone(q_model)  # None of the tuning configs met the requirements!
 
     def test_pt_num_of_nodes_more_than_len_of_tune_cfg_lst_met(self):
-        """Run: mpirun -np 18 python test_distributed_tuning.py TestDistributedTuning.test_pt_num_of_nodes_more_than_len_of_tunecfglst_met"""
         logger.info("*** Test: distributed tuning testing test_pt_num_of_nodes_more_than_len_of_tune_cfg_lst_met start.")
 
         num_processes = 18
@@ -262,6 +278,59 @@ class TestDistributedTuning(unittest.TestCase):
 
     def test_pt_met_wait_before_met(self):
         pass
+
+if __name__ == "__main__":
+    unittest.main()
+    """
+
+    with open('fake_ut.py', 'w', encoding="utf-8") as f:
+        f.write(fake_ut)
+
+class TestDistributedTuning(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        build_fake_ut()
+
+    @classmethod
+    def tearDownClass(cls):
+        os.remove('fake_ut.py')
+        shutil.rmtree('./saved', ignore_errors = True)
+        shutil.rmtree('runs', ignore_errors = True)
+
+    def setUp(self):
+        logger.info(f"CPU: {cpuinfo.get_cpu_info()['brand_raw']}")
+        logger.info(f"Test: {sys.modules[__name__].__file__}-{self.__class__.__name__}-{self._testMethodName}")
+
+    def tearDown(self):
+        logger.info(f"{self._testMethodName} done.\n")
+
+    @unittest.skipIf(CONDITION, "missing the mpi4py package")
+    def test_distributed_tuning(self):
+        distributed_cmds = [
+        'mpirun -np 3 python fake_ut.py TestDistributedTuning.test_pt_stage_1_met', \
+        'mpirun -np 3 python fake_ut.py TestDistributedTuning.test_pt_stage_3_fp32_met', \
+        'mpirun -np 3 python fake_ut.py TestDistributedTuning.test_pt_stage_4_fp32_met', \
+        'mpirun -np 3 python fake_ut.py TestDistributedTuning.test_pt_stage_not_met', \
+        'mpirun -np 18 python fake_ut.py TestDistributedTuning.test_pt_num_of_nodes_more_than_len_of_tune_cfg_lst_met',
+        ]
+        for i, distributed_cmd in enumerate(distributed_cmds):
+            p = subprocess.Popen(distributed_cmd, preexec_fn = os.setsid, stdout = subprocess.PIPE,
+                                stderr = subprocess.PIPE, shell=True) # nosec
+            try:
+                out, error = p.communicate()
+                matches = re.findall(r'FAILED', error.decode('utf-8'))
+                self.assertEqual(matches, [])
+
+                matches = re.findall(r'OK', error.decode('utf-8'))
+                if i == len(distributed_cmds) - 1:
+                    self.assertTrue(len(matches) == 18)
+                else:
+                    self.assertTrue(len(matches) == 3)
+
+            except KeyboardInterrupt:
+                os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+                assert 0
+
 
 if __name__ == "__main__":
     unittest.main()
