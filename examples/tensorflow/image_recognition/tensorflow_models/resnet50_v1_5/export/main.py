@@ -113,16 +113,8 @@ class eval_classifier_optimized_graph:
                     'filter': None
                 }
                 eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
-                op_name_list = {
-                    'resnet_model/dense/MatMul':
-                                {
-                                'activation':  {'dtype': ['fp32']},
-                                'weight': {'dtype': ['fp32']},
-                                }
-                            }
                 conf = PostTrainingQuantConfig(backend='itex', calibration_sampling_size=[50, 100],
-                                            outputs=['softmax_tensor'],
-                                            op_name_list=op_name_list)
+                                            outputs=['softmax_tensor'])
                 from neural_compressor.metric import TensorflowTopK
                 top1 = TensorflowTopK(k=1)
                 q_model = quantization.fit(self.args.input_graph, conf=conf, calib_dataloader=calib_dataloader,

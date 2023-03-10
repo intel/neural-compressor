@@ -67,6 +67,9 @@ int8_onnx_config = Torch2ONNXConfig(
 )
 q_model.export('int8-model.onnx', int8_onnx_config)
 ```
+> **Note**: Two export examples covering computer vision and natural language processing tasks exist in examples. Users can leverage them to verify the accuracy and performance of the exported ONNX model.
+ - [Image recognition](/examples/pytorch/image_recognition/torchvision_models/export/fx/)
+ - [Text classification](/examples/pytorch/nlp/huggingface_models/text-classification/export/fx/)
 
 # Appendix
 
