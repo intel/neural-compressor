@@ -16,7 +16,8 @@
 # limitations under the License.
 """The configuration of the training loop."""
 import copy
-from .compression.callbacks import QuantizationAwareTrainingCallbacks, DistillationCallbacks, PruningCallbacks, model_slim
+from .compression.callbacks import QuantizationAwareTrainingCallbacks, DistillationCallbacks, PruningCallbacks
+from .compression.callbacks import model_slim
 from .model.model import Model
 from .utils import logger
 from neural_compressor import (DistillationConfig, QuantizationAwareTrainingConfig,
