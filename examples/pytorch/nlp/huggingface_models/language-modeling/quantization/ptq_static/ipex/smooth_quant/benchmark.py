@@ -1,22 +1,20 @@
 import os.path
+import time
 
 import transformers
 import torch
 from tqdm import tqdm
 import sys
 import argparse
+import numpy as np
 
 sys.path.insert(0, './')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--int8', action='store_true', default=False, help="eval fp32 model or int8 model")
-parser.add_argument('--sq', action='store_true', default=False, help="whether to use smooth quant")
-# parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
+parser.add_argument('--int8', action='store_true', help="eval fp32 model or int8 model")
 parser.add_argument('--model_name_or_path', type=str, default='bigscience/bloom-560m')
-parser.add_argument('--alpha', type=float, default=0.5)
-parser.add_argument('--log_frequency', type=int, default=100)
 parser.add_argument('--batch_size', type=int, default=16)
-parser.add_argument('--kl', action='store_true', default=False, help="whether to use kl divergence for calibration")
+parser.add_argument('--warmup', type=int, default=5)
 args = parser.parse_args()
 
 from torch.nn.functional import pad
@@ -26,6 +24,7 @@ class Evaluator:
         self.dataset = dataset
         self.tokenizer = tokenizer
         self.device = device
+        self.batch_size = batch_size
         self.dataloader = INCDataloader(dataset, tokenizer, batch_size, device)
 
     @torch.no_grad()
@@ -34,17 +33,27 @@ class Evaluator:
         # The task is to predict the last word of the input.
         total, hit = 0, 0
         index = 1
+        latency_list = []
         for input_ids, label, label_indices in tqdm(self.dataloader):
+            start = time.time()
             outputs = model(input_ids)
+            end = time.time()
+            latency_list.append(end - start)
             last_token_logits = outputs[0][:, label_indices, :]
             pred = last_token_logits.argmax(dim=-1)
             total += label.size(0)
             hit += (pred == label).sum().item()
-            if index % args.log_frequency == 0:
-                print(hit / total)
             index += 1
+            if index==10:
+                break
         acc = hit / total
+        latency = np.array(latency_list[args.warmup:]).mean() / self.batch_size
         print(acc)
+        print("Batch size = {}".format(self.batch_size))
+        print(
+            "Latency: {:.3f} ms".format(latency * 1000))
+        print(
+            "Throughput: {:.3f} images/sec".format(1. / latency))
         return acc
 
 
@@ -122,43 +131,23 @@ eval_dataset = load_dataset('lambada', split='validation')
 
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
-model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
-                                                          torchscript=True  ##FIXME
-                                                          )
-model.eval()
+from neural_compressor.benchmark import fit
+from neural_compressor.config import BenchmarkConfig
 
 if args.int8:
-    calib_dataset = load_dataset('lambada', split='train')
-    calib_dataset = calib_dataset.shuffle(seed=42)
-    calib_dataloader = INCDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
+    print("benchmarking int8 model")
+    from neural_compressor.utils.pytorch import load
 
-
-    def eval_func(model):
-        acc = evaluator.evaluate(model)
-        return acc
-
-
-    from neural_compressor import PostTrainingQuantConfig
-    from neural_compressor import quantization
-
-    recipes = {}
-    if args.sq:
-        recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
-    op_type_dict = None
-    if args.kl:
-        op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
-
-    conf = PostTrainingQuantConfig(backend='ipex', excluded_precisions=["bf16"],
-                                   recipes=recipes,
-                                   op_type_dict=op_type_dict)
-
-    q_model = quantization.fit(model,
-                               conf,
-                               calib_dataloader=calib_dataloader,
-                               eval_func=eval_func)
-    save_model_name = model_name.split("/")[-1]
-    q_model.save(f"{save_model_name}")
-
+    int8_folder = model_name.split('/')[-1]
+    if not os.path.exists(int8_folder):
+        print(f"could not find int8 folder {int8_folder} ")
+        exit()
+    model = load(int8_folder)
 else:
-    acc = evaluator.evaluate(model)
-    print(f'Original model accuracy: {acc}')
+    print("benchmarking fp32 model")
+    model = transformers.AutoModelForCausalLM.from_pretrained(model_name,
+                                                              torchscript=True  ##FIXME
+                                                              )
+    model.eval()
+conf = BenchmarkConfig(backend='ipex')
+fit(model, conf, b_func=evaluator.evaluate)
