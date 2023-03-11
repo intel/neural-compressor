@@ -580,24 +580,6 @@
       "batch_size": 16,
       "main_script": "run_glue.py"
     },
-    "xlnet_base_MRPC(rm)": {
-      "model_src_dir": "eager/huggingface_models",
-      "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/xlnet_base_MRPC",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
-    },
-    "gpt2_MRPC(rm)": {
-      "model_src_dir": "eager/huggingface_models",
-      "dataset_location": "",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/gpt2_MRPC",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
-    },
     "transfo_xl_MRPC": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/eager",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
@@ -611,15 +593,6 @@
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/eager",
       "dataset_location": "/tf_dataset/pytorch/glue_data_new",
       "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/ctrl_mrpc_dynamic",
-      "yaml": "conf.yaml",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": false
-    },
-    "xlm_MRPC(rm)": {
-      "model_src_dir": "eager/huggingface_models",
-      "dataset_location": "/tf_dataset/pytorch/glue_data_new",
-      "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/xlm_mrpc_dynamic",
       "yaml": "conf.yaml",
       "strategy": "basic",
       "batch_size": 1,
