@@ -217,7 +217,7 @@ def save_checkpoint(state, is_best, save_dir):
     filename = save_dir + "checkpoint.pth"
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, save_dir + 'model_best.pth')
+        shutil.copyfile(filename, save_dir + '/model_best.pth')
 
 
 def train(args, model, train_dataloader, scheduler, compression_manager, criterion,
@@ -252,9 +252,9 @@ def train(args, model, train_dataloader, scheduler, compression_manager, criteri
             loss.backward()
 
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                optimizer.zero_grad()
                 optimizer.step()
                 scheduler.step()
+                optimizer.zero_grad()
                 completed_steps += 1
 
             if completed_steps >= args.max_train_steps:
@@ -665,7 +665,7 @@ def main():
         model.eval()
         for step, batch in enumerate(eval_dataloader):
             outputs = model(**batch)
-            predictions = outputs.logits.argmax(dim=-1)
+            predictions = outputs.argmax(dim=-1)
             metric.add_batch(
                 predictions=predictions,
                 references=batch["labels"],
