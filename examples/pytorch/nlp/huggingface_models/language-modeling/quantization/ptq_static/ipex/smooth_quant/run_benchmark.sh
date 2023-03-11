@@ -27,6 +27,7 @@ function init_params {
 
 # run_tuning
 function run_benchmark {
+
   if [ ${int8} == true ]; then
      python benchmark.py \
         --model_name_or_path ${input_model} \
