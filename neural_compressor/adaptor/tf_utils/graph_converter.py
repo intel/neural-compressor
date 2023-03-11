@@ -180,7 +180,7 @@ class GraphConverter:
             sess.run(init_table_op)
 
         logger.info("Start sampling on calibration dataset.")
-        if len(self.data_loader) == 0:
+        if hasattr(self.data_loader, "__len__") and len(self.data_loader) == 0:
             feed_dict = {}
             _ = sess.run(output_tensor, feed_dict) if iter_op==[] \
                 else iterator_sess_run(sess, iter_op, \
