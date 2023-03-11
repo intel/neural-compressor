@@ -1,3 +1,4 @@
+intel-tensorflow
 Cython
 contextlib2
 pillow>=8.2.0
