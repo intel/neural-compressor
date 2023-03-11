@@ -729,32 +729,11 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/object_detection/yolo_v5/pruning/eager">eager</a></td>
   </tr>
   <tr>
-    <td>ResNet18</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>ResNet34</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
     <td>ResNet50</td>
     <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>ResNet101</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
+    <td>Structured (2x1)</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/image_recognition/ResNet50/pruning/eager">eager</a></td>
   </tr>
 </tbody>
 </table>
