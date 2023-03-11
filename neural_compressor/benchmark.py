@@ -203,18 +203,19 @@ class Benchmark(object):
                         latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
                         throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
                         throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
-            assert len(latency_l)==len(throughput_l)==num_of_instance, \
-                "Multiple instance benchmark failed with some instance!"
+            if throughput_l and latency_l:
+                assert len(latency_l)==len(throughput_l)==num_of_instance, \
+                    "Multiple instance benchmark failed with some instance!"
 
-            output_data = [
-                ["Latency average [second/sample]", "{:.3f}".format(sum(latency_l)/len(latency_l))],
-                ["Throughput sum [samples/second]", "{:.3f}".format(sum(throughput_l))]
-            ]
-            logger.info("********************************************")
-            Statistics(
-                output_data, 
-                header='Multiple Instance Benchmark Summary',
-                field_names=["Items", "Result"]).print_stat()
+                output_data = [
+                    ["Latency average [second/sample]", "{:.3f}".format(sum(latency_l)/len(latency_l))],
+                    ["Throughput sum [samples/second]", "{:.3f}".format(sum(throughput_l))]
+                ]
+                logger.info("********************************************")
+                Statistics(
+                    output_data,
+                    header='Multiple Instance Benchmark Summary',
+                    field_names=["Items", "Result"]).print_stat()
         else:
             # (TODO) should add summary after win32 benchmark has log
             pass
