@@ -1224,3 +1224,84 @@ class OnnxGraph:
 
         self.remove_node(dq_node.name)
         self.remove_node(q_node.name)
+
+    def optimize_conv_add_fusion(self, node):
+        """Fuse conv and add."""
+        if node.type != 'Add':
+            return []
+
+        conv_node = self.get_node_by_output(node.input[0])
+        if conv_node.type != 'Conv':
+            return []
+
+        if len(self.find_output_consumers(conv_node.output[0])) > 1:
+            return []
+
+        next_nodes = self.find_output_consumers(node.output[0])
+        for next_node in next_nodes:
+            if next_node.type == 'Add':
+                return []
+
+        if self.is_const(node.input[1]):
+            bias_tensor = self.get_node_by_name(node.input[1]).get_tensor_value(as_list=False)
+            if bias_tensor.ndim > 1:
+                bias_tensor = np.squeeze(bias_tensor)
+                self.get_node_by_name(node.input[1]).set_tensor_value(bias_tensor)
+        else:
+            return []
+
+        input_dequantize_node = self.get_node_by_output(conv_node.input[0])
+        weight_dequantize_node = self.get_node_by_output(conv_node.input[1])
+        input_scale = self.get_node_by_name(
+            input_dequantize_node.input[1]).get_tensor_value(as_list=False)
+        weight_scale = self.get_node_by_name(
+            weight_dequantize_node.input[1]).get_tensor_value(as_list=False)
+        bias_scale_val = input_scale * weight_scale
+        bias_zp_val = np.zeros(bias_scale_val.shape, dtype=np.int32).reshape(-1)
+        quantized_bias = (bias_tensor / bias_scale_val).round().astype(np.int32)
+        bias_scale = self.make_const(name=utils.set_name(node.name+"_scale"),
+                                     np_val=bias_scale_val).output[0]
+        bias_zero_point = self.make_const(utils.set_name(node.name+"_zero_point"),
+                                     bias_zp_val).output[0]
+        bias_input = self.make_const(name=utils.set_name(node.name+"_x"),
+                                     np_val=quantized_bias).output[0]
+
+        dequant_bias_node = self.make_node(op_type="DequantizeLinear",
+                                   inputs=[bias_input, bias_scale, bias_zero_point],
+                                   outputs=[conv_node.name],
+                                   shapes=[bias_scale_val.shape],
+                                   attr=weight_dequantize_node.attr,
+                                   dtypes=[TensorProto.INT32],
+                                   name=utils.set_name("DequantLinearNode"))
+
+        # Backup the conv and biasadd values
+        conv_type = conv_node.type
+        conv_input = conv_node.input
+        conv_attr = conv_node.attr
+        dtype = self.get_dtype(conv_node.output[0])
+        shape = self.get_shape(conv_node.output[0])
+        conv_name = conv_node.name
+        conv_output = node.output
+        if len(conv_input) == 3:
+            conv_inputs = [conv_input[0], conv_input[1], conv_input[2], dequant_bias_node.output[0]]
+        else:
+            conv_inputs = [conv_input[0], conv_input[1], dequant_bias_node.output[0]]
+
+        # Remove the Conv and Add node
+        self.remove_node(conv_node.name)
+        self.remove_node(node.name)
+
+        self.make_node(conv_type, conv_inputs, attr=conv_attr, name=conv_name, outputs=conv_output,
+                    shapes=[shape], dtypes=[dtype], skip_conversion=False)
+        return []
+
+    def apply_onnx_fusion(self):
+        """Optimize graph with fusion."""
+        graph_changed = True
+        while graph_changed:
+            graph_changed = False
+            nodes = self.get_nodes()
+            for node in nodes:
+                if node.type == "Add" and self.optimize_conv_add_fusion(node):
+                    graph_changed = True
+        return self
