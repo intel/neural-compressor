@@ -23,21 +23,21 @@
      "main_script": "main.py",
      "batch_size": 100
     },
-    "efficientnet_b0_fx": {
+    "efficientnet_b0": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b0",
       "main_script": "main.py",
       "batch_size": 100
     },
-    "efficientnet_b3_fx": {
+    "efficientnet_b3": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b3",
       "main_script": "main.py",
       "batch_size": 100
     },
-    "efficientnet_b7_fx": {
+    "efficientnet_b7": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "efficientnet_b7",
@@ -575,7 +575,7 @@
     },
     "xlm-roberta-base_MRPC_dynamic": {
       "model_src_dir": "nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx",
-      "dataset_location": "/tf_dataset/pytorch/glue_data_new",
+      "dataset_location": "",
       "input_model": "/tf_dataset/pytorch/huggingface/language_translation_pt/xlm_roberta_MRPC",
       "batch_size": 16,
       "main_script": "run_glue.py"
