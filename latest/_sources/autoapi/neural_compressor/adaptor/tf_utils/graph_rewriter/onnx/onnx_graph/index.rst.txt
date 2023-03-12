@@ -331,4 +331,14 @@ Classes
       Delete tensorflow QuantizeV2/Dequantize in the onnx graph.
 
 
+   .. py:method:: optimize_conv_add_fusion(node)
+
+      Fuse conv and add.
+
+
+   .. py:method:: apply_onnx_fusion()
+
+      Optimize graph with fusion.
+
+
 
