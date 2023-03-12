@@ -308,7 +308,8 @@ class eval_classifier_optimized_graph:
             q_model.save(self.args.output_graph)
         else:
             if self.args.accuracy:
-                evaluation_func(self.args.input_graph)
+                infer_graph = load_graph(self.args.input_graph)
+                evaluation_func(infer_graph)
             if self.args.performance:
                 from neural_compressor.benchmark import fit
                 from neural_compressor.config import BenchmarkConfig
