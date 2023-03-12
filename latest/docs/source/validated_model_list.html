@@ -1998,47 +1998,206 @@
   <tr>
   </tr>
 </thead>
-<tbody>
+<tbody>  
   <tr>
-    <td>ResNet18</td>
-    <td>image classification</br>ImageNet</td>
-    <td>top-1% acc = 69.76</br>top-1% acc = 69.47</td>
-    <td>-0.42%</td>    
-    <td>30%</td>
-    <td>magnitude</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>ResNet50</td>
-    <td>image classification</br>ImageNet</td>
-    <td>top-1% acc = 76.13</br>top-1% acc = 76.11</td>
-    <td>-0.03%</td>    
-    <td>30%</td>
-    <td>magnitude</td>
-  </tr> 
-  <tr>
-  </tr>
-  <tr>
-    <td>ResNet50</td>
-    <td>image classification</br>ImageNet</td>
-    <td>top-1% acc = 76.13</br>top-1% acc = 76.01</td>
-    <td>-0.16%</td>    
-    <td>30%</td>
-    <td>magnitude</br>Post Training Quantization</td>    
+    <td>Bert-Mini</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=76.87</br>f1=76.2</td>
+    <td>-0.80%</td>
+    <td>80%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>
   </tr>
   <tr>
   </tr>  
   <tr>
-    <td>ResNet50</td>
-    <td>image classification</br>ImageNet</td>
-    <td>top-1% acc = 76.13</br>top-1% acc = 75.90</td>
-    <td>-0.30%</td> 
-    <td>30%</td>
-    <td>magnitude</br>Quantization Aware Training</td>   
-  </tr> 
+    <td>Bert-Mini</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=76.87</br>f1=76.2</td>
+    <td>-0.80%</td>
+    <td>80%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
   <tr>
-  </tr>     
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=76.87</br>f1=77.62</td>
+    <td>+0.98%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Distilbert-base-uncased</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=86.90</br>f1=86.15</td>
+    <td>-0.86%</td>
+    <td>80%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Distilbert-base-uncased</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=86.90</br>f1=87.50</td>
+    <td>+0.69%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-base-uncased</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=88.59</br>f1=87.78</td>
+    <td>-0.92%</td>
+    <td>80%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-base-uncased</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=88.59</br>f1=89.40</td>
+    <td>+0.91%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-large</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=91.23</br>f1=90.91</td>
+    <td>-0.35%</td>
+    <td>80%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-large</td>
+    <td>question answering</br>SQuAD-v1.1</td>
+    <td>f1=91.23</br>f1=91.67</td>
+    <td>+0.48%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=87.22</td>
+    <td>-0.34%</td>
+    <td>90%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=87.33</td>
+    <td>-0.22%</td>
+    <td>90%</br>structured 4x1</td>
+    <td>snip momentum</br>balanced</td>  
+  </tr>
+  <tr>
+  </tr>  
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=86.89</td>
+    <td>-0.72%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=87.52</br>f1=86.8</td>
+    <td>-0.83%</td>
+    <td>60%</br>structured per channel</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Distilbert-base-uncased</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=90.26</br>f1=89.85</td>
+    <td>-0.46%</td>
+    <td>90%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>  
+  </tr>
+  <tr>
+  </tr>  
+  <tr>
+    <td>Distilbert-base-uncased</td>
+    <td>text classification</br>MRPC</td>
+    <td>f1=90.26</br>f1=90.88</td>
+    <td>+0.69%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy=87.61</br>accuracy=86.92</td>
+    <td>-0.79%</td>
+    <td>90%</br>structured 4x1</td>
+    <td>snip momentum</br>unbalanced</td>  
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy=87.61</br>accuracy=87.73</td>
+    <td>+0.14%</td>
+    <td>50%</br>structured 2:4</td>
+    <td>snip momentum</br>balanced</td>
+  </tr>
+  <tr>
+  </tr>  
+  <tr>
+    <td>Bert-Mini</td>
+    <td>text classification</br>SST-2</td>
+    <td>accuracy=87.61</br>accuracy=86.92</td>
+    <td>-0.79%</td>
+    <td>50%</br>structured per channel</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
+  <tr>
+    <td>ResNet50</td>
+    <td>image recognition</br>ImageNet</td>
+    <td>top1 acc = 78.95</br>top1 acc = 80.10</td>
+    <td>-1.43%</td>
+    <td>75%</br>structured 2x1</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  <tr>
+    <td>YOLO-v5s6</td>
+    <td>object detection</br>COCO</td>
+    <td>AP0.50:0.95/AP0.50=0.404/0.6</br>AP0.50:0.95/AP0.50=0.393/0.584</td>
+    <td>-2.72%</td>
+    <td>80%</br>unstructured</td>
+    <td>snip momentum</br>unbalanced</td>
+  </tr>
+  <tr>
+  </tr>
   <tr>
     <td>Bert-Large</td>
     <td>question answering</br>SQuAD-v1.1</td>
@@ -2157,177 +2316,7 @@
     <td>Prune once for all</br>balanced</td>       
   </tr>  
   <tr>
-  </tr>     
-  <tr>
-    <td>Bert-Mini</td>
-    <td>question answering</br>SQuAD-v1.1</td>
-    <td>f1]=76.87</br>f1=76.2</td>
-    <td>-0.80%</td>
-    <td>80%</br>structured 4x1</td>
-    <td>snip momentum</br>unbalanced</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Bert-Mini</td>
-    <td>question answering</br>SQuAD-v1.1</td>
-    <td>f1=76.87</br>f1=77.62</td>
-    <td>+0.98%</td>
-    <td>50%</br>structured 2:4</td>
-    <td>snip momentum</br>balanced</td>  
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Distilbert-base-uncased</td>
-    <td>question answering</br>SQuAD-v1.1</td>
-    <td>f1]=86.90</br>f1=86.15</td>
-    <td>-0.86%</td>
-    <td>80%</br>structured 4x1</td>
-    <td>snip momentum</br>unbalanced</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Distilbert-base-uncased</td>
-    <td>question answering</br>SQuAD-v1.1</td>
-    <td>f1=86.90</br>f1=87.50</td>
-    <td>+0.69%</td>
-    <td>50%</br>structured 2:4</td>
-    <td>snip momentum</br>balanced</td>  
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Bert-base-uncased</td>
-    <td>question answering</br>SQuAD-v1.1</td>
-    <td>f1]=88.59</br>f1=87.78</td>
-    <td>-0.92%</td>
-    <td>80%</br>structured 4x1</td>
-    <td>snip momentum</br>unbalanced</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Bert-base-uncased</td>
-    <td>question answering</br>SQuAD-v1.1</td>
-    <td>f1=88.59</br>f1=89.40</td>
-    <td>+0.91%</td>
-    <td>50%</br>structured 2:4</td>
-    <td>snip momentum</br>balanced</td>  
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Bert-large</td>
-    <td>question answering</br>SQuAD-v1.1</td>
-    <td>f1]=91.23</br>f1=90.91</td>
-    <td>-0.35%</td>
-    <td>80%</br>structured 4x1</td>
-    <td>snip momentum</br>unbalanced</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Bert-large</td>
-    <td>question answering</br>SQuAD-v1.1</td>
-    <td>f1=91.23</br>f1=91.67</td>
-    <td>+0.48%</td>
-    <td>50%</br>structured 2:4</td>
-    <td>snip momentum</br>balanced</td>  
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Bert-Mini</td>
-    <td>text classification</br>MRPC</td>
-    <td>f1=87.52</br>f1=87.22</td>
-    <td>-0.34%</td>
-    <td>90%</br>structured 4x1</td>
-    <td>snip momentum</br>unbalanced</td>  
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Bert-Mini</td>
-    <td>text classification</br>MRPC</td>
-    <td>f1=87.52</br>f1=87.33</td>
-    <td>-0.22%</td>
-    <td>90%</br>structured 4x1</td>
-    <td>snip momentum</br>balanced</td>  
-  </tr>
-  <tr>
   </tr>  
-  <tr>
-    <td>Bert-Mini</td>
-    <td>text classification</br>MRPC</td>
-    <td>f1=87.52</br>f1=86.89</td>
-    <td>-0.72%</td>
-    <td>50%</br>structured 2:4</td>
-    <td>snip momentum</br>balanced</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Bert-Mini</td>
-    <td>text classification</br>MRPC</td>
-    <td>f1=87.52</br>f1=86.8</td>
-    <td>-0.83%</td>
-    <td>60%</br>structured per channel</td>
-    <td>snip momentum</br>unbalanced</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Distilbert-base-uncased</td>
-    <td>text classification</br>MRPC</td>
-    <td>f1=90.26</br>f1=89.85</td>
-    <td>-0.46%</td>
-    <td>90%</br>structured 4x1</td>
-    <td>snip momentum</br>unbalanced</td>  
-  </tr>
-  <tr>
-  </tr>  
-  <tr>
-    <td>Distilbert-base-uncased</td>
-    <td>text classification</br>MRPC</td>
-    <td>f1=90.26</br>f1=90.88</td>
-    <td>+0.69%</td>
-    <td>50%</br>structured 2:4</td>
-    <td>snip momentum</br>balanced</td>
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Bert-Mini</td>
-    <td>text classification</br>SST-2</td>
-    <td>accuracy=87.61</br>accuracy=86.92</td>
-    <td>-0.79%</td>
-    <td>90%</br>structured 4x1</td>
-    <td>snip momentum</br>unbalanced</td>  
-  </tr>
-  <tr>
-  </tr>
-  <tr>
-    <td>Bert-Mini</td>
-    <td>text classification</br>SST-2</td>
-    <td>accuracy=87.61</br>accuracy=87.73</td>
-    <td>+0.14%</td>
-    <td>50%</br>structured 2:4</td>
-    <td>snip momentum</br>balanced</td>
-  </tr>
-  <tr>
-  </tr>  
-  <tr>
-    <td>Bert-Mini</td>
-    <td>text classification</br>SST-2</td>
-    <td>accuracy=87.61</br>accuracy=86.92</td>
-    <td>-0.79%</td>
-    <td>50%</br>structured per channel</td>
-    <td>snip momentum</br>unbalanced</td>
-  </tr>
-  <tr>
-  </tr> 
 </tbody>
 </table></section>
 <section id="validated-knowledge-distillation-examples">
