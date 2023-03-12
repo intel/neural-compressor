@@ -345,14 +345,15 @@ class CallBacks:
         self.callbacks_list = callbacks_list
 
     def on_train_begin(self, dataloader=None):
-        """Be called before the beginning of epochs."""
+        """Be called before the beginning of training."""
         for callbacks in self.callbacks_list:
             callbacks.on_train_begin(dataloader)
 
     def on_train_end(self):
-        """Be called after the end of epochs."""
+        """Be called after the end of training."""
         for callbacks in self.callbacks_list:
             callbacks.on_train_end()
+        logger.info("Training finished!")
 
     def on_epoch_begin(self, epoch):
         """Be called on the beginning of epochs."""

@@ -76,7 +76,6 @@ elif [ "${mode}" == "tuning" ]; then
         --model=${model} \
         --tuning_cmd="${tuning_cmd}" \
         --log_dir="${log_dir}/${model}" \
-        --input_model=${input_model} \
         --strategy=${strategy} \
         2>&1 | tee -a ${log_dir}/${model}/${framework}-${model}-tune.log
     $BOLD_YELLOW && echo "====== check tuning status. ======" && $RESET
