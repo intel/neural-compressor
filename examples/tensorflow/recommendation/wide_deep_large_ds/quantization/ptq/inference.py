@@ -148,15 +148,15 @@ class eval_classifier_optimized_graph:
                                 required=False,
                                 default=None,
                                 dest='kmp_blocktime')
-        arg_parser.add_argument('-r', "--accuracy_only",
+        arg_parser.add_argument('-r', "--accuracy",
                                 help='For accuracy measurement only.',
-                                dest='accuracy_only', action='store_true')
+                                dest='accuracy', action='store_true')
         arg_parser.add_argument("--config", default=None,
                                 help="tuning config")
-        arg_parser.add_argument('--benchmark',
-                                dest='benchmark',
+        arg_parser.add_argument('--performance',
+                                dest='performance',
                                 action='store_true',
-                                help='run benchmark')
+                                help='run performance')
         arg_parser.add_argument('--tune',
                                 dest='tune',
                                 action='store_true',
@@ -244,7 +244,7 @@ class eval_classifier_optimized_graph:
                     features=batch[0:3]
                     features_list.append(features)
 
-        if (not self.args.accuracy_only):
+        if not self.args.accuracy:
             iteration = 0
             warm_up_iteration = self.args.warmup_steps
             total_run = self.args.steps
@@ -293,11 +293,11 @@ class eval_classifier_optimized_graph:
         print('Batch size = %d' % self.args.batch_size)
         print('Latency: %.3f ms' % latency)
         print('Throughput: %.3f records/sec' % throughput)
-        if self.args.accuracy_only:
+        if self.args.accuracy:
             print("Accuracy: %.5f" % accuracy)
         print('--------------------------------------------------')
 
-        if self.args.accuracy_only:
+        if self.args.accuracy:
             return accuracy
 
     def run(self):
@@ -307,13 +307,16 @@ class eval_classifier_optimized_graph:
             q_model = evaluate_opt_graph.auto_tune()
             q_model.save(self.args.output_graph)
 
-        if self.args.benchmark:
+        if self.args.accuracy:
+            evaluation_func(self.args.input_graph)
+        if self.args.performance:
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
             conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
             fit(self.args.input_graph, conf,
                 b_dataloader=Dataloader(self.args.eval_data, self.args.batch_size),
                 b_func=evaluation_func)
+
 
 class Dataloader(object):
     def __init__(self, data_location, batch_size):
