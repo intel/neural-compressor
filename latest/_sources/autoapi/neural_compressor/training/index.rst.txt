@@ -192,12 +192,12 @@ Functions
 
    .. py:method:: on_train_begin(dataloader=None)
 
-      Be called before the beginning of epochs.
+      Be called before the beginning of training.
 
 
    .. py:method:: on_train_end()
 
-      Be called after the end of epochs.
+      Be called after the end of training.
 
 
    .. py:method:: on_epoch_begin(epoch)
