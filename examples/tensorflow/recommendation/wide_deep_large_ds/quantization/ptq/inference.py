@@ -244,7 +244,7 @@ class eval_classifier_optimized_graph:
                     features=batch[0:3]
                     features_list.append(features)
 
-        if not self.args.accuracy:
+        if self.args.performance:
             iteration = 0
             warm_up_iteration = self.args.warmup_steps
             total_run = self.args.steps
@@ -306,16 +306,16 @@ class eval_classifier_optimized_graph:
         if self.args.tune:
             q_model = evaluate_opt_graph.auto_tune()
             q_model.save(self.args.output_graph)
-
-        if self.args.accuracy:
-            evaluation_func(self.args.input_graph)
-        if self.args.performance:
-            from neural_compressor.benchmark import fit
-            from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
-            fit(self.args.input_graph, conf,
-                b_dataloader=Dataloader(self.args.eval_data, self.args.batch_size),
-                b_func=evaluation_func)
+        else:
+            if self.args.accuracy:
+                evaluation_func(self.args.input_graph)
+            if self.args.performance:
+                from neural_compressor.benchmark import fit
+                from neural_compressor.config import BenchmarkConfig
+                conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
+                fit(self.args.input_graph, conf,
+                    b_dataloader=Dataloader(self.args.eval_data, self.args.batch_size),
+                    b_func=evaluation_func)
 
 
 class Dataloader(object):
