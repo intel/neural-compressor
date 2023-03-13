@@ -16,3 +16,4 @@
 # limitations under the License.
 
 from .callbacks import QuantizationAwareTrainingCallbacks, DistillationCallbacks, PruningCallbacks
+from .callbacks import model_slim

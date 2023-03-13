@@ -889,7 +889,7 @@ def main():
     logger.info(f"Average inference time: {avg_latency} ms")
 
     #-----------------Following codes execute post-training compression---------------------------#
-    from neural_compressor.training import model_slim
+    from neural_compressor.compression import model_slim
     model = model_slim(model)
     #---------------------------------------------------------------------------------------------#
 
