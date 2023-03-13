@@ -11,6 +11,14 @@ Pruning
 
     1.4. [Pruning Schedule](#pruning-schedule)
 
+    1.5. [Pruning Types](#pruning-types)
+
+    1.6. [Pruning Scope](#pruning-scope)
+
+    1.7. [Sparsity Decay Types](#sparsity-decay-type)
+
+    1.7. [Regularization](#regularization)
+
 2. [Pruning Support Matrix](#pruning-support-matrix)
 
 3. [Get Started With Pruning API](#get-started-with-pruning-api)
