@@ -63,9 +63,17 @@ def function2(param1: str, param2: float) -> bool:
 
         Style 3::
 
-            a = 1
-            b = 2
-            c = a + b
+            from neural_compressor.config import MixedPrecisionConfig
+            def eval_func(model):
+                ...
+                return accuracy
+
+            conf = MixedPrecisionConfig()
+            output_model = mix_precision.fit(
+                model,
+                conf,
+                eval_func=eval_func,
+            )
 
     Returns:
         The return value. True|False.
