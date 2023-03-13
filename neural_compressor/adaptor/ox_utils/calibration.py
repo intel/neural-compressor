@@ -381,7 +381,7 @@ class ONNXRTAugment:
         return self._map_calibration(node_output_names, output_dicts,
                                      calib_mode=calib_mode)
 
-    def dump_calibration(self, q_config, calib_mode='naive'):
+    def dump_calibration(self, q_config, calib_mode='naive', min_max=None):
         """Gather calibration params for quantization.
 
         Args:
@@ -389,10 +389,12 @@ class ONNXRTAugment:
             calib_mode (str, optional): type 'naive' gives (Min, Max) pairs
                                         for each intermediate model output across
                                         test data sets, where the first element is
-                                        a minimum of all values and the second element 
+                                        a minimum of all values and the second element
                                         is a maximum of all values. Defaults to 'naive'.
+            min_max (dict, optional): min/max values of tensors
         """
-        return self.calculate_quantization_params(q_config, self.dump_minmax(calib_mode))
+        return self.calculate_quantization_params(q_config, self.dump_minmax(calib_mode)) if min_max is None \
+            else self.calculate_quantization_params(q_config, min_max)
 
     def calculate_quantization_params(self, q_config, quantization_thresholds):
         """Given quantization thresholds, calculate the quantization params.
@@ -509,11 +511,11 @@ class ONNXRTAugment:
                 if rmin < numpy_helper.to_array(
                         self.model_wrapper.get_initializer(next_node.input[1])):
                     rmin = numpy_helper.to_array(
-                        self.model_wrapper.get_initializer(next_node.input[1]))
+                        self.model_wrapper.get_initializer(next_node.input[1]))[0]
                 if rmax > numpy_helper.to_array(
                         self.model_wrapper.get_initializer(next_node.input[2])):
                     rmax = numpy_helper.to_array(
-                        self.model_wrapper.get_initializer(next_node.input[2]))
+                        self.model_wrapper.get_initializer(next_node.input[2]))[0]
 
         if last_node:
             if last_node.op_type in ['Conv', 'FusedConv']:

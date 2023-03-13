@@ -247,37 +247,42 @@ def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
 
 def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
     """Calculate scale and zero point."""
-    if scheme == 'sym':
-        if isinstance(rmax, np.ndarray):
+    if isinstance(rmax, np.ndarray):
+        if scheme == 'sym':
             max_range = np.maximum(abs(rmin), abs(rmax))
             scale = np.ones(rmax.shape, dtype='float32')
             scale[max_range > 0] = \
                 np.array([float(i) / quantize_range for i in (max_range * 2.).flatten().tolist()], dtype='float32')
         else:
-            max_range = max(abs(rmin), abs(rmax))
-            scale = (max_range * 2.) / quantize_range if max_range > 0 else 1
-    else:
-        if isinstance(rmax, np.ndarray):
             scale = np.ones(rmax.shape, dtype='float32')
             scale[rmin != rmax] = \
                 np.array([float(i) / quantize_range for i in (rmax - rmin).flatten().tolist()], dtype='float32')
-        else:
-            scale = (rmax - rmin) / float(quantize_range) if rmin != rmax else 1
 
-    if scheme == 'sym' and qType == onnx_proto.TensorProto.INT8:
-        zero_point = np.zeros(scale.shape, dtype='int8') if isinstance(scale, np.ndarray) else 0
-    elif isinstance(scale, np.ndarray) and (scale == 1).all():
-        zero_point = np.zeros(scale.shape, dtype='int8') if qType == onnx_proto.TensorProto.INT8 \
-            else  np.zeros(scale.shape, dtype='uint8')
-    elif scale == 1:
-        zero_point = 0
-    elif qType == onnx_proto.TensorProto.UINT8:
-        zero_point = np.uint8(max(0, min(255, round((0 - rmin) / float(scale))))) if \
-            not isinstance(rmin, np.ndarray) else \
-            np.maximum(0, np.minimum(255, ((0 - float(rmin)) / scale).round()).round()).astype('uint8')
+        if scheme == 'sym' and qType == onnx_proto.TensorProto.INT8:
+            zero_point = np.zeros(scale.shape, dtype='int8') if isinstance(scale, np.ndarray) else 0
+        elif isinstance(scale, np.ndarray) and (scale == 1).all():
+            zero_point = np.zeros(scale.shape, dtype='int8') if qType == onnx_proto.TensorProto.INT8 \
+                else  np.zeros(scale.shape, dtype='uint8')
+        elif qType == onnx_proto.TensorProto.UINT8:
+            zero_point = np.maximum(0, np.minimum(255, ((0 - float(rmin)) / scale).round()).round()).astype('uint8')
+        else:
+            zero_point = ((-64 - rmin) / float(scale) if quantize_range == 128 else (-127 - rmin) / float(scale)).round()
+
     else:
-        zero_point = (-64 - rmin) / float(scale) if quantize_range == 128 else (-127 - rmin) / float(scale)
-        zero_point = round(zero_point) if not isinstance(zero_point, np.ndarray) else zero_point.round()
+        if scheme == 'sym':
+            max_range = max(abs(rmin), abs(rmax))
+            scale = (float(max_range) * 2) / quantize_range if max_range > 0 else 1
+        else:
+            scale = (float(rmax) - float(rmin)) / quantize_range if rmin != rmax else 1
+
+        if scale == 1 or (scheme == 'sym' and qType == onnx_proto.TensorProto.INT8):
+            zero_point = 0
+        elif qType == onnx_proto.TensorProto.UINT8:
+            zero_point = round((0 - float(rmin)) / scale)
+            zero_point = np.uint8(round(max(0, min(255, zero_point))))
+        else:
+            zero_point = round((-64 - float(rmin)) / scale) if quantize_range == 128 \
+                else round((-127 - float(rmin)) / scale)
     return scale, zero_point
 
 def quantize_data(data, quantize_range, qType, scheme):
