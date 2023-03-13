@@ -155,7 +155,7 @@ Pruning type defines how the masks are generated and applied to a neural network
 
   <div align = "center", style = "width: 77%; margin-bottom: 2%;">
       <a target="_blank" href="../../../docs/source/imgs/pruning/progressive_pruning.png">
-          <img src="../../../docs/source/imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=290>
+          <img src="../../../docs/source/imgs/pruning/progressive_pruning.png" alt="Architecture" width=700 height=250>
       </a>
   </div>
   &emsp;&emsp;(a) refers to the traditional structured iterative pruning;  <Br/>

@@ -22,18 +22,22 @@ Pruning
 ### Neural Network Pruning
 Neural network pruning (briefly known as pruning or sparsity) is one of the most promising model compression techniques. It removes the least important parameters in the network and achieves compact architectures with minimal accuracy drop and maximal inference acceleration. As current state-of-the-art models have increasingly more parameters, pruning plays a crucial role in enabling them to run on devices whose memory footprints and computing resources are limited. 
 
+<div align=center>
 <a target="_blank" href="./imgs/pruning/pruning_intro.png">
     <img src="./imgs/pruning/pruning_intro.png" width=400 height=250 alt="pruning intro">
 </a>
+</div>
 
 
 ### Pruning Patterns
 
 Pruning patterns defines the rules of pruned weights' arrangements in space.
 
+<div align=center>
 <a target="_blank" href="./imgs/pruning/pruning_patterns.jpg">
     <img src="imgs/pruning/pruning_patterns.jpg" width=600 height=150 alt="Sparsity Pattern">
 </a>
+</div>
 
 
 - Unstructured Pruning
@@ -56,9 +60,19 @@ Pruning patterns defines the rules of pruned weights' arrangements in space.
 
   Here is a figure showing a matrix with ```IC``` = 32 and ```OC``` = 16 dimension, and a block-wise sparsity pattern with block size 4 on ```OC``` dimension.
 
+<div align=center>
 <a target="_blank" href="./imgs/pruning/sparse_dim.png">
     <img src="./imgs/pruning/sparse_dim.png" width=600 height=320 alt="block sparsity Pattern">
 </a>
+</div>
+
+- Channel-wise Pruning (Model Auto Slim)
+
+  Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.
+  
+  An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
+  
+  We name this process as **Model Auto Slim** and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Please refer more details of such method in this [model slim example](../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
 
 ### Pruning Criteria
 
@@ -247,6 +261,37 @@ The following section exemplifies how to use hooks in user pass-in training func
 ## Examples
 
 We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). [Validated pruning examples](./validated_model_list.md#validated-pruning-examples) shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. 
+
+Figure below shows our pruning results (pruned model's accuracy and sparsity as well as sparse patterns.)
+
+<div align = "center", style = "width: 77%; margin-bottom: 2%;">
+  <a target="_blank" href="./imgs/pruning/pruning_scatter.png">
+    <img src="./docs/source/imgs/pruning/pruning_scatter.jpg" alt="Architecture" width=685 height=300>
+  </a>
+</div>
+
+"Experimental" annotation means these examples codes are ready but pruning results are under improvements. Please don't hesitate to try these codes with different configurations to get better pruning results! 
+
+- Text Classification
+
+  Sparsity is implemented in different pruning patterns of MRPC and SST-2 tasks [Text-classification examples](../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
+
+- Question Answering
+
+  Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
+
+- Language Translation (Experimental)
+
+  Pruning Flan-T5-small model on English-Romanian translation task [Translation examples](../../examples/pytorch/nlp/huggingface_models/translation/pruning/eager).
+
+- Object Detection (Experimental)
+
+  Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../examples/pytorch/object_detection/yolo_v5/pruning/eager).
+
+- Image Recognition (Experimental)
+
+  Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
+  
 
 Please refer to pruning examples([TensorFlow](../../examples/README.md#Pruning), [PyTorch](../../examples/README.md#Pruning-1)) for more information.
 
