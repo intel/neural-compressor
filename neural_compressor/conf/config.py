@@ -802,6 +802,7 @@ schema = Schema({
                                                       'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
+                                      'quant_level': "auto",
                                       }): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
@@ -895,9 +896,9 @@ schema = Schema({
         Optional('op_wise', default=None): {
             str: ops_schema
         },
+        Optional('quant_level', default="auto"): And(Or(str, int), lambda level: level in ["auto", 0, 1]),
     },
     Optional('use_bf16', default=True): bool,
-    Optional('quant_level', default="auto"): And(Or(str, int), lambda level: level in ["auto", 0, 1]),
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
@@ -1172,9 +1173,9 @@ quantization_default_schema = Schema({
                                                       'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
+                                      'quant_level': "auto",
                                     }): dict,
     Optional('use_bf16', default=False): bool,
-    Optional('quant_level', default="auto"): Or(str, int),
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},

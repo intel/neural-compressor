@@ -83,13 +83,11 @@ class PostTrainingQuant:
 
         strategy = cfg.tuning.strategy.name.lower()
         
-        if cfg.quant_level == "auto" or cfg.quantization.quant_level == "auto":
+        if cfg.quantization.quant_level == "auto":
             strategy = "auto"
-            logger.info(f"Start auto tuning.")
             
-        if cfg.quantization.quant_level == 0:
+        elif cfg.quantization.quant_level == 0:
             strategy = "conservative"
-            logger.info(f"On the premise that the accuracy meets the conditions, improve the performance.")
 
         if strategy == "mse_v2":
             if not (cfg.model.framework.startswith("tensorflow") or cfg.model.framework == 'pytorch_fx'):
@@ -97,7 +95,8 @@ class PostTrainingQuant:
                 logger.warning(f"MSE_v2 does not support {cfg.model.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
-
+        
+        logger.info(f"Start {strategy} tuning.")
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
         # whole auto tune process.
