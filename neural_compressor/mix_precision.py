@@ -35,17 +35,17 @@ class MixedPrecision:
     frameworks including tensorflow, pytorch and onnxruntime.
 
     Example:
-        from neural_compressor.config import MixedPrecisionConfig
-        def eval_func(model):
-            ...
-            return accuracy
-
-        conf = MixedPrecisionConfig()
-        output_model = mix_precision.fit(
-            model,
-            conf,
-            eval_func=eval_func,
-        )
+        >>> from neural_compressor.config import MixedPrecisionConfig
+        ... def eval_func(model):
+        ...     ...
+        ... return accuracy
+        ...
+        ... conf = MixedPrecisionConfig()
+        ... output_model = mix_precision.fit(
+        ...     model,
+        ...     conf,
+        ...     eval_func=eval_func,
+        ... )
     """
     def __init__(self, conf=None):
         """Initialize `MixedPrecision` class.
@@ -363,11 +363,12 @@ def fit(model,
         AssertionError.
 
     Example:
-        from neural_compressor import mix_precision
-        from neural_compressor.config import MixedPrecisionConfig
 
-        conf = MixedPrecisionConfig()
-        converted_model = mix_precision.fit(model, config=conf)
+        >>> from neural_compressor import mix_precision
+        ... from neural_compressor.config import MixedPrecisionConfig
+        ...
+        ... conf = MixedPrecisionConfig()
+        ... converted_model = mix_precision.fit(model, config=conf)
     """
     converter = MixedPrecision(config)
     precisions = ["bf16", "fp16", "fp32"]

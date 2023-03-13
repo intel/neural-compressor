@@ -11,3 +11,4 @@ The user facing APIs information is available:
    neural_compressor.objective
    neural_compressor.training
    neural_compressor.config
+   neural_compressor.api_doc_example
