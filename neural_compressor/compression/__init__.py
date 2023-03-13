@@ -16,4 +16,4 @@
 # limitations under the License.
 
 from .callbacks import QuantizationAwareTrainingCallbacks, DistillationCallbacks, PruningCallbacks
-from .pruner.pruning import PruningWrapper, PurningUnWrapper
+from .pruner.pruning import PruningWrapper, PruningUnWrapper

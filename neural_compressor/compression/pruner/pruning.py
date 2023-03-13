@@ -96,7 +96,7 @@ def PruningWrapper(config, model: torch.nn.Module, opt: torch.optim):
     return model, opt
 
 
-def PurningUnWrapper(model: torch.nn.Module, opt: torch.optim):
+def PruningUnWrapper(model: torch.nn.Module, opt: torch.optim):
     """
     :param model: the modified model
     :param opt: the modified optimizer

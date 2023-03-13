@@ -9,7 +9,7 @@ sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
-from neural_compressor.compression import PruningWrapper, PurningUnWrapper
+from neural_compressor.compression import PruningWrapper, PruningUnWrapper
 
 
 class TestPruning(unittest.TestCase):
@@ -57,7 +57,7 @@ class TestPruning(unittest.TestCase):
                 optimizer.step()
                 local_step += 1
 
-        model, optimizer = PurningUnWrapper(self.model, optimizer)
+        model, optimizer = PruningUnWrapper(self.model, optimizer)
 
 
 if __name__ == "__main__":

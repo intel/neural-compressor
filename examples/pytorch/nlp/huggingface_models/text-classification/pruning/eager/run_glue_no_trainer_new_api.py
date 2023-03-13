@@ -522,7 +522,7 @@ def main():
     # pruner = Pruning(config)
     # pruner.model = model
     # pruner.on_train_begin()
-    from neural_compressor.compression.pruner.pruning import PruningWrapper,PurningUnWrapper
+    from neural_compressor.compression.pruner.pruning import PruningWrapper,PruningUnWrapper
     model, optimizer = PruningWrapper(configs, model, optimizer)
 
 
@@ -594,7 +594,7 @@ def main():
             # if args.push_to_hub:
             #     repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
-    model, optimizer = PurningUnWrapper(model, optimizer)
+    model, optimizer = PruningUnWrapper(model, optimizer)
 
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
