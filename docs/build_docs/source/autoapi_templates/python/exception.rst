@@ -1,1 +1,0 @@
-{% extends "python/class.rst" %}
