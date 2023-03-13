@@ -73,7 +73,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
   Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.
   
-  An advantage of channel pruning is that in some particular structure(FFN parts in Transformers etc.), pruned channels can be removed permenantly from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization toolkits like [ITREX](https://github.com/intel/intel-extension-for-transformers) (Intel Transformer Extensions). 
+  An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanetly from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
   
   We name this process as **Model Auto Slim** and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
 
