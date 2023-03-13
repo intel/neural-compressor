@@ -266,7 +266,7 @@ Figure below shows our pruning results (pruned model's accuracy and sparsity as 
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="./imgs/pruning/pruning_scatter.png">
-    <img src="./docs/source/imgs/pruning/pruning_scatter.jpg" alt="Architecture" width=685 height=300>
+    <img src="./docs/source/imgs/pruning/pruning_scatter.png" alt="Architecture" width=685 height=300>
   </a>
 </div>
 
