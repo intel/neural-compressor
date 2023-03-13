@@ -85,7 +85,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 <div align=center>
 <a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_patterns.jpg">
-    <img src="../../../docs/source/imgs/pruning/pruning_patterns.jpg" width=695 height=145 alt="Sparsity Pattern">
+    <img src="../../../docs/source/imgs/pruning/pruning_patterns.jpg" width=680 height=145 alt="Sparsity Pattern">
 </a>
 </div>
 
@@ -116,7 +116,7 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 <div align=center>
 <a target="_blank" href="../../../docs/source/imgs/pruning/pruning_criteria.png">
-    <img src="../../../docs/source/imgs/pruning/pruning_criteria.png" width=350 height=170 alt="Pruning criteria">
+    <img src="../../../docs/source/imgs/pruning/pruning_criteria.png" width=340 height=170 alt="Pruning criteria">
 </a>
 </div>
 
@@ -137,7 +137,7 @@ Pruning schedule defines the way the model reaches the target sparsity (the rati
 
 <div align=center>
 <a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_schedule.jpg">
-    <img src="../../../docs/source/imgs/pruning/Pruning_schedule.jpg" width=930 height=170 alt="Pruning schedule">
+    <img src="../../../docs/source/imgs/pruning/Pruning_schedule.jpg" width=890 height=170 alt="Pruning schedule">
 </a>
 </div>
 
@@ -155,7 +155,7 @@ Pruning type defines how the masks are generated and applied to a neural network
 
   <div align = "center", style = "width: 77%; margin-bottom: 2%;">
       <a target="_blank" href="../../../docs/source/imgs/pruning/progressive_pruning.png">
-          <img src="../../../docs/source/imgs/pruning/progressive_pruning.png" alt="Architecture" width=420 height=290>
+          <img src="../../../docs/source/imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=290>
       </a>
   </div>
   &emsp;&emsp;(a) refers to the traditional structured iterative pruning;  <Br/>
@@ -290,15 +290,17 @@ The following section exemplifies how to use hooks in user pass-in training func
  In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function.
 
 
-## Validated Pruning Models
+## Examples
 
 The pruning technique  is validated on typical models across various domains (including CV and NLP).
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
-  <a target="_blank" href="../../../docs/source/imgs/pruning/pruning_scatter.jpg">
-    <img src="../../../docs/source/imgs/pruning/pruning_scatter.jpg" alt="Architecture" width=450 height=300>
+  <a target="_blank" href="../../../docs/source/imgs/pruning/pruning_scatter.png">
+    <img src="../../../docs/source/imgs/pruning/pruning_scatter.jpg" alt="Architecture" width=685 height=300>
   </a>
 </div>
+
+"Experimental" annotation means these examples codes are ready but pruning results are under improvements. Please don't hesitate to try these codes with different configurations to get better pruning results! 
 
 - Text Classification
 
@@ -308,9 +310,17 @@ The pruning technique  is validated on typical models across various domains (in
 
   Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
-- Object Detection
+- Language Translation (Experimental)
+
+  Pruning Flan-T5-small model on English-Romanian translation task [Translation examples](../../../examples/pytorch/nlp/huggingface_models/translation/pruning/eager).
+
+- Object Detection (Experimental)
 
   Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../../examples/pytorch/object_detection/yolo_v5/pruning/eager).
+
+- Image Recognition (Experimental)
+
+  Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
   
 
 The API [Pruning V2](../../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
