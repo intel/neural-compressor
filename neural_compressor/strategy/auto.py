@@ -53,7 +53,7 @@ class AutoTuneStrategy(TuneStrategy):
         """
         super().__init__(model, conf, q_dataloader, q_func, eval_dataloader,\
             eval_func, resume, q_hooks)
-        logger.info(f"*** Start auto tuning")
+        logger.info(f"*** Initialize auto tuning")
         self.model = model
         self.conf = conf
         self.q_dataloader = q_dataloader

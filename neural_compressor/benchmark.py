@@ -23,6 +23,7 @@ import numpy as np
 import subprocess
 import signal
 import psutil
+from threading import Thread
 from .adaptor import FRAMEWORKS
 from .objective import MultiObjective
 from .conf.config import BenchmarkConf
@@ -203,18 +204,19 @@ class Benchmark(object):
                         latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
                         throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
                         throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
-            assert len(latency_l)==len(throughput_l)==num_of_instance, \
-                "Multiple instance benchmark failed with some instance!"
+            if throughput_l and latency_l:
+                assert len(latency_l)==len(throughput_l)==num_of_instance, \
+                    "Multiple instance benchmark failed with some instance!"
 
-            output_data = [
-                ["Latency average [second/sample]", "{:.3f}".format(sum(latency_l)/len(latency_l))],
-                ["Throughput sum [samples/second]", "{:.3f}".format(sum(throughput_l))]
-            ]
-            logger.info("********************************************")
-            Statistics(
-                output_data, 
-                header='Multiple Instance Benchmark Summary',
-                field_names=["Items", "Result"]).print_stat()
+                output_data = [
+                    ["Latency average [second/sample]", "{:.3f}".format(sum(latency_l)/len(latency_l))],
+                    ["Throughput sum [samples/second]", "{:.3f}".format(sum(throughput_l))]
+                ]
+                logger.info("********************************************")
+                Statistics(
+                    output_data,
+                    header='Multiple Instance Benchmark Summary',
+                    field_names=["Items", "Result"]).print_stat()
         else:
             # (TODO) should add summary after win32 benchmark has log
             pass
@@ -228,6 +230,9 @@ class Benchmark(object):
         multi_instance_cmd = ''
         num_of_instance = int(os.environ.get('NUM_OF_INSTANCE'))
         cores_per_instance = int(os.environ.get('CORES_PER_INSTANCE'))
+
+        logger.info("num of instance: {}".format(num_of_instance))
+        logger.info("cores per instance: {}".format(cores_per_instance))
 
         if(sys.platform in ['linux'] and get_architecture() == 'aarch64' and int(get_threads_per_core()) > 1):
             raise OSError('Currently no support on ARM with hyperthreads')
@@ -248,7 +253,6 @@ class Benchmark(object):
                 multi_instance_cmd += '{} 2>&1|tee {} & \\\n'.format(
                     instance_cmd, instance_log)
             else:  # pragma: no cover
-                # (TODO) should also add log to win32 benchmark
                 multi_instance_cmd += '{} \n'.format(instance_cmd)
 
         multi_instance_cmd += 'wait' if sys.platform in ['linux'] else ''
@@ -258,7 +262,22 @@ class Benchmark(object):
         if sys.platform in ['linux']:
             p = subprocess.Popen(multi_instance_cmd, preexec_fn=os.setsid, shell=True) # nosec
         elif sys.platform in ['win32']:  # pragma: no cover
-            p = subprocess.Popen(multi_instance_cmd, start_new_session=True, shell=True) # nosec
+            cmd_list = multi_instance_cmd.split("\n")[:-1]
+            threads = []
+            for idx, cmd in enumerate(cmd_list):
+                # wrap each execution of windows bat file in one thread
+                # write the log to the log file of the corresponding instance
+                logger.info('Will dump to {}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))
+                threads.append(Thread(target=self.call_one, args=(cmd,
+                    '{}_{}_{}.log'.format(num_of_instance, cores_per_instance, idx))))
+            for command_thread in threads:
+                command_thread.start()
+                logger.info("Worker threads start")
+            # Wait for all of them to finish
+            for command_thread in threads:
+                command_thread.join()
+                logger.info("Worker threads join")
+            return
         try:
             p.communicate()
         except KeyboardInterrupt:
