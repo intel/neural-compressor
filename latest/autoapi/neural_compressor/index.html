@@ -576,7 +576,7 @@ prune.model = self.model</p>
 <dt>if approach == “qat”:</dt><dd><p>model = copy.deepcopy(model_origin)
 conf = QuantizationAwareTrainingConfig(</p>
 <blockquote>
-<div><p>op_name_dict=qat_op_name_list</p>
+<div><p>op_name_dict=qat_op_name_dict</p>
 </div></blockquote>
 <p>)
 compression_manager = prepare_compression(model, conf)</p>
