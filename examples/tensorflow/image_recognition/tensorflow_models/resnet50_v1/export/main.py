@@ -86,7 +86,7 @@ class eval_classifier_optimized_graph:
         if self.args.export:
             if self.args.dtype == 'int8':
                 from neural_compressor import quantization
-                from neural_compressor.config import PostTrainingQuantConfig, AccuracyCriterion
+                from neural_compressor.config import PostTrainingQuantConfig
                 from neural_compressor.utils.create_obj_from_config import create_dataloader
                 calib_dataloader_args = {
                     'batch_size': 10,
