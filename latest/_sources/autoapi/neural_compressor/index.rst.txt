@@ -248,7 +248,7 @@ Functions
       Get approach.
 
 
-.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[])
+.. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precision='bf16', inputs=[], outputs=[], tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[])
 
    Bases: :py:obj:`PostTrainingQuantConfig`
 
@@ -261,5 +261,9 @@ Functions
 
    conf = MixedPrecisionConfig()
    converted_model = mix_precision.fit(model, config=conf)
+
+   .. py:property:: precision
+
+      Get precision.
 
 
