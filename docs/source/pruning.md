@@ -90,10 +90,6 @@ Pruning criteria defines the rules of which weights are least important to be pr
 
   The algorithm uses Group lasso regularization to prune entire rows, columns or blocks of parameters that result in a smaller dense network.
 
-- Pattern Lock
-
-  The algorithm locks the sparsity pattern in finetuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied in the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
-
 - SNIP
 
   The algorithm prunes the dense model at its initialization, by analyzing the weights' effect to the loss function when they are masked. Please refer to the original [paper](https://arxiv.org/abs/1810.02340) for details
@@ -115,6 +111,65 @@ Pruning schedule defines the way the model reach the target sparsity (the ratio 
 - Iterative Pruning
 
   Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends. 
+
+### Pruning Types
+
+Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include **snip_momentum(default)**, **snip_momentum_progressive**, **magnitude**, **magnitude_progressive**, **gradient**, **gradient_progressive**, **snip**, **snip_progressive** and **pattern_lock**. progressive pruning is preferred when large patterns like 1xchannel and channelx1 are selected.
+
+- Progressive Pruning
+
+  Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of intervals masks during the pruning process. In this method, a sequence of masks is generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
+  Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.
+
+  <div align = "center", style = "width: 77%; margin-bottom: 2%;">
+      <a target="_blank" href="./imgs/pruning/progressive_pruning.png">
+          <img src="./imgs/pruning/progressive_pruning.png" alt="Architecture" width=700 height=250>
+      </a>
+  </div>
+  &emsp;&emsp;(a) refers to the traditional structured iterative pruning;  <Br/>
+  &emsp;&emsp;(b) inserts unstructured masks which prune some weights by referring to pre-defined score maps.
+
+  (b) is adopted in progressive pruning implementation. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. these partial-zero unstructured masks are added to the previous structured masks and  pruning continues. After training the model with these interpolating masks and masking more elements in these blocks, the mask interpolation process is returned. After several steps of mask interpolation, All weights in the blocks are finally masked and the model is trained as pure block-wise sparsity.
+
+- Pattern_lock Pruning
+
+  Pattern_lock pruning type uses masks of a fixed pattern during the pruning process. It locks the sparsity pattern in fine-tuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied for the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to [Prune once for all](https://arxiv.org/pdf/2111.05754.pdf) for more information.
+
+### Pruning Scope
+
+Range of sparse score calculation in iterative pruning, default scope is global.
+
+- Global
+
+  The score map is computed out of entire parameters, Some layers are higher than the target sparsity and some of them are lower, the total sparsity of the model reaches the target. You can also set the "min sparsity ratio"/"max sparsity ratio" to be the same as the target to achieve same sparsity for each layer in a global way.
+
+- Local
+
+  The score map is computed from the corresponding layer's weight, The sparsity of each layer is equal to the target.
+
+### Sparsity Decay Type
+
+Growth rules for the sparsity of iterative pruning, "exp", "cos", "cube",  and "linear" are available，We use exp by default.
+<div align=center>
+<a target="_blank" href="./imgs/pruning/sparsity_decay_type.png">
+    <img src="./imgs/pruning/sparsity_decay_type.png" width=870 height=220 alt="Regularization">
+</a>
+</div>
+
+
+### Regularization
+
+Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection. In the image below, some weights are pushed to be as small as possible and the connections are thus pruned. **Group-lasso** method is used in Intel Neural Compressor.
+
+- Group Lasso
+
+  The main ideas of Group Lasso are to construct an objective function that penalizes the L2 parameterization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.
+
+<div align=center>
+<a target="_blank" href="./imgs/pruning/Regularization.jpg">
+    <img src="./imgs/pruning/Regularization.jpg" width=350 height=170 alt="Regularization">
+</a>
+</div>
 
 ## Pruning Support Matrix
 
@@ -266,7 +321,7 @@ Figure below shows our pruning results (pruned model's accuracy and sparsity as 
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="./imgs/pruning/pruning_scatter.png">
-    <img src="./docs/source/imgs/pruning/pruning_scatter.png" alt="Architecture" width=685 height=300>
+    <img src="./imgs/pruning/pruning_scatter.png" alt="Architecture" width=685 height=300>
   </a>
 </div>
 
