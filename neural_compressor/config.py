@@ -951,7 +951,7 @@ class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
         if approach == "qat":
             model = copy.deepcopy(model_origin)
             conf = QuantizationAwareTrainingConfig(
-                op_name_dict=qat_op_name_list
+                op_name_dict=qat_op_name_dict
             )
             compression_manager = prepare_compression(model, conf)
     """
