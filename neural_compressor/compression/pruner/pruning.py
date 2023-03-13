@@ -19,13 +19,14 @@
 from .utils import process_config, parse_to_prune
 from .pruners import get_pruner
 from .utils import logger, torch
-import re
-##import torch
-
 
 
 def _generate_pruners(config, model):
-    """Obtain Pruner objects."""
+    """Generate pruners
+    :param config: WeightPruningConfig
+    :param model: The torch module to be pruned
+    :return: A list of pruner
+    """
     assert isinstance(model, torch.nn.Module)
     pruners_info = process_config(config)
     pruners = []
@@ -41,7 +42,11 @@ def _generate_pruners(config, model):
     return pruners
 
 
-def register_on_step_begin(model):
+def _register_on_step_begin(model):
+    """mount on_step_begin to the model
+    :param model:The torch module to be pruned
+    :return: hook handle
+    """
     def hook(module, input):
         for pruner in module.pruners:
             pruner.on_step_begin(0)
@@ -50,40 +55,53 @@ def register_on_step_begin(model):
     return hook_handle
 
 
-
-def new_step(self, closure=None):
-    for pruner in self.pruners:
-        pruner.on_before_optimizer_step()
-
-    if closure is not None:
-        res = self.orig_step(closure)
-    else:
-        res = self.orig_step()
-    for pruner in self.pruners:
-        pruner.on_after_optimizer_step()
-    return res
-
-
 def rewrite_optimizer_step(opt: torch.optim.Optimizer):
+    """mount on_before/after_optimizer_step to optimizer
+    :param opt: user optimizer
+    :return: the modified optimizer
+    """
+    def new_step(self, closure=None):
+        for pruner in self.pruners:
+            pruner.on_before_optimizer_step()
+
+        if closure is not None:
+            res = self.orig_step(closure)
+        else:
+            res = self.orig_step()
+        for pruner in self.pruners:
+            pruner.on_after_optimizer_step()
+        return res
+
     opt.orig_step = opt.step
     import types
     opt.step = types.MethodType(new_step, opt)
     return opt
 
 
-
 def PruningWrapper(config, model: torch.nn.Module, opt: torch.optim):
+    """
+    Wrapper to model and optimizer to support all the pruning functionality
+    :param config: WeightPruningConfig
+    :param model: The user's model
+    :param opt: The user's optimizer
+    :return: The modified model and optimizer
+    """
     pruners = _generate_pruners(config, model)  ##list
     model.pruners = pruners
     opt.pruners = pruners
 
-    inc_hook_handle = register_on_step_begin(model)
+    inc_hook_handle = _register_on_step_begin(model)
     model.inc_hook_handle = inc_hook_handle
     rewrite_optimizer_step(opt)
     return model, opt
 
 
 def PurningUnWrapper(model: torch.nn.Module, opt: torch.optim):
+    """
+    :param model: the modified model
+    :param opt: the modified optimizer
+    :return: the pruned model and the user's optimizer
+    """
     model.inc_hook_handle.remove()
     delattr(model, "inc_hook_handle")
     opt.step = opt.orig_step
