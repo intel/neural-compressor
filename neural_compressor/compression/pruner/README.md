@@ -69,11 +69,13 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
   N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used.
 
-- Channel-wise Pruning
+- Channel-wise Pruning (Model Auto Slim)
 
   Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.
   
-  An advantage of channel pruning is that pruned channels can be removed from original weights without influence other dense channels. Via this process we can decrease these weights' size and obtain direct improvements of inference speed, instead of relying on kernels' support. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
+  An advantage of channel pruning is that in some particular structure(FFN parts in Transformers etc.), pruned channels can be removed permenantly from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization toolkits like [ITREX](https://github.com/intel/intel-extension-for-transformers) (Intel Transformer Extensions). 
+  
+  We name this process as **Model Auto Slim** and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
 
 
 - Unstructured Pruning
@@ -229,8 +231,8 @@ The following section exemplifies how to use hooks in user pass-in training func
       configs = [
               { ## Example of a regular configuration
                 "op_names": ['layer1.*'], # A list of modules that would be pruned.
-                "start_step": 1,  # Step at which to begin pruning, if a gradient-based criterion is used (e.g., snip-momentum), should let the start_step >= 1.
-                "end_step": 10000, # Step at which to end pruning, for one-shot pruning start_step=end_step.
+                "start_step": 1,  # Step at which to begin pruning, if a gradient-based criterion is used (e.g., snip-momentum), start_step should be equal to or greater than 1.
+                "end_step": 10000, # Step at which to end pruning, for one-shot pruning start_step = end_step.
                 "excluded_op_names": ['.*embeddings*'], # A list of modules that would not be pruned.
                 'target_sparsity': 0.9,   # Target sparsity ratio of modules.
                 "pruning_frequence": 250,   # Frequency of applying pruning, The recommended setting is one fortieth of the pruning steps.
@@ -312,16 +314,6 @@ The pruning technique  is validated on typical models across various domains (in
   
 
 The API [Pruning V2](../../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
-
-
-## Experimental Examples
-The table below shows some pruning results which are still have chance to be improved. 
-|  Example Name | Task<br>Dataset | Dense Metric<br>Sparse Metric | Relative Drop | Sparsity ratio<br>Sparsity Pattern | Comments<br>Balanced or unbalanced ratio |
-|-----|-----|-----|-----|-----|-----|
-|YOLOv5s6|object-detection<br>COCO|mAP50/mAP50-95 0.600<br>mAP50/mAP50-95 0.584| -2.67%|80%<br>Unstructured 1x1|snip_momentum<br>unbalanced
-|YOLOv5s6|object-detection<br>COCO|mAP50/mAP50-95 0.600<br>mAP50/mAP50-95 0.573| -4.5%|80%<br>Structured 4x1|snip_momentum<br>unbalanced
-|ResNet50|image recognition<br>ImageNet|Top-1 Acc 80.1<br>Top-1 Acc 78.95| -1.43% | 75% <br> Structured 2x1| snip_momentum <br> unbalanced|
-|Flan-T5-small| translation<br>wmt16 en-ro | BLEU 25.63<br>BLEU 24.53|-4.95%|80%<br>Structured 4x1|snip_momentum<br>unbalanced|
 
 ## Reference
 
