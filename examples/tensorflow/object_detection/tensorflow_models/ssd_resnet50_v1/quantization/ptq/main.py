@@ -117,7 +117,7 @@ def main(_):
             conf = BenchmarkConfig(
                 inputs=["image_tensor"],
                 outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
-                cores_per_instance=28, 
+                cores_per_instance=4,
                 num_of_instance=1)
             fit(args.input_graph, conf, b_func=evaluate)
         else:

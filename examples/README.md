@@ -436,10 +436,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">fx</a></td>
   </tr>
   <tr>
-    <td>*PeleeNet</td>
+    <td>PeleeNet</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/image_recognition/peleenet/quantization/ptq/eager">eager</a></td>
+    <td><a href="./pytorch/image_recognition/peleenet/quantization/ptq/fx">fx</a></td>
   </tr>
   <tr>
     <td>*ResNeSt50</td>
@@ -526,6 +526,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
   <tr>
+    <td>textattack/distilbert-base-uncased-MRPC</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/albert-base-v2-MRPC</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
     <td>Intel/xlm-roberta-base-mrpc</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
@@ -538,16 +550,82 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
-    <td>*t5-small</td>
+    <td>Intel/bert-base-uncased-mrpc</td>
     <td>Natural Language Processing</td>
-    <td>Post-Training Dynamic Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/eager">eager</a></td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
   </tr>
   <tr>
-    <td>*Helsinki-NLP/opus-mt-en-ro</td>
+    <td>textattack/bert-base-uncased-CoLA</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/bert-base-uncased-STS-B</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>gchhablani/bert-base-cased-finetuned-sst2</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>ModelTC/bert-base-uncased-rte</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/bert-base-uncased-QNLI</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>yoshitomo-matsubara/bert-large-uncased-cola</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/distilbert-base-uncased-MRPC</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Intel/xlnet-base-cased-mrpc</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>textattack/roberta-base-MRPC</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Intel/camembert-base-mrpc</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>t5_WMT_en_ro</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Dynamic Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/eager">eager</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>Helsinki-NLP/opus-mt-en-ro</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Dynamic Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/translation/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
   <tr>
     <td>*lvwerra/pegasus-samsum</td>
@@ -563,6 +641,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
   </tr>
   <tr>
     <td>EleutherAI/gpt-j-6B</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a></td>
+  </tr>
+  <tr>
+    <td>abeja/gpt-neox-japanese-2.7b</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx">fx</a></td>
@@ -631,6 +715,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/eager">eager</a></td>
   </tr>
   <tr>
+    <td>Flan-T5-small</td>
+    <td>Natural Language Processing (translation)</td>
+    <td>Structured (4x1)</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/translation/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
     <td>YOLOv5s6</td>
     <td>Object Detection</td>
     <td>Structured (4x1, 2in4), Unstructured</td>
@@ -638,68 +729,11 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/object_detection/yolo_v5/pruning/eager">eager</a></td>
   </tr>
   <tr>
-    <td>ResNet18</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>ResNet34</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
     <td>ResNet50</td>
     <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>ResNet101</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>*BERT large</td>
-    <td>Natural Language Processing</td>
     <td>Structured (2x1)</td>
-    <td>Group Lasso</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager">eager</a></td>
-  </tr>
-
-  <tr>
-    <td>*Intel/bert-base-uncased-sparse-70-unstructured</td>
-    <td>Natural Language Processing (question-answering)</td>
-    <td>Unstructured</td>
-    <td>Prune once for all</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/question-answering/pruning/pattern_lock/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>*bert-base-uncased</td>
-    <td>Natural Language Processing</td>
-    <td>Structured (Filter/Channel-wise)</td>
-    <td>Gradient Sensitivity</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/pruning/gradient_sensitivity/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>*DistilBERT</td>
-    <td>Natural Language Processing</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>*Intel/bert-base-uncased-sparse-70-unstructured</td>
-    <td>Natural Language Processing (text-classification)</td>
-    <td>Unstructured</td>
-    <td>Prune once for all</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pattern_lock/eager">eager</a></td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/image_recognition/ResNet50/pruning/eager">eager</a></td>
   </tr>
 </tbody>
 </table>

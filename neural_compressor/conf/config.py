@@ -802,6 +802,7 @@ schema = Schema({
                                                       'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
+                                      'quant_level': "auto",
                                       }): {
         Optional('approach', default='post_training_static_quant'): And(
             str,
@@ -895,9 +896,9 @@ schema = Schema({
         Optional('op_wise', default=None): {
             str: ops_schema
         },
+        Optional('quant_level', default="auto"): And(Or(str, int), lambda level: level in ["auto", 0, 1]),
     },
     Optional('use_bf16', default=True): bool,
-    Optional('quant_level', default="auto"): And(Or(str, int), lambda level: level in ["auto", 0, 1]),
     Optional('graph_optimization'): graph_optimization_schema,
     Optional('mixed_precision'): mixed_precision_schema,
 
@@ -1172,9 +1173,9 @@ quantization_default_schema = Schema({
                                                       'pre_post_process_quantization': True},
                                       'model_wise': {'weight': {'bit': [7.0]},
                                                      'activation': {}},
+                                      'quant_level': "auto",
                                     }): dict,
     Optional('use_bf16', default=False): bool,
-    Optional('quant_level', default="auto"): Or(str, int),
     Optional('tuning', default={
         'strategy': {'name': 'basic'},
         'accuracy_criterion': {'relative': 0.01, 'higher_is_better': True},
@@ -1400,8 +1401,8 @@ class Conf(object):
                 'quantization.example_inputs': pythonic_config.quantization.example_inputs,
                 'quantization.calibration.sampling_size':
                     pythonic_config.quantization.calibration_sampling_size,
-                'quantization.optype_wise': pythonic_config.quantization.op_type_list,
-                'quantization.op_wise': pythonic_config.quantization.op_name_list,
+                'quantization.optype_wise': pythonic_config.quantization.op_type_dict,
+                'quantization.op_wise': pythonic_config.quantization.op_name_dict,
                 'tuning.strategy.name': pythonic_config.quantization.strategy,
                 'tuning.accuracy_criterion.relative':
                     pythonic_config.quantization.accuracy_criterion.relative,
@@ -1421,8 +1422,7 @@ class Conf(object):
             if pythonic_config.quantization.strategy_kwargs:
                 st_kwargs = pythonic_config.quantization.strategy_kwargs
                 for st_key in ['sigopt_api_token', 'sigopt_project_id', 'sigopt_experiment_name', \
-                    'accuracy_weight', 'latency_weight', 'hawq_v2_loss']:
-
+                    'accuracy_weight', 'latency_weight', 'hawq_v2_loss', 'confidence_batches']:
                     if st_key in st_kwargs:
                         st_val =  st_kwargs[st_key]
                         mapping.update({'tuning.strategy.' + st_key: st_val})

@@ -1305,6 +1305,11 @@ class PyTorchAdaptor(TemplateAdaptor):
         del op_cfgs['bf16_ops_list']
         gc.collect()
 
+        if self.version.release < Version("2.0.0").release:
+            from torch.quantization.quantize import add_observer_
+        else:
+            from torch.quantization.quantize import _add_observer_ as add_observer_
+
         if self.performance_only:
             q_model = model
         else:
@@ -1329,7 +1334,7 @@ class PyTorchAdaptor(TemplateAdaptor):
                             "by assigning the `.qconfig` attribute directly on submodules.")
 
         if self.approach in ['post_training_static_quant', 'post_training_auto_quant']:
-            torch.quantization.add_observer_(q_model._model)
+            add_observer_(q_model._model)
             if q_func is None:
                 iterations = tune_cfg.get('calib_iteration', 1)
                 self.model_calibration(q_model._model,
@@ -1346,10 +1351,10 @@ class PyTorchAdaptor(TemplateAdaptor):
                                            inplace=True,
                                            remove_qconfig=False)
                 _propagate_qconfig(q_model._model, op_cfgs)
-                torch.quantization.add_observer_(q_model._model, self.white_list,
+                add_observer_(q_model._model, self.white_list,
                                                  set(self.q_mapping.values()))
             else:  # pragma: no cover
-                torch.quantization.add_observer_(q_model._model)
+                add_observer_(q_model._model)
                 torch.quantization.convert(q_model._model, self.q_mapping, inplace=True)
             # q_func can be created by neural_compressor internal or passed by user. It's critical to
             # distinguish how q_func is passed since neural_compressor built-in functions accept neural_compressor
@@ -1926,7 +1931,10 @@ class PyTorchAdaptor(TemplateAdaptor):
             None
         """
         from torch.utils.tensorboard import SummaryWriter
-        from torch.quantization import get_observer_dict
+        if self.version.release >= Version("2.0.0").release:
+            from torch.quantization.quantize import _get_observer_dict as get_observer_dict
+        else:
+            from torch.quantization import get_observer_dict
 
         model = model._model
 
@@ -2052,7 +2060,10 @@ class PyTorchAdaptor(TemplateAdaptor):
         observer_dict = {}
         ret = {}
         if inspect_type == 'activation' or inspect_type == 'all':
-            from torch.quantization import get_observer_dict
+            if self.version.release >= Version("2.0.0").release:
+                from torch.quantization.quantize import _get_observer_dict as get_observer_dict
+            else:
+                from torch.quantization import get_observer_dict
             ret['activation'] = []
             get_observer_dict(new_model._model, observer_dict)
             if iteration_list is None:

@@ -208,11 +208,12 @@ class Benchmark(object):
                     latency_l.append(float(latency.group(1))) if latency and latency.group(1) else None
                     throughput = re.search(r"[T,t]hroughput:\s+(\d+(\.\d+)?)", line)
                     throughput_l.append(float(throughput.group(1))) if throughput and throughput.group(1) else None
-        assert len(latency_l)==len(throughput_l)==num_of_instance, \
-            "Multiple instance benchmark failed with some instance!"
-        logger.info("\n\nMultiple instance benchmark summary: ")
-        logger.info("Latency average: {:.3f} ms".format(sum(latency_l)/len(latency_l)))
-        logger.info("Throughput sum: {:.3f} images/sec".format(sum(throughput_l)))
+        if throughput_l and latency_l:
+            assert len(latency_l)==len(throughput_l)==num_of_instance, \
+                "Multiple instance benchmark failed with some instance!"
+            logger.info("\n\nMultiple instance benchmark summary: ")
+            logger.info("Latency average: {:.3f} ms".format(sum(latency_l)/len(latency_l)))
+            logger.info("Throughput sum: {:.3f} images/sec".format(sum(throughput_l)))
 
     def call_one(self, cmd, log_file):
         """Execute one command for one instance in one thread and dump the log (for Windows)."""

@@ -129,9 +129,17 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
             # intersection update kw arguments
             self.input_args.update(values['kwargs'])
             # update arguments
-            for (single_input, single_arg) in zip(values['input'],
-                    list(self.input_args.keys())[:len(values['input'])]):
-                self.input_args[single_arg] = single_input
+            if "input" in values:
+                for (single_input, single_arg) in \
+                        zip(values['input'], list(self.input_args.keys())[:len(values['input'])]):
+                    self.input_args[single_arg] = single_input
+            elif "args" in values:
+                for (single_input, single_arg) in \
+                        zip(values['args'], list(self.input_args.keys())[:len(values['args'])]):
+                    self.input_args[single_arg] = single_input
+            else:
+                assert False, "there is no input field was found!"
+
         return actual_forward_pre_hook
 
     def framework(self):
@@ -160,7 +168,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
             new_tensor (ndarray): weight value.
         """
         # TODO: copy tensor option to new tensor is better
-        device = next(self._model.parameters()).device 
+        device = next(self._model.parameters()).device
         new_tensor = torch.tensor(new_tensor).float().to(device)
         module_index = '.'.join(tensor_name.split('.')[:-1])
         module = dict(self._model.named_modules())[module_index]
@@ -346,7 +354,7 @@ class PyTorchModel(PyTorchBaseModel):
     ):
         """Export PyTorch model to ONNX model."""
         from neural_compressor.experimental.export import (
-            torch_to_fp32_onnx, 
+            torch_to_fp32_onnx,
             torch_to_int8_onnx
         )
         if conf.dtype == 'int8':
@@ -432,4 +440,3 @@ class IPEXModel(PyTorchBaseModel):   # pragma: no cover
 
         if isinstance(self.model, torch.jit._script.RecursiveScriptModule):
             self.model.save(os.path.join(root, "best_model.pt"))
-

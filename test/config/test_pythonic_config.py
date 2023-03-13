@@ -143,7 +143,7 @@ class TestPythonicConf(unittest.TestCase):
         config.quantization.outputs = ['out']
         config.quantization.approach = 'post_training_dynamic_quant'
         config.quantization.device = 'gpu'
-        config.quantization.op_type_list = {'Conv': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}}
+        config.quantization.op_type_dict = {'Conv': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}}
         config.quantization.strategy = 'mse'
         config.quantization.objective = 'accuracy'
         config.quantization.timeout = 100
@@ -156,7 +156,7 @@ class TestPythonicConf(unittest.TestCase):
         self.assertEqual(config.quantization.outputs, ['out'])
         self.assertEqual(config.quantization.approach, 'post_training_dynamic_quant')
         self.assertEqual(config.quantization.device, 'gpu')
-        self.assertEqual(config.quantization.op_type_list,
+        self.assertEqual(config.quantization.op_type_dict,
             {'Conv': {'weight': {'dtype': ['fp32']}, 'activation': {'dtype': ['fp32']}}})
         self.assertEqual(config.quantization.strategy, 'mse')
         self.assertEqual(config.quantization.objective, 'accuracy')
