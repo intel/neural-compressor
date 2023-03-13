@@ -34,7 +34,7 @@ except:
     import logging
     logger = logging.getLogger(__name__)
     from .schema_check import PrunerV2
-    
+
     class WeightPruningConfig:
         """Similiar to torch optimizer's interface."""
 
@@ -90,13 +90,18 @@ def get_sparsity_ratio(pruners, model):
         model = model.model
     for pruner in pruners:
         modules = pruner.modules
-        sparsity_ratio = pruner.pattern.get_sparsity_ratio(pruner.masks)
+        blocked = hasattr(pruner, "blocked")
+        sparsity_ratio = pruner.pattern.get_sparsity_ratio(pruner.masks, blocked=blocked)
         cnt = 0
         for key in modules.keys():
             cnt += modules[key].weight.numel()
         pattern_sparsity_cnt += int(cnt * sparsity_ratio)
         for key in pruner.masks.keys():
-            element_sparsity_cnt += torch.sum(pruner.masks[key] == 0).data.item()
+            block_num = 1 
+            if blocked:
+                block_size = pruner.pattern.block_size[key]
+                block_num = block_size[0] * block_size[1]
+            element_sparsity_cnt += torch.sum(pruner.masks[key] == 0).data.item() * block_num
 
     linear_conv_cnt = 0
     param_cnt = 0
@@ -310,7 +315,7 @@ def check_key_validity(template_config, user_config):
         for user_key, user_value in usr_cfg_dict.pruner_config.items():
             if user_key not in template_config.keys():
                 logger.warning(f"{user_key} is not supported for config")
-    
+
     # multi pruners
     if isinstance(user_config, list):
         for obj in user_config:
@@ -318,7 +323,7 @@ def check_key_validity(template_config, user_config):
                 check_key_validity_dict(template_config, obj)
             elif isinstance(obj, PrunerV2):
                 check_key_validity_prunerv2(template_config, obj)
-                
+
     # single pruner, weightconfig or yaml
     elif isinstance(user_config, dict):
         check_key_validity_dict(template_config, user_config)
@@ -328,8 +333,8 @@ def check_key_validity(template_config, user_config):
 
 def process_and_check_config(val):
     """Process and check configurations.
-    
-    Args:  
+
+    Args:
         val: A dict that contains the layer-specific pruning configurations.
     """
     default_global_config = {'target_sparsity': 0.9, 'pruning_type': 'snip_momentum', 'pattern': '4x1', 'op_names': [],
@@ -397,7 +402,7 @@ def process_config(config):
 
 def parse_to_prune(config, model):
     """Keep target pruned layers.
-    
+
     Args:
         config: A string representing the path to the configuration file.
         model: The model to be pruned.
@@ -430,7 +435,7 @@ def parse_to_prune(config, model):
 
 def generate_pruner_config(info):
     """Generate pruner config object from prune information.
-    
+
     Args:
         info: A dotdict that saves prune information.
 

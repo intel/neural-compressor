@@ -45,7 +45,7 @@ class PruningCriterion:
     Args:
         config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
-
+    
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
@@ -190,3 +190,76 @@ class SnipMomentumCriterion(PruningCriterion):
                 p = self.modules[key].weight
                 self.scores[key] *= self.alpha
                 self.scores[key] += self.beta * torch.abs(p * p.grad)
+
+
+@register_criterion('blocked_mask')
+class BlockedMaskCriterion(PruningCriterion):
+    """Pruning criterion.
+    
+    The blocked_mask criterion_class is derived from PruningCriterion.
+    A momentum mechanism is used to calculate snip score, which determines if a blocked weight is to be pruned.
+
+    Args:
+        config: A config dict object that includes information about pruner and pruning criterion.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
+        beta: A parameter that determines how much of the snip score is updated at the current step.
+    
+    Attributes:
+        scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
+    """
+
+    def __init__(self, modules, config):
+        """Initiliaze a blocked_mask pruning criterion."""
+        super(BlockedMaskCriterion, self).__init__(modules, config)
+        assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
+        self.scores = {}
+        self.alpha = 0.9
+        self.beta = 1.0
+        
+    def on_train_begin(self):
+        for key in self.modules.keys():
+            mask = self.modules[key].blocked_mask
+            self.scores[key] = torch.zeros(mask.shape).to(mask.device)
+
+    def on_before_optimizer_step(self):
+        """Calculate and store the pruning scores based on snip_momentum criterion."""
+        with torch.no_grad():
+            for key in self.modules.keys():
+                mask = self.modules[key].blocked_mask
+                self.scores[key] *= self.alpha
+                self.scores[key] += self.beta * torch.abs(mask.data * mask.grad)
+                
+
+# @register_criterion('trainable_mask')
+# class TrainableMaskCriterion(PruningCriterion):
+    # """Pruning criterion.
+    
+    # The trainable_mask criterion_class is derived from PruningCriterion.
+    # A momentum mechanism is used to calculate snip score, which determines if a blocked weight is to be pruned.
+
+    # Args:
+    #     config: A config dict object that includes information about pruner and pruning criterion.
+    #     modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+    #     alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
+    #     beta: A parameter that determines how much of the snip score is updated at the current step.
+    
+    # Attributes:
+    #     scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
+    # """
+    # def __init__(self, modules, config):
+    #     """Initiliaze a snip_momentum pruning criterion."""
+    #     super(TrainableMaskCriterion, self).__init__(modules, config)
+    #     assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
+    #     for key in modules.keys():
+    #         mask = self.modules[key].trainable_mask
+    #         self.mask_grads = []
+    #         self.scores[key] = torch.zeros(mask.shape).to(mask.device)
+
+    # def on_before_optimizer_step(self):
+    #     """Calculate and store the pruning scores based on snip_momentum criterion."""
+    #     with torch.no_grad():
+    #         for key in self.modules.keys():
+    #             mask = self.modules[key].trainable_mask
+    #             self.mask_grads[key].append(mask.grads.data)
+    #             self.scores[key] += mask.grads.data.pow(2)

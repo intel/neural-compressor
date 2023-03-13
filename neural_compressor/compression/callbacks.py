@@ -539,6 +539,16 @@ class PruningCallbacks(BaseCallbacks):
         self.pruners = []
         self._generate_pruners()
         self.generate_hooks()
+        
+    # @model.setter
+    # def model(self, user_model):
+    #     """Set the user model."""
+    #     self._model = user_model   
+         
+    # @property    
+    # def model(self):
+    #     """Getter of model in neural_compressor.model."""
+    #     return self._model
 
     def on_train_end(self):
         """Be called after the end of training."""
@@ -566,7 +576,7 @@ class PruningCallbacks(BaseCallbacks):
                 if modules == {}:
                     logger.warning("one pruner hooks no layers, please have a check")
 
-                self.pruners.append(get_pruner(info, modules))
+                self.pruners.append(get_pruner(info, modules, self._model))
                 info['modules'] = [key for key in modules.keys()]
                 info['len_of_modules'] = len(info['modules'])
                 logger.info(info)
@@ -764,3 +774,5 @@ class DistillationCallbacks(BaseCallbacks):
     def __repr__(self):
         """Class representation."""
         return 'Distillation Callbacks'
+
+
