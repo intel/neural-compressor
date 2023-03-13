@@ -73,7 +73,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
   Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.
   
-  An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanetly from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
+  An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
   
   We name this process as **Model Auto Slim** and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
 
@@ -155,7 +155,7 @@ Pruning type defines how the masks are generated and applied to a neural network
 
   <div align = "center", style = "width: 77%; margin-bottom: 2%;">
       <a target="_blank" href="../../../docs/source/imgs/pruning/progressive_pruning.png">
-          <img src="../../../docs/source/imgs/pruning/progressive_pruning.png" alt="Architecture" width=800 height=290>
+          <img src="../../../docs/source/imgs/pruning/progressive_pruning.png" alt="Architecture" width=420 height=290>
       </a>
   </div>
   &emsp;&emsp;(a) refers to the traditional structured iterative pruning;  <Br/>
@@ -296,7 +296,7 @@ The pruning technique  is validated on typical models across various domains (in
 
 <div align = "center", style = "width: 77%; margin-bottom: 2%;">
   <a target="_blank" href="../../../docs/source/imgs/pruning/pruning_scatter.jpg">
-    <img src="../../../docs/source/imgs/pruning/scatter-03-09.png" alt="Architecture" width=450 height=300>
+    <img src="../../../docs/source/imgs/pruning/pruning_scatter.jpg" alt="Architecture" width=450 height=300>
   </a>
 </div>
 
@@ -312,10 +312,6 @@ The pruning technique  is validated on typical models across various domains (in
 
   Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../../examples/pytorch/object_detection/yolo_v5/pruning/eager).
   
-
-- Image Recognition
-
-  Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
 
 The API [Pruning V2](../../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
 
