@@ -2,7 +2,7 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,13 +16,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils import process_config, parse_to_prune, \
-    check_config, update_params
+from .utils import process_config, parse_to_prune
 from .pruners import get_pruner
-from .utils import logger, get_sparsity_ratio, torch
+from .utils import logger, torch
 import re
-import torch
-from typing import Iterable, Union, Callable, Optional, List
+##import torch
+
 
 
 def _generate_pruners(config, model):
@@ -51,22 +50,26 @@ def register_on_step_begin(model):
     return hook_handle
 
 
-class PruningOptimizer(torch.optim.Optimizer):
-    def __init__(self, orig_opt):
-        self.inc_opt = orig_opt
 
-    def step(self, closure: Optional[Callable[[], float]] = ...):
-        for pruner in self.inc_opt.pruners:
-            pruner.on_before_optimizer_step()
+def new_step(self, closure=None):
+    for pruner in self.pruners:
+        pruner.on_before_optimizer_step()
+
+    if closure is not None:
         res = self.orig_step(closure)
-        for pruner in self.inc_opt.pruners:
-            pruner.on_after_optimizer_step()
-        return res
+    else:
+        res = self.orig_step()
+    for pruner in self.pruners:
+        pruner.on_after_optimizer_step()
+    return res
 
 
 def rewrite_optimizer_step(opt: torch.optim.Optimizer):
-    opt = PruningOptimizer(opt)
+    opt.orig_step = opt.step
+    import types
+    opt.step = types.MethodType(new_step, opt)
     return opt
+
 
 
 def PruningWrapper(config, model: torch.nn.Module, opt: torch.optim):
@@ -80,8 +83,9 @@ def PruningWrapper(config, model: torch.nn.Module, opt: torch.optim):
     return model, opt
 
 
-def PurningUnWrapper( model: torch.nn.Module, opt: torch.optim):
-    model.hook_handel.remove()
-    delattr(model,"inc_hook_handle")
-    return model, opt.inc_opt
-
+def PurningUnWrapper(model: torch.nn.Module, opt: torch.optim):
+    model.inc_hook_handle.remove()
+    delattr(model, "inc_hook_handle")
+    opt.step = opt.orig_step
+    delattr(opt, "orig_step")
+    return model, opt
