@@ -42,7 +42,7 @@ Supported precisions for mix precision include bf16 and fp16. If users want to g
 from neural_compressor import mix_precision
 from neural_compressor.config import MixedPrecisionConfig
 
-conf = MixedPrecisionConfig(precision=['bf16'])
+conf = MixedPrecisionConfig(precision='bf16')
 converted_model = mix_precision.fit(model, config=conf)
 converted_model.save('./path/to/save/')
 ```
@@ -56,7 +56,7 @@ from neural_compressor.config import MixedPrecisionConfig
 conf = MixedPrecisionConfig(
         backend='onnxrt_cuda_ep',
         device='gpu',
-        precision=['fp16'])
+        precision='fp16')
 converted_model = mix_precision.fit(model, config=conf)
 converted_model.save('./path/to/save/')
 ```
