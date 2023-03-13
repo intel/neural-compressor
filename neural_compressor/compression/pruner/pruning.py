@@ -55,7 +55,7 @@ def _register_on_step_begin(model):
     return hook_handle
 
 
-def rewrite_optimizer_step(opt: torch.optim.Optimizer):
+def _rewrite_optimizer_step(opt: torch.optim.Optimizer):
     """mount on_before/after_optimizer_step to optimizer
     :param opt: user optimizer
     :return: the modified optimizer
@@ -80,7 +80,7 @@ def rewrite_optimizer_step(opt: torch.optim.Optimizer):
 
 def PruningWrapper(config, model: torch.nn.Module, opt: torch.optim):
     """
-    Wrapper to model and optimizer to support all the pruning functionality
+    Wrapper the model and optimizer to support all the pruning functionality
     :param config: WeightPruningConfig
     :param model: The user's model
     :param opt: The user's optimizer
@@ -92,12 +92,12 @@ def PruningWrapper(config, model: torch.nn.Module, opt: torch.optim):
 
     inc_hook_handle = _register_on_step_begin(model)
     model.inc_hook_handle = inc_hook_handle
-    rewrite_optimizer_step(opt)
+    _rewrite_optimizer_step(opt)
     return model, opt
 
 
 def PruningUnWrapper(model: torch.nn.Module, opt: torch.optim):
-    """
+    """UnWrapper the model and optimizer
     :param model: the modified model
     :param opt: the modified optimizer
     :return: the pruned model and the user's optimizer
