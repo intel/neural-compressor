@@ -43,7 +43,11 @@ class PostCompressionUtils(object):
     def get_mask_indices(mask):
         """Obtain the masks' 0 elements' indice."""
         # return the indices of elements whose values are zero
-        return torch.nonzero(torch.where(mask == 0, 1, 0) == 1).squeeze().tolist()
+        indice = torch.nonzero(torch.where(mask == 0, 1, 0) == 1).squeeze().tolist()
+        if isinstance(indice, int):
+            # only one channel is to pruned
+            return [indice]
+        return indice
 
     @staticmethod
     def find_pruneable_indices(indice, n_heads, head_size=1, round_option=0):
