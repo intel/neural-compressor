@@ -1,12 +1,7 @@
 Step-by-Step
 ============
 
-This document is used to list steps of reproducing PyTorch BERT tuning zoo result.
-Original BERT documents please refer to [BERT README](../../../../common/README.md) and [README](../../../../common/examples/text-classification/README.md).
-
-> **Note**
->
-> Dynamic Quantization is the recommended method for huggingface models. 
+This document is used to introduce the steps of exporting PyTorch model into ONNX format.
 
 # Prerequisite
 
@@ -16,7 +11,7 @@ Original BERT documents please refer to [BERT README](../../../../common/README.
 
 Recommend python 3.6 or higher version.
 
-#### Install BERT model
+#### Install Transformers
 
 ```bash
 pip install transformers
@@ -35,7 +30,7 @@ pip install torch
 
 ## 2. Prepare pretrained model
 
-Before use Intel® Neural Compressor, you should fine tune the model to get pretrained model or reuse fine-tuned models in [model hub](https://huggingface.co/models), You should also install the additional packages required by the examples.
+Before using Intel® Neural Compressor, you should fine tune the model to get pretrained models or reuse fine-tuned models in [model hub](https://huggingface.co/models). You should extraly install the complementary packages required by the examples.
 
 ## 3. Prepare dataset
 
@@ -44,7 +39,7 @@ Please pass in the name of dataset, supported datasets are 'mrpc', 'qqp', 'qnli'
 
 # Run
 
-### 1. To get the exported model: 
+### 1. Get the exported model: 
 
 ```bash
 # export fp32 model
@@ -53,7 +48,7 @@ bash run_export.sh --input_model=[model_name_or_path] --dataset_location=[datase
 bash run_export.sh --input_model=[model_name_or_path] --dataset_location=[dataset_name]  --dtype=int8 --quant_format=[QDQ/QLinear] --output_model=bert-int8.onnx
 ``` 
 
-### 2. To get the benchmark of exported and tuned models, includes Batch_size and Throughput: 
+### 2. Get the benchmark results of exported and tuned models, including Batch_size and Throughput: 
 ```bash
 # benchmark ONNX model
 bash run_benchmark.sh --input_model=[bert-fp32.onnx|bert-int8.onnx] --dataset_location=[dataset_name] --tokenizer=[model_name_or_path] --mode=[accuracy|performance] --batch_size=[16]
