@@ -39,7 +39,7 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    python -u scripts/torch/verify.py \
+    python -u verify.py \
         --model ${input_model} \
         --batch-size ${batch_size} \
         --workers 1 \

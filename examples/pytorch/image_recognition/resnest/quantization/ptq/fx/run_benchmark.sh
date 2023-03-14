@@ -68,7 +68,7 @@ function run_benchmark {
         extra_cmd="${dataset_location}"
     fi
 
-    python -u scripts/torch/verify.py \
+    python -u verify.py \
         --tuned_checkpoint ${tuned_checkpoint} \
         --model ${input_model} \
         --batch-size ${batch_size} \

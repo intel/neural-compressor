@@ -80,8 +80,7 @@ scenario_map = {
 }
 
 
-def eval_func(model, args):
-    
+def eval_func(model):
     if args.backend == "pytorch":
         from pytorch_SUT import get_pytorch_sut
         sut = get_pytorch_sut(model, args.preprocessed_data_dir,
@@ -157,11 +156,11 @@ import pickle
 criterion = nn.CrossEntropyLoss()
 
 # Data loading code
-traindir = os.path.join(args.preprocessed_data_dir, 'train')
-valdir = os.path.join(args.preprocessed_data_dir, 'val')
+#traindir = os.path.join(args.preprocessed_data_dir, 'train')
+#valdir = os.path.join(args.preprocessed_data_dir, 'val')
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                     std=[0.229, 0.224, 0.225])
-
+'''
 train_dataset = datasets.ImageFolder(
     traindir,
     transforms.Compose([
@@ -186,18 +185,23 @@ val_loader = torch.utils.data.DataLoader(
     val_dataset,
     batch_size=args.batch_size, shuffle=False,
     num_workers=args.workers, pin_memory=True)
+'''
+sys.path.insert(0, os.path.join(os.getcwd(), "nnUnet"))
+from nnunet.training.model_restore import load_model_and_checkpoint_files
+import pickle
 
 def main():
     args = parser.parse_args()
 
-    class CalibrationDL():
+    class DataLoader:
         def __init__(self):
             path = os.path.abspath(os.path.expanduser('./brats_cal_images_list.txt'))
             with open(path, 'r') as f:
                 self.preprocess_files = [line.rstrip() for line in f]
-
-            self.loaded_files = {}
+                
             self.batch_size = 1
+            self.dataset = []
+            self.loaded_files = {}
 
         def __getitem__(self, sample_id):
             file_name = self.preprocess_files[sample_id]
@@ -211,6 +215,9 @@ def main():
             self.count = len(self.preprocess_files)
             return self.count
 
+        def __iter__(self):
+            for item in self.loaded_files:
+                yield item
 
     assert args.backend == "pytorch"
     model_path = os.path.join(args.model_dir, "plans.pkl")
@@ -218,6 +225,8 @@ def main():
     trainer, params = load_model_and_checkpoint_files(args.model_dir, folds=1, fp16=False, checkpoint_name='model_final_checkpoint')
     trainer.load_checkpoint_ram(params[0], False)
     model = trainer.network
+    
+    dataloader = DataLoader()
 
     if args.tune:
         from neural_compressor import PostTrainingQuantConfig
@@ -225,7 +234,7 @@ def main():
         conf = PostTrainingQuantConfig()
         q_model = quantization.fit(model,
                                     conf,
-                                    calib_dataloader=val_loader,
+                                    calib_dataloader=dataloader,
                                     eval_func=eval_func)
         q_model.save(args.tuned_checkpoint)
         return
@@ -236,7 +245,7 @@ def main():
             from neural_compressor.utils.pytorch import load
             new_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
                              model,
-                             dataloader=val_loader)
+                             dataloader=dataloader)
         else:
             new_model = model
         if args.performance:
@@ -246,9 +255,9 @@ def main():
                                      iteration=args.iter,
                                      cores_per_instance=4,
                                      num_of_instance=1)
-            benchmark.fit(new_model, b_conf, b_dataloader=val_loader)
+            benchmark.fit(new_model, b_conf, b_dataloader=dataloader)
         if args.accuracy:
-            validate(val_loader, new_model, criterion, args)
+            validate(dataloader, new_model, criterion, args)
         return
     
 

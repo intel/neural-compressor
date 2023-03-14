@@ -34,7 +34,7 @@ sh run_tuning.sh --topology=topology_name
 ## 2. Benchmark
 ```bash
 # int8
-sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true
+sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true --config=saved_results
 # fp32
 sh run_benchmark.sh --topology=topology_name --mode=performance
 ```

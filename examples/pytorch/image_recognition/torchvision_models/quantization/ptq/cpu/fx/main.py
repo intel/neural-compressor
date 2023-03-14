@@ -19,8 +19,8 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 
 model_names = sorted(name for name in models.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.__dict__[name]))
+if name.islower() and not name.startswith("__")
+and callable(models.__dict__[name]))
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('data', metavar='DIR',
@@ -95,6 +95,11 @@ best_acc1 = 0
 
 def main():
     args = parser.parse_args()
+    
+    if 'efficient' in args.arch:
+        import torchvision.models as models
+    else:
+        import torchvision.models.quantization as models
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -169,7 +174,7 @@ def main():
     def eval_func(model):
         accu = validate(val_loader, model, criterion, args)
         return float(accu)
-
+    
     if args.tune:
         from neural_compressor import PostTrainingQuantConfig
         from neural_compressor import quantization
@@ -187,7 +192,7 @@ def main():
                                     eval_func=eval_func)
         q_model.save(args.tuned_checkpoint)
         return
-
+    
     if args.performance or args.accuracy:
         model.eval()
         if args.int8:
@@ -304,7 +309,6 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
     if is_best:
         shutil.copyfile(filename, 'model_best.pth.tar')
-
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

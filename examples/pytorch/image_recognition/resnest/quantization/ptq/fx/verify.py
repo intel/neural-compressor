@@ -138,7 +138,6 @@ def main():
                                format(args.resume))
 
     model.eval()
-    model.fuse_model()
 
     def eval_func(model):
         accu = validate(val_loader, model, criterion, args)
