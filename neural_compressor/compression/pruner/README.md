@@ -19,15 +19,24 @@ Pruning
 
 
 
-    - [Pruning Schedules](#pruning-schedule)
+    - [Pruning Schedules](#pruning-schedules)
 
 
 
-    - [Pruning types](#pruning-type)
+    - [Pruning Types](#pruning-types)
+
+
+
+    - [Pruning Scope](#pruning-scope)
+
+
+
+    - [Sparsity Decay Type](#sparsity-decay-type)
 
 
 
     - [Regularization](#regularization)
+
 
 
 
