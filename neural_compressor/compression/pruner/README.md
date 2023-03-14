@@ -46,7 +46,7 @@ Pruning
 3. [Examples](#examples)
 
 
-4. [Sparse Model Depolyment](#sparse-model-deployment)
+4. [Sparse Model Deployment](#sparse-model-deployment)
 
 
 5. [Reference](#reference)
