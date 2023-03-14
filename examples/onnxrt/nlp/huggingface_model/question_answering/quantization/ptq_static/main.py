@@ -481,7 +481,7 @@ def main():
         config = PostTrainingQuantConfig(approach='static',
                                          quant_format=model_args.quant_format,
                                          op_name_dict={op_name:FP32 for op_name in fp32_op_names} \
-                                            if fp32_op_names is not None else None)
+                                            if fp32_op_names is not None else None))
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,
