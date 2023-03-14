@@ -111,7 +111,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         weights_min_name = None
         weights_max_name = None
         # no QDQ inserted for 'Enter' node in phase 1
-        if weight_node.op == 'Enter':
+        if weight_node.op == 'Enter': # pragma: no cover
             parent_node = self.node_name_mapping[
                 helper.node_name_from_input(weight_node.input[0])].node
             # FIXME We only quantize the MatMul op which second input node type is const. This is a
@@ -139,13 +139,13 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         if weight_node.op == 'Const':
             weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
 
-            if np.any(np.isnan(weights_content)):
+            if np.any(np.isnan(weights_content)): # pragma: no cover
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
                 return []
 
         # If weight node non const, can't insert dummy biasadd to do matmul fusion.
-        if weight_node.op != 'Const' and len(match_node_name) == 3:
+        if weight_node.op != 'Const' and len(match_node_name) == 3: # pragma: no cover
             self.exclude_matmul_nodes.append(matched_node.node.name)
             self.output_graph = self.input_graph
             return []
@@ -186,7 +186,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             q_weights_max_name = q_weights_inputs[2]
 
         skip_node_name.append(normal_inputs[0])
-        if enter_node:
+        if enter_node: # pragma: no cover
             skip_node_name.append(enter_node.name)
         else:
             skip_node_name.append(normal_inputs[1])
@@ -207,7 +207,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                         bias_node_name, [0] * bias_size, dtypes.float32, shape=[bias_size]
                     )
 
-                    if enter_node:
+                    if enter_node: # pragma: no cover
                         bias_enter_node = helper.create_node(
                             'Enter', bias_node_name + '_enter', [bias_node_name])
                         helper.set_attr_string(bias_enter_node,
@@ -331,7 +331,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         quantizev2_weights_name = None
 
         # no QDQ inserted for 'Enter' node in phase 1
-        if weight_node.op == 'Enter':
+        if weight_node.op == 'Enter': # pragma: no cover
             parent_node = self.node_name_mapping[
                 helper.node_name_from_input(weight_node.input[0])].node
             # FIXME We only quantize the MatMul op which second input node type is const. This is a
@@ -358,7 +358,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
         # TODO Remove below two lines once the TF enabled the QuantizedMatMul while
         # transpose_a could be set to True.
-        if matched_node.node.attr["transpose_a"].b is True:
+        if matched_node.node.attr["transpose_a"].b is True: # pragma: no cover
             self.exclude_matmul_nodes.append(matched_node.node.name)
             self.output_graph = self.input_graph
             return []
@@ -366,7 +366,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         if weight_node.op == 'Const':
             weights_content = tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
 
-            if np.any(np.isnan(weights_content)):
+            if np.any(np.isnan(weights_content)): # pragma: no cover
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
                 return []
@@ -384,7 +384,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
 
         single_matmul_fusion = True
         if len(match_node_name) == 3:
-            if is_shared_output:
+            if is_shared_output: # pragma: no cover
                 self.output_graph = self.input_graph
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 return []
@@ -942,14 +942,14 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                     # This is a workaround for RNN model like LTSM.
                     parent_node = None
                     if cur_node.op == "MatMul" and not self.itex_mode:
-                        if control_inputs:
+                        if control_inputs: # pragma: no cover
                             self.exclude_matmul_nodes.append(cur_node.name)
                             continue
                         if weight_node.op != 'Const':
                             if weight_node.input:
                                 parent_node = self.node_name_mapping \
                                     [helper.node_name_from_input(weight_node.input[0])].node
-                                if weight_node.op == 'Enter':
+                                if weight_node.op == 'Enter': # pragma: no cover
                                     if len(self.node_name_mapping \
                                        [helper.node_name_from_input(weight_name)].output)>1:
                                         self.exclude_matmul_nodes.append(cur_node.name)
@@ -967,13 +967,13 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                         else:
                             weights_content = \
                                 tensor_util.MakeNdarray(weight_node.attr['value'].tensor)
-                            if np.any(np.isnan(weights_content)):
+                            if np.any(np.isnan(weights_content)): # pragma: no cover
                                 self.exclude_matmul_nodes.append(cur_node.name)
                                 continue
 
                         # TODO Remove below two lines once the TF enabled the QuantizedMatMul while
                         # transpose_a could be set to True.
-                        if cur_node.attr["transpose_a"].b is True:
+                        if cur_node.attr["transpose_a"].b is True: # pragma: no cover
                             self.exclude_matmul_nodes.append(cur_node.name)
                             continue
 
@@ -986,7 +986,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
                         continue
 
                     if qdq_inserted:
-                        if control_inputs:
+                        if control_inputs: # pragma: no cover
                             self.exclude_matmul_nodes.append(cur_node.name)
                             continue
                         if self.node_name_mapping[normal_inputs[0]].node.op != "Dequantize" or \

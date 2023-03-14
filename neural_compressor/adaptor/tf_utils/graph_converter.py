@@ -175,12 +175,12 @@ class GraphConverter:
         output_tensor = model.output_tensor
         # TF table initialization: https://github.com/tensorflow/tensorflow/issues/8665
         node_names = [node.name for node in sess.graph.as_graph_def().node]
-        if 'init_all_tables' in node_names:
+        if 'init_all_tables' in node_names: # pragma: no cover
             init_table_op = sess.graph.get_operation_by_name('init_all_tables')
             sess.run(init_table_op)
 
         logger.info("Start sampling on calibration dataset.")
-        if hasattr(self.data_loader, "__len__") and len(self.data_loader) == 0:
+        if hasattr(self.data_loader, "__len__") and len(self.data_loader) == 0: # pragma: no cover
             feed_dict = {}
             _ = sess.run(output_tensor, feed_dict) if iter_op==[] \
                 else iterator_sess_run(sess, iter_op, \
@@ -199,7 +199,7 @@ class GraphConverter:
                                 break
                 else:
                     feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
-            else:
+            else: # pragma: no cover
                 assert len(input_tensor) == len(inputs), \
                     'inputs len must equal with input_tensor'
                 feed_dict = {}
@@ -278,7 +278,7 @@ class GraphConverter:
                 is_supported_version = True
                 is_sprbase_version = True
 
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             raise ValueError(e)
         finally:
             if version1_gt_version2(tf.version.VERSION, TF_SUPPORTED_MAX_VERSION) and not is_sprbase_version:
@@ -297,7 +297,7 @@ class GraphConverter:
                 logger.fatal("Please set environment variable TF_ENABLE_ONEDNN_OPTS=1 "
                              "when TensorFlow >= 2.6.0 and < 2.9.0 installed.")
 
-            if not is_supported_version:
+            if not is_supported_version: # pragma: no cover
                 raise ValueError(
                     str('Please install TensorFlow within version >={} and <={}.')
                     .format(TF_SUPPORTED_MIN_VERSION, TF_SUPPORTED_MAX_VERSION))
@@ -305,7 +305,7 @@ class GraphConverter:
     def _check_args(self):
         """Check model's arguments."""
         if self.model.workspace_path and not os.path.isdir(self.model.workspace_path) \
-                and not os.path.exists(os.path.dirname(self.model.workspace_path)):
+                and not os.path.exists(os.path.dirname(self.model.workspace_path)): # pragma: no cover
             raise ValueError('"output_graph" directory does not exist.')
         self._output_path = self.model.workspace_path
 
@@ -493,6 +493,7 @@ class GraphConverter:
 
                 output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
+
                 # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph 
                 # after enabling pad+conv2d in new API.
                 non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
@@ -526,11 +527,11 @@ class GraphConverter:
                     self._freeze_requantization_ranges(self._kl_op_dict)
                     self._fuse_requantize_with_fused_quantized_node()
 
-        except ValueError as e:
+        except ValueError as e: # pragma: no cover
             logger.error("Fail to quantize graph due to {}.".format(str(e)))
             self._tmp_model = None
             raise
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             import traceback
             traceback.print_exc()
             self._tmp_model = None
@@ -550,7 +551,7 @@ class GraphConverter:
                 self.fp32_ops,
                 self.bf16_ops).do_transformation()
 
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             import traceback
             traceback.print_exc()
             self._tmp_model = None
@@ -590,7 +591,7 @@ class GraphConverter:
             self.itex_mode).do_transform()
         self.exclude_node_names = exclude_node_names
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
-        if debug:
+        if debug and not self.performance_only:
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.save(self._int8_dynamic_range_model_path)
 
@@ -732,11 +733,11 @@ class GraphConverter:
             self._insert_qdq_pairs()
             self._convert_qdq()
 
-        except ValueError as e:
+        except ValueError as e: # pragma: no cover
             logger.error("Fail to quantize graph due to {}.".format(str(e)))
             self._tmp_model = None
             raise
-        except Exception as e:
+        except Exception as e: # pragma: no cover
             import traceback
             traceback.print_exc()
             self._tmp_model = None

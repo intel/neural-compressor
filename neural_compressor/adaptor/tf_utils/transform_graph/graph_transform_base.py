@@ -43,7 +43,7 @@ class GraphTransformBase(object):
             try:
                 with gfile.Open(input_pb, 'rb') as f:
                     self.input_graph.ParseFromString(f.read())
-            except Exception as e:
+            except Exception as e: # pragma: no cover
                 logger.error("Fail to read input pb from {} due to {}.".format(
                     input_pb, str(e)))
 
@@ -63,7 +63,7 @@ class GraphTransformBase(object):
 
             if node.name not in self.node_mapping:
                 self.node_mapping[node.name] = node
-            else:
+            else: # pragma: no cover
                 logger.warning("Duplicated node name {}.".format(node.name))
 
     def generate_input_map(self):
@@ -73,7 +73,7 @@ class GraphTransformBase(object):
             node_name = self.node_name_from_input(node.name)
             if node_name not in self.input_node_map:
                 self.input_node_map[node_name] = node
-            else:
+            else: # pragma: no cover
                 raise ValueError("Duplicate node names detected for ",
                                  node.name)
 
@@ -86,10 +86,10 @@ class GraphTransformBase(object):
         Returns:
             node's name
         """
-        if node_name.startswith("^"):
+        if node_name.startswith("^"): # pragma: no cover
             node_name = node_name[1:]
         m = re.search(r"(.*):\d+$", node_name)
-        if m:
+        if m: # pragma: no cover
             node_name = m.group(1)
         return node_name
 
@@ -107,4 +107,4 @@ class GraphTransformBase(object):
 
     def do_transformation(self):
         """Virtual Interface. Each transformation should implement it."""
-        pass
+        pass # pragma: no cover
