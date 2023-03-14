@@ -7,7 +7,7 @@
       "main_script": "main.py",
       "batch_size": 100
     },
-    "resnet18_fx": {
+    "resnet18": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/ptq/cpu/fx/",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet18",
@@ -100,14 +100,14 @@
       "main_script": "main.py",
       "batch_size": 100
     },
-    "resnet18_qat_fx": {
+    "resnet18_qat": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet18",
       "main_script": "main.py",
       "batch_size": 100
     },
-    "resnet50_qat_fx": {
+    "resnet50_qat": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnet50",
@@ -121,7 +121,7 @@
       "main_script": "main.py",
       "batch_size": 100
     },
-    "mobilenet_v2_qat_fx": {
+    "mobilenet_v2_qat": {
       "model_src_dir": "image_recognition/torchvision_models/quantization/qat/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "mobilenet_v2",
