@@ -44,7 +44,7 @@ Pruning
 
 
 
-3. [Post Pruning Deployment](#post-pruning-deployment)
+3. [Sparse Model Depolyment](#Sparse Model Depolyment)
 
 
 
@@ -302,7 +302,7 @@ The following section exemplifies how to use hooks in user pass-in training func
  In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function.
 
 
-## Post Pruning Deployment
+## Sparse Model Depolyment
 
 Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
 
