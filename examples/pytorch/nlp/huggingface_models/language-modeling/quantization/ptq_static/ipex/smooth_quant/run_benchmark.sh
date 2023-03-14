@@ -17,7 +17,7 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
-      --int8)
+      --int8=*)
           int8=$(echo $var |cut -f2 -d=)
       ;;
     esac
