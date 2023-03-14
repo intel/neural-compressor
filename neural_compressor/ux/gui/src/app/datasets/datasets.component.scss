@@ -28,6 +28,7 @@ img {
   position: relative;
   border-radius: 4px;
   flex-grow: 1;
+  max-height: 80vh;
 }
 
 th {
@@ -45,7 +46,7 @@ tr:hover {
 }
 
 .green {
-  background-color: #047271 !important;
+  background-color: #024948 !important;
 }
 
 .container {

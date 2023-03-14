@@ -23,8 +23,13 @@
     "@angular/platform-browser-dynamic": "^14.2.0",
     "@angular/router": "^14.2.0",
     "@swimlane/ngx-charts": "^20.1.2",
-    "@swimlane/ngx-graph": "^8.0.2",
+    "@types/cytoscape": "^3.19.9",
     "angular-plotly.js": "^4.0.4",
+    "cytoscape": "^3.23.0",
+    "cytoscape-dagre": "^2.5.0",
+    "cytoscape-expand-collapse": "^4.1.0",
+    "cytoscape-navigator": "^2.0.2",
+    "cytoscape-node-html-label": "^1.2.2",
     "file-saver": "^2.0.5",
     "glob-parent": "^6.0.1",
     "lodash": "^4.17.21",
@@ -67,7 +72,6 @@
     "karma-coverage-istanbul-reporter": "~3.0.2",
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "^1.6.0",
-    "protractor": "~7.0.0",
     "ts-node": "~7.0.0",
     "typescript": "~4.7.4"
   }

@@ -1,5 +1,4 @@
 <div class="project-list">
-  <br>
   <h3>My projects</h3>
   <div *ngFor="let project of projectList" (mouseleave)="showDeleteButtonId = 0">
     <div mat-flat-button [attr.id]="'project' + project.id" [routerLink]="['/project', project.id, activeTab]"
