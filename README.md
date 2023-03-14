@@ -73,12 +73,12 @@ q_model = fit(
     <tr>
       <td colspan="4" align="center"><a href="./docs/source/design.md#architecture">Architecture</a></td>
       <td colspan="3" align="center"><a href="./docs/source/design.md#workflow">Workflow</a></td>
-      <td colspan="1" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
+      <td colspan="1" align="center"><a href="api-doc/apis.html">APIs</a></td>
       <td colspan="1" align="center"><a href="./docs/source/bench.md">GUI</a></td>
     </tr>
     <tr>
-      <td colspan="2" align="center"><a href="./examples#notebook-examples">Notebook</a></td>
-      <td colspan="1" align="center"><a href="./examples">Examples</a></td>
+      <td colspan="2" align="center"><a href="examples/README.md#notebook-examples">Notebook</a></td>
+      <td colspan="1" align="center"><a href="examples/README.md">Examples</a></td>
       <td colspan="1" align="center"><a href="./docs/source/validated_model_list.md">Results</a></td>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
     </tr>

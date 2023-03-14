@@ -18,15 +18,15 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
   </thead>
   <tbody>
     <tr>
-      <td colspan="4" align="center"><a href="/docs/source/design.md#architecture">Architecture</a></td>
-      <td colspan="3" align="center"><a href="/docs/source/design.md#workflow">Workflow</a></td>
-      <td colspan="1" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="/docs/source/bench.md">GUI</a></td>
+      <td colspan="4" align="center"><a href="design.md#architecture">Architecture</a></td>
+      <td colspan="3" align="center"><a href="design.md#workflow">Workflow</a></td>
+      <td colspan="1" align="center"><a href="api-doc/apis.html">APIs</a></td>
+      <td colspan="1" align="center"><a href="bench.md">GUI</a></td>
     </tr>
     <tr>
-      <td colspan="2" align="center"><a href="/examples#notebook-examples">Notebook</a></td>
-      <td colspan="1" align="center"><a href="/examples">Examples</a></td>
-      <td colspan="1" align="center"><a href="/docs/source/validated_model_list.md">Results</a></td>
+      <td colspan="2" align="center"><a href="/examples/README.md#notebook-examples">Notebook</a></td>
+      <td colspan="1" align="center"><a href="/examples/README.md">Examples</a></td>
+      <td colspan="1" align="center"><a href="validated_model_list.md">Results</a></td>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
     </tr>
   </tbody>
@@ -37,16 +37,16 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
   </thead>
   <tbody>
     <tr>
-        <td colspan="2" align="center"><a href="/docs/source/quantization.md">Quantization</a></td>
-        <td colspan="3" align="center"><a href="/docs/source/mixed_precision.md">Advanced Mixed Precision</a></td>
-        <td colspan="2" align="center"><a href="/docs/source/pruning.md">Pruning (Sparsity)</a></td> 
-        <td colspan="2" align="center"><a href="/docs/source/distillation.md">Distillation</a></td>
+        <td colspan="2" align="center"><a href="quantization.md">Quantization</a></td>
+        <td colspan="3" align="center"><a href="mixed_precision.md">Advanced Mixed Precision</a></td>
+        <td colspan="2" align="center"><a href="pruning.md">Pruning (Sparsity)</a></td>
+        <td colspan="2" align="center"><a href="distillation.md">Distillation</a></td>
     </tr>
     <tr>
-        <td colspan="2" align="center"><a href="/docs/source/orchestration.md">Orchestration</a></td>        
-        <td colspan="2" align="center"><a href="/docs/source/benchmark.md">Benchmarking</a></td>
-        <td colspan="3" align="center"><a href="/docs/source/distributed.md">Distributed Compression</a></td>
-        <td colspan="3" align="center"><a href="/docs/source/export.md">Model Export</a></td>
+        <td colspan="2" align="center"><a href="orchestration.md">Orchestration</a></td>
+        <td colspan="2" align="center"><a href="benchmark.md">Benchmarking</a></td>
+        <td colspan="3" align="center"><a href="distributed.md">Distributed Compression</a></td>
+        <td colspan="3" align="center"><a href="export.md">Model Export</a></td>
     </tr>
   </tbody>
   <thead>
@@ -56,7 +56,7 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
   </thead>
   <tbody>
     <tr>
-        <td colspan="9" align="center"><a href="/docs/source/migration.md">Code Migration from Intel® Neural Compressor 1.X to Intel® Neural Compressor 2.X</a></td>
+        <td colspan="9" align="center"><a href="migration.md">Code Migration from Intel® Neural Compressor 1.X to Intel® Neural Compressor 2.X</a></td>
     </tr>    
   </tbody>
   <thead>
@@ -66,10 +66,10 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
   </thead>
   <tbody>
     <tr>
-        <td colspan="1" align="center"><a href="/neural_coder/docs/PythonLauncher.md">Launcher</a></td>
-        <td colspan="2" align="center"><a href="/neural_coder/extensions/neural_compressor_ext_lab/README.md">JupyterLab Extension</a></td>
-        <td colspan="3" align="center"><a href="/neural_coder/extensions/neural_compressor_ext_vscode/README.md">Visual Studio Code Extension</a></td>
-        <td colspan="3" align="center"><a href="/neural_coder/docs/SupportMatrix.md">Supported Matrix</a></td>
+        <td colspan="1" align="center"><a href="neural_coder/docs/PythonLauncher.md">Launcher</a></td>
+        <td colspan="2" align="center"><a href="neural_coder/extensions/neural_compressor_ext_lab/README.md">JupyterLab Extension</a></td>
+        <td colspan="3" align="center"><a href="neural_coder/extensions/neural_compressor_ext_vscode/README.md">Visual Studio Code Extension</a></td>
+        <td colspan="3" align="center"><a href="neural_coder/docs/SupportMatrix.md">Supported Matrix</a></td>
     </tr>    
   </tbody>
   <thead>
@@ -79,13 +79,13 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
   </thead>
   <tbody>
       <tr>
-          <td colspan="3" align="center"><a href="/docs/source/adaptor.md">Adaptor</a></td>
-          <td colspan="3" align="center"><a href="/docs/source/tuning_strategies.md">Strategy</a></td>
-          <td colspan="3" align="center"><a href="/docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
+          <td colspan="3" align="center"><a href="adaptor.md">Adaptor</a></td>
+          <td colspan="3" align="center"><a href="tuning_strategies.md">Strategy</a></td>
+          <td colspan="3" align="center"><a href="distillation_quantization.md">Distillation for Quantization</a></td>
       </tr>
       <tr>
-        <td colspan="3" align="center"><a href="/docs/source/metric.md">Metric</a></td>        
-        <td colspan="3" align="center"><a href="/docs/source/objective.md">Objective</a></td>
+        <td colspan="3" align="center"><a href="metric.md">Metric</a></td>
+        <td colspan="3" align="center"><a href="objective.md">Objective</a></td>
         <td colspan="3" align="center">SmoothQuant (Coming Soon)</td>
       </tr>
   </tbody>
