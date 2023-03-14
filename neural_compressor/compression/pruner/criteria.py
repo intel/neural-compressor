@@ -92,7 +92,7 @@ class MagnitudeCriterion(PruningCriterion):
         """Calculate and store the pruning scores based on magtinude criterion."""
         with torch.no_grad():
             for key in self.modules.keys():
-                p = self.modules[key].weight.data
+                p = torch.abs(self.modules[key].weight.data)
                 self.scores[key] = p
 
 
