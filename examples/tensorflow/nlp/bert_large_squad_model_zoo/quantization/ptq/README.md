@@ -16,7 +16,7 @@ pip install neural-compressor
 ```
 
 ### Install Intel Tensorflow
-```python
+```shell
 pip install intel-tensorflow
 ```
 

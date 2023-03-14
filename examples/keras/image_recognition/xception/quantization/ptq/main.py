@@ -133,7 +133,7 @@ def main(_):
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
         if FLAGS.mode == 'performance':
-            conf = BenchmarkConfig(backend='itex', cores_per_instance=4, num_of_instance=7)
+            conf = BenchmarkConfig(backend='itex', cores_per_instance=4, num_of_instance=1)
             fit(FLAGS.input_model, conf, b_func=evaluate)
         else:
             from neural_compressor.model.model import Model
