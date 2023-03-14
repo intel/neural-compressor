@@ -44,11 +44,14 @@ Pruning
 
 
 
-3. [Examples](#examples)
+3. [Post Pruning Deployment](#post-pruning-deployment)
 
 
 
-4. [Reference](#reference)
+4. [Examples](#examples)
+
+
+5. [Reference](#reference)
 
 
 ## Introduction
@@ -78,13 +81,13 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
   N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used.
 
-- <span id="click">Channel-wise Pruning (Model Auto Slim)</span>
+- Channel-wise Pruning
 
   Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.
   
   An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
   
-  We name this process as **Model Auto Slim** and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
+  We name this process as <span id="click">**Model Auto Slim**</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
 
 
 - Unstructured Pruning
@@ -135,14 +138,14 @@ Pruning Criteria determines how should the weights of a neural network are score
 
 Pruning schedule defines the way the model reaches the target sparsity (the ratio of pruned weights). Both **one-shot** and **iterative** pruning schedules are supported.
 
+- Iterative Pruning
+
+  Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.
+v
 - One-shot Pruning
 
   One-shot pruning means the model is pruned to its target sparsity with one single step(which means pruning start_step = end_step). This often takes place at the initial stage of training/finetuning which simplifies the pruning procedure. However, one-shot pruning is prone to larger accuracy degradation compared to iterative pruning.
 
-
-- Iterative Pruning
-
-  Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.
 
 <div align=center>
 <a target="_blank" href="../../../docs/source/imgs/pruning/Pruning_schedule.jpg">
@@ -299,6 +302,10 @@ The following section exemplifies how to use hooks in user pass-in training func
  In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function.
 
 
+## Post Pruning Deployment
+
+Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
+
 ## Examples
 
 The pruning technique  is validated on typical models across various domains (including CV and NLP).
@@ -330,11 +337,8 @@ The pruning technique  is validated on typical models across various domains (in
 - Image Recognition (Experimental)
 
   Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
-  
 
-## Performance and Memory Footprints
-
-Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [channel pruning and model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
+Please refer to [pruning examples](../../../examples/README.md#Pruning-1) for more information.
 
 ## Reference
 

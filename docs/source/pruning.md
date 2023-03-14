@@ -17,13 +17,18 @@ Pruning
 
     1.7. [Sparsity Decay Types](#sparsity-decay-type)
 
-    1.7. [Regularization](#regularization)
+    1.8. [Regularization](#regularization)
 
 2. [Pruning Support Matrix](#pruning-support-matrix)
 
 3. [Get Started With Pruning API](#get-started-with-pruning-api)
 
-4. [Examples](#examples)
+4. [Post Pruning Deployment](#post-pruning-deployment)
+
+5. [Examples](#examples)
+
+6. [Reference](#reference)
+
 
 ## Introduction
 
@@ -74,13 +79,13 @@ Pruning patterns defines the rules of pruned weights' arrangements in space.
 </a>
 </div>
 
-- Channel-wise Pruning (Model Auto Slim)
+- Channel-wise Pruning
 
   Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.
   
   An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
   
-  We name this process as **Model Auto Slim** and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Please refer more details of such method in this [model slim example](../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
+  We name this process as <span id="click">**Model Auto Slim**</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Please refer more details of such method in this [model slim example](../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/).
 
 ### Pruning Criteria
 
@@ -112,13 +117,14 @@ Pruning criteria defines the rules of which weights are least important to be pr
 
 Pruning schedule defines the way the model reach the target sparsity (the ratio of pruned weights).
 
+- Iterative Pruning
+
+  Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends. 
+
 - One-shot Pruning
 
   One-shot pruning means the model is pruned to its target sparsity with one single step. This pruning method often works at model's initialization step. It can easily cause accuracy drop, but save much training time.
 
-- Iterative Pruning
-
-  Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model's sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends. 
 
 ### Pruning Types
 
@@ -321,6 +327,10 @@ The following section exemplifies how to use hooks in user pass-in training func
     on_train_end() : Execute at the ending of training phase.
 ```
 
+## Post Pruning Deployment
+
+Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
+
 ## Examples
 
 We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). [Validated pruning examples](./validated_model_list.md#validated-pruning-examples) shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model. 
@@ -356,5 +366,11 @@ Figure below shows our pruning results (pruned model's accuracy and sparsity as 
   Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
   
 
-Please refer to pruning examples([TensorFlow](../../examples/README.md#Pruning), [PyTorch](../../examples/README.md#Pruning-1)) for more information.
+Please refer to [pruning examples](../../examples/README.md#Pruning-1) for more information.
 
+
+## Reference
+
+[1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.
+
+[2] Zafrir, Ofir, Ariel Larey, Guy Boudoukh, Haihao Shen, and Moshe Wasserblat. "Prune once for all: Sparse pre-trained language models." arXiv preprint arXiv:2111.05754 (2021).
