@@ -306,7 +306,6 @@
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_resnet50/frozen_inference_graph.pb",
       "main_script": "main.py",
       "batch_size": 10
-
     },
     "faster_rcnn_resnet101_saved": {
       "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_resnet101/quantization/ptq",
