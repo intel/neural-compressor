@@ -251,12 +251,12 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
         if scheme == 'sym':
             max_range = np.maximum(abs(rmin), abs(rmax))
             scale = np.ones(rmax.shape, dtype='float32')
-            scale[max_range > 0] = \
-                np.array([float(i) / quantize_range for i in (max_range * 2.).flatten().tolist()], dtype='float32')
+            scale[max_range > 0] = np.array([float(i) / quantize_range for i in \
+                (max_range[max_range > 0] * 2.).flatten().tolist()], dtype='float32')
         else:
             scale = np.ones(rmax.shape, dtype='float32')
-            scale[rmin != rmax] = \
-                np.array([float(i) / quantize_range for i in (rmax - rmin).flatten().tolist()], dtype='float32')
+            scale[rmin != rmax] = np.array([float(i) / quantize_range for i in \
+                (rmax - rmin)[rmin != rmax].flatten().tolist()], dtype='float32')
 
         if scheme == 'sym' and qType == onnx_proto.TensorProto.INT8:
             zero_point = np.zeros(scale.shape, dtype='int8') if isinstance(scale, np.ndarray) else 0
