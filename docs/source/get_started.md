@@ -16,7 +16,7 @@
 ```shell
 # Install Intel Neural Compressor and TensorFlow
 pip install neural-compressor
-pip install intel-tensorflow
+pip install tensorflow
 # Prepare fp32 model
 wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
 ```
