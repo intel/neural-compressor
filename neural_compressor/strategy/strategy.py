@@ -119,45 +119,25 @@ class TuneStrategy(object):
         self.tune_result_record = []
         self.tuning_history = []
         self.tuning_result_data = []
-        # The tuning history ever made, structured like below:
-        # [
-        #   {
-        #     'version': __version__,
-        #     'cfg': cfg1,
-        #     'framework': tensorflow
-        #     'baseline': baseline1,
-        #     'last_tune_result': last_tune_result1,
-        #     'best_tune_result': best_tune_result1,
-        #     'history': [
-        #                  # tuning history under same yaml config
-        #                  {'tune_cfg': tune_cfg1, 'tune_result': \
-        #                               tune_result1, 'q_config': q_config1, ...},
-
-        #                   ...,
-        #                ],
-        #     # new fields added by subclass for resuming
-        #     ...,
-        #   },
-        #   # tuning history under different yaml configs
-        #   ...,
-        # ]
-
         self.baseline = None
         self.last_tune_result = None
         self.last_qmodel = None
         self.last_tune_cfg = None
         self.best_qmodel = None 
         self.best_tune_result = None
-        self.best_tuning_cfg = None # track the best tuning config correspondence to the best quantized model
-        self.cur_best_acc = self.initial_best_acc() # track the current best accuracy
-        self.cur_best_tuning_cfg = {} # track tuning cfg with the current best accuracy
+        # track the best tuning config correspondence to the best quantized model
+        self.best_tuning_cfg = None
+        # track the current best accuracy
+        self.cur_best_acc = self.initial_best_acc()
+        # track tuning cfg with the current best accuracy
+        self.cur_best_tuning_cfg = {}
         self.re_quant = False
         self.trials_count = 0
         self.capability = self.adaptor.query_fw_capability(model)
         logger.debug(self.capability)
         self.set_tuning_space(conf)
         
-        #For algo scheduler
+        # for algo scheduler
         self.algo_scheduler = AlgorithmScheduler(self.cfg.quantization.recipes)
         self.algo_scheduler.dataloader = self.calib_dataloader  # reuse the calibration iteration
         self.algo_scheduler.origin_model = self.model
@@ -180,6 +160,8 @@ class TuneStrategy(object):
         self._initialize_recipe()
         self.applied_all_recipes_flag = False
         if resume is not None: self.setup_resume(resume)
+        # for diagnosis
+        self._diagnosis_done = False
 
 
     @abstractmethod
@@ -627,6 +609,8 @@ class TuneStrategy(object):
                 self.best_qmodel = self.last_qmodel
                 self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
                 return
+            # evaluate the baseline for diagnosis
+            self._diagnosis(tune_cfg)
             self.last_tune_result = self._evaluate(self.last_qmodel)
             self.cur_best_acc, self.cur_best_tuning_cfg = self.update_best_op_tuning_cfg(op_tuning_cfg)
             need_stop = self.stop(self.cfg.tuning.exit_policy.timeout, self.trials_count)
@@ -657,9 +641,6 @@ class TuneStrategy(object):
                     continue
                 # recover the best quantized model from tuning config
                 self._recover_best_qmodel_from_tuning_cfg()
-                if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning:
-                    logger.debug(f'*** Start to do diagnosis (inspect tensor).')
-                    self._diagnosis()
                 if self.use_multi_objective and len(self.tune_result_record) > 1 and \
                     self.best_tune_result is not None:
                     best_trail, best_result = self.objectives.best_result(self.tune_result_record,
@@ -698,6 +679,11 @@ class TuneStrategy(object):
         
     def _eval_baseline(self):
         """Evaluate the fp32 model if needed."""
+        # need do diagnosis but not do diagnosis, skip
+        if (self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning) and\
+            not self._diagnosis_done:
+            logger.info(" *** Evaluate fp32 model after dumping the diagnosis information.")
+            return
         if not self._can_create_eval_func_from_cfg() and not self.eval_func:
             logger.info("Neither evaluation function nor metric is defined." \
                         " Generate a quantized model with default quantization configuration.")
@@ -708,8 +694,7 @@ class TuneStrategy(object):
             # get fp32 model baseline
             if self.baseline is None:
                 logger.info("Get FP32 model baseline.")
-                self._fp32_model = self.model
-                self.baseline = self._evaluate(self.model)       
+                self.baseline = self._evaluate(self.model)
                 self.objectives.baseline = self.baseline
                 # record the FP32 baseline
                 self._add_tuning_history()
@@ -1535,17 +1520,21 @@ class TuneStrategy(object):
                 ops_lst.append(op_info)
         return ops_lst
 
-    def _diagnosis(self):
+    def _diagnosis(self, tune_cfg):
+        """Dump diagnosis information."""
         import logging
         logger = logging.getLogger("neural_compressor")
+        if self.cfg.tuning.diagnosis and self.cfg.tuning.diagnosis.diagnosis_after_tuning\
+            and not self._diagnosis_done:
+            logger.debug(f'*** Start to do diagnosis (inspect tensor).')
+        else:
+            return
         iteration_list = self.cfg.tuning.diagnosis.iteration_list
         inspect_type = self.cfg.tuning.diagnosis.inspect_type
         save_to_disk = self.cfg.tuning.diagnosis.save_to_disk
         save_path = self.cfg.tuning.diagnosis.save_path
-        inspect_node_lst, updated_cfg = self.adaptor.diagnosis_helper(self._fp32_model,
-                                                                      self.last_qmodel,
-                                                                      self.tune_cfg,
-                                                                      save_path = save_path)
+        inspect_node_lst, updated_cfg = self.adaptor.diagnosis_helper(self.model, \
+            self.last_qmodel, tune_cfg, save_path = save_path)
         op_list = self.cfg.tuning.diagnosis.op_list
         if not op_list:
             op_list = list(inspect_node_lst)
@@ -1553,7 +1542,7 @@ class TuneStrategy(object):
             op_list = list(set(op_list).intersection(inspect_node_lst))
 
         logger.debug(f'*** Start to inspect tensor :{op_list} in  fp32 model.')
-        self.adaptor.inspect_tensor(self._fp32_model,
+        self.adaptor.inspect_tensor(self.model,
                                     dataloader=self.calib_dataloader,
                                     op_list=op_list,
                                     iteration_list=iteration_list,
@@ -1571,3 +1560,5 @@ class TuneStrategy(object):
                                     save_to_disk=save_to_disk,
                                     save_path= save_path + '/quan/',
                                     quantization_cfg=updated_cfg)
+        self._diagnosis_done = True
+        self._eval_baseline()

@@ -175,7 +175,7 @@ class TestTensorflowInspectTensor(unittest.TestCase):
         os.remove(self.quan_dumped_tensor_file_path)
         os.rmdir(self.quan_dumped_tensor_path)
         shutil.rmtree(self.workspace)
-        shutil.rmtree(os.path.join(os.getcwd(), 'save_path_test'))
+        shutil.rmtree(os.path.join(os.getcwd(), 'save_path_test'), ignore_errors=True)
 
     def test_tensorflow_inspect_tensor(self):
         from neural_compressor.experimental import Quantization, common

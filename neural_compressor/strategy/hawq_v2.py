@@ -67,7 +67,7 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
         hawq_v2_criterion =self.cfg.tuning.strategy.hawq_v2_loss
         # assert hawq_v2_criterion is not None, "HAWQ-V2 strategy needs model loss function to compute the gradient, \
         #     Please assign it by strategy_kwargs({'hawq_v2_loss': hawq_v2_loss})."
-        op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self._fp32_model,
+        op_to_traces = self.adaptor.calculate_hessian_trace(fp32_model = self.model,
                                                             dataloader = self.calib_dataloader,
                                                             q_model = self.last_qmodel,
                                                             criterion =hawq_v2_criterion,
