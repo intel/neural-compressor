@@ -180,7 +180,7 @@ Regularization is a technique that discourages learning a more complex model and
 </div>
 
 ## Pruning Support Matrix
-
+(Currently we only support pruning for PyTorch models)
 <table>
 <thead>
   <tr>
@@ -195,7 +195,7 @@ Regularization is a technique that discourages learning a more complex model and
     <td rowspan="3">Unstructured Pruning</td>
     <td rowspan="3">Element-wise</td>
     <td>Magnitude</td>
-    <td>PyTorch, TensorFlow</td>
+    <td>PyTorch</td>
   </tr>
   <tr>
     <td>Pattern Lock</td>
@@ -208,7 +208,7 @@ Regularization is a technique that discourages learning a more complex model and
   <tr>
     <td rowspan="6">Structured Pruning</td>
     <td rowspan="2">Filter/Channel-wise</td>
-    <td>Gradient Sensitivity</td>
+    <td>Gradient</td>
     <td>PyTorch</td>
   </tr>
   <tr>

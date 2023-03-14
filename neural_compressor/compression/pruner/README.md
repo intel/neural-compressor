@@ -78,7 +78,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
   N weights are selected for pruning from each M consecutive weights, The 2:4 pattern is commonly used.
 
-- Channel-wise Pruning (Model Auto Slim)
+- <span id="click">Channel-wise Pruning (Model Auto Slim)</span>
 
   Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.
   
@@ -332,12 +332,12 @@ The pruning technique  is validated on typical models across various domains (in
   Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
   
 
-The API [Pruning V2](../../../docs/source/pruning.md#Get-Started-with-Pruning-API) used in these examples is slightly different from the one described above, both API can achieve the same result, so you can choose the one you like.
+## Performance and Memory Footprints
+
+Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [channel pruning and model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
 
 ## Reference
 
 [1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.
 
 [2] Zafrir, Ofir, Ariel Larey, Guy Boudoukh, Haihao Shen, and Moshe Wasserblat. "Prune once for all: Sparse pre-trained language models." arXiv preprint arXiv:2111.05754 (2021).
-
-
