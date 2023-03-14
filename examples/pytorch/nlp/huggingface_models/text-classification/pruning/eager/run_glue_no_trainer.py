@@ -502,8 +502,8 @@ def main():
         pruning_end = pruning_start
     pruning_configs = [
         {
-            "pruning_type": "magnitude",
-            "pruning_scope": "local",
+            "pruning_type": "snip_momentum",
+            "pruning_scope": "global",
             "sparsity_decay_type": "exp",
             "excluded_op_names": ["classifier", "pooler", ".*embeddings*"],
             "pruning_op_types": ["Linear"],
