@@ -942,7 +942,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
-                if precision == 'fp16' and self.device == 'cpu':
+                if precision in ['fp16', 'bf16'] and (self.device == 'cpu' or self.backend != 'CUDAExecutionProvider'):
+                    continue
+                elif precision == 'bf16' and 'CUDAExecutionProvider' not in ort.get_available_providers():
                     continue
                 # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \

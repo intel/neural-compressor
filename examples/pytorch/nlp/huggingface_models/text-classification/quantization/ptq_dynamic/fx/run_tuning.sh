@@ -40,10 +40,15 @@ function run_tuning {
     extra_cmd=''
     batch_size=16
     MAX_SEQ_LENGTH=128
+    TASK_NAME='mrpc'
     
-    if  [ "${topology}" = "bert_large_RTE_dynamic" ]; then
+    if  [ "${topology}" = "bert_large_RTE"* ]; then
         TASK_NAME='rte'
-    elif [ "${topology}" = "xlm-roberta-base_MRPC_dynamic" ]; then
+    elif [ "${topology}" = "xlm-roberta-base_MRPC"* ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "distilbert_base_MRPC"* ]; then
+        TASK_NAME='mrpc'
+    elif [ "${topology}" = "albert_base_MRPC" ]; then
         TASK_NAME='mrpc'
     fi
 

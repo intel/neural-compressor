@@ -827,8 +827,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         qType = onnx_proto.TensorProto.INT8
         scale_value = np.array([1, 1])
         zo_value = np.array([0, 0])
-        new_tensor_value = quantize_data_per_channel(tensor_value, qType, 'sym', scale_value, zo_value)
-        self.assertEqual(tensor_value.all(), new_tensor_value.all())
+        new_tensor_value = quantize_data_per_channel(tensor_value, 1, 254, qType, 'sym')
+        self.assertEqual(tensor_value.all(), new_tensor_value[-1].all())
 
     def test_adaptor(self):
         from neural_compressor.utils.constant import FP32, INT8_SYM_MINMAX_PERTENSOR, UINT8_ASYM_MINMAX_PERTENSOR

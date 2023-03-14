@@ -85,6 +85,8 @@ function run_performance() {
     cmd="${benchmark_cmd} --input_model=${input_model}"
     if [ "${new_benchmark}" == "true" ]; then
         $BOLD_YELLOW && echo "run with internal benchmark..." && $RESET
+        export NUM_OF_INSTANCE=2
+        export CORES_PER_INSTANCE=4
         eval ${cmd} 2>&1 | tee ${log_dir}/${framework}-${model}-performance-${precision}.log
     else
         $BOLD_YELLOW && echo "run with external multiInstance benchmark..." && $RESET

@@ -72,7 +72,7 @@ PostTrainingQuantConfig(
   calibration_sampling_size=[1000, 2000],   # sampling_size: same as in the conf.yaml;
   ## transform: this parameter does not need to specially be defined;
   ## model_wise: this parameter does not need to specially be defined;
-  op_name_list=op_list,     # op_wise: same as in the conf.yaml;
+  op_name_dict=op_dict,     # op_wise: same as in the conf.yaml;
   ## evaluation: these parameters do not need to specially be defined;
   strategy="basic",         # tuning.strategy.name: same as in the conf.yaml;
   ## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;
@@ -170,7 +170,7 @@ QuantizationAwareTrainingConfig(
   ## approach: this parameter does not need to specially be defined;
   ## train: these parameters do not need to specially be defined;
   ## model_wise: this parameter does not need to specially be defined;
-  op_name_list=op_list,     # op_wise: same as in the conf.yaml;
+  op_name_dict=op_dict,     # op_wise: same as in the conf.yaml;
   ## evaluation: these parameters do not need to specially be defined;
   strategy="basic",         # tuning.strategy.name: same as in the conf.yaml;
   ## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;
