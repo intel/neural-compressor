@@ -139,7 +139,7 @@
       "model_src_dir": "image_recognition/resnest/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "resnest50",
-      "main_script": "scripts/torch/verify.py",
+      "main_script": "verify.py",
       "batch_size": 100
     },
     "se_resnext50_32x4d": {
