@@ -17,3 +17,4 @@
 
 from .callbacks import QuantizationAwareTrainingCallbacks, DistillationCallbacks, PruningCallbacks
 from .pruner.pruning import PruningWrapper, PruningUnWrapper
+from .. import WeightPruningConfig

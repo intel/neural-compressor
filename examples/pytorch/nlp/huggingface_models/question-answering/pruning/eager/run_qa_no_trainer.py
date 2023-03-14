@@ -56,8 +56,8 @@ from transformers.file_utils import get_full_repo_name
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
-from neural_compressor.training import prepare_compression
-from neural_compressor.training import WeightPruningConfig
+
+from neural_compressor.compression import PruningWrapper, WeightPruningConfig
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.21.0.dev0")
@@ -988,9 +988,8 @@ def main():
         start_step=pruning_start,
         end_step=pruning_end
     )
-    compression_manager = prepare_compression(model=model, confs=configs)
-    compression_manager.callbacks.on_train_begin()
-    model = compression_manager.model
+    model, optimizer = PruningWrapper(configs, model, optimizer)
+
 
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
@@ -999,7 +998,6 @@ def main():
                 total_loss = 0
             for step, batch in enumerate(train_dataloader):
                 # pruner.on_step_begin(local_step=step)
-                compression_manager.callbacks.on_step_begin(step)
                 outputs = model(**batch)
                 loss = outputs.loss
                 # We keep track of the loss at each epoch
@@ -1017,9 +1015,7 @@ def main():
                 loss = loss / args.gradient_accumulation_steps
                 accelerator.backward(loss)
                 if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                    compression_manager.callbacks.on_before_optimizer_step()
                     optimizer.step()
-                    compression_manager.callbacks.on_after_optimizer_step()
                     lr_scheduler.step()
                     optimizer.zero_grad()
                     progress_bar.update(1)

@@ -784,8 +784,7 @@ def main():
     # ***INC Pruning API Preparation***
     
     # Step 1: Load the INC packages
-    from neural_compressor.training import prepare_compression
-    from neural_compressor.training import WeightPruningConfig
+    from neural_compressor.compression import PruningWrapper, PruningUnWrapper, WeightPruningConfig
     # Step 2: epochs <==> steps conversion, use steps to initialize the pruning object
     num_iterations = len(loader_train)
     num_warmup_steps = int(args.warmup_epochs * num_iterations)
@@ -818,10 +817,8 @@ def main():
         end_step=end_step
     )
     # Step 5: Define INC object for pruning  
-    compression_manager = prepare_compression(model=model, confs=configs)
-    compression_manager.callbacks.on_train_begin()
-    model = compression_manager.model
 
+    model = PruningWrapper(configs, model, optimizer)
     _logger.info("Before pruning, obtain the model's validation performance")
     eval_metrics = validate(
         model,
@@ -854,7 +851,6 @@ def main():
                 loss_scaler=loss_scaler,
                 model_ema=model_ema,
                 mixup_fn=mixup_fn,
-                compression_manager=compression_manager,
             )
 
             if args.distributed and args.dist_bn in ('broadcast', 'reduce'):
@@ -928,7 +924,6 @@ def train_one_epoch(
         loss_scaler=None,
         model_ema=None,
         mixup_fn=None,
-        compression_manager=None,
 ):
     if args.mixup_off_epoch and epoch >= args.mixup_off_epoch:
         if args.prefetcher and loader.mixup_enabled:
@@ -948,7 +943,6 @@ def train_one_epoch(
     last_idx = num_batches_per_epoch - 1
     num_updates = epoch * num_batches_per_epoch
     for batch_idx, (input, target) in enumerate(loader):
-        compression_manager.callbacks.on_step_begin(batch_id = batch_idx)
         last_batch = batch_idx == last_idx
         data_time_m.update(time.time() - end)
         if not args.prefetcher:
@@ -989,9 +983,7 @@ def train_one_epoch(
                     value=args.clip_grad,
                     mode=args.clip_mode
                 )
-            compression_manager.callbacks.on_before_optimizer_step()
             optimizer.step()
-            compression_manager.callbacks.on_after_optimizer_step()
 
         if model_ema is not None:
             model_ema.update(model)
