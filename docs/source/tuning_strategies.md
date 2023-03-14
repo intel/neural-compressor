@@ -15,25 +15,27 @@ Tuning Strategies
 
 3. [Tuning Algorithms](#tuning-algorithms)
 
-    3.1. [Conservative Tuning](#conservative-tuning)
+    3.1. [Auto](#auto)
 
-    3.2. [Basic](#basic)
+    3.2. [Conservative Tuning](#conservative-tuning)
 
-    3.3. [MSE](#mse)
+    3.3. [Basic](#basic)
 
-    3.4. [MSE_V2](#mse_v2)
+    3.4. [MSE](#mse)
 
-    3.5. [HAWQ_V2](#hawq_v2)
+    3.5. [MSE_V2](#mse_v2)
 
-    3.6. [Bayesian](#bayesian)
+    3.6. [HAWQ_V2](#hawq_v2)
 
-    3.7. [Exhaustive](#exhaustive)
+    3.7. [Bayesian](#bayesian)
 
-    3.8. [Random](#random)
+    3.8. [Exhaustive](#exhaustive)
 
-    3.9. [SigOpt](#sigopt)
+    3.9. [Random](#random)
 
-    3.10. [TPE](#tpe)
+    3.10. [SigOpt](#sigopt)
+
+    3.11. [TPE](#tpe)
 
  4. [Distributed Tuning](#distributed-tuning)
 
@@ -94,11 +96,31 @@ Intel® Neural Compressor allows users to choose different tuning processes by s
 
 - `1`: "Aggressive" tuning. `1` starts with the default quantization configuration and selects different quantization parameters. `1` can be used to achieve the performance. 
 
-- `"auto"` (default) Auto tuning. `"auto"` combines the advantages of `quant_level=0` and `quant_level=1`. Currently, it tries default quantization configuration, `0`, and [`basic`](./tuning_strategies.md#basic-tuning) strategy sequentially.
+- `"auto"` (default) Auto tuning. `"auto"` combines the advantages of `quant_level=0` and `quant_level=1`. Currently, it tries default quantization configuration, `0`, and [`basic`](./tuning_strategies.md#basic) strategy sequentially.
 
 
 ## Tuning Algorithms
 
+
+### Auto
+
+#### Design
+
+The auto tuning (`quant_level`=`"auto"`) is the default tuning process. Classical settings are shown below:
+
+#### Usage
+
+```python
+from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
+
+conf = PostTrainingQuantConfig(
+    quant_level="auto",  # optional, the quantization level.
+    tuning_criterion=TuningCriterion(
+        timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
+        max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
+    ),
+)
+```
 ### Conservative Tuning
 
 #### Design
@@ -127,15 +149,15 @@ The `Basic` strategy is designed for quantizing most models. There are six stage
 
 - **Stage I**. Quantize with default quantization configuration
     
-    In this stage, it tries to quantize OPs with the default quantization configuration which is consistent with the framework behavior.
+    At this stage, it tries to quantize OPs with the default quantization configuration which is consistent with the framework behavior.
 
 - **Stage II**. Apply all recipes
 
-    In this stage, it tries to apply all recipes.
+    At this stage, it tries to apply all recipes.
 
 - **Stage III**. OP-Type-Wise Tuning
 
-    In this stage, it tries to quantize OPs as many as possible and traverse all OP type wise tuning configs. Note that,  the OP is initialized with different quantization modes according to the quantization approach.
+    At this stage, it tries to quantize OPs as many as possible and traverse all OP type wise tuning configs. Note that, the OP is initialized with different quantization modes according to the quantization approach.
     
     a. `post_training_static_quant`: Quantize all OPs support PTQ static.
 
@@ -145,15 +167,15 @@ The `Basic` strategy is designed for quantizing most models. There are six stage
 
 - **Stage IV**. Try recipe One by One
 
-    In this stage, it tries recipe one by one based on the tuning config with the best result in the previous stage.
+    At this stage, it tries recipe one by one based on the tuning config with the best result in the previous stage.
 
 - **Stage V**. Fallback OP One by One
 
-    In this stage, it performs high-precision OP (FP32, BF16 ...) fallbacks one by one based on the tuning config with the best result in the previous stage, and records the impact of each OP. 
+    At this stage, it performs high-precision OP (FP32, BF16 ...) fallbacks one by one based on the tuning config with the best result in the previous stage, and records the impact of each OP. 
 
 - **Stage VI**. Fallback Multiple OPs Accumulated
 
-    In the final stage, it first sorted the OPs list according to the impact score in stage II, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
+    At the final stage, it first sorted the OPs list according to the impact score in stage II, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
 
 ### Usage
 
@@ -169,26 +191,6 @@ conf = PostTrainingQuantConfig(
     ),
 )
 
-```
-
-### Auto Tuning
-
-#### Design
-
-The auto tuning (`quant_level`=`"auto"`) is the default tuning process. Classical settings are shown below:
-
-#### Usage
-
-```python
-from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
-
-conf = PostTrainingQuantConfig(
-    quant_level="auto",  # optional, the quantization level.
-    tuning_criterion=TuningCriterion(
-        timeout=0,  # optional. tuning timeout (seconds). When set to 0, early stopping is enabled.
-        max_trials=100,  # optional. max tuning times. combined with the `timeout` field to decide when to exit tuning.
-    ),
-)
 ```
 
 ### MSE
