@@ -170,7 +170,7 @@ def main():
 
         model = Model(FLAGS.input_model).graph_def
         if FLAGS.mode == 'performance':
-            conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
+            conf = BenchmarkConfig(warmup=10, iteration=100, cores_per_instance=4, num_of_instance=1)
             fit(model, conf, b_func=evaluate)
         elif FLAGS.mode == 'accuracy':
             accuracy = evaluate(model)

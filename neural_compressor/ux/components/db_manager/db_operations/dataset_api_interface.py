@@ -63,7 +63,6 @@ class DatasetAPIInterface:
         except TypeError:
             raise ClientErrorException("Missing dataset id or dataset name.")
         with Session.begin() as db_session:
-
             removed_dataset_id = Dataset.delete_dataset(
                 db_session=db_session,
                 dataset_id=dataset_id,

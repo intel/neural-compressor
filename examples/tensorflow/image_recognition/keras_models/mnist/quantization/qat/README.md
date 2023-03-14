@@ -132,7 +132,7 @@ After prepare step is done, we add quantization and benchmark code to generate q
     # convert the quantized keras model to graph_def so that it can be fused by ITEX
     model = Model(FLAGS.input_model).graph_def
     if FLAGS.mode == 'performance':
-        conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
+        conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
         fit(model, conf, b_func=evaluate)
     elif FLAGS.mode == 'accuracy':
         accuracy = evaluate(model)

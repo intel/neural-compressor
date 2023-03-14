@@ -134,6 +134,7 @@ table.rounded {
 
   tr.active {
     background-color: #ffe07ab6;
+    color: black;
   }
 }
 
@@ -223,7 +224,7 @@ table.rounded {
 }
 
 .link {
-  color: $blue;
+  color: -webkit-link;
   cursor: pointer;
   text-decoration: underline;
   background-color: inherit;
@@ -231,7 +232,7 @@ table.rounded {
 }
 
 .link:hover {
-  color: $energy-blue;
+  color: $blue;
 }
 
 .right {

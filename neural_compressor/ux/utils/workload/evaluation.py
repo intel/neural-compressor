@@ -17,6 +17,7 @@
 from typing import Any, Dict, List, Optional, Union
 
 from neural_compressor.ux.utils.consts import postprocess_transforms
+from neural_compressor.ux.utils.exceptions import ClientErrorException
 from neural_compressor.ux.utils.hw_info import HWInfo
 from neural_compressor.ux.utils.json_serializer import JsonSerializer
 from neural_compressor.ux.utils.workload.dataloader import Dataloader
@@ -105,11 +106,13 @@ class PostprocessSchema(JsonSerializer):
     @staticmethod
     def get_label_shift_value(data: dict) -> Optional[int]:
         """Get LabelShift value."""
-        label_shift_data: Any = data.get("LabelShift", None)
+        label_shift_data: Union[dict, int, None] = data.get("LabelShift", None)
         if label_shift_data is None:
             return None
-        if isinstance(label_shift_data, dict) and "label_shift" in label_shift_data:
-            return int(label_shift_data["label_shift"])
+        if isinstance(label_shift_data, dict):
+            if "label_shift" in label_shift_data:
+                return int(label_shift_data["label_shift"])
+            raise ClientErrorException("LabelShift has to contain 'label_shift' property.")
         return int(label_shift_data)
 
 

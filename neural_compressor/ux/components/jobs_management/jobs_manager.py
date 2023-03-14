@@ -104,6 +104,10 @@ class _JobsManager:
             raise Exception(f"Not recognized task type: {request.type}.")
         method(request)
 
+    def get_jobs_order(self, data: Optional[dict] = None) -> dict:
+        jobs_dict = {job_name: str(job_idx) for job_idx, job_name in enumerate(self._jobs.keys())}
+        return jobs_dict
+
     def _schedule_job(self, request: _Request) -> None:
         # there already is job with such job_id
         if self._jobs.get(request.job_id, None):
