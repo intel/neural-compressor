@@ -15,7 +15,7 @@ Pruning
 
     1.6. [Pruning Scope](#pruning-scope)
 
-    1.7. [Sparsity Decay Types](#sparsity-decay-type)
+    1.7. [Sparsity Decay Types](#sparsity-decay-types)
 
     1.8. [Regularization](#regularization)
 
@@ -23,9 +23,9 @@ Pruning
 
 3. [Get Started With Pruning API](#get-started-with-pruning-api)
 
-4. [Post Pruning Deployment](#post-pruning-deployment)
+4. [Examples](#examples)
 
-5. [Examples](#examples)
+5. [Sparse Model Deployment](#sparse-model-deployment)
 
 6. [Reference](#reference)
 
@@ -161,7 +161,7 @@ Range of sparse score calculation in iterative pruning, default scope is global.
 
   The score map is computed from the corresponding layer's weight, The sparsity of each layer is equal to the target.
 
-### Sparsity Decay Type
+### Sparsity Decay Types
 
 Growth rules for the sparsity of iterative pruning, "exp", "cos", "cube",  and "linear" are available，We use exp by default.
 <div align=center>
@@ -327,9 +327,6 @@ The following section exemplifies how to use hooks in user pass-in training func
     on_train_end() : Execute at the ending of training phase.
 ```
 
-## Post Pruning Deployment
-
-Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
 
 ## Examples
 
@@ -367,6 +364,10 @@ Figure below shows our pruning results (pruned model's accuracy and sparsity as 
   
 
 Please refer to [pruning examples](../../examples/README.md#Pruning-1) for more information.
+
+## Sparse Model Deployment
+
+Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
 
 
 ## Reference
