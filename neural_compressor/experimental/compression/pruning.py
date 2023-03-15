@@ -101,7 +101,6 @@ def save(
     :param _use_new_zipfile_serialization:
     :return:
     """
-
     params = {}
     if pickle_module != None:
         params['pickle_module'] = pickle_module
@@ -154,7 +153,6 @@ def prepare_pruning(config, model: torch.nn.Module, opt: torch.optim):
     :param opt: The user's optimizer
     :return: The modified model and optimizer
     """
-
     import torch
     torch.orig_save = torch.save  ##rewrite torch save
     setattr(torch, 'save', save)
