@@ -49,7 +49,7 @@ Classes
       Get min/max values of tensors.
 
 
-   .. py:method:: dump_calibration(q_config, calib_mode='naive')
+   .. py:method:: dump_calibration(q_config, calib_mode='naive', min_max=None)
 
       Gather calibration params for quantization.
 
@@ -61,6 +61,8 @@ Classes
                          a minimum of all values and the second element
                          is a maximum of all values. Defaults to 'naive'.
       :type calib_mode: str, optional
+      :param min_max: min/max values of tensors
+      :type min_max: dict, optional
 
 
    .. py:method:: calculate_quantization_params(q_config, quantization_thresholds)

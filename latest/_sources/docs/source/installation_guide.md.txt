@@ -186,4 +186,4 @@ The following prerequisites and requirements must be satisfied for a successful 
 </table>
 
 > **Note:**
-> Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow before v2.9. oneDNN is the default for TensorFlow since v2.9.
+> Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow before v2.9. oneDNN is the default for TensorFlow since [v2.9](https://github.com/tensorflow/tensorflow/releases/tag/v2.9.0) ([Intel Cascade Lake](https://www.intel.com/content/www/us/en/products/platforms/details/cascade-lake.html) and newer CPUs).

@@ -57,6 +57,8 @@ Functions
    neural_compressor.ux.utils.utils.parse_to_float_list
    neural_compressor.ux.utils.utils.export_to_csv
    neural_compressor.ux.utils.utils.parse_version
+   neural_compressor.ux.utils.utils.are_archive_filenames_valid
+   neural_compressor.ux.utils.utils.safe_extract_archive
 
 
 
@@ -255,5 +257,15 @@ Functions
 .. py:function:: parse_version(string_version: Optional[str]) -> str
 
    Parse module version.
+
+
+.. py:function:: are_archive_filenames_valid(filenames: list) -> bool
+
+   Validate if archive filenames are not malicious.
+
+
+.. py:function:: safe_extract_archive(file: Union[zipfile.ZipFile, tarfile.TarFile], destination_dir: str, members: list) -> None
+
+   Extract archive in safe way.
 
 

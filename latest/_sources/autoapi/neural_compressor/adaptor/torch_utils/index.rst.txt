@@ -17,7 +17,6 @@ Submodules
 
    bf16_convert/index.rst
    hawq_metric/index.rst
-   onnx/index.rst
    symbolic_trace/index.rst
    util/index.rst
 

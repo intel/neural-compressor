@@ -13,7 +13,6 @@
     <script src="../../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
         <script src="../../../../../_static/doctools.js"></script>
         <script src="../../../../../_static/sphinx_highlight.js"></script>
@@ -129,7 +128,7 @@ ensures their outputs are stored as part of the graph output.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.calibration.ONNXRTAugment.dump_calibration">
-<span class="sig-name descname"><span class="pre">dump_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'naive'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.calibration.ONNXRTAugment.dump_calibration" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">dump_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'naive'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.calibration.ONNXRTAugment.dump_calibration" title="Permalink to this definition"></a></dt>
 <dd><p>Gather calibration params for quantization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -140,6 +139,7 @@ for each intermediate model output across
 test data sets, where the first element is
 a minimum of all values and the second element
 is a maximum of all values. Defaults to ‘naive’.</p></li>
+<li><p><strong>min_max</strong> (<em>dict</em><em>, </em><em>optional</em>) – min/max values of tensors</p></li>
 </ul>
 </dd>
 </dl>

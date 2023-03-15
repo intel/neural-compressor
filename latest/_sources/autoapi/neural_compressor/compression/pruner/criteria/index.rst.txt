@@ -90,7 +90,7 @@ Functions
 
    .. py:method:: on_step_begin()
 
-      Calculate and store the pruning scores based on magtinude criterion.
+      Calculate and store the pruning scores based on a magnitude criterion.
 
 
 

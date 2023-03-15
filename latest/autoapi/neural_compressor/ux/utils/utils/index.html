@@ -13,7 +13,6 @@
     <script src="../../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
         <script src="../../../../../_static/doctools.js"></script>
         <script src="../../../../../_static/sphinx_highlight.js"></script>
@@ -206,6 +205,12 @@
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.ux.utils.utils.parse_version" title="neural_compressor.ux.utils.utils.parse_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_version</span></code></a>(→ str)</p></td>
 <td><p>Parse module version.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.ux.utils.utils.are_archive_filenames_valid" title="neural_compressor.ux.utils.utils.are_archive_filenames_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">are_archive_filenames_valid</span></code></a>(→ bool)</p></td>
+<td><p>Validate if archive filenames are not malicious.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.ux.utils.utils.safe_extract_archive" title="neural_compressor.ux.utils.utils.safe_extract_archive"><code class="xref py py-obj docutils literal notranslate"><span class="pre">safe_extract_archive</span></code></a>(→ None)</p></td>
+<td><p>Extract archive in safe way.</p></td>
 </tr>
 </tbody>
 </table>
@@ -446,6 +451,18 @@
 <dt class="sig sig-object py" id="neural_compressor.ux.utils.utils.parse_version">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.utils.utils.</span></span><span class="sig-name descname"><span class="pre">parse_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#neural_compressor.ux.utils.utils.parse_version" title="Permalink to this definition"></a></dt>
 <dd><p>Parse module version.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.ux.utils.utils.are_archive_filenames_valid">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.utils.utils.</span></span><span class="sig-name descname"><span class="pre">are_archive_filenames_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filenames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#neural_compressor.ux.utils.utils.are_archive_filenames_valid" title="Permalink to this definition"></a></dt>
+<dd><p>Validate if archive filenames are not malicious.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.ux.utils.utils.safe_extract_archive">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.ux.utils.utils.</span></span><span class="sig-name descname"><span class="pre">safe_extract_archive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">zipfile.ZipFile</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tarfile.TarFile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">members</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#neural_compressor.ux.utils.utils.safe_extract_archive" title="Permalink to this definition"></a></dt>
+<dd><p>Extract archive in safe way.</p>
 </dd></dl>
 
 </section>

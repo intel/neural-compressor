@@ -37,6 +37,12 @@ Classes
       Clean log files.
 
 
+   .. py:method:: clean_cache_files(workdir_path: str) -> None
+      :staticmethod:
+
+      Clean cache files.
+
+
    .. py:method:: clean_status(status_to_clean: neural_compressor.ux.utils.consts.ExecutionStatus) -> None
       :staticmethod:
 

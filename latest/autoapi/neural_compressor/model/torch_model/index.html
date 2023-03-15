@@ -13,7 +13,6 @@
     <script src="../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
         <script src="../../../../_static/doctools.js"></script>
         <script src="../../../../_static/sphinx_highlight.js"></script>
@@ -289,93 +288,6 @@ total_sparsity (float): total sparsity of model.</p>
 <dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.load_quantized_state_dict">
 <span class="sig-name descname"><span class="pre">load_quantized_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stat_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.load_quantized_state_dict" title="Permalink to this definition"></a></dt>
 <dd><p>Load quantized state with given dict.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_jit">
-<span class="sig-name descname"><span class="pre">export_to_jit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_jit" title="Permalink to this definition"></a></dt>
-<dd><p>Export JIT model.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_fp32_onnx">
-<span class="sig-name descname"><span class="pre">export_to_fp32_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fp32-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_fp32_onnx" title="Permalink to this definition"></a></dt>
-<dd><p>Export PyTorch FP32 model to ONNX FP32 model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>save_path</strong> (<em>str</em><em>, </em><em>optional</em>) – ONNX model path to save. Defaults to ‘fp32-model.onnx’.</p></li>
-<li><p><strong>example_inputs</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – example inputs for export.
-Defaults to torch.rand([1, 1, 1, 1]).</p></li>
-<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – opset version for exported ONNX model. Defaults to 14.</p></li>
-<li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – specify axes of tensors as dynamic.
-Defaults to {“input”: {0: “batch_size”}, “output”: {0: “batch_size”}}.</p></li>
-<li><p><strong>input_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the input nodes of the graph, in order.
-Defaults to None.</p></li>
-<li><p><strong>output_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the output nodes of the graph, in order.
-Defaults to None.</p></li>
-<li><p><strong>do_constant_folding</strong> (<em>bool</em><em>, </em><em>optional</em>) – Apply the constant-folding optimization.
-Defaults to True.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – if True, prints a description of the model being exported to stdout.
-Defaults to True.</p></li>
-<li><p><strong>fp32_model</strong> (<em>torch.nn.model</em><em>, </em><em>optional</em>) – FP32 PyTorch model. Defaults to None.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_bf16_onnx">
-<span class="sig-name descname"><span class="pre">export_to_bf16_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bf16-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_bf16_onnx" title="Permalink to this definition"></a></dt>
-<dd><p>Export PyTorch bf16 model to ONNX bf16 model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>save_path</strong> (<em>str</em><em>, </em><em>optional</em>) – ONNX model path to save. Defaults to ‘bf16-model.onnx’.</p></li>
-<li><p><strong>example_inputs</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – example inputs for export.
-Defaults to torch.rand([1, 1, 1, 1]).</p></li>
-<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – opset version for exported ONNX model. Defaults to 14.</p></li>
-<li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – specify axes of tensors as dynamic.
-Defaults to {“input”: {0: “batch_size”}, “output”: {0: “batch_size”}}.</p></li>
-<li><p><strong>input_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the input nodes of the graph, in order.
-Defaults to None.</p></li>
-<li><p><strong>output_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the output nodes of the graph, in order.
-Defaults to None.</p></li>
-<li><p><strong>do_constant_folding</strong> (<em>bool</em><em>, </em><em>optional</em>) – Apply the constant-folding optimization.
-Defaults to True.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – if True, prints a description of the model being exported to stdout.
-Defaults to True.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.model.torch_model.PyTorchModel.export_to_int8_onnx">
-<span class="sig-name descname"><span class="pre">export_to_int8_onnx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int8-model.onnx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.rand([1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'input':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'},</span> <span class="pre">'output':</span> <span class="pre">{0:</span> <span class="pre">'batch_size'}}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_constant_folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'QDQ'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'S8S8'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.model.torch_model.PyTorchModel.export_to_int8_onnx" title="Permalink to this definition"></a></dt>
-<dd><p>Export PyTorch int8 model to ONNX int8 model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>save_path</strong> (<em>str</em><em>, </em><em>optional</em>) – ONNX model path to save. Defaults to ‘int8-model.onnx’.</p></li>
-<li><p><strong>example_inputs</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – example inputs for export.
-Defaults to torch.rand([1, 1, 1, 1]).</p></li>
-<li><p><strong>opset_version</strong> (<em>int</em><em>, </em><em>optional</em>) – opset version for exported ONNX model. Defaults to 14.</p></li>
-<li><p><strong>dynamic_axes</strong> (<em>dict</em><em>, </em><em>optional</em>) – specify axes of tensors as dynamic.
-Defaults to {“input”: {0: “batch_size”}, “output”: {0: “batch_size”}}.</p></li>
-<li><p><strong>input_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the input nodes of the graph, in order.
-Defaults to None.</p></li>
-<li><p><strong>output_names</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – names to assign to the output nodes of the graph, in order.
-Defaults to None.</p></li>
-<li><p><strong>do_constant_folding</strong> (<em>bool</em><em>, </em><em>optional</em>) – Apply the constant-folding optimization.
-Defaults to True.</p></li>
-<li><p><strong>quant_format</strong> (<em>str</em><em>, </em><em>optional</em>) – format of quantized ONNX model. Defaults to ‘QDQ’.</p></li>
-<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – type for quantized activation and weight. Defaults to ‘S8S8’.</p></li>
-<li><p><strong>fp32_model</strong> (<em>torch.nn.model</em><em>, </em><em>optional</em>) – FP32 PyTorch model. Defaults to None.</p></li>
-<li><p><strong>calib_dataloader</strong> (<em>object</em><em>, </em><em>optional</em>) – calibration dataloader. Defaults to None.</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
