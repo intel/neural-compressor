@@ -9,7 +9,7 @@ sys.path.insert(0, './')
 from neural_compressor.data import Datasets
 from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 from neural_compressor import WeightPruningConfig
-from neural_compressor.compression import PruningWrapper, PruningUnWrapper
+from neural_compressor.training import prepare_pruning
 
 
 class TestPruning(unittest.TestCase):
@@ -44,7 +44,7 @@ class TestPruning(unittest.TestCase):
         dummy_dataset = datasets['dummy'](shape=(10, 3, 224, 224), low=0., high=1., label=True)
         dummy_dataloader = PyTorchDataLoader(dummy_dataset)
 
-        model, optimizer = PruningWrapper(config, self.model, optimizer)
+        model, optimizer = prepare_pruning(config, self.model, optimizer)
 
         for epoch in range(4):
             self.model.train()
@@ -57,7 +57,7 @@ class TestPruning(unittest.TestCase):
                 optimizer.step()
                 local_step += 1
 
-        model, optimizer = PruningUnWrapper(self.model, optimizer)
+        assert (model != None)
 
 
 if __name__ == "__main__":
