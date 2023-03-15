@@ -4,3 +4,4 @@ coloredlogs
 sympy
 onnxruntime-extensions; python_version < '3.10'
 nltk
+tqdm
