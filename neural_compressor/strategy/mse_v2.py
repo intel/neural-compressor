@@ -55,13 +55,6 @@ class MSE_V2TuneStrategy(TuneStrategy):
         Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
-        best_op_tuning_cfg = None
-        if len(self.metric_name) == 1 or self.metric_weight is not None:
-            best_acc = float('-inf') if self.higher_is_better else float('inf')
-        else:
-            best_acc = [float('-inf') if higher_is_better else float('inf') for \
-                higher_is_better in self.metric_criterion]
-
         from copy import deepcopy
         tuning_space = self.tuning_space
         initial_op_tuning_cfg = {}
@@ -92,7 +85,6 @@ class MSE_V2TuneStrategy(TuneStrategy):
             # Optype-wise tuning 
             early_stop_tuning = True
             stage1_cnt = 0
-            int8_ops = quant_mode_wise_items['dynamic'] + quant_mode_wise_items['static']
             stage1_max = 2  # TODO set a more appropriate value
             op_wise_tuning_sampler = OpTypeWiseTuningSampler(tuning_space, [], [], 
                                                              op_item_dtype_dict, initial_op_tuning_cfg)
@@ -125,9 +117,9 @@ class MSE_V2TuneStrategy(TuneStrategy):
 
             # Fallback one by one by op sensitivity(mse)
             # 1. while the accuracy requirements not met:  # to improve the accuracy
-            #     1) calculate the sensitivity of int8 ops in current state. 
+            #     1) calculate the sensitivity of int8 ops in current state.
             #     2) fallback the op with higher sensitivity accumulatively
-            # 2. after the accuracy requirements met:  # to improve the performance 
+            # 2. after the accuracy requirements met:  # to improve the performance
             #     1) calculate the sensitivity of fp32 ops in the current state
             #     2) re-quantize the op with lower sensitivity accumulatively
             tune_cfg = deepcopy(self.cur_best_tuning_cfg)
@@ -203,7 +195,7 @@ class MSE_V2TuneStrategy(TuneStrategy):
                         yield tune_cfg
                         break
                     else:
-                        logger.debug(f"*** Skip re-qaunt {select_op_info}, due the config has been evallated.")
+                        logger.debug(f"*** Skip re-quant {select_op_info}, due the config has been evaluated.")
                         continue
             self.re_quant = False
             logger.info(f"*** The accuracy not meeting the accuracy requirements, stop re-quantize ops.")
