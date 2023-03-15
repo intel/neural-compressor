@@ -62,8 +62,8 @@ from utils.metrics import fitness
 from utils.plots import plot_evolve
 from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel, select_device, smart_DDP, smart_optimizer,
                                smart_resume, torch_distributed_zero_first)
-
-from neural_compressor.training import prepare_compression, WeightPruningConfig
+from neural_compressor.training import prepare_compression
+from neural_compressor.training import WeightPruningConfig
 
 
 import torch.nn.functional as F
@@ -377,8 +377,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     # pruner = Pruning(config)
     # pruner.model = model
     # pruner.on_train_begin()
-
-    prepare_compression(config, model, optimizer)
+    compression_manager = prepare_compression(model=model, confs=config)
+    compression_manager.callbacks.on_train_begin()
     
     if dist_loss != None:
         teacher_model.float()
@@ -434,6 +434,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             # Forward
             with torch.cuda.amp.autocast(amp):
                 # pruner.on_step_begin(local_step=ni)
+                compression_manager.callbacks.on_step_begin(ni)
                 pred = model(imgs)  # forward
                 loss, loss_items = compute_loss(pred, targets.to(device))  # loss scaled by batch_size
                 # distillation
@@ -464,8 +465,11 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 else: # Optimize of non-warmup epochs
                     scaler.unscale_(optimizer)  # unscale gradients
                     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)  # clip gradients
-
+                    # pruner.on_before_optimizer_step()
+                    compression_manager.callbacks.on_before_optimizer_step()
                     scaler.step(optimizer)  # optimizer.step
+                    # pruner.on_after_optimizer_step()
+                    compression_manager.callbacks.on_after_optimizer_step()
                     scaler.update()
                     optimizer.zero_grad()
                 if ema:

@@ -22,7 +22,8 @@ from neural_compressor.compression.pruner.utils import logger, torch
 
 
 def _generate_pruners(config, model):
-    """Generate pruners
+    """Generate pruners.
+
     :param config: WeightPruningConfig
     :param model: The torch module to be pruned
     :return: A list of pruner
@@ -43,7 +44,8 @@ def _generate_pruners(config, model):
 
 
 def _register_on_step_begin(model):
-    """mount on_step_begin to the model
+    """mount on_step_begin to the model.
+
     :param model:The torch module to be pruned
     :return: hook handle
     """
@@ -57,7 +59,8 @@ def _register_on_step_begin(model):
 
 
 def _rewrite_optimizer_step(opt: torch.optim.Optimizer):
-    """mount on_before/after_optimizer_step to optimizer
+    """mount on_before/after_optimizer_step to optimizer.
+
     :param opt: user optimizer
     :return: the modified optimizer
     """
@@ -89,6 +92,15 @@ def save(
         pickle_protocol=None,
         _use_new_zipfile_serialization=None
 ):
+    """A rewrite function for torch save.
+    :param obj:
+    :param f:
+    :param pickle_module:
+    :param pickle_protocol:
+    :param _use_new_zipfile_serialization:
+    :return:
+    """
+
     params = {}
     if pickle_module != None:
         params['pickle_module'] = pickle_module
@@ -98,13 +110,12 @@ def save(
         params['_use_new_zipfile_serialization'] = _use_new_zipfile_serialization
 
     if isinstance(obj, torch.nn.Module) and hasattr(obj, "pruners"):
-        print("save module")
         pruners = obj.pruners
         obj.pruners = None
         delattr(obj, "pruners")
         obj.inc_hook_handle.remove()
         delattr(obj, "inc_hook_handle")
-        if len(params)!=0:
+        if len(params) != 0:
             torch.orig_save(obj, f, params)
         else:
             torch.orig_save(obj, f)
@@ -135,13 +146,13 @@ def save(
 
 
 def prepare_pruning(config, model: torch.nn.Module, opt: torch.optim):
-    """
-    Wrapper the model and optimizer to support all the pruning functionality
+    """Wrapper the model and optimizer to support all the pruning functionality.
     :param config: WeightPruningConfig
     :param model: The user's model
     :param opt: The user's optimizer
     :return: The modified model and optimizer
     """
+
     import torch
     torch.orig_save = torch.save  ##rewrite torch save
     setattr(torch, 'save', save)
