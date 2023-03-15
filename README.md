@@ -73,7 +73,7 @@ q_model = fit(
     <tr>
       <td colspan="4" align="center"><a href="./docs/source/design.md#architecture">Architecture</a></td>
       <td colspan="3" align="center"><a href="./docs/source/design.md#workflow">Workflow</a></td>
-      <td colspan="1" align="center"><a href="api-doc/apis.html">APIs</a></td>
+      <td colspan="1" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
       <td colspan="1" align="center"><a href="./docs/source/bench.md">GUI</a></td>
     </tr>
     <tr>

@@ -20,7 +20,7 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
     <tr>
       <td colspan="4" align="center"><a href="design.md#architecture">Architecture</a></td>
       <td colspan="3" align="center"><a href="design.md#workflow">Workflow</a></td>
-      <td colspan="1" align="center"><a href="api-doc/apis.html">APIs</a></td>
+      <td colspan="1" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
       <td colspan="1" align="center"><a href="bench.md">GUI</a></td>
     </tr>
     <tr>
