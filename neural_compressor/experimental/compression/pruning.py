@@ -44,7 +44,7 @@ def _generate_pruners(config, model):
 
 
 def _register_on_step_begin(model):
-    """mount on_step_begin to the model.
+    """Mount on_step_begin to the model.
 
     :param model:The torch module to be pruned
     :return: hook handle
@@ -59,7 +59,7 @@ def _register_on_step_begin(model):
 
 
 def _rewrite_optimizer_step(opt: torch.optim.Optimizer):
-    """mount on_before/after_optimizer_step to optimizer.
+    """Mount on_before/after_optimizer_step to optimizer.
 
     :param opt: user optimizer
     :return: the modified optimizer
@@ -93,6 +93,7 @@ def save(
         _use_new_zipfile_serialization=None
 ):
     """A rewrite function for torch save.
+
     :param obj:
     :param f:
     :param pickle_module:
@@ -147,6 +148,7 @@ def save(
 
 def prepare_pruning(config, model: torch.nn.Module, opt: torch.optim):
     """Wrapper the model and optimizer to support all the pruning functionality.
+
     :param config: WeightPruningConfig
     :param model: The user's model
     :param opt: The user's optimizer
