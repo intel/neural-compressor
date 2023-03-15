@@ -71,7 +71,7 @@ class HAWQ_V2TuneStrategy(TuneStrategy):
                                                             dataloader = self.calib_dataloader,
                                                             q_model = self.last_qmodel,
                                                             criterion =hawq_v2_criterion,
-                                                            enable_act = True)
+                                                            enable_act = False)
         sorted_op_to_traces = dict(sorted(op_to_traces.items(), key=lambda item: item[1], reverse=True))
         logger.info(f"**************  Hessian Trace  *****************")
         for op_name, trace in sorted_op_to_traces.items():
