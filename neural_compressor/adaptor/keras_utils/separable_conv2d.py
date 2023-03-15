@@ -84,8 +84,8 @@ class QSeparableConv2D(SeparableConv):
       else:
           strides = (1, 1) + self.strides
       # (TODO) it's ugly that we can't get the point_wise min/max here 
-      depthwise_kernel, _, _ = quantization.quantize(self.kernel, self.min_value,
-                                      self.max_value, tf.qint8,
+      depthwise_kernel, _, _ = quantization.quantize(self.depthwise_kernel,
+                                      self.min_value, self.max_value, tf.qint8,
                                       axis=3, mode='SCALED')
       depthwise_kernel = quantization.dequantize(depthwise_kernel, self.min_value,
                                       self.max_value, axis=3, mode='SCALED',)
