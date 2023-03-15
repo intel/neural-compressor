@@ -14,7 +14,7 @@
 // Custom Theming for Angular Material
 // For more information: https://material.angular.io/guide/themin
 
-@use '@angular/material'as mat;
+@use '@angular/material' as mat;
 
 @import '@angular/material/theming';
 
@@ -22,7 +22,8 @@
 
 @include mat-core();
 
-$mat-intel-dark-blue: (50 : #005B85,
+$mat-intel-dark-blue: (
+  50 : #005B85,
   100 : #005B85,
   200 : #005B85,
   300 : #005B85,
@@ -50,9 +51,11 @@ $mat-intel-dark-blue: (50 : #005B85,
     A200 : #ffffff,
     A400 : #ffffff,
     A700 : #ffffff,
-  ));
+  )
+);
 
-$mat-intel-mid-blue: (50 : #0095CA,
+$mat-intel-mid-blue: (
+  50 : #0095CA,
   100 : #0095CA,
   200 : #0095CA,
   300 : #0095CA,
@@ -80,9 +83,11 @@ $mat-intel-mid-blue: (50 : #0095CA,
     A200 : #ffffff,
     A400 : #ffffff,
     A700 : #ffffff,
-  ));
+  )
+);
 
-$mat-intel-light-blue: (50 : #e0f3fc,
+$mat-intel-light-blue: (
+  50 : #e0f3fc,
   100 : #00C7FD,
   200 : #00C7FD,
   300 : #00C7FD,
@@ -110,7 +115,8 @@ $mat-intel-light-blue: (50 : #e0f3fc,
     A200 : #000000,
     A400 : #000000,
     A700 : #000000,
-  ));
+  )
+);
 
 $custom-typography: mat-typography-config($font-family: IntelClearRg);
 @include mat-table-typography($custom-typography);
@@ -123,6 +129,7 @@ $custom-typography: mat-typography-config($font-family: IntelClearRg);
 
   .mat-tab-label {
     font-size: large;
+    opacity: 0.8 !important;
   }
 }
 
@@ -136,7 +143,7 @@ $gui-primary-dark: mat-palette($mat-intel-mid-blue);
 $gui-accent: mat-palette($mat-intel-light-blue);
 
 // The warn palette is optional (defaults to red).
-$gui-warn: mat-palette($mat-red);
+$gui-warn: mat-palette($mat-red, A700);
 
 // Create the theme object (a Sass map containing all of the palettes).
 $gui-theme: mat-light-theme($gui-primary-light, $gui-accent, $gui-warn);
@@ -172,6 +179,26 @@ $gui-dark-theme: mat-dark-theme($gui-primary-dark, $gui-accent, $gui-warn);
   .label,
   .info {
     color: $lighter-gray;
+  }
+
+  .link {
+    color: $light-blue;
+  }
+
+  .footer {
+    color: $lighter-gray;
+  }
+
+  // diagnosis tab
+  .table-value {
+    background-color: $dark-gray;
+    border: 2px #424242 solid;
+  }
+
+  #cy {
+    background: #252525;
+    background-image: radial-gradient(#424242 1px, transparent 0);
+    background-size: 18px 18px;
   }
 }
 

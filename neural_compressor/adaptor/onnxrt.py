@@ -517,7 +517,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   iterations=list(range(0, quantize_config['calib_iteration'])),
                   backend=self.backend, reduce_range=self.reduce_range)
         self.min_max = augment.dump_minmax()
-        quantize_params = augment.dump_calibration(quantize_config)
+        quantize_params = augment.dump_calibration(quantize_config, min_max=self.min_max)
         return quantize_params
 
     def inspect_tensor(self, model, dataloader, op_list=[],

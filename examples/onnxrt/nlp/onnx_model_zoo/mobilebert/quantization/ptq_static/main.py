@@ -157,7 +157,7 @@ def main():
             from neural_compressor.config import BenchmarkConfig
             conf = BenchmarkConfig(iteration=100,
                                    cores_per_instance=4,
-                                   num_of_instance=7)
+                                   num_of_instance=1)
             fit(model, conf, b_dataloader=eval_dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(model)

@@ -13,77 +13,6 @@
 // limitations under the License.
 @import './../../variables.scss';
 
-.node {
-  cursor: pointer;
-  font-family: IntelClearBd;
-  color: black !important;
-
-  :hover {
-    background-color: #E9E9E9;
-  }
-}
-
-.bold {
-  font-family: IntelClearBd;
-}
-
-.node-container {
-  border-radius: 0.5rem;
-  background-color: white;
-
-  .yellow-background {
-    background-color: #FFE17A !important;
-  }
-}
-
-.group-node-container {
-  border-radius: 0.5rem;
-  background-color: #005B85;
-}
-
-.node-header {
-  font-size: 150%;
-  text-align: center;
-  color: white !important;
-}
-
-.group-node {
-  font-size: 150%;
-  text-align: center;
-  color: white !important;
-  background-color: #005B85 !important;
-  cursor: pointer;
-  font-family: IntelClearBd;
-
-  :hover {
-    color: #FFE17A;
-  }
-}
-
-.group-node-label {
-  position: relative;
-  top: 20px;
-}
-
-.node-text {
-  position: relative;
-  top: -20px;
-}
-
-.sidenav {
-  min-height: 10%;
-  max-height: 30%;
-  width: 40%;
-  margin-top: 30%;
-  box-shadow: none;
-  border-radius: 0.5rem;
-}
-
-.close {
-  float: right;
-  top: -8px;
-}
-
 @media all {
   .wrapper {
     height: 1400px;
@@ -108,15 +37,10 @@
   }
 }
 
-.graph {
-  height: 95%;
-  width: 95%;
-}
-
 .nodes-table-container {
   position: absolute;
-  top: 60px;
-  right: 0px;
+  top: 5px;
+  left: 5px;
   background-color: rgba(182, 182, 182, 0.13);
 }
 
@@ -140,19 +64,13 @@
   left: 48%;
 }
 
-.expand-button {
-  position: absolute;
-  top: -5px;
-  right: 2px;
-  width: 30px;
-  height: 30px;
-}
-
 .graph-buttons {
   position: absolute;
   top: 0px;
   right: 0px;
   margin-top: 5px;
+  margin-right: 5px;
+  z-index: 10;
 }
 
 .graph-button {
@@ -160,15 +78,81 @@
   margin-left: 5px;
 }
 
-// .mat-drawer-container {
-//   background-color: white;
-//   color: black;
-// }
-
-.yellow {
-  color: #FFE17A !important;
+#cy {
+  width: 90%;
+  height: 90vw;
+  position: relative;
+  margin: auto;
+  background: #fafafa;
+  background-image: radial-gradient(#bebebe 1px, transparent 0);
+  background-size: 18px 18px;
 }
 
-.yellow-background {
-  background-color: #f3e1a6 !important;
+.plus-sign {
+  color: white;
+  background-color: #5B69FF;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.hover {
+  background-color: #FFE17A;
+}
+
+.selected {
+  background-color: orange !important;
+}
+
+.cyto-graph {
+  max-height: 95%;
+  padding-top: 20px;
+  z-index: 0;
+  position: relative;
+}
+
+.cytoscape-navigator {
+  position: absolute;
+  border: 1px solid #000;
+  background: #fff;
+  z-index: 10;
+  width: 200px;
+  height: 200px;
+  bottom: 20px;
+  right: 20px;
+  overflow: hidden;
+}
+
+.cytoscape-navigator>img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.cytoscape-navigator>canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 11;
+}
+
+.cytoscape-navigatorView {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: move;
+  background: #B7E1ED;
+  -moz-opacity: 0.50;
+  opacity: 0.50;
+  z-index: 12;
+}
+
+.cytoscape-navigatorOverlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 13;
 }

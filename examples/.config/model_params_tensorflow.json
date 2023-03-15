@@ -1,27 +1,20 @@
 {
   "tensorflow": {
-    "helloworld_keras": {
-      "model_src_dir": "",
-      "dataset_location": "",
-      "input_model": "",
-      "yaml": "",
-      "strategy": "basic",
-      "batch_size": 1,
-      "new_benchmark": true
-    },
     "resnet50v1.0": {
       "model_src_dir": "image_recognition/tensorflow_models/resnet50_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/pre-trained-models/resnet50/fp32/freezed_resnet50.pb",
       "main_script": "main.py",
-      "batch_size": 32
+      "batch_size": 32,
+      "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/resnet50_fp32_pretrained_model.pb"
     },
     "resnet50v1.5": {
       "model_src_dir": "image_recognition/tensorflow_models/resnet50_v1_5/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/pre-trained-models/resnet50v1_5/fp32/resnet50_v1.pb",
       "main_script": "main.py",
-      "batch_size": 32
+      "batch_size": 32,
+      "fp32_model_url": "https://zenodo.org/record/2535873/files/resnet50_v1.pb"
     },
     "resnet101": {
       "model_src_dir": "image_recognition/tensorflow_models/resnet101/quantization/ptq",
@@ -56,7 +49,8 @@
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/pre-trained-models/inceptionv3/fp32/freezed_inceptionv3.pb",
       "main_script": "main.py",
-      "batch_size": 32
+      "batch_size": 32,
+      "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/inceptionv3_fp32_pretrained_model.pb"
     },
     "inception_v3_keras": {
       "model_src_dir": "image_recognition/keras_models/inception_v3/quantization/ptq",
@@ -196,7 +190,8 @@
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_mobilenet_v1.pb",
       "main_script": "main.py",
-      "batch_size": 32
+      "batch_size": 32,
+      "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/mobilenet_v1_1.0_224_frozen.pb"
     },
     "mobilenetv2": {
       "model_src_dir": "image_recognition/tensorflow_models/mobilenet_v2/quantization/ptq",
@@ -311,6 +306,7 @@
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_resnet50/frozen_inference_graph.pb",
       "main_script": "main.py",
       "batch_size": 10
+
     },
     "faster_rcnn_resnet101_saved": {
       "model_src_dir": "object_detection/tensorflow_models/faster_rcnn_resnet101/quantization/ptq",
@@ -338,14 +334,16 @@
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-trained-models/ssd_resnet34/fp32/ssd_resnet34_fp32_1200x1200_pretrained_model.pb",
       "main_script": "main.py",
-      "batch_size": 1
+      "batch_size": 1,
+      "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/ssd_resnet34_fp32_1200x1200_pretrained_model.pb"
     },
     "wide_deep_large_ds": {
       "model_src_dir": "recommendation/wide_deep_large_ds/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/wide_deep_large_ds/dataset",
       "input_model": "/tf_dataset/tensorflow/wide_deep_large_ds/fp32_optimized_graph.pb",
       "main_script": "inference.py",
-      "batch_size": 256
+      "batch_size": 256,
+      "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/wide_deep_fp32_pretrained_model.pb"
     },
     "style_transfer": {
       "model_src_dir": "style_transfer/arbitrary_style_transfer/quantization/ptq",
@@ -373,7 +371,8 @@
       "dataset_location": "/tf_dataset/tensorflow/bert/data",
       "input_model": "/tf_dataset/tensorflow/bert/fp32_bert_squad.pb",
       "main_script": "tune_squad.py",
-      "batch_size": 64
+      "batch_size": 64,
+      "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_7_0/fp32_bert_squad.pb"
     },
     "bert_base_mrpc": {
       "model_src_dir": "nlp/bert_base_mrpc/quantization/ptq",
@@ -1863,7 +1862,8 @@
       "dataset_location": "/tf_dataset2/datasets/transformer_uniform_data",
       "input_model": "/tf_dataset2/models/tensorflow/transformer_lt_mlperf/fp32/transformer_mlperf_fp32.pb",
       "main_script": "run_inference.py",
-      "batch_size": 64
+      "batch_size": 64,
+      "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/2_10_0/transformer_mlperf_fp32.pb"
     },
     "distilbert_base": {
       "model_src_dir": "nlp/distilbert_base/quantization/ptq",

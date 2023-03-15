@@ -48,7 +48,7 @@ python test.py --benchmark --dataset_location=/path/to/imagenet/
 * Run benchmark according to config.
 ```python
     from neural_compressor.benchmark import fit
-    conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=7)
+    conf = BenchmarkConfig(iteration=100, cores_per_instance=4, num_of_instance=1)
     fit(model='./int8.pb', config=conf, b_dataloader=eval_dataloader)
  
 ```

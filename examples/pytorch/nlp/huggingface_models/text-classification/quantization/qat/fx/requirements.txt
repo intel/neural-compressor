@@ -2,7 +2,7 @@ neural-compressor
 transformers>=4.16.0
 datasets>=1.18.0
 sentencepiece!=0.1.92
-protobuf
+protobuf<=3.20.3
 scipy
 onnx
 onnxruntime

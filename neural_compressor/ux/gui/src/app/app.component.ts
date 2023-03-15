@@ -19,6 +19,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ShortcutInput } from 'ng-keyboard-shortcuts';
 import { HomeComponent } from './home/home.component';
+import { JobsQueueComponent } from './jobs-queue/jobs-queue.component';
 import { NotificationComponent } from './notification/notification.component';
 import { ModelService } from './services/model.service';
 import { SocketService } from './services/socket.service';
@@ -108,6 +109,13 @@ export class AppComponent implements OnInit, AfterViewInit {
           this.modelService.openErrorDialog(error);
         }
       );
+  }
+
+  showJobsQueue() {
+    const dialogRef = this.dialog.open(JobsQueueComponent, {
+      width: '50vw',
+      height: '50vh',
+    });
   }
 
   showSystemInfo() {

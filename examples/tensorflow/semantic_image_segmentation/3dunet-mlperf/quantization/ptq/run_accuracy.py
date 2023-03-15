@@ -224,7 +224,7 @@ if __name__ == "__main__":
         from neural_compressor.data import DataLoader
         from neural_compressor.benchmark import fit
         from neural_compressor.config import BenchmarkConfig
-        conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=7)
+        conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
         fit(graph, conf,
             b_dataloader=DataLoader(framework='tensorflow', dataset=CalibrationDL()),
             b_func=eval_func)
