@@ -146,7 +146,7 @@
       "model_src_dir": "image_recognition/se_resnext/quantization/ptq/fx",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
       "input_model": "se_resnext50_32x4d",
-      "main_script": "examples/imagenet_eval.py",
+      "main_script": "run_eval.py",
       "batch_size": 100
     },
     "yolo_v3": {
@@ -423,8 +423,8 @@
     },
     "pegasus_samsum": {
       "model_src_dir": "nlp/huggingface_models/summarization/quantization/ptq_dynamic/fx",
-      "dataset_location": "",
-      "input_model": "",
+      "dataset_location": "/tf_dataset/pytorch/billsum",
+      "input_model": "/tf_dataset2/models/huggingface/pegasus-samsum",
       "main_script": "run_summarization.py",
       "batch_size": 64
     },

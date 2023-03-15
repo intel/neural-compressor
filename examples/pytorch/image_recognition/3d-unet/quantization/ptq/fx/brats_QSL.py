@@ -22,7 +22,7 @@ sys.path.insert(0, os.getcwd())
 import mlperf_loadgen as lg
 
 sys.path.insert(0, os.path.join(os.getcwd(), "nnUnet"))
-from nnUnet.nnunet.inference.predict import preprocess_multithreaded
+from nnUNet.nnunet.inference.predict import preprocess_multithreaded
 
 class BraTS_2019_QSL():
     def __init__(self, preprocessed_data_dir, perf_count):

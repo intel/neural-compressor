@@ -48,4 +48,4 @@ sh run_benchmark.sh --mode=performance --input_model=se_resnext50_32x4d  --datas
 ```
 
 # Original SE_ResNext README
-Please refer [SE_ResNext README](SE_ResNext_README.md)
+Please refer [SE_ResNext README](https://github.com/hujie-frank/SENet/blob/master/README.md).
