@@ -63,7 +63,7 @@ from utils.plots import plot_evolve
 from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel, select_device, smart_DDP, smart_optimizer,
                                smart_resume, torch_distributed_zero_first)
 
-from neural_compressor.compression import PruningWrapper, WeightPruningConfig
+from neural_compressor.training import prepare_compression, WeightPruningConfig
 
 
 import torch.nn.functional as F
@@ -378,7 +378,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     # pruner.model = model
     # pruner.on_train_begin()
 
-    model, optimizer = PruningWrapper(config, model, optimizer)
+    prepare_compression(config, model, optimizer)
     
     if dist_loss != None:
         teacher_model.float()

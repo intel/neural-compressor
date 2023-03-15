@@ -57,7 +57,7 @@ from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from utils_qa import postprocess_qa_predictions
 
-from neural_compressor.compression import PruningWrapper, WeightPruningConfig
+from neural_compressor.training import prepare_pruning, WeightPruningConfig
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.21.0.dev0")
@@ -988,7 +988,7 @@ def main():
         start_step=pruning_start,
         end_step=pruning_end
     )
-    model, optimizer = PruningWrapper(configs, model, optimizer)
+    prepare_pruning(configs, model, optimizer)
 
 
     for epoch in range(starting_epoch, args.num_train_epochs):
@@ -1100,7 +1100,6 @@ def main():
         eval_metric = metric.compute(predictions=prediction.predictions, references=prediction.label_ids)
         logger.info(f"Evaluation metrics of epoch{epoch}: {eval_metric}")
 
-    compression_manager.callbacks.on_train_end()
     # Prediction
     if args.do_predict:
         logger.info("***** Running Prediction *****")

@@ -45,7 +45,6 @@ from transformers import (
 )
 from transformers.file_utils import get_full_repo_name
 from transformers.utils.versions import require_version
-from neural_compressor.training import prepare_compression
 from neural_compressor.training import WeightPruningConfig
 
 logger = logging.getLogger(__name__)
@@ -154,7 +153,7 @@ def parse_args():
         type=SchedulerType,
         default="linear",
         help="The scheduler type to use.",
-        choices=["linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup"],
+        ##choices=["linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup"],
     )
     parser.add_argument(
         "--num_warmup_steps", type=int, default=0, help="Number of steps for the warmup in the lr scheduler."
@@ -522,8 +521,8 @@ def main():
     # pruner = Pruning(config)
     # pruner.model = model
     # pruner.on_train_begin()
-    from neural_compressor.compression.pruner.pruning import PruningWrapper,PruningUnWrapper
-    model, optimizer = PruningWrapper(configs, model, optimizer)
+    from neural_compressor.training import prepare_pruning
+    prepare_pruning(configs, model, optimizer)
 
 
     for epoch in range(args.num_train_epochs):
@@ -559,7 +558,8 @@ def main():
                 break
 
         model.eval()
-
+        # torch.save(model,"model.pt")
+        # torch.save(optimizer, "optimizer.pt")
         for step, batch in enumerate(eval_dataloader):
             outputs = model(**batch)
             predictions = outputs.logits.argmax(dim=-1) if not is_regression else outputs.logits.squeeze()
@@ -594,9 +594,9 @@ def main():
             # if args.push_to_hub:
             #     repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
-    model, optimizer = PruningUnWrapper(model, optimizer)
 
     if args.output_dir is not None:
+
         accelerator.wait_for_everyone()
         # unwrapped_model = accelerator.unwrap_model(model)
         # unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)

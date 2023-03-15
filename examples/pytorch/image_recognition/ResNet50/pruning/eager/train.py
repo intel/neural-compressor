@@ -784,7 +784,7 @@ def main():
     # ***INC Pruning API Preparation***
     
     # Step 1: Load the INC packages
-    from neural_compressor.compression import PruningWrapper, PruningUnWrapper, WeightPruningConfig
+    from neural_compressor.training import prepare_pruning, WeightPruningConfig
     # Step 2: epochs <==> steps conversion, use steps to initialize the pruning object
     num_iterations = len(loader_train)
     num_warmup_steps = int(args.warmup_epochs * num_iterations)
@@ -818,7 +818,7 @@ def main():
     )
     # Step 5: Define INC object for pruning  
 
-    model = PruningWrapper(configs, model, optimizer)
+    prepare_pruning(configs, model, optimizer)
     _logger.info("Before pruning, obtain the model's validation performance")
     eval_metrics = validate(
         model,
