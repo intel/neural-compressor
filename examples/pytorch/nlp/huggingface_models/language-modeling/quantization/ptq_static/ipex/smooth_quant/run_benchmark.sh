@@ -10,17 +10,15 @@ function main {
 
 # init params
 function init_params {
+  int8=false
   for var in "$@"
   do
     case $var in
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
-      --mode=*)
-          mode=$(echo $var |cut -f2 -d=)    
-      ;;
-      --batch_size=*)
-          batch_size=$(echo $var |cut -f2 -d=)    
+      --int8=*)
+          int8=$(echo $var |cut -f2 -d=)
       ;;
     esac
   done
@@ -30,11 +28,15 @@ function init_params {
 # run_tuning
 function run_benchmark {
 
-    python main.py \
-            --input_model ${input_model} \
-            --benchmark \
-            --mode ${mode} \
-            --batch_size ${batch_size}
+  if [[ "${int8}" == "true" ]]; then
+     python benchmark.py \
+        --model_name_or_path ${input_model} \
+        --int8
+  else
+     python benchmark.py \
+        --model_name_or_path ${input_model}
+  fi
+
 }
 
 main "$@"
