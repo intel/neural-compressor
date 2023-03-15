@@ -88,25 +88,35 @@
 <p>1.2. <a class="reference external" href="#pruning-patterns">Pruning Patterns</a></p>
 <p>1.3. <a class="reference external" href="#pruning-criteria">Pruning Criteria</a></p>
 <p>1.4. <a class="reference external" href="#pruning-schedule">Pruning Schedule</a></p>
+<p>1.5. <a class="reference external" href="#pruning-types">Pruning Types</a></p>
+<p>1.6. <a class="reference external" href="#pruning-scope">Pruning Scope</a></p>
+<p>1.7. <a class="reference external" href="#sparsity-decay-types">Sparsity Decay Types</a></p>
+<p>1.8. <a class="reference external" href="#regularization">Regularization</a></p>
 </li>
 <li><p><a class="reference external" href="#pruning-support-matrix">Pruning Support Matrix</a></p></li>
 <li><p><a class="reference external" href="#get-started-with-pruning-api">Get Started With Pruning API</a></p></li>
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
+<li><p><a class="reference external" href="#sparse-model-deployment">Sparse Model Deployment</a></p></li>
+<li><p><a class="reference external" href="#reference">Reference</a></p></li>
 </ol>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
 <section id="neural-network-pruning">
 <h3>Neural Network Pruning<a class="headerlink" href="#neural-network-pruning" title="Permalink to this heading"></a></h3>
 <p>Neural network pruning (briefly known as pruning or sparsity) is one of the most promising model compression techniques. It removes the least important parameters in the network and achieves compact architectures with minimal accuracy drop and maximal inference acceleration. As current state-of-the-art models have increasingly more parameters, pruning plays a crucial role in enabling them to run on devices whose memory footprints and computing resources are limited.</p>
+<div align=center>
 <a target="_blank" href="./imgs/pruning/pruning_intro.png">
     <img src="./imgs/pruning/pruning_intro.png" width=400 height=250 alt="pruning intro">
-</a></section>
+</a>
+</div></section>
 <section id="pruning-patterns">
 <h3>Pruning Patterns<a class="headerlink" href="#pruning-patterns" title="Permalink to this heading"></a></h3>
 <p>Pruning patterns defines the rules of pruned weights’ arrangements in space.</p>
+<div align=center>
 <a target="_blank" href="./imgs/pruning/pruning_patterns.jpg">
     <img src="imgs/pruning/pruning_patterns.jpg" width=600 height=150 alt="Sparsity Pattern">
-</a><ul>
+</a>
+</div><ul>
 <li><p>Unstructured Pruning</p>
 <p>Unstructured pruning means finding and removing the less salient connection in the model where the nonzero patterns are irregular and could be anywhere in the matrix.</p>
 </li>
@@ -121,9 +131,18 @@
 <p>Here is a figure showing a matrix with <code class="docutils literal notranslate"><span class="pre">IC</span></code> = 32 and <code class="docutils literal notranslate"><span class="pre">OC</span></code> = 16 dimension, and a block-wise sparsity pattern with block size 4 on <code class="docutils literal notranslate"><span class="pre">OC</span></code> dimension.</p>
 </li>
 </ul>
+<div align=center>
 <a target="_blank" href="./imgs/pruning/sparse_dim.png">
     <img src="./imgs/pruning/sparse_dim.png" width=600 height=320 alt="block sparsity Pattern">
-</a></section>
+</a>
+</div><ul>
+<li><p>Channel-wise Pruning</p>
+<p>Channel-wise pruning means removing less salient channels on feature maps and it could directly shrink feature map widths. Users could set a channelx1 (or 1xchannel) pruning pattern to use this method.</p>
+<p>An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights’ size and obtain direct improvements of inference speed, without using hardware related optimization tools like <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers">Intel Extension for Transformers</a>.</p>
+<p>We name this process as <span id="click"><strong>Model Auto Slim</strong></span> and currently we have validated that this process can significantly improve some popular transformer model’s inference speed. Please refer more details of such method in this <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/eager/">model slim example</a>.</p>
+</li>
+</ul>
+</section>
 <section id="pruning-criteria">
 <h3>Pruning Criteria<a class="headerlink" href="#pruning-criteria" title="Permalink to this heading"></a></h3>
 <p>Pruning criteria defines the rules of which weights are least important to be pruned, in order to maintain the model’s original accuracy. Most popular criteria examine weights’ absolute value and their corresponding gradients.</p>
@@ -136,9 +155,6 @@
 </li>
 <li><p>Group Lasso</p>
 <p>The algorithm uses Group lasso regularization to prune entire rows, columns or blocks of parameters that result in a smaller dense network.</p>
-</li>
-<li><p>Pattern Lock</p>
-<p>The algorithm locks the sparsity pattern in finetuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied in the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to <a class="reference external" href="https://arxiv.org/pdf/2111.05754.pdf">Prune once for all</a> for more information.</p>
 </li>
 <li><p>SNIP</p>
 <p>The algorithm prunes the dense model at its initialization, by analyzing the weights’ effect to the loss function when they are masked. Please refer to the original <a class="reference external" href="https://arxiv.org/abs/1810.02340">paper</a> for details</p>
@@ -153,17 +169,71 @@ $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$</p>
 <h3>Pruning Schedule<a class="headerlink" href="#pruning-schedule" title="Permalink to this heading"></a></h3>
 <p>Pruning schedule defines the way the model reach the target sparsity (the ratio of pruned weights).</p>
 <ul>
-<li><p>One-shot Pruning</p>
-<p>One-shot pruning means the model is pruned to its target sparsity with one single step. This pruning method often works at model’s initialization step. It can easily cause accuracy drop, but save much training time.</p>
-</li>
 <li><p>Iterative Pruning</p>
 <p>Iterative pruning means the model is gradually pruned to its target sparsity during a training process. The pruning process contains several pruning steps, and each step raises model’s sparsity to a higher value. In the final pruning step, the model reaches target sparsity and the pruning process ends.</p>
 </li>
+<li><p>One-shot Pruning</p>
+<p>One-shot pruning means the model is pruned to its target sparsity with one single step. This pruning method often works at model’s initialization step. It can easily cause accuracy drop, but save much training time.</p>
+</li>
 </ul>
 </section>
+<section id="pruning-types">
+<h3>Pruning Types<a class="headerlink" href="#pruning-types" title="Permalink to this heading"></a></h3>
+<p>Pruning type defines how the masks are generated and applied to a neural network. In Intel Neural Compressor, both pruning criterion and pruning type are defined in pruning_type. Currently supported pruning types include <strong>snip_momentum(default)</strong>, <strong>snip_momentum_progressive</strong>, <strong>magnitude</strong>, <strong>magnitude_progressive</strong>, <strong>gradient</strong>, <strong>gradient_progressive</strong>, <strong>snip</strong>, <strong>snip_progressive</strong> and <strong>pattern_lock</strong>. progressive pruning is preferred when large patterns like 1xchannel and channelx1 are selected.</p>
+<ul>
+<li><p>Progressive Pruning</p>
+<p>Progressive pruning aims at smoothing the structured pruning by automatically interpolating a group of intervals masks during the pruning process. In this method, a sequence of masks is generated to enable a more flexible pruning process and those masks would gradually change into ones to fit the target pruning structure.
+Progressive pruning is used mainly for channel-wise pruning and currently only supports NxM pruning pattern.</p>
+<div align = "center", style = "width: 77%; margin-bottom: 2%;">
+    <a target="_blank" href="./imgs/pruning/progressive_pruning.png">
+        <img src="./imgs/pruning/progressive_pruning.png" alt="Architecture" width=700 height=250>
+    </a>
+</div>
+&emsp;&emsp;(a) refers to the traditional structured iterative pruning;  <Br/>
+&emsp;&emsp;(b) inserts unstructured masks which prune some weights by referring to pre-defined score maps.<p>(b) is adopted in progressive pruning implementation. after a new structure pruning step, newly generated masks with full-zero blocks are not used to prune the model immediately. Instead, only a part of weights in these blocks is selected to be pruned by referring to these weights’ score maps. these partial-zero unstructured masks are added to the previous structured masks and  pruning continues. After training the model with these interpolating masks and masking more elements in these blocks, the mask interpolation process is returned. After several steps of mask interpolation, All weights in the blocks are finally masked and the model is trained as pure block-wise sparsity.</p>
+</li>
+<li><p>Pattern_lock Pruning</p>
+<p>Pattern_lock pruning type uses masks of a fixed pattern during the pruning process. It locks the sparsity pattern in fine-tuning phase by freezing those zero values of weight tensor during weight update of training. It can be applied for the following scenario: after the model is pruned under a large dataset, pattern lock can be used to retrain the sparse model on a downstream task (a smaller dataset). Please refer to <a class="reference external" href="https://arxiv.org/pdf/2111.05754.pdf">Prune once for all</a> for more information.</p>
+</li>
+</ul>
+</section>
+<section id="pruning-scope">
+<h3>Pruning Scope<a class="headerlink" href="#pruning-scope" title="Permalink to this heading"></a></h3>
+<p>Range of sparse score calculation in iterative pruning, default scope is global.</p>
+<ul>
+<li><p>Global</p>
+<p>The score map is computed out of entire parameters, Some layers are higher than the target sparsity and some of them are lower, the total sparsity of the model reaches the target. You can also set the “min sparsity ratio”/”max sparsity ratio” to be the same as the target to achieve same sparsity for each layer in a global way.</p>
+</li>
+<li><p>Local</p>
+<p>The score map is computed from the corresponding layer’s weight, The sparsity of each layer is equal to the target.</p>
+</li>
+</ul>
+</section>
+<section id="sparsity-decay-types">
+<h3>Sparsity Decay Types<a class="headerlink" href="#sparsity-decay-types" title="Permalink to this heading"></a></h3>
+<p>Growth rules for the sparsity of iterative pruning, “exp”, “cos”, “cube”,  and “linear” are available，We use exp by default.</p>
+<div align=center>
+<a target="_blank" href="./imgs/pruning/sparsity_decay_type.png">
+    <img src="./imgs/pruning/sparsity_decay_type.png" width=870 height=220 alt="Regularization">
+</a>
+</div></section>
+<section id="regularization">
+<h3>Regularization<a class="headerlink" href="#regularization" title="Permalink to this heading"></a></h3>
+<p>Regularization is a technique that discourages learning a more complex model and therefore performs variable-selection. In the image below, some weights are pushed to be as small as possible and the connections are thus pruned. <strong>Group-lasso</strong> method is used in Intel Neural Compressor.</p>
+<ul>
+<li><p>Group Lasso</p>
+<p>The main ideas of Group Lasso are to construct an objective function that penalizes the L2 parameterization of the grouped variables, determines the coefficients of some groups of variables to be zero, and obtains a refined model by feature filtering.</p>
+</li>
+</ul>
+<div align=center>
+<a target="_blank" href="./imgs/pruning/Regularization.jpg">
+    <img src="./imgs/pruning/Regularization.jpg" width=350 height=170 alt="Regularization">
+</a>
+</div></section>
 </section>
 <section id="pruning-support-matrix">
 <h2>Pruning Support Matrix<a class="headerlink" href="#pruning-support-matrix" title="Permalink to this heading"></a></h2>
+<p>(Currently we only support pruning for PyTorch models)</p>
 <table>
 <thead>
   <tr>
@@ -178,7 +248,7 @@ $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$</p>
     <td rowspan="3">Unstructured Pruning</td>
     <td rowspan="3">Element-wise</td>
     <td>Magnitude</td>
-    <td>PyTorch, TensorFlow</td>
+    <td>PyTorch</td>
   </tr>
   <tr>
     <td>Pattern Lock</td>
@@ -191,7 +261,7 @@ $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$</p>
   <tr>
     <td rowspan="6">Structured Pruning</td>
     <td rowspan="2">Filter/Channel-wise</td>
-    <td>Gradient Sensitivity</td>
+    <td>Gradient</td>
     <td>PyTorch</td>
   </tr>
   <tr>
@@ -304,7 +374,39 @@ $$Score_{n} = 1.0 \times Score_{n-1} + 0.9 \times |W_{n} \times G_{n}|$$</p>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p>We validate the sparsity on typical models across different domains (including CV, NLP, and Recommendation System). <a class="reference external" href="./validated_model_list.md#validated-pruning-examples">Validated pruning examples</a> shows the sparsity pattern, sparsity ratio, and accuracy of sparse and dense (Reference) model for each model.</p>
-<p>Please refer to pruning examples(<a class="reference external" href="../../examples/README.md#Pruning">TensorFlow</a>, <a class="reference external" href="../../examples/README.md#Pruning-1">PyTorch</a>) for more information.</p>
+<p>Figure below shows our pruning results (pruned model’s accuracy and sparsity as well as sparse patterns.)</p>
+<div align = "center", style = "width: 77%; margin-bottom: 2%;">
+  <a target="_blank" href="./imgs/pruning/pruning_scatter.png">
+    <img src="./imgs/pruning/pruning_scatter.png" alt="Architecture" width=685 height=300>
+  </a>
+</div><p>“Experimental” annotation means these examples codes are ready but pruning results are under improvements. Please don’t hesitate to try these codes with different configurations to get better pruning results!</p>
+<ul>
+<li><p>Text Classification</p>
+<p>Sparsity is implemented in different pruning patterns of MRPC and SST-2 tasks <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager">Text-classification examples</a>.</p>
+</li>
+<li><p>Question Answering</p>
+<p>Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager">Question-answering examples</a>.</p>
+</li>
+<li><p>Language Translation (Experimental)</p>
+<p>Pruning Flan-T5-small model on English-Romanian translation task <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/translation/pruning/eager">Translation examples</a>.</p>
+</li>
+<li><p>Object Detection (Experimental)</p>
+<p>Pruning on YOLOv5 model using coco dataset <a class="reference external" href="../../examples/pytorch/object_detection/yolo_v5/pruning/eager">Object-detection examples</a>.</p>
+</li>
+<li><p>Image Recognition (Experimental)</p>
+<p>Pruning on ResNet50 model using ImageNet dataset <a class="reference external" href="../../examples/pytorch/image_recognition/ResNet50/pruning/eager/">Image-recognition examples</a>.</p>
+</li>
+</ul>
+<p>Please refer to <a class="reference external" href="../../examples/README.md#Pruning-1">pruning examples</a> for more information.</p>
+</section>
+<section id="sparse-model-deployment">
+<h2>Sparse Model Deployment<a class="headerlink" href="#sparse-model-deployment" title="Permalink to this heading"></a></h2>
+<p>Particular hardware/software like <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers">Intel Extension for Transformer</a> are required to obtain inference speed and footprints’ optimization for most sparse models. However, using <a class="reference external" href="#click">model slim</a> for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)</p>
+</section>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading"></a></h2>
+<p>[1] Namhoon Lee, Thalaiyasingam Ajanthan, and Philip Torr. SNIP: Single-shot network pruning based on connection sensitivity. In International Conference on Learning Representations, 2019.</p>
+<p>[2] Zafrir, Ofir, Ariel Larey, Guy Boudoukh, Haihao Shen, and Moshe Wasserblat. “Prune once for all: Sparse pre-trained language models.” arXiv preprint arXiv:2111.05754 (2021).</p>
 </section>
 </section>
 
