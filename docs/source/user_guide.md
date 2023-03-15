@@ -66,10 +66,10 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
   </thead>
   <tbody>
     <tr>
-        <td colspan="1" align="center"><a href="neural_coder/docs/PythonLauncher.md">Launcher</a></td>
-        <td colspan="2" align="center"><a href="neural_coder/extensions/neural_compressor_ext_lab/README.md">JupyterLab Extension</a></td>
-        <td colspan="3" align="center"><a href="neural_coder/extensions/neural_compressor_ext_vscode/README.md">Visual Studio Code Extension</a></td>
-        <td colspan="3" align="center"><a href="neural_coder/docs/SupportMatrix.md">Supported Matrix</a></td>
+        <td colspan="1" align="center"><a href="/neural_coder/docs/PythonLauncher.md">Launcher</a></td>
+        <td colspan="2" align="center"><a href="/neural_coder/extensions/neural_compressor_ext_lab/README.md">JupyterLab Extension</a></td>
+        <td colspan="3" align="center"><a href="/neural_coder/extensions/neural_compressor_ext_vscode/README.md">Visual Studio Code Extension</a></td>
+        <td colspan="3" align="center"><a href="/neural_coder/docs/SupportMatrix.md">Supported Matrix</a></td>
     </tr>    
   </tbody>
   <thead>

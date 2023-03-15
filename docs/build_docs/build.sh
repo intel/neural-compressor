@@ -88,6 +88,8 @@ cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
 sed -i 's/.\/docs\/source\/_static/./g' ./source/docs/source/Welcome.md ./source/docs/source/user_guide.md
 sed -i 's/.md/.html/g; s/.\/docs\/source\//.\//g' ./source/docs/source/Welcome.md ./source/docs/source/user_guide.md
 sed -i 's/\/examples\/README.html/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/README.md/g' ./source/docs/source/user_guide.md
+sed -i 's/href=\"\/neural_coder/href=\".\/neural_coder/g' ./source/docs/source/user_guide.md
+
 sed -i 's/examples\/README.html/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/README.md/g' ./source/docs/source/Welcome.md
 
 sed -i 's/\"\/neural_coder\/extensions\/screenshots\/extmanager.png/\".\/neural_coder\/extensions\/screenshots\/extmanager.png/g' ./source/docs/source/get_started.md
