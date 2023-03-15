@@ -515,7 +515,7 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         q_model = fit(ori_model, conf = PostTrainingQuantConfig(), calib_dataloader=dataloader)
         op_to_traces = hawq_top(fp32_model=pt_model, q_model=q_model, dataloader=dataloader, \
              criterion=None, enable_act=True)
-        self.assertIsNone(op_to_traces)
+        self.assertIsNotNone(op_to_traces)
 
 
 
