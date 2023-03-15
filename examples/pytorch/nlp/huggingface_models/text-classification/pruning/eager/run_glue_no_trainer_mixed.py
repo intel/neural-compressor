@@ -45,9 +45,7 @@ from transformers import (
 )
 from transformers.file_utils import get_full_repo_name
 from transformers.utils.versions import require_version
-# from neural_compressor.training import prepare_compression
-# from neural_compressor.training import WeightPruningConfig
-from neural_compressor.compression import PruningWrapper, WeightPruningConfig
+from neural_compressor.training import prepare_pruning
 
 logger = logging.getLogger(__name__)
 
@@ -529,7 +527,7 @@ def main():
     # pruner.on_train_begin()
     # compression_manager = prepare_compression(model=model, confs=configs)
     # compression_manager.callbacks.on_train_begin()
-    model, optimizer = PruningWrapper(configs, model, optimizer)
+    prepare_pruning(configs, model, optimizer)
 
     for epoch in range(args.num_train_epochs):
         model.train()
@@ -598,7 +596,6 @@ def main():
 
     # pattern_sparsity_over_conv_linear, element_sparsity_over_conv_linear, element_sparsity_over_all = pruner.get_sparsity_ratio()
     # print(pattern_sparsity_over_conv_linear, element_sparsity_over_conv_linear, element_sparsity_over_all )
-    compression_manager.callbacks.on_train_end()
     
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
