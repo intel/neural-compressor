@@ -3,12 +3,6 @@ Step-by-Step
 
 This document describes the step-by-step instructions for reproducing PyTorch ResNest50 tuning and benchmarking results with Intel® Neural Compressor.
 
-> **Note**
->
-> * PyTorch quantization implementation in imperative path has limitation on automatically execution. It requires manually adding QuantStub and DequantStub for quantizable ops, and  also fusion operation manually.
-> * Intel® Neural Compressor supposes user have done these two steps before invoking Intel® Neural Compressor interface.
->   For details, please refer to https://pytorch.org/docs/stable/quantization.html
-
 # Prerequisite
 ## 1. Environment
 Python 3.6 or higher version is recommended.
@@ -28,6 +22,7 @@ train  val
 ```shell
 git clone https://github.com/zhanghang1989/ResNeSt.git
 cd ResNeSt
+git checkout 1dfb3e8867e2ece1c28a65c9db1cded2818a2031
 python setup.py install
 cd ..
 ```
@@ -52,12 +47,12 @@ net = resnest50(pretrained=True)
 # Run
 ## 1. Quantization
 ```Shell
-python -u verify.py --tune --model resnest50 --batch-size what_you_want --workers 1 --no-cuda /path/to/imagenet
+python -u verify.py --tune --model resnest50 --batch-size 30 --workers 1 --no-cuda /path/to/imagenet
 ```
 ## 2. Benchmark
 ```bash
 # int8
-sh run_benchmark.sh --int8=true --mode=performance --input_model=resnest50  --dataset_location=/path/to/imagenet
+sh run_benchmark.sh --int8=true --mode=performance --input_model=resnest50  --dataset_location=/path/to/imagenet --config=saved_results
 # fp32
 sh run_benchmark.sh --mode=performance --input_model=resnest50  --dataset_location=/path/to/imagenet
 ```

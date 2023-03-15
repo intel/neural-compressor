@@ -67,9 +67,8 @@ function run_benchmark {
         extra_cmd="--int8"
     fi
 
-    python examples/imagenet_eval.py \
+    python run_eval.py \
         --data ${dataset_location} \
-        #--tuned_checkpoint ${tuned_checkpoint} \
         -a ${input_model} \
         -b ${batch_size} \
         -j 1 \

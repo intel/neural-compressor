@@ -3,12 +3,6 @@ Step-by-Step
 
 This document describes the step-by-step instructions for reproducing PyTorch se_resnext tuning and benchmarking results with Intel® Neural Compressor.
 
-> **Note**
->
-> * PyTorch quantization implementation in imperative path has limitation on automatically execution. It requires manually adding QuantStub and DequantStub for quantizable ops, and  also fusion operation manually.
-> * Intel® Neural Compressor supposes user have done these two steps before invoking Intel® Neural Compressor interface.
->   For details, please refer to https://pytorch.org/docs/stable/quantization.html
-
 # Prerequisite
 ## 1. Environment
 Python 3.6 or higher version is recommended.
@@ -17,9 +11,13 @@ The dependent packages are all in requirements, please install as following.
 cd examples/pytorch/image_recognition/se_resnext/quantization/ptq/fx
 pip install -r requirements.txt
 ```
-## 2. Install Model
+## 2. Install from Repo
 ```shell
+git clone https://github.com/Cadene/pretrained-models.pytorch.git
+cd pretrained-models.pytorch
+git checkout 8aae3d8f1135b6b13fed79c1d431e3449fdbf6e0
 python setup.py install
+cd ..
 ```
 > **Note**
 >
@@ -34,7 +32,7 @@ train  val
 # Run
 ## 1. Quantization
 ```shell
-python examples/imagenet_eval.py \
+python run_eval.py \
           --data /path/to/imagenet \
           -a se_resnext50_32x4d \
           -b 128 \
@@ -44,7 +42,7 @@ python examples/imagenet_eval.py \
 ## 2. Benchmark
 ```bash
 # int8
-sh run_benchmark.sh --int8=true --mode=performance --input_model=se_resnext50_32x4d  --dataset_location=/path/to/imagenet
+sh run_benchmark.sh --int8=true --config=saved_results --mode=performance --input_model=se_resnext50_32x4d  --dataset_location=/path/to/imagenet
 # fp32
 sh run_benchmark.sh --mode=performance --input_model=se_resnext50_32x4d  --dataset_location=/path/to/imagenet
 ```

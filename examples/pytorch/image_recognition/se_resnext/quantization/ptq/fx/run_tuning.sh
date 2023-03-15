@@ -37,7 +37,7 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    python examples/imagenet_eval.py \
+    python run_eval.py \
             --tuned_checkpoint ${tuned_checkpoint} \
             --data ${dataset_location} \
             --tune \

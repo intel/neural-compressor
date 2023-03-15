@@ -2,8 +2,6 @@ Step-by-Step
 ============
 
 This document is used to list the steps of reproducing quantization and benchmarking results.
-Original BERT documents please refer to [BERT README](../../../../common/README.md) and [README](../../../../common/examples/seq2seq/README.md).
-
 > **Note**
 >
 > Dynamic Quantization is the recommended method for huggingface models. 
@@ -16,7 +14,7 @@ The dependent packages are all in requirements, please install as following.
 cd examples/pytorch/nlp/huggingface_models/summarization/quantization/ptq_dynamic/fx
 pip install -r requirements.txt
 ```
-## Prepare Dataset
+## 2. Prepare Dataset
 ```shell
 wget https://cdn-datasets.huggingface.co/summarization/pegasus_data/billsum.tar.gz
 tar -xzvf billsum.tar.gz
@@ -28,9 +26,7 @@ tar -xzvf billsum.tar.gz
 cd examples/pytorch/nlp/huggingface_models/summarization/quantization/ptq_dynamic/fx
 sh run_tuning.sh --topology=topology_name
 ```
-> NOTE
->
-> topology_name can be:{"pegasus_samsum"}
+
 ## 2. Benchmark
 ```bash
 # int8
