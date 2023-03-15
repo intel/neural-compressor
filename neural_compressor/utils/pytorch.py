@@ -349,6 +349,7 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     if checkpoint_dir is None and history_cfg is not None:
         _set_activation_scale_zeropoint(model, history_cfg)
     else:
-        model.load_state_dict(stat_dict)
+        # set strict=False to avoid loading linked tensors.
+        model.load_state_dict(stat_dict, strict=False)
     util.get_embedding_contiguous(model)
     return model
