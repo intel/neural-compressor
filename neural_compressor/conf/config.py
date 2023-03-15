@@ -1238,7 +1238,7 @@ graph_optimization_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
 
     Optional('graph_optimization', default={'precisions': ['bf16, fp32']}): dict
 })
@@ -1272,7 +1272,7 @@ mixed_precision_default_schema = Schema({
         'random_seed': 1978, 'tensorboard': False,
         'workspace': {'path': default_workspace}}): dict,
 
-    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict
+    Optional('evaluation', default={'accuracy': {'metric': {'topk': 1}}}): dict,
 
     Optional('mixed_precision', default={'precisions': ['bf16, fp32']}): dict
 })
