@@ -36,11 +36,15 @@ def _add_supported_quantized_objects(custom_objects):
   from neural_compressor.adaptor.keras_utils.quantizer import Quantize, DeQuantize
   from neural_compressor.adaptor.keras_utils.quantizer import FakeQuant
   from neural_compressor.adaptor.keras_utils.conv2d import QConv2D
+  from neural_compressor.adaptor.keras_utils.depthwise_conv2d import QDepthwiseConv2D
+  from neural_compressor.adaptor.keras_utils.separable_conv2d import QSeparableConv2D
   from neural_compressor.adaptor.keras_utils.dense import QDense
   custom_objects["Quantize"] = Quantize
   custom_objects["DeQuantize"] = DeQuantize
   custom_objects["FakeQuant"] = FakeQuant
   custom_objects["QConv2D"] = QConv2D
+  custom_objects["QDepthwiseConv2D"] = QDepthwiseConv2D
+  custom_objects["QSeparableConv2D"] = QSeparableConv2D
   custom_objects["QDense"] = QDense
   return custom_objects
 
@@ -58,7 +62,9 @@ class KerasAdaptor(Adaptor):
         #self.work_dir = os.path.abspath(self.framework_specific_info['workspace_path'])
         self.recipes = deep_get(self.framework_specific_info, 'recipes', {})
         #os.makedirs(self.work_dir, exist_ok=True)
+        self.supported_op = ['Conv2D', 'Dense', 'SeparableConv2D', 'DepthwiseConv2D']
 
+        self.pre_optimized_object = None
         self.pre_optimized_model = None
         self.pre_optimizer_handle = None
         self.fp32_ops = []
@@ -70,6 +76,8 @@ class KerasAdaptor(Adaptor):
         self.benchmark = (GLOBAL_STATE.STATE == MODE.BENCHMARK)
         self.callbacks = []
         self.optype_statistics = None
+
+        self.conv_format = {}
 
     def tuning_cfg_to_fw(self, tuning_cfg):
         self.quantize_config['calib_iteration'] = tuning_cfg['calib_iteration']
@@ -109,12 +117,42 @@ class KerasAdaptor(Adaptor):
         self.fp32_ops = fp32_ops
 
     def _pre_optimize(self, model):
+        model = self._check_quantize_format(model)
         model = self._fuse_bn(model)
+        #(TODO) change to package fuse bn
+        # model = self._fuse_bn_from_package(model)
         return model
 
+    def _check_quantize_format(self, model):
+        json_model = copy.deepcopy(json.loads(model.to_json()))
+        config = json_model["config"]
+        fp32_layers = config["layers"]
+        name_op_map = {}
+
+        for idx, layer in enumerate(copy.deepcopy(fp32_layers)):
+            name_op_map[layer['name']] = layer
+
+        for idx, layer in enumerate(copy.deepcopy(fp32_layers)):
+            layer_config = layer['config']
+            if layer['class_name'] in self.supported_op:
+                if 'inbound_nodes' in layer:
+                    check_layer = name_op_map[layer['inbound_nodes'][0][0][0]]
+                else:
+                    check_layer = fp32_layers[idx - 1]
+                if check_layer['class_name'] in ['Activation'] and \
+                        check_layer['config']['activation'] in ['relu']:
+                    self.conv_format[layer['name']] = 'u8'
+                else:
+                    self.conv_format[layer['name']] = 's8'
+        return model
+
+    # def _fuse_bn_from_package(self, model):
+    #     from batch_normalization_folding.folder import fold_batchnormalization_layers
+    #     fused_model, output_str=fold_batchnormalization_layers(model, True)
+    #     return fused_model
+
     def _fuse_bn(self, model):
-        keras_object = model._model_object
-        json_model = copy.deepcopy(json.loads(keras_object.to_json()))
+        json_model = copy.deepcopy(json.loads(model.to_json()))
         config = json_model["config"]
         fp32_layers = config["layers"]
         def fuse_conv_bn(conv_weight, bn_weight, eps=1.0e-5):
@@ -154,7 +192,6 @@ class KerasAdaptor(Adaptor):
                             fold_conv.append(bn_inbound_node[0])
                         else:
                             fuse_layers.append(layer)
-                    # (TODO) DepthwiseConv BN fuse
                     else:
                         fuse_layers.append(layer)
                 elif len(layer['inbound_nodes']):
@@ -174,7 +211,7 @@ class KerasAdaptor(Adaptor):
                     fuse_layers.append(layer)
             else:
                 if idx > 0 and layer['class_name'] in ['BatchNormalization'] and \
-                        fp32_layers[idx - 1]['class_name'] in ['Conv2D']:
+                    fp32_layers[idx - 1]['class_name'] in ['Conv2D']:
                     conv_name = fp32_layers[idx - 1]['config']['name']
                     conv_weight = self.conv_weights[conv_name]
                     bn_weight = self.bn_weights[layer_config['name']]
@@ -191,8 +228,6 @@ class KerasAdaptor(Adaptor):
             
         json_model['config']['layers'] = fuse_layers
         fused_model = self._restore_model_from_json(json_model)
-        from neural_compressor.model.keras_model import KerasModel
-        fused_model = KerasModel(fused_model)
         return fused_model
 
     @dump_elapsed_time("Pass quantize model")
@@ -239,13 +274,14 @@ class KerasAdaptor(Adaptor):
         self.inbound_nodes_map = {}
         for idx, layer in enumerate(copy.deepcopy(self.fp32_layers)):
           layer_config = layer["config"]
-          if layer["class_name"] in ["Conv2D", "Dense"] and \
+          if layer["class_name"] in self.supported_op and \
             layer['config']['name'] in self.quantize_config['op_wise_config']:
               op_config = self.quantize_config['op_wise_config'][layer['config']['name']]
               mode = 'per_channel' if op_config[0] else 'per_tensor'
               fake_q_name = 'fake_quant_' + str(idx)
               fake_q_layer = {'class_name': 'FakeQuant', 
                               'name': fake_q_name,
+                              'T': self.conv_format[layer['name']],
                               'config': {'mode': 'per_tensor', 'name': fake_q_name}, 
                               }
               if 'inbound_nodes' in layer:
@@ -257,9 +293,8 @@ class KerasAdaptor(Adaptor):
               q_layers.append(layer)
           else:
               q_layers.append(layer)
-
-        keras_object = self.pre_optimized_model._model_object
-        json_model = copy.deepcopy(json.loads(keras_object.to_json()))
+        
+        json_model = copy.deepcopy(json.loads(self.pre_optimized_object.to_json()))
         json_model['config']['layers'] = q_layers
         quantized_model = self._restore_model_from_json(json_model)
 
@@ -308,7 +343,7 @@ class KerasAdaptor(Adaptor):
                                   'name': 'quantize_' + str(idx), 
                                   'config': {'min_range': min_value,
                                              'max_range': max_value,
-                                             # 'mode': quantize_mode,
+                                             'T': layer_config['T'],
                                              'name': 'quantize_' + str(idx), 
                                             }}
                 dequantize_layer = {'class_name': 'DeQuantize',
@@ -328,7 +363,7 @@ class KerasAdaptor(Adaptor):
                     
                 q_layers.append(quantize_layer)
                 q_layers.append(dequantize_layer)
-            elif layer['class_name'] in ['Conv2D', 'Dense'] and \
+            elif layer['class_name'] in self.supported_op and \
                 layer['config']['name'] in self.quantize_config['op_wise_config']:
                 # index 0 is weight, index 1 is bias
                 q_layer_name = 'Q' + layer['class_name']
@@ -453,10 +488,12 @@ class KerasAdaptor(Adaptor):
         int8_type = self.query_handler.get_op_types_by_precision(precision='int8')
         op_capability = self.query_handler.get_quantization_capability()
         conv_config = copy.deepcopy(op_capability['int8']['Conv2D'])
+        conv_config = copy.deepcopy(op_capability['int8']['SeparableConv2D'])
+        conv_config = copy.deepcopy(op_capability['int8']['DepthwiseConv2D'])
         dense_config = copy.deepcopy(op_capability['int8']['Dense'])
         other_config = copy.deepcopy(op_capability['int8']['default'])
 
-        # get fp32 layer weights
+        # # get fp32 layer weights
         keras_object = model._model_object
         self.conv_weights = {}
         self.bn_weights = {}
@@ -468,10 +505,11 @@ class KerasAdaptor(Adaptor):
                 elif isinstance(layer, tf.keras.layers.BatchNormalization):
                     self.bn_weights[layer.name] = copy.deepcopy(layer.get_weights())
                 self.layer_weights[layer.name] = copy.deepcopy(layer.get_weights())
+        self.pre_optimized_object = self._pre_optimize(keras_object)
 
-        self.pre_optimized_model = self._pre_optimize(model)
-        keras_object = self.pre_optimized_model._model_object
-        json_model = copy.deepcopy(json.loads(keras_object.to_json()))
+        from neural_compressor.model.keras_model import KerasModel
+        self.pre_optimized_model = KerasModel(self.pre_optimized_object)
+        json_model = copy.deepcopy(json.loads(self.pre_optimized_object.to_json()))
         config = json_model["config"]
         self.fp32_layers = config["layers"]
 
