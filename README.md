@@ -77,8 +77,8 @@ q_model = fit(
       <td colspan="1" align="center"><a href="./docs/source/bench.md">GUI</a></td>
     </tr>
     <tr>
-      <td colspan="2" align="center"><a href="./examples#notebook-examples">Notebook</a></td>
-      <td colspan="1" align="center"><a href="./examples">Examples</a></td>
+      <td colspan="2" align="center"><a href="examples/README.md#notebook-examples">Notebook</a></td>
+      <td colspan="1" align="center"><a href="examples/README.md">Examples</a></td>
       <td colspan="1" align="center"><a href="./docs/source/validated_model_list.md">Results</a></td>
       <td colspan="5" align="center"><a href="https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html">Intel oneAPI AI Analytics Toolkit</a></td>
     </tr>
