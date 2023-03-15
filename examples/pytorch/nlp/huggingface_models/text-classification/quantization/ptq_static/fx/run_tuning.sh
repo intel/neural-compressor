@@ -44,10 +44,6 @@ function run_tuning {
     
     if [ "${topology}" = "bert_large_RTE" ]; then
         TASK_NAME='rte'
-    elif [ "${topology}" = "xlm-roberta-base_MRPC" ]; then
-        TASK_NAME='mrpc'
-    elif [ "${topology}" = "bert_base_MRPC" ]; then
-        TASK_NAME='mrpc'
     elif [ "${topology}" = "bert_base_CoLA" ]; then
         TASK_NAME='cola'
     elif [ "${topology}" = "bert_base_STS-B" ]; then
@@ -60,14 +56,6 @@ function run_tuning {
         TASK_NAME='qnli'
     elif [ "${topology}" = "bert_large_CoLA" ]; then
         TASK_NAME='cola'
-    elif [ "${topology}" = "distilbert_base_MRPC" ]; then
-        TASK_NAME='mrpc'
-    elif [ "${topology}" = "xlnet_base_cased_MRPC" ]; then
-        TASK_NAME='mrpc'
-    elif [ "${topology}" = "roberta_base_MRPC" ]; then
-        TASK_NAME='mrpc'
-    elif [ "${topology}" = "camembert_base_MRPC" ]; then
-        TASK_NAME='mrpc'
     fi
 
     python -u ./run_glue.py \
