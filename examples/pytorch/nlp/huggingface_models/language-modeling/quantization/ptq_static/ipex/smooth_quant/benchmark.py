@@ -44,8 +44,6 @@ class Evaluator:
             total += label.size(0)
             hit += (pred == label).sum().item()
             index += 1
-            if index==10:
-                break
         acc = hit / total
         latency = np.array(latency_list[args.warmup:]).mean() / self.batch_size
         print("Accuracy: {:.3f}".format(acc))
