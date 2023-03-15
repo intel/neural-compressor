@@ -93,22 +93,6 @@ class ConservativeTuneStrategy(TuneStrategy):
         logger.info(f"*** Ending tuning process due to no quantifiable op left.")
         self.re_quant = False
 
-            
-    def _compare_performace(self, last_tune_result, best_tune_result): # pragma: no cover
-        """Compare the tuning result with performance only.
-
-        Args:
-            last_tune_result (list): The list of last tuning result.
-            best_tune_result (list): The list of best tuning result.
-
-        Returns:
-            bool: whether the best tuning result is better than last tuning result
-              in performance.
-        """
-        _, last_perf = last_tune_result
-        _, best_perf = best_tune_result
-        return last_perf[0] < best_perf[0]
-
     def _get_op_type_priority(self):
         optypewise_cap = self.capability['optypewise']
         op_type_priority = list(optypewise_cap.keys())
