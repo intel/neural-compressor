@@ -34,6 +34,21 @@ yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/tuple',
                                  lambda loader, node: tuple(loader.construct_sequence(node)))
 
 
+def is_int8_model(model):
+    """Check whether the input model is a int8 model.
+
+    Args:
+        model (torch.nn.Module): input model
+
+    Returns:
+        result(bool): Return True if the input model is a int8 model.
+    """
+    stat_dict = dict(model.state_dict())
+    for k, v in stat_dict.items():
+        if hasattr(v, 'dtype') and 'int8' in str(v.dtype):
+            return True
+    return False
+
 def _set_sub_module_scale_zeropoint(model, tune_cfg, prefix=''):
     """Set activation scale and zero_point for converted sub modules recursively.
 
@@ -346,10 +361,16 @@ def load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs):
     if len(bf16_ops_list) > 0 and (version >= Version("1.11.0-rc1")):
         from ..adaptor.torch_utils.bf16_convert import Convert
         model = Convert(model, tune_cfg)
+    assert is_int8_model(model), "Int8 model is not loaded."
     if checkpoint_dir is None and history_cfg is not None:
         _set_activation_scale_zeropoint(model, history_cfg)
     else:
-        # set strict=False to avoid loading linked tensors.
-        model.load_state_dict(stat_dict, strict=False)
+        try:
+            model.load_state_dict(stat_dict)
+        except:
+            # set strict=False to avoid loading linked tensors, ignore missing_keys.
+            mismatch_log = model.load_state_dict(stat_dict, strict=False)
+            assert len(mismatch_log.unexpected_keys) == 0, \
+              "Loading state_dict failed: {}".format(mismatch_log)
     util.get_embedding_contiguous(model)
     return model

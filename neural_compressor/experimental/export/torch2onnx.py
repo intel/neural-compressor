@@ -23,6 +23,7 @@ from collections import UserDict
 from neural_compressor.adaptor.torch_utils.util import input2tuple
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
+from neural_compressor.utils.pytorch import is_int8_model
 
 torch = LazyImport('torch')
 onnx = LazyImport('onnx')
@@ -681,6 +682,8 @@ def torch_to_fp32_onnx(
         do_constant_folding (bool, optional): do constant folding or not. Defaults to True.
         verbose (bool, optional): dump verbose or not. Defaults to True.
     """
+    assert is_int8_model(fp32_model) == False, "The fp32 model is replaced during quantization. " + \
+        "please customize a eval_func when quantizing, if not, such as `lambda x: 1`."
     if input_names is None and \
       (isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict)):
         input_names = list(example_inputs.keys())
