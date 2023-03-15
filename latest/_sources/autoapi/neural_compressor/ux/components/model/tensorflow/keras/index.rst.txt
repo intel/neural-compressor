@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: KerasModel(path: str)
+.. py:class:: KerasModel
 
    Bases: :py:obj:`neural_compressor.ux.components.model.tensorflow.model.TensorflowModel`
 
