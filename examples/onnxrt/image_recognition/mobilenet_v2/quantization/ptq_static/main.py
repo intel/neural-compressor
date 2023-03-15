@@ -139,8 +139,8 @@ class Dataloader:
 
     def _preprpcess(self, src):
         with Image.open(src) as image:
-            image = np.array(image.convert('RGB')).astype(np.float32)
-            
+            image = np.array(image.convert('RGB'))
+
             height, width = image.shape[0], image.shape[1]
             scale = self.resize_side / width if height > width else self.resize_side / height
             new_height = int(height*scale)
@@ -157,6 +157,7 @@ class Dataloader:
             if len(image.shape) == 2:
                 image = np.array([image])
                 image = np.repeat(image, 3, axis=0)
+                image = image.transpose(1, 2, 0)
             image = image[y0:y0+self.height, x0:x0+self.width, :]
             image = ((image - self.mean_value)/self.std_value).astype(np.float32)
             image = image.transpose((2, 0, 1))

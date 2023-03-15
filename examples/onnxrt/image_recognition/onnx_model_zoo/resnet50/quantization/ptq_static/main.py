@@ -132,7 +132,7 @@ class Dataloader:
 
     def _preprpcess(self, src):
         with Image.open(src) as image:
-            image = np.array(image.convert('RGB')).astype(np.float32)
+            image = np.array(image.convert('RGB'))
             image = image / 255.
             image = cv2.resize(image, (256, 256), interpolation=cv2.INTER_AREA)
 

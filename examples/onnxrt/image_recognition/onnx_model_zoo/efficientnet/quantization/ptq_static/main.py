@@ -138,7 +138,7 @@ class Dataloader:
 
     def _preprpcess(self, src):
         with Image.open(src) as image:
-            image = np.array(image.convert('RGB')).astype(np.float32)
+            image = np.array(image.convert('RGB'))
             assert len(image.shape) == 3
             height, width, _ = image.shape
             new_height = int(100. * 224 / 87.5) 

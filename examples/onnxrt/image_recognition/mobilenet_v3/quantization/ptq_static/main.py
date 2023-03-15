@@ -139,7 +139,7 @@ class Dataloader:
 
     def _preprpcess(self, src):
         with Image.open(src) as image:
-            image = np.array(image.convert('RGB')).astype(np.float32)
+            image = np.array(image.convert('RGB'))
             image = image.astype('float32') / 255. 
             img_shape = image.shape
 
