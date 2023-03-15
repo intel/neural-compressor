@@ -246,7 +246,7 @@ class TestBasicTuningStrategy(unittest.TestCase):
         # model
         model = torchvision.models.resnet18()
         #tuning and accuracy criterion
-        conf = PostTrainingQuantConfig()
+        conf = PostTrainingQuantConfig(quant_level=1)
         # fit
         q_model = fit(model=model, conf=conf, calib_dataloader=dataloader)
         self.assertIsNotNone(q_model)

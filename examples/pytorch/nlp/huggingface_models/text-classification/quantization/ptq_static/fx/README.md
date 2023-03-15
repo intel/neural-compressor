@@ -29,11 +29,11 @@ python run_glue.py \
         --max_seq_length 128 \
         --per_device_eval_batch_size 16 \
         --no_cuda \
-        --output_dir /path/to/checkpoint/dir \
+        --output_dir saved_results \
         --tune \
         --overwrite_output_dir
 ```
-> NOTE: /path/to/checkpoint/dir is the path to finetune output_dir
+> NOTE: `saved_results` is the path to finetuned output_dir.
 
 or
 ```bash
@@ -82,7 +82,7 @@ the number of physical cores on one node.
 ## 2. Benchmark
 ```bash
 # int8
-sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true --input_model=/path/to/checkpoint/dir
+sh run_benchmark.sh --topology=topology_name --mode=performance --int8=true --input_model=saved_results
 # fp32
 sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=model_name_or_path
 ```
@@ -105,6 +105,61 @@ sh run_benchmark.sh --topology=topology_name --mode=performance --input_model=mo
   <tr>
     <td>xlm-roberta-base_MRPC</td>
     <td><a href="https://huggingface.co/Intel/xlm-roberta-base-mrpc">Intel/xlm-roberta-base-mrpc</a></td>
+    <td>mrpc</td>
+  </tr>
+  <tr>
+    <td>bert_base_MRPC</td>
+    <td><a href="https://huggingface.co/Intel/bert-base-uncased-mrpc">Intel/bert-base-uncased-mrpc</a></td>
+    <td>mrpc</td>
+  </tr>
+  <tr>
+    <td>bert_base_CoLA</td>
+    <td><a href="https://huggingface.co/textattack/bert-base-uncased-CoLA">textattack/bert-base-uncased-CoLA</a></td>
+    <td>cola</td>
+  </tr>
+  <tr>
+    <td>bert_base_STS-B</td>
+    <td><a href="https://huggingface.co/textattack/bert-base-uncased-STS-B">textattack/bert-base-uncased-STS-B</a></td>
+    <td>stsb</td>
+  </tr>
+  <tr>
+    <td>bert_base_SST-2</td>
+    <td><a href="https://huggingface.co/gchhablani/bert-base-cased-finetuned-sst2">gchhablani/bert-base-cased-finetuned-sst2</a></td>
+    <td>sst2</td>
+  </tr>
+  <tr>
+    <td>bert_base_RTE</td>
+    <td><a href="https://huggingface.co/ModelTC/bert-base-uncased-rte">ModelTC/bert-base-uncased-rte</a></td>
+    <td>rte</td>
+  </tr>
+  <tr>
+    <td>bert_large_QNLI</td>
+    <td><a href="https://huggingface.co/textattack/bert-base-uncased-QNLI">textattack/bert-base-uncased-QNLI</a></td>
+    <td>qnli</td>
+  </tr>
+  <tr>
+    <td>bert_large_CoLA</td>
+    <td><a href="https://huggingface.co/yoshitomo-matsubara/bert-large-uncased-cola">yoshitomo-matsubara/bert-large-uncased-cola</a></td>
+    <td>cola</td>
+  </tr>
+  <tr>
+    <td>distilbert_base_MRPC</td>
+    <td><a href="https://huggingface.co/textattack/distilbert-base-uncased-MRPC">textattack/distilbert-base-uncased-MRPC</a></td>
+    <td>mrpc</td>
+  </tr>
+  <tr>
+    <td>xlnet_base_cased_MRPC</td>
+    <td><a href="https://huggingface.co/Intel/xlnet-base-cased-mrpc">Intel/xlnet-base-cased-mrpc</a></td>
+    <td>mrpc</td>
+  </tr>
+  <tr>
+    <td>roberta_base_MRPC</td>
+    <td><a href="https://huggingface.co/textattack/roberta-base-MRPC">textattack/roberta-base-MRPC</a></td>
+    <td>mnli</td>
+  </tr>
+  <tr>
+    <td>camembert_base_MRPC</td>
+    <td><a href="https://huggingface.co/Intel/camembert-base-mrpc">Intel/camembert-base-mrpc</a></td>
     <td>mrpc</td>
   </tr>
 </tbody>

@@ -135,7 +135,7 @@ class TensorflowQDQToOnnxQDQConverter:
             if node.op == 'HostConst':
                 node.op = 'Const'
 
-        # Duplicat the QuantizeV2 node if it has multi Dequantize nodes
+        # Duplicate the QuantizeV2 node if it has multi Dequantize nodes
         model = self.duplicate_tf_quantizev2_nodes(model)
         return model
 
@@ -316,6 +316,8 @@ class TensorflowQDQToOnnxQDQConverter:
         # some nodes may already copied into inner Graph, so remove them from main Graph.
         onnx_graph.delete_unused_nodes(onnx_graph.outputs)
         t2o.tfonnx.topological_sort(onnx_graph, False)
+
+        onnx_graph = onnx_graph.apply_onnx_fusion()
 
         # Build ONNX model
         model_proto = onnx_graph.make_model("converted from neural compressor")
