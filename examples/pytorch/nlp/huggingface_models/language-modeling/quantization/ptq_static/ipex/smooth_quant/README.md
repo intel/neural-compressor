@@ -22,6 +22,23 @@ python eval_lambada.py \
   --int8 \
   --sq
 ```
+
+## Benchmarking 
+
+int8 benchmarking
+```shell
+python benchmark.py \
+  --model_name_or_path bigscience/bloom-560m \
+  --int8
+```
+
+fp32 benchmarking
+```shell
+python benchmark.py \
+  --model_name_or_path bigscience/bloom-560m 
+```
+
+
 # Validated Models
 | Models\Acc       |  FP32  |    int8     | SQ           |
 |------------------|:------:|:-----------:|--------------|
@@ -32,8 +49,8 @@ python eval_lambada.py \
 | bigscience/bloom | 0.8417 |   0.8213    | 0.8352(alpha=0.6) |
 | facebook/opt-125m | 0.6389 |   0.6354    | 0.6391       |
 | facebook/opt-1.3b | 0.7542 | 0.7386(val) | 0.7464(val)  |
-| facebook/opt-2.7b | 0.7790 |      -      | 0.7891       |
-| facebook/opt-6.7b | 0.8151 |      -      | 0.8158       |
+| facebook/opt-2.7b | 0.7790 |   0.7899    | 0.7891       |
+| facebook/opt-6.7b | 0.8151 |   0.7944    | 0.8158       |
 
 
 
