@@ -387,18 +387,21 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.fusion_options import FusionOptions
-        opt_options = FusionOptions("bert")
-        opt_options.enable_embed_layer_norm = False
+        if onnxruntime.__version__ <= '1.13.1':
+            from onnxruntime.transformers import optimizer
+            from onnxruntime.transformers.fusion_options import FusionOptions
+            opt_options = FusionOptions("bert")
+            opt_options.enable_embed_layer_norm = False
 
-        model_optimizer = optimizer.optimize_model(
-            args.model_path,
-            "bert",
-            num_heads=12,
-            hidden_size=768,
-            optimization_options=opt_options)
-        model = model_optimizer.model
+            model_optimizer = optimizer.optimize_model(
+                args.model_path,
+                "bert",
+                num_heads=12,
+                hidden_size=768,
+                optimization_options=opt_options)
+            model = model_optimizer.model
+        else:
+            model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(approach="dynamic")

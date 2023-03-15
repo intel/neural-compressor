@@ -400,18 +400,21 @@ if __name__ == "__main__":
 
 
     if args.tune:
-        from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.fusion_options import FusionOptions
-        opt_options = FusionOptions('bert')
-        opt_options.enable_embed_layer_norm = False
+        if ort.__version__ <= '1.13.1':
+            from onnxruntime.transformers import optimizer
+            from onnxruntime.transformers.fusion_options import FusionOptions
+            opt_options = FusionOptions('bert')
+            opt_options.enable_embed_layer_norm = False
 
-        model_optimizer = optimizer.optimize_model(
-            args.model_path,
-            'bert',
-            num_heads=args.num_heads,
-            hidden_size=args.hidden_size,
-            optimization_options=opt_options)
-        model = model_optimizer.model
+            model_optimizer = optimizer.optimize_model(
+                args.model_path,
+                'bert',
+                num_heads=args.num_heads,
+                hidden_size=args.hidden_size,
+                optimization_options=opt_options)
+            model = model_optimizer.model
+        else:
+            model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(approach='static',

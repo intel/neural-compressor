@@ -457,18 +457,21 @@ def main():
         return metrics['f1']
 
     if model_args.tune:
-        from onnxruntime.transformers import optimizer
-        from onnxruntime.transformers.fusion_options import FusionOptions
-        opt_options = FusionOptions('bert')
-        opt_options.enable_embed_layer_norm = False
+        if onnxruntime.__version__ <= '1.13.1':
+            from onnxruntime.transformers import optimizer
+            from onnxruntime.transformers.fusion_options import FusionOptions
+            opt_options = FusionOptions('bert')
+            opt_options.enable_embed_layer_norm = False
 
-        model_optimizer = optimizer.optimize_model(
-            model_args.input_model,
-            'bert',
-            num_heads=model_args.num_heads,
-            hidden_size=model_args.hidden_size,
-            optimization_options=opt_options)
-        model = model_optimizer.model
+            model_optimizer = optimizer.optimize_model(
+                model_args.input_model,
+                'bert',
+                num_heads=model_args.num_heads,
+                hidden_size=model_args.hidden_size,
+                optimization_options=opt_options)
+            model = model_optimizer.model
+        else:
+            model = onnx.load(model_args.input_model)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
         from neural_compressor.utils.constant import FP32
