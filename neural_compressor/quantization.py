@@ -466,8 +466,6 @@ def fit(model,
         # Saved quantized model in ./saved folder
         q_model.save("./saved")
     """
-    if eval_func is None and eval_dataloader is None:
-        conf.performance_only = True
     quantizer = PostTrainingQuant(conf)
     quantizer.model = model
     if eval_func is not None:
