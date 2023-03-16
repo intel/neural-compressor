@@ -248,26 +248,26 @@ The following section exemplifies how to use hooks in user pass-in training func
 
 - Step 2: Enable pruning functionalities 
 
-     [**Experimental option 1** ]Modify model and optimizer. 
+     [**Experimental option** ]Modify model and optimizer.
 
-        ```python
-            """
-            from neural_compressor.training import prepare_pruning, WeightPruningConfig 
-            config = WeightPruningConfig(configs)
-            prepare_pruning(config, model, optimzier) # modify model and optimizer
-            for epoch in range(num_train_epochs):
-                model.train()
-                for step, batch in enumerate(train_dataloader):
-                    outputs = model(**batch)
-                    loss = outputs.loss
-                    loss.backward()
-                    optimizer.step()
-                    lr_scheduler.step()
-                    model.zero_grad()
+    ```python
+        from neural_compressor.training import prepare_pruning, WeightPruningConfig 
+        config = WeightPruningConfig(configs)
+        prepare_pruning(config, model, optimzier) # modify model and optimizer
+        for epoch in range(num_train_epochs):
+        model.train()
+        for step, batch in enumerate(train_dataloader):
+             outputs = model(**batch)
+             loss = outputs.loss
+             loss.backward()
+             optimizer.step()
+             lr_scheduler.step()
+             model.zero_grad()
+    ```
 
-        ```
+
 - 
-    [**Stable Option 2** ]Insert Hook functions in your codes. 
+    [**Stable Option** ]Insert Hook functions in your codes. 
 
     ```python
         """ All you need is to insert following API functions to your codes:
