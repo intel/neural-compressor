@@ -75,6 +75,12 @@ class Diagnosis:
             min_max_data: dict = pickle.load(min_max_file)
 
         op_list: List[dict] = []
+        saved_mse_pkl_path = os.path.join(self.optimization.workdir, "saved_mse.pkl")
+        if os.path.exists(saved_mse_pkl_path):
+            with open(saved_mse_pkl_path, "rb") as op_list_pkl:
+                op_list = pickle.load(op_list_pkl)
+            return op_list
+
         input_model_tensors: dict = self.get_tensors_info(model_type="input")["activation"][0]
         optimized_model_tensors: dict = self.get_tensors_info(model_type="optimized")[
             "activation"
@@ -87,6 +93,10 @@ class Diagnosis:
             max = float(min_max.get("max", None))
             op_entry = OpEntry(op_name, mse, min, max)
             op_list.append(op_entry.serialize())
+
+        with open(saved_mse_pkl_path, "wb") as op_list_pkl:
+            pickle.dump(op_list, op_list_pkl)
+
         return op_list
 
     def calculate_mse(

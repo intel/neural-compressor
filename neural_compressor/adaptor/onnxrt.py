@@ -517,7 +517,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                   iterations=list(range(0, quantize_config['calib_iteration'])),
                   backend=self.backend, reduce_range=self.reduce_range)
         self.min_max = augment.dump_minmax()
-        quantize_params = augment.dump_calibration(quantize_config)
+        quantize_params = augment.dump_calibration(quantize_config, min_max=self.min_max)
         return quantize_params
 
     def inspect_tensor(self, model, dataloader, op_list=[],
@@ -942,7 +942,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             precisions = query.get_precisions()
 
             for precision in precisions:
-                if precision == 'fp16' and self.device == 'cpu':
+                if precision in ['fp16', 'bf16'] and (self.device == 'cpu' or self.backend != 'CUDAExecutionProvider'):
+                    continue
+                elif precision == 'bf16' and 'CUDAExecutionProvider' not in ort.get_available_providers():
                     continue
                 # get supported optype for target precision
                 optypes = query.get_op_types_by_precision(precision) if \

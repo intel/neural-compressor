@@ -5,10 +5,8 @@ import shutil
 import torch
 import torch.nn as nn
 import unittest
-import os
 from neural_compressor import PostTrainingQuantConfig, QuantizationAwareTrainingConfig, set_workspace
 from neural_compressor.data import Datasets, DATALOADERS, DataLoader
-from neural_compressor.experimental.data.datasets.dataset import Datasets
 from neural_compressor import quantization
 from neural_compressor.training import prepare_compression, fit
 from neural_compressor.utils.pytorch import load

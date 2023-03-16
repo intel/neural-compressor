@@ -41,7 +41,7 @@ class ExpiringDict(UserDict):
         if initial_value is None:
             initial_value = {}
 
-        for (key, value) in initial_value.items():
+        for key, value in initial_value.items():
             self[key] = value
 
     def __setitem__(self, key: str, item: Any) -> None:

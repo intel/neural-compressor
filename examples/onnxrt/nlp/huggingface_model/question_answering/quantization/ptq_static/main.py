@@ -477,7 +477,7 @@ def main():
         elif model_args.model_name_or_path == 'salti/bert-base-multilingual-cased-finetuned-squad':
             fp32_op_names = ['MatMul_660', 'MatMul_566', 'Unsqueeze_91']
         config = PostTrainingQuantConfig(approach='static',
-                                         op_name_list={op_name:FP32_CONFIG for op_name in fp32_op_names if fp32_op_names})
+                                         op_name_dict={op_name:FP32_CONFIG for op_name in fp32_op_names if fp32_op_names})
         q_model = quantization.fit(model, 
                                    config,
                                    eval_func=eval_func,

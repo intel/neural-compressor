@@ -247,20 +247,43 @@ def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
 
 def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
     """Calculate scale and zero point."""
-    if scheme == 'sym':
-        max_range = max(abs(rmin), abs(rmax))
-        scale = (float(max_range) * 2) / quantize_range if max_range > 0 else 1
-    else:
-        scale = (float(rmax) - float(rmin)) / quantize_range if rmin != rmax else 1
+    if isinstance(rmax, np.ndarray):
+        if scheme == 'sym':
+            max_range = np.maximum(abs(rmin), abs(rmax))
+            scale = np.ones(rmax.shape, dtype='float32')
+            scale[max_range > 0] = np.array([float(i) / quantize_range for i in \
+                (max_range[max_range > 0] * 2.).flatten().tolist()], dtype='float32')
+        else:
+            scale = np.ones(rmax.shape, dtype='float32')
+            scale[rmin != rmax] = np.array([float(i) / quantize_range for i in \
+                (rmax - rmin)[rmin != rmax].flatten().tolist()], dtype='float32')
 
-    if scale == 1 or (scheme == 'sym' and qType == onnx_proto.TensorProto.INT8):
-        zero_point = 0
-    elif qType == onnx_proto.TensorProto.UINT8:
-        zero_point = round((0 - float(rmin)) / scale)
-        zero_point = np.uint8(round(max(0, min(255, zero_point))))
+        if scheme == 'sym' and qType == onnx_proto.TensorProto.INT8:
+            zero_point = np.zeros(scale.shape, dtype='int8') if isinstance(scale, np.ndarray) else 0
+        elif isinstance(scale, np.ndarray) and (scale == 1).all():
+            zero_point = np.zeros(scale.shape, dtype='int8') if qType == onnx_proto.TensorProto.INT8 \
+                else  np.zeros(scale.shape, dtype='uint8')
+        elif qType == onnx_proto.TensorProto.UINT8:
+            zero_point = np.maximum(0, np.minimum(255, ((0 - float(rmin)) / scale).round()).round()).astype('uint8')
+        else:
+            zero_point = ((-64 - rmin) / float(scale) if quantize_range == 128 \
+                else (-127 - rmin) / float(scale)).round()
+
     else:
-        zero_point = round((-64 - float(rmin)) / scale) if quantize_range == 128 \
-            else round((-127 - float(rmin)) / scale)
+        if scheme == 'sym':
+            max_range = max(abs(rmin), abs(rmax))
+            scale = (float(max_range) * 2) / quantize_range if max_range > 0 else 1
+        else:
+            scale = (float(rmax) - float(rmin)) / quantize_range if rmin != rmax else 1
+
+        if scale == 1 or (scheme == 'sym' and qType == onnx_proto.TensorProto.INT8):
+            zero_point = 0
+        elif qType == onnx_proto.TensorProto.UINT8:
+            zero_point = round((0 - float(rmin)) / scale)
+            zero_point = np.uint8(round(max(0, min(255, zero_point))))
+        else:
+            zero_point = round((-64 - float(rmin)) / scale) if quantize_range == 128 \
+                else round((-127 - float(rmin)) / scale)
     return scale, zero_point
 
 def quantize_data(data, quantize_range, qType, scheme):
@@ -290,30 +313,19 @@ def quantize_data(data, quantize_range, qType, scheme):
     quantized_data = quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
     return rmin, rmax, zero_point, scale, quantized_data
 
-def quantize_data_per_channel(tensor_value, qType, scheme, scale_value, zo_value):
+def quantize_data_per_channel(data, axis, quantize_range, qType, scheme):
     """Quantize tensor per-channel."""
-    channel_count = tensor_value.shape[0] # TBD, default from axis 0
-    new_per_channel_tensor_values = []
-    for i in range(channel_count):
-        per_channel_tensor_value = tensor_value.take(i, 0)
-        per_channel_scale_value = scale_value.take(i)
-        per_channel_zero_value = zo_value.take(i)
-        new_per_channel_tensor_values.append(quantize_data_with_scale_zero(\
-                                                       per_channel_tensor_value,
-                                                       qType,
-                                                       scheme,
-                                                       per_channel_scale_value,
-                                                       per_channel_zero_value))
-    # combine per_channel_data into one
-    reshape_dims = list(tensor_value.shape)  # deep copy
-    reshape_dims[0] = 1  # only one per channel for reshape
-    new_tensor_value = new_per_channel_tensor_values[0].reshape(reshape_dims)
-    for i in range(1, channel_count):
-        new_per_channel_tensor_value = new_per_channel_tensor_values[i].\
-                                                       reshape(reshape_dims)
-        new_tensor_value = np.concatenate((new_tensor_value, \
-                                           new_per_channel_tensor_value), 0)
-    return new_tensor_value
+    rmin = None
+    rmax = None
+    for i in range(len(data.shape)):
+        if i != axis:
+            rmin = np.min(data, axis=i, keepdims=True) if rmin is None else np.min(rmin, axis=i, keepdims=True)
+            rmax = np.max(data, axis=i, keepdims=True) if rmax is None else  np.max(rmax, axis=i, keepdims=True)
+    rmin = np.minimum(rmin, 0)
+    rmax = np.maximum(rmax, 0)
+    scale, zero_point = calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
+    quantized_data = quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
+    return rmin.reshape(-1, 1), rmax.reshape(-1, 1), zero_point.reshape(-1, 1), scale.reshape(-1, 1), quantized_data
 
 def dequantize_data_with_scale_zero(tensor_value, scale_value, zo_value): # pragma: no cover
     """Dequantize tensor with sacale and zero point."""

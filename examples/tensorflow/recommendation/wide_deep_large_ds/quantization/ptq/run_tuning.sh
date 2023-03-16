@@ -39,7 +39,7 @@ function run_tuning {
             --input_graph ${input_model} \
             --evaluation_data_location ${dataset_location}/eval_processed_data.tfrecords \
             --calibration_data_location ${dataset_location}/train_processed_data.tfrecords \
-            --accuracy_only \
+            --accuracy \
             --batch_size 1000 \
             --output_graph ${output_model} \
             --tune

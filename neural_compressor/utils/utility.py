@@ -80,7 +80,7 @@ class LazyImport(object):
 
     def __init__(self, module_name):
         """Init LazyImport object.
-        
+
         Args:
            module_name (string): The name of module imported later
         """

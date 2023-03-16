@@ -99,10 +99,18 @@ def tf_to_int8_onnx(
     else:
         input_names[:] = [o+":0" for o in input_names]
     output_names[:] = [o+":0" for o in output_names]
+    onnx_convert_graph = "./converted_graph.onnx"
     from neural_compressor.adaptor.tf_utils.tf2onnx_converter import TensorflowQDQToOnnxQDQConverter
     TensorflowQDQToOnnxQDQConverter(int8_model, input_names, \
-                        output_names, shape_override, inputs_as_nchw, opset_version).convert(save_path)
+        output_names, shape_override, inputs_as_nchw, opset_version).convert(onnx_convert_graph)
 
+    import onnxruntime as ort
+    sess_options = ort.SessionOptions()
+    sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    sess_options.optimized_model_filepath = save_path
+    import onnx
+    model = onnx.load(onnx_convert_graph)
+    ort.InferenceSession(model.SerializeToString(), sess_options)
     info = "The INT8 ONNX Model is exported to path: {0}".format(save_path)
     logger.info("*"*len(info))
     logger.info(info)

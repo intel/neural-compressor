@@ -103,13 +103,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>VGG16</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg16/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/vgg16/quantization/ptq">keras</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg16/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>VGG19</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg19/quantization/ptq">pb</a> / <a href="./tensorflow/image_recognition/keras_models/vgg19/quantization/ptq">keras</a></td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg19/quantization/ptq">pb</a></td>
   </tr>
   <tr>
     <td>ResNet V2 50</td>
@@ -154,42 +154,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq">ckpt</a></td>
   </tr>
   <tr>
-    <td>MNIST </td>
-    <td>Image Recognition</td>
-    <td>Quantization-Aware Training</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/mnist/quantization/qat">keras</a></td>
-  </tr>
-  <tr>
-    <td>ResNet50</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/resnet50/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
-    <td>ResNet50 Fashion</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/resnet50_fashion/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
-    <td>ResNet101</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/resnet101/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
-    <td>Inception V3</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/inception_v3/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
-    <td>Inception Resnet V2</td>
-    <td>Image Recognition</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/inception_resnet_v2/quantization/ptq">keras</a></td>
-  </tr>
-  <tr>
     <td>Xception</td>
     <td>Image Recognition</td>
     <td>Post-Training Static Quantization</td>
@@ -200,12 +164,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Image Recognition</td>
     <td>Quantization-Aware Training</td>
     <td><a href="./tensorflow/image_recognition/resnet_v2/quantization/qat">keras</a> </td>
-  </tr>
-  <tr>
-    <td>ResNet50</td>
-    <td>Image Recognition</td>
-    <td>Quantization-Aware Training</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/resnet50/quantization/qat">keras</a> </td>
   </tr>
   <tr>
     <td>EfficientNet V2 B0</td>
@@ -323,13 +281,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
   </tr>
 </thead>
 <tbody>
-  <tr>
-    <td>Inception V3</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./tensorflow/image_recognition/keras_models/inception_v3/pruning/magnitude">keras</a></td>
-  </tr>
   <tr>
     <td>ResNet V2</td>
     <td>Image Recognition</td>
@@ -715,6 +666,13 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/question-answering/pruning/eager">eager</a></td>
   </tr>
   <tr>
+    <td>Flan-T5-small</td>
+    <td>Natural Language Processing (translation)</td>
+    <td>Structured (4x1)</td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/nlp/huggingface_models/translation/pruning/eager">eager</a></td>
+  </tr>
+  <tr>
     <td>YOLOv5s6</td>
     <td>Object Detection</td>
     <td>Structured (4x1, 2in4), Unstructured</td>
@@ -722,68 +680,11 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/object_detection/yolo_v5/pruning/eager">eager</a></td>
   </tr>
   <tr>
-    <td>ResNet18</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>ResNet34</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
     <td>ResNet50</td>
     <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>ResNet101</td>
-    <td>Image Recognition</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="./pytorch/image_recognition/torchvision_models/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>*BERT large</td>
-    <td>Natural Language Processing</td>
     <td>Structured (2x1)</td>
-    <td>Group Lasso</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/question-answering/pruning/group_lasso/eager">eager</a></td>
-  </tr>
-
-  <tr>
-    <td>*Intel/bert-base-uncased-sparse-70-unstructured</td>
-    <td>Natural Language Processing (question-answering)</td>
-    <td>Unstructured</td>
-    <td>Prune once for all</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/question-answering/pruning/pattern_lock/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>*bert-base-uncased</td>
-    <td>Natural Language Processing</td>
-    <td>Structured (Filter/Channel-wise)</td>
-    <td>Gradient Sensitivity</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/pruning/gradient_sensitivity/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>*DistilBERT</td>
-    <td>Natural Language Processing</td>
-    <td>Unstructured</td>
-    <td>Magnitude</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/pruning/magnitude/eager">eager</a></td>
-  </tr>
-  <tr>
-    <td>*Intel/bert-base-uncased-sparse-70-unstructured</td>
-    <td>Natural Language Processing (text-classification)</td>
-    <td>Unstructured</td>
-    <td>Prune once for all</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pattern_lock/eager">eager</a></td>
+    <td>Snip-momentum</td>
+    <td><a href="./pytorch/image_recognition/ResNet50/pruning/eager">eager</a></td>
   </tr>
 </tbody>
 </table>
