@@ -40,17 +40,17 @@ python benchmark.py \
 
 
 # Validated Models
-| Models\Acc       |  FP32  |    INT8 (w/o Smooth Quantization)     | INT8 (w Smooth Quantization)           |
+| Models\Acc       |  FP32  |    INT8 (w/o SmoothQuant)     | INT8 (w/ SmoothQuant)           |
 |------------------|:------:|:-----------:|--------------|
-| bigscience/bloom-560m | 0.6516 | 0.6496  | 0.6652 (alpha=0.5)   |
-| bigscience/bloom-1b7 | 0.7155 |   0.6761    | 0.7281 (alpha=0.5)       |
-| bigscience/bloom-3b | 0.7406 |   0.7073    | 0.7441 (alpha=0.5)       |
-| bigscience/bloom-7b1 | 0.7759 |   0.7628    | 0.7718 (alpha=0.5)       |
-| bigscience/bloom-176b | 0.8417 |   0.8213    | 0.8352 (alpha=0.6) |
-| facebook/opt-125m | 0.6389 |   0.6354    | 0.6391 (alpha=0.5)       |
-| facebook/opt-1.3b | 0.7542 | 0.7386 | 0.7464 (alpha=0.5)  |
-| facebook/opt-2.7b | 0.7790 |   0.7899    | 0.7891 (alpha=0.5)       |
-| facebook/opt-6.7b | 0.8151 |   0.7944    | 0.8158 (alpha=0.5)       |
+| bigscience/bloom-560m | 65.16% | 64.96%  | 66.52% (alpha=0.5)   |
+| bigscience/bloom-1b7 | 71.55% |   67.61%    | 72.81% (alpha=0.5)       |
+| bigscience/bloom-3b | 74.06% |   70.73%    | 74.41% (alpha=0.5)       |
+| bigscience/bloom-7b1 | 77.59% |   76.28%    | 77.18% (alpha=0.5)       |
+| bigscience/bloom-176b | 84.17% |   82.13%    | 83.52% (alpha=0.6) |
+| facebook/opt-125m | 63.89% |   63.54%    | 63.91% (alpha=0.5)       |
+| facebook/opt-1.3b | 75.42% | 73.86% | 74.64% (alpha=0.5)  |
+| facebook/opt-2.7b | 77.90% |   78.99%    | 78.91% (alpha=0.5)       |
+| facebook/opt-6.7b | 81.51% |   79.44%    | 81.58% (alpha=0.5)       |
 
 
 
