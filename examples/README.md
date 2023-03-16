@@ -673,7 +673,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
-## Quantization with [Intel® Extension for Transformers](https://github.com/intel/intel-extension-for-transformers)
+## Quantization with [Intel® Extension for Transformers](https://github.com/intel/intel-extension-for-transformers) based on Intel® Neural Compressor
 <table>
 <thead>
   <tr>
