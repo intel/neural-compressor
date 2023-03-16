@@ -109,29 +109,25 @@
 <thead>
 <tr>
 <th style="text-align: center;">Export</th>
-<th style="text-align: center;">Post-training Dynamic Quantization</th>
-<th style="text-align: center;">Post-training Static Quantization</th>
-<th style="text-align: center;">Quantization Aware Training</th>
+<th style="text-align: center;">PyTorch</th>
+<th style="text-align: center;">TensorFlow</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: center;">FP32 PyTorch Model -&gt; FP32 ONNX Model</td>
-<td style="text-align: center;">&#10004;</td>
-<td style="text-align: center;">&#10004;</td>
-<td style="text-align: center;">&#10004;</td>
-</tr>
-<tr>
-<td style="text-align: center;">INT8 PyTorch Model -&gt; INT8 QDQ ONNX Model</td>
-<td style="text-align: center;">&#10004;</td>
+<td style="text-align: center;">FP32 Model -&gt; FP32 ONNX Model</td>
 <td style="text-align: center;">&#10004;</td>
 <td style="text-align: center;">&#10004;</td>
 </tr>
 <tr>
-<td style="text-align: center;">INT8 PyTorch Model -&gt; INT8 QLinear ONNX Model</td>
+<td style="text-align: center;">INT8 Model -&gt; INT8 QDQ ONNX Model</td>
 <td style="text-align: center;">&#10004;</td>
 <td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td style="text-align: center;">INT8 Model -&gt; INT8 QLinear ONNX Model</td>
 <td style="text-align: center;">&#10004;</td>
+<td style="text-align: center;">:x:</td>
 </tr>
 </tbody>
 </table></section>
