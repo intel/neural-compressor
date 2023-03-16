@@ -681,9 +681,14 @@ def torch_to_fp32_onnx(
         do_constant_folding (bool, optional): do constant folding or not. Defaults to True.
         verbose (bool, optional): dump verbose or not. Defaults to True.
     """
+    from neural_compressor.utils.pytorch import is_int8_model
+    assert is_int8_model(fp32_model) == False, "The fp32 model is replaced during quantization. " + \
+        "please customize a eval_func when quantizing, if not, such as `lambda x: 1`."
     if input_names is None and \
       (isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict)):
         input_names = list(example_inputs.keys())
+        example_inputs = list(example_inputs.values())
+    elif isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict):
         example_inputs = list(example_inputs.values())
     # match input_names with inspected input_order, especailly for bert in hugginface.
     if input_names and len(input_names) > 1:
