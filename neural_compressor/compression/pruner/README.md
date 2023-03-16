@@ -212,7 +212,7 @@ Users can pass the customized training/evaluation functions to `Pruning` in vari
 
 The following section exemplifies how to use hooks in user pass-in training function to perform model pruning. Through the pruning API, multiple pruner objects are supported in one single Pruning object to enable layer-specific configurations and a default set is used as a complement.
 
-- Step 1: Define a dict-like configuration in your training codes. Usually only 5-7 configuration items need to be identified for personalized pruning, a configuration template is shown below:
+- Step 1: Define a dict-like configuration in your training codes. Usually only 5-7 configuration items need to be identified. For customized pruning, a configuration template is shown below:
 
   ```python
       configs = [
@@ -246,7 +246,28 @@ The following section exemplifies how to use hooks in user pass-in training func
           ]
   ```
 
-- Step 2: Insert API functions in your codes. Only 4 lines of codes are required.
+- Step 2: Enable pruning functionalities 
+
+     [**Experimental option 1** ]Modify model and optimizer. 
+
+        ```python
+            """
+            from neural_compressor.training import prepare_pruning, WeightPruningConfig 
+            config = WeightPruningConfig(configs)
+            prepare_pruning(config, model, optimzier) # modify model and optimizer
+            for epoch in range(num_train_epochs):
+                model.train()
+                for step, batch in enumerate(train_dataloader):
+                    outputs = model(**batch)
+                    loss = outputs.loss
+                    loss.backward()
+                    optimizer.step()
+                    lr_scheduler.step()
+                    model.zero_grad()
+
+        ```
+- 
+    [**Stable Option 2** ]Insert Hook functions in your codes. 
 
     ```python
         """ All you need is to insert following API functions to your codes:
@@ -274,7 +295,7 @@ The following section exemplifies how to use hooks in user pass-in training func
                 model.zero_grad()
         compression_manager.callbacks.on_train_end()
     ```
- In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function.
+   In the case mentioned above, pruning process can be done by pre-defined hooks in Neural Compressor. Users need to place those hooks inside the training function.
 
 
 ## Validated Pruning Models
