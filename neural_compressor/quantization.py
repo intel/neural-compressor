@@ -470,9 +470,6 @@ def fit(model,
         # Saved quantized model in ./saved folder
         q_model.save("./saved")
     """
-    assert all((eval_dataloader is not None, eval_metric is not None)) or \
-        all((eval_dataloader is None, eval_metric is None)), \
-        "Please set eval_metric also if you set eval_dataloader!"
     quantizer = PostTrainingQuant(conf)
     quantizer.model = model
     if eval_func is not None:
