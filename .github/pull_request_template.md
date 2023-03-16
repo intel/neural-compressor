@@ -5,8 +5,7 @@ API changed or not
 
 ## Description
 
-detail description 
-JIRA ticket: xxx
+detail description
 
 ## Expected Behavior & Potential Risk
 
