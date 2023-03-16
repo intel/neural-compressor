@@ -1,0 +1,43 @@
+:py:mod:`neural_compressor.experimental.compression`
+====================================================
+
+.. py:module:: neural_compressor.experimental.compression
+
+.. autoapi-nested-parse::
+
+   Experimental pruning API.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   pruning/index.rst
+
+
+Package Contents
+----------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.experimental.compression.prepare_pruning
+
+
+
+.. py:function:: prepare_pruning(config, model: torch.nn.Module, opt: torch.optim)
+
+   Wrapper the model and optimizer to support all the pruning functionality.
+
+   :param config: WeightPruningConfig
+   :param model: The user's model
+   :param opt: The user's optimizer
+   :return: The modified model and optimizer
+
+

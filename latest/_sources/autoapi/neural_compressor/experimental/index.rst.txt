@@ -16,6 +16,7 @@ Subpackages
    :maxdepth: 3
 
    common/index.rst
+   compression/index.rst
    data/index.rst
    export/index.rst
    metric/index.rst

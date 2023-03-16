@@ -36,7 +36,16 @@ Classes
    neural_compressor.compression.QuantizationAwareTrainingCallbacks
    neural_compressor.compression.DistillationCallbacks
    neural_compressor.compression.PruningCallbacks
+   neural_compressor.compression.WeightPruningConfig
 
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.compression.prepare_pruning
 
 
 
@@ -138,5 +147,36 @@ Classes
 
       Register hooks for pruning.
 
+
+
+.. py:function:: prepare_pruning(config, model: torch.nn.Module, opt: torch.optim)
+
+   Wrapper the model and optimizer to support all the pruning functionality.
+
+   :param config: WeightPruningConfig
+   :param model: The user's model
+   :param opt: The user's optimizer
+   :return: The modified model and optimizer
+
+
+.. py:class:: WeightPruningConfig(pruning_configs=[{}], target_sparsity=0.9, pruning_type='snip_momentum', pattern='4x1', op_names=[], excluded_op_names=[], start_step=0, end_step=0, pruning_scope='global', pruning_frequency=1, min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98, sparsity_decay_type='exp', pruning_op_types=['Conv', 'Linear'], **kwargs)
+
+   Similiar to torch optimizer's interface.
+
+   .. rubric:: Example
+
+   from neural_compressor.config import WeightPruningConfig
+
+   config = WeightPruningConfig(
+       local_configs,
+       target_sparsity=0.8
+   )
+   prune = Pruning(config)
+   prune.update_config(start_step=1, end_step=10)
+   prune.model = self.model
+
+   .. py:property:: weight_compression
+
+      Get weight_compression.
 
 

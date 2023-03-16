@@ -134,4 +134,14 @@ Classes
       :type tensor_dict: dict
 
 
+   .. py:method:: save(model, path)
+
+      The function is used by tune strategy class for saving model.
+
+      :param model: The model to saved.
+      :type model: object
+      :param path: The path where to save.
+      :type path: string
+
+
 

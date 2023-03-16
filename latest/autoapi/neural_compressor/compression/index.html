@@ -125,6 +125,19 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.PruningCallbacks" title="neural_compressor.compression.PruningCallbacks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PruningCallbacks</span></code></a></p></td>
 <td><p>This is the class for callbacks of pruning object.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.WeightPruningConfig" title="neural_compressor.compression.WeightPruningConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WeightPruningConfig</span></code></a></p></td>
+<td><p>Similiar to torch optimizer's interface.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.prepare_pruning" title="neural_compressor.compression.prepare_pruning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_pruning</span></code></a>(config, model, opt)</p></td>
+<td><p>Wrapper the model and optimizer to support all the pruning functionality.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py class">
@@ -257,6 +270,47 @@ in terms of epoch.</p>
 <dt class="sig sig-object py" id="neural_compressor.compression.PruningCallbacks.generate_hooks">
 <span class="sig-name descname"><span class="pre">generate_hooks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.compression.PruningCallbacks.generate_hooks" title="Permalink to this definition"></a></dt>
 <dd><p>Register hooks for pruning.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.prepare_pruning">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.</span></span><span class="sig-name descname"><span class="pre">prepare_pruning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.optim</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.compression.prepare_pruning" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper the model and optimizer to support all the pruning functionality.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – WeightPruningConfig</p></li>
+<li><p><strong>model</strong> – The user’s model</p></li>
+<li><p><strong>opt</strong> – The user’s optimizer</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The modified model and optimizer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.WeightPruningConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.</span></span><span class="sig-name descname"><span class="pre">WeightPruningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pruning_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[{}]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'snip_momentum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'4x1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_scope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.98</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparsity_decay_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_op_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Conv',</span> <span class="pre">'Linear']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.compression.WeightPruningConfig" title="Permalink to this definition"></a></dt>
+<dd><p>Similiar to torch optimizer’s interface.</p>
+<p class="rubric">Example</p>
+<p>from neural_compressor.config import WeightPruningConfig</p>
+<dl class="simple">
+<dt>config = WeightPruningConfig(</dt><dd><p>local_configs,
+target_sparsity=0.8</p>
+</dd>
+</dl>
+<p>)
+prune = Pruning(config)
+prune.update_config(start_step=1, end_step=10)
+prune.model = self.model</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neural_compressor.compression.WeightPruningConfig.weight_compression">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">weight_compression</span></span><a class="headerlink" href="#neural_compressor.compression.WeightPruningConfig.weight_compression" title="Permalink to this definition"></a></dt>
+<dd><p>Get weight_compression.</p>
 </dd></dl>
 
 </dd></dl>

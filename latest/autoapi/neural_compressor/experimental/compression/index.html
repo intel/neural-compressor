@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.strategy.exhaustive &mdash; Intel® Neural Compressor 2.0 documentation</title>
+  <title>neural_compressor.experimental.compression &mdash; Intel® Neural Compressor 2.0 documentation</title>
       <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
@@ -70,9 +70,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.exhaustive</span></code></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.compression</span></code></li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../../../_sources/autoapi/neural_compressor/strategy/exhaustive/index.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../../../_sources/autoapi/neural_compressor/experimental/compression/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -80,43 +80,44 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-neural_compressor.strategy.exhaustive">
-<span id="neural-compressor-strategy-exhaustive"></span><h1><a class="reference internal" href="#module-neural_compressor.strategy.exhaustive" title="neural_compressor.strategy.exhaustive"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.strategy.exhaustive</span></code></a><a class="headerlink" href="#module-neural_compressor.strategy.exhaustive" title="Permalink to this heading"></a></h1>
-<p>The exhaustive tuning strategy.</p>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
-<section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+  <section id="module-neural_compressor.experimental.compression">
+<span id="neural-compressor-experimental-compression"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.compression" title="neural_compressor.experimental.compression"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.compression</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.compression" title="Permalink to this heading"></a></h1>
+<p>Experimental pruning API.</p>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pruning/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.compression.pruning</span></code></a></li>
+</ul>
+</div>
+</section>
+<section id="package-contents">
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Permalink to this heading"></a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy" title="neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExhaustiveTuneStrategy</span></code></a></p></td>
-<td><p>The exhaustive tuning strategy.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.compression.prepare_pruning" title="neural_compressor.experimental.compression.prepare_pruning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_pruning</span></code></a>(config, model, opt)</p></td>
+<td><p>Wrapper the model and optimizer to support all the pruning functionality.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.strategy.exhaustive.</span></span><span class="sig-name descname"><span class="pre">ExhaustiveTuneStrategy</span></span><a class="headerlink" href="#neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../strategy/index.html#neural_compressor.strategy.strategy.TuneStrategy" title="neural_compressor.strategy.strategy.TuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neural_compressor.strategy.strategy.TuneStrategy</span></code></a></p>
-<p>The exhaustive tuning strategy.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy.next_tune_cfg">
-<span class="sig-name descname"><span class="pre">next_tune_cfg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.strategy.exhaustive.ExhaustiveTuneStrategy.next_tune_cfg" title="Permalink to this definition"></a></dt>
-<dd><p>Generate and yield the next tuning config using exhaustive search in tuning space.</p>
-<p>It sequentially traverse all possible quantization tuning configurations
-in a tuning space. From the perspective of the impact on performance,
-we currently only traverse all possible quantization tuning configs.
-Same reason as Bayesian, fallback datatypes are not included for now.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.compression.prepare_pruning">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.compression.</span></span><span class="sig-name descname"><span class="pre">prepare_pruning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.optim</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neural_compressor.experimental.compression.prepare_pruning" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper the model and optimizer to support all the pruning functionality.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dict containing the tuning configuration for quantization.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – WeightPruningConfig</p></li>
+<li><p><strong>model</strong> – The user’s model</p></li>
+<li><p><strong>opt</strong> – The user’s optimizer</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tune_config (dict)</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The modified model and optimizer</p>
 </dd>
 </dl>
-</dd></dl>
-
 </dd></dl>
 
 </section>
