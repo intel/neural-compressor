@@ -198,7 +198,8 @@ def main():
             # use the MSE_V2 strategy by default.
             from neural_compressor.config import TuningCriterion
             tuning_criterion = TuningCriterion(strategy="mse_v2")
-            conf = PostTrainingQuantConfig(tuning_criterion=tuning_criterion)
+            conf = PostTrainingQuantConfig(quant_level=1,
+                                           tuning_criterion=tuning_criterion)
         else:
             conf = PostTrainingQuantConfig()
         q_model = quantization.fit(model,
