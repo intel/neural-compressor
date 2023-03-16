@@ -58,7 +58,7 @@ python benchmark.py \
 
 
 ```bibtex
-@article{<a href="https://arxiv.org/pdf/2211.05100.pdf">xiao2022smoothquant</a>,
+@article{[xiao2022smoothquant](https://arxiv.org/pdf/2211.05100.pdf),
   title={SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models},
   author={Xiao, Guangxuan and Lin, Ji and Seznec, Mickael and Demouth, Julien and Han, Song},
   journal={arXiv},
