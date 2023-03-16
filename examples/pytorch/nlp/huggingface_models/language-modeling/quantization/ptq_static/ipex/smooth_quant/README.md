@@ -1,5 +1,6 @@
 # Introduction
-This example is to demonstrate the accuracy improvement introduced by SmoothQuant[1] for int8 models. Lambada train split is used for calibration(unless specified) and validation  is used for evaluation.
+This example is to demonstrate the accuracy improvement introduced by SmoothQuant[1] (https://arxiv.org/pdf/2211.05100.pdf)
+for int8 models. [Lambada] (https://huggingface.co/datasets/lambada) train split is used for calibration (unless specified) and validation is used for evaluation.
 
 # 1. Environment
 ```shell
@@ -51,18 +52,6 @@ python benchmark.py \
 | facebook/opt-1.3b | 75.42% | 73.86% | 74.64% (alpha=0.5)  |
 | facebook/opt-2.7b | 77.90% |   78.99%    | 78.91% (alpha=0.5)       |
 | facebook/opt-6.7b | 81.51% |   79.44%    | 81.58% (alpha=0.5)       |
+| EleutherAI/gpt-j-6b | 79.17% |   78.76%    | 79.13% (alpha=0.5)       |
 
 
-
-# Reference
-
-
-[SmoothQuant Paper (Click here)](https://arxiv.org/pdf/2211.05100.pdf)
-```bibtex
-@article{xiao2022smoothquant,
-  title={SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models},
-  author={Xiao, Guangxuan and Lin, Ji and Seznec, Mickael and Demouth, Julien and Han, Song},
-  journal={arXiv},
-  year={2022}
-}
-```
