@@ -54,4 +54,3 @@ python benchmark.py \
 | facebook/opt-6.7b | 81.51% |   79.44%    | 81.58% (alpha=0.5)       |
 | EleutherAI/gpt-j-6B | 79.17% |   78.76%    | 79.13% (alpha=0.5)       |
 
-
