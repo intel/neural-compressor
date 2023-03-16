@@ -175,11 +175,11 @@ The `Basic` strategy is designed for quantizing most models. There are six stage
 
 - **Stage VI**. Fallback Multiple OPs Accumulated
 
-    At the final stage, it first sorted the OPs list according to the impact score in stage II, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
+    At the final stage, it first sorted the OPs list according to the impact score in stage V, and tries to incrementally fallback multiple OPs to high precision according to the sorted OP list.
 
 ### Usage
 
-`Basic` is the default strategy for `quant_level`=`1`, It can be used by default with nothing changed in the `strategy` field of `TuningCriterion` after set the `quant_level`=`1` in `PostTrainingQuantConfig`. Classical settings are shown below:
+`Basic` is the default strategy for `quant_level`=`1`, it can be used by default with nothing changed in the `strategy` field of `TuningCriterion` after set the `quant_level`=`1` in `PostTrainingQuantConfig`. Classical settings are shown below:
 
 ```python
 from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
