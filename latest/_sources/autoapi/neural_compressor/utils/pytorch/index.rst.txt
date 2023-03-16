@@ -18,8 +18,20 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.utils.pytorch.is_int8_model
    neural_compressor.utils.pytorch.load
 
+
+
+.. py:function:: is_int8_model(model)
+
+   Check whether the input model is a int8 model.
+
+   :param model: input model
+   :type model: torch.nn.Module
+
+   :returns: Return True if the input model is a int8 model.
+   :rtype: result(bool)
 
 
 .. py:function:: load(checkpoint_dir=None, model=None, history_cfg=None, **kwargs)
