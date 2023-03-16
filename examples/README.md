@@ -673,6 +673,32 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
+## Quantization with [Intel® Extension for Transformers](https://github.com/intel/intel-extension-for-transformers)
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Domain</th>
+    <th>Approach </th>
+    <th>Examples</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>T5 Large</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="https://github.com/intel/intel-extension-for-transformers/tree/main/examples/optimization/pytorch/huggingface/summarization/quantization">fx</a></td>
+  </tr>
+  <tr>
+    <td>EleutherAI/gpt-neo-125M</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="https://github.com/intel/intel-extension-for-transformers/tree/main/examples/optimization/pytorch/huggingface/language-modeling/quantization/inc">fx</a></td>
+  </tr>
+</tbody>
+</table>
+
 ## Pruning
 <table>
 <thead>
