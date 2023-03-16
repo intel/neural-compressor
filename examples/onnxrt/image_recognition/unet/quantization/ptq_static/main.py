@@ -96,7 +96,7 @@ if __name__ == "__main__":
         fit(args.model_path, conf, b_dataloader=dataloader)
     if args.tune:
         from neural_compressor import quantization, PostTrainingQuantConfig
-        config = PostTrainingQuantConfig(quant_format=args.quant_format, performance_only=True)
+        config = PostTrainingQuantConfig(quant_format=args.quant_format, recipes={'graph_optimization_level':'ENABLE_EXTENDED'})
         q_model = quantization.fit(args.model_path, config, calib_dataloader=dataloader)
 
         q_model.save(args.output_model)
