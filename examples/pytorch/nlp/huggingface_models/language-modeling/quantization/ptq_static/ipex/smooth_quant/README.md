@@ -57,7 +57,7 @@ python benchmark.py \
 # Reference
 
 
-[SmoothQuant](https://arxiv.org/pdf/2211.05100.pdf)
+[SmoothQuant Paper (Click here)](https://arxiv.org/pdf/2211.05100.pdf)
 ```bibtex
 @article{xiao2022smoothquant,
   title={SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models},
