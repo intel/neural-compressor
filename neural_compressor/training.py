@@ -22,6 +22,7 @@ from .utils import logger
 from neural_compressor import (DistillationConfig, QuantizationAwareTrainingConfig,
                                WeightPruningConfig)
 from typing import Callable, List, Union
+from .compression import prepare_pruning
 
 
 class CompressionManager:
