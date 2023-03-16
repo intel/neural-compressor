@@ -40,7 +40,7 @@ python benchmark.py \
 
 
 # Validated Models
-| Models\Acc       |  FP32  |    INT8 (w/o SmoothQuant)     | INT8 (w/ SmoothQuant)           |
+| Models\Accuracy       |  FP32  |    INT8 (w/o SmoothQuant)     | INT8 (w/ SmoothQuant)           |
 |------------------|:------:|:-----------:|--------------|
 | bigscience/bloom-560m | 65.16% | 64.96%  | 66.52% (alpha=0.5)   |
 | bigscience/bloom-1b7 | 71.55% |   67.61%    | 72.81% (alpha=0.5)       |
@@ -58,7 +58,7 @@ python benchmark.py \
 
 
 ```bibtex
-@article{xiao2022smoothquant,
+@article{<a href="https://arxiv.org/pdf/2211.05100.pdf">xiao2022smoothquant</a>,
   title={SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models},
   author={Xiao, Guangxuan and Lin, Ji and Seznec, Mickael and Demouth, Julien and Han, Song},
   journal={arXiv},
