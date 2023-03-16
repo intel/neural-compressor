@@ -45,7 +45,7 @@ class PruningCriterion:
     Args:
         config: A config dict object that includes information about pruner and pruning criterion.
         modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
-
+    
     Attributes:
         scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
     """
@@ -190,3 +190,73 @@ class SnipMomentumCriterion(PruningCriterion):
                 p = self.modules[key].weight
                 self.scores[key] *= self.alpha
                 self.scores[key] += self.beta * torch.abs(p * p.grad)
+                
+                
+@register_criterion('snip_momentum_block')
+class SnipMomentumBlockCriterion(PruningCriterion):
+    """Pruning criterion.
+    
+    The snip_momentum_block criterion_class is derived from PruningCriterion.
+    A momentum mechanism is used to calculate snip score, which determines if a block weight is to be pruned.
+
+    Args:
+        config: A config dict object that includes information about pruner and pruning criterion.
+        modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+        alpha: A parameter that determines how much of the snip score is preserved from last pruning step.
+        beta: A parameter that determines how much of the snip score is updated at the current step.
+    
+    Attributes:
+        scores: A dict {"module_name": Tensor} that stores the scores of pruning modules.
+    """
+
+    def __init__(self, modules, config):
+        """Initiliaze a block_mask pruning criterion."""
+        super(SnipMomentumBlockCriterion, self).__init__(modules, config)
+        assert self.config.end_step > 0, "please set end_step > 0 for gradient based criterion"
+        for key in self.modules.keys():
+            if not hasattr(self.modules[key], 'block_mask'):
+                continue # No corresponding block mask, skip.
+            mask = self.modules[key].block_mask
+            self.scores[key] = torch.zeros(mask.shape).to(mask.device)
+        self.alpha = 0.9
+        self.beta = 1.0
+        
+    def on_train_begin(self):
+        """Initiliaze the block shape scores."""
+        pass
+
+    def on_before_optimizer_step(self):
+        """Calculate and store the pruning scores based on snip_momentum_block criterion."""
+        with torch.no_grad():
+            for key in self.modules.keys():
+                if not hasattr(self.modules[key], 'block_mask'):
+                    continue # No corresponding block mask, skip.
+                mask = self.modules[key].block_mask
+                self.scores[key] *= self.alpha
+                reduce_weight = self.reduce_weights(self.modules[key])
+                self.scores[key] += self.beta * torch.abs(reduce_weight * mask.grad)
+                
+    def reduce_weights(self, module):
+        """Calculate the reduced weights by block."""
+        if type(module).__name__ not in ["Linear"]: # Currently only linear is supported
+            return module.block_mask
+        block_size = [module.weight.shape[0]//module.block_mask.shape[0], \
+                      module.weight.shape[1]//module.block_mask.shape[1]] 
+        shape = module.weight.shape
+        new_shape = [shape[0] // block_size[0], block_size[0], shape[1] // block_size[1],
+                     block_size[1]]
+        weight = module.weight.data.reshape(new_shape)
+        reduced_weight = self.reduce_tensor(self.reduce_tensor(weight, dim=-1), dim=1)
+        return reduced_weight
+        
+    def reduce_tensor(self, data, dim):
+        """Reduce the data along the given dimension."""
+        name = self.config['criterion_reduce_type']
+        if name == "mean":
+            return torch.mean(data, dim=dim)
+        elif name == "sum":
+            return torch.sum(data, dim=dim)
+        elif name == "max":
+            return torch.max(data, dim=dim)[0]
+        else:
+            assert False, "currently only support mean, sum and max reduce type"
