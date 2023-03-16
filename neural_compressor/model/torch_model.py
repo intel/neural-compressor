@@ -243,8 +243,7 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
             logger.info("INC IPEX don't support compute sparsity for model in TorchScript format now.")
             return [0.0]
         import pandas as pd
-        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)",
-                                   'Std', 'Mean', 'Abs-Mean'])
+        df = pd.DataFrame(columns=['Name', 'Shape', 'NNZ (dense)', 'NNZ (sparse)', "Sparsity(%)"])
         pd.set_option('display.precision', 2)
         # TODO: need to specify modules(Conv2d, Linear, etc.) instead of dims
         param_dims = [2, 4]
@@ -270,20 +269,16 @@ class PyTorchBaseModel(torch.nn.Module, BaseModel):
                     dense_param_size,
                     sparse_param_size,
                     (1 - density) * 100,
-                    param.std().item(),
-                    param.mean().item(),
-                    param.abs().mean().item()
                 ])
 
         total_sparsity = sparse_params_size / params_size * 100
 
         df.loc[len(df.index)] = ([
             'Total sparsity:',
-            params_size,
             "-",
-            int(sparse_params_size),
-            total_sparsity,
-            0, 0, 0])
+            params_size,
+            sparse_params_size,
+            total_sparsity,])
         return df, total_sparsity
 
 class PyTorchModel(PyTorchBaseModel):

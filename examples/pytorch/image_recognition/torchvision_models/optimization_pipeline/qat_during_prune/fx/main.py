@@ -173,7 +173,8 @@ def main_worker(args):
             pruning_type=args.pruning_type,
             target_sparsity=args.target_sparsity,
             pruning_frequency=1,
-            op_names=['layer1.0.conv1.weight', 'layer1.0.conv2.weight'],
+            op_names=['layer1.0.conv*'],
+            pruning_scope="global",
             start_step=num_warm,
             end_step=num_iterations
         )
@@ -216,7 +217,14 @@ def main_worker(args):
             'optimizer': optimizer.state_dict(),
         }, is_best)
 
+    # report sparsed fp32 model statistics.
+    df, total_sparsity = compression_manager.model.report_sparsity()
+    print("Total sparsity of FP32 model is {}".format(total_sparsity))
     compression_manager.callbacks.on_train_end()
+    # report sparsed int8 model statistics.
+    df, total_sparsity = compression_manager.model.report_sparsity()
+    print("Total sparsity of INT8 model is {}".format(total_sparsity))
+    print(df)
     compression_manager.save(args.output_model)
 
 
