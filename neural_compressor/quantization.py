@@ -95,7 +95,7 @@ class PostTrainingQuant:
                 logger.warning(f"MSE_v2 does not support {cfg.model.framework} now, use basic instead.")
                 logger.warning("Only tensorflow, pytorch_fx is supported by MSE_v2 currently.")
         assert strategy in STRATEGIES, "Tuning strategy {} is NOT supported".format(strategy)
-        
+
         logger.info(f"Start {strategy} tuning.")
         _resume = None
         # check if interrupted tuning procedure exists. if yes, it will resume the
@@ -107,6 +107,10 @@ class PostTrainingQuant:
                 "The specified resume file {} doesn't exist!".format(self.resume_file)
             with open(self.resume_file, 'rb') as f:
                 _resume = pickle.load(f).__dict__
+
+        if self._eval_func is None and self._eval_dataloader is None:
+            self.conf.usr_cfg.tuning.exit_policy.performance_only = True
+            logger.info("Quantize model without tuning!")
 
         self.strategy = STRATEGIES[strategy](
             self._model,
