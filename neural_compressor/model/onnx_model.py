@@ -232,10 +232,11 @@ class ONNXModel(BaseModel):
                 for attr in attrs:
                     self._get_input_name_to_nodes(attr.g.node)
             for input_name in node.input:
-                if input_name not in self._input_name_to_nodes:
-                    self._input_name_to_nodes[input_name] = [node]
-                else:
-                    self._input_name_to_nodes[input_name].append(node)
+                if len(input_name.strip()) != 0:
+                    if input_name not in self._input_name_to_nodes:
+                        self._input_name_to_nodes[input_name] = [node]
+                    else:
+                        self._input_name_to_nodes[input_name].append(node)
 
     @property
     def output_name_to_node(self):
@@ -251,7 +252,8 @@ class ONNXModel(BaseModel):
                 for attr in attrs:
                     self._get_output_name_to_node(attr.g.node)
             for output_name in node.output:
-                self._output_name_to_node[output_name] = node
+                if len(output_name.strip()) != 0:
+                    self._output_name_to_node[output_name] = node
 
     def get_siblings(self, node):
         """Get siblings nodes."""
@@ -424,12 +426,14 @@ class ONNXModel(BaseModel):
             output_name_to_node = {}
             for node in self.model.graph.node:
                 for input_name in node.input:
-                    if input_name not in input_name_to_nodes:
-                        input_name_to_nodes[input_name] = [node]
-                    else:
-                        input_name_to_nodes[input_name].append(node)
+                    if len(input_name.strip()) != 0:
+                        if input_name not in input_name_to_nodes:
+                            input_name_to_nodes[input_name] = [node]
+                        else:
+                            input_name_to_nodes[input_name].append(node)
                 for output_name in node.output:
-                    output_name_to_node[output_name] = node
+                    if len(output_name.strip()) != 0:
+                        output_name_to_node[output_name] = node
         else: # pragma: no cover
             input_name_to_nodes = self._input_name_to_nodes
             output_name_to_node = self._output_name_to_node

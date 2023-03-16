@@ -17,6 +17,9 @@ function init_params {
       --output_model=*)
           output_model=$(echo $var |cut -f2 -d=)
       ;;
+      --quant_format=*)
+          quant_format=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -29,10 +32,14 @@ function run_tuning {
         model_name_or_path="mrm8488/spanbert-finetuned-squadv1"
         num_heads=12
         hidden_size=768
-    elif [[ "${input_model}" =~ "bert-base" ]]; then
+    elif [[ "${input_model}" =~ "bert-base-multilingual" ]]; then
         model_name_or_path="salti/bert-base-multilingual-cased-finetuned-squad"
         num_heads=12
         hidden_size=768
+    elif [[ "${input_model}" =~ "bert-large-uncased" ]]; then
+        model_name_or_path="bert-large-uncased-whole-word-masking-finetuned-squad"
+        num_heads=16
+        hidden_size=1024
     fi
 
     python main.py \
@@ -41,7 +48,8 @@ function run_tuning {
             --save_path ${output_model} \
             --output_dir './output' \
             --overwrite_output_dir \
-            --model_name_or_path=${model_name_or_path} \
+            --model_name_or_path ${model_name_or_path} \
+            --quant_format ${quant_format} \
             --num_heads ${num_heads} \
             --hidden_size ${hidden_size} \
             --tune 

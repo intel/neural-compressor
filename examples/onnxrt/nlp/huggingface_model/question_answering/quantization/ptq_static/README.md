@@ -17,8 +17,9 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 
 |                 Model Identifier                |
 |:-----------------------------------------------:|
-|           mrm8488/spanbert-finetuned-squadv1          |
-|             salti/bert-base-multilingual-cased-finetuned-squad             |
+|           mrm8488/spanbert-finetuned-squadv1     |
+|salti/bert-base-multilingual-cased-finetuned-squad |
+|bert-large-uncased-whole-word-masking-finetuned-squad|
 
 
 ```bash
@@ -32,11 +33,12 @@ Download SQuAD dataset from [SQuAD dataset link](https://rajpurkar.github.io/SQu
 
 ## 1. Quantization
 
-Quantize model with static quantization:
+Static quantization with QOperator format:
 
 ```bash
 bash run_tuning.sh --input_model=/path/to/model \ # model path as *.onnx
-                   --output_model=/path/to/model_tune 
+                   --output_model=/path/to/model_tune \
+                   --quant_format="QOperator"
 ```
 
 
