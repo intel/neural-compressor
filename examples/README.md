@@ -305,7 +305,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <th>Student Model</th>
     <th>Teacher Model</th>
     <th>Domain</th>
-    <th>Approach </th>
+    <th>Approach</th>
     <th>Examples</th>
   </tr>
 </thead>
@@ -316,6 +316,56 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Image Recognition</td>
     <td>Knowledge Distillation</td>
     <td><a href="./tensorflow/image_recognition/tensorflow_models/distillation">pb</a></td>
+  </tr>
+</tbody>
+</table>
+
+## Model Export
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Domain</th>
+    <th>Approach</th>
+    <th>Examples</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>ResNet50 V1</td>
+    <td>Image Recognition</td>
+    <td>TF2ONNX</td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet50_v1/export">int8 fp32</a></td>
+  </tr>
+  <tr>
+    <td>ResNet50 V1.5</td>
+    <td>Image Recognition</td>
+    <td>TF2ONNX</td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/export">int8 fp32</a></td>
+  </tr>
+  <tr>
+    <td>MobileNet V2</td>
+    <td>Image Recognition</td>
+    <td>TF2ONNX</td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/mobilenet_v2/export">int8 fp32</a></td>
+  </tr>
+  <tr>
+    <td>VGG16</td>
+    <td>Image Recognition</td>
+    <td>TF2ONNX</td>
+    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg16/export">int8 fp32</a></td>
+  </tr>
+  <tr>
+    <td>Faster R-CNN ResNet50</td>
+    <td>Object Detection</td>
+    <td>TF2ONNX</td>
+    <td><a href="./tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet50/export">int8 fp32</a></td>
+  </tr>
+  <tr>
+    <td>SSD MobileNet V1</td>
+    <td>Object Detection</td>
+    <td>TF2ONNX</td>
+    <td><a href="./tensorflow/object_detection/tensorflow_models/ssd_mobilenet_v1/export">int8 fp32</a></td>
   </tr>
 </tbody>
 </table>
@@ -815,6 +865,44 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Natural Language Processing (text-classification)</td>
     <td>One-shot: Pruning, Distillation and QAT<br></td>
     <td><a href="./pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/prune_once_for_all/fx">link</a></td>
+  </tr>
+</tbody>
+</table>
+
+## Model Export
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Domain</th>
+    <th>Approach</th>
+    <th>Examples</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>ResNet18</td>
+    <td>Image Recognition</td>
+    <td>PT2ONNX</td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/export/fx">int8 fp32</a></td>
+  </tr>
+  <tr>
+    <td>ResNet50</td>
+    <td>Image Recognition</td>
+    <td>PT2ONNX</td>
+    <td><a href="./pytorch/image_recognition/torchvision_models/export/fx">int8 fp32</a></td>
+  </tr>
+  <tr>
+    <td>bert base MRPC</td>
+    <td>Natural Language Processing</td>
+    <td>PT2ONNX</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/export/fx">int8 fp32</a></td>
+  </tr>
+  <tr>
+    <td>bert large MRPC</td>
+    <td>Natural Language Processing</td>
+    <td>PT2ONNX</td>
+    <td><a href="./pytorch/nlp/huggingface_models/text-classification/export/fx">int8 fp32</a></td>
   </tr>
 </tbody>
 </table>
