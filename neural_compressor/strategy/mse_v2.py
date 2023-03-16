@@ -55,6 +55,14 @@ class MSE_V2TuneStrategy(TuneStrategy):
         Returns:
             tune_config (dict): A dict containing the tuning configuration for quantization.
         """
+        #TODO remove it before merge
+        try:
+            import subprocess
+            import sys
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "tqdm"])
+            logger.info("Install tdqm")
+        except:
+            assert False, "Unable to import tqdm from the local environment."
         best_op_tuning_cfg = None
         if len(self.metric_name) == 1 or self.metric_weight is not None:
             best_acc = float('-inf') if self.higher_is_better else float('inf')
