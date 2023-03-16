@@ -1,10 +1,14 @@
 import os
 import unittest
 import numpy as np
+from neural_compressor.model import Model
 from neural_compressor.adaptor.tf_utils.util import get_graph_def
-from neural_compressor.adaptor.tf_utils.util import collate_tf_preds
-from neural_compressor.adaptor.tf_utils.util import fix_ref_type_of_graph_def
 from neural_compressor.adaptor.tf_utils.util import disable_random
+from neural_compressor.adaptor.tf_utils.util import is_ckpt_format
+from neural_compressor.adaptor.tf_utils.util import collate_tf_preds
+from neural_compressor.adaptor.tf_utils.util import get_tensor_by_name
+from neural_compressor.adaptor.tf_utils.util import generate_feed_dict
+from neural_compressor.adaptor.tf_utils.util import fix_ref_type_of_graph_def
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper as Helper
 
 import tensorflow as tf
@@ -76,6 +80,27 @@ def build_fake_graphdef():
     ])
     return graph_def
 
+def build_fake_graphdef2():
+    input_placeholder = tf.compat.v1.placeholder(tf.float32, shape=(32, 224, 224, 3), name='input_placeholder')
+
+    conv_filter = tf.Variable(tf.random.normal([3, 3, 3, 32], stddev=0.1), name='conv_filter')
+    conv_bias = tf.Variable(tf.zeros([32]), name='conv_bias')
+    conv_output = tf.nn.conv2d(input_placeholder, conv_filter, strides=[1, 1, 1, 1], padding='SAME')
+    conv_output = tf.nn.bias_add(conv_output, conv_bias)
+    conv_output = tf.nn.relu(conv_output, name='conv_output')
+
+    pool_output = tf.nn.max_pool2d(conv_output, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='pool_output')
+
+    fc_weights = tf.Variable(tf.random.normal([int(pool_output.shape[1]) * int(pool_output.shape[2]) * int(pool_output.shape[3]), 10], stddev=0.1), name='fc_weights')
+    fc_bias = tf.Variable(tf.zeros([10]), name='fc_bias')
+    fc_input = tf.reshape(pool_output, [-1, int(fc_weights.shape[0])])
+    fc_output = tf.matmul(fc_input, fc_weights) + fc_bias
+    
+    output = tf.reduce_sum(tf.nn.softmax(fc_output, name='output'), axis=-1)
+    graph_def = tf.compat.v1.get_default_graph().as_graph_def()
+
+    return graph_def
+
 class TestTFutil(unittest.TestCase):
 
     @classmethod
@@ -99,11 +124,52 @@ class TestTFutil(unittest.TestCase):
         results = [[1],[np.array([2])]]
         data = collate_tf_preds(results)
         self.assertEqual(data,[1,np.array([2])])
+        results = [[np.array([2])], [[1]]]
+        data = collate_tf_preds(results)
+        self.assertEqual(data[0].all(),np.array([2, 1]).all())
 
     @disable_random()
     def test_get_graph_def(self):
-        graphdef = get_graph_def('./test.pb', outputs="assignadd")
-        self.assertIsInstance(graphdef, tf.compat.v1.GraphDef)
+        graph_def = get_graph_def('./test.pb', outputs="assignadd")
+        self.assertIsInstance(graph_def, tf.compat.v1.GraphDef)  
+
+    @disable_random()
+    def test_judge_ckpt_format(self):
+        ckpt_format = is_ckpt_format('./test.pb')
+        self.assertEqual(ckpt_format, False)
+
+    @disable_random()
+    def test_get_model_input_shape(self):
+        graph_def = build_fake_graphdef2()
+        try:
+            tensor = get_tensor_by_name(graph_def, 'fake:0')
+        except:
+            print("This code is for UT coverage of the exception handling")
+        model = Model(graph_def)
+        input_shape = get_model_input_shape(model)
+        self.assertEqual(input_shape, 32)
+
+    @disable_random()
+    def test_generate_feed_dict(self):
+        input_0 = [[1., 3.],[3., 7.]]
+        input_tensor_0 = tf.convert_to_tensor(input_0)
+        input_1 = [[1., 3.]]
+        input_tensor_1 = tf.convert_to_tensor(input_1)
+
+        feed_dict = generate_feed_dict([input_tensor_0], input_0)
+        self.assertEqual(feed_dict, {input_tensor_0:input_0})
+
+        feed_dict = generate_feed_dict([input_tensor_0], {"Const": input_0})
+        self.assertEqual(feed_dict, {input_tensor_0:input_0})
+
+        feed_dict = generate_feed_dict([input_tensor_0, input_tensor_1], [input_0, input_1])
+        self.assertEqual(feed_dict[input_tensor_0], input_0)
+        self.assertEqual(feed_dict[input_tensor_1], input_1)
+
+        feed_dict = generate_feed_dict([input_tensor_0, input_tensor_1], {"Const": input_0, "Const_1": input_1})
+        self.assertEqual(feed_dict[input_tensor_0], input_0)
+        self.assertEqual(feed_dict[input_tensor_1], input_1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1477,9 +1477,12 @@ class TensorFlowAdaptor(Adaptor):
             model.__class__.__name__ in ['Functional', 'Sequential']
         ), "Only `Functional` or `Sequential` keras model is supported for QAT."
 
+        from .tf_utils.quantize_graph.qat.quantize_config import global_config
         from .tf_utils.quantize_graph.qat.quantize_helper import init_quantize_config, qat_clone_function
         config = init_quantize_config(model, quantize_recipe)
         q_model = tf.keras.models.clone_model(model, input_tensors=None, clone_function=qat_clone_function)
+        global_config.clear()
+
         return q_model
 
     @dump_elapsed_time("Pass recover model")
