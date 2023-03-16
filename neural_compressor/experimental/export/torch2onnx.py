@@ -688,6 +688,8 @@ def torch_to_fp32_onnx(
       (isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict)):
         input_names = list(example_inputs.keys())
         example_inputs = list(example_inputs.values())
+    elif isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict):
+        example_inputs = list(example_inputs.values())
     # match input_names with inspected input_order, especailly for bert in hugginface.
     if input_names and len(input_names) > 1:
         import inspect
