@@ -266,7 +266,6 @@ The following section exemplifies how to use hooks in user pass-in training func
     ```
 
 
-- 
     [**Stable Option** ]Insert Hook functions in your codes. 
 
     ```python
