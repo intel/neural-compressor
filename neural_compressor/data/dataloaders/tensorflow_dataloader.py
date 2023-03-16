@@ -100,7 +100,7 @@ class TFDataDataLoader(BaseDataLoader):    # pragma: no cover
                 if isinstance(iter_inputs, tf.Tensor):
                     samples.append(iter_inputs.numpy())
                 else:
-                    samples.append((iter_input.numpy() for iter_input in iter_inputs))
+                    samples.append(tuple(iter_input.numpy() for iter_input in iter_inputs))
                 if isinstance(iter_labels,tf.Tensor):
                     samples.append(iter_labels.numpy())
                 else:
