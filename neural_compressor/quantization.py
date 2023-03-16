@@ -108,7 +108,7 @@ class PostTrainingQuant:
             with open(self.resume_file, 'rb') as f:
                 _resume = pickle.load(f).__dict__
 
-        if self._eval_func is None and self.self._eval_dataloader is None:
+        if self._eval_func is None and self._eval_dataloader is None:
             self.conf.usr_cfg.tuning.exit_policy.performance_only = True
             logger.info("Quantize model without tuning!")
 
