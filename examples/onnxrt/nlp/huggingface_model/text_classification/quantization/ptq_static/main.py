@@ -322,15 +322,6 @@ if __name__ == "__main__":
     parser.add_argument(
         '--model_name_or_path',
         type=str,
-        choices=['Intel/bert-base-uncased-mrpc',
-                'Intel/roberta-base-mrpc',
-                'distilbert-base-uncased-finetuned-sst-2-english',
-                'philschmid/MiniLM-L6-H384-uncased-sst2',
-                'Intel/MiniLM-L12-H384-uncased-mrpc',
-                'bert-base-cased-finetuned-mrpc',
-                'Intel/electra-small-discriminator-mrpc',
-                'M-FAC/bert-mini-finetuned-mrpc',
-                'Intel/xlnet-base-cased-mrpc'],
         help="pretrained model name or path"
     )
     parser.add_argument(
@@ -403,12 +394,13 @@ if __name__ == "__main__":
         if ort.__version__ <= '1.13.1':
             from onnxruntime.transformers import optimizer
             from onnxruntime.transformers.fusion_options import FusionOptions
-            opt_options = FusionOptions('bert')
+            model_type = 'bart' if args.model_name_or_path == 'Intel/bart-large-mrpc' else 'bert'
+            opt_options = FusionOptions(model_type)
             opt_options.enable_embed_layer_norm = False
 
             model_optimizer = optimizer.optimize_model(
                 args.model_path,
-                'bert',
+                model_type,
                 num_heads=args.num_heads,
                 hidden_size=args.hidden_size,
                 optimization_options=opt_options)
@@ -417,7 +409,12 @@ if __name__ == "__main__":
             model = onnx.load(args.model_path)
 
         from neural_compressor import quantization, PostTrainingQuantConfig
+        from neural_compressor.utils.constant import FP32
+        fp32_op_names = None
+        if args.model_name_or_path == 'Intel/bart-large-mrpc':
+            fp32_op_names = ['/model/(en|de)coder/layers.*/fc(1|2)/MatMul']
         config = PostTrainingQuantConfig(approach='static',
+                                         op_name_dict={op_name:FP32 for op_name in fp32_op_names} if fp32_op_names else None,
                                          quant_format=args.quant_format)
         q_model = quantization.fit(model, 
                                    config,

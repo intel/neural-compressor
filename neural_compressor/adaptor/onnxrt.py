@@ -647,47 +647,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             is_nlp = True
 
         # 3. according to attention structure
-        for node in model.model.graph.node:
-            if node.op_type == 'Add':
-                start_node = node
-                qkv_nodes_list = [
-                    # match base attention structure
-                    model.match_parent_path(
-                        start_node,
-                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
-                        [0, None, 0, 0, 0],),
-                    model.match_parent_path(
-                        start_node,
-                        ["Add", "MatMul", "Reshape", "Transpose", "MatMul"],
-                        [1, None, 0, 0, 0]),
-
-                    # match gpt attention no past structure
-                    model.match_parent_path(
-                        start_node,
-                        ["Reshape", "Gemm", "Reshape", "Reshape", "Transpose", "MatMul"],
-                        [ None, 0, 0, 0, 0, 0],
-                        output_name_to_node=model.output_name_to_node,
-                        return_indice=[])
-                    ]
-                if not any(qkv_nodes_list):
-                    continue
-                qkv_nodes = [qkv for qkv in qkv_nodes_list if qkv is not None][-1]
-                other_inputs = []
-                for input in start_node.input:
-                    if input not in model.output_name_to_node:
-                        continue
-                    if input == qkv_nodes[0].output[0]:
-                        continue
-                    other_inputs.append(input)
-                if len(other_inputs) != 1:
-                    continue
-                root_input = other_inputs[0]
-                input_name_to_nodes = model.input_name_to_nodes
-                children = input_name_to_nodes[root_input]
-                children_types = [child.op_type for child in children]
-                if children_types.count("MatMul") == 3:
-                    is_nlp = True
-                    break
+        qkv = model.find_qkv_in_attention()
+        if len(qkv) != 0:
+            is_nlp = True
 
         # 4. according to LSTM/Attention optype
         op_types = [node.op_type for node in model.model.graph.node]
@@ -924,6 +886,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         recipes_ops['first_conv_or_matmul_quantization'] = []
         recipes_ops['last_conv_or_matmul_quantization'] = []
         recipes_ops['pre_post_process_quantization'] = []
+        recipes_ops['ffn_matmul_quantization'] = []
         exclude_first_quantizable_op = True if 'first_conv_or_matmul_quantization' in \
             self.recipes and not self.recipes['first_conv_or_matmul_quantization'] \
             else False
@@ -932,6 +895,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             else False
         exclude_pre_post_process = True if 'pre_post_process_quantization' in \
             self.recipes and not self.recipes['pre_post_process_quantization'] \
+            else False
+        exclude_ffn_matmul = True if 'ffn_matmul_quantization' in \
+            self.recipes and not self.recipes['ffn_matmul_quantization'] \
             else False
  
         quantizable_optype = set([i.op_type for i in self.pre_optimized_model.nodes()])
@@ -992,34 +958,40 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         first_quantizable_node = []
         last_quantizable_node = []
         all_conv_matmul = []
+        ffn_matmul = []
+        attention_matmul = []
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             if node.op_type in ['Conv', 'MatMul']:
-                if len(first_quantizable_node) == 0:
-                    recipes_ops['first_conv_or_matmul_quantization'] = [(node.name, node.op_type)]
-
                 # get first Conv or MatMul node
-                if exclude_first_quantizable_op:
-                    if len(first_quantizable_node) == 0:
-                        first_quantizable_node.append(node.name)
-                    
+                if len(first_quantizable_node) == 0:
+                    first_quantizable_node.append(node)
+
                 # get last Conv or MatMul node
-                if exclude_last_quantizable_op:
-                    if len(last_quantizable_node) != 0:
-                        last_quantizable_node.pop()
-                    last_quantizable_node.append(node.name)
+                if len(last_quantizable_node) != 0:
+                    last_quantizable_node.pop()
+                last_quantizable_node.append(node)
 
-                if len(recipes_ops['last_conv_or_matmul_quantization']):
-                    recipes_ops['last_conv_or_matmul_quantization'].pop()
-                recipes_ops['last_conv_or_matmul_quantization'].append((node.name, node.op_type))
+                all_conv_matmul.append(node)
 
-                # get first and last Conv or MatMul node
-                if exclude_pre_post_process:
-                    if len(first_quantizable_node) == 0:
-                        first_quantizable_node.append(node.name)
-                    if len(last_quantizable_node) != 0:
-                        last_quantizable_node.pop()
-                    last_quantizable_node.append(node.name)
-                    all_conv_matmul.append(node)
+            if node.op_type in ['Attention', 'MatMul']:
+                attention_matmul.append(node)
+
+        recipes_ops['first_conv_or_matmul_quantization'] = [(first_quantizable_node[0].name, 
+                                                             first_quantizable_node[0].op_type)]
+        recipes_ops['last_conv_or_matmul_quantization'] = [(last_quantizable_node[0].name, 
+                                                            last_quantizable_node[0].op_type)]
+        
+        attention_matmul_optype = [node.op_type for node in attention_matmul]
+        if len(attention_matmul) > 0 and 'Attention' in attention_matmul_optype:
+            first_attention_index = attention_matmul_optype.index('Attention')
+            attention_matmul_optype = attention_matmul_optype[first_attention_index:]
+            attention_matmul = attention_matmul[first_attention_index:]
+            attention_index = list(np.where(np.array(attention_matmul_optype) == 'Attention')[0])
+            for index in attention_index:
+                if index + 2 < len(attention_matmul) and index + 3 < len(attention_matmul):
+                    ffn_matmul.extend([attention_matmul[index + 2], attention_matmul[index + 3]])
+        for node in ffn_matmul:
+            recipes_ops['ffn_matmul_quantization'].append((node.name, node.op_type))
 
         for _, node in enumerate(self.pre_optimized_model.nodes()):
             # for TRT EP, only insert Q/DQ to inputs of Add nodes followed by ReduceMean
@@ -1031,8 +1003,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 continue
 
             if node.op_type in optype_wise:
-                if (exclude_first_quantizable_op and node.name in first_quantizable_node) \
-                     or (exclude_last_quantizable_op and node.name in last_quantizable_node):
+                if (exclude_first_quantizable_op and node in first_quantizable_node) \
+                     or (exclude_last_quantizable_op and node in last_quantizable_node) \
+                     or (exclude_ffn_matmul and node in ffn_matmul):
                     tmp_cfg = copy.deepcopy(optype_wise[node.op_type])
                     tmp_cfg = list(filter(lambda x:'quant_mode' not in x['activation'], tmp_cfg))
                     op_wise.update({(node.name, node.op_type): tmp_cfg})
@@ -1051,13 +1024,13 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         backbone_queue_extra = deque()
         for conv_or_matmul in all_conv_matmul:
             if conv_or_matmul.name not in backbone_nodes:
-                backbone_queue_extra.append(conv_or_matmul.name)
+                backbone_queue_extra.append(conv_or_matmul)
                 backbone_nodes = self.pre_optimized_model.get_nodes_chain(backbone_queue_extra, 
                                                 first_quantizable_node, backbone_nodes)
-        backbone_nodes += [i for i in first_quantizable_node]
+        backbone_nodes += [i.name for i in first_quantizable_node]
         
         for _, node in enumerate(self.pre_optimized_model.nodes()):
-            if node.name not in backbone_nodes:
+            if node.name not in backbone_nodes and node.op_type in optype_wise:
                 recipes_ops['pre_post_process_quantization'].append((node.name, node.op_type))
         
         if exclude_pre_post_process:

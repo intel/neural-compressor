@@ -413,6 +413,7 @@ class _BaseQuantizationConfig:
                      'first_conv_or_matmul_quantization': whether quantize the first conv or matmul
                      'last_conv_or_matmul_quantization': whether quantize the last conv or matmul
                      'pre_post_process_quantization': whether quantize the ops in preprocess and postprocess
+                     'ffn_matmul_quantization': whether quantize matmul in ffn
                      'add_qdq_pair_to_weight': whether add QDQ pair for weights, only vaild for onnxrt_trt_ep
                      'optypes_to_exclude_output_quant': don't quantize output of specified optypes
                      'dedicated_qdq_pair': whether dedicate QDQ pair, only vaild for onnxrt_trt_ep
@@ -540,6 +541,12 @@ class _BaseQuantizationConfig:
                 return check_value("pre_post_process_quantization", val, bool)
             else:
                 return True
+            
+        def ffn_matmul_quantization(val=None):
+            if val is not None:
+                return check_value("ffn_matmul_quantization", val, bool)
+            else:
+                return True
 
         def add_qdq_pair_to_weight(val=None):
             if val is not None:
@@ -568,6 +575,7 @@ class _BaseQuantizationConfig:
                    "first_conv_or_matmul_quantization": first_conv_or_matmul_quantization,
                    "last_conv_or_matmul_quantization": last_conv_or_matmul_quantization,
                    "pre_post_process_quantization": pre_post_process_quantization,
+                   "ffn_matmul_quantization": ffn_matmul_quantization,
                    "add_qdq_pair_to_weight": add_qdq_pair_to_weight,
                    "optypes_to_exclude_output_quant": optypes_to_exclude_output_quant,
                    "dedicated_qdq_pair": dedicated_qdq_pair
