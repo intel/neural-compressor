@@ -278,7 +278,7 @@ The following section exemplifies how to use hooks in user pass-in training func
         config = WeightPruningConfig(configs)
         prepare_pruning(config, model, optimizer) # modify model and optimizer
         for epoch in range(num_train_epochs):
-        model.train()
+          model.train()
         for step, batch in enumerate(train_dataloader):
              outputs = model(**batch)
              loss = outputs.loss
