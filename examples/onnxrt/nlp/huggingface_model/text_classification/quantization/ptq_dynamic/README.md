@@ -26,6 +26,11 @@ Supported model identifier from [huggingface.co](https://huggingface.co/):
 |         Alireza1044/albert-base-v2-sst2         |
 |        Intel/MiniLM-L12-H384-uncased-mrpc       |
 |      philschmid/MiniLM-L6-H384-uncased-sst2     |
+|     bert-base-cased-finetuned-mrpc              |
+|        Intel/electra-small-discriminator-mrpc   |
+|         M-FAC/bert-mini-finetuned-mrpc          |
+|           Intel/xlnet-base-cased-mrpc           |
+|            Intel/bart-large-mrpc                |
 
 ```bash
 python export.py --model_name_or_path=Intel/bert-base-uncased-mrpc \ # or other supported model identifier
@@ -45,7 +50,7 @@ bash prepare_data.sh --data_dir=$GLUE_DIR --task_name=$TASK_NAME
 
 ## 1. Quantization
 
-Quantize model with dynamic quantization:
+Dynamic quantization:
 
 ```bash
 bash run_tuning.sh --input_model=path/to/model \ # model path as *.onnx

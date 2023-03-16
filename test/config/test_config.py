@@ -17,7 +17,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.recipes['weight_correction'], False)
         self.assertEqual(config.recipes['dedicated_qdq_pair'], False)
         self.assertEqual(config.recipes['add_qdq_pair_to_weight'], False)
-        self.assertEqual(config.recipes['graph_optimization_level'], 'ENABLE_BASIC')
+        self.assertEqual(config.recipes['graph_optimization_level'], None)
 
 class TestPyConf(unittest.TestCase):
     def test_config(self):
