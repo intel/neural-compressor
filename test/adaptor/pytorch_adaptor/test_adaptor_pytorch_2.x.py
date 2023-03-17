@@ -498,6 +498,25 @@ class TestPytorchFXAdaptor(unittest.TestCase):
 
         self.assertEqual(q_model._model.conv.module.module.weight.dtype, torch.bfloat16)
         self.assertEqual(q_model._model.conv.module.module.bias.dtype, torch.bfloat16)
+        
+    def test_hawq_metric(self):
+        # Test for hawq metric
+        import torchvision
+        from neural_compressor.data import Datasets, DATALOADERS
+        from neural_compressor.quantization import fit
+        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.model.torch_model import PyTorchFXModel
+        from neural_compressor.adaptor.torch_utils.hawq_metric import hawq_top
+        
+        ori_model = torchvision.models.resnet18()
+        pt_model = PyTorchFXModel(ori_model)
+        dataset = Datasets("pytorch")["dummy"](((16, 3, 224, 224)))
+        dataloader = DATALOADERS["pytorch"](dataset)
+        q_model = fit(ori_model, conf = PostTrainingQuantConfig(), calib_dataloader=dataloader)
+        op_to_traces = hawq_top(fp32_model=pt_model, q_model=q_model, dataloader=dataloader, \
+             criterion=None, enable_act=True)
+        self.assertIsNotNone(op_to_traces)
+
 
 
 if __name__ == "__main__":

@@ -149,7 +149,7 @@ After prepare step is done, we add tune and benchmark code to generate quantized
 ```python
       from neural_compressor.benchmark import fit
       from neural_compressor.config import BenchmarkConfig
-      conf = BenchmarkConfig(iteration=10, cores_per_instance=4, num_of_instance=7)
+      conf = BenchmarkConfig(iteration=10, cores_per_instance=4, num_of_instance=1)
       fit(FLAGS.input_model, conf, b_func=eval)
 ```
 The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.

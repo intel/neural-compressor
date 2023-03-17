@@ -48,7 +48,8 @@ class PytorchBertDataset(Dataset):         # pragma: no cover
           filter (Filter objects, default=None): filter out examples according
                                                  to specific conditions.
 
-    Examples:
+    Examples::
+
         dataset = [[
            [101,2043,2001],
            [1,1,1],
@@ -135,7 +136,8 @@ class ONNXRTBertDataset(Dataset):    # pragma: no cover
           filter (Filter objects, default=None): filter out examples according
                                                  to specific conditions.
 
-    Examples:
+    Examples::
+
         dataset = ONNXRTBertDataset(data_dir=data_dir, model_name_or_path='bert-base-uncase',
                                      transform=preprocess, filter=filter)
     """

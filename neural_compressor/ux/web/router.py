@@ -38,7 +38,11 @@ from neural_compressor.ux.components.db_manager.db_operations import (
 from neural_compressor.ux.components.file_browser.file_browser import get_directory_entries
 from neural_compressor.ux.components.graph.graph import Graph
 from neural_compressor.ux.components.graph.graph_reader import GraphReader
-from neural_compressor.ux.components.jobs_management import jobs_control_queue, parse_job_id
+from neural_compressor.ux.components.jobs_management import (
+    jobs_control_queue,
+    jobs_manager,
+    parse_job_id,
+)
 from neural_compressor.ux.components.manage_workspace import get_default_path
 from neural_compressor.ux.components.model_zoo.list_models import list_models
 from neural_compressor.ux.components.optimization.execute_optimization import execute_optimization
@@ -202,6 +206,9 @@ class Router:
             ),
             "diagnosis/model_wise_params": RealtimeRoutingDefinition(
                 DiagnosisAPIInterface.model_wise_params,
+            ),
+            "jobs/queue": RealtimeRoutingDefinition(
+                jobs_manager.get_jobs_order,
             ),
         }
 

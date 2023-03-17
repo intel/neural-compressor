@@ -1,4 +1,5 @@
 # coding=utf-8
+# Copyright (c) 2023 Intel Corporation
 # Copyright 2021 The HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,8 +46,7 @@ from transformers import (
 )
 from transformers.file_utils import get_full_repo_name
 from transformers.utils.versions import require_version
-from neural_compressor.training import prepare_compression
-from neural_compressor.training import WeightPruningConfig
+from neural_compressor.training import prepare_pruning,WeightPruningConfig
 
 logger = logging.getLogger(__name__)
 
@@ -526,15 +526,15 @@ def main():
     # pruner = Pruning(config)
     # pruner.model = model
     # pruner.on_train_begin()
-    compression_manager = prepare_compression(model=model, confs=configs)
-    compression_manager.callbacks.on_train_begin()
+    # compression_manager = prepare_compression(model=model, confs=configs)
+    # compression_manager.callbacks.on_train_begin()
+    prepare_pruning(configs, model, optimizer)
 
     for epoch in range(args.num_train_epochs):
         model.train()
 
         for step, batch in enumerate(train_dataloader):
             # pruner.on_step_begin(local_step=step)
-            compression_manager.callbacks.on_step_begin(step)
             outputs = model(**batch, output_hidden_states=True)
             loss = outputs.loss
             loss = loss / args.gradient_accumulation_steps
@@ -550,11 +550,8 @@ def main():
             accelerator.backward(loss)
             
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                # pruner.on_before_optimizer_step()
-                compression_manager.callbacks.on_before_optimizer_step()
+
                 optimizer.step()
-                # pruner.on_after_optimizer_step()
-                compression_manager.callbacks.on_after_optimizer_step()
 
                 lr_scheduler.step()
                 optimizer.zero_grad()
@@ -600,7 +597,6 @@ def main():
 
     # pattern_sparsity_over_conv_linear, element_sparsity_over_conv_linear, element_sparsity_over_all = pruner.get_sparsity_ratio()
     # print(pattern_sparsity_over_conv_linear, element_sparsity_over_conv_linear, element_sparsity_over_all )
-    compression_manager.callbacks.on_train_end()
     
     if args.output_dir is not None:
         accelerator.wait_for_everyone()

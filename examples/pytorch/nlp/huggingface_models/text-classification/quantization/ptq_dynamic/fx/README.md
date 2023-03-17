@@ -1,17 +1,12 @@
 Step-by-Step
 ============
 
-This document is used to list the steps of reproducing quantization and benchmarking results.
-Original BERT documents please refer to [BERT README](../../../../common/README.md) and [README](../../../../common/examples/text-classification/README.md).
-
-> **Note**
->
-> Dynamic Quantization is the recommended method for huggingface models. 
+This document is used to introduce the details about how to quantize the model with `PostTrainingDynamic` on the text classification task and obtain the benchmarking results. 
 
 # Prerequisite
 ## 1. Environment
 Python 3.6 or higher version is recommended.
-The dependent packages are all in requirements, please install as following.
+The dependent packages are listed in requirements, please install them as follows,
 ```shell
 cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx
 pip install -r requirements.txt
@@ -90,7 +85,7 @@ save_for_huggingface_upstream(q_model, tokenizer, output_dir)
 Users can upstream files in the `output_dir` into model hub and reuse them with our `OptimizedModel` API.
 
 ## 2. To download from HuggingFace model hub
-We provide an API `OptimizedModel` to initialize int8 models from HuggingFace model hub and its usage same as the model class provided by [transformers](https://github.com/huggingface/transformers).
+We provide an API `OptimizedModel` to initialize INT8 models from HuggingFace model hub and its usage is same as the model class provided by [transformers](https://github.com/huggingface/transformers).
 ```python
 from neural_compressor.utils.load_huggingface import OptimizedModel
 model = OptimizedModel.from_pretrained(
@@ -101,16 +96,16 @@ model = OptimizedModel.from_pretrained(
             use_auth_token=True if model_args.use_auth_token else None,
         )
 ```
-We also upstreamed several int8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.
+We also upstreamed several INT8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.
 ----
 
 # Tutorial of Enabling NLP Models with Intel® Neural Compressor
 ## 1. Intel® Neural Compressor supports two usages:
 1. User specifies fp32 'model', calibration dataset 'q_dataloader', evaluation dataset "eval_dataloader" and metrics.
 2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
-## 2. Code Prepare
 
-We need to update `run_glue.py` like below:
+## 2. Code Prepare
+We update `run_glue.py` like belows:
 
 ```python
 trainer = QuestionAnsweringTrainer(

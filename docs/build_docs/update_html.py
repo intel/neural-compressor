@@ -36,11 +36,27 @@ def update_version_link(version, folder_name, index_file):
         f.write(index_buf)
 
 
+def update_source_url(version, folder_name, index_file):
+    if 'latest'!= folder_name:
+        return
+
+    base_url = "class=\"reference external\" href=\"https://github.com/intel/neural-compressor/blob/{}/"
+    repo_url = base_url.format("v"+version)
+    target = base_url.format("master")
+    with open(index_file, "r") as f:
+        index_buf = f.read()
+        index_buf = index_buf.replace(repo_url, target)
+
+    with open(index_file, "w") as f:
+        f.write(index_buf)
+
+
+
 def main(folder, version):
     folder_name=os.path.basename(folder)
     for index_file in glob.glob('{}/**/*.html'.format(folder),recursive = True):
         update_version_link(version, folder_name, index_file)
-
+        update_source_url(version, folder_name, index_file)
 
 def help(me):
     print("python {} html_folder version".format(me))

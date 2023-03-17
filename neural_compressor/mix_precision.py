@@ -34,12 +34,13 @@ class MixedPrecision:
     MixedPrecision class automatically generates low precision model across various DL
     frameworks including tensorflow, pytorch and onnxruntime.
 
-    Example:
+    Example::
+
         from neural_compressor.config import MixedPrecisionConfig
         def eval_func(model):
             ...
-            return accuracy
-
+        return accuracy
+        
         conf = MixedPrecisionConfig()
         output_model = mix_precision.fit(
             model,
@@ -362,18 +363,31 @@ def fit(model,
     Raises:
         AssertionError.
 
-    Example:
+    Example::
+
         from neural_compressor import mix_precision
         from neural_compressor.config import MixedPrecisionConfig
-
+        
         conf = MixedPrecisionConfig()
         converted_model = mix_precision.fit(model, config=conf)
     """
     converter = MixedPrecision(config)
-    precisions = ["bf16", "fp16", "fp32"]
-    precisions = list(set(precisions) - set(config.excluded_precisions))
+    if config.precision in config.excluded_precisions:
+        logger.warning("Target precision is in excluded_precisions, "\
+            "please modify precision or excluded_precisions to make it understandable.")
+        sys.exit(0)
+    precisions = list(set(config.precision) - set(config.excluded_precisions))
     converter.precisions = precisions
-    if 'bf16' in precisions and not CpuInfo().bf16:
+    converter.model = model
+
+    if ('bf16' in precisions or 'fp16' in precisions) and converter.model.framework() == "onnxruntime":
+        if config.device == "cpu":
+            logger.warning("Mix precision exits due to device isn't gpu for onnx models.")
+            sys.exit(0)
+        elif config.backend != "onnxrt_cuda_ep":
+            logger.warning("Mix precision exits due to backend isn't onnxrt_cuda_ep for onnx models.")
+            sys.exit(0)
+    elif 'bf16' in precisions and not CpuInfo().bf16 and converter.model.framework() != "onnxruntime":
         if os.getenv('FORCE_BF16') == '1':
             logger.warning("Mix precision will generate bf16 graph although " \
                            "the hardware doesn't support bf16 instruction.")
@@ -381,7 +395,9 @@ def fit(model,
             logger.warning("Mix precision exits due to the hardware " \
                            "doesn't support bf16 instruction.")
             sys.exit(0)
-    converter.model = model
+    elif 'fp16' in precisions and converter.model.framework() != "onnxruntime":
+        logger.warning("Currently mix precision only supports fp16 for onnx models.")
+        sys.exit(0)
     if eval_func is not None:
         converter.eval_func = eval_func
     if eval_dataloader is not None:

@@ -30,6 +30,7 @@ from neural_compressor.ux.utils.utils import (
     load_model_config,
     normalize_domain,
     normalize_framework,
+    safe_extract_archive,
 )
 from neural_compressor.ux.web.communication import MessageQueue
 
@@ -236,13 +237,12 @@ class Downloader:
         log.debug(f"Unpacking {archive_path}")
 
         if zipfile.is_zipfile(archive_path):
-            z = zipfile.ZipFile(archive_path)
-            z.extractall(self.download_dir)
+            with zipfile.ZipFile(archive_path) as file:
+                safe_extract_archive(file, self.download_dir, file.namelist())
 
         elif tarfile.is_tarfile(archive_path):
-            with tarfile.open(archive_path, "r:gz") as t:
-                t.extractall(self.download_dir)
-
+            with tarfile.open(archive_path, "r:gz") as file:
+                safe_extract_archive(file, self.download_dir, file.getnames())
         else:
             message = "Could unpack an archive. Supported archive types are zip and tar.gz."
             raise ClientErrorException(message)

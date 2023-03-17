@@ -40,7 +40,15 @@ local_types_config = [
         "pruning_scope": "local",
         "pattern": "16x1",
         "sparsity_decay_type": "cube"
-    }
+    },
+    {
+        "start_step": 0,
+        "end_step": 0,
+        "pruning_type": "pattern_lock",
+        "op_names": ['layer4.*'],
+        "pattern": "2:4",
+        "pruning_scope": "global"
+    },
 ]
 
 fake_snip_config = WeightPruningConfig(local_types_config, target_sparsity=0.9, start_step=0, \

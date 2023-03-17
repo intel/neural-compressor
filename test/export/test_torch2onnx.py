@@ -293,7 +293,7 @@ class TestPytorch2ONNX(unittest.TestCase):
         inc_model = Model(model)
         fp32_onnx_config = Torch2ONNXConfig(
             dtype="fp32",
-            example_inputs=tuple(self.nlp_input.values()),
+            example_inputs=self.nlp_input,
             input_names=list(self.nlp_input.keys()),
             output_names=['labels'],
             dynamic_axes=dynamic_axes,

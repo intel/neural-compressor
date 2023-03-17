@@ -6,9 +6,9 @@ Our example comes from [Huggingface/transformers](https://github.com/huggingface
 # Prerequisite
 ## 1. Environment
 Python 3.6 or higher version is recommended.
-The dependent packages are all in requirements, please install as following.
+The dependent packages are listed in `requirements.txt`, please install them as follows,
 ```shell
-cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_dynamic/fx
+cd examples/pytorch/nlp/huggingface_models/text-classification/quantization/qat/fx
 pip install -r requirements.txt
 ```
 ## 2. Prepare fine-tuned model
@@ -86,7 +86,7 @@ or
 
 # HuggingFace Model Hub
 ## 1. To upstream into HuggingFace model hub
-We provide an API `save_for_huggingface_upstream` to collect configuration files, tokenizer files and int8 model weights in the format of [transformers](https://github.com/huggingface/transformers). 
+We provide an API `save_for_huggingface_upstream` to collect configuration files, tokenizer files and INT8 model weights in the format of [transformers](https://github.com/huggingface/transformers). 
 ```py
 from neural_compressor.utils.load_huggingface import save_for_huggingface_upstream
 save_for_huggingface_upstream(q_model, tokenizer, output_dir)
@@ -94,7 +94,7 @@ save_for_huggingface_upstream(q_model, tokenizer, output_dir)
 Users can upstream files in the `output_dir` into model hub and reuse them with our `OptimizedModel` API.
 
 ## 2. To download from HuggingFace model hub
-We provide an API `OptimizedModel` to initialize int8 models from HuggingFace model hub and its usage same as the model class provided by [transformers](https://github.com/huggingface/transformers).
+We provide an API `OptimizedModel` to initialize INT8 models from HuggingFace model hub and its usage is same as the model class provided by [transformers](https://github.com/huggingface/transformers).
 ```python
 from neural_compressor.utils.load_huggingface import OptimizedModel
 model = OptimizedModel.from_pretrained(
@@ -105,4 +105,4 @@ model = OptimizedModel.from_pretrained(
             use_auth_token=True if model_args.use_auth_token else None,
         )
 ```
-We also upstreamed several int8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.
+We also upstreamed several INT8 models into HuggingFace [model hub](https://huggingface.co/models?other=Intel%C2%AE%20Neural%20Compressor) for users to ramp up.

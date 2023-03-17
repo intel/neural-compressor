@@ -527,7 +527,7 @@ def compare_weights(
     quantized weights. This dict can be used to compare and compute the quantization
     error of the weights of float and quantized models.
 
-    Example usage::
+    Example::
 
         wt_compare_dict = compare_weights(
             float_model.state_dict(), qmodel.state_dict())

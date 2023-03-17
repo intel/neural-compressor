@@ -119,6 +119,7 @@ def execute_optimization_regular(
     }
 
     Workdir.clean_logs(optimization.workdir)
+    Workdir.clean_cache_files(optimization.workdir)
 
     optimization.generate_config()
 
