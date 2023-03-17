@@ -331,6 +331,7 @@ def validate(val_loader, model, criterion, args):
 # Quantization code
 def train_func(model):
     ...
+    return model  # user should return a best performance model here
 
 from neural_compressor import QuantizationAwareTrainingConfig
 from neural_compressor.training import prepare_compression, fit
@@ -410,7 +411,7 @@ Example of recipe:
 recipes = {
     "smooth_quant": True,
     "smooth_quant_args": {
-        "alpha": 0.6
+        "alpha": 0.5 # default value is 0.5
     },
     "fast_bias_correction": False,
 }
