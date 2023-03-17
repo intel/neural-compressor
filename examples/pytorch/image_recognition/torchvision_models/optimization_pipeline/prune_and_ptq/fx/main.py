@@ -177,7 +177,7 @@ def main_worker(args):
             pruning_type=args.pruning_type,
             target_sparsity=args.target_sparsity,
             pruning_frequency=1,
-            op_names=['layer1.0.conv1.weight', 'layer1.0.conv2.weight'],
+            op_names=['layer1.0.conv1', 'layer1.0.conv2'],
             start_step=num_warm,
             end_step=num_iterations
         )
@@ -215,6 +215,9 @@ def main_worker(args):
 
         compression_manager.callbacks.on_train_end()
         compression_manager.save(args.output_model)
+        df, total_sparsity = compression_manager.model.report_sparsity()
+        print("Total sparsity of FP32 model is {}".format(total_sparsity))
+        print(df)
 
     if args.quantize:
         from neural_compressor import PostTrainingQuantConfig
@@ -224,7 +227,10 @@ def main_worker(args):
                                     q_conf,
                                     calib_dataloader=val_loader,
                                     eval_func=eval_func)
-        q_model.save(args.tuned_checkpoint)
+        df, total_sparsity = q_model.report_sparsity()
+        print("Total sparsity of INT8 model is {}".format(total_sparsity))
+        print(df)
+        q_model.save(args.output_model)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args, compression_manager):

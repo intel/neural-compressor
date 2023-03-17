@@ -34,12 +34,13 @@ class MixedPrecision:
     MixedPrecision class automatically generates low precision model across various DL
     frameworks including tensorflow, pytorch and onnxruntime.
 
-    Example:
+    Example::
+
         from neural_compressor.config import MixedPrecisionConfig
         def eval_func(model):
             ...
-            return accuracy
-
+        return accuracy
+        
         conf = MixedPrecisionConfig()
         output_model = mix_precision.fit(
             model,
@@ -362,10 +363,11 @@ def fit(model,
     Raises:
         AssertionError.
 
-    Example:
+    Example::
+
         from neural_compressor import mix_precision
         from neural_compressor.config import MixedPrecisionConfig
-
+        
         conf = MixedPrecisionConfig()
         converted_model = mix_precision.fit(model, config=conf)
     """
