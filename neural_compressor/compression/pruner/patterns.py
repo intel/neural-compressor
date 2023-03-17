@@ -680,7 +680,7 @@ class PatternNxM(BasePattern):
                 mask = self._reshape_2dims_to_orig(mask, orig_shape)
                 masks[key] = mask
             layer_ratio = torch.sum(masks[key] == 0.0).data.item() / masks[key].numel()
-            logger.info(f'layer {key} sparsity_ratio is {layer_ratio}')
+            logger.info(f'{key} sparsity is {layer_ratio}')
         return masks
 
     def get_pattern_lock_masks(self, modules):

@@ -1,4 +1,5 @@
 # coding=utf-8
+# Copyright (c) 2023 Intel Corporation
 # Copyright 2021 The HuggingFace Inc. team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,7 +46,6 @@ from transformers import (
 )
 from transformers.file_utils import get_full_repo_name
 from transformers.utils.versions import require_version
-from neural_compressor.training import prepare_compression
 from neural_compressor.training import WeightPruningConfig
 
 logger = logging.getLogger(__name__)
@@ -171,7 +171,7 @@ def parse_args():
                         help="Number of epochs the network not be purned")
     parser.add_argument("--hub_token", type=str, help="The token to use to push to the Model Hub.")
     parser.add_argument("--do_prune", action="store_true", help="Whether or not to prune the model")
-    
+
     parser.add_argument(
         "--pruning_pattern",
         type=str, default="4x1",
@@ -494,13 +494,13 @@ def main():
     num_warm = int(args.sparsity_warm_epochs * num_iterations)
     total_iterations = int(num_iterations * (args.num_train_epochs - args.cooldown_epochs))
     frequency = int((total_iterations - num_warm + 1) / 40) if args.pruning_frequency == -1 \
-                                                           else args.pruning_frequency
+        else args.pruning_frequency
     pruning_start = num_warm
     pruning_end = total_iterations
     if not args.do_prune:
         pruning_start = num_iterations * args.num_train_epochs + 1
         pruning_end = pruning_start
-    pruning_configs=[
+    pruning_configs = [
         {
             "pruning_type": "snip_momentum",
             "pruning_scope": "global",
@@ -522,15 +522,15 @@ def main():
     # pruner = Pruning(config)
     # pruner.model = model
     # pruner.on_train_begin()
-    compression_manager = prepare_compression(model=model, confs=configs)
-    compression_manager.callbacks.on_train_begin()
+    from neural_compressor.training import prepare_pruning
+    prepare_pruning(configs, model, optimizer)
+
 
     for epoch in range(args.num_train_epochs):
         model.train()
-
         for step, batch in enumerate(train_dataloader):
             # pruner.on_step_begin(local_step=step)
-            compression_manager.callbacks.on_step_begin(step)
+
             outputs = model(**batch, output_hidden_states=True)
             loss = outputs.loss
             loss = loss / args.gradient_accumulation_steps
@@ -544,13 +544,11 @@ def main():
                                                      teacher_outputs['hidden_states'][-1])  ##variant 3
 
             accelerator.backward(loss)
-
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
                 # pruner.on_before_optimizer_step()
-                compression_manager.callbacks.on_before_optimizer_step()
+
                 optimizer.step()
                 # pruner.on_after_optimizer_step()
-                compression_manager.callbacks.on_after_optimizer_step()
 
                 lr_scheduler.step()
                 optimizer.zero_grad()
@@ -561,7 +559,8 @@ def main():
                 break
 
         model.eval()
-
+        # torch.save(model,"model.pt")
+        # torch.save(optimizer, "optimizer.pt")
         for step, batch in enumerate(eval_dataloader):
             outputs = model(**batch)
             predictions = outputs.logits.argmax(dim=-1) if not is_regression else outputs.logits.squeeze()
@@ -592,13 +591,13 @@ def main():
             # unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
             accelerator.save_state(file)
             # if accelerator.is_main_process:
-                # tokenizer.save_pretrained(args.output_dir)
-                # if args.push_to_hub:
-                #     repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
+            # tokenizer.save_pretrained(args.output_dir)
+            # if args.push_to_hub:
+            #     repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
-    compression_manager.callbacks.on_train_end()
 
     if args.output_dir is not None:
+
         accelerator.wait_for_everyone()
         # unwrapped_model = accelerator.unwrap_model(model)
         # unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
