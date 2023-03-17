@@ -28,21 +28,44 @@ python ./train.py \
     --pretrained \
     --batch-size 128 \
     --lr 0.175 \
-    --epochs 60 \
+    --epochs 180 \
     --warmup-epochs 0 \
-    --cooldown-epochs 10 \
+    --cooldown-epochs 20 \
     --do-prune \
     --do-distillation \
     --target-sparsity 0.75 \
     --pruning-pattern "2x1" \
     --update-frequency-on-step 2000 \
     --distillation-loss-weight "1.0" \
-    --output ./outputs/ \
-
+    --output ./path/save/your/models/ \
 ```
 After configs are settled, just run:
 ```bash
 sh run_resnet50_prune.sh
+```
+
+If you do not have a GPU, our code will automatically deploy pruning process on your CPU. If you do have GPUs and CUDA but you still want to execute the pruning on CPU, use an extra argument of "--no-cuda" in your script.
+```bash
+#!/bin/bash
+DATA="/path/to/your/dataset/"
+python ./train.py \
+    ${DATA} \
+    --model "resnet50" \
+    --num-classes 1000 \
+    --pretrained \
+    --batch-size 128 \
+    --lr 0.175 \
+    --epochs 180 \
+    --warmup-epochs 0 \
+    --cooldown-epochs 20 \
+    --do-prune \
+    --do-distillation \
+    --target-sparsity 0.75 \
+    --pruning-pattern "2x1" \
+    --update-frequency-on-step 2000 \
+    --distillation-loss-weight "1.0" \
+    --output ./path/save/your/models/ \
+    --no-cuda
 ```
 
 # Results
