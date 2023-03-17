@@ -396,7 +396,6 @@ def main():
         torch.backends.cudnn.benchmark = True
 
     args.prefetcher = not args.no_prefetcher
-    # import pdb;pdb.set_trace()
     device = utils.init_distributed_device(args)
     
     # user define args.no_cuda, even if the machine have GPU, user can still choose CPU to train.
