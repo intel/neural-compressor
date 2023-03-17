@@ -534,7 +534,7 @@ class TensorFlowAdaptor(Adaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
-        if self.approach == "quant_aware_training":
+        if self.approach == "quant_aware_training": # pragma: no cover
             assert q_func is not None, "quantization aware training mode \
                 is not configured correctly"
 
@@ -1412,7 +1412,7 @@ class TensorFlowAdaptor(Adaptor):
 
     # this function is used to convert keras QAT model to pb in old QAT implementation,
     # and it's not used in refactored QAT
-    def convert(self, model, source, destination):
+    def convert(self, model, source, destination): # pragma: no cover
         """The function is used to convert a source model format to another.
 
         Args:

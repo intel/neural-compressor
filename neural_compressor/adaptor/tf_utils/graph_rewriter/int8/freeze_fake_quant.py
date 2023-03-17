@@ -23,7 +23,7 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.graph_util import GraphRewriterHelper
 from tensorflow.python.framework import dtypes
 
-class FreezeFakeQuantOpOptimizer(GraphRewriterBase):
+class FreezeFakeQuantOpOptimizer(GraphRewriterBase): # pragma: no cover
     """Freeze fake_quant op to the following Quantize op and prioring Dequantize op."""
 
     def __init__(self, model):

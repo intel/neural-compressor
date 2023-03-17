@@ -482,7 +482,7 @@ class GraphConverter:
             self._quantize_graph()
             self.quantized_node_info = [tuple(i) for i in self.quantized_node_info]
 
-            if self.fake_quant:
+            if self.fake_quant: # pragma: no cover
                 self._fuse_requantize_with_fused_quantized_node()
             else:
                 if self._enable_kl_op_names:
@@ -654,7 +654,7 @@ class GraphConverter:
 
     def _fuse_requantize_with_fused_quantized_node(self):
         """Fuse the Requantize/Dequantize with fused quantized Ops."""
-        if self.fake_quant:
+        if self.fake_quant: # pragma: no cover
             self._tmp_graph_def = FreezeFakeQuantOpOptimizer(
                 self._tmp_graph_def).do_transformation()
 
