@@ -461,12 +461,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/object_detection/ssd_resnet34/quantization/ptq/fx">fx</a> / <a href="./pytorch/object_detection/ssd_resnet34/quantization/ptq/ipex">ipex</a></td>
   </tr>
   <tr>
-    <td>*Mask R-CNN</td>
-    <td>Object Detection</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/object_detection/maskrcnn/quantization/ptq/fx">fx</a></td>
-  </tr>
-  <tr>
     <td>YOLOv3</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
@@ -479,28 +473,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/recommendation/dlrm/quantization/ptq/ipex">ipex</a> / <a href="./pytorch/recommendation/dlrm/quantization/ptq/fx">fx</a></td>
   </tr>
   <tr>
-    <td>*RNN-T</td>
-    <td>Speech Recognition</td>
-    <td>Post-Training Dynamic Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/eager">eager</a> </td>
-  </tr>
-  <tr>
-    <td>*Wav2Vec2</td>
-    <td>Speech Recognition</td>
-    <td>Post-Training Dynamic</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/eager">eager</a> </td>
-  </tr>
-  <tr>
-    <td>*HuBERT</td>
+    <td>HuBERT</td>
     <td>Speech Recognition</td>
     <td>Post-Training Dynamic /Static Quantization</td>
     <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_static/fx">fx</a></td>
-  </tr>
-  <tr>
-    <td>*BlendCNN</td>
-    <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="https://github.com/intel/neural-compressor/tree/old_api_examples/examples/pytorch/nlp/blendcnn/quantization/ptq/eager">eager</a></td>
   </tr>
   <tr>
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
