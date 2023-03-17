@@ -1,8 +1,8 @@
 """
 Environment Setting
 
-Enable IntelÂ® oneDNN Optimizations in TensorFlow 2.6.0 and newer by setting environment variable TF_ENABLE_ONEDNN_OPTS=1. In TensorFlow 2.9 and newer, oneDNN is enabled by default. 
-That will accelerate training and inference, and  it's mandatory requirement of running IntelÂ® Neural Compressor quantize Fp32 model or deploying the quantized model.
+Enable Intel® oneDNN Optimizations in TensorFlow 2.6.0 and newer by setting environment variable TF_ENABLE_ONEDNN_OPTS=1. In TensorFlow 2.9 and newer, oneDNN is enabled by default. 
+That will accelerate training and inference, and  it's mandatory requirement of running Intel® Neural Compressor quantize Fp32 model or deploying the quantized model.
 """
 
 import neural_compressor as inc
