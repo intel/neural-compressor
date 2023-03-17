@@ -5,14 +5,16 @@ import copy
 import onnx
 import numpy as np
 from onnx import helper, TensorProto, numpy_helper, onnx_pb
+from neural_compressor.adaptor.ox_utils.operators import QOPERATORS
 from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
 from neural_compressor.adaptor.ox_utils.util import QuantizedInitializer, QuantizedValue, QuantizationMode
 import onnxruntime as ort
+from neural_compressor.config import ONNXQlinear2QDQConfig
 
 def build_model():
     initializers = []
     input = helper.make_tensor_value_info('input', TensorProto.FLOAT, [1, 3, 15, 15])
-    output = helper.make_tensor_value_info('reshape_output', TensorProto.FLOAT, [88, 11])
+    output = helper.make_tensor_value_info('add_out_2', TensorProto.FLOAT, [88, 11])
     
     add_node = onnx.helper.make_node('Add', ['input', 'add_init'], ['add_out'], name='add')
 
@@ -32,10 +34,14 @@ def build_model():
     avgpool_node = helper.make_node('AveragePool', ['concat_output'], ['avg_output'], name='AveragePool', **avg_args)
     reshape_node = onnx.helper.make_node('Reshape', ['avg_output', 'shape'], ['reshape_output'], name='Reshape')
 
+    add_node_2 = onnx.helper.make_node('Add', ['reshape_output', 'add_init_2'], ['add_out_2'], name='add_2')
+
     initializers = [conv1_weight_initializer, conv2_weight_initializer]
     initializers.append(onnx.numpy_helper.from_array(np.array([88, 11], dtype=np.int64), name='shape'))
-    initializers.append(onnx.numpy_helper.from_array(np.zeros((1, 3, 15, 15)), name='add_init'))
-    graph = helper.make_graph([conv1_node, conv2_node, concat_node, avgpool_node, reshape_node, add_node],
+    initializers.append(onnx.numpy_helper.from_array(np.zeros((1, 3, 15, 15)).astype('float32'), name='add_init'))
+    initializers.append(onnx.numpy_helper.from_array(np.zeros((88, 11)).astype('float32'), name='add_init_2'))
+ 
+    graph = helper.make_graph([conv1_node, conv2_node, concat_node, avgpool_node, reshape_node, add_node, add_node_2],
                               'test', [input], [output], initializer=initializers)
     model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 13)])
     return model
@@ -43,7 +49,7 @@ def build_model():
 class TestAdaptorONNXRT(unittest.TestCase):
 
     qlinear_backend = QuantizationMode.QLinearOps
-    qdq_backend = 'qdqops'
+    qdq_backend = 'qdq'
     integer_backend = QuantizationMode.IntegerOps
     static_q_config = {"weight":{'dtype': 3, 
                           'algorithm': 'minmax', 
@@ -84,6 +90,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
             **kwargs)
         quantizer.quantize_model()
         assert quantizer.model.model
+        return quantizer.model
 
     def qdq_test(self, model, q_config, quantize_params, quantizable_op_types, **kwargs):
         quantizer = Quantizer(copy.deepcopy(model),
@@ -359,6 +366,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            'input_ids': [np.uint8(10.), np.float32(0)],
                            } 
         self.qlinear_test(model, q_config, quantize_params, ['EmbedLayerNormalization']) 
+
+        q_model = self.qlinear_test(model, q_config, quantize_params, ['EmbedLayerNormalization'])
+        converter = QOPERATORS["QEmbedLayerNormalization"]([i for i in q_model.nodes() if i.op_type == "QEmbedLayerNormalization"][0],
+                None, q_model.initializer())
+        done, add_node, init = converter.convert()
+        self.assertTrue("EmbedLayerNormalization" in [i.op_type for i in add_node])
+
         self.qdq_test(model, q_config, quantize_params, ['EmbedLayerNormalization']) 
 
     def test_LSTM(self):
@@ -415,9 +429,17 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            'add_out': [np.uint8(10.), np.float32(0)],
                            'add_init': [np.uint8(10.), np.float32(0)],
                            'shape': [np.uint8(10.), np.float32(0)],
-                           'reshape_output': [np.uint8(10.), np.float32(0)]}
+                           'reshape_output': [np.uint8(10.), np.float32(0)],
+                           'add_init_2': [np.uint8(10.), np.float32(0)],
+                           'add_out_2': [np.uint8(10.), np.float32(0)]}
         quantizable_op_types = ['Reshape', 'Conv', 'Concat', 'AveragePool', 'Add']
-        self.qlinear_test(model, q_config, quantize_params, quantizable_op_types, **{'dedicated_qdq_pair': True})
+        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types, **{'dedicated_qdq_pair': True})
+
+        q_model.export('test.onnx', ONNXQlinear2QDQConfig())
+        export_model = onnx.load('test.onnx')
+        self.assertEqual(len(export_model.graph.node), 20)
+        os.remove('test.onnx')
+ 
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types, **{'dedicated_qdq_pair': True})
 
         q_config = {'Reshape':self.static_q_config, 'conv1':'fp32', 'conv2':self.static_q_config, \
@@ -522,7 +544,13 @@ class TestAdaptorONNXRT(unittest.TestCase):
                            "C": [np.uint8(0), np.float32(0.5)],
                            "D": [np.uint8(0), np.float32(0.5)]}
         quantizable_op_types = ["Attention"]
-        self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+
+        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        converter = QOPERATORS["QAttention"]([i for i in q_model.nodes() if i.op_type == "QAttention"][0],
+                None, q_model.initializer())
+        done, add_node, init = converter.convert()
+        self.assertTrue("Attention" in [i.op_type for i in add_node])
+
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
         q_config = {"Attention": self.dynamic_q_config}
         self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
@@ -598,15 +626,17 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.dynamic_test(model, q_config, quantize_params, quantizable_op_types)
 
     def test_split(self):
-        a_value = np.random.randn(100, 4).astype(np.float32)
-        A_init = helper.make_tensor('A', TensorProto.FLOAT, [100, 4],
-                                    a_value.reshape(400).tolist())
-        A = helper.make_tensor_value_info('A', TensorProto.FLOAT, [100, 4])
-        B = helper.make_tensor_value_info('conv1_output', TensorProto.FLOAT, [50, 4])
-        C = helper.make_tensor_value_info('conv2_output', TensorProto.FLOAT, [50, 4])
-
-        node = onnx.helper.make_node('Split', ['A'], ['B', 'C'], name='Split')
-        graph = helper.make_graph([node], 'test_graph_1', [A], [B, C], [A_init])
+        D = helper.make_tensor_value_info('D', TensorProto.FLOAT, [100, 2])
+        e_value = np.random.randn(2, 2).astype(np.float32)
+        E_init = helper.make_tensor('E', TensorProto.FLOAT, [2, 2],
+                                    e_value.reshape(4).tolist())
+ 
+        matmul_node = onnx.helper.make_node('MatMul', ['D', 'E'], ['A'], name='Matmul')
+ 
+        B = helper.make_tensor_value_info('B', TensorProto.FLOAT, [50, 2])
+        C = helper.make_tensor_value_info('C', TensorProto.FLOAT, [50, 2])
+        node = onnx.helper.make_node('Split', ['A'], ['B', 'C'], name='Split', **{'num_outputs': 2})
+        graph = helper.make_graph([matmul_node, node], 'test_graph_1', [D], [B, C], [E_init])
         model = helper.make_model(graph)
         q_config = {'Split': {"weight":{'dtype': 3,
                                          'algorithm': 'minmax',
@@ -618,13 +648,31 @@ class TestAdaptorONNXRT(unittest.TestCase):
                                          'granularity':'per_tensor',
                                          'quant_mode': 'static'}
                         },
+                    'Matmul': {"weight":{'dtype': 3,
+                                         'algorithm': 'minmax',
+                                         'scheme':'sym',
+                                         'granularity': 'per_tensor'},
+                              'activation':{'dtype': 2,
+                                         'algorithm': 'minmax',
+                                         'scheme':'asym',
+                                         'granularity':'per_tensor',
+                                         'quant_mode': 'static'}
+                        },
+ 
                     }
-        quantize_params = {"A": [np.uint8(10.), np.float32(0)],
-                           "B": [np.uint8(10.), np.float32(0)],
-                           "C": [np.uint8(10.), np.float32(0)],
+        quantize_params = {"A": [np.uint8(0), np.float32(0.5)],
+                           "B": [np.uint8(0), np.float32(0.5)],
+                           "C": [np.uint8(0), np.float32(0.5)],
+                           "D": [np.uint8(0), np.float32(0.5)],
+                           "E": [np.uint8(0), np.float32(0.5)],
                            }
-        quantizable_op_types = ["Split"]
-        self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        quantizable_op_types = ["Split", "MatMul"]
+        q_model = self.qlinear_test(model, q_config, quantize_params, quantizable_op_types)
+        q_model.export('test.onnx', ONNXQlinear2QDQConfig())
+        export_model = onnx.load('test.onnx')
+        self.assertEqual(len(export_model.graph.node), 11)
+        os.remove('test.onnx')
+
         self.qdq_test(model, q_config, quantize_params, quantizable_op_types)
  
     def test_pad(self):

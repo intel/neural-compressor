@@ -124,42 +124,4 @@ class QOperator(object):
 
     def convert(self):
         """Convert to QDQ format."""
-        node = self.node
-        add_nodes = []
-        inputs = []
-        inits = []
-        if all([child.op_type not in self.qop_list or \
-                child.op_type != 'DequantizeLinear' for child in self.children]):
-            return False, add_nodes, inits
-
-        # input dq
-        for child in self.children:
-            if child.op_type == 'DequantizeLinear':
-                in_dq = onnx.helper.make_node(
-                    'DequantizeLinear',
-                    [node.input[0], child.input[1], child.input[2]],
-                    [node.name + '_in_dequant'],
-                    node.name + '_in_dequant')
-                inputs.append(node.name + '_in_dequant')
-                add_nodes.append(in_dq)
-                break
-
-        # output q
-        out_q = onnx.helper.make_node(
-            'QuantizeLinear',
-            [node.name + '_out', in_dq.input[1], in_dq.input[2]],
-            node.output,
-            node.name + '_out_quant')
-        outputs = [node.name + '_out']
-        add_nodes.append(out_q)
-
-        kwargs = {}
-        for attribute in node.attribute: # pragma: no cover
-            kwargs.update(attribute_to_kwarg(attribute))
-            
-        inputs.append(node.input[1:])
-        new_node = onnx.helper.make_node(
-            node.op_type, inputs,
-            outputs, node.name + '_convert', **kwargs)
-        add_nodes.append(new_node)
-        return True, add_nodes, inits
+        return True, [self.node], []
