@@ -530,7 +530,8 @@ def fit(model, config=None, b_dataloader=None, b_func=None):
         b_func:                   Customized benchmark function. If user passes the dataloader,
                                   then b_func is not needed.
 
-    Example:
+    Example::
+
         # Run benchmark according to config
         from neural_compressor.benchmark import fit
 

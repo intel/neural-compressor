@@ -47,7 +47,8 @@ def objective_registry(cls):
 def objective_custom_registry(name, obj_cls):
     """Register a customized objective.
     
-    Example:
+    Example::
+
         from eural_compressor.objective import objective_custom_registry
         
         objective_cls = type(user_objective)
@@ -195,7 +196,8 @@ class ModelSize(Objective):
 class MultiObjective:
     """The base class for multiple benchmarks supported by neural_compressor.
 
-    Example:
+    Example::
+
         from neural_compressor.objective import MultiObjective
         obj = MultiObjective(
             objectives=['accuracy', 'modelsize', 'performance'],
@@ -428,7 +430,8 @@ class MultiObjective:
     def best_result(self, tune_data, baseline):
         """Calculate the best results.
 
-        Example:
+        Example::
+
             # metric + multi-objectives case:
             tune_data = [
                 [acc1, [obj1, obj2, ...]],
