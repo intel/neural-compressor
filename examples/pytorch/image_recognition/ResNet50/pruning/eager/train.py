@@ -1010,7 +1010,7 @@ def train_one_epoch(
         if model_ema is not None:
             model_ema.update(model)
         
-        if torch.cuda.is_available():
+        if device.type == 'cuda':
             torch.cuda.synchronize()
 
         num_updates += 1
