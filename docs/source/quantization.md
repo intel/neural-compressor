@@ -196,7 +196,7 @@ The design philosophy of the quantization interface of Intel(R) Neural Compresso
 
 `calibration dataloader` is used to load the data samples for calibration phase. In most cases, it could be the partial samples of the evaluation dataset.
 
-If a user needs to tune the model accuracy, the user should provide either `evaluation function` or `evaluation dataloader` `evaluation metric`. If the user won't to tune the model accuracy, then the user should provide neither `evaluation function` nor `evaluation dataloader` `evaluation metirc`.
+If a user needs to tune the model accuracy, the user should provide either `evaluation function` or `evaluation dataloader` `evaluation metric`. If the user won't to tune the model accuracy, then the user should provide neither `evaluation function` nor `evaluation dataloader` `evaluation metric`.
 
 `evaluation function` is a function used to evaluate model accuracy. It is a optional. This function should be same with how user makes evaluation on fp32 model, just taking `model` as input and returning a scalar value represented the evaluation accuracy.
 
@@ -391,7 +391,7 @@ conf = PostTrainingQuantConfig(op_type_dict=op_type_dict)
 ### Specify Quantization Recipes
 Intel(R) Neural Compressor support some quantization recipes. Users can set `recipes` in config class to achieve the above purpose. (`fast_bias_correction` and `weight_correction` is working in progress.)
 
-| Recipes | PyTorch |  Tensorflow | ONNXRuntime |
+| Recipes | PyTorch |  Tensorflow | ONNX Runtime |
 | :---------------- |:---------------:| ---------------:|---------------:|
 | smooth_quant      | ✅ | N/A | ✅ |
 | smooth_quant_args | ✅ | N/A | ✅ |
