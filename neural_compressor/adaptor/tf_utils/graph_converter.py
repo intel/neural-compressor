@@ -493,6 +493,7 @@ class GraphConverter:
 
                 output_tensor_names = copy.deepcopy(self.model.output_tensor_names)
                 sampling_graph_def = copy.deepcopy(self._fp32_model.graph_def)
+
                 # TODO: this is a workaround to make Min/Max node be completly eliminated in int8 graph 
                 # after enabling pad+conv2d in new API.
                 non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
@@ -590,7 +591,7 @@ class GraphConverter:
             self.itex_mode).do_transform()
         self.exclude_node_names = exclude_node_names
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
-        if debug:
+        if debug and not self.performance_only:
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.save(self._int8_dynamic_range_model_path)
 
