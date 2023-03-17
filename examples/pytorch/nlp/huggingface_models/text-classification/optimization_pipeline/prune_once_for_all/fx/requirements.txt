@@ -6,3 +6,4 @@ protobuf
 scipy
 scikit-learn
 accelerate
+tqdm
